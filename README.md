@@ -2,16 +2,20 @@
 
 ### To Do:
 
-- Parse json file for concept images
-- Put images in s3 storage
-- Finish setting up basic aws EC2
-- Connect and host basic html page
+- Work on sign in/home page
 - Embed mp4 video on aws server
 - Set up domain name deepWaterAnnotator.com
 
 ### Done:
 
 - Wrote create table statements in psql
+- Parse json file for concept images
+- Put images in s3 storage
+- Finish setting up basic aws EC2
+- Set up database with postgresql
+- Make Users table
+- Add basic sign in
+- Add encrytion to password
 
 ### Basic Ubuntu
 
