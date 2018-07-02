@@ -5,6 +5,14 @@
 - Work on sign in/home page
 - Embed mp4 video on aws server
 - Set up domain name deepWaterAnnotator.com
+- Admin page with Info, Users, Reports tabs
+- Users page with Info, Select Concept, Select Videos,  Annotate Video, Any Video tabs
+  - Annotate Video tab has Start Now button
+  - button leads to a new video or a partly complete one
+- v2.0.0 features:
+  - During playback, display each label from -5 to 0 sec relative to label timestamp
+  - Keystroke shortcuts
+  - Playback speed controls
 
 ### Done:
 
