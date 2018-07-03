@@ -1,10 +1,10 @@
-## Welcome to Deep Sea Classifier
+## Welcome to Video Annotation Tool
 
 ### To Do:
 
 - Work on sign in/home page
 - Embed mp4 video on aws server
-- Set up domain name deepWaterAnnotator.com
+- Set up domain name videoAnnotationTool.com
 - Admin page with Info, Users, Reports tabs
 - Users page with Info, Select Concept, Select Videos,  Annotate Video, Any Video tabs
   - Annotate Video tab has Start Now button
