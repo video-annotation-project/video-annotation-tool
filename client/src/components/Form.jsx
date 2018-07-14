@@ -4,45 +4,48 @@ class Form extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      userName: '',
-      userPass: '',
+      username: '',
+      password: '',
     };
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
   }
 
   handleChange(event) {
-    this.setState({[event.target.name]: event.target.value})
+    this.setState({[event.target.name]: event.target.value});
   }
 
   handleSubmit(event) {
     event.preventDefault();
     //Note: you can access FormData fields with 'data.get(fieldName)'
-    fetch("/login", {
+    fetch('/login', {
       method: 'POST',
+      headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
-        'userName': this.state.userName,
-        'userPass': this.state.userPass
-      }),
-      headers: {"Content-Type": "application/json"}
-    }).then(res => {
-      console.log(res)
-    })
+        'username': this.state.username,
+        'password': this.state.password
+      })
+    }).then(res => res.json()).then(res => {
+      console.log(res);
+      if (res.message === 'welcome') {
+        console.log('welcome');
+        // store res.token in localstorage
+      } else {
+        console.log('error');
+      }
+    });
   }
-  
+
   render() {
     return (
-      <div className="form">
-        <h1>Login</h1><br />
-        <div className='loadingBar'>
-        {}
-        </div>
+      <div className='form'>
+        <h2>Login</h2><br />
         <form onSubmit={this.handleSubmit}>
-        <div>User Name:</div><input type="text" name='userName' value={this.state.userName} onChange= {this.handleChange}/>
-        <br /><br />
-        <div>User Password:</div><input type="password" name='userPass' value={this.state.userPass} onChange= {this.handleChange}/>
-        <br /><br />
-        <input type="submit" value="Login"/>
+          <div>username</div><input type='text' name='username' value={this.state.username} onChange= {this.handleChange}/>
+          <br /><br />
+          <div>password</div><input type='password' name='password' value={this.state.password} onChange= {this.handleChange}/>
+          <br /><br />
+          <input type='submit' value='Login'/>
         </form>
       </div>
     );
