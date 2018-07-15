@@ -41,13 +41,6 @@ class TestComponent extends Component {
     } else {
       return (
         <div>{item}</div>
-        // <ul>
-        //   {items.map(item => (
-        //     <li key={item.name}>
-        //       {item.name} {item.price}
-        //     </li>
-        //   ))}
-        // </ul>
       );
     }
   }

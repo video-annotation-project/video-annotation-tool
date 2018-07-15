@@ -6,18 +6,18 @@ class Form extends Component {
     this.state = {
       username: '',
       password: '',
+      errorMsg: null,
     };
-    this.handleChange = this.handleChange.bind(this);
-    this.handleSubmit = this.handleSubmit.bind(this);
   }
 
-  handleChange(event) {
-    this.setState({[event.target.name]: event.target.value});
-  }
+  handleChange = event => {
+    this.setState({
+      [event.target.name]: event.target.value
+    });
+  };
 
-  handleSubmit(event) {
+  handleSubmit = event => {
     event.preventDefault();
-    //Note: you can access FormData fields with 'data.get(fieldName)'
     fetch('/login', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
@@ -26,28 +26,34 @@ class Form extends Component {
         'password': this.state.password
       })
     }).then(res => res.json()).then(res => {
-      console.log(res);
       if (res.message === 'welcome') {
-        console.log('welcome');
-        // store res.token in localstorage
+        localStorage.setItem('isAuthed', 'true');
+        localStorage.setItem('token', res.token);
+        this.props.history.push('/');
       } else {
-        console.log('error');
+        localStorage.clear();
+        this.setState({
+          errorMsg: res.message
+        });
       }
     });
-  }
+  };
 
   render() {
     return (
-      <div className='form'>
+      <React.Fragment>
         <h2>Login</h2><br />
         <form onSubmit={this.handleSubmit}>
-          <div>username</div><input type='text' name='username' value={this.state.username} onChange= {this.handleChange}/>
+          <div>username</div>
+          <input type='text' name='username' value={this.state.username} onChange= {this.handleChange}/>
           <br /><br />
-          <div>password</div><input type='password' name='password' value={this.state.password} onChange= {this.handleChange}/>
+          <div>password</div>
+          <input type='password' name='password' value={this.state.password} onChange= {this.handleChange}/>
           <br /><br />
           <input type='submit' value='Login'/>
         </form>
-      </div>
+        {this.state.errorMsg ? this.state.errorMsg : <div></div>}
+      </React.Fragment>
     );
   }
 }
