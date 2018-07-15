@@ -83,9 +83,15 @@ app.get('/api', (req, res) => {
   res.json('Test API reponse sent from Node js server');
 });
 
-app.get('/protected', passport.authenticate('jwt', {session: false}),
+app.get('/api/concepts', passport.authenticate('jwt', {session: false}),
   (req, res) => {
-    res.json("Success! You possess a valid authorization token.");
+    res.json('You have been authorized to view some juicy concepts.');
+  }
+);
+
+app.get('/api/annotate', passport.authenticate('jwt', {session: false}),
+  (req, res) => {
+    res.json("You have been authorized to do some sweet annotation.");
   }
 );
 
