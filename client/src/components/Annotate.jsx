@@ -46,6 +46,15 @@ const styles = theme => ({
     paddingTop: '10px',
     paddingBottom: '10px'
   },
+  playScript: {
+    fontColor: 'black',
+    fontWeight: 'bold',
+    fontSize: '130%',
+    position: 'relative',
+    top: '10px',
+    marginLeft: '10px',
+    clear: 'both'
+  },
   playSpeed: {
     position: 'relative',
     left: '10px',
@@ -145,7 +154,7 @@ class Annotate extends Component {
          <div className = {classes.videoSectionContainer}>
             <div className = {classes.videoContainer}>
             <div className = {classes.boxContainer}>
-               <video id = "video" src = "fish2.mp4" width = "1280" height = "723" controls>
+               <video id = "video" src = "./fish2.mp4" width = "1280" height = "723" controls>
                Your browser does not support the video tag.
                </video>
                <Rnd
