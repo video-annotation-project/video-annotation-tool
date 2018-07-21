@@ -1,14 +1,15 @@
 import React, { Component } from 'react';
 import ErrorModal from './ErrorModal.jsx';
 
-class Form extends Component {
+class Profile extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      username: '',
       password: '',
+      password1: '',
+      password2: '',
       errorMsg: null,
-      open: false //For error modal box
+      open: false,
     };
   }
 
@@ -20,54 +21,55 @@ class Form extends Component {
 
   handleSubmit = event => {
     event.preventDefault();
-    fetch('/login', {
+    fetch('/changePass', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
+      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token')},
       body: JSON.stringify({
-        'username': this.state.username,
-        'password': this.state.password
+        'password': this.state.password,
+        'password1': this.state.password1,
+        'password2': this.state.password2,
       })
     }).then(res => res.json()).then(res => {
-      if (res.message === 'welcome') {
-        localStorage.setItem('isAuthed', 'true');
-        localStorage.setItem('token', res.token);
-        //Add code for admin
-        if (res.admin) {
-          localStorage.setItem('admin', res.admin);
-        }
-        this.props.history.push('/');
+      if (res.message === "Changed") {
+        alert(res.message)
+        this.props.history.push('/')
       } else {
-        localStorage.clear();
         this.setState({
           errorMsg: res.message,
           open: true
         });
       }
-    });
+    })
   };
 
-  //Code for closing modal
   handleClose = () => {
     this.setState({ open: false });
   };
 
+
   render() {
+
     return (
       <React.Fragment>
-        <h2>Login</h2><br />
+        <h2>Change Password: </h2><br />
         <ErrorModal errorMsg={this.state.errorMsg} open={this.state.open} handleClose={this.handleClose}/>
         <form onSubmit={this.handleSubmit}>
-          <div>username</div>
-          <input type='text' name='username' value={this.state.username} onChange= {this.handleChange}/>
-          <br /><br />
-          <div>password</div>
+          <div>Current Password: </div>
           <input type='password' name='password' value={this.state.password} onChange= {this.handleChange}/>
           <br /><br />
-          <input type='submit' value='Login'/>
+          <div>New Password: </div>
+          <input type='password' name='password1' value={this.state.password1} onChange= {this.handleChange}/>
+          <br /><br />
+          <div>Confirm Password: </div>
+          <input type="password" name="password2" value={this.state.password2} onChange= {this.handleChange} />
+          <br /><br /><br />
+          <input type='submit' value='Submit'/>
         </form>
       </React.Fragment>
     );
   }
 }
 
-export default Form;
+
+
+export default Profile;

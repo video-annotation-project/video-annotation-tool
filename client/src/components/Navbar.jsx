@@ -31,11 +31,22 @@ class Navbar extends React.Component {
           </Button>
           {localStorage.getItem('isAuthed') ? (
             <React.Fragment>
-              <Button color='inherit' onClick={() => history.push('/concepts')}>
-                Select Concepts
-              </Button>
-              <Button color='inherit' onClick={() => history.push('/annotate')}>
-                Annotate Videos
+              {localStorage.getItem('admin') ? (
+                  <Button color='inherit' onClick={() => history.push('/createUser')}>
+                    Create User
+                  </Button>
+              ):(
+                <React.Fragment>
+                  <Button color='inherit' onClick={() => history.push('/concepts')}>
+                    Select Concepts
+                  </Button>
+                  <Button color='inherit' onClick={() => history.push('/annotate')}>
+                    Annotate Videos
+                  </Button>
+                </React.Fragment>
+              )}
+              <Button color='inherit' onClick={() => history.push('/profile')}>
+                Profile
               </Button>
               <Button color='inherit' onClick={this.handleLogout}>
                 Logout
