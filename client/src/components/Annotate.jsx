@@ -16,7 +16,7 @@ const styles = theme => ({
   },
   videoContainer: {
     float: 'left',
-    marginleft: '15px'
+    marginLeft: '15px'
   },
   boxContainer: {
     postion: 'relative',
@@ -26,42 +26,42 @@ const styles = theme => ({
     height: '723px'
   },
   playButton: {
-    margintop: '60px',
-    marginleft: '20px',
-    fontsize: '15px',
-    paddingtop: '10px',
-    paddingbottom: '10px'
+    marginTop: '60px',
+    marginLeft: '20px',
+    fontSize: '15px',
+    paddingTop: '10px',
+    paddingBottom: '10px'
   },
   forwardButton: {
-    margintop: '60px',
-    marginleft: '20px',
-    fontsize: '15px',
-    paddingtop: '10px',
-    paddingbottom: '10px',
+    marginTop: '60px',
+    marginLeft: '20px',
+    fontSize: '15px',
+    paddingTop: '10px',
+    paddingBottom: '10px',
   },
   backwardButton: {
-    margintop: '50px',
-    marginleft: '20px',
-    backgroundcolor: 'blue',
+    marginTop: '50px',
+    marginLeft: '20px',
+    backgroundColor: 'blue',
     color: 'white',
-    fontsize: '20px',
-    paddingtop: '10px',
-    paddingbottom: '10px'
+    fontSize: '20px',
+    paddingTop: '10px',
+    paddingBottom: '10px'
   },
   backwardButton1: {
-    margintop: '60px',
-    marginleft: '20px',
-    fontsize: '15px',
-    paddingtop: '10px',
-    paddingbottom: '10px'
+    marginTop: '60px',
+    marginLeft: '20px',
+    fontSize: '15px',
+    paddingTop: '10px',
+    paddingBottom: '10px'
   },
   playScript: {
-    fontcolor: 'black',
-    fofntweight: 'bold',
-    fontsize: '130%',
+    fontColor: 'black',
+    fontWeight: 'bold',
+    fontSize: '130%',
     position: 'relative',
     top: '10px',
-    marginleft: '10px',
+    marginLeft: '10px',
     clear: 'both'
   },
   playSpeed: {
@@ -70,7 +70,7 @@ const styles = theme => ({
     width: '50px'
   },
   entered: {
-    marginleft: '10px',
+    marginLeft: '10px',
     position: 'relative',
     top: '-3px'
   },
@@ -78,15 +78,15 @@ const styles = theme => ({
     float: 'right',
     width: '400px',
     height: '1000px',
-    backgroundcolor: 'white',
-    borderleft: '1px black solid',
+    backgroundColor: 'white',
+    borderLeft: '1px black solid',
     overflow: 'auto'
   },
   conceptsText: {
-    fontweight: 'bold',
-    fontsize: '200%',
-    margintop: '10px',
-    marginleft: '10px'
+    fontWeight: 'bold',
+    fontSize: '200%',
+    marginTop: '10px',
+    marginLeft: '10px'
   }
 });
 
