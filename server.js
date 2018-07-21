@@ -10,7 +10,7 @@ const ExtractJwt = passportJWT.ExtractJwt;
 const JwtStrategy = passportJWT.Strategy;
 
 const bcrypt = require('bcrypt');
-const psql = require('./simpleConnect');
+const psql = require('./db/simpleConnect');
 
 var fakeUsers = [
   {
