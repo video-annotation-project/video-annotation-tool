@@ -1,6 +1,8 @@
-import React, { Component } from 'react';
+import React from 'react';
 
-class Concepts extends Component {
+import ConceptsList from './ConceptsList.jsx';
+
+class Concepts extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -38,13 +40,13 @@ class Concepts extends Component {
     const { error, isLoaded, item } = this.state;
     if (error) {
       return <div>Error: {error.message}</div>;
-    } else if (!isLoaded) {
-      return <div>Loading...</div>;
-    } else {
-      return (
-        <div>{item}</div>
-      );
     }
+    return (
+      <React.Fragment>
+        {isLoaded ? <div>{item}</div> : <div>Loading...</div>}
+        <ConceptsList />
+      </React.Fragment>
+    );
   }
 }
 

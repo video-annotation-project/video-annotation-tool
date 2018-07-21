@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { withStyles } from '@material-ui/core/styles';
 import AppBar from '@material-ui/core/AppBar';
 import Button from '@material-ui/core/Button';
@@ -15,45 +16,44 @@ class Navbar extends React.Component {
 
   handleLogout = () => {
     localStorage.clear();
-    this.props.history.push('/');
   };
 
   render() {
-    const { classes, history } = this.props;
+    const { classes } = this.props;
     return (
       <AppBar position='static'>
         <Toolbar>
           <Typography variant='title' color='inherit' className={classes.flex}>
             Video Annotation Tool
           </Typography>
-          <Button color='inherit' onClick={() => history.push('/')}>
+          <Button color='inherit' component={Link} to='/'>
             Home
           </Button>
           {localStorage.getItem('isAuthed') ? (
             <React.Fragment>
               {localStorage.getItem('admin') ? (
-                  <Button color='inherit' onClick={() => history.push('/createUser')}>
+                  <Button color='inherit' component={Link} to='/createUser'>
                     Create User
                   </Button>
               ):(
                 <React.Fragment>
-                  <Button color='inherit' onClick={() => history.push('/concepts')}>
+                  <Button color='inherit' component={Link} to='/concepts'>
                     Select Concepts
                   </Button>
-                  <Button color='inherit' onClick={() => history.push('/annotate')}>
+                  <Button color='inherit' component={Link} to='/annotate'>
                     Annotate Videos
                   </Button>
                 </React.Fragment>
               )}
-              <Button color='inherit' onClick={() => history.push('/profile')}>
+              <Button color='inherit' component={Link} to='/profile'>
                 Profile
               </Button>
-              <Button color='inherit' onClick={this.handleLogout}>
+              <Button color='inherit' component={Link} to='/' onClick={this.handleLogout}>
                 Logout
               </Button>
             </React.Fragment>
           ) : (
-            <Button color='inherit' onClick={() => history.push('/login')}>
+            <Button color='inherit' component={Link} to='/login'>
               Login
             </Button>
           )}

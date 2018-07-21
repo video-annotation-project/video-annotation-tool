@@ -18,7 +18,7 @@ class App extends React.Component {
   render() {
     return (
       <React.Fragment>
-        <Route component={Navbar} />
+        <Navbar />
         <Switch>
           <Route exact path='/' component={Home} />
           {localStorage.getItem('isAuthed') ? (
