@@ -31,6 +31,62 @@ const styles = theme => ({
     fontsize: '15px',
     paddingtop: '10px',
     paddingbottom: '10px'
+  },
+  forwardButton: {
+    margintop: '60px',
+    marginleft: '20px',
+    fontsize: '15px',
+    paddingtop: '10px',
+    paddingbottom: '10px',
+  },
+  backwardButton: {
+    margintop: '50px',
+    marginleft: '20px',
+    backgroundcolor: 'blue',
+    color: 'white',
+    fontsize: '20px',
+    paddingtop: '10px',
+    paddingbottom: '10px'
+  },
+  backwardButton1: {
+    margintop: '60px',
+    marginleft: '20px',
+    fontsize: '15px',
+    paddingtop: '10px',
+    paddingbottom: '10px'
+  },
+  playScript: {
+    fontcolor: 'black',
+    fofntweight: 'bold',
+    fontsize: '130%',
+    position: 'relative',
+    top: '10px',
+    marginleft: '10px',
+    clear: 'both'
+  },
+  playSpeed: {
+    position: 'relative',
+    left: '10px',
+    width: '50px'
+  },
+  entered: {
+    marginleft: '10px',
+    position: 'relative',
+    top: '-3px'
+  },
+  conceptSectionContainer: {
+    float: 'right',
+    width: '400px',
+    height: '1000px',
+    backgroundcolor: 'white',
+    borderleft: '1px black solid',
+    overflow: 'auto'
+  },
+  conceptsText: {
+    fontweight: 'bold',
+    fontsize: '200%',
+    margintop: '10px',
+    marginleft: '10px'
   }
 });
 
@@ -101,7 +157,7 @@ class Annotate extends Component {
          <div className = {classes.videoSectionContainer}>
             <div className = {classes.videoContainer}>
             <div className = {classes.boxContainer}>
-               <video id = "video" src = "fish2.mp4" width = "1280" height = "723" controls>
+               <video id = "video" src = "./fish2.mp4" width = "1280" height = "723" controls>
                Your browser does not support the video tag.
                </video>
                <Rnd
@@ -122,16 +178,16 @@ class Annotate extends Component {
             </div>
             </div>
             <div className = "clear"></div>
-            <Button variant = "contained" color = "primary" id = "backwardButton1" onClick = {rewind}>-5 sec</Button>
+            <Button variant = "contained" color = "primary" className = {classes.backwardButton1} onClick = {rewind}>-5 sec</Button>
             <Button variant = "contained" color = "primary" className = {classes.playButton} onClick = {playPause}>Play/Pause</Button>
-            <Button variant = "contained" color = "primary" id = "forwardButton" onClick = {fastForward}>+5 sec</Button>
+            <Button variant = "contained" color = "primary" className = {classes.forwardButton} onClick = {fastForward}>+5 sec</Button>
             <br />
             <span id = "playScript">Play at speed:</span>
-            <p><input type = "text" id = "playSpeed" placeholder = "100" />&ensp; %</p>
-            <input type = "submit" value = "Enter" id = "entered" onClick = {changeSpeed} />
+            <p><input type = "text" className = {classes.playSpeed} placeholder = "100" />&ensp; %</p>
+            <input type = "submit" value = "Enter" className = {classes.entered} onClick = {changeSpeed} />
          </div>
-         <div id = "conceptSectionContainer">
-            <span id = "conceptsText">Current Concepts</span>
+         <div className = {classes.conceptSectionContainer}>
+            <span className = {classes.conceptsText}>Current Concepts</span>
             <br />
             <CurrentConcepts />
          </div>

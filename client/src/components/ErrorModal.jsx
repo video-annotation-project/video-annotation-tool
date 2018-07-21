@@ -4,7 +4,6 @@ import { withStyles } from '@material-ui/core/styles';
 
 const styles = theme => ({
   paper: {
-
     width: theme.spacing.unit * 50,
     backgroundColor: theme.palette.background.paper,
     boxShadow: theme.shadows[5],
