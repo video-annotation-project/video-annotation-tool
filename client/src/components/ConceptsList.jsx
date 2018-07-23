@@ -84,22 +84,16 @@ class ConceptsList extends React.Component {
     return (
       <div className={classes.root}>
         <div>{item}</div>
-        {this.state.concepts.map(concept => (
-          <ListItem>
-            <ListItemIcon>
-              <StarBorder />
-            </ListItemIcon>
-            <ListItemText inset primary={concept.name} />
-          </ListItem>
-        ))}
-        <List>
-          <ListItem button onClick={this.handleClick}>
-            <ListItemIcon>
-              <StarBorder />
-            </ListItemIcon>
-            <ListItemText inset primary="Inbox" />
-            {this.state.open ? <ExpandLess /> : <ExpandMore />}
-          </ListItem>
+        <List disablePadding>
+          {this.state.concepts.map(concept => (
+            <ListItem button onClick={this.handleClick}>
+              <ListItemIcon>
+                <StarBorder />
+              </ListItemIcon>
+              <ListItemText inset primary={concept.name} />
+              {this.state.open ? <ExpandLess /> : <ExpandMore />}
+            </ListItem>
+          ))}
           <Collapse in={this.state.open} timeout="auto" unmountOnExit>
             <List disablePadding>
               <ListItem button className={classes.nested}>
