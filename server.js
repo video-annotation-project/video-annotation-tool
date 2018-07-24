@@ -103,16 +103,11 @@ app.post("/login", async function(req, res) {
       res.json({message:"wrong password"});
       break;
     default:
-        var payload = {id: choice.id};
-        var token = jwt.sign(payload, jwtOptions.secretOrKey);
-        res.json({message: "welcome", token: token, admin: choice.admin});
-        break;
-   }
-
-});
-
-app.get('/api', (req, res) => {
-  res.json('Test API reponse sent from Node js server');
+      var payload = {id: choice.id};
+      var token = jwt.sign(payload, jwtOptions.secretOrKey);
+      res.json({message: "welcome", token: token, admin: choice.admin});
+      break;
+  }
 });
 
 app.get('/api/concepts', passport.authenticate('jwt', {session: false}),
@@ -136,8 +131,8 @@ app.post('/createUser', passport.authenticate('jwt', {session: false}),
       try {
         var hash = await bcrypt.hash(req.body.password, saltRounds);
       } catch (error) {
-          res.json({message: "error hashing" + error.message})
-          res.end()
+        res.json({message: "error hashing" + error.message})
+        res.end()
       }
       try {
         const insertUser = await psql.query(queryText,[req.body.username, hash, req.body.admin]);
