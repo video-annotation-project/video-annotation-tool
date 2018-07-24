@@ -1,41 +1,52 @@
 import React from 'react';
 
 import PropTypes from 'prop-types';
-import { withStyles } from '@material-ui/core/styles';
+import CheckBox from '@material-ui/core/Checkbox';
+import Collapse from '@material-ui/core/Collapse';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
+import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
 import ListItemText from '@material-ui/core/ListItemText';
-import Collapse from '@material-ui/core/Collapse';
+import { withStyles } from '@material-ui/core/styles';
 import ExpandLess from '@material-ui/icons/ExpandLess';
 import ExpandMore from '@material-ui/icons/ExpandMore';
-import StarBorder from '@material-ui/icons/StarBorder';
+import ImageIcon from '@material-ui/icons/Image';
 
 const styles = theme => ({
-  root: {
-    width: '100%',
-    maxWidth: 360,
-    backgroundColor: theme.palette.background.paper,
-  },
   nested: {
-    paddingLeft: theme.spacing.unit * 4,
+    paddingLeft: theme.spacing.unit * 2,
   },
+  shiftRight: {
+    paddingRight: theme.spacing.unit * 5
+  }
 });
 
 class ConceptsList extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      open: true,
       concepts: [
         {
-          name: 'goldfish'
+          id: 1,
+          name: 'goldfish',
+          checked: false,
+          expandable: true,
+          expanded: false
         },
         {
-          name: 'jellyfish'
+          id: 2,
+          name: 'jellyfish',
+          checked: false,
+          expandable: false,
+          expanded: false
         },
         {
-          name: 'sea turtle'
+          id: 3,
+          name: 'sea turtle',
+          checked: false,
+          expandable: true,
+          expanded: false
         }
       ],
       isLoaded: false,
@@ -47,10 +58,8 @@ class ConceptsList extends React.Component {
   componentDidMount() {
     fetch("/api/concepts", {
       headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')}
-    })
-      .then(res => res.json())
-      .then(
-        (result) => {
+    }).then(res => res.json())
+      .then((result) => {
           this.setState({
             isLoaded: true,
             item: result
@@ -67,8 +76,25 @@ class ConceptsList extends React.Component {
       );
   }
 
-  handleClick = () => {
-    this.setState(state => ({ open: !state.open }));
+  handleClick = (id) => {
+    let concepts = JSON.parse(JSON.stringify(this.state.concepts));
+    let concept = concepts.find(concept => concept.id === id);
+    if (concept.expandable) {
+      concept.expanded = !concept.expanded;
+    }
+    this.setState({
+      concepts: concepts
+    });
+  };
+
+  handleCheckBoxClick = (event, id) => {
+    event.stopPropagation();
+    let concepts = JSON.parse(JSON.stringify(this.state.concepts));
+    let concept = concepts.find(concept => concept.id === id);
+    concept.checked = !concept.checked;
+    this.setState({
+      concepts: concepts
+    });
   };
 
   render() {
@@ -76,36 +102,36 @@ class ConceptsList extends React.Component {
     const { classes } = this.props;
 
     if (error)  {
-      return <div>Error: {error.message}</div>;
+      return <List>Error: {error.message}</List>;
     }
     if (!isLoaded) {
-      return <div>Loading...</div>;
+      return <List>Loading...</List>;
     }
     return (
-      <div className={classes.root}>
-        <div>{item}</div>
-        <List disablePadding>
-          {this.state.concepts.map(concept => (
-            <ListItem button onClick={this.handleClick}>
-              <ListItemIcon>
-                <StarBorder />
-              </ListItemIcon>
+      <List disablePadding className={classes.nested}>
+        {this.state.concepts.map(concept => (
+          <React.Fragment key={concept.id}>
+            <ListItem button onClick={() => this.handleClick(concept.id)}>
+              <ListItemIcon><ImageIcon /></ListItemIcon>
               <ListItemText inset primary={concept.name} />
-              {this.state.open ? <ExpandLess /> : <ExpandMore />}
+              <ListItemSecondaryAction className={classes.shiftRight}>
+                <CheckBox
+                  checked={concept.checked}
+                  onClick={(e) => this.handleCheckBoxClick(e, concept.id)}
+                />
+              </ListItemSecondaryAction>
+              {concept.expandable ?
+                (concept.expanded ? <ExpandLess /> : <ExpandMore />)
+              :
+                <div></div>
+              }
             </ListItem>
-          ))}
-          <Collapse in={this.state.open} timeout="auto" unmountOnExit>
-            <List disablePadding>
-              <ListItem button className={classes.nested}>
-                <ListItemIcon>
-                  <StarBorder />
-                </ListItemIcon>
-                <ListItemText inset primary="Starred" />
-              </ListItem>
-            </List>
-          </Collapse>
-        </List>
-      </div>
+            <Collapse in={concept.expanded} timeout="auto" unmountOnExit>
+              <ConceptsList classes={classes}/>
+            </Collapse>
+          </React.Fragment>
+        ))}
+      </List>
     );
   }
 }

@@ -1,7 +1,16 @@
 import React from 'react';
-import Typography from '@material-ui/core/Typography';
+
+// import Typography from '@material-ui/core/Typography';
+import { withStyles } from '@material-ui/core/styles';
 
 import ConceptsList from './ConceptsList.jsx';
+
+const styles = theme => ({
+  root: {
+    width: '100%',
+    backgroundColor: theme.palette.background.paper,
+  }
+});
 
 class Concepts extends React.Component {
   constructor(props) {
@@ -11,13 +20,14 @@ class Concepts extends React.Component {
   }
 
   render() {
+    const { classes } = this.props;
     return (
-      <React.Fragment>
-        <Typography variant='display1' gutterBottom> Concepts </Typography>
+      <div className={classes.root}>
+        <br />
         <ConceptsList />
-      </React.Fragment>
+      </div>
     );
   }
 }
 
-export default Concepts;
+export default withStyles(styles)(Concepts);
