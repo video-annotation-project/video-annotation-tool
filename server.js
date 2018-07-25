@@ -11,6 +11,16 @@ const JwtStrategy = passportJWT.Strategy;
 
 const bcrypt = require('bcrypt');
 const psql = require('./db/simpleConnect');
+const AWS = require('aws-sdk');
+const pause = require('pause');
+
+AWS.config.update(
+  {
+    accessKeyId: "AKIAIZ7422ORLZYNPPYQ",
+    secretAccessKey: "7Hyp7nZsj2Rl1t3JRbE90dun+riMQpJHKjQOIYPn",
+  }
+);
+const fs = require('fs');
 
 var fakeUsers = [
   {
@@ -74,6 +84,8 @@ const app = express();
 
 app.use(passport.initialize());
 
+
+
 // parse application/x-www-form-urlencoded
 // for easier testing with Postman or plain HTML forms
 app.use(bodyParser.urlencoded({
@@ -121,11 +133,92 @@ app.get('/api/concepts', passport.authenticate('jwt', {session: false}),
   }
 );
 
-app.get('/api/annotate', passport.authenticate('jwt', {session: false}),
+// passport.authenticate('jwt',{session: false}),
+app.get('/api/annotate',
   (req, res) => {
-    res.json("You have been authorized to do some sweet annotation.");
-  }
-);
+    var s3 = new AWS.S3();
+    const mimetype = 'video/mp4';
+    const file = 'videos/DocRicketts-0569_20131213T224337Z_00-00-01-00TC_h264.mp4';
+    const cache = 0;
+    s3.listObjectsV2({Bucket: 'lubomirstanchev', MaxKeys: 1, Prefix: file}, function(err, data) {
+      if (err) {
+        return res.sendStatus(404);
+      }
+      if (req != null && req.headers.range != null) {
+        var range = req.headers.range;
+        var bytes = range.replace(/bytes=/, '').split('-');
+        var start = parseInt(bytes[0], 10);
+        var total = data.Contents[0].Size;
+        var end = bytes[1] ? parseInt(bytes[1], 10) : total - 1;
+        var chunksize = (end - start) + 1;
+
+        res.writeHead(206, {
+           'Content-Range'  : 'bytes ' + start + '-' + end + '/' + total,
+           'Accept-Ranges'  : 'bytes',
+           'Content-Length' : chunksize,
+           'Last-Modified'  : data.Contents[0].LastModified,
+           'Content-Type'   : mimetype
+        });
+        s3.getObject({Bucket: 'lubomirstanchev', Key: file, Range: range}).createReadStream().pipe(res);
+    }
+    else
+    {
+        res.writeHead(200,
+        {
+            'Cache-Control' : 'max-age=' + cache + ', private',
+            'Content-Length': data.Contents[0].Size,
+            'Last-Modified' : data.Contents[0].LastModified,
+            'Content-Type'  : mimetype
+        });
+        s3.getObject({Bucket: 'lubomirstanchev', Key: file}).createReadStream().pipe(res);
+    }
+  })
+});
+
+    /*
+    try {
+      const video = aws.getVideo("lubomirstanchev","videos/DocRicketts-0569_20131213T224337Z_00-00-01-00TC_h264.mp4");
+      console.log(video)
+      var range = req.headers.range;
+      var positions = range.replace(/bytes=/, '').split('-');
+      var start = parseInt(positions[0], 10);
+
+      fs.stat(video, (err, stats) => {
+        var total = stats.size;
+        var end = positions[1] ? parseInt(positions[1], 10) : total-1;
+        var chunkSize = (end - start) + 1;
+        res.writeHead(206, {
+          'Content-Range': 'bytes ' + start + '-' + end + '/' + total,
+          'Accept-Ranges': 'bytes',
+          'Content-Length': chunkSize,
+          'Content-Type': 'video/mp4'
+        });
+      });
+      var stream = fs.createReadStream(video, {start: start, end: end});
+
+      stream.on('error', (err) => {
+        res.end(err);
+      });
+      stream.on('open', () => {
+        stream.pipe(res);
+      });
+
+      res
+      .on('error', err => {
+        console.log('res error', err);
+      })
+      .on('finish', () => {
+        console.log('res finish');
+      })
+      .on('close', () => {
+        console.log('res close');
+        stream = null;
+      });
+      stream.pipe(res);
+    } catch (error) {
+      console.log(error);
+    }
+    */
 
 //Code for create users
 app.post('/createUser', passport.authenticate('jwt', {session: false}),
