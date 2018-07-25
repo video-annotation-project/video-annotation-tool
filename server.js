@@ -12,19 +12,6 @@ const JwtStrategy = passportJWT.Strategy;
 const bcrypt = require('bcrypt');
 const psql = require('./db/simpleConnect');
 
-var fakeUsers = [
-  {
-    id: 1,
-    username: 'test',
-    password: '123'
-  },
-  {
-    id: 2,
-    username: 'boi',
-    password: 'lol'
-  }
-];
-
 var jwtOptions = {};
 jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
 jwtOptions.secretOrKey = 'Bernie wouldve won';
