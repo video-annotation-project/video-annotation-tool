@@ -89,11 +89,11 @@ class ConceptsList extends React.Component {
     const { error, isLoaded, concepts } = this.state;
     const { classes } = this.props;
 
-    if (error)  {
-      return <List>Error: {error.message}</List>;
-    }
     if (!isLoaded) {
       return <List>Loading...</List>;
+    }
+    if (error)  {
+      return <List>Error: {error.message}</List>;
     }
     return (
       <List disablePadding className={classes.nested}>
