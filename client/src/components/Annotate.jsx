@@ -4,14 +4,7 @@ import Button from '@material-ui/core/Button';
 import ReactDOM from 'react-dom';
 import { withStyles } from '@material-ui/core/styles';
 import CurrentConcepts from './CurrentConcepts.jsx';
-const AWS = require('aws-sdk');
-const fs = require('fs');
-
-AWS.config.update(
-  {
-      accessKeyId: "AKIAIZ7422ORLZYNPPYQ",
-      secretAccessKey: "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",
-  });
+import VideoList from './VideoList.jsx'
 
 const styles = theme => ({
   clear: {
@@ -75,6 +68,7 @@ const styles = theme => ({
     top: '-3px'
   },
   conceptSectionContainer: {
+    position: 'relative',
     float: 'right',
     width: '400px',
     height: '1000px',
@@ -156,35 +150,6 @@ class Annotate extends Component {
   }
 
 /*
-  componentDidMount() {
-    fetch("/api/annotate", {
-      headers: {'Authorization': 'Bearer ' + localStorage.getItem('token')}
-    })
-      .then(res => {
-        this.setState({
-          videoNow: res
-        });
-      }
-      ,(error) => {
-          console.log(error)
-      }
-      )
-  }
-*/
-
-  /*
-  fetch("/api/annotate", {
-    headers: {'Authorization': 'Bearer ' + localStorage.getItem('token')}
-  })
-    .then(res => {
-      this.setState({
-        videoNow: res
-      });
-    }
-    ,(error) => {
-        console.log(error)
-    }
-    )
 
   <Button variant = "contained" color = "primary" className = {classes.backwardButton} onClick = {rewind}>-5 sec</Button>
   <Button variant = "contained" color = "primary" className = {classes.playButton} onClick = {playPause}>Play/Pause</Button>
@@ -231,7 +196,9 @@ class Annotate extends Component {
             <br />
             <span className = {classes.playScript}>Play at speed:</span>
 
+
          </div>
+         <VideoList />
          <div className = {classes.conceptSectionContainer}>
             <span className = {classes.conceptsText}>Current Concepts</span>
             <br />

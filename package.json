@@ -14,7 +14,6 @@
     "lodash": "^4.17.10",
     "passport": "^0.4.0",
     "passport-jwt": "^4.0.0",
-    "pause": "^0.1.0",
     "pg": "^7.4.3"
   },
   "scripts": {

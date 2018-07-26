@@ -12,15 +12,15 @@ const JwtStrategy = passportJWT.Strategy;
 const bcrypt = require('bcrypt');
 const psql = require('./db/simpleConnect');
 const AWS = require('aws-sdk');
-const pause = require('pause');
+const fs = require('fs');
 
 AWS.config.update(
   {
-    accessKeyId: "AKIAIZ7422ORLZYNPPYQ",
-    secretAccessKey: "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",
+    accessKeyId: "AKIAI2JEDK66FXVNCR6A",
+    secretAccessKey: "YGoYv65N5XIJzimCDD+RVtqHLcesRRJO5OIaQNkg",
   }
 );
-const fs = require('fs');
+var s3 = new AWS.S3();
 
 var fakeUsers = [
   {
@@ -67,6 +67,17 @@ async function userLogin(username, password) {
   }
 }
 
+async function getVideos() {
+  queryPass = 'select id, filename from videos;'
+  try {
+    var data = await psql.query(queryPass);
+    return data;
+  } catch (error) {
+    console.log(error);
+    return error;
+  }
+}
+
 var strategy = new JwtStrategy(jwtOptions, async function(jwt_payload, next) {
   console.log('payload received', jwt_payload);
 
@@ -83,8 +94,6 @@ passport.use(strategy);
 const app = express();
 
 app.use(passport.initialize());
-
-
 
 // parse application/x-www-form-urlencoded
 // for easier testing with Postman or plain HTML forms
@@ -136,7 +145,6 @@ app.get('/api/concepts', passport.authenticate('jwt', {session: false}),
 // passport.authenticate('jwt',{session: false}),
 app.get('/api/annotate',
   (req, res) => {
-    var s3 = new AWS.S3();
     const mimetype = 'video/mp4';
     const file = 'videos/DocRicketts-0569_20131213T224337Z_00-00-01-00TC_h264.mp4';
     const cache = 0;
@@ -174,51 +182,6 @@ app.get('/api/annotate',
     }
   })
 });
-
-    /*
-    try {
-      const video = aws.getVideo("lubomirstanchev","videos/DocRicketts-0569_20131213T224337Z_00-00-01-00TC_h264.mp4");
-      console.log(video)
-      var range = req.headers.range;
-      var positions = range.replace(/bytes=/, '').split('-');
-      var start = parseInt(positions[0], 10);
-
-      fs.stat(video, (err, stats) => {
-        var total = stats.size;
-        var end = positions[1] ? parseInt(positions[1], 10) : total-1;
-        var chunkSize = (end - start) + 1;
-        res.writeHead(206, {
-          'Content-Range': 'bytes ' + start + '-' + end + '/' + total,
-          'Accept-Ranges': 'bytes',
-          'Content-Length': chunkSize,
-          'Content-Type': 'video/mp4'
-        });
-      });
-      var stream = fs.createReadStream(video, {start: start, end: end});
-
-      stream.on('error', (err) => {
-        res.end(err);
-      });
-      stream.on('open', () => {
-        stream.pipe(res);
-      });
-
-      res
-      .on('error', err => {
-        console.log('res error', err);
-      })
-      .on('finish', () => {
-        console.log('res finish');
-      })
-      .on('close', () => {
-        console.log('res close');
-        stream = null;
-      });
-      stream.pipe(res);
-    } catch (error) {
-      console.log(error);
-    }
-    */
 
 //Code for create users
 app.post('/createUser', passport.authenticate('jwt', {session: false}),
@@ -283,6 +246,14 @@ app.post('/changePass', passport.authenticate('jwt', {session: false}),
       res.json({message: "error: " + error.message});
       res.end();
     }
+  }
+)
+
+app.get('/api/videos', passport.authenticate('jwt', {session: false}),
+  async (req, res) => {
+    const videoData = await getVideos();
+    console.log(videoData);
+    res.json(videoData)
   }
 )
 
