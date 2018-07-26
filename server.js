@@ -98,8 +98,14 @@ app.post("/login", async function(req, res) {
 });
 
 app.get('/api/concepts', passport.authenticate('jwt', {session: false}),
-  (req, res) => {
-    res.json('You have been authorized to view some juicy concepts.');
+  async (req, res) => {
+    queryText = `select id, name from concepts where concepts.parent=$1`;
+    try {
+      const concepts = await psql.query(queryText, [req.query.id]);
+      res.json(concepts.rows);
+    } catch (error) {
+      res.status(400).json(error);
+    }
   }
 );
 

@@ -1,5 +1,7 @@
 import React from 'react';
 
+import axios from 'axios';
+
 import PropTypes from 'prop-types';
 import CheckBox from '@material-ui/core/Checkbox';
 import Collapse from '@material-ui/core/Collapse';
@@ -26,54 +28,40 @@ class ConceptsList extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      concepts: [
-        {
-          id: 1,
-          name: 'goldfish',
-          checked: false,
-          expandable: true,
-          expanded: false
-        },
-        {
-          id: 2,
-          name: 'jellyfish',
-          checked: false,
-          expandable: false,
-          expanded: false
-        },
-        {
-          id: 3,
-          name: 'sea turtle',
-          checked: false,
-          expandable: true,
-          expanded: false
-        }
-      ],
+      concepts: [],
       isLoaded: false,
-      error: null,
-      item: null
+      error: null
     };
   }
 
-  componentDidMount() {
-    fetch("/api/concepts", {
-      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')}
-    }).then(res => res.json())
-      .then((result) => {
-          this.setState({
-            isLoaded: true,
-            item: result
-          });
-        },
-        // Note: it's important to handle errors here instead of a catch() block
-        // so that we don't swallow exceptions from actual bugs in components.
-        (error) => {
-          this.setState({
-            isLoaded: true,
-            error: error
-          });
-        }
-      );
+  getChildrenConcepts = async (id) => (
+    axios.get(`/api/concepts?id=${id}`, {
+      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')},
+    }).then(res => (res.data))
+      .catch(error => {
+      this.setState({
+        isloaded: true,
+        error: error
+      });
+      return;
+    })
+  );
+
+  componentDidMount = async () => {
+    let concepts = await this.getChildrenConcepts(this.props.id);
+    if (!concepts) {
+      return;
+    }
+    for (let concept of concepts) {
+      concept.checked = false;
+      const children = await this.getChildrenConcepts(concept.id);
+      concept.expandable = (children && children.length);
+      concept.expanded = false;
+    }
+    this.setState({
+      isLoaded: true,
+      concepts: concepts
+    });
   }
 
   handleClick = (id) => {
@@ -98,7 +86,7 @@ class ConceptsList extends React.Component {
   };
 
   render() {
-    const { error, isLoaded, item } = this.state;
+    const { error, isLoaded, concepts } = this.state;
     const { classes } = this.props;
 
     if (error)  {
@@ -109,7 +97,7 @@ class ConceptsList extends React.Component {
     }
     return (
       <List disablePadding className={classes.nested}>
-        {this.state.concepts.map(concept => (
+        {concepts.map(concept => (
           <React.Fragment key={concept.id}>
             <ListItem button onClick={() => this.handleClick(concept.id)}>
               <ListItemIcon><ImageIcon /></ListItemIcon>
@@ -127,7 +115,7 @@ class ConceptsList extends React.Component {
               }
             </ListItem>
             <Collapse in={concept.expanded} timeout="auto" unmountOnExit>
-              <ConceptsList classes={classes}/>
+              <ConceptsList classes={classes} id={concept.id} />
             </Collapse>
           </React.Fragment>
         ))}

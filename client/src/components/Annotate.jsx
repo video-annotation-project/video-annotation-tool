@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import Rnd from 'react-rnd';
 import Button from '@material-ui/core/Button';
-import ReactDOM from 'react-dom';
 import { withStyles } from '@material-ui/core/styles';
 import CurrentConcepts from './CurrentConcepts.jsx';
 const AWS = require('aws-sdk');

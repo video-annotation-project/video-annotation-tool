@@ -24,7 +24,7 @@ class Concepts extends React.Component {
     return (
       <div className={classes.root}>
         <br />
-        <ConceptsList />
+        <ConceptsList id={-1} />
       </div>
     );
   }
