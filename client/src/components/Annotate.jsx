@@ -189,10 +189,10 @@ class Annotate extends Component {
     return (
       <div>
          <div className = {classes.clear}></div>
+         {this.state.videoName}
          <div className = {classes.videoSectionContainer}>
             <div className = {classes.videoContainer}>
             <div className = {classes.boxContainer}>
-            {this.state.videoName}
                <video id = "video"  width = "1280" height = "723" src={'api/videos/'+this.state.videoName} type='video/mp4' controls>
                Your browser does not support the video tag.
                </video>
@@ -225,7 +225,9 @@ class Annotate extends Component {
 
 
          </div>
-         <VideoList handleVideoClick={this.handleVideoClick} />
+         <div className={classes.videoListContainer}>
+           <VideoList handleVideoClick={this.handleVideoClick} />
+         </div>
          <div className = {classes.conceptSectionContainer}>
             <span className = {classes.conceptsText}>Current Concepts</span>
             <br />
