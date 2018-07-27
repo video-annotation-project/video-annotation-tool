@@ -11,6 +11,16 @@ const JwtStrategy = passportJWT.Strategy;
 
 const bcrypt = require('bcrypt');
 const psql = require('./db/simpleConnect');
+const AWS = require('aws-sdk');
+const fs = require('fs');
+
+AWS.config.update(
+  {
+    accessKeyId: "AKIAI2JEDK66FXVNCR6A",
+    secretAccessKey: "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",
+  }
+);
+var s3 = new AWS.S3();
 
 var jwtOptions = {};
 jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
@@ -23,6 +33,17 @@ async function findUser(userId) {
     return user.rows[0];
   } else {
     return false;
+  }
+}
+
+async function getVideos() {
+  queryPass = 'select id, filename from videos;'
+  try {
+    var data = await psql.query(queryPass);
+    return data;
+  } catch (error) {
+    console.log(error);
+    return error;
   }
 }
 
@@ -230,6 +251,52 @@ app.get('/api/annotate',
         });
         s3.getObject({Bucket: 'lubomirstanchev', Key: file}).createReadStream().pipe(res);
     }
+  })
+});
+
+app.get('/api/videoNames', passport.authenticate('jwt', {session: false}),
+  async (req, res) => {
+    const videoData = await getVideos();
+    res.json(videoData)
+  }
+)
+
+app.get('/api/videos/:name', (req, res) => {
+  const mimetype = 'video/mp4';
+  const file = 'videos/' + req.params.name;
+  const cache = 0;
+  s3.listObjectsV2({Bucket: 'lubomirstanchev', MaxKeys: 1, Prefix: file}, function(err, data) {
+    if (err) {
+      return res.sendStatus(404);
+    }
+    if (req != null && req.headers.range != null) {
+      var range = req.headers.range;
+      var bytes = range.replace(/bytes=/, '').split('-');
+      var start = parseInt(bytes[0], 10);
+      var total = data.Contents[0].Size;
+      var end = bytes[1] ? parseInt(bytes[1], 10) : total - 1;
+      var chunksize = (end - start) + 1;
+
+      res.writeHead(206, {
+         'Content-Range'  : 'bytes ' + start + '-' + end + '/' + total,
+         'Accept-Ranges'  : 'bytes',
+         'Content-Length' : chunksize,
+         'Last-Modified'  : data.Contents[0].LastModified,
+         'Content-Type'   : mimetype
+      });
+      s3.getObject({Bucket: 'lubomirstanchev', Key: file, Range: range}).createReadStream().pipe(res);
+  }
+  else
+  {
+      res.writeHead(200,
+      {
+          'Cache-Control' : 'max-age=' + cache + ', private',
+          'Content-Length': data.Contents[0].Size,
+          'Last-Modified' : data.Contents[0].LastModified,
+          'Content-Type'  : mimetype
+      });
+      s3.getObject({Bucket: 'lubomirstanchev', Key: file}).createReadStream().pipe(res);
+  }
   })
 });
 
