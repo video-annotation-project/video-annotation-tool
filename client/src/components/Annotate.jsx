@@ -105,7 +105,7 @@ const styles = theme => ({
     marginLeft: '10px'
   },
 });
-/*
+
 function changeSpeed() {
 
    try {
@@ -153,7 +153,6 @@ function rewind() {
 
 
 }
-*/
 
 
 class Annotate extends Component {
