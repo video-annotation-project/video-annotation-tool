@@ -70,7 +70,7 @@ const styles = theme => ({
   conceptSectionContainer: {
     position: 'relative',
     float: 'right',
-    width: '400px',
+    width: '330px',
     height: '1000px',
     backgroundColor: 'white',
     borderLeft: '1px black solid',
@@ -78,6 +78,7 @@ const styles = theme => ({
   },
   conceptsText: {
     fontWeight: 'bold',
+    textAlign: 'center',
     fontSize: '200%',
     marginTop: '10px',
     marginLeft: '10px'
@@ -88,13 +89,29 @@ const styles = theme => ({
     border: '2px coral solid',
     borderStyle: 'ridge'
   },
+  videoListContainer: {
+    position: 'relative',
+    float: 'right',
+    width: '230px',
+    height: '1000px',
+    backgroundColor: 'white',
+    borderLeft: '1px black solid',
+    overflow: 'auto'
+  },
+  videoListText: {
+    fontWeight: 'bold',
+    textAlign: 'center',
+    fontSize: '200%',
+    marginTop: '10px',
+    marginLeft: '10px'
+  },
 });
-/*
+
 function changeSpeed() {
 
    try {
    var myVideo = document.getElementById("video");
-   var speed = document.getElementById("playSpeed").value;
+   var speed = document.getElementById("playSpeedId").value;
    if ((speed / 100) === 0)
    {
       myVideo.playbackRate = (1);
@@ -137,7 +154,7 @@ function rewind() {
 
 
 }
-*/
+
 
 class Annotate extends Component {
   constructor(props) {
@@ -188,8 +205,8 @@ class Annotate extends Component {
                  }}
                  minWidth = {25}
                  minHeight = {25}
-                 maxWidth = {400}
-                 maxHeight = {400}
+                 maxWidth = {900}
+                 maxHeight = {650}
                  bounds = "parent"
                  className = {classes.dragBox}
                  >
@@ -197,13 +214,27 @@ class Annotate extends Component {
             </div>
             </div>
             <div className = {classes.clear}></div>
+            <Button variant = "contained" color = "primary" className = {classes.backwardButton} onClick = {rewind}>-5 sec</Button>
+            <Button variant = "contained" color = "primary" className = {classes.playButton} onClick = {playPause}>Play/Pause</Button>
+            <Button variant = "contained" color = "primary" className = {classes.forwardButton} onClick = {fastForward}>+5 sec</Button>
 
             <br />
             <span className = {classes.playScript}>Play at speed:</span>
+            <p><input type = "text" id = "playSpeedId" className = {classes.playSpeed} placeholder = "100" />&ensp; %</p>
+            <input type = "submit" value = "Enter" className = {classes.entered} onClick = {changeSpeed} />
 
 
          </div>
+<<<<<<< HEAD
          <VideoList handleVideoClick={this.handleVideoClick} />
+=======
+         
+         <div className = {classes.videoListContainer}>
+            <span className = {classes.videoListText}>Video Selection</span>
+            <br />
+            <VideoList />
+         </div>
+>>>>>>> eba9dca7a6ba53d781552318c15d193cf0b92433
          <div className = {classes.conceptSectionContainer}>
             <span className = {classes.conceptsText}>Current Concepts</span>
             <br />

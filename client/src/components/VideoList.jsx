@@ -8,10 +8,6 @@ import Divider from '@material-ui/core/Divider';
 
 const styles = theme => ({
   root: {
-    position: 'relative',
-    float: 'right',
-    width: '80%',
-    maxWidth: 300,
     backgroundColor: theme.palette.background.paper,
 
   },
