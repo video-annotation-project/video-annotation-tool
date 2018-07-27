@@ -226,6 +226,8 @@ class Annotate extends Component {
 
          </div>
          <div className={classes.videoListContainer}>
+           <span className = {classes.videoListText}>Select Video</span>
+           <br />
            <VideoList handleVideoClick={this.handleVideoClick} />
          </div>
          <div className = {classes.conceptSectionContainer}>
