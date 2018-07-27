@@ -132,57 +132,6 @@ app.post("/login", async function(req, res) {
 
 });
 
-app.get('/api', (req, res) => {
-  res.json('Test API reponse sent from Node js server');
-});
-
-app.get('/api/concepts', passport.authenticate('jwt', {session: false}),
-  (req, res) => {
-    res.json('You have been authorized to view some juicy concepts.');
-  }
-);
-
-// passport.authenticate('jwt',{session: false}),
-app.get('/api/annotate',
-  (req, res) => {
-    const mimetype = 'video/mp4';
-    const file = 'videos/DocRicketts-0569_20131213T224337Z_00-00-01-00TC_h264.mp4';
-    const cache = 0;
-    s3.listObjectsV2({Bucket: 'lubomirstanchev', MaxKeys: 1, Prefix: file}, function(err, data) {
-      if (err) {
-        return res.sendStatus(404);
-      }
-      if (req != null && req.headers.range != null) {
-        var range = req.headers.range;
-        var bytes = range.replace(/bytes=/, '').split('-');
-        var start = parseInt(bytes[0], 10);
-        var total = data.Contents[0].Size;
-        var end = bytes[1] ? parseInt(bytes[1], 10) : total - 1;
-        var chunksize = (end - start) + 1;
-
-        res.writeHead(206, {
-           'Content-Range'  : 'bytes ' + start + '-' + end + '/' + total,
-           'Accept-Ranges'  : 'bytes',
-           'Content-Length' : chunksize,
-           'Last-Modified'  : data.Contents[0].LastModified,
-           'Content-Type'   : mimetype
-        });
-        s3.getObject({Bucket: 'lubomirstanchev', Key: file, Range: range}).createReadStream().pipe(res);
-    }
-    else
-    {
-        res.writeHead(200,
-        {
-            'Cache-Control' : 'max-age=' + cache + ', private',
-            'Content-Length': data.Contents[0].Size,
-            'Last-Modified' : data.Contents[0].LastModified,
-            'Content-Type'  : mimetype
-        });
-        s3.getObject({Bucket: 'lubomirstanchev', Key: file}).createReadStream().pipe(res);
-    }
-  })
-});
-
 //Code for create users
 app.post('/createUser', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
@@ -249,13 +198,102 @@ app.post('/changePass', passport.authenticate('jwt', {session: false}),
   }
 )
 
-app.get('/api/videos', passport.authenticate('jwt', {session: false}),
+app.get('/api', (req, res) => {
+  res.json('Test API reponse sent from Node js server');
+});
+
+app.get('/api/concepts', passport.authenticate('jwt', {session: false}),
+  (req, res) => {
+    res.json('You have been authorized to view some juicy concepts.');
+  }
+);
+
+// passport.authenticate('jwt',{session: false}),
+app.get('/api/annotate',
+  (req, res) => {
+    const mimetype = 'video/mp4';
+    const file = 'videos/DocRicketts-0569_20131213T224337Z_00-00-01-00TC_h264.mp4';
+    const cache = 0;
+    s3.listObjectsV2({Bucket: 'lubomirstanchev', MaxKeys: 1, Prefix: file}, function(err, data) {
+      if (err) {
+        return res.sendStatus(404);
+      }
+      if (req != null && req.headers.range != null) {
+        var range = req.headers.range;
+        var bytes = range.replace(/bytes=/, '').split('-');
+        var start = parseInt(bytes[0], 10);
+        var total = data.Contents[0].Size;
+        var end = bytes[1] ? parseInt(bytes[1], 10) : total - 1;
+        var chunksize = (end - start) + 1;
+
+        res.writeHead(206, {
+           'Content-Range'  : 'bytes ' + start + '-' + end + '/' + total,
+           'Accept-Ranges'  : 'bytes',
+           'Content-Length' : chunksize,
+           'Last-Modified'  : data.Contents[0].LastModified,
+           'Content-Type'   : mimetype
+        });
+        s3.getObject({Bucket: 'lubomirstanchev', Key: file, Range: range}).createReadStream().pipe(res);
+    }
+    else
+    {
+        res.writeHead(200,
+        {
+            'Cache-Control' : 'max-age=' + cache + ', private',
+            'Content-Length': data.Contents[0].Size,
+            'Last-Modified' : data.Contents[0].LastModified,
+            'Content-Type'  : mimetype
+        });
+        s3.getObject({Bucket: 'lubomirstanchev', Key: file}).createReadStream().pipe(res);
+    }
+  })
+});
+
+app.get('/api/videoNames', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
     const videoData = await getVideos();
-    console.log(videoData);
     res.json(videoData)
   }
 )
+
+app.get('/api/videos/:name', (req, res) => {
+  const mimetype = 'video/mp4';
+  const file = 'videos/' + req.params.name;
+  const cache = 0;
+  s3.listObjectsV2({Bucket: 'lubomirstanchev', MaxKeys: 1, Prefix: file}, function(err, data) {
+    if (err) {
+      return res.sendStatus(404);
+    }
+    if (req != null && req.headers.range != null) {
+      var range = req.headers.range;
+      var bytes = range.replace(/bytes=/, '').split('-');
+      var start = parseInt(bytes[0], 10);
+      var total = data.Contents[0].Size;
+      var end = bytes[1] ? parseInt(bytes[1], 10) : total - 1;
+      var chunksize = (end - start) + 1;
+
+      res.writeHead(206, {
+         'Content-Range'  : 'bytes ' + start + '-' + end + '/' + total,
+         'Accept-Ranges'  : 'bytes',
+         'Content-Length' : chunksize,
+         'Last-Modified'  : data.Contents[0].LastModified,
+         'Content-Type'   : mimetype
+      });
+      s3.getObject({Bucket: 'lubomirstanchev', Key: file, Range: range}).createReadStream().pipe(res);
+  }
+  else
+  {
+      res.writeHead(200,
+      {
+          'Cache-Control' : 'max-age=' + cache + ', private',
+          'Content-Length': data.Contents[0].Size,
+          'Last-Modified' : data.Contents[0].LastModified,
+          'Content-Type'  : mimetype
+      });
+      s3.getObject({Bucket: 'lubomirstanchev', Key: file}).createReadStream().pipe(res);
+  }
+  })
+});
 
 // Express only serves static assets in production
 if (process.env.NODE_ENV === 'production') {

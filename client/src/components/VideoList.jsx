@@ -13,6 +13,7 @@ const styles = theme => ({
     width: '80%',
     maxWidth: 300,
     backgroundColor: theme.palette.background.paper,
+
   },
 });
 
@@ -25,21 +26,19 @@ class VideoList extends Component {
   }
 
   componentDidMount() {
-    fetch("/api/videos", {
+    fetch("/api/videoNames", {
       headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')}
     })
       .then(res => res.json())
       .then(res => {
-        console.log(res.rows)
         this.setState({
           videos: res.rows
         })
-        console.log(this.state.videos)
-      }),
+      })
         // Note: it's important to handle errors here
         // instead of a catch() block so that we don't swallow
         // exceptions from actual bugs in components.
-        (error) => {
+      ,(error) => {
           console.log(error);
         }
   }
@@ -54,6 +53,9 @@ class VideoList extends Component {
 
 
   */
+  handleVideoClick = (filename) => {
+    this.props.handleVideoClick(filename);
+  }
 
   render () {
     const { classes } = this.props;
@@ -61,7 +63,7 @@ class VideoList extends Component {
       <div className={classes.root}>
         <List component="nav">
         {this.state.videos.map((video) =>(
-          <ListItem button key={video.id}>
+          <ListItem button key={video.id} onClick={this.handleVideoClick.bind(this, video.filename)}>
             <ListItemText primary={video.filename} />
           </ListItem>
         ))}

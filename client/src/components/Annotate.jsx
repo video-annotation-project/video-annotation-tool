@@ -145,7 +145,7 @@ class Annotate extends Component {
     this.state = {
       error: null,
       isLoaded: false,
-      videoNow: null
+      videoName: 'DocRicketts-0569_20131213T224337Z_00-00-01-00TC_h264.mp4'
     };
   }
 
@@ -159,7 +159,12 @@ class Annotate extends Component {
   <input type = "submit" value = "Enter" className = {classes.entered} onClick = {changeSpeed} />
   */
 
+  handleVideoClick = (filename) => {
+    this.setState({
+       videoName: filename
+     });
 
+  };
 
   render() {
     const { classes } = this.props;
@@ -170,9 +175,9 @@ class Annotate extends Component {
          <div className = {classes.videoSectionContainer}>
             <div className = {classes.videoContainer}>
             <div className = {classes.boxContainer}>
-               <video id = "video"  width = "1280" height = "723" controls>
+            {this.state.videoName}
+               <video id = "video"  width = "1280" height = "723" src={'api/videos/'+this.state.videoName} type='video/mp4' controls>
                Your browser does not support the video tag.
-                 <source src='api/annotate' type='video/mp4' />
                </video>
                <Rnd
                  default = {{
@@ -198,11 +203,11 @@ class Annotate extends Component {
 
 
          </div>
-         <VideoList />
+         <VideoList handleVideoClick={this.handleVideoClick} />
          <div className = {classes.conceptSectionContainer}>
             <span className = {classes.conceptsText}>Current Concepts</span>
             <br />
-            <CurrentConcepts />
+            <CurrentConcepts  />
          </div>
       </div>
     );
