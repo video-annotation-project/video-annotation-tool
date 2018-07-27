@@ -168,11 +168,8 @@ app.get('/api/concepts', passport.authenticate('jwt', {session: false}),
     queryText = 'select id, name from concepts where concepts.parent=$1';
     try {
       const concepts = await psql.query(queryText, [req.query.id]);
-      console.log('queried the sql server');
-      console.log(concepts.rows);
       res.json(concepts.rows);
-      // concept_images
-      // s3.getObject(Bucket: 'lubomirstanchev', Key: 'concept_images');
+
     } catch (error) {
       res.status(400).json(error);
     }
@@ -183,10 +180,11 @@ app.get('/api/conceptImages/:id',
   async (req, res) => {
     queryText = 'select picture from concepts where concepts.id=$1';
     try {
-      console.log('about to query sql server');
-      const concepts = await psql.query(queryText, [req.query.id]);
-      console.log('queried the sql server');
+      const concepts = await psql.query(queryText, [req.params.id]);
+      console.log('SQL server response:');
       console.log(concepts.rows);
+      // s3.getObject(Bucket: 'lubomirstanchev', Key: 'concept_images');
+      res.json('I come from a land down under');
 
     } catch (error) {
       res.status(400).json(error);
