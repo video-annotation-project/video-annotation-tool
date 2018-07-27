@@ -3,14 +3,7 @@ import Rnd from 'react-rnd';
 import Button from '@material-ui/core/Button';
 import { withStyles } from '@material-ui/core/styles';
 import CurrentConcepts from './CurrentConcepts.jsx';
-const AWS = require('aws-sdk');
-const fs = require('fs');
-
-AWS.config.update(
-  {
-      accessKeyId: "AKIAIZ7422ORLZYNPPYQ",
-      secretAccessKey: "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",
-  });
+import VideoList from './VideoList.jsx'
 
 const styles = theme => ({
   clear: {
@@ -74,8 +67,9 @@ const styles = theme => ({
     top: '-3px'
   },
   conceptSectionContainer: {
+    position: 'relative',
     float: 'right',
-    width: '400px',
+    width: '330px',
     height: '1000px',
     backgroundColor: 'white',
     borderLeft: '1px black solid',
@@ -83,6 +77,7 @@ const styles = theme => ({
   },
   conceptsText: {
     fontWeight: 'bold',
+    textAlign: 'center',
     fontSize: '200%',
     marginTop: '10px',
     marginLeft: '10px'
@@ -93,13 +88,29 @@ const styles = theme => ({
     border: '2px coral solid',
     borderStyle: 'ridge'
   },
+  videoListContainer: {
+    position: 'relative',
+    float: 'right',
+    width: '230px',
+    height: '1000px',
+    backgroundColor: 'white',
+    borderLeft: '1px black solid',
+    overflow: 'auto'
+  },
+  videoListText: {
+    fontWeight: 'bold',
+    textAlign: 'center',
+    fontSize: '200%',
+    marginTop: '10px',
+    marginLeft: '10px'
+  },
 });
 /*
 function changeSpeed() {
 
    try {
    var myVideo = document.getElementById("video");
-   var speed = document.getElementById("playSpeed").value;
+   var speed = document.getElementById("playSpeedId").value;
    if ((speed / 100) === 0)
    {
       myVideo.playbackRate = (1);
@@ -144,46 +155,18 @@ function rewind() {
 }
 */
 
+
 class Annotate extends Component {
   constructor(props) {
     super(props);
     this.state = {
       error: null,
       isLoaded: false,
-      videoNow: null
+      videoName: 'DocRicketts-0569_20131213T224337Z_00-00-01-00TC_h264.mp4'
     };
   }
 
 /*
-  componentDidMount() {
-    fetch("/api/annotate", {
-      headers: {'Authorization': 'Bearer ' + localStorage.getItem('token')}
-    })
-      .then(res => {
-        this.setState({
-          videoNow: res
-        });
-      }
-      ,(error) => {
-          console.log(error)
-      }
-      )
-  }
-*/
-
-  /*
-  fetch("/api/annotate", {
-    headers: {'Authorization': 'Bearer ' + localStorage.getItem('token')}
-  })
-    .then(res => {
-      this.setState({
-        videoNow: res
-      });
-    }
-    ,(error) => {
-        console.log(error)
-    }
-    )
 
   <Button variant = "contained" color = "primary" className = {classes.backwardButton} onClick = {rewind}>-5 sec</Button>
   <Button variant = "contained" color = "primary" className = {classes.playButton} onClick = {playPause}>Play/Pause</Button>
@@ -193,7 +176,12 @@ class Annotate extends Component {
   <input type = "submit" value = "Enter" className = {classes.entered} onClick = {changeSpeed} />
   */
 
+  handleVideoClick = (filename) => {
+    this.setState({
+       videoName: filename
+     });
 
+  };
 
   render() {
     const { classes } = this.props;
@@ -201,10 +189,11 @@ class Annotate extends Component {
     return (
       <div>
          <div className = {classes.clear}></div>
+         {this.state.videoName}
          <div className = {classes.videoSectionContainer}>
             <div className = {classes.videoContainer}>
             <div className = {classes.boxContainer}>
-               <video id = "video"  width = "1280" height = "723" controls>
+               <video id = "video"  width = "1280" height = "723" src={'api/videos/'+this.state.videoName} type='video/mp4' controls>
                Your browser does not support the video tag.
                  <source src='api/annotate' type='video/mp4' />
                </video>
@@ -217,8 +206,8 @@ class Annotate extends Component {
                  }}
                  minWidth = {25}
                  minHeight = {25}
-                 maxWidth = {400}
-                 maxHeight = {400}
+                 maxWidth = {900}
+                 maxHeight = {650}
                  bounds = "parent"
                  className = {classes.dragBox}
                  >
@@ -226,15 +215,24 @@ class Annotate extends Component {
             </div>
             </div>
             <div className = {classes.clear}></div>
+            <Button variant = "contained" color = "primary" className = {classes.backwardButton} onClick = {rewind}>-5 sec</Button>
+            <Button variant = "contained" color = "primary" className = {classes.playButton} onClick = {playPause}>Play/Pause</Button>
+            <Button variant = "contained" color = "primary" className = {classes.forwardButton} onClick = {fastForward}>+5 sec</Button>
 
             <br />
             <span className = {classes.playScript}>Play at speed:</span>
+            <p><input type = "text" id = "playSpeedId" className = {classes.playSpeed} placeholder = "100" />&ensp; %</p>
+            <input type = "submit" value = "Enter" className = {classes.entered} onClick = {changeSpeed} />
 
+
+         </div>
+         <div className={classes.videoListContainer}>
+           <VideoList handleVideoClick={this.handleVideoClick} />
          </div>
          <div className = {classes.conceptSectionContainer}>
             <span className = {classes.conceptsText}>Current Concepts</span>
             <br />
-            <CurrentConcepts />
+            <CurrentConcepts  />
          </div>
       </div>
     );
