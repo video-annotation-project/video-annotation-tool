@@ -12,7 +12,6 @@ const JwtStrategy = passportJWT.Strategy;
 const bcrypt = require('bcrypt');
 const psql = require('./db/simpleConnect');
 const AWS = require('aws-sdk');
-const fs = require('fs');
 
 AWS.config.update(
   {
@@ -20,7 +19,6 @@ AWS.config.update(
     secretAccessKey: "YGoYv65N5XIJzimCDD+RVtqHLcesRRJO5OIaQNkg",
   }
 );
-var s3 = new AWS.S3();
 
 var jwtOptions = {};
 jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
@@ -33,17 +31,6 @@ async function findUser(userId) {
     return user.rows[0];
   } else {
     return false;
-  }
-}
-
-async function getVideos() {
-  queryPass = 'select id, filename from videos;'
-  try {
-    var data = await psql.query(queryPass);
-    return data;
-  } catch (error) {
-    console.log(error);
-    return error;
   }
 }
 
@@ -256,8 +243,13 @@ app.get('/api/annotate',
 
 app.get('/api/videoNames', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
-    const videoData = await getVideos();
-    res.json(videoData)
+    queryPass = 'select id, filename from videos;'
+    try {
+      var videoData = await psql.query(queryPass);
+      res.json(videoData);
+    } catch (error) {
+      res.json(error);
+    }
   }
 )
 
