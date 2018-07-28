@@ -254,6 +254,7 @@ app.get('/api/videoNames', passport.authenticate('jwt', {session: false}),
 )
 
 app.get('/api/videos/:name', (req, res) => {
+  var s3 = new AWS.S3();
   const mimetype = 'video/mp4';
   const file = 'videos/' + req.params.name;
   const cache = 0;
