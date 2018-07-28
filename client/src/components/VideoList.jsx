@@ -4,7 +4,7 @@ import { withStyles } from '@material-ui/core/styles';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
-import Divider from '@material-ui/core/Divider';
+//import Divider from '@material-ui/core/Divider';
 
 const styles = theme => ({
   root: {
@@ -21,7 +21,7 @@ class VideoList extends Component {
     };
   }
 
-  componentDidMount() {
+  componentDidMount = () => {
     fetch("/api/videoNames", {
       headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')}
     })
@@ -58,9 +58,9 @@ class VideoList extends Component {
     return (
       <div className={classes.root}>
         <List component="nav">
-        {this.state.videos.map((video) =>(
+        {this.state.videos.map((video, index) =>(
           <ListItem button key={video.id} onClick={this.handleVideoClick.bind(this, video.filename)}>
-            <ListItemText primary={video.filename} />
+            <ListItemText primary={(index+1)+'. '+video.filename} />
           </ListItem>
         ))}
         </List>

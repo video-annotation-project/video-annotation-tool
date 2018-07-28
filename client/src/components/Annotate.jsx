@@ -104,6 +104,10 @@ const styles = theme => ({
     marginTop: '10px',
     marginLeft: '10px'
   },
+  name: {
+    display: 'inline',
+    float: 'left'
+  },
 });
 
 function changeSpeed() {
@@ -187,8 +191,11 @@ class Annotate extends Component {
 
     return (
       <div>
+         <div className= {classes.name}>
+          {this.state.videoName}
+         </div>
          <div className = {classes.clear}></div>
-         {this.state.videoName}
+
          <div className = {classes.videoSectionContainer}>
             <div className = {classes.videoContainer}>
             <div className = {classes.boxContainer}>
@@ -226,6 +233,8 @@ class Annotate extends Component {
 
          </div>
          <div className={classes.videoListContainer}>
+           <span className = {classes.videoListText}>Select Video</span>
+           <br />
            <VideoList handleVideoClick={this.handleVideoClick} />
          </div>
          <div className = {classes.conceptSectionContainer}>
