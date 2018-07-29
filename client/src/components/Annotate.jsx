@@ -70,7 +70,7 @@ const styles = theme => ({
   conceptSectionContainer: {
     position: 'relative',
     float: 'right',
-    width: '330px',
+    width: '460px',
     height: '1000px',
     backgroundColor: 'white',
     borderLeft: '1px black solid',
@@ -92,7 +92,7 @@ const styles = theme => ({
   videoListContainer: {
     position: 'relative',
     float: 'right',
-    width: '230px',
+    width: '400px',
     height: '1000px',
     backgroundColor: 'white',
     borderLeft: '1px black solid',
@@ -110,12 +110,6 @@ const styles = theme => ({
     float: 'left'
   },
 });
-
-const codeForKevinToUse = () => {
-  const conceptsSelected = localStorage.getItem('conceptsSelected');
-  const conceptsObj = JSON.parse(conceptsSelected) || {};
-  const conceptsArr = Object.keys(conceptsObj).filter(id => conceptsObj[id]);
-}
 
 function changeSpeed() {
 
@@ -195,7 +189,7 @@ class Annotate extends Component {
 
   };
 
-  handleConceptClick = (name) => {
+  handleConceptClick = (concept) => {
     var myVideo = document.getElementById("video");
     var cTime = myVideo.currentTime;
 
@@ -210,7 +204,7 @@ class Annotate extends Component {
       method: 'POST',
       headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token')},
       body: JSON.stringify({
-        'conceptId': name,
+        'conceptId': concept.name,
         'videoId': this.state.videoName,
         'timeinvideo': cTime,
         'leftBotX': leftBotX,
@@ -221,8 +215,9 @@ class Annotate extends Component {
     }).then(res => res.json())
     .then(res => {
       if( res.message === "Annotated") {
+        var videoInfo = JSON.parse(res.value);
         this.setState({
-          errorMsg: "Annotated: " + res.value,
+          errorMsg: "User: " + videoInfo.userid + " Annotated: \n" + concept.name + " in video " + videoInfo.videoid + " at time " + videoInfo.timeinvideo,
           open: true
         })
       } else {

@@ -8,26 +8,63 @@ const styles = theme => ({
   },
   rightConcepts: {
     fontSize: '150%',
-    float: 'left'
+    float: 'right'
   },
   conceptListElement: {
-    listStyleType: 'none'
+    listStyleType: 'none',
+    cursor: 'pointer',
   },
 });
 
-
 class CurrentConcepts extends React.Component {
-  handleConceptClick = (name) => {
-    this.props.handleConceptClick(name);
+  constructor(props) {
+    super(props);
+    this.state = {
+      concepts: []
+    };
+  }
+
+  getConceptList = async (conceptsArr) => (
+    fetch("/api/listConcepts", {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token')},
+      body: JSON.stringify({
+        'conceptList': conceptsArr
+      })
+    }).then(res => res.json())
+      .then(res => {
+        return res;
+      })
+      .catch(error => {
+        console.log(error)
+        return [];
+      })
+  );
+
+  componentDidMount = async () => {
+    const conceptsSelected = localStorage.getItem('conceptsSelected');
+    const conceptsObj = JSON.parse(conceptsSelected) || {};
+    const conceptsArr = Object.keys(conceptsObj).filter(id => conceptsObj[id]).map(Number);
+    console.log(conceptsArr);
+    let conceptList = await this.getConceptList(conceptsArr);
+    console.log(conceptList);
+    this.setState({
+      concepts: conceptList
+    })
+  }
+
+
+  handleConceptClick = (concept) => {
+    this.props.handleConceptClick(concept);
   };
 
   render() {
     const { classes } = this.props;
-    var concepts = ['saury', 'concept2', 'concept3', 'concept4', 'concept5', 'concept6', 'concept7', 'concept8', 'concept9', 'concept10', 'concept11', 'concept12', 'concept13', 'concept14', 'concept15', 'concept16', 'concept17', 'concept18', 'concept19', 'concept20'];
-    var conceptsList = concepts.map((name) => {
-      return (<li className = {classes.conceptListElement} onClick={this.handleConceptClick.bind(this, name)}>{name} <br />
-             <img src = "fish1.png" alt = "Could not be downloaded" height="100" width="100" /></li>);
-    })
+
+    var conceptsList = this.state.concepts.map((concept, index) => (
+      <li key = {index} className = {classes.conceptListElement} onClick={this.handleConceptClick.bind(this, concept)}>{concept.name} <br />
+             <img src = {"https://d1yenv1ac8fa55.cloudfront.net/concept_images/"+concept.picture} alt = "Could not be downloaded" height="100" width="100" /></li>));
+
     var leftList = [];
     var rightList = [];
     var conceptsListLength = conceptsList.length;

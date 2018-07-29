@@ -327,14 +327,28 @@ app.post("/annotate", passport.authenticate('jwt', {session: false}),
   queryText = 'INSERT INTO annotations(videoid, userid, conceptid, timeinvideo, toprightx, toprighty, botleftx, botlefty, dateannotated) VALUES($1, $2, $3, $4, $5, $6, $7, $8, current_timestamp) RETURNING *';
   try {
     var insertRes = await psql.query(queryText, [videoId, userId, conceptId, req.body.timeinvideo, Math.round(req.body.rightTopX), Math.round(req.body.rightTopY), Math.round(req.body.leftBotX), Math.round(req.body.leftBotY)]);
-    console.log("Success: ", insertRes);
     res.json({message: "Annotated", value: JSON.stringify(insertRes.rows[0])});
   } catch(error) {
     console.log(error)
-    res.json({message: "error"+error})
+    res.json({message: "error: "+error})
   }
 }
 );
+
+app.post("/api/listConcepts", passport.authenticate('jwt', {session: false}),
+  async (req, res) => {
+    var params = [];
+    for (var i = 1; i<=req.body.conceptList.length; i++) {
+      params.push('$' + i);
+    }
+    queryText = 'SELECT * FROM concepts WHERE concepts.id IN(' + params.join(',') + ')';
+    try {
+      var conceptInfo = await psql.query(queryText, req.body.conceptList);
+      res.json(conceptInfo.rows)
+    } catch (error) {
+      console.log(error);
+    }
+  })
 
 // Express only serves static assets in production
 if (process.env.NODE_ENV === 'production') {
