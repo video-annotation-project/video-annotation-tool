@@ -186,14 +186,16 @@ app.get('/api/concepts', passport.authenticate('jwt', {session: false}),
 
 app.get('/api/conceptImages/:id',
   async (req, res) => {
+    let s3 = new AWS.S3();
     queryText = 'select picture from concepts where concepts.id=$1';
     try {
-      const concepts = await psql.query(queryText, [req.params.id]);
-      console.log('SQL server response:');
-      console.log(concepts.rows);
-      // s3.getObject(Bucket: 'lubomirstanchev', Key: 'concept_images');
-      res.json('I come from a land down under');
-
+      const response = await psql.query(queryText, [req.params.id]);
+      const picture = response.rows[0].picture;
+      const params = {
+        Bucket: 'lubomirstanchev',
+        Key: `concept_images/${picture}`
+      }
+      s3.getObject(params).createReadStream().pipe(res);
     } catch (error) {
       res.status(400).json(error);
     }
