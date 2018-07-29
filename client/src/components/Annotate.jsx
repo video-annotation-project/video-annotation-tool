@@ -111,6 +111,12 @@ const styles = theme => ({
   },
 });
 
+const codeForKevinToUse = () => {
+  const conceptsSelected = localStorage.getItem('conceptsSelected');
+  const conceptsObj = JSON.parse(conceptsSelected) || {};
+  const conceptsArr = Object.keys(conceptsObj).filter(id => conceptsObj[id]);
+}
+
 function changeSpeed() {
 
    try {

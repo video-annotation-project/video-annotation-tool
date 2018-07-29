@@ -3,17 +3,16 @@ import React from 'react';
 import axios from 'axios';
 
 import PropTypes from 'prop-types';
+import Avatar from '@material-ui/core/Avatar';
 import CheckBox from '@material-ui/core/Checkbox';
 import Collapse from '@material-ui/core/Collapse';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
-import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
 import ListItemText from '@material-ui/core/ListItemText';
 import { withStyles } from '@material-ui/core/styles';
 import ExpandLess from '@material-ui/icons/ExpandLess';
 import ExpandMore from '@material-ui/icons/ExpandMore';
-import ImageIcon from '@material-ui/icons/Image';
 
 const styles = theme => ({
   nested: {
@@ -53,7 +52,9 @@ class ConceptsList extends React.Component {
       return;
     }
     for (let concept of concepts) {
-      concept.checked = false;
+      let conceptsSelected = JSON.parse(localStorage.getItem('conceptsSelected'));
+      conceptsSelected = conceptsSelected || {};
+      concept.checked = conceptsSelected[concept.id];
       const children = await this.getChildrenConcepts(concept.id);
       concept.expandable = (children && children.length);
       concept.expanded = false;
@@ -64,22 +65,26 @@ class ConceptsList extends React.Component {
     });
   }
 
+  handleCheckBoxClick = (event, id) => {
+    event.stopPropagation();
+    let concepts = JSON.parse(JSON.stringify(this.state.concepts));
+    let concept = concepts.find(concept => concept.id === id);
+    concept.checked = !concept.checked;
+    let conceptsSelected = JSON.parse(localStorage.getItem('conceptsSelected'));
+    conceptsSelected = conceptsSelected || {};
+    conceptsSelected[concept.id] = concept.checked;
+    localStorage.setItem('conceptsSelected', JSON.stringify(conceptsSelected));
+    this.setState({
+      concepts: concepts
+    });
+  };
+
   handleClick = (id) => {
     let concepts = JSON.parse(JSON.stringify(this.state.concepts));
     let concept = concepts.find(concept => concept.id === id);
     if (concept.expandable) {
       concept.expanded = !concept.expanded;
     }
-    this.setState({
-      concepts: concepts
-    });
-  };
-
-  handleCheckBoxClick = (event, id) => {
-    event.stopPropagation();
-    let concepts = JSON.parse(JSON.stringify(this.state.concepts));
-    let concept = concepts.find(concept => concept.id === id);
-    concept.checked = !concept.checked;
     this.setState({
       concepts: concepts
     });
@@ -100,7 +105,7 @@ class ConceptsList extends React.Component {
         {concepts.map(concept => (
           <React.Fragment key={concept.id}>
             <ListItem button onClick={() => this.handleClick(concept.id)}>
-              <ListItemIcon><ImageIcon /></ListItemIcon>
+              <Avatar src={`/api/conceptImages/${concept.id}`} />
               <ListItemText inset primary={concept.name} />
               <ListItemSecondaryAction className={classes.shiftRight}>
                 <CheckBox
