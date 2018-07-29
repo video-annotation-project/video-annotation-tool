@@ -10,6 +10,7 @@ const styles = theme => ({
     padding: theme.spacing.unit * 4,
     display: 'block',
     margin: 'auto',
+    overflow: 'auto',
   },
 });
 

@@ -3,7 +3,8 @@ import Rnd from 'react-rnd';
 import Button from '@material-ui/core/Button';
 import { withStyles } from '@material-ui/core/styles';
 import CurrentConcepts from './CurrentConcepts.jsx';
-import VideoList from './VideoList.jsx'
+import VideoList from './VideoList.jsx';
+import ErrorModal from './ErrorModal.jsx';
 
 const styles = theme => ({
   clear: {
@@ -20,7 +21,7 @@ const styles = theme => ({
     marginLeft: '15px'
   },
   boxContainer: {
-    postion: 'relative',
+    postion: 'absolute',
     top: '50px',
     border: '1px black solid',
     width: '1280px',
@@ -165,7 +166,9 @@ class Annotate extends Component {
     this.state = {
       error: null,
       isLoaded: false,
-      videoName: 'DocRicketts-0569_20131213T224337Z_00-00-01-00TC_h264.mp4'
+      videoName: 'DocRicketts-0569_20131213T224337Z_00-00-01-00TC_h264.mp4',
+      errorMsg: null,
+      open: false //For error modal box
     };
   }
 
@@ -186,11 +189,56 @@ class Annotate extends Component {
 
   };
 
+  handleConceptClick = (name) => {
+    var myVideo = document.getElementById("video");
+    var cTime = myVideo.currentTime;
+
+    var dragBoxCord = document.getElementById("dragBox").getBoundingClientRect();
+    var vidCord = myVideo.getBoundingClientRect();
+    var leftBotX = Math.max((dragBoxCord.left-vidCord.left),0);
+    var leftBotY = Math.min((dragBoxCord.bottom-vidCord.top),723);
+    var rightTopX = Math.min((dragBoxCord.right-vidCord.left),1280);
+    var rightTopY = Math.max((dragBoxCord.top-vidCord.top),0);
+    //id | videoid | userid | conceptid | timeinvideo | topRightx | topRighty | botLeftx | botLefty | dateannotated
+    fetch('/annotate', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token')},
+      body: JSON.stringify({
+        'conceptId': name,
+        'videoId': this.state.videoName,
+        'timeinvideo': cTime,
+        'leftBotX': leftBotX,
+        'leftBotY': leftBotY,
+        'rightTopX': rightTopX,
+        'rightTopY': rightTopY,
+      })
+    }).then(res => res.json())
+    .then(res => {
+      if( res.message === "Annotated") {
+        this.setState({
+          errorMsg: "Annotated: " + res.value,
+          open: true
+        })
+      } else {
+        this.setState({
+          errorMsg: res.message,
+          open: true
+        })
+      }
+    })
+  }
+
+  handleClose = () => {
+    this.setState({ open: false });
+  };
+
+
   render() {
     const { classes } = this.props;
 
     return (
       <div>
+         <ErrorModal errorMsg={this.state.errorMsg} open={this.state.open} handleClose={this.handleClose}/>
          <div className= {classes.name}>
           {this.state.videoName}
          </div>
@@ -203,7 +251,7 @@ class Annotate extends Component {
                Your browser does not support the video tag.
                  <source src='api/annotate' type='video/mp4' />
                </video>
-               <Rnd
+               <Rnd id = "dragBox"
                  default = {{
                     x: 30,
                     y: 30,
@@ -218,6 +266,7 @@ class Annotate extends Component {
                  className = {classes.dragBox}
                  >
                </Rnd>
+
             </div>
             </div>
             <div className = {classes.clear}></div>
@@ -240,7 +289,7 @@ class Annotate extends Component {
          <div className = {classes.conceptSectionContainer}>
             <span className = {classes.conceptsText}>Current Concepts</span>
             <br />
-            <CurrentConcepts  />
+            <CurrentConcepts  handleConceptClick={this.handleConceptClick}/>
          </div>
       </div>
     );
