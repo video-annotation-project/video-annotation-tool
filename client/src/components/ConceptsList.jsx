@@ -52,7 +52,9 @@ class ConceptsList extends React.Component {
       return;
     }
     for (let concept of concepts) {
-      concept.checked = false;
+      let conceptsSelected = JSON.parse(localStorage.getItem('conceptsSelected'));
+      conceptsSelected = conceptsSelected || {};
+      concept.checked = conceptsSelected[concept.id];
       const children = await this.getChildrenConcepts(concept.id);
       concept.expandable = (children && children.length);
       concept.expanded = false;
@@ -63,22 +65,26 @@ class ConceptsList extends React.Component {
     });
   }
 
+  handleCheckBoxClick = (event, id) => {
+    event.stopPropagation();
+    let concepts = JSON.parse(JSON.stringify(this.state.concepts));
+    let concept = concepts.find(concept => concept.id === id);
+    concept.checked = !concept.checked;
+    let conceptsSelected = JSON.parse(localStorage.getItem('conceptsSelected'));
+    conceptsSelected = conceptsSelected || {};
+    conceptsSelected[concept.id] = concept.checked;
+    localStorage.setItem('conceptsSelected', JSON.stringify(conceptsSelected));
+    this.setState({
+      concepts: concepts
+    });
+  };
+
   handleClick = (id) => {
     let concepts = JSON.parse(JSON.stringify(this.state.concepts));
     let concept = concepts.find(concept => concept.id === id);
     if (concept.expandable) {
       concept.expanded = !concept.expanded;
     }
-    this.setState({
-      concepts: concepts
-    });
-  };
-
-  handleCheckBoxClick = (event, id) => {
-    event.stopPropagation();
-    let concepts = JSON.parse(JSON.stringify(this.state.concepts));
-    let concept = concepts.find(concept => concept.id === id);
-    concept.checked = !concept.checked;
     this.setState({
       concepts: concepts
     });
