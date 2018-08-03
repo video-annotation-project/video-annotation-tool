@@ -2,3 +2,8 @@ cra-server-ex.graffle
 node_modules
 npm-debug.log
 client/build
+
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml

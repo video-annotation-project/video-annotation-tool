@@ -2,6 +2,9 @@
   "name": "video-annotation-tool",
   "version": "0.0.1",
   "private": true,
+  "engines": {
+    "node": ">=8.10"
+  },
   "dependencies": {
     "aws-sdk": "^2.279.1",
     "babel-cli": "6.14.0",
