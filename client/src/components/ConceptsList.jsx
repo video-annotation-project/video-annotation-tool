@@ -51,9 +51,9 @@ class ConceptsList extends React.Component {
     if (!concepts) {
       return;
     }
+    const conceptsSelected = await this.props.conceptsSelected;
     for (let concept of concepts) {
-      let conceptsSelected = JSON.parse(localStorage.getItem('conceptsSelected'));
-      conceptsSelected = conceptsSelected || {};
+      //conceptsSelected = conceptsSelected || {};
       concept.checked = conceptsSelected[concept.id];
       const children = await this.getChildrenConcepts(concept.id);
       concept.expandable = (children && children.length);
@@ -63,17 +63,19 @@ class ConceptsList extends React.Component {
       isLoaded: true,
       concepts: concepts
     });
-  }
+}
 
   handleCheckBoxClick = (event, id) => {
     event.stopPropagation();
     let concepts = JSON.parse(JSON.stringify(this.state.concepts));
     let concept = concepts.find(concept => concept.id === id);
     concept.checked = !concept.checked;
-    let conceptsSelected = JSON.parse(localStorage.getItem('conceptsSelected'));
+    //props
+    let conceptsSelected = this.props.conceptsSelected;
     conceptsSelected = conceptsSelected || {};
     conceptsSelected[concept.id] = concept.checked;
-    localStorage.setItem('conceptsSelected', JSON.stringify(conceptsSelected));
+    //Send to props
+    this.props.handleCheckBoxClick(id, concept.checked);
     this.setState({
       concepts: concepts
     });
@@ -120,7 +122,7 @@ class ConceptsList extends React.Component {
               }
             </ListItem>
             <Collapse in={concept.expanded} timeout="auto" unmountOnExit>
-              <ConceptsList classes={classes} id={concept.id} />
+              <ConceptsList classes={classes} id={concept.id} conceptsSelected={this.props.conceptsSelected} handleCheckBoxClick={this.props.handleCheckBoxClick}/>
             </Collapse>
           </React.Fragment>
         ))}

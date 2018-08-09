@@ -184,6 +184,33 @@ app.get('/api/concepts', passport.authenticate('jwt', {session: false}),
   }
 );
 
+app.get('/api/selected', passport.authenticate('jwt', {session: false}),
+  async (req, res) => {
+    queryText = 'select conceptid from profile where profile.userid=$1';
+    try {
+      let concepts = await psql.query(queryText, [req.user.id]);
+      res.json(concepts.rows);
+    } catch (error) {
+      res.status(400).json(error);
+    }
+  }
+)
+
+app.post('/api/selectedPush', passport.authenticate('jwt', {session: false}),
+  async (req, res) => {
+    queryText = 'DELETE FROM profile WHERE profile.userid=$1 AND profile.conceptid=$2 RETURNING *';
+    if (req.body.checked) {
+      queryText = 'INSERT INTO profile(userid, conceptid) VALUES($1, $2) RETURNING *';
+    }
+    try {
+      let insert = await psql.query(queryText, [req.user.id, req.body.id]);
+      res.json({message: "Changed", value: JSON.stringify(insert.rows)});
+    } catch (error) {
+      res.status(400).json(error);
+    }
+  }
+)
+
 app.get('/api/conceptImages/:id',
   async (req, res) => {
     let s3 = new AWS.S3();

@@ -37,17 +37,14 @@ class CurrentConcepts extends React.Component {
       })
       .catch(error => {
         console.log(error)
-        return [];
+        return;
       })
   );
 
   componentDidMount = async () => {
-    const conceptsSelected = localStorage.getItem('conceptsSelected');
-    const conceptsObj = JSON.parse(conceptsSelected) || {};
+    const conceptsObj = this.props.conceptsSelected;
     const conceptsArr = Object.keys(conceptsObj).filter(id => conceptsObj[id]).map(Number);
-    console.log(conceptsArr);
     let conceptList = await this.getConceptList(conceptsArr);
-    console.log(conceptList);
     this.setState({
       concepts: conceptList
     })

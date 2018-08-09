@@ -5,6 +5,8 @@ import { withStyles } from '@material-ui/core/styles';
 import CurrentConcepts from './CurrentConcepts.jsx';
 import VideoList from './VideoList.jsx';
 import ErrorModal from './ErrorModal.jsx';
+import List from '@material-ui/core/List';
+import axios from 'axios';
 
 const styles = theme => ({
   clear: {
@@ -116,16 +118,12 @@ function changeSpeed() {
    try {
    var myVideo = document.getElementById("video");
    var speed = document.getElementById("playSpeedId").value;
-   if ((speed / 100) === 0)
-   {
+   if ((speed / 100) === 0) {
       myVideo.playbackRate = (1);
-   }
-   else
-   {
+   } else {
       myVideo.playbackRate = (speed / 100);
    }
-   }
-   catch(err) {
+   } catch(err) {
    alert("invalid input");
    myVideo.playbackRate = 1;
    }
@@ -141,22 +139,18 @@ function playPause() {
    {
       myVideo.pause();
    }
-
 }
 
 function fastForward() {
    var myVideo = document.getElementById("video");
    var cTime = myVideo.currentTime;
    myVideo.currentTime = (cTime + 5);
-
 }
 
 function rewind() {
    var myVideo = document.getElementById("video");
    var cTime = myVideo.currentTime;
    myVideo.currentTime = (cTime - 5);
-
-
 }
 
 
@@ -168,19 +162,40 @@ class Annotate extends Component {
       isLoaded: false,
       videoName: 'DocRicketts-0569_20131213T224337Z_00-00-01-00TC_h264.mp4',
       errorMsg: null,
+      conceptsSelected: {},
       open: false //For error modal box
     };
   }
 
-/*
+  getSelectedConcepts = async () => (
+    axios.get(`/api/selected`, {
+      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')},
+    }).then(res => (res.data))
+      .catch(error => {
+        this.setState({
+          isloaded: true,
+          error: error
+        });
+        return;
+    })
+  );
 
-  <Button variant = "contained" color = "primary" className = {classes.backwardButton} onClick = {rewind}>-5 sec</Button>
-  <Button variant = "contained" color = "primary" className = {classes.playButton} onClick = {playPause}>Play/Pause</Button>
-  <Button variant = "contained" color = "primary" className = {classes.forwardButton} onClick = {fastForward}>+5 sec</Button>
+  makeObject = async (selectedConcepts) => {
+    let temp = {}
+    selectedConcepts.forEach(concept => {
+      temp[concept.conceptid] = true;
+    })
+    return temp;
+  }
 
-  <p><input type = "text" className = {classes.playSpeed} placeholder = "100" />&ensp; %</p>
-  <input type = "submit" value = "Enter" className = {classes.entered} onClick = {changeSpeed} />
-  */
+  componentDidMount = async () => {
+    let selectedConcepts = await this.getSelectedConcepts();
+    let temp = await this.makeObject(selectedConcepts);
+    await this.setState({conceptsSelected: temp});
+    this.setState({
+      isLoaded: true,
+    });
+  }
 
   handleVideoClick = (filename) => {
     this.setState({
@@ -290,7 +305,12 @@ class Annotate extends Component {
          <div className = {classes.conceptSectionContainer}>
             <span className = {classes.conceptsText}>Current Concepts</span>
             <br />
-            <CurrentConcepts  handleConceptClick={this.handleConceptClick}/>
+            {(this.state.isLoaded) ? (
+              <CurrentConcepts  handleConceptClick={this.handleConceptClick} conceptsSelected={this.state.conceptsSelected} />
+            ):(
+              <List>Loading...</List>
+            )}
+
          </div>
       </div>
     );
