@@ -27,7 +27,7 @@ class Concepts extends React.Component {
 
   handleCheckBoxClick = async (id, checked) => {
     this.state.conceptsSelected[id] = checked;
-    let res = await this.pushSelectedConcepts(id, checked);
+    await this.pushSelectedConcepts(id, checked);
   };
 
   pushSelectedConcepts = async (id, checked) => {
@@ -79,7 +79,7 @@ class Concepts extends React.Component {
 
 
   render() {
-    const { error, isLoaded, concepts } = this.state;
+    const { error, isLoaded } = this.state;
     const { classes } = this.props;
 
     if (!isLoaded) {
