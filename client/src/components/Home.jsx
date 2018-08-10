@@ -18,12 +18,6 @@ const styles = theme => ({
 
 });
 
-function rewind() {
-   var myVideo = document.getElementById("video");
-   var cTime = myVideo.currentTime;
-   myVideo.currentTime = (cTime - 5);
-}
-
 
 class HomePage extends Component {
   constructor(props) {
