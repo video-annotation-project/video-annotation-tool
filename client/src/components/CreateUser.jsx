@@ -1,5 +1,17 @@
 import React, { Component } from 'react';
 import ErrorModal from './ErrorModal.jsx';
+import Typography from '@material-ui/core/Typography';
+import { withStyles } from '@material-ui/core/styles';
+
+const styles= {
+  root: {
+    height: '70vh',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center'
+  }
+};
 
 class CreateUser extends Component {
   constructor(props) {
@@ -54,9 +66,10 @@ class CreateUser extends Component {
   };
 
   render() {
+    const { classes } = this.props;
     return (
-      <React.Fragment>
-        <h2>Create a new user:</h2><br />
+      <div className={classes.root}>
+        <Typography variant="display1">Create New User</Typography><br />
         <ErrorModal errorMsg={this.state.errorMsg} open={this.state.open} handleClose={this.handleClose}/>
         <form onSubmit={this.handleSubmit}>
           <div>username</div>
@@ -68,9 +81,9 @@ class CreateUser extends Component {
           <input type="checkbox" name="admin" checked={this.state.admin} onChange= {this.handleBoxChange} />admin<br />
           <input type='submit' value='Create'/>
         </form>
-      </React.Fragment>
+      </div>
     );
   }
 }
 
-export default CreateUser;
+export default withStyles(styles)(CreateUser);
