@@ -1,47 +1,34 @@
 import React, { Component } from 'react';
-import Button from '@material-ui/core/Button';
+import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
-import VideoList from './VideoList.jsx';
-import ErrorModal from './ErrorModal.jsx';
 
-const styles = theme => ({
-  clear: {
-    clear: 'both'
-  },
-  welcome: {
-    fontSize: '200%',
-    position: 'relative',
-    top: '15px',
-    left: '15px',
-    color: 'blue'
+const styles= {
+  root: {
+    height: '70vh',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center'
   }
-
-});
-
+};
 
 class HomePage extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      error: null,
-      isLoaded: false,
-      errorMsg: null,
-      open: false //For error modal box
+      // error: null,
+      // isLoaded: false,
+      // errorMsg: null,
+      // open: false //For error modal box
     };
   }
 
   render() {
     const { classes } = this.props;
-
     return (
-      <div>
-         <ErrorModal errorMsg={this.state.errorMsg} open={this.state.open} />
-         <div className = {classes.clear}></div>
-
-         <div className= {classes.welcome}>
-          Welcome Back!
-         </div>
-         <div className = {classes.clear}></div>
+      <div className={classes.root}>
+        <Typography variant="display2">
+          Welcome
+        </Typography>
       </div>
     );
   }
