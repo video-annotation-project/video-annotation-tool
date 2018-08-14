@@ -1,10 +1,8 @@
 import React from 'react';
 
-import axios from 'axios';
-
 // import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
-import List from '@material-ui/core/List';
+import VideosAnnotated from './VideosAnnotated.jsx';
 
 const styles = theme => ({
   root: {
@@ -12,7 +10,7 @@ const styles = theme => ({
     backgroundColor: theme.palette.background.paper,
   }
 });
-
+/*
 function getVideoImage(path, secs, callback) {
   var me = this, video = document.createElement('video');
   video.setAttribute('crossOrigin', 'use-credentials');
@@ -29,7 +27,7 @@ function getVideoImage(path, secs, callback) {
     var ctx = canvas.getContext('2d');
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     var img = new Image();
-    img.setAttribute('crossorigin', 'use-credentials');
+    img.setAttribute('crossOrigin', 'use-credentials');
     img.src = canvas.toDataURL();
     callback.call(me, img, this.currentTime, e);
   };
@@ -38,7 +36,7 @@ function getVideoImage(path, secs, callback) {
   };
   video.src = path;
 }
-
+*/
 class Report extends React.Component {
   constructor(props) {
     super(props);
@@ -46,29 +44,32 @@ class Report extends React.Component {
     };
   }
 
-  componentDidMount = async () => {
+  componentDidMount = () => {
 
   }
+
+  /*
+  {getVideoImage(
+'https://d1yenv1ac8fa55.cloudfront.net/videos/DocRicketts-0569_20131213T224337Z_00-00-01-00TC_h264.mp4',
+-1,
+function(img, secs, event) {
+if (event.type === 'seeked') {
+var li = document.createElement('li');
+li.innerHTML += '<b>Frame at second ' + secs + ':</b><br />';
+li.appendChild(img);
+document.getElementById('olFrames').appendChild(li);
+}
+})};
+  */
 
 
   render() {
     const { classes } = this.props;
     return (
       <div className={classes.root}>
-        <br />
-        <ol id="olFrames"></ol>
-        Hello
-        {getVideoImage(
-  'https://d1yenv1ac8fa55.cloudfront.net/videos/DocRicketts-0569_20131213T224337Z_00-00-01-00TC_h264.mp4',
-  -1,
-  function(img, secs, event) {
-    if (event.type === 'seeked') {
-      var li = document.createElement('li');
-      li.innerHTML += '<b>Frame at second ' + secs + ':</b><br />';
-      li.appendChild(img);
-      document.getElementById('olFrames').appendChild(li);
-    }
-  })};
+        <VideosAnnotated />
+
+
       </div>
     );
   }

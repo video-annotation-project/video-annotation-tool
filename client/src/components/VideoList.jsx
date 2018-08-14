@@ -42,6 +42,8 @@ class VideoList extends Component {
   </ListItem>
 
 
+
+
   */
   handleVideoClick = (filename) => {
     this.props.handleVideoClick(filename);
