@@ -8,6 +8,7 @@ import Collapse from '@material-ui/core/Collapse';
 import ExpandLess from '@material-ui/icons/ExpandLess';
 import ExpandMore from '@material-ui/icons/ExpandMore';
 import axios from 'axios';
+import Times from './Times.jsx'
 //import Divider from '@material-ui/core/Divider';
 
 const styles = theme => ({
@@ -21,43 +22,42 @@ class VideosAnnotated extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      videosList: [],
+      videos: [],
       isLoaded: false,
       error: null
     };
   }
 
   getVideosWatched = async () => {
-    await axios.get(`/api/videosWatched`, {
-      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')},
-    }).then(res => (res.data))
-      .catch(error => {
-      this.setState({
-        isloaded: true,
-        error: error
-      });
-      return;
+    let videos = await axios.get(`/api/videosWatched`, {
+      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')}
     })
+    return videos.data;
+
   };
 
   makeObject = async (videos) => {
     let tempList = []
+
     videos.forEach(video => {
       let temp = {}
-      temp['filename'] = video;
+      temp['id'] = video.id;
+      temp['filename'] = video.filename;
       temp['expanded'] = false;
       tempList.push(temp);
     })
     return tempList;
   }
 
-  testing = async (videos) => {
-    await console.log(videos);
-  }
-
   componentDidMount = async () => {
       let videos = await this.getVideosWatched();
-      await this.testing(videos);
+      videos = await this.makeObject(videos);
+      await this.setState({
+        isLoaded: true,
+        videos: videos
+      });
+
+
   };
 
   /*
@@ -70,12 +70,20 @@ class VideosAnnotated extends Component {
 
 
   */
-  handleVideoClick = () => {
-
+  handleVideoClick = async (filename) => {
+    let videos = this.state.videos;
+    for (let video of videos) {
+      if (video.filename == filename) {
+        video.expanded = !video.expanded;
+      }
+    }
+    await this.setState({
+      videos: videos
+    })
   }
 
   render () {
-    const { error, isLoaded, videosList } = this.state;
+    const { error, isLoaded, videos } = this.state;
     const { classes } = this.props;
 
     if (!isLoaded) {
@@ -86,14 +94,14 @@ class VideosAnnotated extends Component {
     }
     return (
     <List className={classes.root}>
-      {videosList.map((video, index) =>(
+      {videos.map((video, index) =>(
         <React.Fragment key={index+1}>
-          <ListItem button onClick={this.handleVideoClick()}>
+          <ListItem button onClick={() => this.handleVideoClick(video.filename)}>
             <ListItemText primary={(index+1)+': '+video.filename} />
             {video.expanded ? <ExpandLess /> : <ExpandMore />}
           </ListItem>
           <Collapse in={video.expanded} timeout='auto' >
-            test
+              <Times videoId = {video.id}/>
           </Collapse>
         </React.Fragment>
       ))}
