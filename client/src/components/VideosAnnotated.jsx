@@ -8,7 +8,7 @@ import Collapse from '@material-ui/core/Collapse';
 import ExpandLess from '@material-ui/icons/ExpandLess';
 import ExpandMore from '@material-ui/icons/ExpandMore';
 import axios from 'axios';
-import Times from './Times.jsx'
+import Annotations from './Annotations.jsx';
 //import Divider from '@material-ui/core/Divider';
 
 const styles = theme => ({
@@ -67,13 +67,12 @@ class VideosAnnotated extends Component {
   <ListItem button>
     <ListItemText primary="Drafts" />
   </ListItem>
-
-
   */
+
   handleVideoClick = async (filename) => {
     let videos = this.state.videos;
     for (let video of videos) {
-      if (video.filename == filename) {
+      if (video.filename === filename) {
         video.expanded = !video.expanded;
       }
     }
@@ -101,7 +100,7 @@ class VideosAnnotated extends Component {
             {video.expanded ? <ExpandLess /> : <ExpandMore />}
           </ListItem>
           <Collapse in={video.expanded} timeout='auto' >
-              <Times videoId = {video.id}/>
+              <Annotations videoId = {video.id}/>
           </Collapse>
         </React.Fragment>
       ))}

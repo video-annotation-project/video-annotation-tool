@@ -295,10 +295,10 @@ app.get('/api/videosWatched', passport.authenticate('jwt', {session: false}),
   }
 )
 
-app.get('/api/getTimes', passport.authenticate('jwt', {session: false}),
+app.get('/api/getAnnotations', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
     let videoId = req.query.videoid;
-    let queryPass = 'SELECT * FROM annotations, concepts WHERE annotations.conceptid=concepts.id AND annotations.userid=$1 AND annotations.videoid=$2';
+    let queryPass = 'SELECT annotations.id, annotations.timeinvideo, annotations.toprightx, annotations.toprighty, annotations.botleftx, annotations.botlefty, concepts.name, videos.filename FROM annotations, concepts, videos WHERE annotations.conceptid=concepts.id AND annotations.userid=$1 AND annotations.videoid=$2 AND videos.id=annotations.videoid ORDER BY annotations.timeinvideo';
     let userId = req.user.id;
     try {
       const videoData = await psql.query(queryPass, [userId, videoId]);

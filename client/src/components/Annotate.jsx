@@ -27,7 +27,7 @@ const styles = theme => ({
     top: '50px',
     border: '1px black solid',
     width: '1280px',
-    height: '723px'
+    height: '720px'
   },
   playButton: {
     marginTop: '40px',
@@ -263,7 +263,7 @@ class Annotate extends Component {
          <div className = {classes.videoSectionContainer}>
             <div className = {classes.videoContainer}>
             <div className = {classes.boxContainer}>
-               <video id = "video"  width = "1280" height = "723" src={'api/videos/'+this.state.videoName} type='video/mp4' controls>
+               <video id = "video"  width = "1280" height = "720" src={'api/videos/'+this.state.videoName} type='video/mp4' controls>
                Your browser does not support the video tag.
                  <source src='api/annotate' type='video/mp4' />
                </video>
