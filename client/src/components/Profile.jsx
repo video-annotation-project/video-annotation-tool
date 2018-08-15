@@ -1,5 +1,17 @@
 import React, { Component } from 'react';
 import ErrorModal from './ErrorModal.jsx';
+import Typography from '@material-ui/core/Typography';
+import { withStyles } from '@material-ui/core/styles';
+
+const styles= {
+  root: {
+    height: '70vh',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center'
+  }
+};
 
 class Profile extends Component {
   constructor(props) {
@@ -48,10 +60,10 @@ class Profile extends Component {
 
 
   render() {
-
+    const { classes } = this.props;
     return (
-      <React.Fragment>
-        <h2>Change Password: </h2><br />
+      <div className={classes.root}>
+        <Typography variant="display1">Change Password</Typography><br />
         <ErrorModal errorMsg={this.state.errorMsg} open={this.state.open} handleClose={this.handleClose}/>
         <form onSubmit={this.handleSubmit}>
           <div>Current Password: </div>
@@ -65,11 +77,11 @@ class Profile extends Component {
           <br /><br /><br />
           <input type='submit' value='Submit'/>
         </form>
-      </React.Fragment>
+      </div>
     );
   }
 }
 
 
 
-export default Profile;
+export default withStyles(styles)(Profile);
