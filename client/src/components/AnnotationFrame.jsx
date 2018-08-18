@@ -4,7 +4,6 @@ import { withStyles } from '@material-ui/core/styles';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
-import axios from 'axios';
 
 //import Divider from '@material-ui/core/Divider';
 
@@ -13,6 +12,9 @@ const styles = theme => ({
     backgroundColor: theme.palette.background.paper,
 
   },
+  item: {
+    paddingTop: 0
+  }
 });
 
 class AnnotationFrame extends Component {
@@ -22,6 +24,8 @@ class AnnotationFrame extends Component {
       image: null,
       isLoaded: false,
       error: null,
+      width: null,
+      height: null,
     };
   }
 
@@ -51,21 +55,24 @@ class AnnotationFrame extends Component {
   }
 
   componentDidMount = async () => {
+    console.log(this.props.annotation)
     this.getVideoImage('https://d1yenv1ac8fa55.cloudfront.net/videos/'+this.props.annotation.filename,
      this.props.annotation.timeinvideo,
     function(img, secs, event) {
       if (event.type === 'seeked') {
         this.setState({
           isLoaded: true,
-          image: img
+          image: img,
         })
       }
     });
   };
 
   render () {
-    const { error, isLoaded, AnnotationFrame } = this.state;
+    const { error, isLoaded, image } = this.state;
     const { classes } = this.props;
+
+
 
     if (!isLoaded) {
       return <List>Loading...</List>;
@@ -76,8 +83,21 @@ class AnnotationFrame extends Component {
     return (
       <React.Fragment>
         <List className={classes.root}>
-            <ListItem>
-              <img src={this.state.image.src} />
+            <ListItem className={classes.item}>
+              <img id = 'imageId' src={image.src} alt='error' />
+              <div style={{
+                position: 'absolute',
+                left: ((this.props.annotation.botleftx/1280)*1920)+30,
+                top: (this.props.annotation.toprighty/720)*1080,
+                // left: this.props.annotation.botlefty,
+                // marginLeft: 0,
+                height: ((this.props.annotation.botlefty-this.props.annotation.toprighty)/720)*1080,
+                width: ((this.props.annotation.toprightx-this.props.annotation.botleftx)/1280)*1920,
+                borderStyle: 'solid',
+                borderWidth: '1px',
+                borderColor: 'coral',
+              }}>
+              </div>
             </ListItem>
         </List>
       </React.Fragment>

@@ -16,6 +16,7 @@ const styles = theme => ({
     backgroundColor: theme.palette.background.paper,
 
   },
+
 });
 
 class VideosAnnotated extends Component {
@@ -100,7 +101,7 @@ class VideosAnnotated extends Component {
             {video.expanded ? <ExpandLess /> : <ExpandMore />}
           </ListItem>
           <Collapse in={video.expanded} timeout='auto' >
-              <Annotations videoId = {video.id}/>
+              <Annotations videoId = {video.id} />
           </Collapse>
         </React.Fragment>
       ))}
