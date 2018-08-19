@@ -72,7 +72,7 @@ const styles = theme => ({
   conceptSectionContainer: {
     position: 'relative',
     float: 'right',
-    width: '460px',
+    width: '440px',
     height: '1000px',
     backgroundColor: 'white',
     borderLeft: '1px black solid',
@@ -297,22 +297,24 @@ class Annotate extends Component {
 
 
          </div>
-         <div className={classes.videoListContainer}>
-           <span className = {classes.videoListText}>Select Video</span>
-           <br />
-           <VideoList handleVideoClick={this.handleVideoClick} />
-         </div>
-         <div className = {classes.conceptSectionContainer}>
-            <span className = {classes.conceptsText}>Current Concepts</span>
-            <br />
-            {(this.state.isLoaded) ? (
-              <CurrentConcepts  handleConceptClick={this.handleConceptClick} conceptsSelected={this.state.conceptsSelected} />
-            ):(
-              <List>Loading...</List>
-            )}
+            <div className = {classes.conceptSectionContainer}>
+               <span className = {classes.conceptsText}>Current Concepts</span>
+               <br />
+               {(this.state.isLoaded) ? (
+                 <CurrentConcepts  handleConceptClick={this.handleConceptClick} conceptsSelected={this.state.conceptsSelected} />
+               ):(
+                 <List>Loading...</List>
+               )}
+
+            </div>
+            <div className={classes.videoListContainer}>
+              <span className = {classes.videoListText}>Select Video</span>
+              <br />
+              <VideoList handleVideoClick={this.handleVideoClick} />
+            </div>
+
 
          </div>
-      </div>
     );
   }
 }

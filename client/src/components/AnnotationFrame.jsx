@@ -87,9 +87,12 @@ class AnnotationFrame extends Component {
               <img id = 'imageId' src={image.src} alt='error' />
               <div style={{
                 position: 'absolute',
-                left: ((this.props.annotation.botleftx/1280)*1920)+30,
-                top: (this.props.annotation.toprighty/720)*1080,
-                // left: this.props.annotation.botlefty,
+                //top: '0px',
+                //left: '24px',
+                //left: ((this.props.annotation.botleftx/1280)*1920)+30,
+                top: ((this.props.annotation.toprighty/720)*1080),
+                left: (((this.props.annotation.botleftx/1280)*1920)+24),
+                //left: this.props.annotation.botlefty,
                 // marginLeft: 0,
                 height: ((this.props.annotation.botlefty-this.props.annotation.toprighty)/720)*1080,
                 width: ((this.props.annotation.toprightx-this.props.annotation.botleftx)/1280)*1920,
