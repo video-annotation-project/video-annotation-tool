@@ -9,7 +9,6 @@ import ListItemText from '@material-ui/core/ListItemText';
 const styles = theme => ({
   root: {
     backgroundColor: theme.palette.background.paper,
-
   },
 });
 
@@ -33,18 +32,6 @@ class VideoList extends Component {
       })
   }
 
-  /*
-  <ListItem button>
-    <ListItemText primary="Inbox" />
-  </ListItem>
-  <ListItem button>
-    <ListItemText primary="Drafts" />
-  </ListItem>
-
-
-
-
-  */
   handleVideoClick = (filename) => {
     this.props.handleVideoClick(filename);
   }
@@ -63,7 +50,6 @@ class VideoList extends Component {
       </div>
     );
   }
-
 }
 
 VideoList.propTypes = {

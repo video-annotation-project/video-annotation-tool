@@ -1,7 +1,5 @@
 import React from 'react';
-
 import axios from 'axios';
-
 import PropTypes from 'prop-types';
 import Avatar from '@material-ui/core/Avatar';
 import CheckBox from '@material-ui/core/Checkbox';
@@ -63,7 +61,7 @@ class ConceptsList extends React.Component {
       isLoaded: true,
       concepts: concepts
     });
-}
+  }
 
   handleCheckBoxClick = (event, id) => {
     event.stopPropagation();

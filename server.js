@@ -404,6 +404,18 @@ app.post("/api/listConcepts", passport.authenticate('jwt', {session: false}),
     }
   })
 
+app.post('/api/delete', passport.authenticate('jwt', {session: false}),
+  async (req, res) => {
+    queryText = 'DELETE FROM annotations WHERE annotations.id=$1 RETURNING *'
+    try {
+      var deleteRes = await psql.query(queryText, [req.body.id]);
+      res.json(deleteRes.rows);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+)
+
 // Express only serves static assets in production
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, 'client', 'build')));

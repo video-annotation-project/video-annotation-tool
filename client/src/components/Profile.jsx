@@ -58,7 +58,6 @@ class Profile extends Component {
     this.setState({ open: false });
   };
 
-
   render() {
     const { classes } = this.props;
     return (
@@ -81,7 +80,5 @@ class Profile extends Component {
     );
   }
 }
-
-
 
 export default withStyles(styles)(Profile);

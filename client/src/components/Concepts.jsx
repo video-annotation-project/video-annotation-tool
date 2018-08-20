@@ -1,11 +1,9 @@
 import React from 'react';
-
 import axios from 'axios';
 
 // import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
 import List from '@material-ui/core/List';
-
 import ConceptsList from './ConceptsList.jsx';
 
 const styles = theme => ({
@@ -77,11 +75,9 @@ class Concepts extends React.Component {
     });
   }
 
-
   render() {
     const { error, isLoaded } = this.state;
     const { classes } = this.props;
-
     if (!isLoaded) {
       return <List>Loading...</List>;
     }

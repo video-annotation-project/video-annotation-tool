@@ -9,14 +9,11 @@ import ExpandLess from '@material-ui/icons/ExpandLess';
 import ExpandMore from '@material-ui/icons/ExpandMore';
 import axios from 'axios';
 import Annotations from './Annotations.jsx';
-//import Divider from '@material-ui/core/Divider';
 
 const styles = theme => ({
   root: {
     backgroundColor: theme.palette.background.paper,
-
   },
-
 });
 
 class VideosAnnotated extends Component {
@@ -34,12 +31,10 @@ class VideosAnnotated extends Component {
       headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')}
     })
     return videos.data;
-
   };
 
   makeObject = async (videos) => {
     let tempList = []
-
     videos.forEach(video => {
       let temp = {}
       temp['id'] = video.id;
@@ -57,35 +52,20 @@ class VideosAnnotated extends Component {
         isLoaded: true,
         videos: videos
       });
-
-
   };
 
-  /*
-  <ListItem button>
-    <ListItemText primary="Inbox" />
-  </ListItem>
-  <ListItem button>
-    <ListItemText primary="Drafts" />
-  </ListItem>
-  */
-
   handleVideoClick = async (filename) => {
-    let videos = this.state.videos;
-    for (let video of videos) {
-      if (video.filename === filename) {
-        video.expanded = !video.expanded;
-      }
-    }
-    await this.setState({
+    let videos = JSON.parse(JSON.stringify(this.state.videos));
+    let video = videos.find(video => video.filename === filename);
+    video.expanded = !video.expanded;
+    this.setState({
       videos: videos
-    })
+    });
   }
 
   render () {
     const { error, isLoaded, videos } = this.state;
     const { classes } = this.props;
-
     if (!isLoaded) {
       return <List>Loading...</List>;
     }
@@ -101,14 +81,13 @@ class VideosAnnotated extends Component {
             {video.expanded ? <ExpandLess /> : <ExpandMore />}
           </ListItem>
           <Collapse in={video.expanded} timeout='auto' >
-              <Annotations videoId = {video.id} />
+              <Annotations  videoId = {video.id} />
           </Collapse>
         </React.Fragment>
       ))}
       </List>
     );
   }
-
 }
 
 VideosAnnotated.propTypes = {

@@ -116,27 +116,24 @@ const styles = theme => ({
 function changeSpeed() {
 
    try {
-   var myVideo = document.getElementById("video");
-   var speed = document.getElementById("playSpeedId").value;
-   if ((speed / 100) === 0) {
+     var myVideo = document.getElementById("video");
+     var speed = document.getElementById("playSpeedId").value;
+     if ((speed / 100) === 0) {
       myVideo.playbackRate = (1);
-   } else {
+     } else {
       myVideo.playbackRate = (speed / 100);
-   }
+     }
    } catch(err) {
-   alert("invalid input");
-   myVideo.playbackRate = 1;
+     alert("invalid input");
+     myVideo.playbackRate = 1;
    }
 }
 
 function playPause() {
    var myVideo = document.getElementById("video");
-   if(myVideo.paused)
-   {
+   if(myVideo.paused) {
       myVideo.play();
-   }
-   else
-   {
+   } else {
       myVideo.pause();
    }
 }
@@ -201,13 +198,11 @@ class Annotate extends Component {
     this.setState({
        videoName: filename
      });
-
   };
 
   handleConceptClick = (concept) => {
     var myVideo = document.getElementById("video");
     var cTime = myVideo.currentTime;
-
     var dragBoxCord = document.getElementById("dragBox").getBoundingClientRect();
     var vidCord = myVideo.getBoundingClientRect();
     var leftBotX = Math.max((dragBoxCord.left-vidCord.left),0);
@@ -248,10 +243,8 @@ class Annotate extends Component {
     this.setState({ open: false });
   };
 
-
   render() {
     const { classes } = this.props;
-
     return (
       <div>
          <ErrorModal errorMsg={this.state.errorMsg} open={this.state.open} handleClose={this.handleClose}/>
@@ -294,8 +287,6 @@ class Annotate extends Component {
             <span className = {classes.playScript}>Play at speed:</span>
             <p><input type = "text" id = "playSpeedId" className = {classes.playSpeed} placeholder = "100" />&ensp; %</p>
             <input type = "submit" value = "Enter" className = {classes.entered} onClick = {changeSpeed} />
-
-
          </div>
             <div className = {classes.conceptSectionContainer}>
                <span className = {classes.conceptsText}>Current Concepts</span>
@@ -312,8 +303,6 @@ class Annotate extends Component {
               <br />
               <VideoList handleVideoClick={this.handleVideoClick} />
             </div>
-
-
          </div>
     );
   }
