@@ -4,11 +4,13 @@ import { withStyles } from '@material-ui/core/styles';
 const styles = theme => ({
   leftConcepts: {
     fontSize: '150%',
-    float: 'left'
+    float: 'left',
+    width: '210px'
   },
   rightConcepts: {
     fontSize: '150%',
-    float: 'right'
+    float: 'right',
+    width: '210px'
   },
   conceptListElement: {
     listStyleType: 'none',

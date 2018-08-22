@@ -27,7 +27,7 @@ const styles = theme => ({
     top: '50px',
     border: '1px black solid',
     width: '1280px',
-    height: '723px'
+    height: '720px'
   },
   playButton: {
     marginTop: '40px',
@@ -72,7 +72,7 @@ const styles = theme => ({
   conceptSectionContainer: {
     position: 'relative',
     float: 'right',
-    width: '460px',
+    width: '440px',
     height: '1000px',
     backgroundColor: 'white',
     borderLeft: '1px black solid',
@@ -116,27 +116,24 @@ const styles = theme => ({
 function changeSpeed() {
 
    try {
-   var myVideo = document.getElementById("video");
-   var speed = document.getElementById("playSpeedId").value;
-   if ((speed / 100) === 0) {
+     var myVideo = document.getElementById("video");
+     var speed = document.getElementById("playSpeedId").value;
+     if ((speed / 100) === 0) {
       myVideo.playbackRate = (1);
-   } else {
+     } else {
       myVideo.playbackRate = (speed / 100);
-   }
+     }
    } catch(err) {
-   alert("invalid input");
-   myVideo.playbackRate = 1;
+     alert("invalid input");
+     myVideo.playbackRate = 1;
    }
 }
 
 function playPause() {
    var myVideo = document.getElementById("video");
-   if(myVideo.paused)
-   {
+   if(myVideo.paused) {
       myVideo.play();
-   }
-   else
-   {
+   } else {
       myVideo.pause();
    }
 }
@@ -201,13 +198,11 @@ class Annotate extends Component {
     this.setState({
        videoName: filename
      });
-
   };
 
   handleConceptClick = (concept) => {
     var myVideo = document.getElementById("video");
     var cTime = myVideo.currentTime;
-
     var dragBoxCord = document.getElementById("dragBox").getBoundingClientRect();
     var vidCord = myVideo.getBoundingClientRect();
     var leftBotX = Math.max((dragBoxCord.left-vidCord.left),0);
@@ -248,10 +243,8 @@ class Annotate extends Component {
     this.setState({ open: false });
   };
 
-
   render() {
     const { classes } = this.props;
-
     return (
       <div>
          <ErrorModal errorMsg={this.state.errorMsg} open={this.state.open} handleClose={this.handleClose}/>
@@ -263,7 +256,7 @@ class Annotate extends Component {
          <div className = {classes.videoSectionContainer}>
             <div className = {classes.videoContainer}>
             <div className = {classes.boxContainer}>
-               <video id = "video"  width = "1280" height = "723" src={'api/videos/'+this.state.videoName} type='video/mp4' controls>
+               <video id = "video"  width = "1280" height = "720" src={'api/videos/'+this.state.videoName} type='video/mp4' controls>
                Your browser does not support the video tag.
                  <source src='api/annotate' type='video/mp4' />
                </video>
@@ -294,25 +287,23 @@ class Annotate extends Component {
             <span className = {classes.playScript}>Play at speed:</span>
             <p><input type = "text" id = "playSpeedId" className = {classes.playSpeed} placeholder = "100" />&ensp; %</p>
             <input type = "submit" value = "Enter" className = {classes.entered} onClick = {changeSpeed} />
-
-
          </div>
-         <div className={classes.videoListContainer}>
-           <span className = {classes.videoListText}>Select Video</span>
-           <br />
-           <VideoList handleVideoClick={this.handleVideoClick} />
-         </div>
-         <div className = {classes.conceptSectionContainer}>
-            <span className = {classes.conceptsText}>Current Concepts</span>
-            <br />
-            {(this.state.isLoaded) ? (
-              <CurrentConcepts  handleConceptClick={this.handleConceptClick} conceptsSelected={this.state.conceptsSelected} />
-            ):(
-              <List>Loading...</List>
-            )}
+            <div className = {classes.conceptSectionContainer}>
+               <span className = {classes.conceptsText}>Current Concepts</span>
+               <br />
+               {(this.state.isLoaded) ? (
+                 <CurrentConcepts  handleConceptClick={this.handleConceptClick} conceptsSelected={this.state.conceptsSelected} />
+               ):(
+                 <List>Loading...</List>
+               )}
 
+            </div>
+            <div className={classes.videoListContainer}>
+              <span className = {classes.videoListText}>Select Video</span>
+              <br />
+              <VideoList handleVideoClick={this.handleVideoClick} />
+            </div>
          </div>
-      </div>
     );
   }
 }

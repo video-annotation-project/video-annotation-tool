@@ -274,8 +274,35 @@ app.get('/api/videoNames', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
     queryPass = 'select id, filename from videos;'
     try {
-      var videoData = await psql.query(queryPass);
+      const videoData = await psql.query(queryPass);
       res.json(videoData);
+    } catch (error) {
+      res.json(error);
+    }
+  }
+)
+
+app.get('/api/videosWatched', passport.authenticate('jwt', {session: false}),
+  async (req, res) => {
+    let queryPass = 'SELECT DISTINCT ON (videos.filename) videos.filename, videos.id FROM videos, annotations WHERE videos.id = annotations.videoid AND annotations.userid = $1';
+    let userId = req.user.id;
+    try {
+      const videoData = await psql.query(queryPass, [userId]);
+      res.json(videoData.rows);
+    } catch (error) {
+      res.json(error);
+    }
+  }
+)
+
+app.get('/api/getAnnotations', passport.authenticate('jwt', {session: false}),
+  async (req, res) => {
+    let videoId = req.query.videoid;
+    let queryPass = 'SELECT annotations.id, annotations.timeinvideo, annotations.toprightx, annotations.toprighty, annotations.botleftx, annotations.botlefty, concepts.name, videos.filename FROM annotations, concepts, videos WHERE annotations.conceptid=concepts.id AND annotations.userid=$1 AND annotations.videoid=$2 AND videos.id=annotations.videoid ORDER BY annotations.timeinvideo';
+    let userId = req.user.id;
+    try {
+      const videoData = await psql.query(queryPass, [userId, videoId]);
+      res.json(videoData.rows);
     } catch (error) {
       res.json(error);
     }
@@ -376,6 +403,18 @@ app.post("/api/listConcepts", passport.authenticate('jwt', {session: false}),
       console.log(error);
     }
   })
+
+app.post('/api/delete', passport.authenticate('jwt', {session: false}),
+  async (req, res) => {
+    queryText = 'DELETE FROM annotations WHERE annotations.id=$1 RETURNING *'
+    try {
+      var deleteRes = await psql.query(queryText, [req.body.id]);
+      res.json(deleteRes.rows);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+)
 
 // Express only serves static assets in production
 if (process.env.NODE_ENV === 'production') {
