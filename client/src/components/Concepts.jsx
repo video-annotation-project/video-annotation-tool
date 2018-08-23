@@ -23,23 +23,39 @@ class Concepts extends React.Component {
     };
   }
 
-  getSelectedConcepts = async () => {
+  getConceptsSelected = async () => {
     return axios.get('/api/conceptsSelected', {
       headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')},
     }).then(res => res.data)
+      .then(conceptsSelectedList => {
+      let conceptsSelectedObj = {};
+      conceptsSelectedList.forEach(concept => {
+        conceptsSelectedObj[concept.conceptid] = true;
+      })
+      return conceptsSelectedObj;
+    })
       .catch(error => {
-        this.setState({
-          isloaded: true,
-          error: error
-        });
+      this.setState({
+        isloaded: true,
+        error: error
+      });
     });
   };
 
-  changeSelectedConcepts = async (id, checked) => {
-    this.state.conceptsSelected[id] = checked;
+  componentDidMount = async () => {
+    let conceptsSelected = await this.getConceptsSelected();
+    this.setState({
+      isLoaded: true,
+      conceptsSelected: conceptsSelected
+    });
+  }
+
+  changeConceptsSelected = async (id) => {
+    let conceptsSelected = this.state.conceptsSelected;
+    conceptsSelected[id] = !conceptsSelected[id];
     axios.post('/api/conceptsSelected', {
       'id': id,
-      'checked': checked,
+      'checked': conceptsSelected[id]
     }, {
       headers: {
         'Authorization': 'Bearer ' + localStorage.getItem('token')
@@ -58,23 +74,6 @@ class Concepts extends React.Component {
     });
   }
 
-  makeObject = (selectedConcepts) => {
-    let temp = {}
-    selectedConcepts.forEach(concept => {
-      temp[concept.conceptid] = true;
-    })
-    return temp;
-  }
-
-  componentDidMount = async () => {
-    let selectedConcepts = await this.getSelectedConcepts();
-    let temp = this.makeObject(selectedConcepts);
-    this.setState({
-      isLoaded: true,
-      conceptsSelected: temp,
-    });
-  }
-
   render() {
     const { error, isLoaded } = this.state;
     const { classes } = this.props;
@@ -90,7 +89,7 @@ class Concepts extends React.Component {
         <ConceptsList
           id={-1}
           conceptsSelected={this.state.conceptsSelected}
-          handleCheckBoxClick={this.changeSelectedConcepts}
+          changeConceptsSelected={this.changeConceptsSelected}
         />
       </div>
     );

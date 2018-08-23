@@ -48,10 +48,7 @@ class ConceptsList extends React.Component {
     if (!concepts) {
       return;
     }
-    const conceptsSelected = await this.props.conceptsSelected;
     for (let concept of concepts) {
-      //conceptsSelected = conceptsSelected || {};
-      concept.checked = conceptsSelected[concept.id];
       const children = await this.getChildrenConcepts(concept.id);
       concept.expandable = (children && children.length);
       concept.expanded = false;
@@ -64,21 +61,10 @@ class ConceptsList extends React.Component {
 
   handleCheckBoxClick = (event, id) => {
     event.stopPropagation();
-    let concepts = JSON.parse(JSON.stringify(this.state.concepts));
-    let concept = concepts.find(concept => concept.id === id);
-    concept.checked = !concept.checked;
-    //props
-    let conceptsSelected = this.props.conceptsSelected;
-    conceptsSelected = conceptsSelected || {};
-    conceptsSelected[concept.id] = concept.checked;
-    //Send to props
-    this.props.handleCheckBoxClick(id, concept.checked);
-    this.setState({
-      concepts: concepts
-    });
+    this.props.changeConceptsSelected(id);
   };
 
-  handleClick = (id) => {
+  handleConceptClick = (id) => {
     let concepts = JSON.parse(JSON.stringify(this.state.concepts));
     let concept = concepts.find(concept => concept.id === id);
     if (concept.expandable) {
@@ -91,7 +77,7 @@ class ConceptsList extends React.Component {
 
   render() {
     const { error, isLoaded, concepts } = this.state;
-    const { classes } = this.props;
+    const { classes, conceptsSelected, changeConceptsSelected } = this.props;
 
     if (!isLoaded) {
       return <List>Loading...</List>;
@@ -103,12 +89,12 @@ class ConceptsList extends React.Component {
       <List disablePadding className={classes.nested}>
         {concepts.map(concept => (
           <React.Fragment key={concept.id}>
-            <ListItem button onClick={() => this.handleClick(concept.id)}>
+            <ListItem button onClick={() => this.handleConceptClick(concept.id)}>
               <Avatar src={`/api/conceptImages/${concept.id}`} />
               <ListItemText inset primary={concept.name} />
               <ListItemSecondaryAction className={classes.shiftRight}>
                 <CheckBox
-                  checked={concept.checked}
+                  checked={conceptsSelected[concept.id]}
                   onClick={(e) => this.handleCheckBoxClick(e, concept.id)}
                 />
               </ListItemSecondaryAction>
@@ -119,7 +105,7 @@ class ConceptsList extends React.Component {
               }
             </ListItem>
             <Collapse in={concept.expanded} timeout="auto" unmountOnExit>
-              <ConceptsList classes={classes} id={concept.id} conceptsSelected={this.props.conceptsSelected} handleCheckBoxClick={this.props.handleCheckBoxClick}/>
+              <ConceptsList classes={classes} id={concept.id} conceptsSelected={conceptsSelected} changeConceptsSelected={changeConceptsSelected}/>
             </Collapse>
           </React.Fragment>
         ))}
