@@ -237,7 +237,7 @@ class Annotate extends Component {
       if( res.message === "Annotated") {
         var videoInfo = JSON.parse(res.value);
         this.setState({
-          errorMsg: "User: " + videoInfo.userid + " Annotated: " + concept.name + " in video " + videoInfo.videoid + " at time " + videoInfo.timeinvideo,
+          errorMsg: "User: " + videoInfo.userid + " Annotated: " + concept.name + " in video " + videoInfo.videoid + " at time " + Math.floor(videoInfo.timeinvideo/60) + ' minutes '+ videoInfo.timeinvideo%60 + " seconds",
           open: true
         })
       } else {
