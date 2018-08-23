@@ -26,15 +26,13 @@ class Concepts extends React.Component {
   getConceptsSelected = async () => {
     return axios.get('/api/conceptsSelected', {
       headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')},
-    }).then(res => res.data)
-      .then(conceptsSelectedList => {
+    }).then(res => res.data).then(conceptsSelectedList => {
       let conceptsSelectedObj = {};
       conceptsSelectedList.forEach(concept => {
         conceptsSelectedObj[concept.conceptid] = true;
       })
       return conceptsSelectedObj;
-    })
-      .catch(error => {
+    }).catch(error => {
       this.setState({
         isloaded: true,
         error: error
