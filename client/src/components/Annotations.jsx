@@ -97,11 +97,11 @@ class Annotations extends Component {
     return (
       <React.Fragment>
         <List className={classes.root}>
-          {annotations.map((annotation, index) =>(
+          {annotations.map((annotation, index) => (
             <React.Fragment key={index}>
               <ListItem button onClick={() => this.handleClick(annotation.timeinvideo, annotation.filename, annotation.id)}>
                 <ListItemText primary={'At '+ Math.floor(annotation.timeinvideo/60) + ' minutes '+ annotation.timeinvideo%60 + " seconds Annotated: " + annotation.name} />
-                <ListItemSecondaryAction  >
+                <ListItemSecondaryAction >
                   <IconButton className={classes.delete} aria-label="Delete">
                     <DeleteIcon onClick = {(e) => this.handleDelete(e, annotation.id)} />
                   </IconButton>
@@ -114,7 +114,7 @@ class Annotations extends Component {
             </React.Fragment>
           ))}
         </List>
-        </React.Fragment>
+      </React.Fragment>
     );
   }
 }

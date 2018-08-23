@@ -55,16 +55,15 @@ class AnnotationFrame extends Component {
 
   componentDidMount = async () => {
     this.getVideoImage('https://d1yenv1ac8fa55.cloudfront.net/videos/'+this.props.annotation.filename,
-     this.props.annotation.timeinvideo,
-    function(img, secs, event) {
-      if (event.type === 'seeked') {
-        this.setState({
-          isLoaded: true,
-          image: img,
-        })
+      this.props.annotation.timeinvideo, (img, secs, event) => {
+        if (event.type === 'seeked') {
+          this.setState({
+            isLoaded: true,
+            image: img,
+          });
+        }
       }
-    });
-
+    );
   };
 
   render () {
