@@ -384,7 +384,7 @@ app.post("/annotate", passport.authenticate('jwt', {session: false}),
     console.log(error)
     res.json({message: "error: "+error})
   }
-);
+});
 
 app.post("/api/listConcepts", passport.authenticate('jwt', {session: false}),
   async (req, res) => {
