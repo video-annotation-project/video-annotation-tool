@@ -192,7 +192,7 @@ app.get('/api/conceptsSelected', passport.authenticate('jwt', {session: false}),
       res.status(400).json(error);
     }
   }
-)
+);
 
 app.post('/api/conceptsSelected', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
@@ -208,7 +208,7 @@ app.post('/api/conceptsSelected', passport.authenticate('jwt', {session: false})
       res.status(400).json(error);
     }
   }
-)
+);
 
 app.get('/api/conceptImages/:id',
   async (req, res) => {
@@ -247,27 +247,27 @@ app.get('/api/annotate',
         var chunksize = (end - start) + 1;
 
         res.writeHead(206, {
-           'Content-Range'  : 'bytes ' + start + '-' + end + '/' + total,
-           'Accept-Ranges'  : 'bytes',
-           'Content-Length' : chunksize,
-           'Last-Modified'  : data.Contents[0].LastModified,
-           'Content-Type'   : mimetype
+          'Content-Range'  : 'bytes ' + start + '-' + end + '/' + total,
+          'Accept-Ranges'  : 'bytes',
+          'Content-Length' : chunksize,
+          'Last-Modified'  : data.Contents[0].LastModified,
+          'Content-Type'   : mimetype
         });
         s3.getObject({Bucket: 'lubomirstanchev', Key: file, Range: range}).createReadStream().pipe(res);
-    }
-    else
-    {
-        res.writeHead(200,
-        {
-            'Cache-Control' : 'max-age=' + cache + ', private',
-            'Content-Length': data.Contents[0].Size,
-            'Last-Modified' : data.Contents[0].LastModified,
-            'Content-Type'  : mimetype
+      }
+      else
+      {
+        res.writeHead(200, {
+          'Cache-Control' : 'max-age=' + cache + ', private',
+          'Content-Length': data.Contents[0].Size,
+          'Last-Modified' : data.Contents[0].LastModified,
+          'Content-Type'  : mimetype
         });
         s3.getObject({Bucket: 'lubomirstanchev', Key: file}).createReadStream().pipe(res);
-    }
-  })
-});
+      }
+    });
+  }
+);
 
 app.get('/api/videoNames', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
@@ -279,7 +279,7 @@ app.get('/api/videoNames', passport.authenticate('jwt', {session: false}),
       res.json(error);
     }
   }
-)
+);
 
 app.get('/api/videosWatched', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
@@ -292,7 +292,7 @@ app.get('/api/videosWatched', passport.authenticate('jwt', {session: false}),
       res.json(error);
     }
   }
-)
+);
 
 app.get('/api/getAnnotations', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
@@ -306,7 +306,7 @@ app.get('/api/getAnnotations', passport.authenticate('jwt', {session: false}),
       res.json(error);
     }
   }
-)
+);
 
 app.get('/api/videos/:name', (req, res) => {
   var s3 = new AWS.S3();
@@ -326,26 +326,26 @@ app.get('/api/videos/:name', (req, res) => {
       var chunksize = (end - start) + 1;
 
       res.writeHead(206, {
-         'Content-Range'  : 'bytes ' + start + '-' + end + '/' + total,
-         'Accept-Ranges'  : 'bytes',
-         'Content-Length' : chunksize,
-         'Last-Modified'  : data.Contents[0].LastModified,
-         'Content-Type'   : mimetype
+        'Content-Range'  : 'bytes ' + start + '-' + end + '/' + total,
+        'Accept-Ranges'  : 'bytes',
+        'Content-Length' : chunksize,
+        'Last-Modified'  : data.Contents[0].LastModified,
+        'Content-Type'   : mimetype
       });
       s3.getObject({Bucket: 'lubomirstanchev', Key: file, Range: range}).createReadStream().pipe(res);
-  }
-  else
-  {
+    }
+    else
+    {
       res.writeHead(200,
       {
-          'Cache-Control' : 'max-age=' + cache + ', private',
-          'Content-Length': data.Contents[0].Size,
-          'Last-Modified' : data.Contents[0].LastModified,
-          'Content-Type'  : mimetype
+        'Cache-Control' : 'max-age=' + cache + ', private',
+        'Content-Length': data.Contents[0].Size,
+        'Last-Modified' : data.Contents[0].LastModified,
+        'Content-Type'  : mimetype
       });
       s3.getObject({Bucket: 'lubomirstanchev', Key: file}).createReadStream().pipe(res);
-  }
-  })
+    }
+  });
 });
 
 async function getVideoId(value) {
