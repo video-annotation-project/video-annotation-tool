@@ -5,7 +5,14 @@ import ListItem from '@material-ui/core/ListItem';
 
 const styles = theme => ({
   item: {
-    paddingTop: 0
+    paddingTop: 0,
+    width: '1280px',
+    height: '720px',
+    paddingLeft: 0
+  },
+  img: {
+    width: '1280px',
+    height: '720px',
   }
 });
 
@@ -57,6 +64,7 @@ class AnnotationFrame extends Component {
         })
       }
     });
+
   };
 
   render () {
@@ -71,15 +79,16 @@ class AnnotationFrame extends Component {
     return (
       <React.Fragment>
         <ListItem className={classes.item}>
-          <img id = 'imageId' src={image.src} alt='error' />
+          <div id='test'></div>
+          <img className={classes.img} id='imageId' src={image.src} alt='error' />
           <div style={{
             position: 'absolute',
-            top: ((this.props.annotation.toprighty/720)*1080),
-            left: (((this.props.annotation.botleftx/1280)*1920)+24),
-            height: ((this.props.annotation.botlefty-this.props.annotation.toprighty)/720)*1080,
-            width: ((this.props.annotation.toprightx-this.props.annotation.botleftx)/1280)*1920,
+            top: (this.props.annotation.y1)+'px',
+            left: (this.props.annotation.x1)+'px',
+            height: (this.props.annotation.y2-this.props.annotation.y1) + 'px',
+            width: (this.props.annotation.x2-this.props.annotation.x1) +'px',
             borderStyle: 'solid',
-            borderWidth: '1px',
+            borderWidth: '2px',
             borderColor: 'coral',
           }}>
           </div>

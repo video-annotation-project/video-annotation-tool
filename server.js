@@ -298,7 +298,7 @@ app.get('/api/videosWatched', passport.authenticate('jwt', {session: false}),
 app.get('/api/getAnnotations', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
     let videoId = req.query.videoid;
-    let queryPass = 'SELECT annotations.id, annotations.timeinvideo, annotations.toprightx, annotations.toprighty, annotations.botleftx, annotations.botlefty, concepts.name, videos.filename FROM annotations, concepts, videos WHERE annotations.conceptid=concepts.id AND annotations.userid=$1 AND annotations.videoid=$2 AND videos.id=annotations.videoid ORDER BY annotations.timeinvideo';
+    let queryPass = 'SELECT annotations.id, annotations.timeinvideo, annotations.x1, annotations.y1, annotations.x2, annotations.y2, annotations.videoWidth, annotations.videoHeight, concepts.name, videos.filename FROM annotations, concepts, videos WHERE annotations.conceptid=concepts.id AND annotations.userid=$1 AND annotations.videoid=$2 AND videos.id=annotations.videoid ORDER BY annotations.timeinvideo';
     let userId = req.user.id;
     try {
       const videoData = await psql.query(queryPass, [userId, videoId]);
@@ -378,9 +378,9 @@ app.post("/annotate", passport.authenticate('jwt', {session: false}),
   var videoId = await getVideoId(req.body.videoId);
   var userId = req.user.id;
   var conceptId = await getConceptId(req.body.conceptId);
-  queryText = 'INSERT INTO annotations(videoid, userid, conceptid, timeinvideo, toprightx, toprighty, botleftx, botlefty, dateannotated) VALUES($1, $2, $3, $4, $5, $6, $7, $8, current_timestamp) RETURNING *';
+  queryText = 'INSERT INTO annotations(videoid, userid, conceptid, timeinvideo, x1, y1, x2, y2, videoWidth, videoHeight, dateannotated) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, current_timestamp) RETURNING *';
   try {
-    var insertRes = await psql.query(queryText, [videoId, userId, conceptId, req.body.timeinvideo, Math.round(req.body.rightTopX), Math.round(req.body.rightTopY), Math.round(req.body.leftBotX), Math.round(req.body.leftBotY)]);
+    var insertRes = await psql.query(queryText, [videoId, userId, conceptId, req.body.timeinvideo, req.body.x1, req.body.y1, req.body.x2, req.body.y2, req.body.videoWidth, req.body.videoHeight]);
     res.json({message: "Annotated", value: JSON.stringify(insertRes.rows[0])});
   } catch(error) {
     console.log(error)

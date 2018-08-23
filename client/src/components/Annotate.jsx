@@ -204,12 +204,21 @@ class Annotate extends Component {
     var myVideo = document.getElementById("video");
     var cTime = myVideo.currentTime;
     var dragBoxCord = document.getElementById("dragBox").getBoundingClientRect();
-    var vidCord = myVideo.getBoundingClientRect();
-    var leftBotX = Math.max((dragBoxCord.left-vidCord.left),0);
-    var leftBotY = Math.min((dragBoxCord.bottom-vidCord.top),723);
-    var rightTopX = Math.min((dragBoxCord.right-vidCord.left),1280);
-    var rightTopY = Math.max((dragBoxCord.top-vidCord.top),0);
+    var vidCord = myVideo.getBoundingClientRect("dragBox");
+    var x1_video = vidCord.left;
+    var y1_video = vidCord.top;
+    var x1_box = dragBoxCord.left;
+    var y1_box = dragBoxCord.top;
+    var height = dragBoxCord.height;
+    var width = dragBoxCord.width;
+
+    var x1 = Math.max((x1_box - x1_video),0);
+    var y1 = Math.max((y1_box - y1_video),0);
+    var x2 = Math.min((x1 + width),1279);
+    var y2 = Math.min((y1 + height),719);
+
     //id | videoid | userid | conceptid | timeinvideo | topRightx | topRighty | botLeftx | botLefty | dateannotated
+
     fetch('/annotate', {
       method: 'POST',
       headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token')},
@@ -217,10 +226,12 @@ class Annotate extends Component {
         'conceptId': concept.name,
         'videoId': this.state.videoName,
         'timeinvideo': cTime,
-        'leftBotX': leftBotX,
-        'leftBotY': leftBotY,
-        'rightTopX': rightTopX,
-        'rightTopY': rightTopY,
+        'x1': x1,
+        'y1': y1,
+        'x2': x2,
+        'y2': y2,
+        'videoWidth': 1280,
+        'videoHeight': 720,
       })
     }).then(res => res.json())
     .then(res => {
@@ -237,6 +248,7 @@ class Annotate extends Component {
         })
       }
     })
+
   }
 
   handleClose = () => {
