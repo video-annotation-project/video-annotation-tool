@@ -106,7 +106,7 @@ app.post("/login", async function(req, res) {
 });
 
 //Code for profile modification
-app.post('/changePass', passport.authenticate('jwt', {session: false}),
+app.post('/changePassword', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
     if (req.body.password1 != req.body.password2) {
       res.json({message: "New passwords not matching"});
@@ -129,7 +129,6 @@ app.post('/changePass', passport.authenticate('jwt', {session: false}),
             res.json({message: "error: " + error.message});
             res.end();
           }
-
         } else {
           res.json({message: "Wrong Password!"});
           res.end();
@@ -138,7 +137,6 @@ app.post('/changePass', passport.authenticate('jwt', {session: false}),
         res.json({message: "error: " + error.message});
         res.end();
       }
-
     } catch (error) {
       res.json({message: "error: " + error.message});
       res.end();
@@ -184,7 +182,7 @@ app.get('/api/concepts', passport.authenticate('jwt', {session: false}),
   }
 );
 
-app.get('/api/selected', passport.authenticate('jwt', {session: false}),
+app.get('/api/conceptsSelected', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
     queryText = 'select conceptid from profile where profile.userid=$1';
     try {
@@ -196,8 +194,9 @@ app.get('/api/selected', passport.authenticate('jwt', {session: false}),
   }
 )
 
-app.post('/api/selectedPush', passport.authenticate('jwt', {session: false}),
+app.post('/api/conceptsSelected', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
+    console.log('conceptsSelected posted');
     queryText = 'DELETE FROM profile WHERE profile.userid=$1 AND profile.conceptid=$2 RETURNING *';
     if (req.body.checked) {
       queryText = 'INSERT INTO profile(userid, conceptid) VALUES($1, $2) RETURNING *';

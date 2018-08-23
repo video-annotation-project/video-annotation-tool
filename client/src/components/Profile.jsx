@@ -33,7 +33,7 @@ class Profile extends Component {
 
   handleSubmit = event => {
     event.preventDefault();
-    fetch('/changePass', {
+    fetch('/changePassword', {
       method: 'POST',
       headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token')},
       body: JSON.stringify({

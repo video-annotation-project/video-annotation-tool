@@ -17,19 +17,15 @@ class Concepts extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      conceptsSelected: {},
       isLoaded: false,
+      conceptsSelected: {},
       error: null
     };
   }
 
-  handleCheckBoxClick = async (id, checked) => {
+  changeSelectedConcepts = async (id, checked) => {
     this.state.conceptsSelected[id] = checked;
-    await this.pushSelectedConcepts(id, checked);
-  };
-
-  pushSelectedConcepts = async (id, checked) => {
-    fetch('/api/selectedPush', {
+    fetch('/api/conceptsSelected', {
       method: 'POST',
       headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token')},
       body: JSON.stringify({
@@ -43,22 +39,39 @@ class Concepts extends React.Component {
         alert(res)
       }
     })
+    // axios.post('/api/conceptsSelected', {
+    //   headers: {'Authorization': 'Bearer ' + localStorage.getItem('token')},
+    //   body: JSON.stringify({
+    //     'id': id,
+    //     'checked': checked,
+    //   })
+    // }).then(res => res.data).then(res => {
+    //   if (res.message === "Changed") {
+    //     alert(res.message + ": " + res.value)
+    //   } else {
+    //     alert(res)
+    //   }
+    // }).catch(error => {
+    //   this.setState({
+    //     isloaded: true,
+    //     error: error
+    //   });
+    // });
   }
 
-  getSelectedConcepts = async () => (
-    axios.get(`/api/selected`, {
+  getSelectedConcepts = async () => {
+    return axios.get('/api/conceptsSelected', {
       headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')},
-    }).then(res => (res.data))
+    }).then(res => res.data)
       .catch(error => {
         this.setState({
           isloaded: true,
           error: error
         });
-        return;
-    })
-  );
+    });
+  };
 
-  makeObject = async (selectedConcepts) => {
+  makeObject = (selectedConcepts) => {
     let temp = {}
     selectedConcepts.forEach(concept => {
       temp[concept.conceptid] = true;
@@ -68,10 +81,10 @@ class Concepts extends React.Component {
 
   componentDidMount = async () => {
     let selectedConcepts = await this.getSelectedConcepts();
-    let temp = await this.makeObject(selectedConcepts);
-    await this.setState({conceptsSelected: temp});
+    let temp = this.makeObject(selectedConcepts);
     this.setState({
       isLoaded: true,
+      conceptsSelected: temp,
     });
   }
 
@@ -87,7 +100,11 @@ class Concepts extends React.Component {
     return (
       <div className={classes.root}>
         <br />
-        <ConceptsList id={-1} conceptsSelected={this.state.conceptsSelected} handleCheckBoxClick={this.handleCheckBoxClick}/>
+        <ConceptsList
+          id={-1}
+          conceptsSelected={this.state.conceptsSelected}
+          handleCheckBoxClick={this.changeSelectedConcepts}
+        />
       </div>
     );
   }

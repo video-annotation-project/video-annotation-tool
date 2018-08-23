@@ -45,21 +45,4 @@ class App extends React.Component {
   }
 }
 
-/*
-{localStorage.getItem('admin') === 'true' ? (
-    <Button color='inherit' onClick={() => history.push('/createUser')}>
-      Create User
-    </Button>
-):(
-  <React.Fragment>
-    <Button color='inherit' onClick={() => history.push('/concepts')}>
-      Select Concepts
-    </Button>
-    <Button color='inherit' onClick={() => history.push('/annotate')}>
-      Annotate Videos
-    </Button>
-  </React.Fragment>
-)}
-*/
-
 export default App;

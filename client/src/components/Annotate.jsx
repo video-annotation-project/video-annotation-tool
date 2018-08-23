@@ -164,18 +164,17 @@ class Annotate extends Component {
     };
   }
 
-  getSelectedConcepts = async () => (
-    axios.get(`/api/selected`, {
+  getSelectedConcepts = async () => {
+    return axios.get('/api/conceptsSelected', {
       headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')},
-    }).then(res => (res.data))
+    }).then(res => res.data)
       .catch(error => {
         this.setState({
           isloaded: true,
           error: error
         });
-        return;
     })
-  );
+  };
 
   makeObject = async (selectedConcepts) => {
     let temp = {}
