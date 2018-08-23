@@ -352,9 +352,9 @@ async function getVideoId(value) {
   queryPass = 'select id from videos where videos.filename=$1';
   try {
     const user = await psql.query(queryPass,[value]);
-    return user.rows[0].id
+    return user.rows[0].id;
   } catch (error) {
-    console.log(error)
+    console.log(error);
   }
 }
 
@@ -363,29 +363,29 @@ async function getConceptId(value) {
   queryPass = 'select id from concepts where concepts.name=$1';
   try {
     const queryRes = await psql.query(queryPass,[value]);
-    return queryRes.rows[0].id
+    return queryRes.rows[0].id;
   } catch (error) {
-    console.log(error)
+    console.log(error);
   }
 }
 
 
 app.post("/annotate", passport.authenticate('jwt', {session: false}),
   async (req, res) => {
-  //id | videoid | userid | conceptid | timeinvideo | topRightx | topRighty | botLeftx | botLefty | dateannotated
-  //get videoId
-  var videoId = await getVideoId(req.body.videoId);
-  var userId = req.user.id;
-  var conceptId = await getConceptId(req.body.conceptId);
-  queryText = 'INSERT INTO annotations(videoid, userid, conceptid, timeinvideo, toprightx, toprighty, botleftx, botlefty, dateannotated) VALUES($1, $2, $3, $4, $5, $6, $7, $8, current_timestamp) RETURNING *';
-  try {
-    var insertRes = await psql.query(queryText, [videoId, userId, conceptId, req.body.timeinvideo, Math.round(req.body.rightTopX), Math.round(req.body.rightTopY), Math.round(req.body.leftBotX), Math.round(req.body.leftBotY)]);
-    res.json({message: "Annotated", value: JSON.stringify(insertRes.rows[0])});
-  } catch(error) {
-    console.log(error)
-    res.json({message: "error: "+error})
+    //id | videoid | userid | conceptid | timeinvideo | topRightx | topRighty | botLeftx | botLefty | dateannotated
+    //get videoId
+    var videoId = await getVideoId(req.body.videoId);
+    var userId = req.user.id;
+    var conceptId = await getConceptId(req.body.conceptId);
+    queryText = 'INSERT INTO annotations(videoid, userid, conceptid, timeinvideo, toprightx, toprighty, botleftx, botlefty, dateannotated) VALUES($1, $2, $3, $4, $5, $6, $7, $8, current_timestamp) RETURNING *';
+    try {
+      var insertRes = await psql.query(queryText, [videoId, userId, conceptId, req.body.timeinvideo, Math.round(req.body.rightTopX), Math.round(req.body.rightTopY), Math.round(req.body.leftBotX), Math.round(req.body.leftBotY)]);
+      res.json({message: "Annotated", value: JSON.stringify(insertRes.rows[0])});
+    } catch(error) {
+      console.log(error);
+      res.json({message: "error: "+error});
+    }
   }
-}
 );
 
 app.post("/api/listConcepts", passport.authenticate('jwt', {session: false}),
@@ -397,15 +397,16 @@ app.post("/api/listConcepts", passport.authenticate('jwt', {session: false}),
     queryText = 'SELECT * FROM concepts WHERE concepts.id IN(' + params.join(',') + ')';
     try {
       var conceptInfo = await psql.query(queryText, req.body.conceptList);
-      res.json(conceptInfo.rows)
+      res.json(conceptInfo.rows);
     } catch (error) {
       console.log(error);
     }
-  })
+  }
+);
 
 app.post('/api/delete', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
-    queryText = 'DELETE FROM annotations WHERE annotations.id=$1 RETURNING *'
+    queryText = 'DELETE FROM annotations WHERE annotations.id=$1 RETURNING *';
     try {
       var deleteRes = await psql.query(queryText, [req.body.id]);
       res.json(deleteRes.rows);
@@ -413,7 +414,7 @@ app.post('/api/delete', passport.authenticate('jwt', {session: false}),
       console.log(error);
     }
   }
-)
+);
 
 // Express only serves static assets in production
 if (process.env.NODE_ENV === 'production') {
