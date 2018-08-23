@@ -31,18 +31,17 @@ class ConceptsList extends React.Component {
     };
   }
 
-  getChildrenConcepts = async (id) => (
-    axios.get(`/api/concepts?id=${id}`, {
+  getChildrenConcepts = async (id) => {
+    return axios.get(`/api/concepts?id=${id}`, {
       headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')},
-    }).then(res => (res.data))
+    }).then(res => res.data)
       .catch(error => {
       this.setState({
         isloaded: true,
         error: error
       });
-      return;
     })
-  );
+  };
 
   componentDidMount = async () => {
     let concepts = await this.getChildrenConcepts(this.props.id);

@@ -23,42 +23,6 @@ class Concepts extends React.Component {
     };
   }
 
-  changeSelectedConcepts = async (id, checked) => {
-    this.state.conceptsSelected[id] = checked;
-    fetch('/api/conceptsSelected', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token')},
-      body: JSON.stringify({
-        'id': id,
-        'checked': checked,
-      })
-    }).then(res => res.json()).then(res => {
-      if (res.message === "Changed") {
-        alert(res.message + ": " + res.value)
-      } else {
-        alert(res)
-      }
-    })
-    // axios.post('/api/conceptsSelected', {
-    //   headers: {'Authorization': 'Bearer ' + localStorage.getItem('token')},
-    //   body: JSON.stringify({
-    //     'id': id,
-    //     'checked': checked,
-    //   })
-    // }).then(res => res.data).then(res => {
-    //   if (res.message === "Changed") {
-    //     alert(res.message + ": " + res.value)
-    //   } else {
-    //     alert(res)
-    //   }
-    // }).catch(error => {
-    //   this.setState({
-    //     isloaded: true,
-    //     error: error
-    //   });
-    // });
-  }
-
   getSelectedConcepts = async () => {
     return axios.get('/api/conceptsSelected', {
       headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')},
@@ -70,6 +34,29 @@ class Concepts extends React.Component {
         });
     });
   };
+
+  changeSelectedConcepts = async (id, checked) => {
+    this.state.conceptsSelected[id] = checked;
+    axios.post('/api/conceptsSelected', {
+      'id': id,
+      'checked': checked,
+    }, {
+      headers: {
+        'Authorization': 'Bearer ' + localStorage.getItem('token')
+      },
+    }).then(res => res.data).then(res => {
+      if (res.message === "Changed") {
+        alert(res.message + ": " + res.value)
+      } else {
+        alert(res)
+      }
+    }).catch(error => {
+      this.setState({
+        isloaded: true,
+        error: error
+      });
+    });
+  }
 
   makeObject = (selectedConcepts) => {
     let temp = {}

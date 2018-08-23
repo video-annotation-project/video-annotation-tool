@@ -369,7 +369,6 @@ async function getConceptId(value) {
   }
 }
 
-
 app.post("/annotate", passport.authenticate('jwt', {session: false}),
   async (req, res) => {
     //id | videoid | userid | conceptid | timeinvideo | topRightx | topRighty | botLeftx | botLefty | dateannotated
