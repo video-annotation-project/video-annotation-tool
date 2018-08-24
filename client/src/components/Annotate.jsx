@@ -267,7 +267,7 @@ class Annotate extends Component {
          <div className = {classes.videoSectionContainer}>
             <div className = {classes.videoContainer}>
             <div className = {classes.boxContainer}>
-               <video id = "video"  width = "1280" height = "720" src={'api/videos/'+this.state.videoName} type='video/mp4' controls>
+               <video id = "video"  width = "1280" height = "720" src={'api/videos/Y7Ek6tndnA/'+this.state.videoName} type='video/mp4' controls>
                Your browser does not support the video tag.
                  <source src='api/annotate' type='video/mp4' />
                </video>

@@ -6,8 +6,8 @@ import ListItem from '@material-ui/core/ListItem';
 const styles = theme => ({
   item: {
     paddingTop: 0,
-    width: '1280px',
-    height: '720px',
+    width: '1300px',
+    height: '730px',
     paddingLeft: 0
   },
   img: {
@@ -15,7 +15,8 @@ const styles = theme => ({
     height: '720px',
   }
 });
-
+// width 1283
+//height 727
 class AnnotationFrame extends Component {
   constructor(props) {
     super(props);

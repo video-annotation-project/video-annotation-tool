@@ -294,9 +294,9 @@ app.get('/api/videosWatched', passport.authenticate('jwt', {session: false}),
   }
 );
 
-app.get('/api/getAnnotations', passport.authenticate('jwt', {session: false}),
+app.get('/api/annotations/:videoid', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
-    let videoId = req.query.videoid;
+    let videoId = req.params.videoid;
     let queryPass = 'SELECT annotations.id, annotations.timeinvideo, annotations.x1, annotations.y1, annotations.x2, annotations.y2, annotations.videoWidth, annotations.videoHeight, concepts.name, videos.filename FROM annotations, concepts, videos WHERE annotations.conceptid=concepts.id AND annotations.userid=$1 AND annotations.videoid=$2 AND videos.id=annotations.videoid ORDER BY annotations.timeinvideo';
     let userId = req.user.id;
     try {
@@ -308,7 +308,7 @@ app.get('/api/getAnnotations', passport.authenticate('jwt', {session: false}),
   }
 );
 
-app.get('/api/videos/:name', (req, res) => {
+app.get('/api/videos/Y7Ek6tndnA/:name', (req, res) => {
   var s3 = new AWS.S3();
   const mimetype = 'video/mp4';
   const file = 'videos/' + req.params.name;

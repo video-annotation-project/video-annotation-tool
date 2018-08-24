@@ -34,8 +34,8 @@ class Annotations extends Component {
     };
   }
 
-  getAnnotations = async (id) => {
-    let annotations = await axios.get(`/api/getAnnotations?videoid=${id}`, {
+  getAnnotations = async (videoid) => {
+    let annotations = await axios.get(`/api/annotations/${videoid}`, {
       headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')},
     })
     return annotations.data;
