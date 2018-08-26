@@ -1,5 +1,19 @@
 ## Welcome to Video Annotation Tool
 
+### How to run our code:
+
+
+```
+git clone git@github.com:ishaanj1/video-annotation-tool.git
+cd video-annotation-tool/
+sudo apt install npm
+npm install
+cd client/
+npm install
+cd ..
+npm start
+```
+
 ### To Do:
 
 - Work on sign in/home page
