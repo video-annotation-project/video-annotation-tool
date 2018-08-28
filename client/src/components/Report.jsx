@@ -1,10 +1,5 @@
 import React from 'react';
-
-// import Typography from '@material-ui/core/Typography';
-import { withStyles } from '@material-ui/core/styles';
-import ListItem from '@material-ui/core/ListItem';
 import AWS from 'aws-sdk';
-//import VideosAnnotated from './VideosAnnotated.jsx';
 
 AWS.config.update(
   {
@@ -13,13 +8,6 @@ AWS.config.update(
     region: 'us-west-1',
   }
 );
-
-const styles = theme => ({
-  root: {
-    width: '100%',
-    backgroundColor: theme.palette.background.paper,
-  }
-});
 
 class Report extends React.Component {
   constructor(props) {
@@ -81,7 +69,6 @@ class Report extends React.Component {
 
   render() {
     const { error, isLoaded, image } = this.state;
-    const { classes } = this.props;
     if (!isLoaded) {
       return <div>Loading...</div>;
     }
@@ -89,13 +76,9 @@ class Report extends React.Component {
       return <div>Error: {error.message}</div>;
     }
     return (
-      <React.Fragment>
-        <ListItem className={classes.item}>
-          <img className={classes.img} id='imageId' src={image.src} alt='error' />
-        </ListItem>
-      </React.Fragment>
+      <img id='imageId' src={image.src} alt='error' />
     );
   }
 }
 
-export default withStyles(styles)(Report);
+export default Report;
