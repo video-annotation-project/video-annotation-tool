@@ -15,10 +15,19 @@ cd ..
 ```
 Now that the project environment is set up, run `npm start` to run the code.
 
-### Task list
+### Task list:
 Our task list is a shared private document located
 [here](https://docs.google.com/document/d/16zIdhcf8k0fMssgTFSHqLqmJxHvxEBnoGhTnfB3KWcs/edit).
 Contact a team member if you don't have permission to view.
+
+### Coding/Style guide:
+* All code should have a purpose (unnecessary/redundant code introduces bugs and
+  confuses people)
+* Coding style should be consistent. This includes:
+  * Indent correctly
+  * Keep lines from exceeding 80 characters
+  * Terminate JavaScript statements with semicolons
+  * Use arrow functions
 
 ### Basic Ubuntu
 
@@ -66,7 +75,7 @@ Then click 'System settings..'
 ![Settings](https://i.imgur.com/pXLa4r5.png)
 
 
-## Overview
+### Extra info:
 
 A Webpack development server is configured to run on `localhost:3000`. This development server will bundle all static assets located under `client/src/`. All requests to `localhost:3000` will serve `client/index.html` which will include Webpack's `bundle.js`.
 
