@@ -7,6 +7,7 @@ import VideoList from './VideoList.jsx';
 import ErrorModal from './ErrorModal.jsx';
 import List from '@material-ui/core/List';
 import axios from 'axios';
+import AWS from 'aws-sdk';
 
 const styles = theme => ({
   clear: {
@@ -113,6 +114,14 @@ const styles = theme => ({
   },
 });
 
+AWS.config.update(
+  {
+    accessKeyId: "AKIAI2JEDK66FXVNCR6A",
+    secretAccessKey: "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",
+    region: 'us-west-1',
+  }
+);
+
 function changeSpeed() {
 
    try {
@@ -218,7 +227,22 @@ class Annotate extends Component {
 
     //id | videoid | userid | conceptid | timeinvideo | topRightx | topRighty | botLeftx | botLefty | dateannotated
 
-    fetch('/annotate', {
+    //draw video with bounding box to off-screen canvas and save as img
+    var canvas = document.createElement('canvas');
+    canvas.height = vidCord.height;
+    canvas.width = vidCord.width;
+    var ctx = canvas.getContext('2d');
+    ctx.drawImage(myVideo, 0, 0, canvas.width, canvas.height);
+    ctx.lineWidth = "2";
+    ctx.strokeStyle = "coral";
+    ctx.rect(x1, y1, width, height);
+    ctx.stroke();
+    var imgWithBox = new Image();
+    imgWithBox.setAttribute('crossOrigin', 'use-credentials');
+    imgWithBox.src = canvas.toDataURL();
+    this.putVideoImage(imgWithBox);
+
+    fetch('/annotateImage', {
       method: 'POST',
       headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token')},
       body: JSON.stringify({
@@ -248,6 +272,29 @@ class Annotate extends Component {
       }
     })
 
+  }
+
+  putVideoImage = (img) => {
+    var s3 = new AWS.S3();
+    var params = {
+      Key: 'test/'+Date.now().toString(), //example
+      Bucket: 'lubomirstanchev',
+      ContentType: 'text/plain',
+      Body: img.src //the base64 string is now the body
+    };
+    try{
+      s3.putObject(params, (err, data) => {
+        if (err) {
+          // Log the error
+          console.log(err);
+        } else {
+          //Image put in s3
+          console.log(data)
+        }
+      });
+    } catch (error) {
+      console.log('Error: ', error);
+    }
   }
 
   handleClose = () => {

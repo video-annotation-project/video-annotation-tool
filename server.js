@@ -386,6 +386,23 @@ app.post("/annotate", passport.authenticate('jwt', {session: false}),
   }
 });
 
+app.post("/annotateImage", passport.authenticate('jwt', {session: false}),
+  async (req, res) => {
+  //id | videoid | userid | conceptid | timeinvideo | topRightx | topRighty | botLeftx | botLefty | dateannotated
+  //get videoId
+  var videoId = await getVideoId(req.body.videoId);
+  var userId = req.user.id;
+  var conceptId = await getConceptId(req.body.conceptId);
+  queryText = 'INSERT INTO annotations(videoid, userid, conceptid, timeinvideo, x1, y1, x2, y2, videoWidth, videoHeight, dateannotated) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, current_timestamp) RETURNING *';
+  try {
+    var insertRes = await psql.query(queryText, [videoId, userId, conceptId, req.body.timeinvideo, req.body.x1, req.body.y1, req.body.x2, req.body.y2, req.body.videoWidth, req.body.videoHeight]);
+    res.json({message: "Annotated", value: JSON.stringify(insertRes.rows[0])});
+  } catch(error) {
+    console.log(error)
+    res.json({message: "error: "+error})
+  }
+});
+
 app.post("/api/listConcepts", passport.authenticate('jwt', {session: false}),
   async (req, res) => {
     var params = [];
