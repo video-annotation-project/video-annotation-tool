@@ -227,20 +227,9 @@ class Annotate extends Component {
 
     //id | videoid | userid | conceptid | timeinvideo | topRightx | topRighty | botLeftx | botLefty | dateannotated
 
-    //draw video with bounding box to off-screen canvas and save as img
-    var canvas = document.createElement('canvas');
-    canvas.height = vidCord.height;
-    canvas.width = vidCord.width;
-    var ctx = canvas.getContext('2d');
-    ctx.drawImage(myVideo, 0, 0, canvas.width, canvas.height);
-    ctx.lineWidth = "2";
-    ctx.strokeStyle = "coral";
-    ctx.rect(x1, y1, width, height);
-    ctx.stroke();
-    var imgWithBox = new Image();
-    imgWithBox.setAttribute('crossOrigin', 'use-credentials');
-    imgWithBox.src = canvas.toDataURL();
-    this.putVideoImage(imgWithBox);
+    //draw video with and without bounding box to canvas and save as img
+    var date = Date.now().toString();
+    this.drawImages(vidCord, dragBoxCord, myVideo, date, x1, y1);
 
     fetch('/annotateImage', {
       method: 'POST',
@@ -255,6 +244,8 @@ class Annotate extends Component {
         'y2': y2,
         'videoWidth': 1280,
         'videoHeight': 720,
+        'image': date,
+        'imagewithbox': date + "_box",
       })
     }).then(res => res.json())
     .then(res => {
@@ -274,10 +265,34 @@ class Annotate extends Component {
 
   }
 
-  putVideoImage = (img) => {
+  drawImages = (vidCord, dragBoxCord, myVideo, date, x1, y1) => {
+    var canvas = document.createElement('canvas');
+    canvas.height = vidCord.height;
+    canvas.width = vidCord.width;
+    var ctx = canvas.getContext('2d');
+    ctx.drawImage(myVideo, 0, 0, canvas.width, canvas.height);
+    var img = new Image();
+    img.setAttribute('crossOrigin', 'use-credentials');
+    img.src = canvas.toDataURL();
+    this.putVideoImage(img, date, false);
+    ctx.lineWidth = "2";
+    ctx.strokeStyle = "coral";
+    ctx.rect(x1, y1, dragBoxCord.width, dragBoxCord.height);
+    ctx.stroke();
+    var imgWithBox = new Image();
+    imgWithBox.setAttribute('crossOrigin', 'use-credentials');
+    imgWithBox.src = canvas.toDataURL();
+    this.putVideoImage(imgWithBox, date, true);
+  }
+
+  putVideoImage = (img, date, box) => {
     var s3 = new AWS.S3();
+    var key = 'test/' + date;
+    if (box) {
+      key += '_box';
+    }
     var params = {
-      Key: 'test/'+Date.now().toString(), //example
+      Key: key,
       Bucket: 'lubomirstanchev',
       ContentType: 'text/plain',
       Body: img.src //the base64 string is now the body
@@ -285,10 +300,8 @@ class Annotate extends Component {
     try{
       s3.putObject(params, (err, data) => {
         if (err) {
-          // Log the error
           console.log(err);
         } else {
-          //Image put in s3
           console.log(data)
         }
       });
