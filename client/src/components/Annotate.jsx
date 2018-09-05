@@ -298,13 +298,7 @@ class Annotate extends Component {
       Body: img.src //the base64 string is now the body
     };
     try{
-      s3.putObject(params, (err, data) => {
-        if (err) {
-          console.log(err);
-        } else {
-          console.log(data)
-        }
-      });
+      s3.putObject(params).send();
     } catch (error) {
       console.log('Error: ', error);
     }
@@ -363,13 +357,13 @@ class Annotate extends Component {
                <span className = {classes.conceptsText}>Current Concepts</span>
                <br />
                {(this.state.isLoaded) ? (
-                 <CurrentConcepts  handleConceptClick={this.handleConceptClick} conceptsSelected={this.state.conceptsSelected} />
+                 <CurrentConcepts  handleConceptClick= {this.handleConceptClick} conceptsSelected= {this.state.conceptsSelected} />
                ):(
                  <List>Loading...</List>
                )}
 
             </div>
-            <div className={classes.videoListContainer}>
+            <div className= {classes.videoListContainer}>
               <span className = {classes.videoListText}>Select Video</span>
               <br />
               <VideoList handleVideoClick={this.handleVideoClick} />
