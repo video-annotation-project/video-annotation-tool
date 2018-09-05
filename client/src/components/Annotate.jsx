@@ -295,7 +295,7 @@ class Annotate extends Component {
     var params = {
       Key: key,
       Bucket: 'lubomirstanchev',
-      ContentType: 'image/png',
+      ContentType: 'text/plain',
       Body: img.src //the base64 string is now the body
     };
     try{

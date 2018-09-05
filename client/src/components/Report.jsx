@@ -9,7 +9,7 @@ const styles = theme => ({
   root: {
     width: '100%',
     backgroundColor: theme.palette.background.paper,
-  }
+  },
 });
 
 class Report extends React.Component {
@@ -41,7 +41,8 @@ class Report extends React.Component {
         image: res,
         loaded: true,
       });
-      console.log(this.state.image);
+      let img = document.getElementById('imageTag');
+      img.src = res;
     })
   }
 
@@ -49,7 +50,7 @@ class Report extends React.Component {
     const { classes } = this.props;
     return (
       <div className={classes.root}>
-        {this.state.loaded ? (<img src = {this.state.image} alt = 'Download Failed'/>):(<div>Loading</div>)}
+        {this.state.loaded ? (<img id = 'imageTag' alt = 'Download Failed'/>):(<div>Loading</div>)}
       </div>
     );
   }
