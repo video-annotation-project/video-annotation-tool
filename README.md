@@ -1,8 +1,9 @@
 ## Welcome to Video Annotation Tool
+This application is live at https://www.deepseaannotations.com/
 
-### How to run our code:
+### How to run the development version on your local computer:
 
-
+Run the following commands in your command prompt to set up the project environment.
 ```
 git clone git@github.com:ishaanj1/video-annotation-tool.git
 cd video-annotation-tool/
@@ -11,33 +12,22 @@ npm install
 cd client/
 npm install
 cd ..
-npm start
 ```
+Now that the project environment is set up, run `npm start` to run the code.
 
-### To Do:
+### Task list:
+Our task list is a shared private document located
+[here](https://docs.google.com/document/d/16zIdhcf8k0fMssgTFSHqLqmJxHvxEBnoGhTnfB3KWcs/edit).
+Contact a team member if you don't have permission to view.
 
-- Work on sign in/home page
-- Embed mp4 video on aws server
-- Set up domain name videoAnnotationTool.com
-- Admin page with Info, Users, Reports tabs
-- Users page with Info, Select Concept, Select Videos,  Annotate Video, Any Video tabs
-  - Annotate Video tab has Start Now button
-  - button leads to a new video or a partly complete one
-- v2.0.0 features:
-  - During playback, display each label from -5 to 0 sec relative to label timestamp
-  - Keystroke shortcuts
-  - Playback speed controls
-
-### Done:
-
-- Wrote create table statements in psql
-- Parse json file for concept images
-- Put images in s3 storage
-- Finish setting up basic aws EC2
-- Set up database with postgresql
-- Make Users table
-- Add basic sign in
-- Add encrytion to password
+### Coding/Style guide:
+* All code should have a purpose (unnecessary/redundant code introduces bugs and
+  confuses people)
+* Coding style should be consistent. This includes:
+  * Indent correctly
+  * Keep lines from exceeding 80 characters
+  * Terminate JavaScript statements with semicolons
+  * Use arrow functions
 
 ### Basic Ubuntu
 
@@ -85,7 +75,7 @@ Then click 'System settings..'
 ![Settings](https://i.imgur.com/pXLa4r5.png)
 
 
-## Overview
+### Extra info:
 
 A Webpack development server is configured to run on `localhost:3000`. This development server will bundle all static assets located under `client/src/`. All requests to `localhost:3000` will serve `client/index.html` which will include Webpack's `bundle.js`.
 

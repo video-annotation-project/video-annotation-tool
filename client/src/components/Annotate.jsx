@@ -7,6 +7,7 @@ import VideoList from './VideoList.jsx';
 import ErrorModal from './ErrorModal.jsx';
 import List from '@material-ui/core/List';
 import axios from 'axios';
+import AWS from 'aws-sdk';
 
 const styles = theme => ({
   clear: {
@@ -113,6 +114,14 @@ const styles = theme => ({
   },
 });
 
+AWS.config.update(
+  {
+    accessKeyId: "AKIAI2JEDK66FXVNCR6A",
+    secretAccessKey: "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",
+    region: 'us-west-1',
+  }
+);
+
 function changeSpeed() {
 
    try {
@@ -218,7 +227,11 @@ class Annotate extends Component {
 
     //id | videoid | userid | conceptid | timeinvideo | topRightx | topRighty | botLeftx | botLefty | dateannotated
 
-    fetch('/annotate', {
+    //draw video with and without bounding box to canvas and save as img
+    var date = Date.now().toString();
+    this.drawImages(vidCord, dragBoxCord, myVideo, date, x1, y1);
+
+    fetch('/annotateImage', {
       method: 'POST',
       headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token')},
       body: JSON.stringify({
@@ -231,6 +244,8 @@ class Annotate extends Component {
         'y2': y2,
         'videoWidth': 1280,
         'videoHeight': 720,
+        'image': date,
+        'imagewithbox': date + "_box",
       })
     }).then(res => res.json())
     .then(res => {
@@ -248,6 +263,51 @@ class Annotate extends Component {
       }
     })
 
+  }
+
+  drawImages = (vidCord, dragBoxCord, myVideo, date, x1, y1) => {
+    var canvas = document.createElement('canvas');
+    canvas.height = vidCord.height;
+    canvas.width = vidCord.width;
+    var ctx = canvas.getContext('2d');
+    ctx.drawImage(myVideo, 0, 0, canvas.width, canvas.height);
+    var img = new Image();
+    img.setAttribute('crossOrigin', 'use-credentials');
+    img.src = canvas.toDataURL();
+    this.putVideoImage(img, date, false);
+    ctx.lineWidth = "2";
+    ctx.strokeStyle = "coral";
+    ctx.rect(x1, y1, dragBoxCord.width, dragBoxCord.height);
+    ctx.stroke();
+    var imgWithBox = new Image();
+    imgWithBox.setAttribute('crossOrigin', 'use-credentials');
+    imgWithBox.src = canvas.toDataURL();
+    this.putVideoImage(imgWithBox, date, true);
+  }
+
+  putVideoImage = (img, date, box) => {
+    var s3 = new AWS.S3();
+    var key = 'test/' + date;
+    if (box) {
+      key += '_box';
+    }
+    var params = {
+      Key: key,
+      Bucket: 'lubomirstanchev',
+      ContentType: 'text/plain',
+      Body: img.src //the base64 string is now the body
+    };
+    try{
+      s3.putObject(params, (err, data) => {
+        if (err) {
+          console.log(err);
+        } else {
+          console.log(data)
+        }
+      });
+    } catch (error) {
+      console.log('Error: ', error);
+    }
   }
 
   handleClose = () => {
