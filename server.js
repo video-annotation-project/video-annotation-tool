@@ -182,7 +182,7 @@ app.get('/api/concepts', passport.authenticate('jwt', {session: false}),
   }
 );
 
-app.get('/api/conceptsSelected', passport.authenticate('jwt', {session: false}),
+app.get('/conceptsSelected', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
     queryText = 'select conceptid from profile where profile.userid=$1';
     try {
@@ -196,7 +196,6 @@ app.get('/api/conceptsSelected', passport.authenticate('jwt', {session: false}),
 
 app.post('/api/conceptsSelected', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
-    console.log('conceptsSelected posted');
     queryText = 'DELETE FROM profile WHERE profile.userid=$1 AND profile.conceptid=$2 RETURNING *';
     if (req.body.checked) {
       queryText = 'INSERT INTO profile(userid, conceptid) VALUES($1, $2) RETURNING *';
@@ -373,15 +372,14 @@ app.post("/annotate", passport.authenticate('jwt', {session: false}),
   async (req, res) => {
   //id | videoid | userid | conceptid | timeinvideo | topRightx | topRighty | botLeftx | botLefty | dateannotated
   //get videoId
-  var videoId = await getVideoId(req.body.videoId);
-  var userId = req.user.id;
-  var conceptId = await getConceptId(req.body.conceptId);
+  let videoId = await getVideoId(req.body.videoId);
+  let userId = req.user.id;
+  let conceptId = await getConceptId(req.body.conceptId);
   queryText = 'INSERT INTO annotations(videoid, userid, conceptid, timeinvideo, x1, y1, x2, y2, videoWidth, videoHeight, dateannotated) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, current_timestamp) RETURNING *';
   try {
     var insertRes = await psql.query(queryText, [videoId, userId, conceptId, req.body.timeinvideo, req.body.x1, req.body.y1, req.body.x2, req.body.y2, req.body.videoWidth, req.body.videoHeight]);
     res.json({message: "Annotated", value: JSON.stringify(insertRes.rows[0])});
   } catch(error) {
-    console.log(error)
     res.json({message: "error: "+error})
   }
 });
@@ -390,12 +388,13 @@ app.post("/annotateImage", passport.authenticate('jwt', {session: false}),
   async (req, res) => {
   //id | videoid | userid | conceptid | timeinvideo | topRightx | topRighty | botLeftx | botLefty | dateannotated
   //get videoId
-  var videoId = await getVideoId(req.body.videoId);
-  var userId = req.user.id;
-  var conceptId = await getConceptId(req.body.conceptId);
+  let videoId = await getVideoId(req.body.videoId);
+  console.log(videoId);
+  let userId = req.user.id;
+  let conceptId = await getConceptId(req.body.conceptId);
   queryText = 'INSERT INTO annotations2(videoid, userid, conceptid, timeinvideo, x1, y1, x2, y2, videoWidth, videoHeight, image, imagewithbox, dateannotated) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, current_timestamp) RETURNING *';
   try {
-    var insertRes = await psql.query(queryText, [videoId, userId, conceptId, req.body.timeinvideo, req.body.x1, req.body.y1, req.body.x2, req.body.y2, req.body.videoWidth, req.body.videoHeight, req.body.image, req.body.imagewithbox]);
+    let insertRes = await psql.query(queryText, [videoId, userId, conceptId, req.body.timeinvideo, req.body.x1, req.body.y1, req.body.x2, req.body.y2, req.body.videoWidth, req.body.videoHeight, req.body.image, req.body.imagewithbox]);
     res.json({message: "Annotated", value: JSON.stringify(insertRes.rows[0])});
   } catch(error) {
     console.log(error)

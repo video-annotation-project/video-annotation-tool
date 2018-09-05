@@ -174,7 +174,7 @@ class Annotate extends Component {
   }
 
   getSelectedConcepts = async () => {
-    return axios.get('/api/conceptsSelected', {
+    return axios.get('/conceptsSelected', {
       headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')},
     }).then(res => res.data)
       .catch(error => {
@@ -196,8 +196,8 @@ class Annotate extends Component {
   componentDidMount = async () => {
     let selectedConcepts = await this.getSelectedConcepts();
     let temp = await this.makeObject(selectedConcepts);
-    await this.setState({conceptsSelected: temp});
-    this.setState({
+    await this.setState({
+      conceptsSelected: temp,
       isLoaded: true,
     });
   }
@@ -215,6 +215,7 @@ class Annotate extends Component {
     var vidCord = myVideo.getBoundingClientRect("dragBox");
     var x1_video = vidCord.left;
     var y1_video = vidCord.top;
+
     var x1_box = dragBoxCord.left;
     var y1_box = dragBoxCord.top;
     var height = dragBoxCord.height;
@@ -294,7 +295,7 @@ class Annotate extends Component {
     var params = {
       Key: key,
       Bucket: 'lubomirstanchev',
-      ContentType: 'text/plain',
+      ContentType: 'image/png',
       Body: img.src //the base64 string is now the body
     };
     try{
@@ -357,16 +358,15 @@ class Annotate extends Component {
                <span className = {classes.conceptsText}>Current Concepts</span>
                <br />
                {(this.state.isLoaded) ? (
-                 <CurrentConcepts  handleConceptClick= {this.handleConceptClick} conceptsSelected= {this.state.conceptsSelected} />
+                 <CurrentConcepts handleConceptClick= {this.handleConceptClick} conceptsSelected= {this.state.conceptsSelected} />
                ):(
                  <List>Loading...</List>
                )}
-
             </div>
             <div className= {classes.videoListContainer}>
               <span className = {classes.videoListText}>Select Video</span>
               <br />
-              <VideoList handleVideoClick={this.handleVideoClick} />
+              <VideoList handleVideoClick = {this.handleVideoClick} />
             </div>
          </div>
     );

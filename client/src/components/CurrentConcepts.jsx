@@ -47,7 +47,7 @@ class CurrentConcepts extends React.Component {
     const conceptsObj = this.props.conceptsSelected;
     const conceptsArr = Object.keys(conceptsObj).filter(id => conceptsObj[id]).map(Number);
     let conceptList = await this.getConceptList(conceptsArr);
-    this.setState({
+    await this.setState({
       concepts: conceptList
     })
   }

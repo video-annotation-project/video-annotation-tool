@@ -16,14 +16,40 @@ class Report extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
+      loaded: false,
+      image: null,
     };
+  }
+
+  toDataURL = (url, callback) => {
+  var xhr = new XMLHttpRequest();
+  xhr.onload = function() {
+    var reader = new FileReader();
+    reader.onloadend = function() {
+      callback(reader.result);
+    }
+    reader.readAsDataURL(xhr.response);
+  };
+  xhr.open('GET', url);
+  xhr.responseType = 'blob';
+  xhr.send();
+}
+
+  componentDidMount = async () => {
+    await this.toDataURL('https://d1yenv1ac8fa55.cloudfront.net/test/1536186135339_box', async (res) => {
+      await this.setState({
+        image: res,
+        loaded: true,
+      });
+      console.log(this.state.image);
+    })
   }
 
   render() {
     const { classes } = this.props;
     return (
       <div className={classes.root}>
-        <VideosAnnotated />
+        {this.state.loaded ? (<img src = {this.state.image} alt = 'Download Failed'/>):(<div>Loading</div>)}
       </div>
     );
   }
