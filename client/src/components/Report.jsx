@@ -1,9 +1,17 @@
 
 import React from 'react';
-
+import AWS from 'aws-sdk';
 // import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
 import VideosAnnotated from './VideosAnnotated.jsx';
+import TextDecoder from 'text-encoding'
+AWS.config.update(
+  {
+    accessKeyId: "AKIAI2JEDK66FXVNCR6A",
+    secretAccessKey: "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",
+    region: 'us-west-1',
+  }
+);
 
 const styles = theme => ({
   root: {
@@ -12,37 +20,36 @@ const styles = theme => ({
   },
 });
 
+let encode = (data) => {
+  var str = data.reduce(function(a,b){ return a+String.fromCharCode(b) },'');
+  return btoa(str).replace(/.{76}(?=.)/g,'$&\n');
+}
+
 class Report extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
+      img: null,
       loaded: false,
-      image: null,
     };
   }
 
-  toDataURL = (url, callback) => {
-  var xhr = new XMLHttpRequest();
-  xhr.onload = function() {
-    var reader = new FileReader();
-    reader.onloadend = function() {
-      callback(reader.result);
-    }
-    reader.readAsDataURL(xhr.response);
-  };
-  xhr.open('GET', url);
-  xhr.responseType = 'blob';
-  xhr.send();
-}
-
   componentDidMount = async () => {
-    await this.toDataURL('https://d1yenv1ac8fa55.cloudfront.net/test/1536186135339_box', async (res) => {
-      await this.setState({
-        image: res,
-        loaded: true,
-      });
-      let img = document.getElementById('imageTag');
-      img.src = res;
+    let s3 = new AWS.S3();
+    let key = 'test/1536275779167_box';
+    var params = {
+      Key: key,
+      Bucket: 'lubomirstanchev',
+    };
+    s3.getObject(params, async (err, data) => {
+      if (err) {
+        console.log(err);
+      } else {
+        this.setState({
+          img: 'data:image/png;base64, ' + encode(data.Body),
+          loaded: true
+        })
+      }
     })
   }
 
@@ -50,7 +57,11 @@ class Report extends React.Component {
     const { classes } = this.props;
     return (
       <div className={classes.root}>
-        {this.state.loaded ? (<img id = 'imageTag' alt = 'Download Failed'/>):(<div>Loading</div>)}
+        {this.state.loaded ? (
+          <img src = {this.state.img} alt = "Don't Work" />
+        ):(
+          <div>Loading...</div>
+        )}
       </div>
     );
   }

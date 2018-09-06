@@ -288,6 +288,7 @@ class Annotate extends Component {
 
   putVideoImage = (img, date, box) => {
     var s3 = new AWS.S3();
+    let buf = new Buffer(img.src.replace(/^data:image\/\w+;base64,/, ""),'base64');
     var key = 'test/' + date;
     if (box) {
       key += '_box';
@@ -295,8 +296,9 @@ class Annotate extends Component {
     var params = {
       Key: key,
       Bucket: 'lubomirstanchev',
-      ContentType: 'text/plain',
-      Body: img.src //the base64 string is now the body
+      ContentEncoding: 'base64',
+      ContentType: 'image/jpeg',
+      Body: buf //the base64 string is now the body
     };
     try{
       s3.putObject(params).send();
