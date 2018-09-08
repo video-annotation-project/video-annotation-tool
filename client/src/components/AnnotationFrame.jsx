@@ -2,6 +2,20 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import ListItem from '@material-ui/core/ListItem';
+import AWS from 'aws-sdk';
+
+AWS.config.update(
+  {
+    accessKeyId: "AKIAI2JEDK66FXVNCR6A",
+    secretAccessKey: "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",
+    region: 'us-west-1',
+  }
+);
+
+let encode = (data) => {
+  var str = data.reduce(function(a,b){ return a+String.fromCharCode(b) },'');
+  return btoa(str).replace(/.{76}(?=.)/g,'$&\n');
+}
 
 const styles = theme => ({
   item: {
@@ -29,43 +43,24 @@ class AnnotationFrame extends Component {
     };
   }
 
-  getVideoImage = (path, secs, callback) => {
-    var me = this;
-    var video = document.createElement('video');
-    video.setAttribute('crossOrigin', 'use-credentials');
-    video.onloadedmetadata = function() {
-      // this.currentTime = Math.min(Math.max(0, (secs < 0 ? this.duration : 0) + secs), this.duration);
-      this.currentTime = secs;
-    };
-    video.onseeked = function(e) {
-      var canvas = document.createElement('canvas');
-      canvas.height = video.videoHeight;
-      canvas.width = video.videoWidth;
-      var ctx = canvas.getContext('2d');
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      var img = new Image();
-      img.setAttribute('crossOrigin', 'use-credentials');
-      img.src = canvas.toDataURL();
-      callback.call(me, img, this.currentTime, e);
-    };
-    video.onerror = function(e) {
-      callback.call(me, undefined, undefined, e);
-    };
-    video.src = path;
-  }
-
   componentDidMount = async () => {
-    this.getVideoImage('https://d1yenv1ac8fa55.cloudfront.net/videos/'+this.props.annotation.filename,
-      this.props.annotation.timeinvideo, (img, secs, event) => {
-        if (event.type === 'seeked') {
-          this.setState({
-            isLoaded: true,
-            image: img,
-          });
-        }
+    let s3 = new AWS.S3();
+    let key = 'test/1536275779167_box';
+    var params = {
+      Key: key,
+      Bucket: 'lubomirstanchev',
+    };
+    s3.getObject(params, async (err, data) => {
+      if (err) {
+        console.log(err);
+      } else {
+        this.setState({
+          image: 'data:image/png;base64, ' + encode(data.Body),
+          isLoaded: true
+        })
       }
-    );
-  };
+    })
+  }
 
   render () {
     const { error, isLoaded, image } = this.state;
@@ -80,18 +75,7 @@ class AnnotationFrame extends Component {
       <React.Fragment>
         <ListItem className={classes.item}>
           <div id='test'></div>
-          <img className={classes.img} id='imageId' src={image.src} alt='error' />
-          <div style={{
-            position: 'absolute',
-            top: (this.props.annotation.y1)+'px',
-            left: (this.props.annotation.x1)+'px',
-            height: (this.props.annotation.y2-this.props.annotation.y1) + 'px',
-            width: (this.props.annotation.x2-this.props.annotation.x1) +'px',
-            borderStyle: 'solid',
-            borderWidth: '2px',
-            borderColor: 'coral',
-          }}>
-          </div>
+          <img className={classes.img} id='imageId' src={this.state.image} alt='error' />
         </ListItem>
       </React.Fragment>
     );
