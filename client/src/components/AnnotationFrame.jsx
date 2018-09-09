@@ -13,7 +13,7 @@ AWS.config.update(
 );
 
 let encode = (data) => {
-  var str = data.reduce(function(a,b){ return a+String.fromCharCode(b) },'');
+  var str = data.reduce(function(a,b) { return a+String.fromCharCode(b) },'');
   return btoa(str).replace(/.{76}(?=.)/g,'$&\n');
 }
 
@@ -44,23 +44,16 @@ class AnnotationFrame extends Component {
   }
 
   componentDidMount = async () => {
-    let s3 = new AWS.S3();
-    let key = 'test/1536275779167_box';
-    var params = {
-      Key: key,
-      Bucket: 'lubomirstanchev',
-    };
-    s3.getObject(params, async (err, data) => {
-      if (err) {
-        console.log(err);
-      } else {
+    fetch(`/api/annotationImage/${this.props.annotation.imagewithbox}`)
+      .then(res => res.json())
+      .then(res => {
+        console.log(res);
         this.setState({
-          image: 'data:image/png;base64, ' + encode(data.Body),
+          image: 'data:image/png;base64, ' + encode(res.image.data),
           isLoaded: true
-        })
-      }
-    })
-  }
+        });
+      });
+  };
 
   render () {
     const { error, isLoaded, image } = this.state;

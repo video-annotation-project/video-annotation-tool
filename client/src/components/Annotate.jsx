@@ -232,7 +232,7 @@ class Annotate extends Component {
     var date = Date.now().toString();
     this.drawImages(vidCord, dragBoxCord, myVideo, date, x1, y1);
 
-    fetch('/annotateImage', {
+    fetch('/annotate', {
       method: 'POST',
       headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token')},
       body: JSON.stringify({
@@ -263,7 +263,6 @@ class Annotate extends Component {
         })
       }
     })
-
   }
 
   drawImages = (vidCord, dragBoxCord, myVideo, date, x1, y1) => {
@@ -274,7 +273,7 @@ class Annotate extends Component {
     ctx.drawImage(myVideo, 0, 0, canvas.width, canvas.height);
     var img = new Image();
     img.setAttribute('crossOrigin', 'use-credentials');
-    img.src = canvas.toDataURL();
+    img.src = canvas.toDataURL(1.0);
     this.putVideoImage(img, date, false);
     ctx.lineWidth = "2";
     ctx.strokeStyle = "coral";
@@ -282,7 +281,7 @@ class Annotate extends Component {
     ctx.stroke();
     var imgWithBox = new Image();
     imgWithBox.setAttribute('crossOrigin', 'use-credentials');
-    imgWithBox.src = canvas.toDataURL();
+    imgWithBox.src = canvas.toDataURL(1.0);
     this.putVideoImage(imgWithBox, date, true);
   }
 
@@ -297,7 +296,7 @@ class Annotate extends Component {
       Key: key,
       Bucket: 'lubomirstanchev',
       ContentEncoding: 'base64',
-      ContentType: 'image/jpeg',
+      ContentType: 'image/png',
       Body: buf //the base64 string is now the body
     };
     try{
