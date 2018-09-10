@@ -227,47 +227,6 @@ app.get('/api/conceptImages/:id',
   }
 );
 
-app.get('/api/annotate',
-  (req, res) => {
-    var s3 = new AWS.S3();
-    const mimetype = 'video/mp4';
-    const file = 'videos/DocRicketts-0569_20131213T224337Z_00-00-01-00TC_h264.mp4';
-    const cache = 0;
-    s3.listObjectsV2({Bucket: 'lubomirstanchev', MaxKeys: 1, Prefix: file}, function(err, data) {
-      if (err) {
-        return res.sendStatus(404);
-      }
-      if (req != null && req.headers.range != null) {
-        var range = req.headers.range;
-        var bytes = range.replace(/bytes=/, '').split('-');
-        var start = parseInt(bytes[0], 10);
-        var total = data.Contents[0].Size;
-        var end = bytes[1] ? parseInt(bytes[1], 10) : total - 1;
-        var chunksize = (end - start) + 1;
-
-        res.writeHead(206, {
-          'Content-Range'  : 'bytes ' + start + '-' + end + '/' + total,
-          'Accept-Ranges'  : 'bytes',
-          'Content-Length' : chunksize,
-          'Last-Modified'  : data.Contents[0].LastModified,
-          'Content-Type'   : mimetype
-        });
-        s3.getObject({Bucket: 'lubomirstanchev', Key: file, Range: range}).createReadStream().pipe(res);
-      }
-      else
-      {
-        res.writeHead(200, {
-          'Cache-Control' : 'max-age=' + cache + ', private',
-          'Content-Length': data.Contents[0].Size,
-          'Last-Modified' : data.Contents[0].LastModified,
-          'Content-Type'  : mimetype
-        });
-        s3.getObject({Bucket: 'lubomirstanchev', Key: file}).createReadStream().pipe(res);
-      }
-    });
-  }
-);
-
 app.get('/api/videoNames', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
     queryPass = 'select id, filename from videos;'
