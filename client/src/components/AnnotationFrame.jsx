@@ -6,8 +6,8 @@ import AWS from 'aws-sdk';
 
 AWS.config.update(
   {
-    accessKeyId: "AKIAI2JEDK66FXVNCR6A",
-    secretAccessKey: "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",
+    accessKeyId: "AKIAIJRSQPH2BGGCEFOA",
+    secretAccessKey: "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",
     region: 'us-west-1',
   }
 );
@@ -47,7 +47,6 @@ class AnnotationFrame extends Component {
     fetch(`/api/annotationImage/${this.props.annotation.imagewithbox}`)
       .then(res => res.json())
       .then(res => {
-        console.log(res);
         this.setState({
           image: 'data:image/png;base64, ' + encode(res.image.data),
           isLoaded: true
