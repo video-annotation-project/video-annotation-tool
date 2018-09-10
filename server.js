@@ -182,7 +182,7 @@ app.get('/api/concepts', passport.authenticate('jwt', {session: false}),
   }
 );
 
-app.get('/conceptsSelected', passport.authenticate('jwt', {session: false}),
+app.get('/api/conceptsSelected', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
     queryText = 'select conceptid from profile where profile.userid=$1';
     try {
