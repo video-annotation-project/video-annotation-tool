@@ -215,18 +215,29 @@ class Annotate extends Component {
         })
       }).then(res => res.json())
       .then(res => {
-        if (res.message ==! "updated") {
+        if (res.message !== "updated") {
           console.log("error");
         }
       })
     }
-
   }
 
-  handleVideoClick = (filename) => {
+  getVideoStartTime = async (filename) => {
+    let currentTime = await axios.get(`/api/videos/currentTime/${filename}`, {
+      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')},
+    })
+    return currentTime;
+  };
+
+  handleVideoClick = async(filename) => {
     this.setState({
        videoName: filename
-     });
+    });
+    let currentTime = await this.getVideoStartTime(filename);
+    if (currentTime.data.length === 1) {
+       var myVideo = document.getElementById("video");
+       myVideo.currentTime = currentTime.data[0].timeinvideo;
+    }
   };
 
   handleConceptClick = (concept) => {

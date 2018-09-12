@@ -307,6 +307,20 @@ app.get('/api/annotations/:videoid', passport.authenticate('jwt', {session: fals
   }
 );
 
+app.get('/api/videos/currentTime/:videoname', passport.authenticate('jwt', {session: false}),
+  async (req, res) => {
+    let videoId = await getVideoId(req.params.videoname);
+    let userId = req.user.id;
+    let queryPass = 'SELECT timeinvideo FROM checkpoints WHERE checkpoints.videoid=$1 AND checkpoints.userid=$2';
+    try {
+      const currentTime = await psql.query(queryPass, [videoId, userId]);
+      res.json(currentTime.rows);
+    } catch (error) {
+      res.json(error);
+    }
+  }
+);
+
 app.get('/api/annotationImage/:name', (req, res) => {
   let s3 = new AWS.S3();
   let key = 'test/' + req.params.name;
@@ -412,7 +426,7 @@ app.post("/updateCheckpoint", passport.authenticate('jwt', {session: false}),
   catch(error) {
     res.json({message: "error: " + error});
   }
-  if (updateRes.rowCount == 0) {
+  if (updateRes.rowCount == 0) { // user just started watching video
     queryText = 'INSERT INTO checkpoints(userid, videoid, timeinvideo, timestamp) VALUES($1, $2, $3, current_timestamp)';
     try {
       let insertRes = await psql.query(queryText, [userId, videoId, req.body.timeinvideo]);
@@ -422,7 +436,9 @@ app.post("/updateCheckpoint", passport.authenticate('jwt', {session: false}),
       res.json({message: "error: " + error});
     }
   }
-  res.json({message: "updated"});
+  else {
+    res.json({message: "updated"});
+  }
 });
 
 app.post("/api/listConcepts", passport.authenticate('jwt', {session: false}),
