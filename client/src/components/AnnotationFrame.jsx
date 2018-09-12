@@ -12,11 +12,6 @@ AWS.config.update(
   }
 );
 
-let encode = (data) => {
-  var str = data.reduce(function(a,b) { return a+String.fromCharCode(b) },'');
-  return btoa(str).replace(/.{76}(?=.)/g,'$&\n');
-}
-
 const styles = theme => ({
   item: {
     paddingTop: 0,
@@ -42,13 +37,23 @@ class AnnotationFrame extends Component {
       height: null,
     };
   }
+  encode = (data) => {
+    var str = data.reduce(function(a,b) { return a+String.fromCharCode(b) },'');
+    return btoa(str).replace(/.{76}(?=.)/g,'$&\n');
+  }
 
   componentDidMount = async () => {
     fetch(`/api/annotationImage/${this.props.annotation.imagewithbox}`)
       .then(res => res.json())
       .then(res => {
         this.setState({
-          image: 'data:image/png;base64, ' + encode(res.image.data),
+          image: 'data:image/png;base64, ' + this.encode(res.image.data),
+          isLoaded: true
+        });
+      })
+      .catch(error => {
+        console.log("Error: " + error);
+        this.setState({
           isLoaded: true
         });
       });

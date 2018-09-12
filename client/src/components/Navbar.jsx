@@ -5,8 +5,6 @@ import AppBar from '@material-ui/core/AppBar';
 import Button from '@material-ui/core/Button';
 import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
-import Menu from '@material-ui/core/Menu';
-import MenuItem from '@material-ui/core/MenuItem';
 
 const styles = {
   flex: {
@@ -15,28 +13,12 @@ const styles = {
 };
 
 class Navbar extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      open: false
-    };
-  }
-
-  handleClick = event => {
-    this.setState({ open: event.currentTarget });
-  };
-
-  handleClose = () => {
-    this.setState({ open: false });
-  };
-
   handleLogout = () => {
     localStorage.clear();
   };
 
   render() {
     const { classes } = this.props;
-    const { open } = this.state;
     return (
       <AppBar position='static'>
         <Toolbar>
@@ -60,23 +42,7 @@ class Navbar extends React.Component {
                   <Button color='inherit' component={Link} to='/annotate'>
                     Annotate Videos
                   </Button>
-                  <Button
-                      color='inherit'
-                      aria-owns={open ? 'report-menu' : null}
-                      aria-haspopup="true"
-                      onClick={this.handleClick}
-                  >
-                    Report
-                  </Button>
-                  <Menu
-                    id="report-menu"
-                    anchorEl={open}
-                    open={open}
-                    onClose={this.handleClose}
-                  >
-                    <MenuItem onClick={this.handleClose} component={Link} to='/'>Videos</MenuItem>
-                    <MenuItem onClick={this.handleClose} component={Link} to='/'>Concepts</MenuItem>
-                  </Menu>
+                  <Button color='inherit'component={Link} to='/report'>Report </Button>
                 </React.Fragment>
               )}
               <Button color='inherit' component={Link} to='/profile'>

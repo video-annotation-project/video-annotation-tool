@@ -202,27 +202,6 @@ class Annotate extends Component {
     });
   }
 
-  componentWillUnmount = async () => {
-    var myVideo = document.getElementById("video");
-    var cTime = myVideo.currentTime;
-    if (cTime > 0) {
-      fetch('/updateCheckpoint', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token')},
-        body: JSON.stringify({
-          'videoId': this.state.videoName,
-          'timeinvideo': cTime
-        })
-      }).then(res => res.json())
-      .then(res => {
-        if (res.message ==! "updated") {
-          console.log("error");
-        }
-      })
-    }
-
-  }
-
   handleVideoClick = (filename) => {
     this.setState({
        videoName: filename
@@ -330,7 +309,7 @@ class Annotate extends Component {
   handleClose = () => {
     this.setState({ open: false });
   };
-  
+
   render() {
     const { classes } = this.props;
     return (

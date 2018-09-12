@@ -359,31 +359,6 @@ app.post("/annotate", passport.authenticate('jwt', {session: false}),
   }
 });
 
-app.post("/updateCheckpoint", passport.authenticate('jwt', {session: false}),
-  async (req, res) => {
-  let videoId = await getVideoId(req.body.videoId);
-  let userId = req.user.id;
-  var updateRes = null;
-  queryText = 'UPDATE checkpoints SET timeinvideo=$1, timestamp=current_timestamp WHERE userid=$2 AND videoid=$3';
-  try {
-    updateRes = await psql.query(queryText, [req.body.timeinvideo, userId, videoId]);
-  }
-  catch(error) {
-    res.json({message: "error: " + error});
-  }
-  if (updateRes.rowCount == 0) {
-    queryText = 'INSERT INTO checkpoints(userid, videoid, timeinvideo, timestamp) VALUES($1, $2, $3, current_timestamp)';
-    try {
-      let insertRes = await psql.query(queryText, [userId, videoId, req.body.timeinvideo]);
-      res.json({message: "updated"});
-    }
-    catch(error) {
-      res.json({message: "error: " + error});
-    }
-  }
-  res.json({message: "updated"});
-});
-
 app.post("/api/listConcepts", passport.authenticate('jwt', {session: false}),
   async (req, res) => {
     var params = [];
