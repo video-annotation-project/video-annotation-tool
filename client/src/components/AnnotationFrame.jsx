@@ -2,6 +2,20 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import ListItem from '@material-ui/core/ListItem';
+import AWS from 'aws-sdk';
+
+AWS.config.update(
+  {
+    accessKeyId: "AKIAIJRSQPH2BGGCEFOA",
+    secretAccessKey: "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",
+    region: 'us-west-1',
+  }
+);
+
+let encode = (data) => {
+  var str = data.reduce(function(a,b) { return a+String.fromCharCode(b) },'');
+  return btoa(str).replace(/.{76}(?=.)/g,'$&\n');
+}
 
 const styles = theme => ({
   item: {
@@ -29,42 +43,15 @@ class AnnotationFrame extends Component {
     };
   }
 
-  getVideoImage = (path, secs, callback) => {
-    var me = this;
-    var video = document.createElement('video');
-    video.setAttribute('crossOrigin', 'use-credentials');
-    video.onloadedmetadata = function() {
-      // this.currentTime = Math.min(Math.max(0, (secs < 0 ? this.duration : 0) + secs), this.duration);
-      this.currentTime = secs;
-    };
-    video.onseeked = function(e) {
-      var canvas = document.createElement('canvas');
-      canvas.height = video.videoHeight;
-      canvas.width = video.videoWidth;
-      var ctx = canvas.getContext('2d');
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      var img = new Image();
-      img.setAttribute('crossOrigin', 'use-credentials');
-      img.src = canvas.toDataURL();
-      callback.call(me, img, this.currentTime, e);
-    };
-    video.onerror = function(e) {
-      callback.call(me, undefined, undefined, e);
-    };
-    video.src = path;
-  }
-
   componentDidMount = async () => {
-    this.getVideoImage('https://d1yenv1ac8fa55.cloudfront.net/videos/'+this.props.annotation.filename,
-      this.props.annotation.timeinvideo, (img, secs, event) => {
-        if (event.type === 'seeked') {
-          this.setState({
-            isLoaded: true,
-            image: img,
-          });
-        }
-      }
-    );
+    fetch(`/api/annotationImage/${this.props.annotation.imagewithbox}`)
+      .then(res => res.json())
+      .then(res => {
+        this.setState({
+          image: 'data:image/png;base64, ' + encode(res.image.data),
+          isLoaded: true
+        });
+      });
   };
 
   render () {
@@ -80,18 +67,7 @@ class AnnotationFrame extends Component {
       <React.Fragment>
         <ListItem className={classes.item}>
           <div id='test'></div>
-          <img className={classes.img} id='imageId' src={image.src} alt='error' />
-          <div style={{
-            position: 'absolute',
-            top: (this.props.annotation.y1)+'px',
-            left: (this.props.annotation.x1)+'px',
-            height: (this.props.annotation.y2-this.props.annotation.y1) + 'px',
-            width: (this.props.annotation.x2-this.props.annotation.x1) +'px',
-            borderStyle: 'solid',
-            borderWidth: '2px',
-            borderColor: 'coral',
-          }}>
-          </div>
+          <img className={classes.img} id='imageId' src={this.state.image} alt='error' />
         </ListItem>
       </React.Fragment>
     );
