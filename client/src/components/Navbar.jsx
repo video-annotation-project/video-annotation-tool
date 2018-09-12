@@ -74,8 +74,8 @@ class Navbar extends React.Component {
                     open={open}
                     onClose={this.handleClose}
                   >
-                    <MenuItem onClick={this.handleClose}>Videos</MenuItem>
-                    <MenuItem onClick={this.handleClose}>Concepts</MenuItem>
+                    <MenuItem onClick={this.handleClose} component={Link} to='/'>Videos</MenuItem>
+                    <MenuItem onClick={this.handleClose} component={Link} to='/'>Concepts</MenuItem>
                   </Menu>
                 </React.Fragment>
               )}
