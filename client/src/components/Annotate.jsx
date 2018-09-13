@@ -196,13 +196,17 @@ class Annotate extends Component {
   componentDidMount = async () => {
     let selectedConcepts = await this.getSelectedConcepts();
     let temp = await this.makeObject(selectedConcepts);
+    let currentVideo = await this.getCurrentVideo();
     await this.setState({
+      videoName: currentVideo.filename,
       conceptsSelected: temp,
       isLoaded: true,
     });
+    var myVideo = document.getElementById("video");
+    myVideo.currentTime = currentVideo.time;
   }
 
-  componentWillUnmount = async () => {
+  componentWillUnmount = () => {
     var myVideo = document.getElementById("video");
     var cTime = myVideo.currentTime;
     if (cTime > 0) {
@@ -222,7 +226,22 @@ class Annotate extends Component {
     }
   }
 
-  getVideoStartTime = async (filename) => {
+  getCurrentVideo = async() => {
+    let videoData = await axios.get('/api/latestVideoId', {
+      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')},
+    })
+    if (videoData.data.length > 0) { // they've started watching a video
+      let videoid = videoData.data[0].videoid;
+      let startTime = videoData.data[0].timeinvideo;
+      let filename = await axios.get(`/api/latestVideoName/${videoid}`, {
+        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')},
+      })
+      return {filename: filename.data[0].filename, time: startTime};
+    }
+    return {filename: 'DocRicketts-0569_20131213T224337Z_00-00-01-00TC_h264.mp4', time: 0};
+  };
+
+  getVideoStartTime = async(filename) => {
     let currentTime = await axios.get(`/api/videos/currentTime/${filename}`, {
       headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')},
     })
@@ -259,7 +278,6 @@ class Annotate extends Component {
     var y2 = Math.min((y1 + height),719);
 
     //id | videoid | userid | conceptid | timeinvideo | topRightx | topRighty | botLeftx | botLefty | dateannotated
-
     //draw video with and without bounding box to canvas and save as img
     var date = Date.now().toString();
     this.drawImages(vidCord, dragBoxCord, myVideo, date, x1, y1);

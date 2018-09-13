@@ -280,6 +280,32 @@ app.get('/api/videoNames', passport.authenticate('jwt', {session: false}),
   }
 );
 
+app.get('/api/latestVideoId', passport.authenticate('jwt', {session: false}),
+  async (req, res) => {
+    let userId = req.user.id;
+    queryPass = 'SELECT videoid, timeinvideo FROM checkpoints WHERE userid=$1 ORDER BY timestamp DESC;'
+    try {
+      const videoData = await psql.query(queryPass, [userId]);
+      res.json(videoData.rows);
+    } catch (error) {
+      res.json(error);
+    }
+  }
+);
+
+app.get('/api/latestVideoName/:videoid', passport.authenticate('jwt', {session: false}),
+  async (req, res) => {
+    let videoId = req.params.videoid;
+    queryPass = 'SELECT filename FROM videos WHERE id=$1;'
+    try {
+      const videoName = await psql.query(queryPass, [videoId]);
+      res.json(videoName.rows);
+    } catch (error) {
+      res.json(error);
+    }
+  }
+);
+
 app.get('/api/videosWatched', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
     let queryPass = 'SELECT DISTINCT ON (videos.filename) videos.filename, videos.id FROM videos, annotations WHERE videos.id = annotations.videoid AND annotations.userid = $1';
