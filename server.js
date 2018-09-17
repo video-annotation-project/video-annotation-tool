@@ -445,17 +445,17 @@ app.post("/updateCheckpoint", passport.authenticate('jwt', {session: false}),
   let videoId = await getVideoId(req.body.videoId);
   let userId = req.user.id;
   var updateRes = null;
-  queryText = 'UPDATE checkpoints SET timeinvideo=$1, timestamp=current_timestamp WHERE userid=$2 AND videoid=$3';
+  queryText = 'UPDATE checkpoints SET timeinvideo=$1, timestamp=current_timestamp, finished=$2 WHERE userid=$3 AND videoid=$4';
   try {
-    updateRes = await psql.query(queryText, [req.body.timeinvideo, userId, videoId]);
+    updateRes = await psql.query(queryText, [req.body.timeinvideo, req.body.finished, userId, videoId]);
   }
   catch(error) {
     res.json({message: "error: " + error});
   }
   if (updateRes.rowCount == 0) { // user just started watching video
-    queryText = 'INSERT INTO checkpoints(userid, videoid, timeinvideo, timestamp) VALUES($1, $2, $3, current_timestamp)';
+    queryText = 'INSERT INTO checkpoints(userid, videoid, timeinvideo, timestamp, finished) VALUES($1, $2, $3, current_timestamp, $4)';
     try {
-      let insertRes = await psql.query(queryText, [userId, videoId, req.body.timeinvideo]);
+      let insertRes = await psql.query(queryText, [userId, videoId, req.body.timeinvideo, req.body.finished]);
       res.json({message: "updated"});
     }
     catch(error) {

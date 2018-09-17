@@ -51,6 +51,20 @@ const styles = theme => ({
     paddingTop: '10px',
     paddingBottom: '10px'
   },
+  saveButton: {
+    marginTop: '40px',
+    marginLeft: '20px',
+    fontSize: '15px',
+    paddingTop: '10px',
+    paddingBottom: '10px'
+  },
+  doneButton: {
+    marginTop: '40px',
+    marginLeft: '20px',
+    fontSize: '15px',
+    paddingTop: '10px',
+    paddingBottom: '10px'
+  },
   playScript: {
     fontColor: 'black',
     fontWeight: 'bold',
@@ -123,7 +137,6 @@ AWS.config.update(
 );
 
 function changeSpeed() {
-
    try {
      var myVideo = document.getElementById("video");
      var speed = document.getElementById("playSpeedId").value;
@@ -206,16 +219,20 @@ class Annotate extends Component {
     myVideo.currentTime = currentVideo.time;
   }
 
-  componentWillUnmount = () => {
+  updateCheckpoint = (finished) => {
     var myVideo = document.getElementById("video");
-    var cTime = myVideo.currentTime;
-    if (cTime > 0) {
+    var time = myVideo.currentTime;
+    if (finished) {
+      time = 0;
+    }
+    if (time > 0 || finished) {
       fetch('/updateCheckpoint', {
         method: 'POST',
         headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token')},
         body: JSON.stringify({
           'videoId': this.state.videoName,
-          'timeinvideo': cTime
+          'timeinvideo': time,
+          'finished' : finished
         })
       }).then(res => res.json())
       .then(res => {
@@ -224,6 +241,10 @@ class Annotate extends Component {
         }
       })
     }
+  }
+
+  componentWillUnmount = () => {
+     this.updateCheckpoint(false);
   }
 
   getCurrentVideo = async() => {
@@ -278,6 +299,7 @@ class Annotate extends Component {
     var y2 = Math.min((y1 + height),719);
 
     //id | videoid | userid | conceptid | timeinvideo | topRightx | topRighty | botLeftx | botLefty | dateannotated
+
     //draw video with and without bounding box to canvas and save as img
     var date = Date.now().toString();
     this.drawImages(vidCord, dragBoxCord, myVideo, date, x1, y1);
@@ -399,7 +421,8 @@ class Annotate extends Component {
             <Button variant = "contained" color = "primary" className = {classes.backwardButton} onClick = {rewind}>-5 sec</Button>
             <Button variant = "contained" color = "primary" className = {classes.playButton} onClick = {playPause}>Play/Pause</Button>
             <Button variant = "contained" color = "primary" className = {classes.forwardButton} onClick = {fastForward}>+5 sec</Button>
-
+            <Button variant = "contained" color = "primary" className = {classes.saveButton} onClick = {this.updateCheckpoint.bind(this, false)}>Save Position</Button>
+            <Button variant = "contained" color = "primary" className = {classes.saveButton} onClick = {this.updateCheckpoint.bind(this, true)}>Done</Button>
             <br />
             <span className = {classes.playScript}>Play at speed:</span>
             <p><input type = "text" id = "playSpeedId" className = {classes.playSpeed} placeholder = "100" />&ensp; %</p>
