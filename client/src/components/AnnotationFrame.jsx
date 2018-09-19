@@ -56,6 +56,12 @@ class AnnotationFrame extends Component {
         this.setState({
           isLoaded: true
         });
+      })
+      .catch(error => {
+        console.log(error);
+        this.setState({
+          isLoaded: true
+        })
       });
   };
 
@@ -72,7 +78,7 @@ class AnnotationFrame extends Component {
       <React.Fragment>
         <ListItem className={classes.item}>
           <div id='test'></div>
-          <img className={classes.img} id='imageId' src={this.state.image} alt='error' />
+          <img className={classes.img} id='imageId' src={image} alt='error' />
         </ListItem>
       </React.Fragment>
     );
