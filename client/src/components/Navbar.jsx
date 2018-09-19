@@ -33,6 +33,26 @@ class Navbar extends React.Component {
   handleLogout = () => {
     localStorage.clear();
   };
+  /*
+  <Button
+      color='inherit'
+      aria-owns={open ? 'report-menu' : null}
+      aria-haspopup="true"
+      onClick={this.handleClick}
+      component={Link} to='/report'
+  >
+    Report
+  </Button>
+  <Menu
+    id="report-menu"
+    anchorEl={open}
+    open={open}
+    onClose={this.handleClose}
+  >
+    <MenuItem onClick={this.handleClose}>Videos</MenuItem>
+    <MenuItem onClick={this.handleClose}>Concepts</MenuItem>
+  </Menu>
+  */
 
   render() {
     const { classes } = this.props;
@@ -60,23 +80,9 @@ class Navbar extends React.Component {
                   <Button color='inherit' component={Link} to='/annotate'>
                     Annotate Videos
                   </Button>
-                  <Button
-                      color='inherit'
-                      aria-owns={open ? 'report-menu' : null}
-                      aria-haspopup="true"
-                      onClick={this.handleClick}
-                  >
+                  <Button color='inherit' component={Link} to='/report'>
                     Report
                   </Button>
-                  <Menu
-                    id="report-menu"
-                    anchorEl={open}
-                    open={open}
-                    onClose={this.handleClose}
-                  >
-                    <MenuItem onClick={this.handleClose}>Videos</MenuItem>
-                    <MenuItem onClick={this.handleClose}>Concepts</MenuItem>
-                  </Menu>
                 </React.Fragment>
               )}
               <Button color='inherit' component={Link} to='/profile'>
