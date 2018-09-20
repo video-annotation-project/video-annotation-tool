@@ -22,7 +22,11 @@ class Report extends React.Component {
     const { classes } = this.props;
     return (
       <div className={classes.root}>
-        <VideosAnnotated />
+        {localStorage.getItem('report') === 'true' ? (
+          <VideosAnnotated />
+        ):(
+          <div>Concepts...</div>
+        )}
       </div>
 
     );

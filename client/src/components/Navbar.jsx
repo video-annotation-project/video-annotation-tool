@@ -18,7 +18,7 @@ class Navbar extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      open: false
+      open: null
     };
   }
 
@@ -26,8 +26,13 @@ class Navbar extends React.Component {
     this.setState({ open: event.currentTarget });
   };
 
-  handleClose = () => {
-    this.setState({ open: false });
+  handleClose = (path) => {
+    if ( path === 'Videos') {
+      localStorage.setItem('report', 'true');
+    } else {
+      localStorage.setItem('report', 'false');
+    }
+    this.setState({ open: null });
   };
 
   handleLogout = () => {
@@ -72,11 +77,11 @@ class Navbar extends React.Component {
                   <Menu
                     id="report-menu"
                     anchorEl={open}
-                    open={open}
+                    open={Boolean(open)}
                     onClose={this.handleClose}
                    >
-                    <MenuItem onClick={this.handleClose} component={Link} to='/report'>Videos</MenuItem>
-                    <MenuItem onClick={this.handleClose} component={Link} to='/report'>Concepts</MenuItem>
+                    <MenuItem onClick={this.handleClose.bind(this, 'Videos')} component={Link} to='/report'>Videos</MenuItem>
+                    <MenuItem onClick={this.handleClose.bind(this, 'Concepts')} component={Link} to='/report'>Concepts</MenuItem>
                   </Menu>
                 </React.Fragment>
               )}
