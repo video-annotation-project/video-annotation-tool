@@ -187,7 +187,7 @@ class Annotate extends Component {
   }
 
   getSelectedConcepts = async () => {
-    return axios.get('/conceptsSelected', {
+    return axios.get('/api/conceptsSelected', {
       headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')},
     }).then(res => res.data)
       .catch(error => {
@@ -381,7 +381,7 @@ class Annotate extends Component {
   handleClose = () => {
     this.setState({ open: false });
   };
-
+  
   render() {
     const { classes } = this.props;
     return (
@@ -397,7 +397,6 @@ class Annotate extends Component {
             <div className = {classes.boxContainer}>
                <video id = "video"  width = "1280" height = "720" src={'api/videos/Y7Ek6tndnA/'+this.state.videoName} type='video/mp4' controls>
                Your browser does not support the video tag.
-                 <source src='api/annotate' type='video/mp4' />
                </video>
                <Rnd id = "dragBox"
                  default = {{

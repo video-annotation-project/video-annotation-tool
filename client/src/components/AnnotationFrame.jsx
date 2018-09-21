@@ -51,6 +51,12 @@ class AnnotationFrame extends Component {
           image: 'data:image/png;base64, ' + encode(res.image.data),
           isLoaded: true
         });
+      })
+      .catch(error => {
+        console.log(error);
+        this.setState({
+          isLoaded: true
+        })
       });
   };
 
@@ -67,7 +73,7 @@ class AnnotationFrame extends Component {
       <React.Fragment>
         <ListItem className={classes.item}>
           <div id='test'></div>
-          <img className={classes.img} id='imageId' src={this.state.image} alt='error' />
+          <img className={classes.img} id='imageId' src={image} alt='error' />
         </ListItem>
       </React.Fragment>
     );

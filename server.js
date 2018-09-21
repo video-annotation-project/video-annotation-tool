@@ -182,7 +182,7 @@ app.get('/api/concepts', passport.authenticate('jwt', {session: false}),
   }
 );
 
-app.get('/conceptsSelected', passport.authenticate('jwt', {session: false}),
+app.get('/api/conceptsSelected', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
     queryText = 'select conceptid from profile where profile.userid=$1';
     try {
@@ -224,47 +224,6 @@ app.get('/api/conceptImages/:id',
     } catch (error) {
       res.status(400).json(error);
     }
-  }
-);
-
-app.get('/api/annotate',
-  (req, res) => {
-    var s3 = new AWS.S3();
-    const mimetype = 'video/mp4';
-    const file = 'videos/DocRicketts-0569_20131213T224337Z_00-00-01-00TC_h264.mp4';
-    const cache = 0;
-    s3.listObjectsV2({Bucket: 'lubomirstanchev', MaxKeys: 1, Prefix: file}, function(err, data) {
-      if (err) {
-        return res.sendStatus(404);
-      }
-      if (req != null && req.headers.range != null) {
-        var range = req.headers.range;
-        var bytes = range.replace(/bytes=/, '').split('-');
-        var start = parseInt(bytes[0], 10);
-        var total = data.Contents[0].Size;
-        var end = bytes[1] ? parseInt(bytes[1], 10) : total - 1;
-        var chunksize = (end - start) + 1;
-
-        res.writeHead(206, {
-          'Content-Range'  : 'bytes ' + start + '-' + end + '/' + total,
-          'Accept-Ranges'  : 'bytes',
-          'Content-Length' : chunksize,
-          'Last-Modified'  : data.Contents[0].LastModified,
-          'Content-Type'   : mimetype
-        });
-        s3.getObject({Bucket: 'lubomirstanchev', Key: file, Range: range}).createReadStream().pipe(res);
-      }
-      else
-      {
-        res.writeHead(200, {
-          'Cache-Control' : 'max-age=' + cache + ', private',
-          'Content-Length': data.Contents[0].Size,
-          'Last-Modified' : data.Contents[0].LastModified,
-          'Content-Type'  : mimetype
-        });
-        s3.getObject({Bucket: 'lubomirstanchev', Key: file}).createReadStream().pipe(res);
-      }
-    });
   }
 );
 
@@ -520,6 +479,38 @@ app.post('/api/delete', passport.authenticate('jwt', {session: false}),
     }
   }
 );
+
+app.get('/api/missingAnnotations', passport.authenticate('jwt', {session: false}),
+  async (req, res) => {
+    let queryPass = 'select annotations.id, videoid, userid, conceptid, timeinvideo, x1, y1, x2, y2, videowidth, videoheight, filename from annotations, videos where videos.id=annotations.videoid and (image is NULL OR imagewithbox is NULL) LIMIT 10';
+    try {
+      const annotations = await psql.query(queryPass);
+      res.json(annotations.rows);
+    } catch (error) {
+      res.json(error);
+    }
+  }
+);
+
+app.post("/updateImage", passport.authenticate('jwt', {session: false}),
+  async (req, res) => {
+  //id | videoid | userid | conceptid | timeinvideo | topRightx | topRighty | botLeftx | botLefty | dateannotated
+  //get videoId
+  let queryText = 'UPDATE annotations SET image=$1 WHERE id=$2 RETURNING *';
+  let name = req.body.id;
+  if (req.body.box) {
+    queryText = 'UPDATE annotations SET imagewithbox=$1 WHERE id=$2 RETURNING *';
+    name = name + '_box';
+  }
+  try {
+    let updateRes = await psql.query(queryText, [name+'.png', req.body.id]);
+    console.log(updateRes.rows);
+    res.json({message: "Updated", value: JSON.stringify(updateRes.rows[0])});
+  } catch(error) {
+    console.log(error)
+    res.json({message: "error: "+error})
+  }
+});
 
 // Express only serves static assets in production
 if (process.env.NODE_ENV === 'production') {
