@@ -280,6 +280,32 @@ app.get('/api/videoNames', passport.authenticate('jwt', {session: false}),
   }
 );
 
+app.get('/api/userVideos/:finished', passport.authenticate('jwt', {session: false}),
+  async (req, res) => {
+    let userId = req.user.id;
+    queryPass = 'SELECT id, filename FROM videos WHERE id IN (SELECT videoid FROM checkpoints WHERE userid=$1 AND finished=$2);'
+    try {
+      const videoData = await psql.query(queryPass, [userId, req.params.finished]);
+      res.json(videoData);
+    } catch (error) {
+      res.json(error);
+    }
+  }
+);
+
+app.get('/api/userUnwatchedVideos/', passport.authenticate('jwt', {session: false}),
+  async (req, res) => {
+    let userId = req.user.id;
+    queryPass = 'SELECT id, filename FROM videos WHERE id NOT IN (SELECT videoid FROM checkpoints WHERE userid=$1);'
+    try {
+      const videoData = await psql.query(queryPass, [userId]);
+      res.json(videoData);
+    } catch (error) {
+      res.json(error);
+    }
+  }
+);
+
 app.get('/api/latestVideoId', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
     let userId = req.user.id;

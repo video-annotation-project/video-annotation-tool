@@ -438,9 +438,15 @@ class Annotate extends Component {
                )}
             </div>
             <div className= {classes.videoListContainer}>
-              <span className = {classes.videoListText}>Select Video</span>
+              <span className = {classes.videoListText}>Resume</span>
               <br />
-              <VideoList handleVideoClick = {this.handleVideoClick} />
+              <VideoList handleVideoClick = {this.handleVideoClick} listType = {"resume"}/>
+              <span className = {classes.videoListText}>Unwatched Videos</span>
+              <br />
+              <VideoList handleVideoClick = {this.handleVideoClick} listType = {"unwatched"}/>
+              <span className = {classes.videoListText}>Watched Videos</span>
+              <br />
+              <VideoList handleVideoClick = {this.handleVideoClick} listType = {"watched"}/>
             </div>
          </div>
     );
