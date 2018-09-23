@@ -97,7 +97,7 @@ class Report extends React.Component {
                   <option value={'Concept'}>Concept</option>
                   <option value={'Video'}>Video</option>
                 </Select>
-              </FormControl>VideosAnnotated
+              </FormControl>
               {localStorage.getItem('admin') ? (
                 <FormControl className={classes.formControl}>
                   <InputLabel>Level 3</InputLabel>
