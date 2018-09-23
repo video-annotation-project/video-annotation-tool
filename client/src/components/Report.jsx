@@ -1,6 +1,6 @@
 import React from 'react';
+
 import { withStyles } from '@material-ui/core/styles';
-import VideosAnnotated from './VideosAnnotated.jsx';
 import PropTypes from 'prop-types';
 import Button from '@material-ui/core/Button';
 import Dialog from '@material-ui/core/Dialog';
@@ -12,6 +12,8 @@ import Input from '@material-ui/core/Input';
 import MenuItem from '@material-ui/core/MenuItem';
 import FormControl from '@material-ui/core/FormControl';
 import Select from '@material-ui/core/Select';
+
+import VideosAnnotated from './VideosAnnotated.jsx';
 
 const styles = theme => ({
   root: {
@@ -33,12 +35,15 @@ class Report extends React.Component {
     super(props);
     this.state = {
       open: false,
-      age: '',
+      level1: '',
+      level2: '',
+      level3: '',
+      renderTree: false
     };
   }
 
   handleChange = name => event => {
-    this.setState({ [name]: Number(event.target.value) });
+    this.setState({ [name]: event.target.value });
   };
 
   handleClickOpen = () => {
@@ -46,7 +51,10 @@ class Report extends React.Component {
   };
 
   handleClose = () => {
-    this.setState({ open: false });
+    this.setState({
+       open: false,
+       renderTree: true
+     });
   };
   //<VideosAnnotated />
 
@@ -67,31 +75,46 @@ class Report extends React.Component {
                 <InputLabel>Level 1</InputLabel>
                 <Select
                   native
-                  value={this.state.age}
-                  onChange={this.handleChange('age')}
+                  value={this.state.level1}
+                  onChange={this.handleChange('level1')}
                   input={<Input id="age-native-simple" />}
                 >
                   <option value="" />
-                  <option value={10}></option>
-                  <option value={20}>Twenty</option>
-                  <option value={30}>Thirty</option>
+                  <option value={'Concept'}>Concept</option>
+                  <option value={'Video'}>Video</option>
                 </Select>
               </FormControl>
               <FormControl className={classes.formControl}>
-                <InputLabel htmlFor="age-simple">Age</InputLabel>
+                <InputLabel>Level 2</InputLabel>
                 <Select
-                  value={this.state.age}
-                  onChange={this.handleChange('age')}
+                  value={this.state.level2}
+                  onChange={this.handleChange('level2')}
                   input={<Input id="age-simple" />}
                 >
                   <MenuItem value="">
                     <em>None</em>
                   </MenuItem>
-                  <MenuItem value={10}>Ten</MenuItem>
-                  <MenuItem value={20}>Twenty</MenuItem>
-                  <MenuItem value={30}>Thirty</MenuItem>
+                  <option value={'Concept'}>Concept</option>
+                  <option value={'Video'}>Video</option>
                 </Select>
               </FormControl>
+              {localStorage.getItem('admin') ? (
+                <FormControl className={classes.formControl}>
+                  <InputLabel>Level 3</InputLabel>
+                  <Select
+                    value={this.state.level3}
+                    onChange={this.handleChange('level3')}
+                  >
+                    <MenuItem value="">
+                      <em>None</em>
+                    </MenuItem>
+                    <option value={'Concept'}>Concept</option>
+                    <option value={'Video'}>Video</option>
+                  </Select>
+                </FormControl>
+              ):(
+                <div></div>
+              )}
             </form>
           </DialogContent>
           <DialogActions>
@@ -103,6 +126,11 @@ class Report extends React.Component {
             </Button>
           </DialogActions>
         </Dialog>
+        {this.state.renderTree ? (
+          <VideosAnnotated/>
+        ):(
+          <div></div>
+        )}
       </div>
 
     );
