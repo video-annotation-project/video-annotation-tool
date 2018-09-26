@@ -5,9 +5,11 @@ import { withStyles } from '@material-ui/core/styles';
 import CurrentConcepts from './CurrentConcepts.jsx';
 import VideoList from './VideoList.jsx';
 import ErrorModal from './ErrorModal.jsx';
+import DialogModal from './DialogModal.jsx';
 import List from '@material-ui/core/List';
 import axios from 'axios';
 import AWS from 'aws-sdk';
+import AddIcon from '@material-ui/icons/Add';
 
 const styles = theme => ({
   clear: {
@@ -168,8 +170,10 @@ class Annotate extends Component {
       isLoaded: false,
       videoName: 'DocRicketts-0569_20131213T224337Z_00-00-01-00TC_h264.mp4',
       errorMsg: null,
+      dialogMsg: null,
       conceptsSelected: {},
-      open: false //For error modal box
+      open: false, //For error modal box
+      dialogOpen: false
     };
   }
 
@@ -265,6 +269,13 @@ class Annotate extends Component {
     })
   }
 
+  searchConcepts = () => {
+        this.setState({
+            dialogOpen: true,
+            dialogTitle: "Add New Concept"
+        });
+  }
+
   drawImages = (vidCord, dragBoxCord, myVideo, date, x1, y1) => {
     var canvas = document.createElement('canvas');
     canvas.height = vidCord.height;
@@ -310,11 +321,22 @@ class Annotate extends Component {
     this.setState({ open: false });
   };
 
+  handleDialogClose = () => {
+    this.setState(
+      { 
+        dialogOpen: false,
+        dialogMsg: null,
+        dialogTitle: null
+      });
+  };
+
   render() {
     const { classes } = this.props;
     return (
       <div>
          <ErrorModal errorMsg={this.state.errorMsg} open={this.state.open} handleClose={this.handleClose}/>
+         <DialogModal title={this.state.dialogTitle} message={this.state.dialogMsg} open={this.state.dialogOpen} handleClose={this.handleDialogClose}/>
+
          <div className= {classes.name}>
           {this.state.videoName}
          </div>
@@ -356,6 +378,9 @@ class Annotate extends Component {
          </div>
             <div className = {classes.conceptSectionContainer}>
                <span className = {classes.conceptsText}>Current Concepts</span>
+               <Button variant="contained" color="primary" aria-label="Add" className={classes.button} style={{float: 'right'}} onClick={this.searchConcepts}>
+                <AddIcon />
+               </Button>
                <br />
                {(this.state.isLoaded) ? (
                  <CurrentConcepts handleConceptClick= {this.handleConceptClick} conceptsSelected= {this.state.conceptsSelected} />
