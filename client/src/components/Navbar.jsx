@@ -37,9 +37,20 @@ class Navbar extends React.Component {
           {localStorage.getItem('isAuthed') ? (
             <React.Fragment>
               {localStorage.getItem('admin') ? (
-                  <Button color='inherit' component={Link} to='/createUser'>
-                    Create User
-                  </Button>
+                  <React.Fragment>
+                    <Button color='inherit' component={Link} to='/createUser'>
+                      Create User
+                    </Button>
+                    <Button color='inherit' component={Link} to='/concepts'>
+                      Select Concepts
+                    </Button>
+                    <Button color='inherit' component={Link} to='/annotate'>
+                      Annotate Videos
+                    </Button>
+                    <Button color='inherit'component={Link} to='/report'>
+                      Report
+                    </Button>
+                  </React.Fragment>
               ):(
                 <React.Fragment>
                   <Button color='inherit' component={Link} to='/concepts'>

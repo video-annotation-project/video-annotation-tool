@@ -8,12 +8,10 @@ import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import InputLabel from '@material-ui/core/InputLabel';
-import Input from '@material-ui/core/Input';
-import MenuItem from '@material-ui/core/MenuItem';
 import FormControl from '@material-ui/core/FormControl';
 import Select from '@material-ui/core/Select';
 
-import VideosAnnotated from './VideosAnnotated.jsx';
+import Level1 from './TreeLevel1.jsx';
 
 const styles = theme => ({
   root: {
@@ -38,25 +36,62 @@ class Report extends React.Component {
       level1: '',
       level2: '',
       level3: '',
-      renderTree: false
+      renderTree: false,
+      options: [
+        {"name":"", "selected":false},
+        {"name":"Video", "selected":false},
+        {"name":"Concept", "selected":false},
+        {"name":"User", "selected":false}
+      ]
     };
+  }
+
+  componentDidMount = () => {
+    if (!localStorage.getItem('admin')) {
+      let tempOptions = JSON.parse(JSON.stringify(this.state.options));
+      tempOptions.filter(option => option.name === "User")
+                 .map(option => option.selected = true);
+      this.setState({
+        options: tempOptions
+      });
+    }
+  }
+
+  handleOptionToggle = (level, optionSelected) => {
+    let tempOptions = JSON.parse(JSON.stringify(this.state.options));
+    tempOptions.filter(option => option.selected === level)
+               .map(option => option.selected = false);
+    tempOptions.filter(option => option.name === optionSelected & "" !== optionSelected)
+               .map(option => option.selected = level);
+    this.setState({
+      options: tempOptions
+    });
   }
 
   handleChange = name => event => {
     this.setState({ [name]: event.target.value });
+    this.handleOptionToggle(name, event.target.value);
   };
 
   handleClickOpen = () => {
-    this.setState({ open: true });
+    this.setState({
+      open: true,
+      renderTree: false
+    });
   };
 
-  handleClose = () => {
+  handleCancel = () => {
+    this.setState({
+       open: false,
+     });
+  };
+
+  handleOk = () => {
     this.setState({
        open: false,
        renderTree: true
      });
   };
-  //<VideosAnnotated />
 
   render() {
     const { classes } = this.props;
@@ -66,7 +101,7 @@ class Report extends React.Component {
         <Dialog
           disableBackdropClick
           open={this.state.open}
-          onClose={this.handleClose}
+          onClose={this.handleCancel}
         >
           <DialogTitle>Select Tree Structure:</DialogTitle>
           <DialogContent>
@@ -77,39 +112,35 @@ class Report extends React.Component {
                   native
                   value={this.state.level1}
                   onChange={this.handleChange('level1')}
-                  input={<Input id="age-native-simple" />}
                 >
-                  <option value="" />
-                  <option value={'Concept'}>Concept</option>
-                  <option value={'Video'}>Video</option>
+                  {this.state.options
+                    .filter(option => option.selected === false || option.selected === 'level1')
+                    .map(choice => <option key={'level1'+choice.name} value={choice.name}>{choice.name}</option>)}
                 </Select>
               </FormControl>
               <FormControl className={classes.formControl}>
                 <InputLabel>Level 2</InputLabel>
                 <Select
+                  native
                   value={this.state.level2}
                   onChange={this.handleChange('level2')}
-                  input={<Input id="age-simple" />}
                 >
-                  <MenuItem value="">
-                    <em>None</em>
-                  </MenuItem>
-                  <option value={'Concept'}>Concept</option>
-                  <option value={'Video'}>Video</option>
+                  {this.state.options
+                    .filter(option => option.selected === false || option.selected === 'level2')
+                    .map(choice => <option key={'level1'+choice.name} value={choice.name}>{choice.name}</option>)}
                 </Select>
               </FormControl>
               {localStorage.getItem('admin') ? (
                 <FormControl className={classes.formControl}>
                   <InputLabel>Level 3</InputLabel>
                   <Select
+                    native
                     value={this.state.level3}
                     onChange={this.handleChange('level3')}
                   >
-                    <MenuItem value="">
-                      <em>None</em>
-                    </MenuItem>
-                    <option value={'Concept'}>Concept</option>
-                    <option value={'Video'}>Video</option>
+                    {this.state.options
+                      .filter(option => option.selected === false || option.selected === 'level3')
+                      .map(choice => <option key={'level1'+choice.name} value={choice.name}>{choice.name}</option>)}
                   </Select>
                 </FormControl>
               ):(
@@ -118,21 +149,20 @@ class Report extends React.Component {
             </form>
           </DialogContent>
           <DialogActions>
-            <Button onClick={this.handleClose} color="primary">
+            <Button onClick={this.handleCancel} color="primary">
               Cancel
             </Button>
-            <Button onClick={this.handleClose} color="primary">
+            <Button onClick={this.handleOk} color="primary">
               Ok
             </Button>
           </DialogActions>
         </Dialog>
         {this.state.renderTree ? (
-          <VideosAnnotated/>
+          <Level1 level1={this.state.level1} level2={this.state.level2} level3={this.state.level3}/>
         ):(
           <div></div>
         )}
       </div>
-
     );
   }
 }

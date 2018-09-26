@@ -34,18 +34,21 @@ class Annotations extends Component {
     };
   }
 
-  getAnnotations = async (videoid) => {
-    let annotations = await axios.get(`/api/annotations/${videoid}`, {
+  getAnnotations = async () => {
+    let port = `/api/annotations?level1=${this.props.level1}&id=${this.props.id}`;
+    if (this.props.level2) {
+      port = port + `&level2=${this.props.level2}&level1Id=${this.props.level1Id}`;
+    }
+    let annotations = await axios.get(port, {
       headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')},
-    })
+    });
+    console.log(annotations);
     return annotations.data;
   };
 
   componentDidMount = async () => {
-    let annotations = await this.getAnnotations(this.props.videoId);
-    annotations.forEach(annotation => {
-      annotation.expanded = false;
-    })
+    let annotations = await this.getAnnotations();
+    annotations.map(annotation => annotation.expanded = false);
     this.setState({
       isLoaded: true,
       annotations: annotations
