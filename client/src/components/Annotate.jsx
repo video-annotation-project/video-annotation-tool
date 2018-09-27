@@ -161,7 +161,6 @@ function rewind() {
    myVideo.currentTime = (cTime - 5);
 }
 
-
 class Annotate extends Component {
   constructor(props) {
     super(props);
@@ -173,7 +172,8 @@ class Annotate extends Component {
       dialogMsg: null,
       conceptsSelected: {},
       open: false, //For error modal box
-      dialogOpen: false
+      dialogOpen: false,
+      inputHandler: null
     };
   }
 
@@ -202,7 +202,7 @@ class Annotate extends Component {
     let temp = await this.makeObject(selectedConcepts);
     await this.setState({
       conceptsSelected: temp,
-      isLoaded: true,
+      isLoaded: true
     });
   }
 
@@ -272,9 +272,38 @@ class Annotate extends Component {
   searchConcepts = () => {
         this.setState({
             dialogOpen: true,
-            dialogTitle: "Add New Concept"
+            dialogTitle: "Add New Concept",
+            inputHandler: this.addConcept
         });
   }
+
+
+  addConcept = (concept) => {
+    fetch("/api/selectConcept", {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token')},
+      body: JSON.stringify({
+        'name': concept
+      })
+    }).then(res => res.json())
+      .then(async res => {
+        this.setState({
+          isLoaded:false
+        })
+        let selectedConcepts = await this.getSelectedConcepts();
+        let temp = await this.makeObject(selectedConcepts);
+        await this.setState({
+          conceptsSelected: temp,
+          isLoaded: true
+        });
+        this.handleDialogClose();
+      })
+      .catch(error => {
+        console.log(error)
+        return;
+      })
+  };
+
 
   drawImages = (vidCord, dragBoxCord, myVideo, date, x1, y1) => {
     var canvas = document.createElement('canvas');
@@ -335,7 +364,7 @@ class Annotate extends Component {
     return (
       <div>
          <ErrorModal errorMsg={this.state.errorMsg} open={this.state.open} handleClose={this.handleClose}/>
-         <DialogModal title={this.state.dialogTitle} message={this.state.dialogMsg} open={this.state.dialogOpen} handleClose={this.handleDialogClose}/>
+         <DialogModal title={this.state.dialogTitle} message={this.state.dialogMsg} inputHandler={this.state.inputHandler} open={this.state.dialogOpen} handleClose={this.handleDialogClose}/>
 
          <div className= {classes.name}>
           {this.state.videoName}

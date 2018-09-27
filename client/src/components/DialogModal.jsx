@@ -1,12 +1,9 @@
 import React, { Component } from 'react';
-import Button from '@material-ui/core/Button';
 import TextField from '@material-ui/core/TextField';
 import Dialog from '@material-ui/core/Dialog';
-import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
 import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
-import Modal from '@material-ui/core/Modal';
 import { withStyles } from '@material-ui/core/styles';
 
 const styles = theme => ({
@@ -21,6 +18,16 @@ const styles = theme => ({
   },
 });
 
+
+/* 
+  A pop up dialog box that prompts the user for input.
+  Has the properties:
+    -inputHandler: function called when user hits enter, passes the input
+    -title
+    -message
+    -handleClose
+    -open
+*/
 class DialogModal extends Component {
 
   handleClose = () => {
@@ -29,13 +36,12 @@ class DialogModal extends Component {
 
   _handleKeyPress = (e) => {
     if (e.key === 'Enter') {
-      console.log(e.target.value);
+      this.props.inputHandler(e.target.value);
     }
   }
 
   render() {
     const { classes } = this.props;
-    console.log(this.props.message);
     return (
       <React.Fragment>
         <Dialog
