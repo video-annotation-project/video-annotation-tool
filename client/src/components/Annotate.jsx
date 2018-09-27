@@ -170,9 +170,11 @@ class Annotate extends Component {
       videoName: 'DocRicketts-0569_20131213T224337Z_00-00-01-00TC_h264.mp4',
       errorMsg: null,
       dialogMsg: null,
+      dialogTitle: null,
+      dialogPlaceholder: null,
+      dialogOpen: false,
       conceptsSelected: {},
       open: false, //For error modal box
-      dialogOpen: false,
       inputHandler: null
     };
   }
@@ -273,6 +275,8 @@ class Annotate extends Component {
         this.setState({
             dialogOpen: true,
             dialogTitle: "Add New Concept",
+            dialogPlaceholder: "concept",
+            dialogMsg: null,
             inputHandler: this.addConcept
         });
   }
@@ -355,6 +359,7 @@ class Annotate extends Component {
       { 
         dialogOpen: false,
         dialogMsg: null,
+        dialogPlaceholder: null,
         dialogTitle: null
       });
   };
@@ -364,7 +369,14 @@ class Annotate extends Component {
     return (
       <div>
          <ErrorModal errorMsg={this.state.errorMsg} open={this.state.open} handleClose={this.handleClose}/>
-         <DialogModal title={this.state.dialogTitle} message={this.state.dialogMsg} inputHandler={this.state.inputHandler} open={this.state.dialogOpen} handleClose={this.handleDialogClose}/>
+         <DialogModal 
+            title={this.state.dialogTitle}
+            message={this.state.dialogMsg}
+            placeholder={this.state.dialogPlaceholder}
+            inputHandler={this.state.inputHandler}
+            open={this.state.dialogOpen}
+            handleClose={this.handleDialogClose}
+         />
 
          <div className= {classes.name}>
           {this.state.videoName}

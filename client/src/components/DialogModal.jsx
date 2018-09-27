@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import TextField from '@material-ui/core/TextField';
+import Input from '@material-ui/core/Input';
 import Dialog from '@material-ui/core/Dialog';
 import DialogContent from '@material-ui/core/DialogContent';
 import DialogContentText from '@material-ui/core/DialogContentText';
@@ -34,14 +34,13 @@ class DialogModal extends Component {
     this.props.handleClose();
   };
 
-  _handleKeyPress = (e) => {
+  handleKeyPress = (e) => {
     if (e.key === 'Enter') {
       this.props.inputHandler(e.target.value);
     }
   }
 
   render() {
-    const { classes } = this.props;
     return (
       <React.Fragment>
         <Dialog
@@ -49,17 +48,18 @@ class DialogModal extends Component {
           onClose={this.handleClose}
           aria-labelledby="form-dialog-title"
         >
-          <DialogTitle id="form-dialog-title">Add Concept</DialogTitle>
+          <DialogTitle id="form-dialog-title">{this.props.title}</DialogTitle>
           <DialogContent>
             <DialogContentText>
               {this.props.message}
             </DialogContentText>
-            <TextField
-              onKeyPress={this._handleKeyPress}
+            <Input
+              onKeyPress={this.handleKeyPress}
               autoFocus
               margin="dense"
               id="concept"
               type="text"
+              placeholder={this.props.placeholder}
               fullWidth
             />
           </DialogContent>
