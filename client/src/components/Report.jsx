@@ -88,9 +88,13 @@ class Report extends React.Component {
 
   handleOk = () => {
     this.setState({
-       open: false,
-       renderTree: true
+       open: false
      });
+     if (this.state.level1 !== '') {
+       this.setState({
+         renderTree: true
+       });
+     }
   };
 
   render() {

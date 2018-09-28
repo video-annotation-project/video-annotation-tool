@@ -9,6 +9,7 @@ import ExpandLess from '@material-ui/icons/ExpandLess';
 import ExpandMore from '@material-ui/icons/ExpandMore';
 import axios from 'axios';
 import Annotations from './Annotations.jsx';
+import Level3 from './TreeLevel3.jsx';
 
 
 const styles = theme => ({
@@ -28,7 +29,7 @@ class TreeLevel2 extends Component {
   }
 
   getLevel2 = async () => {
-    let level2 = await axios.get(`/api/reportInfoLevel2?level1=${this.props.level1}&level2=${this.props.level2}&id=${this.props.id}`, {
+    let level2 = await axios.get(`/api/reportInfoLevel2?level1=${this.props.level1}&level2=${this.props.level2}&id=${this.props.id}&admin=${localStorage.getItem('admin')}`, {
       headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')}
     })
     return level2.data;
@@ -85,7 +86,7 @@ class TreeLevel2 extends Component {
                 {this.props.level3 === '' ? (
                   <Annotations level1 = {this.props.level1} level2 = {this.props.level2} id = {data.id} level1Id = {this.props.id} />
                 ):(
-                  <div>Not yet implemented...</div>
+                  <Level3 level1 = {this.props.level1} level2 = {this.props.level2} level3 = {this.props.level3} id = {data.id} level1Id = {this.props.id}/>
                 )}
 
             </Collapse>

@@ -9,7 +9,7 @@ import ExpandLess from '@material-ui/icons/ExpandLess';
 import ExpandMore from '@material-ui/icons/ExpandMore';
 import axios from 'axios';
 import Annotations from './Annotations.jsx';
-import Level2 from './TreeLevel2.jsx';
+
 
 const styles = theme => ({
   root: {
@@ -17,21 +17,21 @@ const styles = theme => ({
   },
 });
 
-class TreeLevel1 extends Component {
+class TreeLevel3 extends Component {
   constructor(props) {
     super(props);
     this.state = {
       isLoaded: false,
       error: null,
-      level1: null
+      level3: null
     };
   }
 
-  getLevel1 = async () => {
-    let level1 = await axios.get(`/api/reportInfoLevel1?level1=${this.props.level1}&admin=${localStorage.getItem('admin')}`, {
+  getLevel3 = async () => {
+    let level3 = await axios.get(`/api/reportInfoLevel3?level1=${this.props.level1}&level2=${this.props.level2}&level3=${this.props.level3}&id=${this.props.id}&level1Id=${this.props.level1Id}&admin=${localStorage.getItem('admin')}`, {
       headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')}
     })
-    return level1.data;
+    return level3.data;
   }
 
   makeObject = async (reportData) => {
@@ -47,25 +47,25 @@ class TreeLevel1 extends Component {
   }
 
   componentDidMount = async () => {
-    let level1 = await this.getLevel1();
-    level1 = await this.makeObject(level1);
+    let level3 = await this.getLevel3();
+    level3 = await this.makeObject(level3);
     await this.setState({
       isLoaded: true,
-      level1: level1
+      level3: level3
     });
   }
 
   handleListClick = async (name) => {
-    let level1 = JSON.parse(JSON.stringify(this.state.level1));
-    let selected = level1.find(data => data.name === name);
+    let level3 = JSON.parse(JSON.stringify(this.state.level3));
+    let selected = level3.find(data => data.name === name);
     selected.expanded = !selected.expanded;
     this.setState({
-      level1: level1
+      level3: level3
     });
   }
 
   render () {
-    const { error, isLoaded, level1 } = this.state;
+    const { error, isLoaded, level3 } = this.state;
     const { classes } = this.props;
     if (!isLoaded) {
       return <List>Loading...</List>;
@@ -75,19 +75,14 @@ class TreeLevel1 extends Component {
     }
     return (
       <List className={classes.root}>
-        {level1.map((data, index) =>(
+        {level3.map((data, index) =>(
           <React.Fragment key={index+1}>
             <ListItem button onClick={() => this.handleListClick(data.name)}>
               <ListItemText primary={(index+1)+': '+data.name} />
               {data.expanded ? <ExpandLess /> : <ExpandMore />}
             </ListItem>
             <Collapse in={data.expanded} timeout='auto' >
-                {this.props.level2 === '' ? (
-                  <Annotations level1={this.props.level1} id={data.id} />
-                ):(
-                  <Level2 level1 = {this.props.level1} level2 = {this.props.level2} level3 = {this.props.level3} id = {data.id} />
-                )}
-
+              <Annotations level1 = {this.props.level1} level2 = {this.props.level2} level3 = {this.props.level3} id = {data.id} level2Id = {this.props.id} level1Id = {this.props.level1Id} />
             </Collapse>
           </React.Fragment>
         ))}
@@ -96,8 +91,8 @@ class TreeLevel1 extends Component {
   }
 }
 
-TreeLevel1.propTypes = {
+TreeLevel3.propTypes = {
   classes: PropTypes.object.isRequired,
 };
 
-export default withStyles(styles)(TreeLevel1);
+export default withStyles(styles)(TreeLevel3);

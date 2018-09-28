@@ -268,16 +268,24 @@ app.get('/api/latestVideoName/:videoid', passport.authenticate('jwt', {session: 
 app.get('/api/reportInfoLevel1', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
     let queryPass = '';
+    let userId = req.user.id;
     if (req.query.level1 === "Video") {
-      queryPass = 'SELECT DISTINCT ON (videos.filename) videos.filename as name, videos.id FROM videos, annotations WHERE videos.id = annotations.videoid AND annotations.userid = $1';
+      queryPass = 'SELECT DISTINCT ON (videos.filename) videos.filename as name, videos.id FROM videos, annotations WHERE videos.id = annotations.videoid';
     }
     if (req.query.level1 === "Concept") {
-      queryPass = 'SELECT DISTINCT ON (concepts.name) concepts.name, concepts.id FROM concepts, annotations WHERE concepts.id = annotations.conceptid AND annotations.userid = $1';
+      queryPass = 'SELECT DISTINCT ON (concepts.name) concepts.name, concepts.id FROM concepts, annotations WHERE concepts.id = annotations.conceptid';
     }
-
-    let userId = req.user.id;
+    if (req.query.level1 === "User") {
+      queryPass = 'SELECT DISTINCT ON (users.username) users.username as name, users.id FROM users, annotations WHERE users.id = annotations.userid';
+    }
+    let params = [];
+    if (req.query.admin !== 'true') {
+      queryPass = queryPass + ' AND annotations.userid = $1';
+      params.push(userId);
+    }
     try {
-      const reportData = await psql.query(queryPass, [userId]);
+      const reportData = await psql.query(queryPass, params);
+
       res.json(reportData.rows);
     } catch (error) {
       res.json(error);
@@ -288,16 +296,26 @@ app.get('/api/reportInfoLevel1', passport.authenticate('jwt', {session: false}),
 app.get('/api/reportInfoLevel2', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
     let queryPass = '';
-    if (req.query.level2 === "Concept") {
-      queryPass = 'SELECT DISTINCT ON (concepts.name) concepts.name, concepts.id FROM concepts, annotations, videos WHERE concepts.id = annotations.conceptid AND videos.id = annotations.videoid AND annotations.userid = $1 AND videos.id = $2';
+    let level1 = req.query.level1;
+    let level2 = req.query.level2;
+    if (level2 === "Concept") {
+      queryPass = 'SELECT DISTINCT ON (concepts.name) concepts.name, concepts.id FROM concepts, annotations, ' + level1.toLowerCase() + 's WHERE ' + level1.toLowerCase() + 's.id = annotations.' + level1.toLowerCase() + 'id AND concepts.id = annotations.conceptid';
     }
-    if (req.query.level2 === "Video") {
-      queryPass = 'SELECT DISTINCT ON (videos.filename) videos.filename as name, videos.id FROM videos, annotations, concepts WHERE concepts.id = annotations.conceptid AND videos.id = annotations.videoid AND annotations.userid = $1 AND concepts.id = $2';
+    if (level2 === "Video") {
+      queryPass = 'SELECT DISTINCT ON (videos.filename) videos.filename as name, videos.id FROM videos, annotations, ' + level1.toLowerCase() + 's WHERE ' + level1.toLowerCase() + 's.id = annotations.' + level1.toLowerCase() + 'id AND videos.id = annotations.videoid';
+    }
+    if (level2 === "User") {
+      queryPass = 'SELECT DISTINCT ON (users.username) users.username as name, users.id FROM users, annotations, ' + level1.toLowerCase() + 's WHERE ' + level1.toLowerCase() + 's.id = annotations.' + level1.toLowerCase() + 'id AND users.id = annotations.userid';
     }
     let userId = req.user.id;
+    let params = [];
+    if (req.query.admin !== 'true') {
+      queryPass = queryPass + ' AND annotations.userid = $1';
+      params.push(userId);
+    }
+    queryPass = queryPass + ' AND ' + level1.toLowerCase() + 's.id =' + req.query.id;
     try {
-      const reportData = await psql.query(queryPass, [userId, req.query.id]);
-      console.log(reportData.rows);
+      const reportData = await psql.query(queryPass, params);
       res.json(reportData.rows);
     } catch (error) {
       res.json(error);
@@ -305,39 +323,111 @@ app.get('/api/reportInfoLevel2', passport.authenticate('jwt', {session: false}),
   }
 );
 
+let addLevel = (queryPass, level) => {
+  queryPass = queryPass + ', ' + level.toLowerCase() + 's';
+  return queryPass;
+}
+
+let addCondition = (queryPass, level, id) => {
+  let condition = '';
+  if ( level !== null) {
+    condition = ' AND ' + level.toLowerCase() + 's.id=' + id;
+    condition = condition + ' AND ' + level.toLowerCase() + 's.id=annotations.' + level.toLowerCase() + 'id';
+  }
+  return queryPass + condition;
+}
+
+
+app.get('/api/reportInfoLevel3', passport.authenticate('jwt', {session: false}),
+  async (req, res) => {
+    let queryPass = '';
+    let level1 = req.query.level1;
+    let level2 = req.query.level2;
+    let level3 = req.query.level3;
+    let level1Id = req.query.level1Id;
+    let id = req.query.id;
+    if (level3 === "Concept") {
+      queryPass = 'SELECT DISTINCT ON (concepts.name) concepts.name, concepts.id FROM concepts, annotations';
+    }
+    if (level3 === "Video") {
+      queryPass = 'SELECT DISTINCT ON (videos.filename) videos.filename as name, videos.id FROM videos, annotations';
+    }
+    if (level3 === "User") {
+      queryPass = 'SELECT DISTINCT ON (users.username) users.username as name, users.id FROM users, annotations';
+    }
+    queryPass = addLevel(queryPass, level1);
+    queryPass = addLevel(queryPass, level2);
+    queryPass = queryPass + ' WHERE annotations.' + level3.toLowerCase() + 'id=' + level3.toLowerCase() + 's.id';
+    queryPass = addCondition(queryPass, level1, level1Id);
+    queryPass = addCondition(queryPass, level2, id);
+    let userId = req.user.id;
+    let params = [];
+    if (req.query.admin !== 'true') {
+      queryPass = queryPass + ' AND annotations.userid = $1';
+      params.push(userId);
+    }
+    try {
+      const reportData = await psql.query(queryPass, params);
+      res.json(reportData.rows);
+    } catch (error) {
+      res.json(error);
+    }
+  }
+);
+
+let addLevelAnnotations = (queryPass, level) => {
+  if ( level !== 'Concept' & level !== null) {
+    queryPass = queryPass + ', ' + level.toLowerCase() + 's';
+  }
+  return queryPass;
+}
+
+let addConditionAnnotations = (queryPass, level, id) => {
+  let condition = '';
+  if ( level !== null) {
+    condition = ' AND ' + level.toLowerCase() + 's.id=' + id;
+    if ( level !== 'Concepts') {
+      condition = condition + ' AND ' + level.toLowerCase() + 's.id=annotations.' + level.toLowerCase() + 'id';
+    }
+  }
+  return queryPass + condition;
+}
+
 app.get('/api/annotations', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
     let level1 = req.query.level1;
     let id = req.query.id;
     let level2 = null;
     let level1Id = null;
+    let level3 = null;
+    let level2Id = null;
     if (req.query.level2) {
       level1Id = req.query.level1Id;
       level2 = req.query.level2;
     }
+    if (req.query.level3) {
+      level2Id = req.query.level2Id;
+      level3 = req.query.level3;
+    }
+    //Build query string
     let queryPass = '';
-    if (level1 === "Video") {
-      queryPass = 'SELECT annotations.id, annotations.timeinvideo, annotations.x1, annotations.y1, annotations.x2, annotations.y2, annotations.videoWidth, annotations.videoHeight, annotations.imagewithbox, concepts.name, videos.filename FROM annotations, concepts, videos WHERE annotations.conceptid=concepts.id AND annotations.userid=$1 AND annotations.videoid=$2 AND videos.id=annotations.videoid';
-    }
-    if (level1 === "Concept") {
-      queryPass = 'SELECT annotations.id, annotations.timeinvideo, annotations.x1, annotations.y1, annotations.x2, annotations.y2, annotations.videoWidth, annotations.videoHeight, annotations.imagewithbox, concepts.name, videos.filename FROM annotations, concepts, videos WHERE annotations.conceptid=concepts.id AND annotations.userid=$1 AND annotations.conceptid=$2 AND videos.id=annotations.videoid';
-    }
-    if (level2 !== null) {
-      queryPass = queryPass + ' AND ' + level2.toLowerCase() + 's.id = $3';
-    }
-    queryPass = queryPass + ' ORDER BY annotations.timeinvideo';
+    queryPass = 'SELECT annotations.id, annotations.timeinvideo, annotations.x1, annotations.y1, annotations.x2, annotations.y2, annotations.videoWidth, annotations.videoHeight, annotations.imagewithbox, concepts.name FROM annotations, concepts';
+    queryPass = addLevelAnnotations(queryPass, level1);
+    queryPass = addLevelAnnotations(queryPass, level2);
+    queryPass = addLevelAnnotations(queryPass, level3);
+    queryPass = queryPass + ' WHERE concepts.id=annotations.conceptid';
+    queryPass = addConditionAnnotations(queryPass, level1, (level1Id ? level1Id:id));
+    queryPass = addConditionAnnotations(queryPass, level2, (level2Id ? level2Id:id));
+    queryPass = addConditionAnnotations(queryPass, level3, id);
     let userId = req.user.id;
     let params = [];
-    params.push(userId);
-    console.log(queryPass);
-    if (level2 !== null & level1Id !== null) {
-      params.push(level1Id);
+    if (req.query.admin !== 'true') {
+      queryPass = queryPass + ' AND annotations.userid = $1';
+      params.push(userId);
     }
-    params.push(id);
-    console.log(params);
+    queryPass = queryPass + ' ORDER BY annotations.timeinvideo';
     try {
       const annotations = await psql.query(queryPass, params);
-      console.log("Printing: ", annotations);
       res.json(annotations.rows);
     } catch (error) {
       res.json(error);

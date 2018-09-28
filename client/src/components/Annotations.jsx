@@ -35,9 +35,12 @@ class Annotations extends Component {
   }
 
   getAnnotations = async () => {
-    let port = `/api/annotations?level1=${this.props.level1}&id=${this.props.id}`;
+    let port = `/api/annotations?level1=${this.props.level1}&id=${this.props.id}&admin=${localStorage.getItem('admin')}`;
     if (this.props.level2) {
       port = port + `&level2=${this.props.level2}&level1Id=${this.props.level1Id}`;
+    }
+    if (this.props.level3) {
+      port = port + `&level3=${this.props.level3}&level2Id=${this.props.level2Id}`;
     }
     let annotations = await axios.get(port, {
       headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')},
