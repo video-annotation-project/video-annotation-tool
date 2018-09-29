@@ -214,12 +214,13 @@ class Annotate extends Component {
       videoName: currentVideo.filename,
       conceptsSelected: temp,
       isLoaded: true,
+    }, () => {
+      var myVideo = document.getElementById("video");
+      myVideo.currentTime = currentVideo.time;
     });
-    var myVideo = document.getElementById("video");
-    myVideo.currentTime = currentVideo.time;
   }
 
-  updateCheckpoint = (finished) => {
+  updateCheckpoint = async(finished) => {
     var myVideo = document.getElementById("video");
     var time = myVideo.currentTime;
     if (finished) {
@@ -241,7 +242,43 @@ class Annotate extends Component {
         }
       })
     }
+    // show next video on resume list
+    if (finished) {
+      fetch('/api/userVideos/false', {
+        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')}
+      }).then(res => res.json())
+      .then(res => {
+        if (typeof res.rows[0] !== 'undefined') {
+          this.setState({
+            videoName: res.rows[0].filename
+          }, () => {
+            // get saved time from videoid
+            fetch(`/api/timeAtVideo/${res.rows[0].id}`, {
+              headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')}
+            }).then(res => res.json())
+            .then(res => {
+              if (typeof res.rows !== 'undefined') {
+                  var myVideo = document.getElementById("video");
+                  myVideo.currentTime = res.rows[0].timeinvideo;
+              }
+            })
+          });
+        }
+        else { // no videos on resume list, get from unwatched list
+          fetch('/api/userUnwatchedVideos/', {
+            headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')}
+          }).then(res => res.json())
+          .then(res => {
+            if (typeof res.rows !== 'undefined') {
+              this.setState({
+                videoName: res.rows[0].filename
+              });
+            }
+          })
+        }
+    })
   }
+};
 
   componentWillUnmount = () => {
      this.updateCheckpoint(false);
@@ -381,7 +418,7 @@ class Annotate extends Component {
   handleClose = () => {
     this.setState({ open: false });
   };
-  
+
   render() {
     const { classes } = this.props;
     return (
