@@ -271,19 +271,20 @@ class Annotate extends Component {
     })
   }
 
-  searchConcepts = () => {
+  addConcept = () => {
         this.setState({
             dialogOpen: true,
             dialogTitle: "Add New Concept",
             dialogPlaceholder: "concept",
             dialogMsg: null,
-            inputHandler: this.addConcept
+            inputHandler: this.searchConcepts
         });
   }
 
-
-  addConcept = (concept) => {
-    fetch("/api/selectConcept", {
+  //Queries database with term, expects a list of concepts. 
+  //Should open a dialogue for selecting from the list (currently just selects 1st result)
+  searchConcepts = (concept) => {
+    fetch("/api/searchConcepts", {
       method: 'POST',
       headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token')},
       body: JSON.stringify({
@@ -291,16 +292,35 @@ class Annotate extends Component {
       })
     }).then(res => res.json())
       .then(async res => {
-        this.setState({
-          isLoaded:false
-        })
-        let selectedConcepts = await this.getSelectedConcepts();
-        let temp = await this.makeObject(selectedConcepts);
-        await this.setState({
-          conceptsSelected: temp,
-          isLoaded: true
-        });
-        this.handleDialogClose();
+         console.log(res);
+         this.handleDialogClose();
+         if(res.length > 0){
+            this.selectConcept(res[0]['id']);
+         }
+      })
+   };
+
+   //Selects a concept based off of the id..
+   selectConcept = (concept) => {
+      fetch("/api/conceptSelected", {
+         method: 'POST',
+         headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token')},
+         body: JSON.stringify({
+            'id': concept,
+            'checked' : true
+         })
+      }).then(res => res.json())
+         .then(async res => {
+            console.log(res);
+            this.setState({
+               isLoaded:false
+            })
+            let selectedConcepts = await this.getSelectedConcepts();
+            let temp = await this.makeObject(selectedConcepts);
+            await this.setState({
+               conceptsSelected: temp,
+               isLoaded: true
+            });
       })
       .catch(error => {
         console.log(error)
@@ -419,7 +439,7 @@ class Annotate extends Component {
          </div>
             <div className = {classes.conceptSectionContainer}>
                <span className = {classes.conceptsText}>Current Concepts</span>
-               <Button variant="contained" color="primary" aria-label="Add" className={classes.button} style={{float: 'right'}} onClick={this.searchConcepts}>
+               <Button variant="contained" color="primary" aria-label="Add" className={classes.button} style={{float: 'right'}} onClick={this.addConcept}>
                 <AddIcon />
                </Button>
                <br />

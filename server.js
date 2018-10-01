@@ -194,8 +194,9 @@ app.get('/api/conceptsSelected', passport.authenticate('jwt', {session: false}),
   }
 );
 
-//Will add concept by name to user's selected concepts.
-app.post('/api/selectConcept', passport.authenticate('jwt', {session: false}),
+//Will get list of concepts based off search criteria to and returns a list of concept id's.
+//Currently just looks for exact concept name match.
+app.post('/api/searchConcepts', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
     let concepts = null
     queryText = "SELECT id FROM concepts WHERE name=$1";
@@ -204,17 +205,7 @@ app.post('/api/selectConcept', passport.authenticate('jwt', {session: false}),
     } catch (error) {
       res.status(400).json(error);
     }
-    if(concepts.rows.length > 0){
-      queryText = 'INSERT INTO profile(userid, conceptid) VALUES($1, $2) RETURNING *';
-      try {
-        let insert = await psql.query(queryText, [req.user.id, concepts.rows[0]['id']]);
-        res.json({message: "Changed", value: JSON.stringify(insert.rows)});
-      } catch (error) {
-        res.status(400).json(error);
-      }
-    }else{
-      res.json({message: "Not Changed"});
-    }
+    res.json(concepts.rows);
   }
 );
 
