@@ -174,8 +174,10 @@ class Annotate extends Component {
       dialogPlaceholder: null,
       dialogOpen: false,
       conceptsSelected: {},
-      open: false, //For error modal box
-      inputHandler: null
+      errorOpen: false, //For error modal box
+      clickedConcept: null,
+      inputHandler: null,
+      closeHandler: null
     };
   }
 
@@ -259,13 +261,74 @@ class Annotate extends Component {
       if( res.message === "Annotated") {
         var videoInfo = JSON.parse(res.value);
         this.setState({
-          errorMsg: "User: " + videoInfo.userid + " Annotated: " + concept.name + " in video " + videoInfo.videoid + " at time " + Math.floor(videoInfo.timeinvideo/60) + ' minutes '+ videoInfo.timeinvideo%60 + " seconds",
-          open: true
+          dialogMsg: "User: " + videoInfo.userid + " Annotated: " + concept.name + " in video " + videoInfo.videoid + " at time " + Math.floor(videoInfo.timeinvideo/60) + ' minutes '+ videoInfo.timeinvideo%60 + " seconds",
+          dialogOpen: true,
+          dialogTitle: "Confirm Annotation",
+          dialogPlaceholder: "Comments",
+          clickedConcept: concept,
+          inputHandler: this.addCommentedAnnotation,
+          closeHandler: this.handleAnnotationClose
         })
       } else {
         this.setState({
           errorMsg: res.message,
-          open: true
+          errorOpen: true
+        })
+      }
+    })
+  }
+
+  addCommentedAnnotation = (comment) => {
+    console.log(comment);
+    console.log(this.state.clickedConcept)
+
+    var myVideo = document.getElementById("video");
+    var cTime = myVideo.currentTime;
+    var dragBoxCord = document.getElementById("dragBox").getBoundingClientRect();
+    var vidCord = myVideo.getBoundingClientRect("dragBox");
+    var x1_video = vidCord.left;
+    var y1_video = vidCord.top;
+
+    var x1_box = dragBoxCord.left;
+    var y1_box = dragBoxCord.top;
+    var height = dragBoxCord.height;
+    var width = dragBoxCord.width;
+
+    var x1 = Math.max((x1_box - x1_video),0);
+    var y1 = Math.max((y1_box - y1_video),0);
+    var x2 = Math.min((x1 + width),1279);
+    var y2 = Math.min((y1 + height),719);
+
+    //id | videoid | userid | conceptid | timeinvideo | topRightx | topRighty | botLeftx | botLefty | comment | dateannotated
+    //draw video with and without bounding box to canvas and save as img
+    var date = Date.now().toString();
+    this.drawImages(vidCord, dragBoxCord, myVideo, date, x1, y1);
+
+    fetch('/commentedAnnotate', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token')},
+      body: JSON.stringify({
+        'conceptId': this.state.clickedConcept.name,
+        'videoId': this.state.videoName,
+        'timeinvideo': cTime,
+        'x1': x1,
+        'y1': y1,
+        'x2': x2,
+        'y2': y2,
+        'videoWidth': 1280,
+        'videoHeight': 720,
+        'image': date,
+        'imagewithbox': date + "_box",
+        'comment': comment
+      })
+    }).then(res => res.json())
+    .then(res => {
+      if( res.message === "Annotated") {
+        this.handleDialogClose();
+      } else {
+        this.setState({
+          errorMsg: res.message,
+          errorOpen: true
         })
       }
     })
@@ -277,10 +340,10 @@ class Annotate extends Component {
             dialogTitle: "Add New Concept",
             dialogPlaceholder: "concept",
             dialogMsg: null,
-            inputHandler: this.addConcept
+            inputHandler: this.addConcept,
+            closeHandler: this.handleDialogClose
         });
   }
-
 
   addConcept = (concept) => {
     fetch("/api/selectConcept", {
@@ -350,8 +413,8 @@ class Annotate extends Component {
     }
   }
 
-  handleClose = () => {
-    this.setState({ open: false });
+  handleErrorClose = () => {
+    this.setState({ errorOpen: false });
   };
 
   handleDialogClose = () => {
@@ -360,22 +423,31 @@ class Annotate extends Component {
         dialogOpen: false,
         dialogMsg: null,
         dialogPlaceholder: null,
-        dialogTitle: null
+        dialogTitle: "",
+        clickedConcept: null,
       });
   };
+
+  // Created to later add in the functionality to save the comments upon clicking outside of the modal
+  handleAnnotationClose = () => {
+    this.handleDialogClose();
+  }
 
   render() {
     const { classes } = this.props;
     return (
       <div>
-         <ErrorModal errorMsg={this.state.errorMsg} open={this.state.open} handleClose={this.handleClose}/>
+         <ErrorModal 
+            errorMsg={this.state.errorMsg} 
+            open={this.state.errorOpen} 
+            handleClose={this.handleErrorClose}/>
          <DialogModal 
             title={this.state.dialogTitle}
             message={this.state.dialogMsg}
             placeholder={this.state.dialogPlaceholder}
             inputHandler={this.state.inputHandler}
             open={this.state.dialogOpen}
-            handleClose={this.handleDialogClose}
+            handleClose={this.state.closeHandler}
          />
 
          <div className= {classes.name}>
