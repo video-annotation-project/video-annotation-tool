@@ -265,66 +265,23 @@ app.get('/api/latestVideoName/:videoid', passport.authenticate('jwt', {session: 
   }
 );
 
-app.get('/api/reportInfoLevel1', passport.authenticate('jwt', {session: false}),
-  async (req, res) => {
-    let queryPass = '';
-    let userId = req.user.id;
-    if (req.query.level1 === "Video") {
-      queryPass = 'SELECT DISTINCT ON (videos.filename) videos.filename as name, videos.id FROM videos, annotations WHERE videos.id = annotations.videoid';
-    }
-    if (req.query.level1 === "Concept") {
-      queryPass = 'SELECT DISTINCT ON (concepts.name) concepts.name, concepts.id FROM concepts, annotations WHERE concepts.id = annotations.conceptid';
-    }
-    if (req.query.level1 === "User") {
-      queryPass = 'SELECT DISTINCT ON (users.username) users.username as name, users.id FROM users, annotations WHERE users.id = annotations.userid';
-    }
-    let params = [];
-    if (req.query.admin !== 'true') {
-      queryPass = queryPass + ' AND annotations.userid = $1';
-      params.push(userId);
-    }
-    try {
-      const reportData = await psql.query(queryPass, params);
-
-      res.json(reportData.rows);
-    } catch (error) {
-      res.json(error);
-    }
+let selectLevels = (levels, selectedIds) => {
+  let queryPass = '';
+  let level = levels[0];
+  if (level === "Video") {
+    queryPass = 'SELECT DISTINCT ON (videos.filename) videos.filename as name, videos.id FROM annotations, ';
   }
-);
-
-app.get('/api/reportInfoLevel2', passport.authenticate('jwt', {session: false}),
-  async (req, res) => {
-    let queryPass = '';
-    let level1 = req.query.level1;
-    let level2 = req.query.level2;
-    if (level2 === "Concept") {
-      queryPass = 'SELECT DISTINCT ON (concepts.name) concepts.name, concepts.id FROM concepts, annotations, ' + level1.toLowerCase() + 's WHERE ' + level1.toLowerCase() + 's.id = annotations.' + level1.toLowerCase() + 'id AND concepts.id = annotations.conceptid';
-    }
-    if (level2 === "Video") {
-      queryPass = 'SELECT DISTINCT ON (videos.filename) videos.filename as name, videos.id FROM videos, annotations, ' + level1.toLowerCase() + 's WHERE ' + level1.toLowerCase() + 's.id = annotations.' + level1.toLowerCase() + 'id AND videos.id = annotations.videoid';
-    }
-    if (level2 === "User") {
-      queryPass = 'SELECT DISTINCT ON (users.username) users.username as name, users.id FROM users, annotations, ' + level1.toLowerCase() + 's WHERE ' + level1.toLowerCase() + 's.id = annotations.' + level1.toLowerCase() + 'id AND users.id = annotations.userid';
-    }
-    let userId = req.user.id;
-    let params = [];
-    if (req.query.admin !== 'true') {
-      queryPass = queryPass + ' AND annotations.userid = $1';
-      params.push(userId);
-    }
-    queryPass = queryPass + ' AND ' + level1.toLowerCase() + 's.id =' + req.query.id;
-    try {
-      const reportData = await psql.query(queryPass, params);
-      res.json(reportData.rows);
-    } catch (error) {
-      res.json(error);
-    }
+  if (level === "Concept") {
+    queryPass = 'SELECT DISTINCT ON (concepts.name) concepts.name, concepts.id FROM annotations, ';
   }
-);
-
-let addLevel = (queryPass, level) => {
-  queryPass = queryPass + ', ' + level.toLowerCase() + 's';
+  if (level === "User") {
+    queryPass = 'SELECT DISTINCT ON (users.username) users.username as name, users.id FROM annotations, ';
+  }
+  queryPass = queryPass + levels.join("s, ") + 's WHERE annotations.' + level.toLowerCase() + 'id=' + level.toLowerCase() + 's.id';
+  let levelsSelected = levels.slice(1);
+  levelsSelected.forEach((level, index) => {
+    queryPass = addCondition(queryPass, level, selectedIds[index]);
+  })
   return queryPass;
 }
 
@@ -337,6 +294,48 @@ let addCondition = (queryPass, level, id) => {
   return queryPass + condition;
 }
 
+app.get('/api/reportInfoLevel1', passport.authenticate('jwt', {session: false}),
+  async (req, res) => {
+    let queryPass = '';
+    let level1 = req.query.level1;
+    queryPass = selectLevels([level1], []);
+
+    let userId = req.user.id;
+    let params = [];
+    if (req.query.admin !== 'true') {
+      queryPass = queryPass + ' AND annotations.userid = $1';
+      params.push(userId);
+    }
+    try {
+      const reportData = await psql.query(queryPass, params);
+      res.json(reportData.rows);
+    } catch (error) {
+      res.json(error);
+    }
+  }
+);
+
+app.get('/api/reportInfoLevel2', passport.authenticate('jwt', {session: false}),
+  async (req, res) => {
+    let queryPass = '';
+    let level1 = req.query.level1;
+    let level2 = req.query.level2;
+    queryPass = selectLevels([level2, level1], [req.query.id]);
+
+    let userId = req.user.id;
+    let params = [];
+    if (req.query.admin !== 'true') {
+      queryPass = queryPass + ' AND annotations.userid = $1';
+      params.push(userId);
+    }
+    try {
+      const reportData = await psql.query(queryPass, params);
+      res.json(reportData.rows);
+    } catch (error) {
+      res.json(error);
+    }
+  }
+);
 
 app.get('/api/reportInfoLevel3', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
@@ -346,20 +345,8 @@ app.get('/api/reportInfoLevel3', passport.authenticate('jwt', {session: false}),
     let level3 = req.query.level3;
     let level1Id = req.query.level1Id;
     let id = req.query.id;
-    if (level3 === "Concept") {
-      queryPass = 'SELECT DISTINCT ON (concepts.name) concepts.name, concepts.id FROM concepts, annotations';
-    }
-    if (level3 === "Video") {
-      queryPass = 'SELECT DISTINCT ON (videos.filename) videos.filename as name, videos.id FROM videos, annotations';
-    }
-    if (level3 === "User") {
-      queryPass = 'SELECT DISTINCT ON (users.username) users.username as name, users.id FROM users, annotations';
-    }
-    queryPass = addLevel(queryPass, level1);
-    queryPass = addLevel(queryPass, level2);
-    queryPass = queryPass + ' WHERE annotations.' + level3.toLowerCase() + 'id=' + level3.toLowerCase() + 's.id';
-    queryPass = addCondition(queryPass, level1, level1Id);
-    queryPass = addCondition(queryPass, level2, id);
+    queryPass = selectLevels([level3, level2, level1], [id, level1Id]);
+
     let userId = req.user.id;
     let params = [];
     if (req.query.admin !== 'true') {
@@ -411,7 +398,9 @@ app.get('/api/annotations', passport.authenticate('jwt', {session: false}),
     }
     //Build query string
     let queryPass = '';
-    queryPass = 'SELECT annotations.id, annotations.timeinvideo, annotations.x1, annotations.y1, annotations.x2, annotations.y2, annotations.videoWidth, annotations.videoHeight, annotations.imagewithbox, concepts.name FROM annotations, concepts';
+    queryPass = 'SELECT annotations.id, annotations.timeinvideo, annotations.x1, annotations.y1, \
+                 annotations.x2, annotations.y2, annotations.videoWidth, annotations.videoHeight, \
+                 annotations.imagewithbox, concepts.name FROM annotations, concepts';
     queryPass = addLevelAnnotations(queryPass, level1);
     queryPass = addLevelAnnotations(queryPass, level2);
     queryPass = addLevelAnnotations(queryPass, level3);
@@ -532,7 +521,9 @@ app.post("/annotate", passport.authenticate('jwt', {session: false}),
   let videoId = await getVideoId(req.body.videoId);
   let userId = req.user.id;
   let conceptId = await getConceptId(req.body.conceptId);
-  queryText = 'INSERT INTO annotations(videoid, userid, conceptid, timeinvideo, x1, y1, x2, y2, videoWidth, videoHeight, image, imagewithbox, dateannotated) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, current_timestamp) RETURNING *';
+  queryText = 'INSERT INTO annotations(videoid, userid, conceptid, timeinvideo, x1, \
+               y1, x2, y2, videoWidth, videoHeight, image, imagewithbox, dateannotated) \
+               VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, current_timestamp) RETURNING *';
   try {
     let insertRes = await psql.query(queryText, [videoId, userId, conceptId, req.body.timeinvideo, req.body.x1, req.body.y1, req.body.x2, req.body.y2, req.body.videoWidth, req.body.videoHeight, req.body.image, req.body.imagewithbox]);
     res.json({message: "Annotated", value: JSON.stringify(insertRes.rows[0])});
