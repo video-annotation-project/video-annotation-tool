@@ -6,6 +6,7 @@ import CurrentConcepts from './CurrentConcepts.jsx';
 import VideoList from './VideoList.jsx';
 import ErrorModal from './ErrorModal.jsx';
 import DialogModal from './DialogModal.jsx';
+import SearchModal from './SearchModal.jsx';
 import List from '@material-ui/core/List';
 import axios from 'axios';
 import AWS from 'aws-sdk';
@@ -175,7 +176,8 @@ class Annotate extends Component {
       dialogOpen: false,
       conceptsSelected: {},
       open: false, //For error modal box
-      inputHandler: null
+      inputHandler: null,
+      searchOpen: false
     };
   }
 
@@ -273,32 +275,10 @@ class Annotate extends Component {
 
   addConcept = () => {
         this.setState({
-            dialogOpen: true,
-            dialogTitle: "Add New Concept",
-            dialogPlaceholder: "concept",
-            dialogMsg: null,
-            inputHandler: this.searchConcepts
+            searchOpen: true,
+            inputHandler: this.selectConcept
         });
   }
-
-  //Queries database with term, expects a list of concepts. 
-  //Should open a dialogue for selecting from the list (currently just selects 1st result)
-  searchConcepts = (concept) => {
-    fetch("/api/searchConcepts", {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token')},
-      body: JSON.stringify({
-        'name': concept
-      })
-    }).then(res => res.json())
-      .then(async res => {
-         console.log(res);
-         this.handleDialogClose();
-         if(res.length > 0){
-            this.selectConcept(res[0]['id']);
-         }
-      })
-   };
 
    //Selects a concept based off of the id..
    selectConcept = (concept) => {
@@ -312,6 +292,7 @@ class Annotate extends Component {
       }).then(res => res.json())
          .then(async res => {
             console.log(res);
+            this.handleSearchClose();
             this.setState({
                isLoaded:false
             })
@@ -384,6 +365,13 @@ class Annotate extends Component {
       });
   };
 
+  handleSearchClose = () => {
+    this.setState(
+      { 
+        searchOpen: false,
+      });
+  };
+
   render() {
     const { classes } = this.props;
     return (
@@ -397,6 +385,8 @@ class Annotate extends Component {
             open={this.state.dialogOpen}
             handleClose={this.handleDialogClose}
          />
+         <SearchModal inputHandler={this.state.inputHandler} open={this.state.searchOpen} handleClose={this.handleSearchClose}/>
+
 
          <div className= {classes.name}>
           {this.state.videoName}

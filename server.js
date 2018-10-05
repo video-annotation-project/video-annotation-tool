@@ -199,7 +199,7 @@ app.get('/api/conceptsSelected', passport.authenticate('jwt', {session: false}),
 app.post('/api/searchConcepts', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
     let concepts = null
-    queryText = "SELECT id FROM concepts WHERE name=$1";
+    queryText = "Select id, name, similarity($1,name) from concepts where similarity($1, name) > .01 order by similarity desc limit 10";
     try {
       concepts = await psql.query(queryText, [req.body.name]);
     } catch (error) {
