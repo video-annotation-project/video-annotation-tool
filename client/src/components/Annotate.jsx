@@ -169,12 +169,12 @@ class Annotate extends Component {
       isLoaded: false,
       videoName: 'DocRicketts-0569_20131213T224337Z_00-00-01-00TC_h264.mp4',
       errorMsg: null,
+      errorOpen: false,
       dialogMsg: null,
       dialogTitle: null,
       dialogPlaceholder: null,
       dialogOpen: false,
       conceptsSelected: {},
-      errorOpen: false, //For error modal box
       clickedConcept: null,
       inputHandler: null,
       closeHandler: null
@@ -218,68 +218,23 @@ class Annotate extends Component {
 
   handleConceptClick = (concept) => {
     var myVideo = document.getElementById("video");
-    var cTime = myVideo.currentTime;
-    var dragBoxCord = document.getElementById("dragBox").getBoundingClientRect();
-    var vidCord = myVideo.getBoundingClientRect("dragBox");
-    var x1_video = vidCord.left;
-    var y1_video = vidCord.top;
-
-    var x1_box = dragBoxCord.left;
-    var y1_box = dragBoxCord.top;
-    var height = dragBoxCord.height;
-    var width = dragBoxCord.width;
-
-    var x1 = Math.max((x1_box - x1_video),0);
-    var y1 = Math.max((y1_box - y1_video),0);
-    var x2 = Math.min((x1 + width),1279);
-    var y2 = Math.min((y1 + height),719);
-
-    //id | videoid | userid | conceptid | timeinvideo | topRightx | topRighty | botLeftx | botLefty | dateannotated
-
-    //draw video with and without bounding box to canvas and save as img
-    var date = Date.now().toString();
-    this.drawImages(vidCord, dragBoxCord, myVideo, date, x1, y1);
-
-    fetch('/annotate', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token')},
-      body: JSON.stringify({
-        'conceptId': concept.name,
-        'videoId': this.state.videoName,
-        'timeinvideo': cTime,
-        'x1': x1,
-        'y1': y1,
-        'x2': x2,
-        'y2': y2,
-        'videoWidth': 1280,
-        'videoHeight': 720,
-        'image': date,
-        'imagewithbox': date + "_box",
-      })
-    }).then(res => res.json())
-    .then(res => {
-      if( res.message === "Annotated") {
-        var videoInfo = JSON.parse(res.value);
-        this.setState({
-          dialogMsg: "User: " + videoInfo.userid + " Annotated: " + concept.name + " in video " + videoInfo.videoid + " at time " + Math.floor(videoInfo.timeinvideo/60) + ' minutes '+ videoInfo.timeinvideo%60 + " seconds",
-          dialogOpen: true,
-          dialogTitle: "Confirm Annotation",
-          dialogPlaceholder: "Comments",
-          clickedConcept: concept,
-          inputHandler: this.addCommentedAnnotation,
-          closeHandler: this.handleAnnotationClose
-        })
-      } else {
-        this.setState({
-          errorMsg: res.message,
-          errorOpen: true
-        })
-      }
+    this.setState({
+      dialogMsg:  " Annotated: " + concept.name + 
+                  " in video " + this.state.videoName + 
+                  " at time " + Math.floor(myVideo.currentTime/60) + ' minutes ' 
+                  + myVideo.currentTime%60 + " seconds",
+      dialogOpen: true,
+      dialogTitle: "Confirm Annotation",
+      dialogPlaceholder: "Comments",
+      clickedConcept: concept,
+      inputHandler: this.postAnnotation,
+      closeHandler: this.handleDialogClose
     })
-  }
+  };
 
-  addCommentedAnnotation = (comment) => {
+  postAnnotation = (comment, unsure) => {
     console.log(comment);
+    console.log(unsure);
     console.log(this.state.clickedConcept)
 
     var myVideo = document.getElementById("video");
@@ -299,7 +254,6 @@ class Annotate extends Component {
     var x2 = Math.min((x1 + width),1279);
     var y2 = Math.min((y1 + height),719);
 
-    //id | videoid | userid | conceptid | timeinvideo | topRightx | topRighty | botLeftx | botLefty | comment | dateannotated
     //draw video with and without bounding box to canvas and save as img
     var date = Date.now().toString();
     this.drawImages(vidCord, dragBoxCord, myVideo, date, x1, y1);
@@ -319,11 +273,12 @@ class Annotate extends Component {
         'videoHeight': 720,
         'image': date,
         'imagewithbox': date + "_box",
-        'comment': comment
+        'comment': comment,
+        'unsure' : unsure,
       })
     }).then(res => res.json())
     .then(res => {
-      if( res.message === "Annotated") {
+      if (res.message === "Annotated") {
         this.handleDialogClose();
       } else {
         this.setState({
@@ -427,11 +382,6 @@ class Annotate extends Component {
         clickedConcept: null,
       });
   };
-
-  // Created to later add in the functionality to save the comments upon clicking outside of the modal
-  handleAnnotationClose = () => {
-    this.handleDialogClose();
-  }
 
   render() {
     const { classes } = this.props;
