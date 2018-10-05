@@ -33,19 +33,28 @@ class SearchModal extends Component {
     this.state = {concepts: []};
   }
 
+  getId = (concept) => {
+    for(var item of this.state.concepts){
+      if(item['name'] == concept){
+        return item['id'];
+      }
+    }
+    return null;
+  };
+
   handleClose = () => {
     this.props.handleClose();
   };
 
   handleKeyPress = (e) => {
     if (e.key === 'Enter') {
-      if(this.state.concepts.includes(e.target.value)){
-        this.props.inputHandler(e.target.value);
+      if(this.getId(e.target.value)){
+        this.props.inputHandler(this.getId(e.target.value + e.key));
       }else{
         this.handleClose();
       }
     }else{
-      this.searchConcepts(e.target.value);
+      this.searchConcepts(e.target.value + e.key);
     }
   }
   
@@ -60,9 +69,7 @@ class SearchModal extends Component {
       })
     }).then(res => res.json())
       .then(async res => {
-        console.log(this.concepts);  
-           this.setState({concepts: res});
-
+        this.setState({concepts: res});
       })
    };
 
@@ -86,12 +93,11 @@ class SearchModal extends Component {
               id="concept"
               type="text"
               placeholder="Search Concepts"
-              fullWidth
               list="data"
             />
             <datalist id="data">
                 {this.state.concepts.map((item) =>
-                    <option value={item['name']} />
+                    <option key={item['id']} value={item['name']} />
                 )}
             </datalist>
           </DialogContent>
