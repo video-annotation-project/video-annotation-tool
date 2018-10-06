@@ -65,6 +65,13 @@ const styles = theme => ({
     paddingTop: '10px',
     paddingBottom: '10px'
   },
+  undoButton: {
+    marginTop: '40px',
+    marginLeft: '20px',
+    fontSize: '15px',
+    paddingTop: '10px',
+    paddingBottom: '10px'
+  },
   playScript: {
     fontColor: 'black',
     fontWeight: 'bold',
@@ -135,6 +142,15 @@ AWS.config.update(
     region: 'us-west-1',
   }
 );
+
+window.addEventListener("beforeunload", (ev) =>
+{
+    var myVideo = document.getElementById("video");
+    if (!myVideo.paused) {
+      ev.preventDefault();
+      return ev.returnValue = 'Are you sure you want to close?';
+    }
+});
 
 function changeSpeed() {
    try {
@@ -432,7 +448,7 @@ class Annotate extends Component {
          <div className = {classes.videoSectionContainer}>
             <div className = {classes.videoContainer}>
             <div className = {classes.boxContainer}>
-               <video id = "video"  width = "1280" height = "720" src={'api/videos/Y7Ek6tndnA/'+this.state.videoName} type='video/mp4' controls>
+               <video onPause = {this.updateCheckpoint.bind(this, false)} id = "video"  width = "1280" height = "720" src={'api/videos/Y7Ek6tndnA/'+this.state.videoName} type='video/mp4' controls>
                Your browser does not support the video tag.
                </video>
                <Rnd id = "dragBox"
@@ -457,7 +473,6 @@ class Annotate extends Component {
             <Button variant = "contained" color = "primary" className = {classes.backwardButton} onClick = {rewind}>-5 sec</Button>
             <Button variant = "contained" color = "primary" className = {classes.playButton} onClick = {playPause}>Play/Pause</Button>
             <Button variant = "contained" color = "primary" className = {classes.forwardButton} onClick = {fastForward}>+5 sec</Button>
-            <Button variant = "contained" color = "primary" className = {classes.saveButton} onClick = {this.updateCheckpoint.bind(this, false)}>Save Position</Button>
             <Button variant = "contained" color = "primary" className = {classes.saveButton} onClick = {this.updateCheckpoint.bind(this, true)}>Done</Button>
             <br />
             <span className = {classes.playScript}>Play at speed:</span>

@@ -331,6 +331,7 @@ app.get('/api/annotations/:videoid', passport.authenticate('jwt', {session: fals
   }
 );
 
+
 app.get('/api/videos/currentTime/:videoname', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
     let videoId = await getVideoId(req.params.videoname);
