@@ -2,6 +2,8 @@ import React, { Component } from 'react';
 import ErrorModal from './ErrorModal.jsx';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
+import Button from '@material-ui/core/Button';
+import { Link } from 'react-router-dom';
 
 const styles= {
   root: {
@@ -20,6 +22,11 @@ class Profile extends Component {
       password: '',
       password1: '',
       password2: '',
+      aws_secret_access_key: '',
+      aws_access_key_id: '',
+      dbname: '',
+      dbhost: '',
+      dbpassword: '',
       errorMsg: null,
       open: false,
     };
@@ -76,6 +83,32 @@ class Profile extends Component {
           <br /><br /><br />
           <input type='submit' value='Submit'/>
         </form>
+        <React.Fragment>
+          {localStorage.getItem('admin') ? (
+            <div>
+              <br /><br /><br />
+              <Typography variant="display1">Settings</Typography><br />
+              <ErrorModal errorMsg={this.state.errorMsg} open={this.state.open} handleClose={this.handleClose}/>
+              <form onSubmit={this.handleSubmit}>
+                <div>AWS Secret Access Key: </div>
+                <br />
+                <div>AWS Access Key ID: </div>
+                <br />
+                <div>DB Name: </div>
+                <br />
+                <div>DB Host: </div>
+                <br />
+                <div>DB Password: </div>
+                <br />
+                <br /><br />
+              </form>
+            </div>
+          ):(
+            <React.Fragment>
+            </React.Fragment>
+          )}
+
+        </React.Fragment>
       </div>
     );
   }

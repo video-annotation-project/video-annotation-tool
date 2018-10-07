@@ -62,7 +62,7 @@ class Navbar extends React.Component {
                 </React.Fragment>
               )}
               <Button color='inherit' component={Link} to='/profile'>
-                Profile
+                Acount
               </Button>
               <Button color='inherit' component={Link} to='/' onClick={this.handleLogout}>
                 Logout
