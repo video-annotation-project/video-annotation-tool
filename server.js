@@ -194,6 +194,8 @@ app.get('/api/conceptsSelected', passport.authenticate('jwt', {session: false}),
   }
 );
 
+
+
 app.post('/api/conceptsSelected', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
     queryText = 'DELETE FROM profile WHERE profile.userid=$1 AND profile.conceptid=$2 RETURNING *';
@@ -232,6 +234,19 @@ app.get('/api/videoNames', passport.authenticate('jwt', {session: false}),
     queryPass = 'select id, filename from videos;'
     try {
       const videoData = await psql.query(queryPass);
+      res.json(videoData);
+    } catch (error) {
+      res.json(error);
+    }
+  }
+);
+
+app.get('/api/userInfo', passport.authenticate('jwt', {session: false}),
+  async (req, res) => {
+    let userId = req.user.id;
+    queryPass = 'SELECT * FROM users WHERE id=$1;'
+    try {
+      const videoData = await psql.query(queryPass, [userId]);
       res.json(videoData);
     } catch (error) {
       res.json(error);

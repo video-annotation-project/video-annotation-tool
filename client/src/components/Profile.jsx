@@ -2,8 +2,6 @@ import React, { Component } from 'react';
 import ErrorModal from './ErrorModal.jsx';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
-import Button from '@material-ui/core/Button';
-import { Link } from 'react-router-dom';
 
 const styles= {
   root: {
@@ -65,6 +63,21 @@ class Profile extends Component {
     this.setState({ open: false });
   };
 
+  componentDidMount = async () => {
+    fetch('/api/userInfo', {
+      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')}
+    }).then(res => res.json())
+    .then(res => {
+      this.setState({
+        aws_secret_access_key: res.rows[0].aws_secret_access_key,
+        aws_access_key_id: res.rows[0].aws_access_key_id,
+        dbname: res.rows[0].dbname,
+        dbhost: res.rows[0].dbhost,
+        dbpassword: res.rows[0].dbpassword
+      });
+    })
+  }
+
   render() {
     const { classes } = this.props;
     return (
@@ -90,15 +103,15 @@ class Profile extends Component {
               <Typography variant="display1">Settings</Typography><br />
               <ErrorModal errorMsg={this.state.errorMsg} open={this.state.open} handleClose={this.handleClose}/>
               <form onSubmit={this.handleSubmit}>
-                <div>AWS Secret Access Key: </div>
+                <div>AWS Secret Access Key: {this.state.aws_secret_access_key}</div>
                 <br />
-                <div>AWS Access Key ID: </div>
+                <div>AWS Access Key ID: {this.state.aws_access_key_id}</div>
                 <br />
-                <div>DB Name: </div>
+                <div>DB Name: {this.state.dbname}</div>
                 <br />
-                <div>DB Host: </div>
+                <div>DB Host: {this.state.dbhost}</div>
                 <br />
-                <div>DB Password: </div>
+                <div>DB Password: {this.state.dbpassword}</div>
                 <br />
                 <br /><br />
               </form>
