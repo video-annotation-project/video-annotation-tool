@@ -49,7 +49,7 @@ class SearchModal extends Component {
   handleKeyPress = (e) => {
     if (e.key === 'Enter') {
       if(this.getId(e.target.value)){
-        this.props.inputHandler(this.getId(e.target.value + e.key));
+        this.props.inputHandler(this.getId(e.target.value));
       }else{
         this.handleClose();
       }
