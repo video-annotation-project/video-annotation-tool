@@ -21,7 +21,7 @@ Now that the project environment is set up, run `npm start` to run the code.
 
 #### Configure 
 
-![Config EB](https://imgur.com/a/qeg1ezF)
+![Config EB](https://imgur.com/a/qeg1ezF.png)
 
 #### Deploy
 
