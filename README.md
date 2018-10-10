@@ -19,6 +19,8 @@ Now that the project environment is set up, run `npm start` to run the code.
 
 #### Download aws elastic beanstalk
 
+[Guide](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/eb-cli3-install.html)
+
 #### Configure 
 
 ![ConfigEB](https://i.imgur.com/YZwkbY8.png)
