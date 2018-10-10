@@ -28,9 +28,11 @@ class TreeLevel1 extends Component {
   }
 
   getLevel1 = async () => {
-    let level1 = await axios.get(`/api/reportInfoLevel1?level1=${this.props.level1}&admin=${localStorage.getItem('admin')}`, {
-      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')}
-    })
+    let level1 = await axios.get(`/api/reportInfoLevel1?level1=${this.props.level1}`+
+                                  `&admin=${localStorage.getItem('admin')}`,
+      {
+        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')}
+      });
     return level1.data;
   }
 
@@ -41,6 +43,7 @@ class TreeLevel1 extends Component {
       temp['id'] = data.id;
       temp['name'] = data.name;
       temp['expanded'] = false;
+      temp['count'] = '?';
       tempList.push(temp);
     })
     return tempList;
@@ -51,6 +54,15 @@ class TreeLevel1 extends Component {
     level1 = await this.makeObject(level1);
     await this.setState({
       isLoaded: true,
+      level1: level1
+    });
+  }
+
+  setAnnotationCount = (id, count) => {
+    let level1 = JSON.parse(JSON.stringify(this.state.level1));
+    let selected = level1.find(data => data.id === id);
+    selected.count = count;
+    this.setState({
       level1: level1
     });
   }
@@ -78,14 +90,16 @@ class TreeLevel1 extends Component {
         {level1.map((data, index) =>(
           <React.Fragment key={index+1}>
             <ListItem button onClick={() => this.handleListClick(data.name)}>
-              <ListItemText primary={(index+1)+': '+data.name} />
+              <ListItemText primary={(data.id)+': '+data.name+' Count: '+data.count} />
               {data.expanded ? <ExpandLess /> : <ExpandMore />}
             </ListItem>
             <Collapse in={data.expanded} timeout='auto' >
                 {this.props.level2 === '' ? (
-                  <Annotations level1={this.props.level1} id={data.id} />
+                  <Annotations level1={this.props.level1} id={data.id}
+                    handleListClick={this.handleListClick} setAnnotationCount={this.setAnnotationCount} />
                 ):(
-                  <Level2 level1 = {this.props.level1} level2 = {this.props.level2} level3 = {this.props.level3} id = {data.id} />
+                  <Level2 level1 = {this.props.level1} level2 = {this.props.level2}
+                     level3 = {this.props.level3} id = {data.id} setAnnotationCount={this.setAnnotationCount} />
                 )}
 
             </Collapse>
