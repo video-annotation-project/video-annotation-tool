@@ -15,6 +15,23 @@ cd ..
 ```
 Now that the project environment is set up, run `npm start` to run the code.
 
+### How to deploy
+
+#### Download aws elastic beanstalk
+
+#### Configure 
+
+![Config EB](https://imgur.com/a/qeg1ezF)
+
+#### Deploy
+
+```
+cd ~/video-annotation-tool/client
+npm run build
+cd ..
+eb deploy --staged
+```
+
 ### Task list:
 Our task list is a shared private document located
 [here](https://docs.google.com/document/d/16zIdhcf8k0fMssgTFSHqLqmJxHvxEBnoGhTnfB3KWcs/edit).
