@@ -55,10 +55,6 @@ class Annotations extends Component {
   handleClick = async (time, filename, id) => {
     let annotations = JSON.parse(JSON.stringify(this.state.annotations));
     let annotation = annotations.find(annotation => annotation.id === id);
-    console.log('Top: ', annotation.y1)
-    console.log('Left: ', annotation.x1)
-    console.log('Height: ', (annotation.y2-annotation.y1));
-    console.log('Width: ', (annotation.x2-annotation.x1));
     annotation.expanded = !annotation.expanded;
     this.setState({
       annotations: annotations
@@ -76,9 +72,7 @@ class Annotations extends Component {
     }).then(res => res.json()).then(res => {
       console.log(res);
       let annotations = JSON.parse(JSON.stringify(this.state.annotations));
-      console.log(annotations);
       annotations = annotations.filter(annotation => annotation.id !== id);
-      console.log(annotations);
       this.setState({
         annotations: annotations
       });

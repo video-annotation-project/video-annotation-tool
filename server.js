@@ -194,7 +194,7 @@ app.get('/api/conceptsSelected', passport.authenticate('jwt', {session: false}),
   }
 );
 
-app.post('/api/conceptsSelected', passport.authenticate('jwt', {session: false}),
+app.post('/api/conceptSelected', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
     queryText = 'DELETE FROM profile WHERE profile.userid=$1 AND profile.conceptid=$2 RETURNING *';
     if (req.body.checked) {
