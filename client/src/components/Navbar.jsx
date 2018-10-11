@@ -13,6 +13,20 @@ const styles = {
 };
 
 class Navbar extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+    };
+  }
+
+  handleClick = event => {
+    this.setState({ open: event.currentTarget });
+  };
+
+  handleClose = () => {
+    this.setState({ open: false });
+  };
+
   handleLogout = () => {
     localStorage.clear();
   };
