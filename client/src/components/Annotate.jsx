@@ -5,7 +5,6 @@ import { withStyles } from '@material-ui/core/styles';
 import CurrentConcepts from './CurrentConcepts.jsx';
 import VideoList from './VideoList.jsx';
 import ErrorModal from './ErrorModal.jsx';
-import DialogModal from './DialogModal.jsx';
 import SearchModal from './SearchModal.jsx';
 import List from '@material-ui/core/List';
 import axios from 'axios';
@@ -170,10 +169,6 @@ class Annotate extends Component {
       isLoaded: false,
       videoName: 'DocRicketts-0569_20131213T224337Z_00-00-01-00TC_h264.mp4',
       errorMsg: null,
-      dialogMsg: null,
-      dialogTitle: null,
-      dialogPlaceholder: null,
-      dialogOpen: false,
       conceptsSelected: {},
       open: false, //For error modal box
       inputHandler: null,
@@ -355,16 +350,6 @@ class Annotate extends Component {
     this.setState({ open: false });
   };
 
-  handleDialogClose = () => {
-    this.setState(
-      { 
-        dialogOpen: false,
-        dialogMsg: null,
-        dialogPlaceholder: null,
-        dialogTitle: null
-      });
-  };
-
   handleSearchClose = () => {
     this.setState(
       { 
@@ -377,14 +362,6 @@ class Annotate extends Component {
     return (
       <div>
          <ErrorModal errorMsg={this.state.errorMsg} open={this.state.open} handleClose={this.handleClose}/>
-         <DialogModal 
-            title={this.state.dialogTitle}
-            message={this.state.dialogMsg}
-            placeholder={this.state.dialogPlaceholder}
-            inputHandler={this.state.inputHandler}
-            open={this.state.dialogOpen}
-            handleClose={this.handleDialogClose}
-         />
          <SearchModal inputHandler={this.state.inputHandler} open={this.state.searchOpen} handleClose={this.handleSearchClose}/>
 
 
