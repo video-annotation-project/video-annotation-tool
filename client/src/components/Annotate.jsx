@@ -233,10 +233,6 @@ class Annotate extends Component {
   };
 
   postAnnotation = (comment, unsure) => {
-    console.log(comment);
-    console.log(unsure);
-    console.log(this.state.clickedConcept)
-
     var myVideo = document.getElementById("video");
     var cTime = myVideo.currentTime;
     var dragBoxCord = document.getElementById("dragBox").getBoundingClientRect();
@@ -260,7 +256,8 @@ class Annotate extends Component {
 
     fetch('/commentedAnnotate', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token')},
+      headers: {'Content-Type': 'application/json', 
+                'Authorization': 'Bearer ' + localStorage.getItem('token')},
       body: JSON.stringify({
         'conceptId': this.state.clickedConcept.name,
         'videoId': this.state.videoName,
@@ -274,7 +271,7 @@ class Annotate extends Component {
         'image': date,
         'imagewithbox': date + "_box",
         'comment': comment,
-        'unsure' : unsure,
+        'unsure' : unsure
       })
     }).then(res => res.json())
     .then(res => {
