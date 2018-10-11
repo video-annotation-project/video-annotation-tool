@@ -50,6 +50,7 @@ class DialogModal extends Component {
 
   handleSubmit = () => {
     this.props.inputHandler(this.comment, this.state.unsure)
+    this.state.unsure = false;
   };
 
   handleChange = name => event => {
