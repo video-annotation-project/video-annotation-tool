@@ -239,6 +239,9 @@ class Annotate extends Component {
   updateCheckpoint = async(finished) => {
     var myVideo = document.getElementById("video");
     var time = myVideo.currentTime;
+    if (localStorage.getItem('token') == null) {
+      return;
+    }
     if (finished) {
       time = 0;
     }
