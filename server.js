@@ -448,13 +448,13 @@ app.post("/annotate", passport.authenticate('jwt', {session: false}),
 
 app.post('/uploadImage', (req, res) => {
   let s3 = new AWS.S3();
-  var key = 'test/' + req.body.date;
+  var key = process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + req.body.date;
   if (req.body.box) {
     key += '_box';
   }
   var params = {
     Key: key,
-    Bucket: 'lubomirstanchev',
+    Bucket: process.env.AWS_S3_BUCKET_NAME,
     ContentEncoding: 'base64',
     ContentType: 'image/png',
     Body: Buffer(req.body.buf) //the base64 string is now the body
