@@ -14,6 +14,8 @@ import CreateUser from './components/CreateUser.jsx';
 import Profile from './components/Profile.jsx';
 import Report from './components/Report.jsx';
 
+require('dotenv').config()
+
 class App extends React.Component {
 
   render() {

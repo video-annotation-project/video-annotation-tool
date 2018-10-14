@@ -7,7 +7,6 @@ import VideoList from './VideoList.jsx';
 import ErrorModal from './ErrorModal.jsx';
 import List from '@material-ui/core/List';
 import axios from 'axios';
-import AWS from 'aws-sdk';
 
 const styles = theme => ({
   clear: {
@@ -135,13 +134,6 @@ const styles = theme => ({
   },
 });
 
-AWS.config.update(
-  {
-    accessKeyId: "AKIAIJRSQPH2BGGCEFOA",
-    secretAccessKey: "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",
-    region: 'us-west-1',
-  }
-);
 
 window.addEventListener("beforeunload", (ev) =>
 {
@@ -239,6 +231,9 @@ class Annotate extends Component {
   updateCheckpoint = async(finished) => {
     var myVideo = document.getElementById("video");
     var time = myVideo.currentTime;
+    if (localStorage.getItem('token') == null) {
+      return;
+    }
     if (finished) {
       time = 0;
     }
@@ -410,25 +405,22 @@ class Annotate extends Component {
     this.putVideoImage(imgWithBox, date, true);
   }
 
-  putVideoImage = (img, date, box) => {
-    var s3 = new AWS.S3();
+  putVideoImage = async(img, date, box) => {
     let buf = new Buffer(img.src.replace(/^data:image\/\w+;base64,/, ""),'base64');
-    var key = 'test/' + date;
-    if (box) {
-      key += '_box';
-    }
-    var params = {
-      Key: key,
-      Bucket: 'lubomirstanchev',
-      ContentEncoding: 'base64',
-      ContentType: 'image/png',
-      Body: buf //the base64 string is now the body
-    };
-    try{
-      s3.putObject(params).send();
-    } catch (error) {
-      console.log('Error: ', error);
-    }
+    fetch('/uploadImage', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        'buf': buf,
+        'date': date,
+        'box': box,
+      })
+    }).then(res => res.json())
+    .then(res => {
+      if(res.message !== "success") {
+        console.log("error uploading image to S3")
+      }
+    })
   }
 
   handleClose = () => {

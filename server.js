@@ -13,13 +13,6 @@ const bcrypt = require('bcrypt');
 const psql = require('./db/simpleConnect');
 const AWS = require('aws-sdk');
 
-AWS.config.update(
-  {
-    accessKeyId: "AKIAIJRSQPH2BGGCEFOA",
-    secretAccessKey: "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",
-  }
-);
-
 var jwtOptions = {};
 jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
 jwtOptions.secretOrKey = 'Bernie wouldve won';
@@ -53,11 +46,10 @@ app.use(passport.initialize());
 
 // parse application/x-www-form-urlencoded
 // for easier testing with Postman or plain HTML forms
-app.use(bodyParser.urlencoded({
-  extended: true
-}));
-// parse application/json
-app.use(bodyParser.json())
+// parse application/json - needs higher limit for passing img for annotation
+
+app.use(bodyParser.json({limit: '50mb'}));
+app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
 
 async function userLogin(username, password) {
   queryPass = 'select id, password, admin from users where users.username=$1';
@@ -441,17 +433,39 @@ async function getConceptId(value) {
 
 app.post("/annotate", passport.authenticate('jwt', {session: false}),
   async (req, res) => {
-  let videoId = await getVideoId(req.body.videoId);
-  let userId = req.user.id;
-  let conceptId = await getConceptId(req.body.conceptId);
-  queryText = 'INSERT INTO annotations(videoid, userid, conceptid, timeinvideo, x1, y1, x2, y2, videoWidth, videoHeight, image, imagewithbox, dateannotated) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, current_timestamp) RETURNING *';
-  try {
-    let insertRes = await psql.query(queryText, [videoId, userId, conceptId, req.body.timeinvideo, req.body.x1, req.body.y1, req.body.x2, req.body.y2, req.body.videoWidth, req.body.videoHeight, req.body.image, req.body.imagewithbox]);
-    res.json({message: "Annotated", value: JSON.stringify(insertRes.rows[0])});
-  } catch(error) {
-    console.log(error)
-    res.json({message: "error: " + error})
+    let videoId = await getVideoId(req.body.videoId);
+    let userId = req.user.id;
+    let conceptId = await getConceptId(req.body.conceptId);
+    queryText = 'INSERT INTO annotations(videoid, userid, conceptid, timeinvideo, x1, y1, x2, y2, videoWidth, videoHeight, image, imagewithbox, dateannotated) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, current_timestamp) RETURNING *';
+    try {
+      let insertRes = await psql.query(queryText, [videoId, userId, conceptId, req.body.timeinvideo, req.body.x1, req.body.y1, req.body.x2, req.body.y2, req.body.videoWidth, req.body.videoHeight, req.body.image, req.body.imagewithbox]);
+      res.json({message: "Annotated", value: JSON.stringify(insertRes.rows[0])});
+    } catch(error) {
+      console.log(error)
+      res.json({message: "error: " + error})
+    }
+});
+
+app.post('/uploadImage', (req, res) => {
+  let s3 = new AWS.S3();
+  var key = 'test/' + req.body.date;
+  if (req.body.box) {
+    key += '_box';
   }
+  var params = {
+    Key: key,
+    Bucket: 'lubomirstanchev',
+    ContentEncoding: 'base64',
+    ContentType: 'image/png',
+    Body: Buffer(req.body.buf) //the base64 string is now the body
+  };
+  s3.putObject(params, function(err, data) {
+    if (err) {
+      console.log(err)
+    } else {
+      res.json({message: "success"})
+    }
+  });
 });
 
 app.post("/updateCheckpoint", passport.authenticate('jwt', {session: false}),
