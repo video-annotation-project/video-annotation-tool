@@ -24,6 +24,7 @@ class Report extends React.Component {
       <div className={classes.root}>
         <VideosAnnotated />
       </div>
+
     );
   }
 }
