@@ -18,15 +18,6 @@ const styles = theme => ({
 });
 
 
-/* 
-  A pop up dialog box that prompts the user for input.
-  Has the properties:
-    -inputHandler: function called when user hits enter, passes the input
-    -title
-    -message
-    -handleClose
-    -open
-*/
 class SearchModal extends Component {
   constructor(props) {
     super(props);

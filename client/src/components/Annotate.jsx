@@ -286,7 +286,6 @@ class Annotate extends Component {
          })
       }).then(res => res.json())
          .then(async res => {
-            console.log(res);
             this.handleSearchClose();
             this.setState({
                isLoaded:false
@@ -299,7 +298,7 @@ class Annotate extends Component {
             });
       })
       .catch(error => {
-        console.log(error)
+        console.log('Error: ', error);
         return;
       })
   };
