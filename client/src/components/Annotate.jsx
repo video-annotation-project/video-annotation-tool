@@ -5,9 +5,11 @@ import { withStyles } from '@material-ui/core/styles';
 import CurrentConcepts from './CurrentConcepts.jsx';
 import VideoList from './VideoList.jsx';
 import ErrorModal from './ErrorModal.jsx';
+import SearchModal from './SearchModal.jsx';
 import List from '@material-ui/core/List';
 import axios from 'axios';
 import AWS from 'aws-sdk';
+import AddIcon from '@material-ui/icons/Add';
 
 const styles = theme => ({
   clear: {
@@ -188,7 +190,6 @@ function rewind() {
    myVideo.currentTime = (cTime - 5);
 }
 
-
 class Annotate extends Component {
   constructor(props) {
     super(props);
@@ -198,7 +199,9 @@ class Annotate extends Component {
       videoName: 'DocRicketts-0569_20131213T224337Z_00-00-01-00TC_h264.mp4',
       errorMsg: null,
       conceptsSelected: {},
-      open: false //For error modal box
+      open: false, //For error modal box
+      inputHandler: null,
+      searchOpen: false
     };
   }
 
@@ -393,6 +396,42 @@ class Annotate extends Component {
     })
   }
 
+  addConcept = () => {
+        this.setState({
+            searchOpen: true,
+            inputHandler: this.selectConcept
+        });
+  }
+
+   //Selects a concept based off of the id..
+   selectConcept = (concept) => {
+      fetch("/api/conceptSelected", {
+         method: 'POST',
+         headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token')},
+         body: JSON.stringify({
+            'id': concept,
+            'checked' : true
+         })
+      }).then(res => res.json())
+         .then(async res => {
+            this.handleSearchClose();
+            this.setState({
+               isLoaded:false
+            })
+            let selectedConcepts = await this.getSelectedConcepts();
+            let temp = await this.makeObject(selectedConcepts);
+            await this.setState({
+               conceptsSelected: temp,
+               isLoaded: true
+            });
+      })
+      .catch(error => {
+        console.log('Error: ', error);
+        return;
+      })
+  };
+
+
   drawImages = (vidCord, dragBoxCord, myVideo, date, x1, y1) => {
     var canvas = document.createElement('canvas');
     canvas.height = vidCord.height;
@@ -438,11 +477,21 @@ class Annotate extends Component {
     this.setState({ open: false });
   };
 
+  handleSearchClose = () => {
+    this.setState(
+      { 
+        searchOpen: false,
+      });
+  };
+
   render() {
     const { classes } = this.props;
     return (
       <div>
          <ErrorModal errorMsg={this.state.errorMsg} open={this.state.open} handleClose={this.handleClose}/>
+         <SearchModal inputHandler={this.state.inputHandler} open={this.state.searchOpen} handleClose={this.handleSearchClose}/>
+
+
          <div className= {classes.name}>
           {this.state.videoName}
          </div>
@@ -484,6 +533,9 @@ class Annotate extends Component {
          </div>
             <div className = {classes.conceptSectionContainer}>
                <span className = {classes.conceptsText}>Current Concepts</span>
+               <Button variant="contained" color="primary" aria-label="Add" className={classes.button} style={{float: 'right'}} onClick={this.addConcept}>
+                <AddIcon />
+               </Button>
                <br />
                {(this.state.isLoaded) ? (
                  <CurrentConcepts handleConceptClick= {this.handleConceptClick} conceptsSelected= {this.state.conceptsSelected} />
