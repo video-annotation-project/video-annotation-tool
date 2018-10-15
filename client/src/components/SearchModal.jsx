@@ -18,6 +18,15 @@ const styles = theme => ({
 });
 
 
+/*
+  A pop up dialog box that prompts the user for input.
+  Has the properties:
+    -inputHandler: function called when user hits enter, passes the input
+    -title
+    -message
+    -handleClose
+    -open
+*/
 class SearchModal extends Component {
   constructor(props) {
     super(props);
@@ -26,7 +35,7 @@ class SearchModal extends Component {
 
   getId = (concept) => {
     for(var item of this.state.concepts){
-      if(item['name'] == concept){
+      if(item['name'] === concept){
         return item['id'];
       }
     }
@@ -48,8 +57,8 @@ class SearchModal extends Component {
       this.searchConcepts(e.target.value + e.key);
     }
   }
-  
-  //Queries database with term, expects a list of concepts. 
+
+  //Queries database with term, expects a list of concepts.
   //Should open a dialogue for selecting from the list (currently just selects 1st result)
   searchConcepts = (concept) => {
     fetch("/api/searchConcepts", {

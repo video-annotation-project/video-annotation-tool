@@ -479,7 +479,7 @@ class Annotate extends Component {
 
   handleSearchClose = () => {
     this.setState(
-      { 
+      {
         searchOpen: false,
       });
   };
