@@ -56,6 +56,12 @@ class AnnotationFrame extends Component {
         this.setState({
           isLoaded: true
         });
+      })
+      .catch(error => {
+        console.log(error);
+        this.setState({
+          isLoaded: true
+        })
       });
   };
 

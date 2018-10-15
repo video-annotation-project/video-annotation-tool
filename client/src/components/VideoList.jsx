@@ -21,15 +21,25 @@ class VideoList extends Component {
   }
 
   componentDidMount = () => {
-    fetch("/api/videoNames", {
+    var url = '';
+    if (this.props.listType === "resume") {
+      url = '/api/userVideos/false';
+    }
+    else if (this.props.listType === "watched") {
+      url = '/api/userVideos/true';
+    }
+    else { //unwatched
+      url = '/api/userUnwatchedVideos/';
+    }
+    fetch(url, {
       headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')}
     })
       .then(res => res.json())
       .then(res => {
         this.setState({
           videos: res.rows
-        })
       })
+    })
   }
 
   handleVideoClick = (filename) => {
@@ -43,7 +53,7 @@ class VideoList extends Component {
         <List component="nav">
         {this.state.videos.map((video, index) =>(
           <ListItem button key={video.id} onClick={this.handleVideoClick.bind(this, video.filename)}>
-            <ListItemText primary={(index+1)+'. '+video.filename} />
+            <ListItemText primary={video.id +'. '+video.filename} />
           </ListItem>
         ))}
         </List>
