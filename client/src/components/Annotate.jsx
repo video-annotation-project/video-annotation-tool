@@ -338,7 +338,7 @@ class Annotate extends Component {
   handleVideoClick = async(filename) => {
     this.setState({
        videoName: filename
-    });
+     })
     let currentTime = await this.getVideoStartTime(filename);
     if (currentTime.data.length === 1) {
        var myVideo = document.getElementById("video");
@@ -512,7 +512,7 @@ class Annotate extends Component {
       {
         searchOpen: false,
       });
-  };
+  }
 
   render() {
     const { classes } = this.props;
