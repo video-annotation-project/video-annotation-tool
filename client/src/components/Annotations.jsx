@@ -97,9 +97,7 @@ class Annotations extends Component {
               <ListItem button onClick={() => this.handleClick(annotation.timeinvideo, annotation.filename, annotation.id)}>
                 <ListItemText 
                   primary={'At '+ Math.floor(annotation.timeinvideo/60) + ' minutes '+ annotation.timeinvideo%60 + " seconds Annotated: " + annotation.name} 
-                  
-                  secondary={"Annotation Comment: In progress..."}
-
+                  secondary={(annotation.comment ? "Annotation Comment: " + annotation.comment : "")}
                 />
                 <ListItemSecondaryAction >
                   <IconButton className={classes.delete} aria-label="Delete">

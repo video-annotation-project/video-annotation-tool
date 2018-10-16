@@ -266,8 +266,8 @@ app.get('/api/videoNames', passport.authenticate('jwt', {session: false}),
 app.get('/api/videosWatched', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
     let queryPass = 'SELECT DISTINCT ON (videos.filename) videos.filename,'+
-    ' videos.id FROM videos, annotations WHERE videos.id = annotations.videoid'+
-    ' AND annotations.userid = $1';
+    ' videos.id FROM videos,'+
+    ' annotations WHERE videos.id = annotations.videoid AND annotations.userid = $1;'
     let userId = req.user.id;
     try {
       const videoData = await psql.query(queryPass, [userId]);
@@ -281,7 +281,7 @@ app.get('/api/videosWatched', passport.authenticate('jwt', {session: false}),
 app.get('/api/annotations/:videoid', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
     let videoId = req.params.videoid;
-    let queryPass = 'SELECT annotations.id, annotations.timeinvideo,'+
+    let queryPass = 'SELECT annotations.id, annotations.comment, annotations.timeinvideo,'+
     ' annotations.x1, annotations.y1, annotations.x2, annotations.y2,'+
     ' annotations.videoWidth, annotations.videoHeight, annotations.imagewithbox,'+
     ' concepts.name, videos.filename FROM annotations, concepts,'+
