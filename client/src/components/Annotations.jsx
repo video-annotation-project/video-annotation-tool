@@ -59,6 +59,7 @@ class Annotations extends Component {
     this.setState({
       annotations: annotations
     });
+    console.log(annotation);
   }
 
   handleDelete = async (event, id) => {
@@ -94,7 +95,10 @@ class Annotations extends Component {
           {annotations.map((annotation, index) => (
             <React.Fragment key={index}>
               <ListItem button onClick={() => this.handleClick(annotation.timeinvideo, annotation.filename, annotation.id)}>
-                <ListItemText primary={'At '+ Math.floor(annotation.timeinvideo/60) + ' minutes '+ annotation.timeinvideo%60 + " seconds Annotated: " + annotation.name} />
+                <ListItemText 
+                  primary={'At '+ Math.floor(annotation.timeinvideo/60) + ' minutes '+ annotation.timeinvideo%60 + " seconds Annotated: " + annotation.name} 
+                  secondary={(annotation.comment ? "Annotation Comment: " + annotation.comment : "")}
+                />
                 <ListItemSecondaryAction >
                   <IconButton className={classes.delete} aria-label="Delete">
                     <DeleteIcon onClick = {(e) => this.handleDelete(e, annotation.id)} />
