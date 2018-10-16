@@ -80,7 +80,7 @@ class VideosAnnotated extends Component {
             <ListItemText primary={(index+1)+': '+video.filename} />
             {video.expanded ? <ExpandLess /> : <ExpandMore />}
           </ListItem>
-          <Collapse in={video.expanded} timeout='auto' >
+          <Collapse in={video.expanded} timeout='auto' unmountOnExit>
               <Annotations  videoId = {video.id} />
           </Collapse>
         </React.Fragment>
