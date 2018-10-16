@@ -102,8 +102,8 @@ class Annotations extends Component {
                 </ListItemSecondaryAction>
                 {annotation.expanded ? <ExpandLess /> : <ExpandMore />}
               </ListItem>
-              <Collapse in={annotation.expanded} timeout='auto' >
-                <AnnotationFrame annotation={annotation} />
+              <Collapse in={annotation.expanded} timeout='auto' unmountOnExit>
+                <AnnotationFrame annotation={annotation} openImage={this.openImage}/>
               </Collapse>
             </React.Fragment>
           ))}
