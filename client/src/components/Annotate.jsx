@@ -114,7 +114,7 @@ const styles = theme => ({
     display: 'inline',
     float: 'left'
   },
-});
+})
 
 AWS.config.update(
   {
@@ -122,7 +122,7 @@ AWS.config.update(
     secretAccessKey: "HHAFUqmYKJbKdr4d/OXk6J5tEzLaLoIowMPD46h3",
     region: 'us-west-1',
   }
-);
+)
 
 function changeSpeed() {
 
@@ -191,7 +191,7 @@ class Annotate extends Component {
           error: error
         });
     })
-  };
+  }
 
   makeObject = async (selectedConcepts) => {
     let temp = {}
@@ -214,7 +214,7 @@ class Annotate extends Component {
     this.setState({
        videoName: filename
      });
-  };
+  }
 
   handleConceptClick = (concept) => {
     var myVideo = document.getElementById("video");
@@ -230,7 +230,7 @@ class Annotate extends Component {
       inputHandler: this.postAnnotation,
       closeHandler: this.handleDialogClose
     })
-  };
+  }
 
   postAnnotation = (comment, unsure) => {
     var myVideo = document.getElementById("video");
@@ -254,7 +254,7 @@ class Annotate extends Component {
     var date = Date.now().toString();
     this.drawImages(vidCord, dragBoxCord, myVideo, date, x1, y1);
 
-    fetch('/commentedAnnotate', {
+    fetch('/annotate', {
       method: 'POST',
       headers: {'Content-Type': 'application/json', 
                 'Authorization': 'Bearer ' + localStorage.getItem('token')},
@@ -321,7 +321,7 @@ class Annotate extends Component {
         console.log(error)
         return;
       })
-  };
+  }
 
 
   drawImages = (vidCord, dragBoxCord, myVideo, date, x1, y1) => {
@@ -367,7 +367,7 @@ class Annotate extends Component {
 
   handleErrorClose = () => {
     this.setState({ errorOpen: false });
-  };
+  }
 
   handleDialogClose = () => {
     this.setState(
@@ -375,10 +375,10 @@ class Annotate extends Component {
         dialogOpen: false,
         dialogMsg: null,
         dialogPlaceholder: null,
-        dialogTitle: "",
+        dialogTitle: "", //If set to null, raises a warning to the console
         clickedConcept: null,
       });
-  };
+  }
 
   render() {
     const { classes } = this.props;

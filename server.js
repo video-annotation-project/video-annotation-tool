@@ -265,7 +265,9 @@ app.get('/api/videoNames', passport.authenticate('jwt', {session: false}),
 
 app.get('/api/videosWatched', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
-    let queryPass = 'SELECT DISTINCT ON (videos.filename) videos.filename, videos.id FROM videos, annotations WHERE videos.id = annotations.videoid AND annotations.userid = $1';
+    let queryPass = 'SELECT DISTINCT ON (videos.filename) videos.filename,'+
+    ' videos.id FROM videos, annotations WHERE videos.id = annotations.videoid'+
+    ' AND annotations.userid = $1';
     let userId = req.user.id;
     try {
       const videoData = await psql.query(queryPass, [userId]);
@@ -279,7 +281,13 @@ app.get('/api/videosWatched', passport.authenticate('jwt', {session: false}),
 app.get('/api/annotations/:videoid', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
     let videoId = req.params.videoid;
-    let queryPass = 'SELECT annotations.id, annotations.timeinvideo, annotations.x1, annotations.y1, annotations.x2, annotations.y2, annotations.videoWidth, annotations.videoHeight, annotations.imagewithbox, concepts.name, videos.filename FROM annotations, concepts, videos WHERE annotations.conceptid=concepts.id AND annotations.userid=$1 AND annotations.videoid=$2 AND videos.id=annotations.videoid ORDER BY annotations.timeinvideo';
+    let queryPass = 'SELECT annotations.id, annotations.timeinvideo,'+
+    ' annotations.x1, annotations.y1, annotations.x2, annotations.y2,'+
+    ' annotations.videoWidth, annotations.videoHeight, annotations.imagewithbox,'+
+    ' concepts.name, videos.filename FROM annotations, concepts,'+
+    ' videos WHERE annotations.conceptid=concepts.id'+
+    ' AND annotations.userid=$1 AND annotations.videoid=$2'+
+    ' AND videos.id=annotations.videoid ORDER BY annotations.timeinvideo';
     let userId = req.user.id;
     try {
       const videoData = await psql.query(queryPass, [userId, videoId]);
@@ -368,28 +376,14 @@ async function getConceptId(value) {
   }
 }
 
-app.post("/annotate", passport.authenticate('jwt', {session: false}),
+app.post('/annotate', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
   let videoId = await getVideoId(req.body.videoId);
   let userId = req.user.id;
   let conceptId = await getConceptId(req.body.conceptId);
-  queryText = 'INSERT INTO annotations(videoid, userid, conceptid, timeinvideo, x1, y1, x2, y2, videoWidth, videoHeight, image, imagewithbox, dateannotated) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, current_timestamp) RETURNING *';
-  try {
-    let insertRes = await psql.query(queryText, [videoId, userId, conceptId, req.body.timeinvideo, req.body.x1, req.body.y1, req.body.x2, req.body.y2, req.body.videoWidth, req.body.videoHeight, req.body.image, req.body.imagewithbox]);
-    res.json({message: "Annotated", value: JSON.stringify(insertRes.rows[0])});
-  } catch(error) {
-    console.log(error)
-    res.json({message: "error: " + error})
-  }
-});
-
-app.post('/commentedAnnotate', passport.authenticate('jwt', {session: false}),
-  async (req, res) => {
-  let videoId = await getVideoId(req.body.videoId);
-  let userId = req.user.id;
-  let conceptId = await getConceptId(req.body.conceptId);
-  queryText = 'INSERT INTO annotations3(' +
-    'videoid, userid, conceptid, timeinvideo, x1, y1, x2, y2, videoWidth, videoHeight, image, imagewithbox, comment, unsure, dateannotated)' +
+  queryText = 'INSERT INTO annotations(' +
+    'videoid, userid, conceptid, timeinvideo, x1, y1, x2, y2,'+
+    ' videoWidth, videoHeight, image, imagewithbox, comment, unsure, dateannotated)' +
     ' VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, current_timestamp) RETURNING *';
   try {
     let insertRes = await psql.query(queryText, 

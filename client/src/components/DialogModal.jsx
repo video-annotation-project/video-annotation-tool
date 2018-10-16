@@ -22,20 +22,17 @@ const styles = theme => ({
   },
 });
 
-/* 
-  A pop up dialog box that prompts the user for input.
-  Has the properties:
-    -inputHandler: function called when user hits enter, passes the input
-    -title
-    -message
-    -handleClose
-    -open
-    -placeholder
-*/
 class DialogModal extends Component {
 
+  constructor(props) {
+    super(props);
+    this.state = {
+      unsure: false
+    };
+  }
+
   handleClose = () => {
-    this.state.unsure = false;
+    this.setState({unsure: false});
     this.props.handleClose();
   };
 
@@ -50,17 +47,12 @@ class DialogModal extends Component {
 
   handleSubmit = () => {
     this.props.inputHandler(this.comment, this.state.unsure)
-    this.state.unsure = false;
+    this.setState({unsure : false});
   };
 
-  handleChange = name => event => {
-    this.setState({ [name]: event.target.checked });
+  handleChange = () => event => {
+    this.setState({ unsure: event.target.checked });
   };
-
-  state = {
-    unsure : false
-  };
-
 
   render() {
     return (
@@ -90,7 +82,7 @@ class DialogModal extends Component {
             control={
               <Checkbox
                 checked={this.state.unsure}
-                onChange={this.handleChange('unsure')}
+                onChange={this.handleChange()}
                 value="unsure"
                 color="primary"
               />
