@@ -59,7 +59,6 @@ class Annotations extends Component {
     this.setState({
       annotations: annotations
     });
-    console.log(annotation);
   }
 
   handleDelete = async (event, id) => {

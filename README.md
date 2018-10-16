@@ -25,6 +25,12 @@ Now that the project environment is set up, run `npm start` to run the code.
 
 ![ConfigEB](https://i.imgur.com/YZwkbY8.png)
 
+```
+Access Key: AKIAIJRSQPH2BGGCEFOA
+
+Secret Access Key: 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
+```
+
 #### Deploy
 
 ```
