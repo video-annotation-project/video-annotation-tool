@@ -103,7 +103,7 @@ class Annotations extends Component {
                 {annotation.expanded ? <ExpandLess /> : <ExpandMore />}
               </ListItem>
               <Collapse in={annotation.expanded} timeout='auto' unmountOnExit>
-                <AnnotationFrame annotation={annotation} openImage={this.openImage}/>
+                <AnnotationFrame annotation={annotation} />
               </Collapse>
             </React.Fragment>
           ))}
