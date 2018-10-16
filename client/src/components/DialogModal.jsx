@@ -39,9 +39,10 @@ class DialogModal extends Component {
   handleKeyPress = (e) => {
     if (e.key === 'Enter') {
       this.props.inputHandler(e.target.value, this.state.unsure);
+      this.props.handleClose();
     }
     else {
-      this.comment = e.target.value + e.key // saves the comment to be Submitted
+      this.comment = e.target.value + e.key // saves the comment
     }
   };
 
