@@ -27,7 +27,8 @@ class DialogModal extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      unsure: false
+      unsure: false,
+      submit_enabled: true
     };
   }
 
@@ -37,8 +38,9 @@ class DialogModal extends Component {
   };
 
   handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' && this.state.submit_enabled) {
       this.props.inputHandler(e.target.value, this.state.unsure);
+      this.setState({submit_enabled: false});
       this.props.handleClose();
     }
     else {
