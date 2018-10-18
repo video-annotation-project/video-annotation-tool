@@ -208,6 +208,7 @@ class Annotate extends Component {
       clickedConcept: null,
       inputHandler: null,
       closeHandler: null,
+      enterEnabled: true,
       searchOpen: false
     };
   }
@@ -357,6 +358,7 @@ class Annotate extends Component {
       dialogTitle: "Confirm Annotation",
       dialogPlaceholder: "Comments",
       clickedConcept: concept,
+      enterEnabled: true,
       inputHandler: this.postAnnotation,
       closeHandler: this.handleDialogClose
     })
@@ -499,6 +501,7 @@ class Annotate extends Component {
   handleDialogClose = () => {
     this.setState(
       { 
+        enterEnabled: false,
         dialogOpen: false,
         dialogMsg: null,
         dialogPlaceholder: null,
@@ -529,6 +532,7 @@ class Annotate extends Component {
             inputHandler={this.state.inputHandler}
             open={this.state.dialogOpen}
             handleClose={this.state.closeHandler}
+            enterEnabled={this.state.enterEnabled}
          />
          <SearchModal 
             inputHandler={this.state.inputHandler} 
