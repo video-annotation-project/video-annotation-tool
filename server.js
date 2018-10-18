@@ -186,8 +186,6 @@ app.get('/api/conceptsSelected', passport.authenticate('jwt', {session: false}),
   }
 );
 
-
-
 app.post('/api/conceptsSelected', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
     queryText = 'DELETE FROM profile WHERE profile.userid=$1 AND profile.conceptid=$2 RETURNING *';
@@ -211,8 +209,8 @@ app.get('/api/conceptImages/:id',
       const response = await psql.query(queryText, [req.params.id]);
       const picture = response.rows[0].picture;
       const params = {
-        Bucket: 'lubomirstanchev',
-        Key: `concept_images/${picture}`
+        Bucket: process.env.AWS_S3_BUCKET_NAME,
+        Key: process.env.AWS_S3_BUCKET_CONCEPTS_FOLDER + `${picture}`
       }
       s3.getObject(params).createReadStream().pipe(res);
     } catch (error) {
@@ -355,10 +353,10 @@ app.get('/api/videos/currentTime/:videoname', passport.authenticate('jwt', {sess
 
 app.get('/api/annotationImage/:name', (req, res) => {
   let s3 = new AWS.S3();
-  let key = 'test/' + req.params.name;
+  let key = process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + req.params.name;
   var params = {
     Key: key,
-    Bucket: 'lubomirstanchev',
+    Bucket: process.env.AWS_S3_BUCKET_NAME,
   };
   s3.getObject(params, async (err, data) => {
     if (err) {
@@ -373,9 +371,9 @@ app.get('/api/annotationImage/:name', (req, res) => {
 app.get('/api/videos/Y7Ek6tndnA/:name', (req, res) => {
   var s3 = new AWS.S3();
   const mimetype = 'video/mp4';
-  const file = 'videos/' + req.params.name;
+  const file = process.env.AWS_S3_BUCKET_VIDEOS_FOLDER + req.params.name;
   const cache = 0;
-  s3.listObjectsV2({Bucket: 'lubomirstanchev', MaxKeys: 1, Prefix: file}, function(err, data) {
+  s3.listObjectsV2({Bucket: process.env.AWS_S3_BUCKET_NAME, MaxKeys: 1, Prefix: file}, function(err, data) {
     if (err) {
       return res.sendStatus(404);
     }
@@ -394,7 +392,7 @@ app.get('/api/videos/Y7Ek6tndnA/:name', (req, res) => {
         'Last-Modified'  : data.Contents[0].LastModified,
         'Content-Type'   : mimetype
       });
-      s3.getObject({Bucket: 'lubomirstanchev', Key: file, Range: range}).createReadStream().pipe(res);
+      s3.getObject({Bucket: process.env.AWS_S3_BUCKET_NAME, Key: file, Range: range}).createReadStream().pipe(res);
     }
     else
     {
@@ -405,7 +403,7 @@ app.get('/api/videos/Y7Ek6tndnA/:name', (req, res) => {
         'Last-Modified' : data.Contents[0].LastModified,
         'Content-Type'  : mimetype
       });
-      s3.getObject({Bucket: 'lubomirstanchev', Key: file}).createReadStream().pipe(res);
+      s3.getObject({Bucket: process.env.AWS_S3_BUCKET_NAME, Key: file}).createReadStream().pipe(res);
     }
   });
 });
