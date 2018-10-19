@@ -29,7 +29,7 @@ class TreeLevel1 extends Component {
 
   getLevel1 = async () => {
     let level1 = await axios.get(`/api/reportInfoLevel1?level1=${this.props.level1}`+
-                                  `&admin=${localStorage.getItem('admin')}`,
+                                  `&admin=${localStorage.getItem('admin')}&unsureOnly=${this.props.unsureOnly}`,
       {
         headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')}
       });
@@ -96,10 +96,10 @@ class TreeLevel1 extends Component {
             <Collapse in={data.expanded} timeout='auto' >
                 {this.props.level2 === '' ? (
                   <Annotations level1={this.props.level1} id={data.id}
-                    handleListClick={this.handleListClick} setAnnotationCount={this.setAnnotationCount} />
+                    handleListClick={this.handleListClick} setAnnotationCount={this.setAnnotationCount} unsureOnly={this.props.unsureOnly}/>
                 ):(
                   <Level2 level1 = {this.props.level1} level2 = {this.props.level2}
-                     level3 = {this.props.level3} id = {data.id} setAnnotationCount={this.setAnnotationCount} />
+                     level3 = {this.props.level3} id = {data.id} setAnnotationCount={this.setAnnotationCount} unsureOnly={this.props.unsureOnly}/>
                 )}
 
             </Collapse>

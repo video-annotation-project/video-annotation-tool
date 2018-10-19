@@ -32,7 +32,7 @@ class TreeLevel3 extends Component {
     let level3 = await axios.get(`/api/reportInfoLevel3?level1=${this.props.level1}` +
                                   `&level2=${this.props.level2}&level3=${this.props.level3}` +
                                   `&id=${this.props.id}&level1Id=${this.props.level1Id}` +
-                                  `&admin=${localStorage.getItem('admin')}`, {
+                                  `&admin=${localStorage.getItem('admin')}&unsureOnly=${this.props.unsureOnly}`, {
       headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')}
     })
     return level3.data;
@@ -101,7 +101,7 @@ class TreeLevel3 extends Component {
             <Collapse in={data.expanded} timeout='auto' >
               <Annotations level1 = {this.props.level1} level2 = {this.props.level2}
                 level3 = {this.props.level3} id = {data.id} level2Id = {this.props.id}
-                level1Id = {this.props.level1Id} setAnnotationCount={this.setAnnotationCount} />
+                level1Id = {this.props.level1Id} setAnnotationCount={this.setAnnotationCount} unsureOnly={this.props.unsureOnly} />
             </Collapse>
           </React.Fragment>
         ))}

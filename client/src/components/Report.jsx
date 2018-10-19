@@ -10,6 +10,8 @@ import DialogTitle from '@material-ui/core/DialogTitle';
 import InputLabel from '@material-ui/core/InputLabel';
 import FormControl from '@material-ui/core/FormControl';
 import Select from '@material-ui/core/Select';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Checkbox from '@material-ui/core/Checkbox';
 
 import Level1 from './TreeLevel1.jsx';
 
@@ -42,7 +44,8 @@ class Report extends React.Component {
         {"name":"Video", "selected":false},
         {"name":"Concept", "selected":false},
         {"name":"User", "selected":false}
-      ]
+      ],
+      unsureOnly: false
     };
   }
 
@@ -71,6 +74,10 @@ class Report extends React.Component {
   handleChange = name => event => {
     this.setState({ [name]: event.target.value });
     this.handleOptionToggle(name, event.target.value);
+  };
+
+  handleCheckBoxChange = name => event => {
+    this.setState({ [name]: event.target.checked });
   };
 
   handleClickOpen = () => {
@@ -150,6 +157,17 @@ class Report extends React.Component {
               ):(
                 <div></div>
               )}
+              <FormControlLabel
+                control={
+                  <Checkbox
+                  checked={this.state.unsureOnly}
+                  onChange={this.handleCheckBoxChange('unsureOnly')}
+                  value="unsureOnly"
+                  color='primary'
+                  />
+                }
+                label="Unsure Only"
+              />
             </form>
           </DialogContent>
           <DialogActions>
@@ -162,7 +180,7 @@ class Report extends React.Component {
           </DialogActions>
         </Dialog>
         {this.state.renderTree ? (
-          <Level1 level1={this.state.level1} level2={this.state.level2} level3={this.state.level3}/>
+          <Level1 level1={this.state.level1} level2={this.state.level2} level3={this.state.level3} unsureOnly={this.state.unsureOnly}/>
         ):(
           <div></div>
         )}

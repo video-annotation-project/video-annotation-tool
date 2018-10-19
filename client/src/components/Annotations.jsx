@@ -12,6 +12,8 @@ import AnnotationFrame from './AnnotationFrame.jsx';
 import DeleteIcon from '@material-ui/icons/Delete';
 import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
 import IconButton from '@material-ui/core/IconButton';
+import Icon from '@material-ui/core/Icon';
+import Button from '@material-ui/core/Button';
 
 const styles = theme => ({
   root: {
@@ -21,7 +23,10 @@ const styles = theme => ({
     float: 'left',
     position: 'relative',
     left: '-50px'
-  }
+  },
+  button: {
+    margin: theme.spacing.unit
+  },
 });
 
 class Annotations extends Component {
@@ -35,7 +40,8 @@ class Annotations extends Component {
   }
 
   getAnnotations = async () => {
-    let port = `/api/annotations?level1=${this.props.level1}&id=${this.props.id}&admin=${localStorage.getItem('admin')}`;
+    let port = `/api/annotations?level1=${this.props.level1}&id=${this.props.id}` +
+               `&admin=${localStorage.getItem('admin')}&unsureOnly=${this.props.unsureOnly}`;
     if (this.props.level2) {
       port = port + `&level2=${this.props.level2}&level1Id=${this.props.level1Id}`;
     }
@@ -76,7 +82,6 @@ class Annotations extends Component {
         'id': id
       })
     }).then(res => res.json()).then(res => {
-      console.log(res);
       let annotations = JSON.parse(JSON.stringify(this.state.annotations));
       annotations = annotations.filter(annotation => annotation.id !== id);
       this.setState({
@@ -100,7 +105,18 @@ class Annotations extends Component {
           {annotations.map((annotation, index) => (
             <React.Fragment key={index}>
               <ListItem button onClick={() => this.handleClick(annotation.timeinvideo, annotation.filename, annotation.id)}>
-                <ListItemText primary={'At '+ Math.floor(annotation.timeinvideo/60) + ' minutes '+ annotation.timeinvideo%60 + " seconds Annotated: " + annotation.name} />
+                {annotation.unsure ? (
+                  <Button variant="fab" color="primary" aria-label="Edit" className={classes.button}>
+                    <Icon>edit_icon</Icon>
+                  </Button>
+                ):(
+                  <div></div>
+                )}
+                <ListItemText
+                  primary={'At '+ Math.floor(annotation.timeinvideo/60) + ' minutes '+ annotation.timeinvideo%60 + " seconds Annotated: " + annotation.name}
+                  secondary={(annotation.comment ? "Annotation Comment: " + annotation.comment : "")}
+                />
+
                 <ListItemSecondaryAction >
                   <IconButton className={classes.delete} aria-label="Delete">
                     <DeleteIcon onClick = {(e) => this.handleDelete(e, annotation.id)} />

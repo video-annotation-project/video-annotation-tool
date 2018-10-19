@@ -52,7 +52,6 @@ class CurrentConcepts extends React.Component {
     })
   }
 
-
   handleConceptClick = (concept) => {
     this.props.handleConceptClick(concept);
   };

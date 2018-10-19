@@ -24,8 +24,7 @@ const styles = theme => ({
     height: '720px',
   }
 });
-// width 1283
-//height 727
+
 class AnnotationFrame extends Component {
   constructor(props) {
     super(props);
