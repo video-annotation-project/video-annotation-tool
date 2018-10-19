@@ -209,7 +209,8 @@ class Annotate extends Component {
       inputHandler: null,
       closeHandler: null,
       enterEnabled: true,
-      searchOpen: false
+      searchOpen: false,
+      videoListOpen: true
     };
   }
 
@@ -350,9 +351,9 @@ class Annotate extends Component {
   handleConceptClick = (concept) => {
     var myVideo = document.getElementById("video");
     this.setState({
-      dialogMsg:  concept.name + 
-                  " in video " + this.state.videoName + 
-                  " at time " + Math.floor(myVideo.currentTime/60) + ' minutes ' 
+      dialogMsg:  concept.name +
+                  " in video " + this.state.videoName +
+                  " at time " + Math.floor(myVideo.currentTime/60) + ' minutes '
                   + myVideo.currentTime%60 + " seconds",
       dialogOpen: true,
       dialogTitle: "Confirm Annotation",
@@ -388,7 +389,7 @@ class Annotate extends Component {
 
     fetch('/annotate', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json', 
+      headers: {'Content-Type': 'application/json',
                 'Authorization': 'Bearer ' + localStorage.getItem('token')},
       body: JSON.stringify({
         'conceptId': this.state.clickedConcept.name,
@@ -500,7 +501,7 @@ class Annotate extends Component {
 
   handleDialogClose = () => {
     this.setState(
-      { 
+      {
         enterEnabled: false,
         dialogOpen: false,
         dialogMsg: null,
@@ -517,15 +518,21 @@ class Annotate extends Component {
       });
   }
 
+  toggleVideoList = () => {
+    this.setState({
+      videoListOpen: !this.state.videoListOpen
+    });
+  }
+
   render() {
     const { classes } = this.props;
     return (
       <div>
-         <ErrorModal 
-            errorMsg={this.state.errorMsg} 
-            open={this.state.errorOpen} 
+         <ErrorModal
+            errorMsg={this.state.errorMsg}
+            open={this.state.errorOpen}
             handleClose={this.handleErrorClose}/>
-         <DialogModal 
+         <DialogModal
             title={this.state.dialogTitle}
             message={this.state.dialogMsg}
             placeholder={this.state.dialogPlaceholder}
@@ -534,9 +541,9 @@ class Annotate extends Component {
             handleClose={this.state.closeHandler}
             enterEnabled={this.state.enterEnabled}
          />
-         <SearchModal 
-            inputHandler={this.state.inputHandler} 
-            open={this.state.searchOpen} 
+         <SearchModal
+            inputHandler={this.state.inputHandler}
+            open={this.state.searchOpen}
             handleClose={this.handleSearchClose}
          />
          <div className= {classes.name}>
@@ -573,35 +580,36 @@ class Annotate extends Component {
             <Button variant = "contained" color = "primary" className = {classes.playButton} onClick = {playPause}>Play/Pause</Button>
             <Button variant = "contained" color = "primary" className = {classes.forwardButton} onClick = {fastForward}>+5 sec</Button>
             <Button variant = "contained" color = "primary" className = {classes.saveButton} onClick = {this.updateCheckpoint.bind(this, true)}>Done</Button>
+            <Button variant = "contained" color = "primary" className = {classes.forwardButton} onClick={this.toggleVideoList}>Toggle Video List</Button>
             <br />
             <span className = {classes.playScript}>Play at speed:</span>
             <p><input type = "text" id = "playSpeedId" className = {classes.playSpeed} placeholder = "100" />&ensp; %</p>
             <input type = "submit" value = "Enter" className = {classes.entered} onClick = {changeSpeed} />
-         </div>
-            <div className = {classes.conceptSectionContainer}>
-               <span className = {classes.conceptsText}>Current Concepts</span>
-               <Button variant="contained" color="primary" aria-label="Add" className={classes.button} style={{float: 'right'}} onClick={this.addConcept}>
-                <AddIcon />
-               </Button>
-               <br />
-               {(this.state.isLoaded) ? (
-                 <CurrentConcepts handleConceptClick= {this.handleConceptClick} conceptsSelected= {this.state.conceptsSelected} />
-               ):(
-                 <List>Loading...</List>
-               )}
-            </div>
-            <div className= {classes.videoListContainer}>
-              <span className = {classes.videoListText}>Resume</span>
-              <br />
-              <VideoList handleVideoClick = {this.handleVideoClick} listType = {"resume"}/>
-              <span className = {classes.videoListText}>Unwatched Videos</span>
-              <br />
-              <VideoList handleVideoClick = {this.handleVideoClick} listType = {"unwatched"}/>
-              <span className = {classes.videoListText}>Watched Videos</span>
-              <br />
-              <VideoList handleVideoClick = {this.handleVideoClick} listType = {"watched"}/>
-            </div>
-         </div>
+        </div>
+          <div className = {classes.conceptSectionContainer}>
+            <span className = {classes.conceptsText}>Current Concepts</span>
+            <Button variant="contained" color="primary" aria-label="Add" className={classes.button} style={{float: 'right'}} onClick={this.addConcept}>
+              <AddIcon />
+            </Button>
+            <br />
+            {(this.state.isLoaded) ? (
+              <CurrentConcepts handleConceptClick= {this.handleConceptClick} conceptsSelected= {this.state.conceptsSelected} />
+            ):(
+             <List>Loading...</List>
+            )}
+          </div>
+          <div className= {classes.videoListContainer} style={{display: this.state.videoListOpen ? '' : 'none'}}>
+            <span className = {classes.videoListText}>Resume</span>
+            <br />
+            <VideoList handleVideoClick = {this.handleVideoClick} listType = {"resume"}/>
+            <span className = {classes.videoListText}>Unwatched Videos</span>
+            <br />
+            <VideoList handleVideoClick = {this.handleVideoClick} listType = {"unwatched"}/>
+            <span className = {classes.videoListText}>Watched Videos</span>
+            <br />
+            <VideoList handleVideoClick = {this.handleVideoClick} listType = {"watched"}/>
+        </div>
+      </div>
     );
   }
 }
