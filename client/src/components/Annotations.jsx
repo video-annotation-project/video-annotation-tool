@@ -56,7 +56,6 @@ class Annotations extends Component {
 
   componentDidMount = async () => {
     let annotations = await this.getAnnotations();
-    this.props.setAnnotationCount(this.props.id, annotations.length);
     annotations.map(annotation => annotation.expanded = false);
     this.setState({
       isLoaded: true,

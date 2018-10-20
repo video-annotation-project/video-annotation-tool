@@ -24,7 +24,6 @@ class TreeLevel3 extends Component {
       isLoaded: false,
       error: null,
       level3: null,
-      totalAnnotations: 0
     };
   }
 
@@ -45,7 +44,6 @@ class TreeLevel3 extends Component {
       temp['id'] = data.id;
       temp['name'] = data.name;
       temp['expanded'] = false;
-      temp['count'] = '?';
       tempList.push(temp);
     })
     return tempList;
@@ -58,18 +56,6 @@ class TreeLevel3 extends Component {
       isLoaded: true,
       level3: level3
     });
-  }
-
-  setAnnotationCount = (id, count) => {
-    let level3 = JSON.parse(JSON.stringify(this.state.level3));
-    let selected = level3.find(data => data.id === id);
-    selected.count = count;
-    let sumAnnotations = this.state.totalAnnotations + count;
-    this.setState({
-      level3: level3,
-      totalAnnotations: sumAnnotations
-    });
-    this.props.setAnnotationCount(this.props.id, this.state.totalAnnotations);
   }
 
   handleListClick = async (name) => {
@@ -95,13 +81,13 @@ class TreeLevel3 extends Component {
         {level3.map((data, index) =>(
           <React.Fragment key={index+1}>
             <ListItem button onClick={() => this.handleListClick(data.name)}>
-              <ListItemText primary={(data.id)+': '+data.name + ' Count: ' + data.count} />
+              <ListItemText primary={(data.id)+': '+data.name} />
               {data.expanded ? <ExpandLess /> : <ExpandMore />}
             </ListItem>
-            <Collapse in={data.expanded} timeout='auto' >
+            <Collapse in={data.expanded} timeout='auto' unmountOnExit>
               <Annotations level1 = {this.props.level1} level2 = {this.props.level2}
                 level3 = {this.props.level3} id = {data.id} level2Id = {this.props.id}
-                level1Id = {this.props.level1Id} setAnnotationCount={this.setAnnotationCount} unsureOnly={this.props.unsureOnly} />
+                level1Id = {this.props.level1Id} unsureOnly={this.props.unsureOnly} />
             </Collapse>
           </React.Fragment>
         ))}
