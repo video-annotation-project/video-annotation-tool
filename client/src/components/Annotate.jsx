@@ -350,9 +350,9 @@ class Annotate extends Component {
   handleConceptClick = (concept) => {
     var myVideo = document.getElementById("video");
     this.setState({
-      dialogMsg:  concept.name + 
-                  " in video " + this.state.videoName + 
-                  " at time " + Math.floor(myVideo.currentTime/60) + ' minutes ' 
+      dialogMsg:  concept.name +
+                  " in video " + this.state.videoName +
+                  " at time " + Math.floor(myVideo.currentTime/60) + ' minutes '
                   + myVideo.currentTime%60 + " seconds",
       dialogOpen: true,
       dialogTitle: "Confirm Annotation",
@@ -388,7 +388,7 @@ class Annotate extends Component {
 
     fetch('/annotate', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json', 
+      headers: {'Content-Type': 'application/json',
                 'Authorization': 'Bearer ' + localStorage.getItem('token')},
       body: JSON.stringify({
         'conceptId': this.state.clickedConcept.name,
@@ -500,7 +500,7 @@ class Annotate extends Component {
 
   handleDialogClose = () => {
     this.setState(
-      { 
+      {
         enterEnabled: false,
         dialogOpen: false,
         dialogMsg: null,
@@ -521,11 +521,11 @@ class Annotate extends Component {
     const { classes } = this.props;
     return (
       <div>
-         <ErrorModal 
-            errorMsg={this.state.errorMsg} 
-            open={this.state.errorOpen} 
+         <ErrorModal
+            errorMsg={this.state.errorMsg}
+            open={this.state.errorOpen}
             handleClose={this.handleErrorClose}/>
-         <DialogModal 
+         <DialogModal
             title={this.state.dialogTitle}
             message={this.state.dialogMsg}
             placeholder={this.state.dialogPlaceholder}
@@ -534,9 +534,9 @@ class Annotate extends Component {
             handleClose={this.state.closeHandler}
             enterEnabled={this.state.enterEnabled}
          />
-         <SearchModal 
-            inputHandler={this.state.inputHandler} 
-            open={this.state.searchOpen} 
+         <SearchModal
+            inputHandler={this.state.inputHandler}
+            open={this.state.searchOpen}
             handleClose={this.handleSearchClose}
          />
          <div className= {classes.name}>
