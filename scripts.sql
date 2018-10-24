@@ -117,7 +117,7 @@ CREATE TABLE Annotations (
   finished - boolean, states whether user has finished video or not
 */
 
-CREATE TABLE checkpoints (
+CREATE TABLE Checkpoints (
   userid int NOT NULL,
   videoid int NOT NULL,
   timeinvideo DOUBLE PRECISION NOT NULL,
