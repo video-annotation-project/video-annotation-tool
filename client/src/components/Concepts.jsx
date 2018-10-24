@@ -51,14 +51,14 @@ class Concepts extends React.Component {
   changeConceptsSelected = async (id) => {
     let conceptsSelected = this.state.conceptsSelected;
     conceptsSelected[id] = !conceptsSelected[id];
-    axios.post('/api/conceptsSelected', {
-      'id': id,
-      'checked': conceptsSelected[id]
-    }, {
-      headers: {
-        'Authorization': 'Bearer ' + localStorage.getItem('token')
-      },
-    }).then(res => res.data).then(res => {
+    fetch('/api/conceptSelected', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token')},
+      body: JSON.stringify({
+        'id': id,
+        'checked': conceptsSelected[id]
+      })
+    }).then(res => res.json()).then(res => {
       if (res.message === "Changed") {
         alert(res.message + ": " + res.value)
       } else {

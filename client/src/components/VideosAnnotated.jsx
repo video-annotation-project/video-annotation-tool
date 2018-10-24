@@ -77,10 +77,10 @@ class VideosAnnotated extends Component {
       {videos.map((video, index) =>(
         <React.Fragment key={index+1}>
           <ListItem button onClick={() => this.handleVideoClick(video.filename)}>
-            <ListItemText primary={(index+1)+': '+video.filename} />
+            <ListItemText primary={video.id +': '+video.filename} />
             {video.expanded ? <ExpandLess /> : <ExpandMore />}
           </ListItem>
-          <Collapse in={video.expanded} timeout='auto' >
+          <Collapse in={video.expanded} timeout='auto' unmountOnExit>
               <Annotations  videoId = {video.id} />
           </Collapse>
         </React.Fragment>

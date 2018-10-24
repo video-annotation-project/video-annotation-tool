@@ -55,14 +55,11 @@ class Annotations extends Component {
   handleClick = async (time, filename, id) => {
     let annotations = JSON.parse(JSON.stringify(this.state.annotations));
     let annotation = annotations.find(annotation => annotation.id === id);
-    console.log('Top: ', annotation.y1)
-    console.log('Left: ', annotation.x1)
-    console.log('Height: ', (annotation.y2-annotation.y1));
-    console.log('Width: ', (annotation.x2-annotation.x1));
     annotation.expanded = !annotation.expanded;
     this.setState({
       annotations: annotations
     });
+    console.log(annotation);
   }
 
   handleDelete = async (event, id) => {
@@ -76,9 +73,7 @@ class Annotations extends Component {
     }).then(res => res.json()).then(res => {
       console.log(res);
       let annotations = JSON.parse(JSON.stringify(this.state.annotations));
-      console.log(annotations);
       annotations = annotations.filter(annotation => annotation.id !== id);
-      console.log(annotations);
       this.setState({
         annotations: annotations
       });
@@ -100,7 +95,10 @@ class Annotations extends Component {
           {annotations.map((annotation, index) => (
             <React.Fragment key={index}>
               <ListItem button onClick={() => this.handleClick(annotation.timeinvideo, annotation.filename, annotation.id)}>
-                <ListItemText primary={'At '+ Math.floor(annotation.timeinvideo/60) + ' minutes '+ annotation.timeinvideo%60 + " seconds Annotated: " + annotation.name} />
+                <ListItemText 
+                  primary={'At '+ Math.floor(annotation.timeinvideo/60) + ' minutes '+ annotation.timeinvideo%60 + " seconds Annotated: " + annotation.name} 
+                  secondary={(annotation.comment ? "Annotation Comment: " + annotation.comment : "")}
+                />
                 <ListItemSecondaryAction >
                   <IconButton className={classes.delete} aria-label="Delete">
                     <DeleteIcon onClick = {(e) => this.handleDelete(e, annotation.id)} />
@@ -108,7 +106,7 @@ class Annotations extends Component {
                 </ListItemSecondaryAction>
                 {annotation.expanded ? <ExpandLess /> : <ExpandMore />}
               </ListItem>
-              <Collapse in={annotation.expanded} timeout='auto' >
+              <Collapse in={annotation.expanded} timeout='auto' unmountOnExit>
                 <AnnotationFrame annotation={annotation} />
               </Collapse>
             </React.Fragment>

@@ -5,8 +5,13 @@ import { withStyles } from '@material-ui/core/styles';
 import CurrentConcepts from './CurrentConcepts.jsx';
 import VideoList from './VideoList.jsx';
 import ErrorModal from './ErrorModal.jsx';
+import DialogModal from './DialogModal.jsx';
+import SearchModal from './SearchModal.jsx';
 import List from '@material-ui/core/List';
 import axios from 'axios';
+import AWS from 'aws-sdk';
+import AddIcon from '@material-ui/icons/Add';
+
 
 const styles = theme => ({
   clear: {
@@ -132,8 +137,7 @@ const styles = theme => ({
     display: 'inline',
     float: 'left'
   },
-});
-
+})
 
 window.addEventListener("beforeunload", (ev) =>
 {
@@ -180,7 +184,6 @@ function rewind() {
    myVideo.currentTime = (cTime - 5);
 }
 
-
 class Annotate extends Component {
   constructor(props) {
     super(props);
@@ -189,8 +192,17 @@ class Annotate extends Component {
       isLoaded: false,
       videoName: 'DocRicketts-0569_20131213T224337Z_00-00-01-00TC_h264.mp4',
       errorMsg: null,
+      errorOpen: false,
+      dialogMsg: null,
+      dialogTitle: null,
+      dialogPlaceholder: null,
+      dialogOpen: false,
       conceptsSelected: {},
-      open: false //For error modal box
+      clickedConcept: null,
+      inputHandler: null,
+      closeHandler: null,
+      enterEnabled: true,
+      searchOpen: false
     };
   }
 
@@ -204,7 +216,7 @@ class Annotate extends Component {
           error: error
         });
     })
-  };
+  }
 
   makeObject = async (selectedConcepts) => {
     let temp = {}
@@ -320,7 +332,7 @@ class Annotate extends Component {
   handleVideoClick = async(filename) => {
     this.setState({
        videoName: filename
-    });
+     })
     let currentTime = await this.getVideoStartTime(filename);
     if (currentTime.data.length === 1) {
        var myVideo = document.getElementById("video");
@@ -329,6 +341,23 @@ class Annotate extends Component {
   };
 
   handleConceptClick = (concept) => {
+    var myVideo = document.getElementById("video");
+    this.setState({
+      dialogMsg:  concept.name +
+                  " in video " + this.state.videoName +
+                  " at time " + Math.floor(myVideo.currentTime/60) + ' minutes '
+                  + myVideo.currentTime%60 + " seconds",
+      dialogOpen: true,
+      dialogTitle: "Confirm Annotation",
+      dialogPlaceholder: "Comments",
+      clickedConcept: concept,
+      enterEnabled: true,
+      inputHandler: this.postAnnotation,
+      closeHandler: this.handleDialogClose
+    })
+  }
+
+  postAnnotation = (comment, unsure) => {
     var myVideo = document.getElementById("video");
     var cTime = myVideo.currentTime;
     var dragBoxCord = document.getElementById("dragBox").getBoundingClientRect();
@@ -346,17 +375,16 @@ class Annotate extends Component {
     var x2 = Math.min((x1 + width),1279);
     var y2 = Math.min((y1 + height),719);
 
-    //id | videoid | userid | conceptid | timeinvideo | topRightx | topRighty | botLeftx | botLefty | dateannotated
-
     //draw video with and without bounding box to canvas and save as img
     var date = Date.now().toString();
     this.drawImages(vidCord, dragBoxCord, myVideo, date, x1, y1);
 
     fetch('/annotate', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token')},
+      headers: {'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + localStorage.getItem('token')},
       body: JSON.stringify({
-        'conceptId': concept.name,
+        'conceptId': this.state.clickedConcept.name,
         'videoId': this.state.videoName,
         'timeinvideo': cTime,
         'x1': x1,
@@ -367,22 +395,55 @@ class Annotate extends Component {
         'videoHeight': 720,
         'image': date,
         'imagewithbox': date + "_box",
+        'comment': comment,
+        'unsure' : unsure
       })
     }).then(res => res.json())
     .then(res => {
-      if( res.message === "Annotated") {
-        var videoInfo = JSON.parse(res.value);
-        this.setState({
-          errorMsg: "User: " + videoInfo.userid + " Annotated: " + concept.name + " in video " + videoInfo.videoid + " at time " + Math.floor(videoInfo.timeinvideo/60) + ' minutes '+ videoInfo.timeinvideo%60 + " seconds",
-          open: true
-        })
+      if (res.message === "Annotated") {
+        this.handleDialogClose();
       } else {
         this.setState({
           errorMsg: res.message,
-          open: true
+          errorOpen: true
         })
       }
     })
+  }
+
+  addConcept = () => {
+        this.setState({
+            searchOpen: true,
+            inputHandler: this.selectConcept
+        });
+  }
+
+   //Selects a concept based off of the id..
+   selectConcept = (concept) => {
+      fetch("/api/conceptSelected", {
+         method: 'POST',
+         headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token')},
+         body: JSON.stringify({
+            'id': concept,
+            'checked' : true
+         })
+      }).then(res => res.json())
+         .then(async res => {
+            this.handleSearchClose();
+            this.setState({
+               isLoaded:false
+            })
+            let selectedConcepts = await this.getSelectedConcepts();
+            let temp = await this.makeObject(selectedConcepts);
+            await this.setState({
+               conceptsSelected: temp,
+               isLoaded: true
+            });
+      })
+      .catch(error => {
+        console.log('Error: ', error);
+        return;
+      })
   }
 
   drawImages = (vidCord, dragBoxCord, myVideo, date, x1, y1) => {
@@ -423,15 +484,51 @@ class Annotate extends Component {
     })
   }
 
-  handleClose = () => {
-    this.setState({ open: false });
-  };
+  handleErrorClose = () => {
+    this.setState({ errorOpen: false });
+  }
+
+  handleDialogClose = () => {
+    this.setState(
+      {
+        enterEnabled: false,
+        dialogOpen: false,
+        dialogMsg: null,
+        dialogPlaceholder: null,
+        dialogTitle: "", //If set to null, raises a warning to the console
+        clickedConcept: null,
+      });
+  }
+
+  handleSearchClose = () => {
+    this.setState(
+      {
+        searchOpen: false,
+      });
+  }
 
   render() {
     const { classes } = this.props;
     return (
       <div>
-         <ErrorModal errorMsg={this.state.errorMsg} open={this.state.open} handleClose={this.handleClose}/>
+         <ErrorModal
+            errorMsg={this.state.errorMsg}
+            open={this.state.errorOpen}
+            handleClose={this.handleErrorClose}/>
+         <DialogModal
+            title={this.state.dialogTitle}
+            message={this.state.dialogMsg}
+            placeholder={this.state.dialogPlaceholder}
+            inputHandler={this.state.inputHandler}
+            open={this.state.dialogOpen}
+            handleClose={this.state.closeHandler}
+            enterEnabled={this.state.enterEnabled}
+         />
+         <SearchModal
+            inputHandler={this.state.inputHandler}
+            open={this.state.searchOpen}
+            handleClose={this.handleSearchClose}
+         />
          <div className= {classes.name}>
           {this.state.videoName}
          </div>
@@ -473,6 +570,9 @@ class Annotate extends Component {
          </div>
             <div className = {classes.conceptSectionContainer}>
                <span className = {classes.conceptsText}>Current Concepts</span>
+               <Button variant="contained" color="primary" aria-label="Add" className={classes.button} style={{float: 'right'}} onClick={this.addConcept}>
+                <AddIcon />
+               </Button>
                <br />
                {(this.state.isLoaded) ? (
                  <CurrentConcepts handleConceptClick= {this.handleConceptClick} conceptsSelected= {this.state.conceptsSelected} />
