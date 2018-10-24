@@ -1,4 +1,5 @@
 -- Hanson Egbert 6/19/18;
+-- Samantha Gunzl 10/24/18 (update);
 /*
   Create SQL Tables
   The following lines of code initialize tables in mySQL. Each
