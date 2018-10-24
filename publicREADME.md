@@ -26,6 +26,7 @@ Don't worry about your secrets being exposed, ```.env``` is added to ```.gitigno
 
 #### Setting up your DB
 There is a file named `scripts.sql` in the root of the project. This folder contains the scripts for creating the appropriate tables within your database. Execute this command only once to initialize these tables.
+
 ```psql -h <hostname> -f scripts.sql -U <username> <dbname>```
 
 #### You're ready!
