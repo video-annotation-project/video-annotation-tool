@@ -5,7 +5,7 @@ Video Annotation Tool is a web app with a NodeJS back end and a ReactJS front en
 Our own app used for deep sea annotations is live [here](https://www.deepseaannotations.com/).
 
 ## Installation
-**Envrionment**
+#### Envrionment
 To set up the project environment, run the following commands.
 ```
 git clone git@github.com:ishaanj1/video-annotation-tool.git
