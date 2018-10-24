@@ -9,7 +9,6 @@ import DialogModal from './DialogModal.jsx';
 import SearchModal from './SearchModal.jsx';
 import List from '@material-ui/core/List';
 import axios from 'axios';
-import AWS from 'aws-sdk';
 import AddIcon from '@material-ui/icons/Add';
 
 
