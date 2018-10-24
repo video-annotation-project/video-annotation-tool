@@ -25,11 +25,11 @@ annotations/`.
 Don't worry about your secrets being exposed, ```.env``` is added to ```.gitignore```, so they won't be committed to your own repository.
 
 #### Setting up your DB
-There is a file named `scripts.sql` in the root of the project. This folder contains the scripts for creating the appropriate tables within your database. Execute this command only once to initialize these tables.
+There is a file named `scripts.sql` in the root of the project. This folder contains the scripts for creating the appropriate tables within your database. It will also create a default 'admin' user with the password '123'. Execute this command only once to initialize these tables.
 
 ```psql -h <hostname> -f scripts.sql -U <username> <dbname>```
 
 #### You're ready!
-Run ``` npm start ``` (in the root of the project) to start the development version. A new window in your browser routed to ```localhost:3000``` should appear with the app.
+Run ``` npm start ``` (in the root of the project) to start the development version. A new window in your browser routed to ```localhost:3000``` should appear with the app. Login using the default admin credentials above!
 
 
