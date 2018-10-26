@@ -324,35 +324,169 @@ app.get('/api/latestVideoName/:videoid', passport.authenticate('jwt', {session: 
   }
 );
 
-app.get('/api/videosWatched', passport.authenticate('jwt', {session: false}),
+let selectLevels = (levels, selectedIds) => {
+  let queryPass = '';
+  let level = levels[0];
+  if (level === "Video") {
+    queryPass = 'SELECT DISTINCT ON (videos.filename) videos.filename as name, videos.id FROM annotations, ';
+  }
+  if (level === "Concept") {
+    queryPass = 'SELECT DISTINCT ON (concepts.name) concepts.name, concepts.id FROM annotations, ';
+  }
+  if (level === "User") {
+    queryPass = 'SELECT DISTINCT ON (users.username) users.username as name, users.id FROM annotations, ';
+  }
+  queryPass = queryPass + levels.join("s, ") + 's WHERE annotations.' + level.toLowerCase() + 'id=' + level.toLowerCase() + 's.id';
+  let levelsSelected = levels.slice(1);
+  levelsSelected.forEach((level, index) => {
+    queryPass = addCondition(queryPass, level, selectedIds[index]);
+  })
+  return queryPass;
+}
+
+let addCondition = (queryPass, level, id) => {
+  let condition = '';
+  if ( level !== null) {
+    condition = ' AND ' + level.toLowerCase() + 's.id=' + id;
+    condition = condition + ' AND ' + level.toLowerCase() + 's.id=annotations.' + level.toLowerCase() + 'id';
+  }
+  return queryPass + condition;
+}
+
+let checkAdminAnnotation = (adminStatus, userId, queryPass, params) => {
+  if (adminStatus !== 'true') {
+    queryPass = queryPass + ' AND annotations.userid = $1';
+    params.push(userId);
+  }
+  return [queryPass, params];
+}
+
+let checkUnsureAnnotation = (unsureStatus, queryPass) => {
+  if (unsureStatus === 'true') {
+    queryPass = queryPass + ' AND annotations.unsure = true';
+  }
+  return queryPass;
+}
+
+app.get('/api/reportInfoLevel1', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
-    let queryPass = 'SELECT DISTINCT ON (videos.filename) videos.filename,'+
-    ' videos.id FROM videos,'+
-    ' annotations WHERE videos.id = annotations.videoid AND annotations.userid = $1;'
+    let queryPass = '';
+    let level1 = req.query.level1;
+    queryPass = selectLevels([level1], []);
+
     let userId = req.user.id;
+    let params = [];
+    [queryPass, params] = checkAdminAnnotation(req.query.admin, userId, queryPass, params);
+    queryPass = checkUnsureAnnotation(req.query.unsureOnly, queryPass);
+
     try {
-      const videoData = await psql.query(queryPass, [userId]);
-      res.json(videoData.rows);
+      const reportData = await psql.query(queryPass, params);
+      res.json(reportData.rows);
     } catch (error) {
       res.json(error);
     }
   }
 );
 
-app.get('/api/annotations/:videoid', passport.authenticate('jwt', {session: false}),
+app.get('/api/reportInfoLevel2', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
-    let videoId = req.params.videoid;
-    let queryPass = 'SELECT annotations.id, annotations.comment, annotations.timeinvideo,'+
-    ' annotations.x1, annotations.y1, annotations.x2, annotations.y2,'+
-    ' annotations.videoWidth, annotations.videoHeight, annotations.imagewithbox,'+
-    ' concepts.name, videos.filename FROM annotations, concepts,'+
-    ' videos WHERE annotations.conceptid=concepts.id'+
-    ' AND annotations.userid=$1 AND annotations.videoid=$2'+
-    ' AND videos.id=annotations.videoid ORDER BY annotations.timeinvideo';
+    let queryPass = '';
+    let level1 = req.query.level1;
+    let level2 = req.query.level2;
+    queryPass = selectLevels([level2, level1], [req.query.id]);
+
     let userId = req.user.id;
+    let params = [];
+
+    [queryPass, params] = checkAdminAnnotation(req.query.admin, userId, queryPass, params);
+    queryPass = checkUnsureAnnotation(req.query.unsureOnly, queryPass);
     try {
-      const videoData = await psql.query(queryPass, [userId, videoId]);
-      res.json(videoData.rows);
+      const reportData = await psql.query(queryPass, params);
+      res.json(reportData.rows);
+    } catch (error) {
+      res.json(error);
+    }
+  }
+);
+
+app.get('/api/reportInfoLevel3', passport.authenticate('jwt', {session: false}),
+  async (req, res) => {
+    let queryPass = '';
+    let level1 = req.query.level1;
+    let level2 = req.query.level2;
+    let level3 = req.query.level3;
+    let level1Id = req.query.level1Id;
+    let id = req.query.id;
+    queryPass = selectLevels([level3, level2, level1], [id, level1Id]);
+
+    let userId = req.user.id;
+    let params = [];
+    [queryPass, params] = checkAdminAnnotation(req.query.admin, userId, queryPass, params);
+    queryPass = checkUnsureAnnotation(req.query.unsureOnly, queryPass);
+    try {
+      const reportData = await psql.query(queryPass, params);
+      res.json(reportData.rows);
+    } catch (error) {
+      res.json(error);
+    }
+  }
+);
+
+let addLevelAnnotations = (queryPass, level) => {
+  if ( level !== 'Concept' & level !== null) {
+    queryPass = queryPass + ', ' + level.toLowerCase() + 's';
+  }
+  return queryPass;
+}
+
+let addConditionAnnotations = (queryPass, level, id) => {
+  let condition = '';
+  if ( level !== null) {
+    condition = ' AND ' + level.toLowerCase() + 's.id=' + id;
+    if ( level !== 'Concepts') {
+      condition = condition + ' AND ' + level.toLowerCase() + 's.id=annotations.' + level.toLowerCase() + 'id';
+    }
+  }
+  return queryPass + condition;
+}
+
+app.get('/api/annotations', passport.authenticate('jwt', {session: false}),
+  async (req, res) => {
+    let level1 = req.query.level1;
+    let id = req.query.id;
+    let level2 = null;
+    let level1Id = null;
+    let level3 = null;
+    let level2Id = null;
+    if (req.query.level2) {
+      level1Id = req.query.level1Id;
+      level2 = req.query.level2;
+    }
+    if (req.query.level3) {
+      level2Id = req.query.level2Id;
+      level3 = req.query.level3;
+    }
+    //Build query string
+    let queryPass = '';
+
+    queryPass = 'SELECT annotations.id, annotations.comment, annotations.unsure, annotations.timeinvideo, annotations.x1, annotations.y1, \
+                 annotations.x2, annotations.y2, annotations.videoWidth, annotations.videoHeight, \
+                 annotations.imagewithbox, concepts.name FROM annotations, concepts';
+    queryPass = addLevelAnnotations(queryPass, level1);
+    queryPass = addLevelAnnotations(queryPass, level2);
+    queryPass = addLevelAnnotations(queryPass, level3);
+    queryPass = queryPass + ' WHERE concepts.id=annotations.conceptid';
+    queryPass = addConditionAnnotations(queryPass, level1, (level1Id ? level1Id:id));
+    queryPass = addConditionAnnotations(queryPass, level2, (level2Id ? level2Id:id));
+    queryPass = addConditionAnnotations(queryPass, level3, id);
+    let userId = req.user.id;
+    let params = [];
+    [queryPass, params] = checkAdminAnnotation(req.query.admin, userId, queryPass, params);
+    queryPass = checkUnsureAnnotation(req.query.unsureOnly, queryPass);
+    queryPass = queryPass + ' ORDER BY annotations.timeinvideo';
+    try {
+      const annotations = await psql.query(queryPass, params);
+      res.json(annotations.rows);
     } catch (error) {
       res.json(error);
     }
@@ -457,10 +591,9 @@ app.post('/annotate', passport.authenticate('jwt', {session: false}),
   let videoId = await getVideoId(req.body.videoId);
   let userId = req.user.id;
   let conceptId = await getConceptId(req.body.conceptId);
-  queryText = 'INSERT INTO annotations(' +
-    'videoid, userid, conceptid, timeinvideo, x1, y1, x2, y2,'+
-    ' videoWidth, videoHeight, image, imagewithbox, comment, unsure, dateannotated)' +
-    ' VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, current_timestamp) RETURNING *';
+  queryText = 'INSERT INTO annotations(videoid, userid, conceptid, timeinvideo, x1, \
+               y1, x2, y2, videoWidth, videoHeight, image, imagewithbox, comment, unsure, dateannotated) \
+               VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, current_timestamp) RETURNING *';
   try {
     let insertRes = await psql.query(queryText,
       [videoId,

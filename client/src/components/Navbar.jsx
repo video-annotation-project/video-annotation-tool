@@ -19,14 +19,6 @@ class Navbar extends React.Component {
     };
   }
 
-  handleClick = event => {
-    this.setState({ open: event.currentTarget });
-  };
-
-  handleClose = () => {
-    this.setState({ open: false });
-  };
-
   handleLogout = () => {
     localStorage.clear();
   };
@@ -45,9 +37,20 @@ class Navbar extends React.Component {
           {localStorage.getItem('isAuthed') ? (
             <React.Fragment>
               {localStorage.getItem('admin') ? (
-                  <Button color='inherit' component={Link} to='/createUser'>
-                    Create User
-                  </Button>
+                  <React.Fragment>
+                    <Button color='inherit' component={Link} to='/createUser'>
+                      Create User
+                    </Button>
+                    <Button color='inherit' component={Link} to='/concepts'>
+                      Select Concepts
+                    </Button>
+                    <Button color='inherit' component={Link} to='/annotate'>
+                      Annotate Videos
+                    </Button>
+                    <Button color='inherit'component={Link} to='/report'>
+                      Report
+                    </Button>
+                  </React.Fragment>
               ):(
                 <React.Fragment>
                   <Button color='inherit' component={Link} to='/concepts'>
@@ -56,7 +59,7 @@ class Navbar extends React.Component {
                   <Button color='inherit' component={Link} to='/annotate'>
                     Annotate Videos
                   </Button>
-                  <Button color='inherit'component={Link} to='/report'>Report </Button>
+                  <Button color='inherit'component={Link} to='/report'> Report </Button>
                 </React.Fragment>
               )}
               <Button color='inherit' component={Link} to='/profile'>
