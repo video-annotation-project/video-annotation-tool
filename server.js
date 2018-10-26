@@ -13,16 +13,9 @@ const bcrypt = require('bcrypt');
 const psql = require('./db/simpleConnect');
 const AWS = require('aws-sdk');
 
-AWS.config.update(
-  {
-    accessKeyId: "AKIAIJRSQPH2BGGCEFOA",
-    secretAccessKey: "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",
-  }
-);
-
 var jwtOptions = {};
 jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
-jwtOptions.secretOrKey = 'Bernie wouldve won';
+jwtOptions.secretOrKey = process.env.JWT_KEY;
 
 async function findUser(userId) {
   queryPass = 'select id, username, password, admin from users where users.id=$1';
@@ -53,11 +46,10 @@ app.use(passport.initialize());
 
 // parse application/x-www-form-urlencoded
 // for easier testing with Postman or plain HTML forms
-app.use(bodyParser.urlencoded({
-  extended: true
-}));
-// parse application/json
-app.use(bodyParser.json())
+// parse application/json - needs higher limit for passing img for annotation
+
+app.use(bodyParser.json({limit: '50mb'}));
+app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
 
 async function userLogin(username, password) {
   queryPass = 'select id, password, admin from users where users.username=$1';
@@ -232,8 +224,8 @@ app.get('/api/conceptImages/:id',
       const response = await psql.query(queryText, [req.params.id]);
       const picture = response.rows[0].picture;
       const params = {
-        Bucket: 'lubomirstanchev',
-        Key: `concept_images/${picture}`
+        Bucket: process.env.AWS_S3_BUCKET_NAME,
+        Key: process.env.AWS_S3_BUCKET_CONCEPTS_FOLDER + `${picture}`
       }
       s3.getObject(params).createReadStream().pipe(res);
     } catch (error) {
@@ -247,6 +239,19 @@ app.get('/api/videoNames', passport.authenticate('jwt', {session: false}),
     queryPass = 'select id, filename from videos;'
     try {
       const videoData = await psql.query(queryPass);
+      res.json(videoData);
+    } catch (error) {
+      res.json(error);
+    }
+  }
+);
+
+app.get('/api/userInfo', passport.authenticate('jwt', {session: false}),
+  async (req, res) => {
+    let userId = req.user.id;
+    queryPass = 'SELECT * FROM users WHERE id=$1;'
+    try {
+      const videoData = await psql.query(queryPass, [userId]);
       res.json(videoData);
     } catch (error) {
       res.json(error);
@@ -505,10 +510,10 @@ app.get('/api/videos/currentTime/:videoname', passport.authenticate('jwt', {sess
 
 app.get('/api/annotationImage/:name', (req, res) => {
   let s3 = new AWS.S3();
-  let key = 'test/' + req.params.name;
+  let key = process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + req.params.name;
   var params = {
     Key: key,
-    Bucket: 'lubomirstanchev',
+    Bucket: process.env.AWS_S3_BUCKET_NAME,
   };
   s3.getObject(params, async (err, data) => {
     if (err) {
@@ -523,9 +528,9 @@ app.get('/api/annotationImage/:name', (req, res) => {
 app.get('/api/videos/Y7Ek6tndnA/:name', (req, res) => {
   var s3 = new AWS.S3();
   const mimetype = 'video/mp4';
-  const file = 'videos/' + req.params.name;
+  const file = process.env.AWS_S3_BUCKET_VIDEOS_FOLDER + req.params.name;
   const cache = 0;
-  s3.listObjectsV2({Bucket: 'lubomirstanchev', MaxKeys: 1, Prefix: file}, function(err, data) {
+  s3.listObjectsV2({Bucket: process.env.AWS_S3_BUCKET_NAME, MaxKeys: 1, Prefix: file}, function(err, data) {
     if (err) {
       return res.sendStatus(404);
     }
@@ -544,7 +549,7 @@ app.get('/api/videos/Y7Ek6tndnA/:name', (req, res) => {
         'Last-Modified'  : data.Contents[0].LastModified,
         'Content-Type'   : mimetype
       });
-      s3.getObject({Bucket: 'lubomirstanchev', Key: file, Range: range}).createReadStream().pipe(res);
+      s3.getObject({Bucket: process.env.AWS_S3_BUCKET_NAME, Key: file, Range: range}).createReadStream().pipe(res);
     }
     else
     {
@@ -555,7 +560,7 @@ app.get('/api/videos/Y7Ek6tndnA/:name', (req, res) => {
         'Last-Modified' : data.Contents[0].LastModified,
         'Content-Type'  : mimetype
       });
-      s3.getObject({Bucket: 'lubomirstanchev', Key: file}).createReadStream().pipe(res);
+      s3.getObject({Bucket: process.env.AWS_S3_BUCKET_NAME, Key: file}).createReadStream().pipe(res);
     }
   });
 });
@@ -611,6 +616,29 @@ app.post('/annotate', passport.authenticate('jwt', {session: false}),
     res.json({message: "error: " + error})
   }
 });
+
+app.post('/uploadImage', (req, res) => {
+  let s3 = new AWS.S3();
+  var key = process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + req.body.date;
+  if (req.body.box) {
+    key += '_box';
+  }
+  var params = {
+    Key: key,
+    Bucket: process.env.AWS_S3_BUCKET_NAME,
+    ContentEncoding: 'base64',
+    ContentType: 'image/png',
+    Body: Buffer(req.body.buf) //the base64 string is now the body
+  };
+  s3.putObject(params, function(err, data) {
+    if (err) {
+      console.log(err)
+    } else {
+      res.json({message: "success"})
+    }
+  });
+});
+
 
 app.post("/updateCheckpoint", passport.authenticate('jwt', {session: false}),
   async (req, res) => {

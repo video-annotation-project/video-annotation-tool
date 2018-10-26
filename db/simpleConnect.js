@@ -1,10 +1,12 @@
 const { Pool, Client } = require('pg')
 
+require('dotenv').config()
+
 const pool = new Pool({
-  user: 'psMaster',
-  host: 'deep-sea-annotations.cet7hhddo9tj.us-west-1.rds.amazonaws.com',
-  database: 'dbname',
-  password: 'mypassword123',
+  user: process.env.DB_USER,
+  host: process.env.DB_HOST,
+  database: process.env.DB_NAME,
+  password: process.env.DB_PASSWORD,
   post: 5432,
 })
 
