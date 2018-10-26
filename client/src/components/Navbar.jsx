@@ -38,9 +38,6 @@ class Navbar extends React.Component {
             <React.Fragment>
               {localStorage.getItem('admin') ? (
                   <React.Fragment>
-                    <Button color='inherit' component={Link} to='/createUser'>
-                      Create User
-                    </Button>
                     <Button color='inherit' component={Link} to='/concepts'>
                       Select Concepts
                     </Button>
@@ -49,6 +46,9 @@ class Navbar extends React.Component {
                     </Button>
                     <Button color='inherit'component={Link} to='/report'>
                       Report
+                    </Button>
+                    <Button color='inherit' component={Link} to='/createUser'>
+                      Create User
                     </Button>
                   </React.Fragment>
               ):(
@@ -63,7 +63,7 @@ class Navbar extends React.Component {
                 </React.Fragment>
               )}
               <Button color='inherit' component={Link} to='/profile'>
-                Acount
+                Account
               </Button>
               <Button color='inherit' component={Link} to='/' onClick={this.handleLogout}>
                 Logout

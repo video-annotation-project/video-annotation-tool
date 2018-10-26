@@ -28,10 +28,10 @@ class App extends React.Component {
             <React.Fragment>
               {localStorage.getItem('admin') ? (
                   <React.Fragment>
-                    <Route exact path='/createUser' component={CreateUser} />
                     <Route exact path='/concepts' component={Concepts} />
                     <Route exact path='/annotate' component={Annotate} />
                     <Route exact path='/report' component={Report} />
+                    <Route exact path='/createUser' component={CreateUser} />
                   </React.Fragment>
               ):(
                 <React.Fragment>
