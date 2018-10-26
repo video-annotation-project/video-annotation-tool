@@ -19,11 +19,6 @@ const styles = theme => ({
   root: {
     backgroundColor: theme.palette.background.paper,
   },
-  delete: {
-    float: 'left',
-    position: 'relative',
-    left: '-50px'
-  },
   button: {
     margin: theme.spacing.unit
   },
@@ -76,7 +71,10 @@ class Annotations extends Component {
     event.stopPropagation();
     fetch('/api/delete', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json','Authorization': 'Bearer ' + localStorage.getItem('token')},
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + localStorage.getItem('token')
+      },
       body: JSON.stringify({
         'id': id
       })
@@ -84,10 +82,29 @@ class Annotations extends Component {
       let annotations = JSON.parse(JSON.stringify(this.state.annotations));
       annotations = annotations.filter(annotation => annotation.id !== id);
       this.setState({
+        isLoaded: true,
         annotations: annotations
+      });
+      this.setState({
+        isLoaded: true
       });
     });
   }
+  /*
+  This will be replaced after Ali finishes editing old annotations
+  {annotation.unsure ? (
+    <Button
+      variant="fab"
+      color="primary"
+      aria-label="Edit"
+      className={classes.button}
+    >
+      <Icon>edit_icon</Icon>
+    </Button>
+  ):(
+    <div></div>
+  )}
+  */
 
   render () {
     const { error, isLoaded, annotations } = this.state;
@@ -103,25 +120,54 @@ class Annotations extends Component {
         <List className={classes.root}>
           {annotations.map((annotation, index) => (
             <React.Fragment key={index}>
-              <ListItem button onClick={() => this.handleClick(annotation.timeinvideo, annotation.filename, annotation.id)}>
-                {annotation.unsure ? (
-                  <Button variant="fab" color="primary" aria-label="Edit" className={classes.button}>
-                    <Icon>edit_icon</Icon>
-                  </Button>
-                ):(
-                  <div></div>
-                )}
+              <ListItem button
+                 onClick={() => this.handleClick(
+                   annotation.timeinvideo,
+                   annotation.filename,
+                   annotation.id
+                   )
+                 }
+              >
+
                 <ListItemText
-                  primary={'At '+ Math.floor(annotation.timeinvideo/60) + ' minutes '+ annotation.timeinvideo%60 + " seconds Annotated: " + annotation.name}
-                  secondary={(annotation.comment ? "Annotation Comment: " + annotation.comment : "")}
+                  primary={
+                    'At '+ Math.floor(annotation.timeinvideo/60) +
+                    ' minutes '+ annotation.timeinvideo%60 +
+                    ' seconds Annotated: ' +
+                    annotation.name
+                  }
+                  secondary={
+                    (annotation.comment ?
+                      "Annotation Comment: " + annotation.comment
+                      :
+                      ""
+                    )
+                  }
                 />
 
                 <ListItemSecondaryAction >
-                  <IconButton className={classes.delete} aria-label="Delete">
-                    <DeleteIcon onClick = {(e) => this.handleDelete(e, annotation.id)} />
+                  {annotation.unsure ? (
+                      <Icon>help</Icon>
+                  ):(
+                    <div></div>
+                  )}
+                  <Button
+                    variant="fab"
+                    color="primary"
+                    aria-label="Edit"
+                    mini
+                    className={classes.button}
+                  >
+                    <Icon size="small">edit_icon</Icon>
+                  </Button>
+                  <IconButton aria-label="Delete">
+                    <DeleteIcon
+                      onClick = {(e) => this.handleDelete(e, annotation.id)}
+                    />
                   </IconButton>
+                  {annotation.expanded ? <ExpandLess /> : <ExpandMore />}
                 </ListItemSecondaryAction>
-                {annotation.expanded ? <ExpandLess /> : <ExpandMore />}
+
               </ListItem>
               <Collapse in={annotation.expanded} timeout='auto' unmountOnExit>
                 <AnnotationFrame annotation={annotation} />

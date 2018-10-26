@@ -60,8 +60,21 @@ class CurrentConcepts extends React.Component {
     const { classes } = this.props;
 
     var conceptsList = this.state.concepts.map((concept, index) => (
-      <li key = {index} className = {classes.conceptListElement} onClick={this.handleConceptClick.bind(this, concept)}>{concept.name} <br />
-             <img src = {"/api/conceptImages/"+concept.id} alt = "Could not be downloaded" height="100" width="100" /></li>));
+      <li
+        key = {index}
+        className = {classes.conceptListElement}
+        onClick={this.handleConceptClick.bind(this, concept)}
+      >
+        {concept.name}
+        <br />
+        <img
+          src = {"/api/conceptImages/"+concept.id}
+          alt = "Could not be downloaded"
+          height="100"
+          width="100"
+        />
+      </li>
+    ));
 
     var leftList = [];
     var rightList = [];
