@@ -25,7 +25,7 @@ class VideoList extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      videosListOpen: true,
+      videoListOpen: true,
       currentVideos: [],
       unwatchedVideos: [],
       watchedVideos: []
