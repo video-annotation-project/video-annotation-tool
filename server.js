@@ -184,28 +184,12 @@ app.get('/api/concepts', passport.authenticate('jwt', {session: false}),
 
 app.get('/api/conceptsSelected', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
-    queryText = 'select conceptid from profile where profile.userid=$1';
+    queryText = 'select * from profile, concepts where profile.userid=$1 AND concepts.id=profile.conceptId';
     try {
       let concepts = await psql.query(queryText, [req.user.id]);
       res.json(concepts.rows);
     } catch (error) {
       res.status(400).json(error);
-    }
-  }
-);
-
-app.post("/api/listConcepts", passport.authenticate('jwt', {session: false}),
-  async (req, res) => {
-    var params = [];
-    for (var i = 1; i<=req.body.conceptList.length; i++) {
-      params.push('$' + i);
-    }
-    queryText = 'SELECT * FROM concepts WHERE concepts.id IN(' + params.join(',') + ')';
-    try {
-      var conceptInfo = await psql.query(queryText, req.body.conceptList);
-      res.json(conceptInfo.rows);
-    } catch (error) {
-      console.log(error);
     }
   }
 );

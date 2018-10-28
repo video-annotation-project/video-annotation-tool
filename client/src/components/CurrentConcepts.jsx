@@ -40,32 +40,9 @@ class CurrentConcepts extends React.Component {
     };
   }
 
-  getConceptList = async (conceptsArr) => (
-    fetch("/api/listConcepts", {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + localStorage.getItem('token')
-      },
-      body: JSON.stringify({
-        'conceptList': conceptsArr
-      })
-    }).then(res => res.json())
-      .then(res => {
-        return res;
-      })
-      .catch(error => {
-        console.log(error)
-        return;
-      })
-  );
-
   componentDidMount = async () => {
-    const conceptsObj = this.props.conceptsSelected;
-    const conceptsArr = Object.keys(conceptsObj).filter(id => conceptsObj[id]).map(Number);
-    let conceptList = await this.getConceptList(conceptsArr);
     await this.setState({
-      concepts: conceptList
+      concepts: this.props.conceptsSelected
     })
   }
 

@@ -229,21 +229,12 @@ class Annotate extends Component {
     })
   }
 
-  makeObject = async (conceptsSelected) => {
-    let temp = {}
-    conceptsSelected.forEach(concept => {
-      temp[concept.conceptid] = true;
-    })
-    return temp;
-  }
-
   componentDidMount = async () => {
     let conceptsSelected = await this.getConceptsSelected();
-    let temp = await this.makeObject(conceptsSelected);
     let currentVideo = await this.getCurrentVideo();
     await this.setState({
       videoName: currentVideo.filename,
-      conceptsSelected: temp,
+      conceptsSelected: conceptsSelected,
       isLoaded: true,
     }, () => {
       var myVideo = document.getElementById("video");
@@ -451,9 +442,8 @@ class Annotate extends Component {
         isLoaded:false
       })
       let conceptsSelected = await this.getConceptsSelected();
-      let temp = await this.makeObject(conceptsSelected);
       await this.setState({
-        conceptsSelected: temp,
+        conceptsSelected: conceptsSelected,
         isLoaded: true
       });
     }).catch(error => {
