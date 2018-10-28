@@ -8,12 +8,12 @@ import axios from 'axios';
 import Collapse from '@material-ui/core/Collapse';
 import ExpandLess from '@material-ui/icons/ExpandLess';
 import ExpandMore from '@material-ui/icons/ExpandMore';
-import AnnotationFrame from './AnnotationFrame.jsx';
 import DeleteIcon from '@material-ui/icons/Delete';
 import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
 import IconButton from '@material-ui/core/IconButton';
 import Icon from '@material-ui/core/Icon';
 import Button from '@material-ui/core/Button';
+import AnnotationFrame from './AnnotationFrame.jsx';
 
 const styles = theme => ({
   root: {
@@ -82,13 +82,17 @@ class Annotations extends Component {
       let annotations = JSON.parse(JSON.stringify(this.state.annotations));
       annotations = annotations.filter(annotation => annotation.id !== id);
       this.setState({
-        isLoaded: true,
+        isLoaded: false,
         annotations: annotations
       });
       this.setState({
         isLoaded: true
       });
     });
+  }
+
+  toggleDrawer = () => {
+    this.props.toggleDrawer();
   }
   /*
   This will be replaced after Ali finishes editing old annotations
@@ -157,6 +161,7 @@ class Annotations extends Component {
                     aria-label="Edit"
                     mini
                     className={classes.button}
+                    onClick={this.toggleDrawer()}
                   >
                     <Icon size="small">edit_icon</Icon>
                   </Button>
@@ -167,7 +172,6 @@ class Annotations extends Component {
                   </IconButton>
                   {annotation.expanded ? <ExpandLess /> : <ExpandMore />}
                 </ListItemSecondaryAction>
-
               </ListItem>
               <Collapse in={annotation.expanded} timeout='auto' unmountOnExit>
                 <AnnotationFrame annotation={annotation} />

@@ -85,9 +85,16 @@ class TreeLevel3 extends Component {
               {data.expanded ? <ExpandLess /> : <ExpandMore />}
             </ListItem>
             <Collapse in={data.expanded} timeout='auto' unmountOnExit>
-              <Annotations level1 = {this.props.level1} level2 = {this.props.level2}
-                level3 = {this.props.level3} id = {data.id} level2Id = {this.props.id}
-                level1Id = {this.props.level1Id} unsureOnly={this.props.unsureOnly} />
+              <Annotations
+                level1 = {this.props.level1}
+                level2 = {this.props.level2}
+                level3 = {this.props.level3}
+                id = {data.id}
+                level2Id = {this.props.id}
+                level1Id = {this.props.level1Id}
+                unsureOnly={this.props.unsureOnly}
+                toggleDrawer = {this.props.toggleDrawer}
+              />
             </Collapse>
           </React.Fragment>
         ))}

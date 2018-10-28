@@ -14,6 +14,8 @@ import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Checkbox from '@material-ui/core/Checkbox';
 
 import Level1 from './TreeLevel1.jsx';
+import Drawer from '@material-ui/core/Drawer';
+import CurrentConcepts from './CurrentConcepts.jsx';
 
 const styles = theme => ({
   root: {
@@ -45,7 +47,8 @@ class Report extends React.Component {
         {"name":"Concept", "selected":false},
         {"name":"User", "selected":false}
       ],
-      unsureOnly: false
+      unsureOnly: false,
+      openConcepts: false
     };
   }
 
@@ -103,6 +106,12 @@ class Report extends React.Component {
        });
      }
   };
+
+  toggleDrawer = () => {
+    this.setState({
+      openConcepts: !this.state.openConcepts
+    })
+  }
 
   render() {
     const { classes } = this.props;
@@ -180,10 +189,26 @@ class Report extends React.Component {
           </DialogActions>
         </Dialog>
         {this.state.renderTree ? (
-          <Level1 level1={this.state.level1} level2={this.state.level2} level3={this.state.level3} unsureOnly={this.state.unsureOnly}/>
+          <Level1
+            level1={this.state.level1}
+            level2={this.state.level2}
+            level3={this.state.level3}
+            unsureOnly={this.state.unsureOnly}
+            toggleDrawer = {this.state.toggleDrawer}
+          />
         ):(
           <div></div>
         )}
+        <Drawer anchor="right" open={this.state.openConcepts} onClose={this.toggleDrawer()}>
+          <div
+            tabIndex={0}
+            role="button"
+            onClick={this.toggleDrawer()}
+            onKeyDown={this.toggleDrawer()}
+          >
+            {<CurrentConcepts/>}
+          </div>
+        </Drawer>
       </div>
     );
   }

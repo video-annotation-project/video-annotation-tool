@@ -85,11 +85,22 @@ class TreeLevel1 extends Component {
             </ListItem>
             <Collapse in={data.expanded} timeout='auto' unmountOnExit>
                 {this.props.level2 === '' ? (
-                  <Annotations level1={this.props.level1} id={data.id}
-                    handleListClick={this.handleListClick} unsureOnly={this.props.unsureOnly}/>
+                  <Annotations
+                    level1={this.props.level1}
+                    id={data.id}
+                    handleListClick={this.handleListClick}
+                    unsureOnly={this.props.unsureOnly}
+                    toggleDrawer = {this.props.toggleDrawer}
+                  />
                 ):(
-                  <Level2 level1 = {this.props.level1} level2 = {this.props.level2}
-                     level3 = {this.props.level3} id = {data.id} unsureOnly={this.props.unsureOnly}/>
+                  <Level2
+                    level1 = {this.props.level1}
+                    level2 = {this.props.level2}
+                    level3 = {this.props.level3}
+                    id = {data.id}
+                    unsureOnly={this.props.unsureOnly}
+                    toggleDrawer = {this.props.toggleDrawer}
+                  />
                 )}
 
             </Collapse>
