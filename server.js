@@ -194,6 +194,22 @@ app.get('/api/conceptsSelected', passport.authenticate('jwt', {session: false}),
   }
 );
 
+app.post("/api/listConcepts", passport.authenticate('jwt', {session: false}),
+  async (req, res) => {
+    var params = [];
+    for (var i = 1; i<=req.body.conceptList.length; i++) {
+      params.push('$' + i);
+    }
+    queryText = 'SELECT * FROM concepts WHERE concepts.id IN(' + params.join(',') + ')';
+    try {
+      var conceptInfo = await psql.query(queryText, req.body.conceptList);
+      res.json(conceptInfo.rows);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+);
+
 //Will get list of concepts based off search criteria to and returns a list of concept id's.
 //Currently just looks for exact concept name match.
 app.post('/api/searchConcepts', passport.authenticate('jwt', {session: false}),
@@ -457,20 +473,20 @@ app.post('/annotate', passport.authenticate('jwt', {session: false}),
     ' videoWidth, videoHeight, image, imagewithbox, comment, unsure, dateannotated)' +
     ' VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, current_timestamp) RETURNING *';
   try {
-    let insertRes = await psql.query(queryText, 
-      [videoId, 
-      userId, 
-      conceptId, 
-      req.body.timeinvideo, 
-      req.body.x1, 
-      req.body.y1, 
-      req.body.x2, 
-      req.body.y2, 
-      req.body.videoWidth, 
-      req.body.videoHeight, 
-      req.body.image, 
-      req.body.imagewithbox, 
-      req.body.comment, 
+    let insertRes = await psql.query(queryText,
+      [videoId,
+      userId,
+      conceptId,
+      req.body.timeinvideo,
+      req.body.x1,
+      req.body.y1,
+      req.body.x2,
+      req.body.y2,
+      req.body.videoWidth,
+      req.body.videoHeight,
+      req.body.image,
+      req.body.imagewithbox,
+      req.body.comment,
       req.body.unsure]);
     res.json({message: "Annotated", value: JSON.stringify(insertRes.rows[0])});
   } catch(error) {
@@ -505,22 +521,6 @@ app.post("/updateCheckpoint", passport.authenticate('jwt', {session: false}),
     res.json({message: "updated"});
   }
 });
-
-app.post("/api/listConcepts", passport.authenticate('jwt', {session: false}),
-  async (req, res) => {
-    var params = [];
-    for (var i = 1; i<=req.body.conceptList.length; i++) {
-      params.push('$' + i);
-    }
-    queryText = 'SELECT * FROM concepts WHERE concepts.id IN(' + params.join(',') + ')';
-    try {
-      var conceptInfo = await psql.query(queryText, req.body.conceptList);
-      res.json(conceptInfo.rows);
-    } catch (error) {
-      console.log(error);
-    }
-  }
-);
 
 app.post('/api/delete', passport.authenticate('jwt', {session: false}),
   async (req, res) => {

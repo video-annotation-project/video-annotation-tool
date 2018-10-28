@@ -201,7 +201,7 @@ class Annotate extends Component {
     this.state = {
       error: null,
       isLoaded: false,
-      videoName: 'DocRicketts-0569_20131213T224337Z_00-00-01-00TC_h264.mp4',
+      videoName: 'DocRicketts-0569_20131213T224337Z_00-00-01-00TC_h264.mp4', // might want to change this. use function that retrieves last watched video?
       errorMsg: null,
       errorOpen: false,
       dialogMsg: null,
@@ -217,29 +217,29 @@ class Annotate extends Component {
     };
   }
 
-  getSelectedConcepts = async () => {
+  getConceptsSelected = async () => {
     return axios.get('/api/conceptsSelected', {
       headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')},
     }).then(res => res.data)
-      .catch(error => {
-        this.setState({
-          isloaded: true,
-          error: error
-        });
+    .catch(error => {
+      this.setState({
+        isloaded: true,
+        error: error
+      });
     })
   }
 
-  makeObject = async (selectedConcepts) => {
+  makeObject = async (conceptsSelected) => {
     let temp = {}
-    selectedConcepts.forEach(concept => {
+    conceptsSelected.forEach(concept => {
       temp[concept.conceptid] = true;
     })
     return temp;
   }
 
   componentDidMount = async () => {
-    let selectedConcepts = await this.getSelectedConcepts();
-    let temp = await this.makeObject(selectedConcepts);
+    let conceptsSelected = await this.getConceptsSelected();
+    let temp = await this.makeObject(conceptsSelected);
     let currentVideo = await this.getCurrentVideo();
     await this.setState({
       videoName: currentVideo.filename,
@@ -437,12 +437,12 @@ class Annotate extends Component {
   }
 
   //Selects a concept based off of the id..
-  selectConcept = (concept) => {
+  selectConcept = (conceptId) => {
     fetch("/api/conceptSelected", {
       method: 'POST',
       headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token')},
       body: JSON.stringify({
-        'id': concept,
+        'id': conceptId,
         'checked' : true
       })
     }).then(res => res.json()).then(async res => {
@@ -450,8 +450,8 @@ class Annotate extends Component {
       this.setState({
         isLoaded:false
       })
-      let selectedConcepts = await this.getSelectedConcepts();
-      let temp = await this.makeObject(selectedConcepts);
+      let conceptsSelected = await this.getConceptsSelected();
+      let temp = await this.makeObject(conceptsSelected);
       await this.setState({
         conceptsSelected: temp,
         isLoaded: true
