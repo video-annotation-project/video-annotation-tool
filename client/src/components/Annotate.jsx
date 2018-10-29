@@ -440,19 +440,19 @@ class Annotate extends Component {
       }
     }
     axios.post('/api/conceptsSelected', body, config).then(async res => {
-      console.log("catch block did not trigger");
       this.handleSearchClose();
       this.setState({
         isLoaded:false
       });
       let conceptsSelected = await this.getConceptsSelected();
-      await this.setState({
+      this.setState({
         conceptsSelected: conceptsSelected,
         isLoaded: true
       });
     }).catch(error => {
-      console.log("CATCH BLOCK HAS TRIGGERED!");
-      console.log(error);
+      console.log('Error: ');
+      console.log(error.response.data.detail);
+      this.handleSearchClose();
     })
   }
 

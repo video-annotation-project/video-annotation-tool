@@ -205,7 +205,6 @@ app.post('/api/conceptsSelected', passport.authenticate('jwt', {session: false})
       let insert = await psql.query(queryText, [req.user.id, req.body.id]);
       res.json({message: "Changed", value: JSON.stringify(insert.rows)});
     } catch (error) {
-      console.log(error);
       res.status(400).json(error);
     }
   }
