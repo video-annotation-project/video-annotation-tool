@@ -1,15 +1,16 @@
 import React, { Component } from 'react';
 import Rnd from 'react-rnd';
-import Button from '@material-ui/core/Button';
-import { withStyles } from '@material-ui/core/styles';
-import CurrentConcepts from './CurrentConcepts.jsx';
+import axios from 'axios';
+import AWS from 'aws-sdk';
+
+import ConceptsSelected from './ConceptsSelected.jsx';
 import VideoList from './VideoList.jsx';
 import ErrorModal from './ErrorModal.jsx';
 import DialogModal from './DialogModal.jsx';
-import SearchModal from './SearchModal.jsx';
+
+import Button from '@material-ui/core/Button';
 import List from '@material-ui/core/List';
-import axios from 'axios';
-import AWS from 'aws-sdk';
+import { withStyles } from '@material-ui/core/styles';
 
 const styles = theme => ({
   // clear: {
@@ -208,7 +209,6 @@ class Annotate extends Component {
       dialogTitle: null,
       dialogPlaceholder: null,
       dialogOpen: false,
-      conceptsSelected: {},
       clickedConcept: null,
       closeHandler: null,
       enterEnabled: true,
@@ -216,24 +216,10 @@ class Annotate extends Component {
     };
   }
 
-  getConceptsSelected = async () => {
-    return axios.get('/api/conceptsSelected', {
-      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')},
-    }).then(res => res.data)
-    .catch(error => {
-      this.setState({
-        isloaded: true,
-        error: error
-      });
-    })
-  }
-
   componentDidMount = async () => {
-    let conceptsSelected = await this.getConceptsSelected();
     let currentVideo = await this.getCurrentVideo();
-    await this.setState({
+    this.setState({
       videoName: currentVideo.filename,
-      conceptsSelected: conceptsSelected,
       isLoaded: true,
     }, () => {
       var myVideo = document.getElementById("video");
@@ -424,35 +410,6 @@ class Annotate extends Component {
     });
   }
 
-  //Adds a concept to the user's conceptsSelected
-  selectConcept = (conceptId) => {
-    const body = {
-      'id': conceptId,
-      'checked': true
-    }
-    const config = {
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + localStorage.getItem('token')
-      }
-    }
-    axios.post('/api/conceptsSelected', body, config).then(async res => {
-      this.handleSearchClose();
-      this.setState({
-        isLoaded:false
-      });
-      let conceptsSelected = await this.getConceptsSelected();
-      this.setState({
-        conceptsSelected: conceptsSelected,
-        isLoaded: true
-      });
-    }).catch(error => {
-      console.log('Error: ');
-      console.log(error.response.data.detail);
-      this.handleSearchClose();
-    })
-  }
-
   drawImages = (vidCord, dragBoxCord, myVideo, date, x1, y1) => {
     var canvas = document.createElement('canvas');
     canvas.height = vidCord.height;
@@ -532,11 +489,6 @@ class Annotate extends Component {
           handleClose={this.state.closeHandler}
           enterEnabled={this.state.enterEnabled}
         />
-        <SearchModal
-          inputHandler={this.selectConcept}
-          open={this.state.searchOpen}
-          handleClose={this.handleSearchClose}
-        />
         {this.state.videoName}
 
         <div className = {classes.videoSectionContainer}>
@@ -570,10 +522,11 @@ class Annotate extends Component {
         </div>
 
         {(this.state.isLoaded) ? (
-          <CurrentConcepts
+          <ConceptsSelected
             addConcept={this.addConcept}
-            conceptsSelected={this.state.conceptsSelected}
             handleConceptClick={this.handleConceptClick}
+            searchModalOpen={this.state.searchOpen}
+            handleSearchClose={this.handleSearchClose}
           />
         ):(
          <List>Loading...</List>
