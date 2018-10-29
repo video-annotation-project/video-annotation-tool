@@ -189,6 +189,23 @@ app.get('/api/conceptsSelected', passport.authenticate('jwt', {session: false}),
       let concepts = await psql.query(queryText, [req.user.id]);
       res.json(concepts.rows);
     } catch (error) {
+      console.log(error);
+      res.json(error);
+    }
+  }
+);
+
+app.post('/api/conceptsSelected', passport.authenticate('jwt', {session: false}),
+  async (req, res) => {
+    queryText = 'DELETE FROM profile WHERE profile.userid=$1 AND profile.conceptid=$2 RETURNING *';
+    if (req.body.checked) {
+      queryText = 'INSERT INTO profile(userid, conceptid) VALUES($1, $2) RETURNING *';
+    }
+    try {
+      let insert = await psql.query(queryText, [req.user.id, req.body.id]);
+      res.json({message: "Changed", value: JSON.stringify(insert.rows)});
+    } catch (error) {
+      console.log(error);
       res.status(400).json(error);
     }
   }
@@ -206,21 +223,6 @@ app.post('/api/searchConcepts', passport.authenticate('jwt', {session: false}),
       res.status(400).json(error);
     }
     res.json(concepts.rows);
-  }
-);
-
-app.post('/api/conceptSelected', passport.authenticate('jwt', {session: false}),
-  async (req, res) => {
-    queryText = 'DELETE FROM profile WHERE profile.userid=$1 AND profile.conceptid=$2 RETURNING *';
-    if (req.body.checked) {
-      queryText = 'INSERT INTO profile(userid, conceptid) VALUES($1, $2) RETURNING *';
-    }
-    try {
-      let insert = await psql.query(queryText, [req.user.id, req.body.id]);
-      res.json({message: "Changed", value: JSON.stringify(insert.rows)});
-    } catch (error) {
-      res.status(400).json(error);
-    }
   }
 );
 

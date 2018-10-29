@@ -427,29 +427,33 @@ class Annotate extends Component {
     });
   }
 
-  //Selects a concept based off of the id..
+  //Adds a concept to the user's conceptsSelected
   selectConcept = (conceptId) => {
-    fetch("/api/conceptSelected", {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token')},
-      body: JSON.stringify({
-        'id': conceptId,
-        'checked' : true
-      })
-    }).then(res => res.json()).then(async res => {
+    const body = {
+      'id': conceptId,
+      'checked': true
+    }
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + localStorage.getItem('token')
+      }
+    }
+    axios.post('/api/conceptsSelected', body, config).then(async res => {
+      console.log("catch block did not trigger");
       this.handleSearchClose();
       this.setState({
         isLoaded:false
-      })
+      });
       let conceptsSelected = await this.getConceptsSelected();
       await this.setState({
         conceptsSelected: conceptsSelected,
         isLoaded: true
       });
     }).catch(error => {
-      console.log('Error: ', error);
-      return;
-    });
+      console.log("CATCH BLOCK HAS TRIGGERED!");
+      console.log(error);
+    })
   }
 
   drawImages = (vidCord, dragBoxCord, myVideo, date, x1, y1) => {
