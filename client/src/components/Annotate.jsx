@@ -210,7 +210,6 @@ class Annotate extends Component {
       dialogOpen: false,
       conceptsSelected: {},
       clickedConcept: null,
-      inputHandler: null,
       closeHandler: null,
       enterEnabled: true,
       searchOpen: false,
@@ -360,7 +359,6 @@ class Annotate extends Component {
       dialogPlaceholder: "Comments",
       clickedConcept: concept,
       enterEnabled: true,
-      inputHandler: this.postAnnotation,
       closeHandler: this.handleDialogClose
     })
   }
@@ -422,8 +420,7 @@ class Annotate extends Component {
 
   addConcept = () => {
     this.setState({
-        searchOpen: true,
-        inputHandler: this.selectConcept
+      searchOpen: true,
     });
   }
 
@@ -530,13 +527,13 @@ class Annotate extends Component {
           title={this.state.dialogTitle}
           message={this.state.dialogMsg}
           placeholder={this.state.dialogPlaceholder}
-          inputHandler={this.state.inputHandler}
+          inputHandler={this.postAnnotation}
           open={this.state.dialogOpen}
           handleClose={this.state.closeHandler}
           enterEnabled={this.state.enterEnabled}
         />
         <SearchModal
-          inputHandler={this.state.inputHandler}
+          inputHandler={this.selectConcept}
           open={this.state.searchOpen}
           handleClose={this.handleSearchClose}
         />
