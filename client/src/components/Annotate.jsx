@@ -1,141 +1,146 @@
 import React, { Component } from 'react';
 import Rnd from 'react-rnd';
-import Button from '@material-ui/core/Button';
-import { withStyles } from '@material-ui/core/styles';
-import CurrentConcepts from './CurrentConcepts.jsx';
+import axios from 'axios';
+import AWS from 'aws-sdk';
+
+import ConceptsSelected from './ConceptsSelected.jsx';
 import VideoList from './VideoList.jsx';
 import ErrorModal from './ErrorModal.jsx';
 import DialogModal from './DialogModal.jsx';
-import SearchModal from './SearchModal.jsx';
+
+import Button from '@material-ui/core/Button';
 import List from '@material-ui/core/List';
-import axios from 'axios';
-import AWS from 'aws-sdk';
-import AddIcon from '@material-ui/icons/Add';
+import { withStyles } from '@material-ui/core/styles';
 
 const styles = theme => ({
-  clear: {
-    clear: 'both'
-  },
-  videoSectionContainer: {
-    width: '1280px',
-    margin: '0 auto',
-    marginTop: '20px',
-    float: 'left'
-  },
-  videoContainer: {
-    float: 'left',
-    marginLeft: '15px'
-  },
-  boxContainer: {
-    postion: 'absolute',
-    top: '50px',
-    border: '1px black solid',
-    width: '1280px',
-    height: '720px'
-  },
-  playButton: {
-    marginTop: '40px',
-    marginLeft: '20px',
-    fontSize: '15px',
-    paddingTop: '10px',
-    paddingBottom: '10px'
-  },
-  forwardButton: {
-    marginTop: '40px',
-    marginLeft: '20px',
-    fontSize: '15px',
-    paddingTop: '10px',
-    paddingBottom: '10px'
-  },
-  backwardButton: {
-    marginTop: '40px',
-    marginLeft: '20px',
-    fontSize: '15px',
-    paddingTop: '10px',
-    paddingBottom: '10px'
-  },
-  saveButton: {
-    marginTop: '40px',
-    marginLeft: '20px',
-    fontSize: '15px',
-    paddingTop: '10px',
-    paddingBottom: '10px'
-  },
-  doneButton: {
-    marginTop: '40px',
-    marginLeft: '20px',
-    fontSize: '15px',
-    paddingTop: '10px',
-    paddingBottom: '10px'
-  },
-  undoButton: {
-    marginTop: '40px',
-    marginLeft: '20px',
-    fontSize: '15px',
-    paddingTop: '10px',
-    paddingBottom: '10px'
-  },
-  playScript: {
-    fontColor: 'black',
-    fontWeight: 'bold',
-    fontSize: '130%',
-    position: 'relative',
-    top: '10px',
-    marginLeft: '10px',
-    clear: 'both'
-  },
-  playSpeed: {
-    position: 'relative',
-    left: '10px',
-    width: '50px'
-  },
-  entered: {
-    marginLeft: '10px',
-    position: 'relative',
-    top: '-3px'
-  },
-  conceptSectionContainer: {
-    position: 'relative',
-    float: 'right',
-    width: '440px',
-    height: '1000px',
-    backgroundColor: 'white',
-    borderLeft: '1px black solid',
-    overflow: 'auto'
-  },
-  conceptsText: {
-    fontWeight: 'bold',
-    textAlign: 'center',
-    fontSize: '200%',
-    marginTop: '10px',
-    marginLeft: '10px'
-  },
+  // clear: {
+  //   clear: 'both'
+  // },
+  // videoSectionContainer: {
+  //   width: '1280px',
+  //   margin: '0 auto',
+  //   marginTop: '20px',
+  //   float: 'left'
+  // },
+  // videoContainer: {
+  //   float: 'left',
+  //   marginLeft: '15px'
+  // },
+  // boxContainer: {
+  //   postion: 'absolute',
+  //   top: '50px',
+  //   border: '1px black solid',
+  //   width: '1280px',
+  //   height: '720px'
+  // },
+  // playButton: {
+  //   marginTop: '40px',
+  //   marginLeft: '20px',
+  //   fontSize: '15px',
+  //   paddingTop: '10px',
+  //   paddingBottom: '10px'
+  // },
+  // forwardButton: {
+  //   marginTop: '40px',
+  //   marginLeft: '20px',
+  //   fontSize: '15px',
+  //   paddingTop: '10px',
+  //   paddingBottom: '10px'
+  // },
+  // backwardButton: {
+  //   marginTop: '40px',
+  //   marginLeft: '20px',
+  //   fontSize: '15px',
+  //   paddingTop: '10px',
+  //   paddingBottom: '10px'
+  // },
+  // saveButton: {
+  //   marginTop: '40px',
+  //   marginLeft: '20px',
+  //   fontSize: '15px',
+  //   paddingTop: '10px',
+  //   paddingBottom: '10px'
+  // },
+  // doneButton: {
+  //   marginTop: '40px',
+  //   marginLeft: '20px',
+  //   fontSize: '15px',
+  //   paddingTop: '10px',
+  //   paddingBottom: '10px'
+  // },
+  // undoButton: {
+  //   marginTop: '40px',
+  //   marginLeft: '20px',
+  //   fontSize: '15px',
+  //   paddingTop: '10px',
+  //   paddingBottom: '10px'
+  // },
+  // playScript: {
+  //   fontColor: 'black',
+  //   fontWeight: 'bold',
+  //   fontSize: '130%',
+  //   position: 'relative',
+  //   top: '10px',
+  //   marginLeft: '10px',
+  //   clear: 'both'
+  // },
+  // playSpeed: {
+  //   position: 'relative',
+  //   left: '10px',
+  //   width: '50px'
+  // },
+  // entered: {
+  //   marginLeft: '10px',
+  //   position: 'relative',
+  //   top: '-3px'
+  // },
+  // conceptSectionContainer: {
+  //   position: 'relative',
+  //   float: 'right',
+  //   width: '440px',
+  //   height: '1000px',
+  //   backgroundColor: 'white',
+  //   borderLeft: '1px black solid',
+  //   overflow: 'auto'
+  // },
+  // conceptsText: {
+  //   fontWeight: 'bold',
+  //   textAlign: 'center',
+  //   fontSize: '200%',
+  //   marginTop: '10px',
+  //   marginLeft: '10px'
+  // },
   dragBox: {
     margin: '0px',
     backgroundColor: 'transparent',
     border: '2px coral solid',
     borderStyle: 'ridge'
   },
-  videoListContainer: {
-    position: 'relative',
-    float: 'right',
-    width: '400px',
-    height: '1000px',
-    backgroundColor: 'white',
-    borderLeft: '1px black solid',
-    overflow: 'auto'
-  },
-  videoListText: {
-    fontWeight: 'bold',
-    textAlign: 'center',
-    fontSize: '200%',
+  // videoListContainer: {
+  //   position: 'relative',
+  //   float: 'right',
+  //   width: '400px',
+  //   height: '1000px',
+  //   backgroundColor: 'white',
+  //   borderLeft: '1px black solid',
+  //   overflow: 'auto'
+  // },
+  // videoListText: {
+  //   fontWeight: 'bold',
+  //   textAlign: 'center',
+  //   fontSize: '200%',
+  //   marginTop: '10px',
+  //   marginLeft: '10px'
+  // },
+  // name: {
+  //   display: 'inline',
+  //   float: 'left'
+  // },
+  button: {
     marginTop: '10px',
-    marginLeft: '10px'
-  },
-  name: {
-    display: 'inline',
-    float: 'left'
-  },
+    marginLeft: '20px',
+    marginBottom: '10px'
+  }
 })
 
 AWS.config.update(
@@ -197,49 +202,24 @@ class Annotate extends Component {
     this.state = {
       error: null,
       isLoaded: false,
-      videoName: 'DocRicketts-0569_20131213T224337Z_00-00-01-00TC_h264.mp4',
+      videoName: 'DocRicketts-0569_20131213T224337Z_00-00-01-00TC_h264.mp4', // might want to change this. use function that retrieves last watched video?
       errorMsg: null,
       errorOpen: false,
       dialogMsg: null,
       dialogTitle: null,
       dialogPlaceholder: null,
       dialogOpen: false,
-      conceptsSelected: {},
       clickedConcept: null,
-      inputHandler: null,
       closeHandler: null,
       enterEnabled: true,
-      searchOpen: false
+      searchOpen: false,
     };
   }
 
-  getSelectedConcepts = async () => {
-    return axios.get('/api/conceptsSelected', {
-      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')},
-    }).then(res => res.data)
-      .catch(error => {
-        this.setState({
-          isloaded: true,
-          error: error
-        });
-    })
-  }
-
-  makeObject = async (selectedConcepts) => {
-    let temp = {}
-    selectedConcepts.forEach(concept => {
-      temp[concept.conceptid] = true;
-    })
-    return temp;
-  }
-
   componentDidMount = async () => {
-    let selectedConcepts = await this.getSelectedConcepts();
-    let temp = await this.makeObject(selectedConcepts);
     let currentVideo = await this.getCurrentVideo();
-    await this.setState({
+    this.setState({
       videoName: currentVideo.filename,
-      conceptsSelected: temp,
       isLoaded: true,
     }, () => {
       var myVideo = document.getElementById("video");
@@ -288,8 +268,8 @@ class Annotate extends Component {
             }).then(res => res.json())
             .then(res => {
               if (typeof res.rows !== 'undefined') {
-                  var myVideo = document.getElementById("video");
-                  myVideo.currentTime = res.rows[0].timeinvideo;
+                var myVideo = document.getElementById("video");
+                myVideo.currentTime = res.rows[0].timeinvideo;
               }
             })
           });
@@ -306,15 +286,15 @@ class Annotate extends Component {
             }
           })
         }
-    })
-  }
-};
+      })
+    }
+  };
 
   componentWillUnmount = () => {
      this.updateCheckpoint(false);
   }
 
-  getCurrentVideo = async() => {
+  getCurrentVideo = async () => {
     let videoData = await axios.get('/api/latestVideoId', {
       headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')},
     })
@@ -323,10 +303,16 @@ class Annotate extends Component {
       let startTime = videoData.data[0].timeinvideo;
       let filename = await axios.get(`/api/latestVideoName/${videoid}`, {
         headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')},
-      })
-      return {filename: filename.data[0].filename, time: startTime};
+      });
+      return {
+        filename: filename.data[0].filename,
+        time: startTime
+      };
     }
-    return {filename: 'DocRicketts-0569_20131213T224337Z_00-00-01-00TC_h264.mp4', time: 0};
+    return {
+      filename: 'DocRicketts-0569_20131213T224337Z_00-00-01-00TC_h264.mp4',
+      time: 0
+    };
   };
 
   getVideoStartTime = async(filename) => {
@@ -338,12 +324,12 @@ class Annotate extends Component {
 
   handleVideoClick = async(filename) => {
     this.setState({
-       videoName: filename
-     })
+      videoName: filename
+    })
     let currentTime = await this.getVideoStartTime(filename);
     if (currentTime.data.length === 1) {
-       var myVideo = document.getElementById("video");
-       myVideo.currentTime = currentTime.data[0].timeinvideo;
+      var myVideo = document.getElementById("video");
+      myVideo.currentTime = currentTime.data[0].timeinvideo;
     }
   };
 
@@ -359,7 +345,6 @@ class Annotate extends Component {
       dialogPlaceholder: "Comments",
       clickedConcept: concept,
       enterEnabled: true,
-      inputHandler: this.postAnnotation,
       closeHandler: this.handleDialogClose
     })
   }
@@ -388,8 +373,10 @@ class Annotate extends Component {
 
     fetch('/annotate', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + localStorage.getItem('token')},
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + localStorage.getItem('token')
+      },
       body: JSON.stringify({
         'conceptId': this.state.clickedConcept.name,
         'videoId': this.state.videoName,
@@ -405,52 +392,22 @@ class Annotate extends Component {
         'comment': comment,
         'unsure' : unsure
       })
-    }).then(res => res.json())
-    .then(res => {
+    }).then(res => res.json()).then(res => {
       if (res.message === "Annotated") {
         this.handleDialogClose();
       } else {
         this.setState({
           errorMsg: res.message,
           errorOpen: true
-        })
+        });
       }
-    })
+    });
   }
 
   addConcept = () => {
-        this.setState({
-            searchOpen: true,
-            inputHandler: this.selectConcept
-        });
-  }
-
-   //Selects a concept based off of the id..
-   selectConcept = (concept) => {
-      fetch("/api/conceptSelected", {
-         method: 'POST',
-         headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token')},
-         body: JSON.stringify({
-            'id': concept,
-            'checked' : true
-         })
-      }).then(res => res.json())
-         .then(async res => {
-            this.handleSearchClose();
-            this.setState({
-               isLoaded:false
-            })
-            let selectedConcepts = await this.getSelectedConcepts();
-            let temp = await this.makeObject(selectedConcepts);
-            await this.setState({
-               conceptsSelected: temp,
-               isLoaded: true
-            });
-      })
-      .catch(error => {
-        console.log('Error: ', error);
-        return;
-      })
+    this.setState({
+      searchOpen: true,
+    });
   }
 
   drawImages = (vidCord, dragBoxCord, myVideo, date, x1, y1) => {
@@ -499,109 +456,84 @@ class Annotate extends Component {
   }
 
   handleDialogClose = () => {
-    this.setState(
-      {
-        enterEnabled: false,
-        dialogOpen: false,
-        dialogMsg: null,
-        dialogPlaceholder: null,
-        dialogTitle: "", //If set to null, raises a warning to the console
-        clickedConcept: null,
-      });
+    this.setState({
+      enterEnabled: false,
+      dialogOpen: false,
+      dialogMsg: null,
+      dialogPlaceholder: null,
+      dialogTitle: "", //If set to null, raises a warning to the console
+      clickedConcept: null,
+    });
   }
 
   handleSearchClose = () => {
-    this.setState(
-      {
-        searchOpen: false,
-      });
+    this.setState({
+      searchOpen: false,
+    });
   }
 
   render() {
     const { classes } = this.props;
     return (
-      <div>
-         <ErrorModal
-            errorMsg={this.state.errorMsg}
-            open={this.state.errorOpen}
-            handleClose={this.handleErrorClose}/>
-         <DialogModal
-            title={this.state.dialogTitle}
-            message={this.state.dialogMsg}
-            placeholder={this.state.dialogPlaceholder}
-            inputHandler={this.state.inputHandler}
-            open={this.state.dialogOpen}
-            handleClose={this.state.closeHandler}
-            enterEnabled={this.state.enterEnabled}
-         />
-         <SearchModal
-            inputHandler={this.state.inputHandler}
-            open={this.state.searchOpen}
-            handleClose={this.handleSearchClose}
-         />
-         <div className= {classes.name}>
-          {this.state.videoName}
-         </div>
-         <div className = {classes.clear}></div>
+      <React.Fragment>
+        <ErrorModal
+          errorMsg={this.state.errorMsg}
+          open={this.state.errorOpen}
+          handleClose={this.handleErrorClose}/>
+        <DialogModal
+          title={this.state.dialogTitle}
+          message={this.state.dialogMsg}
+          placeholder={this.state.dialogPlaceholder}
+          inputHandler={this.postAnnotation}
+          open={this.state.dialogOpen}
+          handleClose={this.state.closeHandler}
+          enterEnabled={this.state.enterEnabled}
+        />
+        {this.state.videoName}
 
-         <div className = {classes.videoSectionContainer}>
-            <div className = {classes.videoContainer}>
-            <div className = {classes.boxContainer}>
-               <video onPause = {this.updateCheckpoint.bind(this, false)} id = "video"  width = "1280" height = "720" src={'api/videos/Y7Ek6tndnA/'+this.state.videoName} type='video/mp4' controls>
-               Your browser does not support the video tag.
-               </video>
-               <Rnd id = "dragBox"
-                 default = {{
-                    x: 30,
-                    y: 30,
-                    width: 60,
-                    height: 60,
-                 }}
-                 minWidth = {25}
-                 minHeight = {25}
-                 maxWidth = {900}
-                 maxHeight = {650}
-                 bounds = "parent"
-                 className = {classes.dragBox}
-                 >
-               </Rnd>
+        <div className = {classes.videoSectionContainer}>
+          <video onPause = {this.updateCheckpoint.bind(this, false)} id = "video"  width = "1280" height = "720" src={'api/videos/Y7Ek6tndnA/'+this.state.videoName} type='video/mp4' controls>
+            Your browser does not support the video tag.
+          </video>
+          <Rnd id = "dragBox"
+            default = {{
+              x: 30,
+              y: 30,
+              width: 60,
+              height: 60,
+          }}
+            minWidth = {25}
+            minHeight = {25}
+            maxWidth = {900}
+            maxHeight = {650}
+            bounds = "parent"
+            className = {classes.dragBox}
+          >
+          </Rnd>
+          <br />
+          <Button variant="contained" color="primary" className={classes.button} onClick={rewind}>-5 sec</Button>
+          <Button variant="contained" color="primary" className={classes.button} onClick={playPause}>Play/Pause</Button>
+          <Button variant="contained" color="primary" className={classes.button} onClick={fastForward}>+5 sec</Button>
+          <Button variant="contained" color="primary" className={classes.button} onClick={this.updateCheckpoint.bind(this, true)}>Done</Button>
+          <br />
+          <span className = {classes.playScript}>Play at speed:</span>
+          <p><input type = "text" id = "playSpeedId" className = {classes.playSpeed} placeholder = "100" />&ensp; %</p>
+          <input type = "submit" value = "Enter" className = {classes.entered} onClick = {changeSpeed} />
+        </div>
 
-            </div>
-            </div>
-            <div className = {classes.clear}></div>
-            <Button variant = "contained" color = "primary" className = {classes.backwardButton} onClick = {rewind}>-5 sec</Button>
-            <Button variant = "contained" color = "primary" className = {classes.playButton} onClick = {playPause}>Play/Pause</Button>
-            <Button variant = "contained" color = "primary" className = {classes.forwardButton} onClick = {fastForward}>+5 sec</Button>
-            <Button variant = "contained" color = "primary" className = {classes.saveButton} onClick = {this.updateCheckpoint.bind(this, true)}>Done</Button>
-            <br />
-            <span className = {classes.playScript}>Play at speed:</span>
-            <p><input type = "text" id = "playSpeedId" className = {classes.playSpeed} placeholder = "100" />&ensp; %</p>
-            <input type = "submit" value = "Enter" className = {classes.entered} onClick = {changeSpeed} />
-         </div>
-            <div className = {classes.conceptSectionContainer}>
-               <span className = {classes.conceptsText}>Current Concepts</span>
-               <Button variant="contained" color="primary" aria-label="Add" className={classes.button} style={{float: 'right'}} onClick={this.addConcept}>
-                <AddIcon />
-               </Button>
-               <br />
-               {(this.state.isLoaded) ? (
-                 <CurrentConcepts handleConceptClick= {this.handleConceptClick} conceptsSelected= {this.state.conceptsSelected} />
-               ):(
-                 <List>Loading...</List>
-               )}
-            </div>
-            <div className= {classes.videoListContainer}>
-              <span className = {classes.videoListText}>Resume</span>
-              <br />
-              <VideoList handleVideoClick = {this.handleVideoClick} listType = {"resume"}/>
-              <span className = {classes.videoListText}>Unwatched Videos</span>
-              <br />
-              <VideoList handleVideoClick = {this.handleVideoClick} listType = {"unwatched"}/>
-              <span className = {classes.videoListText}>Watched Videos</span>
-              <br />
-              <VideoList handleVideoClick = {this.handleVideoClick} listType = {"watched"}/>
-            </div>
-         </div>
+        {(this.state.isLoaded) ? (
+          <ConceptsSelected
+            addConcept={this.addConcept}
+            handleConceptClick={this.handleConceptClick}
+            searchModalOpen={this.state.searchOpen}
+            handleSearchClose={this.handleSearchClose}
+          />
+        ):(
+         <List>Loading...</List>
+        )}
+
+        <VideoList handleVideoClick={this.handleVideoClick} />
+      </React.Fragment>
     );
   }
 }
