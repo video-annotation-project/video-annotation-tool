@@ -9,107 +9,9 @@ import ErrorModal from './ErrorModal.jsx';
 import DialogModal from './DialogModal.jsx';
 
 import Button from '@material-ui/core/Button';
-import List from '@material-ui/core/List';
 import { withStyles } from '@material-ui/core/styles';
 
 const styles = theme => ({
-  // clear: {
-  //   clear: 'both'
-  // },
-  // videoSectionContainer: {
-  //   width: '1280px',
-  //   margin: '0 auto',
-  //   marginTop: '20px',
-  //   float: 'left'
-  // },
-  // videoContainer: {
-  //   float: 'left',
-  //   marginLeft: '15px'
-  // },
-  // boxContainer: {
-  //   postion: 'absolute',
-  //   top: '50px',
-  //   border: '1px black solid',
-  //   width: '1280px',
-  //   height: '720px'
-  // },
-  // playButton: {
-  //   marginTop: '40px',
-  //   marginLeft: '20px',
-  //   fontSize: '15px',
-  //   paddingTop: '10px',
-  //   paddingBottom: '10px'
-  // },
-  // forwardButton: {
-  //   marginTop: '40px',
-  //   marginLeft: '20px',
-  //   fontSize: '15px',
-  //   paddingTop: '10px',
-  //   paddingBottom: '10px'
-  // },
-  // backwardButton: {
-  //   marginTop: '40px',
-  //   marginLeft: '20px',
-  //   fontSize: '15px',
-  //   paddingTop: '10px',
-  //   paddingBottom: '10px'
-  // },
-  // saveButton: {
-  //   marginTop: '40px',
-  //   marginLeft: '20px',
-  //   fontSize: '15px',
-  //   paddingTop: '10px',
-  //   paddingBottom: '10px'
-  // },
-  // doneButton: {
-  //   marginTop: '40px',
-  //   marginLeft: '20px',
-  //   fontSize: '15px',
-  //   paddingTop: '10px',
-  //   paddingBottom: '10px'
-  // },
-  // undoButton: {
-  //   marginTop: '40px',
-  //   marginLeft: '20px',
-  //   fontSize: '15px',
-  //   paddingTop: '10px',
-  //   paddingBottom: '10px'
-  // },
-  // playScript: {
-  //   fontColor: 'black',
-  //   fontWeight: 'bold',
-  //   fontSize: '130%',
-  //   position: 'relative',
-  //   top: '10px',
-  //   marginLeft: '10px',
-  //   clear: 'both'
-  // },
-  // playSpeed: {
-  //   position: 'relative',
-  //   left: '10px',
-  //   width: '50px'
-  // },
-  // entered: {
-  //   marginLeft: '10px',
-  //   position: 'relative',
-  //   top: '-3px'
-  // },
-  // conceptSectionContainer: {
-  //   position: 'relative',
-  //   float: 'right',
-  //   width: '440px',
-  //   height: '1000px',
-  //   backgroundColor: 'white',
-  //   borderLeft: '1px black solid',
-  //   overflow: 'auto'
-  // },
-  // conceptsText: {
-  //   fontWeight: 'bold',
-  //   textAlign: 'center',
-  //   fontSize: '200%',
-  //   marginTop: '10px',
-  //   marginLeft: '10px'
-  // },
   dragBox: {
     margin: '0px',
     backgroundColor: 'transparent',
@@ -132,10 +34,6 @@ const styles = theme => ({
   //   marginTop: '10px',
   //   marginLeft: '10px'
   // },
-  // name: {
-  //   display: 'inline',
-  //   float: 'left'
-  // },
   button: {
     marginTop: '10px',
     marginLeft: '20px',
@@ -143,66 +41,27 @@ const styles = theme => ({
   }
 })
 
-AWS.config.update(
-  {
-    accessKeyId: "AKIAIJRSQPH2BGGCEFOA",
-    secretAccessKey: "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",
-    region: 'us-west-1',
-  }
-)
-
-window.addEventListener("beforeunload", (ev) =>
-{
-    var myVideo = document.getElementById("video");
-    if (!myVideo.paused) {
-      ev.preventDefault();
-      return ev.returnValue = 'Are you sure you want to close?';
-    }
+AWS.config.update({
+  accessKeyId: "AKIAIJRSQPH2BGGCEFOA",
+  secretAccessKey: "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",
+  region: 'us-west-1',
 });
 
-function changeSpeed() {
-   try {
-     var myVideo = document.getElementById("video");
-     var speed = document.getElementById("playSpeedId").value;
-     if ((speed / 100) === 0) {
-      myVideo.playbackRate = (1);
-     } else {
-      myVideo.playbackRate = (speed / 100);
-     }
-   } catch(err) {
-     alert("invalid input");
-     myVideo.playbackRate = 1;
-   }
-}
-
-function playPause() {
-   var myVideo = document.getElementById("video");
-   if(myVideo.paused) {
-      myVideo.play();
-   } else {
-      myVideo.pause();
-   }
-}
-
-function fastForward() {
-   var myVideo = document.getElementById("video");
-   var cTime = myVideo.currentTime;
-   myVideo.currentTime = (cTime + 5);
-}
-
-function rewind() {
-   var myVideo = document.getElementById("video");
-   var cTime = myVideo.currentTime;
-   myVideo.currentTime = (cTime - 5);
-}
+window.addEventListener("beforeunload", (ev) => {
+  var myVideo = document.getElementById("video");
+  if (!myVideo.paused) {
+    ev.preventDefault();
+    return ev.returnValue = 'Are you sure you want to close?';
+  }
+});
 
 class Annotate extends Component {
   constructor(props) {
     super(props);
     this.state = {
       error: null,
-      isLoaded: false,
-      videoName: 'DocRicketts-0569_20131213T224337Z_00-00-01-00TC_h264.mp4', // might want to change this. use function that retrieves last watched video?
+      // might want to change this. use function that retrieves last watched video?
+      videoName: 'DocRicketts-0569_20131213T224337Z_00-00-01-00TC_h264.mp4',
       errorMsg: null,
       errorOpen: false,
       dialogMsg: null,
@@ -212,22 +71,62 @@ class Annotate extends Component {
       clickedConcept: null,
       closeHandler: null,
       enterEnabled: true,
-      searchOpen: false,
     };
   }
+
+  getCurrentVideo = async () => {
+    let videoData = await axios.get('/api/latestVideoId', {
+      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')},
+    })
+    if (videoData.data.length > 0) { // they've started watching a video
+      let videoid = videoData.data[0].videoid;
+      let startTime = videoData.data[0].timeinvideo;
+      let filename = await axios.get(`/api/latestVideoName/${videoid}`, {
+        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')},
+      });
+      return {
+        filename: filename.data[0].filename,
+        time: startTime
+      };
+    }
+    return {
+      filename: 'DocRicketts-0569_20131213T224337Z_00-00-01-00TC_h264.mp4',
+      time: 0
+    };
+  };
 
   componentDidMount = async () => {
     let currentVideo = await this.getCurrentVideo();
     this.setState({
       videoName: currentVideo.filename,
-      isLoaded: true,
     }, () => {
       var myVideo = document.getElementById("video");
       myVideo.currentTime = currentVideo.time;
     });
   }
 
-  updateCheckpoint = async(finished) => {
+  rewind = () => {
+     var myVideo = document.getElementById("video");
+     var cTime = myVideo.currentTime;
+     myVideo.currentTime = (cTime - 5);
+  }
+
+  playPause = () => {
+    var myVideo = document.getElementById("video");
+    if (myVideo.paused) {
+      myVideo.play();
+    } else {
+      myVideo.pause();
+    }
+  }
+
+  fastForward = () => {
+    var myVideo = document.getElementById("video");
+    var cTime = myVideo.currentTime;
+    myVideo.currentTime = (cTime + 5);
+  }
+
+  updateCheckpoint = async (finished) => {
     var myVideo = document.getElementById("video");
     var time = myVideo.currentTime;
     if (localStorage.getItem('token') == null) {
@@ -290,39 +189,33 @@ class Annotate extends Component {
     }
   };
 
+  changeSpeed = () => {
+    try {
+      var myVideo = document.getElementById("video");
+      var speed = document.getElementById("playSpeedId").value;
+      if ((speed / 100) === 0) {
+        myVideo.playbackRate = (1);
+      } else {
+        myVideo.playbackRate = (speed / 100);
+      }
+    } catch(err) {
+      alert("invalid input");
+      myVideo.playbackRate = 1;
+    }
+  }
+
   componentWillUnmount = () => {
      this.updateCheckpoint(false);
   }
 
-  getCurrentVideo = async () => {
-    let videoData = await axios.get('/api/latestVideoId', {
-      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')},
-    })
-    if (videoData.data.length > 0) { // they've started watching a video
-      let videoid = videoData.data[0].videoid;
-      let startTime = videoData.data[0].timeinvideo;
-      let filename = await axios.get(`/api/latestVideoName/${videoid}`, {
-        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')},
-      });
-      return {
-        filename: filename.data[0].filename,
-        time: startTime
-      };
-    }
-    return {
-      filename: 'DocRicketts-0569_20131213T224337Z_00-00-01-00TC_h264.mp4',
-      time: 0
-    };
-  };
-
-  getVideoStartTime = async(filename) => {
+  getVideoStartTime = async (filename) => {
     let currentTime = await axios.get(`/api/videos/currentTime/${filename}`, {
       headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')},
     })
     return currentTime;
   };
 
-  handleVideoClick = async(filename) => {
+  handleVideoClick = async (filename) => {
     this.setState({
       videoName: filename
     })
@@ -404,12 +297,6 @@ class Annotate extends Component {
     });
   }
 
-  addConcept = () => {
-    this.setState({
-      searchOpen: true,
-    });
-  }
-
   drawImages = (vidCord, dragBoxCord, myVideo, date, x1, y1) => {
     var canvas = document.createElement('canvas');
     canvas.height = vidCord.height;
@@ -444,7 +331,7 @@ class Annotate extends Component {
       ContentType: 'image/png',
       Body: buf //the base64 string is now the body
     };
-    try{
+    try {
       s3.putObject(params).send();
     } catch (error) {
       console.log('Error: ', error);
@@ -463,12 +350,6 @@ class Annotate extends Component {
       dialogPlaceholder: null,
       dialogTitle: "", //If set to null, raises a warning to the console
       clickedConcept: null,
-    });
-  }
-
-  handleSearchClose = () => {
-    this.setState({
-      searchOpen: false,
     });
   }
 
@@ -491,46 +372,39 @@ class Annotate extends Component {
         />
         {this.state.videoName}
 
-        <div className = {classes.videoSectionContainer}>
-          <video onPause = {this.updateCheckpoint.bind(this, false)} id = "video"  width = "1280" height = "720" src={'api/videos/Y7Ek6tndnA/'+this.state.videoName} type='video/mp4' controls>
+        <div>
+          <video onPause={this.updateCheckpoint.bind(this, false)} id="video"  width="1280" height="720" src={'api/videos/Y7Ek6tndnA/'+this.state.videoName} type='video/mp4' controls>
             Your browser does not support the video tag.
           </video>
-          <Rnd id = "dragBox"
-            default = {{
+          <Rnd id="dragBox"
+            default={{
               x: 30,
               y: 30,
               width: 60,
               height: 60,
           }}
-            minWidth = {25}
-            minHeight = {25}
-            maxWidth = {900}
-            maxHeight = {650}
-            bounds = "parent"
-            className = {classes.dragBox}
+            minWidth={25}
+            minHeight={25}
+            maxWidth={900}
+            maxHeight={650}
+            bounds="parent"
+            className={classes.dragBox}
           >
           </Rnd>
           <br />
-          <Button variant="contained" color="primary" className={classes.button} onClick={rewind}>-5 sec</Button>
-          <Button variant="contained" color="primary" className={classes.button} onClick={playPause}>Play/Pause</Button>
-          <Button variant="contained" color="primary" className={classes.button} onClick={fastForward}>+5 sec</Button>
-          <Button variant="contained" color="primary" className={classes.button} onClick={this.updateCheckpoint.bind(this, true)}>Done</Button>
+          <Button variant="contained" color="primary" className={classes.button} onClick={this.rewind}>-5 sec</Button>
+          <Button variant="contained" color="primary" className={classes.button} onClick={this.playPause}>Play/Pause</Button>
+          <Button variant="contained" color="primary" className={classes.button} onClick={this.fastForward}>+5 sec</Button>
+          <Button variant="contained" color="primary" className={classes.button} onClick={() => this.updateCheckpoint(true)}>Done</Button>
           <br />
-          <span className = {classes.playScript}>Play at speed:</span>
-          <p><input type = "text" id = "playSpeedId" className = {classes.playSpeed} placeholder = "100" />&ensp; %</p>
-          <input type = "submit" value = "Enter" className = {classes.entered} onClick = {changeSpeed} />
+          <span>Play at speed:</span>
+          <p><input type="text" id="playSpeedId" placeholder="100" />&ensp; %</p>
+          <input type="submit" value="Enter" onClick={this.changeSpeed} />
         </div>
 
-        {(this.state.isLoaded) ? (
-          <ConceptsSelected
-            addConcept={this.addConcept}
-            handleConceptClick={this.handleConceptClick}
-            searchModalOpen={this.state.searchOpen}
-            handleSearchClose={this.handleSearchClose}
-          />
-        ):(
-         <List>Loading...</List>
-        )}
+        <ConceptsSelected
+          handleConceptClick={this.handleConceptClick}
+        />
 
         <VideoList handleVideoClick={this.handleVideoClick} />
       </React.Fragment>
