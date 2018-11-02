@@ -13,129 +13,12 @@ import List from '@material-ui/core/List';
 import { withStyles } from '@material-ui/core/styles';
 
 const styles = theme => ({
-  // clear: {
-  //   clear: 'both'
-  // },
-  // videoSectionContainer: {
-  //   width: '1280px',
-  //   margin: '0 auto',
-  //   marginTop: '20px',
-  //   float: 'left'
-  // },
-  // videoContainer: {
-  //   float: 'left',
-  //   marginLeft: '15px'
-  // },
-  // boxContainer: {
-  //   postion: 'absolute',
-  //   top: '50px',
-  //   border: '1px black solid',
-  //   width: '1280px',
-  //   height: '720px'
-  // },
-  // playButton: {
-  //   marginTop: '40px',
-  //   marginLeft: '20px',
-  //   fontSize: '15px',
-  //   paddingTop: '10px',
-  //   paddingBottom: '10px'
-  // },
-  // forwardButton: {
-  //   marginTop: '40px',
-  //   marginLeft: '20px',
-  //   fontSize: '15px',
-  //   paddingTop: '10px',
-  //   paddingBottom: '10px'
-  // },
-  // backwardButton: {
-  //   marginTop: '40px',
-  //   marginLeft: '20px',
-  //   fontSize: '15px',
-  //   paddingTop: '10px',
-  //   paddingBottom: '10px'
-  // },
-  // saveButton: {
-  //   marginTop: '40px',
-  //   marginLeft: '20px',
-  //   fontSize: '15px',
-  //   paddingTop: '10px',
-  //   paddingBottom: '10px'
-  // },
-  // doneButton: {
-  //   marginTop: '40px',
-  //   marginLeft: '20px',
-  //   fontSize: '15px',
-  //   paddingTop: '10px',
-  //   paddingBottom: '10px'
-  // },
-  // undoButton: {
-  //   marginTop: '40px',
-  //   marginLeft: '20px',
-  //   fontSize: '15px',
-  //   paddingTop: '10px',
-  //   paddingBottom: '10px'
-  // },
-  // playScript: {
-  //   fontColor: 'black',
-  //   fontWeight: 'bold',
-  //   fontSize: '130%',
-  //   position: 'relative',
-  //   top: '10px',
-  //   marginLeft: '10px',
-  //   clear: 'both'
-  // },
-  // playSpeed: {
-  //   position: 'relative',
-  //   left: '10px',
-  //   width: '50px'
-  // },
-  // entered: {
-  //   marginLeft: '10px',
-  //   position: 'relative',
-  //   top: '-3px'
-  // },
-  // conceptSectionContainer: {
-  //   position: 'relative',
-  //   float: 'right',
-  //   width: '440px',
-  //   height: '1000px',
-  //   backgroundColor: 'white',
-  //   borderLeft: '1px black solid',
-  //   overflow: 'auto'
-  // },
-  // conceptsText: {
-  //   fontWeight: 'bold',
-  //   textAlign: 'center',
-  //   fontSize: '200%',
-  //   marginTop: '10px',
-  //   marginLeft: '10px'
-  // },
   dragBox: {
     margin: '0px',
     backgroundColor: 'transparent',
     border: '2px coral solid',
     borderStyle: 'ridge'
   },
-  // videoListContainer: {
-  //   position: 'relative',
-  //   float: 'right',
-  //   width: '400px',
-  //   height: '1000px',
-  //   backgroundColor: 'white',
-  //   borderLeft: '1px black solid',
-  //   overflow: 'auto'
-  // },
-  // videoListText: {
-  //   fontWeight: 'bold',
-  //   textAlign: 'center',
-  //   fontSize: '200%',
-  //   marginTop: '10px',
-  //   marginLeft: '10px'
-  // },
-  // name: {
-  //   display: 'inline',
-  //   float: 'left'
-  // },
   button: {
     marginTop: '10px',
     marginLeft: '20px',
@@ -333,21 +216,6 @@ class Annotate extends Component {
     }
   };
 
-  handleConceptClick = (concept) => {
-    var myVideo = document.getElementById("video");
-    this.setState({
-      dialogMsg:  concept.name +
-                  " in video " + this.state.videoName +
-                  " at time " + Math.floor(myVideo.currentTime/60) + ' minutes '
-                  + myVideo.currentTime%60 + " seconds",
-      dialogOpen: true,
-      dialogTitle: "Confirm Annotation",
-      dialogPlaceholder: "Comments",
-      clickedConcept: concept,
-      enterEnabled: true,
-      closeHandler: this.handleDialogClose
-    })
-  }
 
   postAnnotation = (comment, unsure) => {
     var myVideo = document.getElementById("video");
@@ -401,12 +269,6 @@ class Annotate extends Component {
           errorOpen: true
         });
       }
-    });
-  }
-
-  addConcept = () => {
-    this.setState({
-      searchOpen: true,
     });
   }
 
@@ -464,6 +326,28 @@ class Annotate extends Component {
       dialogTitle: "", //If set to null, raises a warning to the console
       clickedConcept: null,
     });
+  }
+
+  addConcept = () => {
+    this.setState({
+      searchOpen: true,
+    });
+  }
+
+  handleConceptClick = (concept) => {
+    var myVideo = document.getElementById("video");
+    this.setState({
+      dialogMsg:  concept.name +
+                  " in video " + this.state.videoName +
+                  " at time " + Math.floor(myVideo.currentTime/60) + ' minutes '
+                  + myVideo.currentTime%60 + " seconds",
+      dialogOpen: true,
+      dialogTitle: "Confirm Annotation",
+      dialogPlaceholder: "Comments",
+      clickedConcept: concept,
+      enterEnabled: true,
+      closeHandler: this.handleDialogClose
+    })
   }
 
   handleSearchClose = () => {

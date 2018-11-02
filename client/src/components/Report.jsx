@@ -15,7 +15,7 @@ import Checkbox from '@material-ui/core/Checkbox';
 
 import Level1 from './TreeLevel1.jsx';
 import Drawer from '@material-ui/core/Drawer';
-import CurrentConcepts from './CurrentConcepts.jsx';
+import ConceptsSelected from './ConceptsSelected.jsx';
 
 const styles = theme => ({
   root: {
@@ -48,7 +48,8 @@ class Report extends React.Component {
         {"name":"User", "selected":false}
       ],
       unsureOnly: false,
-      openConcepts: false
+      openConcepts: false,
+      searchOpen: false,
     };
   }
 
@@ -63,7 +64,7 @@ class Report extends React.Component {
     }
   }
 
-  handleOptionToggle = (level, optionSelected) => {
+  handleOptionAvailableToggle = (level, optionSelected) => {
     let tempOptions = JSON.parse(JSON.stringify(this.state.options));
     tempOptions.filter(option => option.selected === level)
                .map(option => option.selected = false);
@@ -74,29 +75,29 @@ class Report extends React.Component {
     });
   }
 
-  handleChange = name => event => {
+  handleChangeOption = name => event => {
     this.setState({ [name]: event.target.value });
-    this.handleOptionToggle(name, event.target.value);
+    this.handleOptionAvailableToggle(name, event.target.value);
   };
 
-  handleCheckBoxChange = name => event => {
+  handleUnsureCheckbox = name => event => {
     this.setState({ [name]: event.target.checked });
   };
 
-  handleClickOpen = () => {
+  handleReportSelectorOpen = () => {
     this.setState({
       open: true,
       renderTree: false
     });
   };
 
-  handleCancel = () => {
+  handleReportSelectorCancel = () => {
     this.setState({
        open: false,
      });
   };
 
-  handleOk = () => {
+  handleReportSelectorOk = () => {
     this.setState({
        open: false
      });
@@ -107,21 +108,37 @@ class Report extends React.Component {
      }
   };
 
-  toggleDrawer = () => {
+  toggleConceptsSelected = () => {
     this.setState({
       openConcepts: !this.state.openConcepts
     })
+  }
+
+  addConcept = () => {
+    this.setState({
+      searchOpen: true,
+    });
+  }
+
+  handleConceptClick = (concept) => {
+
+  }
+
+  handleSearchClose = () => {
+    this.setState({
+      searchOpen: false,
+    });
   }
 
   render() {
     const { classes } = this.props;
     return (
       <div className={classes.root}>
-        <Button onClick={this.handleClickOpen}>Open select dialog</Button>
+        <Button onClick={this.handleReportSelectorOpen}>Open select dialog</Button>
         <Dialog
           disableBackdropClick
           open={this.state.open}
-          onClose={this.handleCancel}
+          onClose={this.handleReportSelectorCancel}
         >
           <DialogTitle>Select Tree Structure:</DialogTitle>
           <DialogContent>
@@ -131,7 +148,7 @@ class Report extends React.Component {
                 <Select
                   native
                   value={this.state.level1}
-                  onChange={this.handleChange('level1')}
+                  onChange={this.handleChangeOption('level1')}
                 >
                   {this.state.options
                     .filter(option => option.selected === false || option.selected === 'level1')
@@ -143,7 +160,7 @@ class Report extends React.Component {
                 <Select
                   native
                   value={this.state.level2}
-                  onChange={this.handleChange('level2')}
+                  onChange={this.handleChangeOption('level2')}
                 >
                   {this.state.options
                     .filter(option => option.selected === false || option.selected === 'level2')
@@ -156,7 +173,7 @@ class Report extends React.Component {
                   <Select
                     native
                     value={this.state.level3}
-                    onChange={this.handleChange('level3')}
+                    onChange={this.handleChangeOption('level3')}
                   >
                     {this.state.options
                       .filter(option => option.selected === false || option.selected === 'level3')
@@ -170,7 +187,7 @@ class Report extends React.Component {
                 control={
                   <Checkbox
                   checked={this.state.unsureOnly}
-                  onChange={this.handleCheckBoxChange('unsureOnly')}
+                  onChange={this.handleUnsureCheckbox('unsureOnly')}
                   value="unsureOnly"
                   color='primary'
                   />
@@ -180,10 +197,10 @@ class Report extends React.Component {
             </form>
           </DialogContent>
           <DialogActions>
-            <Button onClick={this.handleCancel} color="primary">
+            <Button onClick={this.handleReportSelectorCancel} color="primary">
               Cancel
             </Button>
-            <Button onClick={this.handleOk} color="primary">
+            <Button onClick={this.handleReportSelectorOk} color="primary">
               Ok
             </Button>
           </DialogActions>
@@ -194,19 +211,26 @@ class Report extends React.Component {
             level2={this.state.level2}
             level3={this.state.level3}
             unsureOnly={this.state.unsureOnly}
-            toggleDrawer = {this.state.toggleDrawer}
+            toggleConceptsSelected = {this.state.toggleConceptsSelected}
           />
         ):(
           <div></div>
         )}
-        <Drawer anchor="right" open={this.state.openConcepts} onClose={this.toggleDrawer()}>
+        <Drawer anchor="right" open={this.state.openConcepts} onClose={this.toggleConceptsSelected()}>
           <div
             tabIndex={0}
             role="button"
-            onClick={this.toggleDrawer()}
-            onKeyDown={this.toggleDrawer()}
+            onClick={this.toggleConceptsSelected()}
+            onKeyDown={this.toggleConceptsSelected()}
           >
-            {<CurrentConcepts/>}
+            {
+              <ConceptsSelected
+                addConcept={this.addConcept}
+                handleConceptClick={this.handleConceptClick}
+                searchModalOpen={this.state.searchOpen}
+                handleSearchClose={this.handleSearchClose}
+              />
+            }
           </div>
         </Drawer>
       </div>
