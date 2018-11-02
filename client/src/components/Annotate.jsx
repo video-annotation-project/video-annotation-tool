@@ -257,8 +257,8 @@ class Annotate extends Component {
 
     var x1 = Math.max((x1_box - x1_video),0);
     var y1 = Math.max((y1_box - y1_video),0);
-    var x2 = Math.min((x1 + width),1279);
-    var y2 = Math.min((y1 + height),719);
+    var x2 = Math.min((x1 + width),1599);
+    var y2 = Math.min((y1 + height),899);
 
     //draw video with and without bounding box to canvas and save as img
     var date = Date.now().toString();
@@ -278,8 +278,8 @@ class Annotate extends Component {
         'y1': y1,
         'x2': x2,
         'y2': y2,
-        'videoWidth': 1280,
-        'videoHeight': 720,
+        'videoWidth': 1600,
+        'videoHeight': 900,
         'image': date,
         'imagewithbox': date + "_box",
         'comment': comment,
@@ -373,7 +373,7 @@ class Annotate extends Component {
         {this.state.videoName}
 
         <div>
-          <video onPause={this.updateCheckpoint.bind(this, false)} id="video"  width="1280" height="720" src={'api/videos/Y7Ek6tndnA/'+this.state.videoName} type='video/mp4' controls>
+          <video onPause={this.updateCheckpoint.bind(this, false)} id="video"  width="1600" height="900" src={'api/videos/Y7Ek6tndnA/'+this.state.videoName} type='video/mp4' controls>
             Your browser does not support the video tag.
           </video>
           <Rnd id="dragBox"
