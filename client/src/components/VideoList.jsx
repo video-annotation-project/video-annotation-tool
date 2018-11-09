@@ -1,14 +1,23 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { withStyles } from '@material-ui/core/styles';
+import Button from '@material-ui/core/Button';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
+import { withStyles } from '@material-ui/core/styles';
 //import Divider from '@material-ui/core/Divider';
 
 const styles = theme => ({
   root: {
-    backgroundColor: theme.palette.background.paper,
+    float: 'right',
+    padding: '10px'
+  },
+  videos: {
+    width: '400px',
+    height: '1000px',
+    padding: '15px',
+    borderLeft: '1px black solid',
+    overflow: 'auto'
   },
 });
 
@@ -16,30 +25,49 @@ class VideoList extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      videos: []
+      videoListOpen: true,
+      currentVideos: [],
+      unwatchedVideos: [],
+      watchedVideos: []
     };
   }
 
   componentDidMount = () => {
-    var url = '';
-    if (this.props.listType === "resume") {
-      url = '/api/userVideos/false';
-    }
-    else if (this.props.listType === "watched") {
-      url = '/api/userVideos/true';
-    }
-    else { //unwatched
-      url = '/api/userUnwatchedVideos/';
-    }
-    fetch(url, {
+    // this can be optimized by combining all three fetch requests into one
+    // also we would want to use axios.get() instead of fetch() for consistency reasons
+    fetch('/api/userVideos/false', {
       headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')}
     })
       .then(res => res.json())
       .then(res => {
         this.setState({
-          videos: res.rows
+          currentVideos: res.rows
       })
     })
+    fetch('/api/userUnwatchedVideos/', {
+      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')}
+    })
+      .then(res => res.json())
+      .then(res => {
+        this.setState({
+          unwatchedVideos: res.rows
+      })
+    })
+    fetch('/api/userVideos/true', {
+      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')}
+    })
+      .then(res => res.json())
+      .then(res => {
+        this.setState({
+          watchedVideos: res.rows
+      })
+    })
+  }
+
+  toggleVideoList = () => {
+    this.setState({
+      videoListOpen: !this.state.videoListOpen
+    });
   }
 
   handleVideoClick = (filename) => {
@@ -50,13 +78,35 @@ class VideoList extends Component {
     const { classes } = this.props;
     return (
       <div className={classes.root}>
-        <List component="nav">
-        {this.state.videos.map((video, index) =>(
-          <ListItem button key={video.id} onClick={this.handleVideoClick.bind(this, video.filename)}>
-            <ListItemText primary={video.id +'. '+video.filename} />
-          </ListItem>
-        ))}
-        </List>
+        <Button variant="contained" color="primary" onClick={this.toggleVideoList}>
+          Toggle Video List
+        </Button>
+        <div className={classes.videos} style={{display: this.state.videoListOpen ? '' : 'none'}}>
+          Current Videos
+          <List component="nav">
+            {this.state.currentVideos.map((video, index) => (
+              <ListItem button key={video.id} onClick={() => this.handleVideoClick(video.filename)}>
+                <ListItemText primary={video.id + '. ' + video.filename} />
+              </ListItem>
+            ))}
+          </List>
+          Unwatched Videos
+          <List component="nav">
+            {this.state.unwatchedVideos.map((video, index) => (
+              <ListItem button key={video.id} onClick={() => this.handleVideoClick(video.filename)}>
+                <ListItemText primary={video.id + '. ' + video.filename} />
+              </ListItem>
+            ))}
+          </List>
+          Watched Videos
+          <List component="nav">
+            {this.state.watchedVideos.map((video, index) => (
+              <ListItem button key={video.id} onClick={() => this.handleVideoClick(video.filename)}>
+                <ListItemText primary={video.id + '. ' + video.filename} />
+              </ListItem>
+            ))}
+          </List>
+        </div>
       </div>
     );
   }

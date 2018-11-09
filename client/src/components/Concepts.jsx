@@ -51,7 +51,7 @@ class Concepts extends React.Component {
   changeConceptsSelected = async (id) => {
     let conceptsSelected = this.state.conceptsSelected;
     conceptsSelected[id] = !conceptsSelected[id];
-    fetch('/api/conceptSelected', {
+    fetch('/api/conceptsSelected', {
       method: 'POST',
       headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token')},
       body: JSON.stringify({
