@@ -102,19 +102,6 @@ class Annotations extends Component {
     });
   }
 
-/*
-<Button
-  variant="fab"
-  color="primary"
-  aria-label="Edit"
-  mini
-  className={classes.button}
-  onClick={this.toggleDrawer()}
->
-  <Icon size="small">edit_icon</Icon>
-</Button>
-
-*/
   render () {
     const { error, isLoaded, annotations } = this.state;
     const { classes } = this.props;

@@ -34,6 +34,7 @@ class VideoList extends Component {
 
   componentDidMount = () => {
     // this can be optimized by combining all three fetch requests into one
+    // also we would want to use axios.get() instead of fetch() for consistency reasons
     fetch('/api/userVideos/false', {
       headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')}
     })

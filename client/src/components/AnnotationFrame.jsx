@@ -2,18 +2,9 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import ListItem from '@material-ui/core/ListItem';
-import AWS from 'aws-sdk';
 import ConceptsSelected from './ConceptsSelected.jsx';
 import DialogModal from './DialogModal.jsx';
 import axios from 'axios';
-
-AWS.config.update(
-  {
-    accessKeyId: "AKIAIJRSQPH2BGGCEFOA",
-    secretAccessKey: "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",
-    region: 'us-west-1',
-  }
-);
 
 const styles = theme => ({
   item: {
