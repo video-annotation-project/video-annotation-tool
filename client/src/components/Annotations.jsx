@@ -1,10 +1,11 @@
 import React, { Component } from 'react';
+import axios from 'axios';
+
 import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
-import axios from 'axios';
 import Collapse from '@material-ui/core/Collapse';
 import ExpandLess from '@material-ui/icons/ExpandLess';
 import ExpandMore from '@material-ui/icons/ExpandMore';
@@ -12,8 +13,9 @@ import DeleteIcon from '@material-ui/icons/Delete';
 import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
 import IconButton from '@material-ui/core/IconButton';
 import Icon from '@material-ui/core/Icon';
-import Button from '@material-ui/core/Button';
+
 import AnnotationFrame from './AnnotationFrame.jsx';
+
 
 const styles = theme => ({
   root: {
@@ -91,25 +93,28 @@ class Annotations extends Component {
     });
   }
 
-  toggleDrawer = () => {
-    this.props.toggleDrawer();
+  reloadAnnotations = (id, updatedName) => {
+    let annotations = JSON.parse(JSON.stringify(this.state.annotations));
+    let annotation = annotations.find(annotation => annotation.id === id);
+    annotation.name = updatedName
+    this.setState({
+      annotations: annotations
+    });
   }
-  /*
-  This will be replaced after Ali finishes editing old annotations
-  {annotation.unsure ? (
-    <Button
-      variant="fab"
-      color="primary"
-      aria-label="Edit"
-      className={classes.button}
-    >
-      <Icon>edit_icon</Icon>
-    </Button>
-  ):(
-    <div></div>
-  )}
-  */
 
+/*
+<Button
+  variant="fab"
+  color="primary"
+  aria-label="Edit"
+  mini
+  className={classes.button}
+  onClick={this.toggleDrawer()}
+>
+  <Icon size="small">edit_icon</Icon>
+</Button>
+
+*/
   render () {
     const { error, isLoaded, annotations } = this.state;
     const { classes } = this.props;
@@ -155,16 +160,6 @@ class Annotations extends Component {
                   ):(
                     <div></div>
                   )}
-                  <Button
-                    variant="fab"
-                    color="primary"
-                    aria-label="Edit"
-                    mini
-                    className={classes.button}
-                    onClick={this.toggleDrawer()}
-                  >
-                    <Icon size="small">edit_icon</Icon>
-                  </Button>
                   <IconButton aria-label="Delete">
                     <DeleteIcon
                       onClick = {(e) => this.handleDelete(e, annotation.id)}
@@ -174,7 +169,10 @@ class Annotations extends Component {
                 </ListItemSecondaryAction>
               </ListItem>
               <Collapse in={annotation.expanded} timeout='auto' unmountOnExit>
-                <AnnotationFrame annotation={annotation} />
+                <AnnotationFrame
+                  annotation={annotation}
+                  reloadAnnotations={this.reloadAnnotations}
+                />
               </Collapse>
             </React.Fragment>
           ))}

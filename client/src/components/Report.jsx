@@ -14,8 +14,6 @@ import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Checkbox from '@material-ui/core/Checkbox';
 
 import Level1 from './TreeLevel1.jsx';
-import Drawer from '@material-ui/core/Drawer';
-import ConceptsSelected from './ConceptsSelected.jsx';
 
 const styles = theme => ({
   root: {
@@ -36,7 +34,7 @@ class Report extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      open: false,
+      openReportSelector: false,
       level1: '',
       level2: '',
       level3: '',
@@ -86,20 +84,20 @@ class Report extends React.Component {
 
   handleReportSelectorOpen = () => {
     this.setState({
-      open: true,
+      openReportSelector: true,
       renderTree: false
     });
   };
 
   handleReportSelectorCancel = () => {
     this.setState({
-       open: false,
+       openReportSelector: false,
      });
   };
 
   handleReportSelectorOk = () => {
     this.setState({
-       open: false
+       openReportSelector: false
      });
      if (this.state.level1 !== '') {
        this.setState({
@@ -120,10 +118,6 @@ class Report extends React.Component {
     });
   }
 
-  handleConceptClick = (concept) => {
-
-  }
-
   handleSearchClose = () => {
     this.setState({
       searchOpen: false,
@@ -134,10 +128,10 @@ class Report extends React.Component {
     const { classes } = this.props;
     return (
       <div className={classes.root}>
-        <Button onClick={this.handleReportSelectorOpen}>Open select dialog</Button>
+        <Button onClick={this.handleReportSelectorOpen}>Open Report Selector</Button>
         <Dialog
           disableBackdropClick
-          open={this.state.open}
+          open={this.state.openReportSelector}
           onClose={this.handleReportSelectorCancel}
         >
           <DialogTitle>Select Tree Structure:</DialogTitle>
@@ -216,23 +210,6 @@ class Report extends React.Component {
         ):(
           <div></div>
         )}
-        <Drawer anchor="right" open={this.state.openConcepts} onClose={this.toggleConceptsSelected()}>
-          <div
-            tabIndex={0}
-            role="button"
-            onClick={this.toggleConceptsSelected()}
-            onKeyDown={this.toggleConceptsSelected()}
-          >
-            {
-              <ConceptsSelected
-                addConcept={this.addConcept}
-                handleConceptClick={this.handleConceptClick}
-                searchModalOpen={this.state.searchOpen}
-                handleSearchClose={this.handleSearchClose}
-              />
-            }
-          </div>
-        </Drawer>
       </div>
     );
   }

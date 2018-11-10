@@ -640,6 +640,35 @@ app.post("/updateCheckpoint", passport.authenticate('jwt', {session: false}),
   }
 });
 
+app.post('/api/editAnnotation', passport.authenticate('jwt', {session: false}),
+  async (req, res) => {
+    queryText = 'UPDATE annotations \
+                 SET conceptid = $1, comment = $2, unsure = $3 \
+                 WHERE annotations.id=$4 RETURNING *';
+    queryUpdate = 'SELECT annotations.id, annotations.comment, annotations.unsure, annotations.timeinvideo, annotations.x1, annotations.y1, \
+                 annotations.x2, annotations.y2, annotations.videoWidth, annotations.videoHeight, \
+                 annotations.imagewithbox, concepts.name FROM annotations, concepts \
+                 WHERE annotations.id = $1 AND annotations.conceptid=concepts.id';
+    try {
+      var editRes = await psql.query(
+                            queryText,
+                            [req.body.conceptId,
+                            req.body.comment,
+                            req.body.unsure,
+                            req.body.id]
+                          );
+      var updatedRow = await psql.query(
+        queryUpdate,
+        [req.body.id]
+      );
+      res.json(updatedRow.rows[0]);
+    } catch (error) {
+      console.log(error);
+      res.json(error);
+    }
+  }
+);
+
 app.post('/api/delete', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
     queryText = 'DELETE FROM annotations WHERE annotations.id=$1 RETURNING *';

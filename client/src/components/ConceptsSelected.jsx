@@ -5,29 +5,26 @@ import SearchModal from './SearchModal.jsx';
 
 import AddIcon from '@material-ui/icons/Add';
 import Button from '@material-ui/core/Button';
-import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
 
 const styles = theme => ({
   root: {
     float: 'right',
     padding: '10px',
-    position: 'relative'
-    // width: '420px'
   },
-  // headline: {
-  //   width: '200px'
-  // },
-  button: {
+  conceptsSelectedElement: {
+    position: 'relative',
+    width: '420px', //ayy
+  },
+  addButton: {
     position: 'absolute',
     right: '70px',
-    top: '5px'
+    top: '-38px'
   },
   conceptList: {
     fontSize: '130%',
-    width: '420px', //ayy
     display: 'flex' ,
-    flexFlow: 'row wrap'
+    flexFlow: 'row wrap',
   },
   concept: {
     width: '210px',
@@ -40,30 +37,54 @@ class ConceptsSelected extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      concepts: []
+      isLoaded: false,
+      conceptsSelected: [],
+      conceptsSelectedOpen: false,
+      searchModalOpen: false
     };
   }
 
   getConceptsSelected = async () => {
-    return axios.get('/api/conceptsSelected', {
+    axios.get('/api/conceptsSelected', {
       headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')},
-    }).then(res => res.data)
+    }).then(res => {
+      let conceptsSelected = res.data;
+      this.setState({
+        isLoaded: true,
+        conceptsSelected: conceptsSelected
+      })
+    })
     .catch(error => {
       this.setState({
-        isloaded: true,
+        isLoaded: true,
         error: error
       });
-    })
+    });
   }
 
   componentDidMount = async () => {
-    let conceptsSelected = await this.getConceptsSelected();
-    this.setState({
-      concepts: conceptsSelected
-    })
+    await this.getConceptsSelected();
   }
 
-  //Adds a concept to the user's conceptsSelected
+  toggleConceptsSelected = () => {
+    this.setState({
+      conceptsSelectedOpen: !this.state.conceptsSelectedOpen
+    });
+  }
+
+  openSearchModel = () => {
+    this.setState({
+      searchModalOpen: true
+    });
+  }
+
+  closeSearchModel = () => {
+    this.setState({
+      searchModalOpen: false
+    });
+  }
+
+  // adds a concept to conceptsSelected
   selectConcept = (conceptId) => {
     const body = {
       'id': conceptId,
@@ -76,73 +97,78 @@ class ConceptsSelected extends React.Component {
       }
     }
     axios.post('/api/conceptsSelected', body, config).then(async res => {
-      this.props.handleSearchClose();
+      this.closeSearchModel();
       this.setState({
         isLoaded:false
       });
-      let conceptsSelected = await this.getConceptsSelected();
-      this.setState({
-        conceptsSelected: conceptsSelected,
-        isLoaded: true
-      });
+      await this.getConceptsSelected();
     }).catch(error => {
-      console.log('Error: ');
-      console.log(error.response.data.detail);
-      this.props.handleSearchClose();
+      this.closeSearchModel();
+      console.log(error);
+      if (error.response) {
+        console.log(error.response.data.detail);
+      }
     })
   }
 
-  handleConceptClick = (concept) => {
-    this.props.handleConceptClick(concept);
-  };
-
   render() {
     const { classes } = this.props;
+
+    let conceptsSelectedElement = <div></div>;
+    if (this.state.conceptsSelectedOpen && !this.state.isLoaded) {
+      conceptsSelectedElement = <div>Loading...</div>;
+    }
+    if (this.state.conceptsSelectedOpen && this.state.isLoaded) {
+      conceptsSelectedElement = (
+        <div className={classes.conceptsSelectedElement}>
+          <Button
+            className={classes.addButton}
+            variant="contained"
+            color="primary"
+            aria-label="Add"
+            onClick={this.openSearchModel}
+          >
+            <AddIcon />
+          </Button>
+          <div className={classes.conceptList}>
+            {this.state.conceptsSelected.map((concept, index) => (
+              <li
+                key={index}
+                className={classes.concept}
+                onClick={() => this.props.handleConceptClick(concept)}
+              >
+                {concept.name}
+                <br />
+                <img
+                  src={"/api/conceptImages/"+concept.id}
+                  alt="Could not be downloaded"
+                  height="100"
+                  width="100"
+                />
+              </li>
+            ))}
+          </div>
+        </div>
+      );
+    }
 
     return (
       <div className={classes.root}>
         <SearchModal
           inputHandler={this.selectConcept}
-          open={this.props.searchModalOpen}
-          handleClose={this.props.handleSearchClose}
+          open={this.state.searchModalOpen}
+          handleClose={this.closeSearchModel}
         />
-
-        <Typography
-          className={classes.headline}
-          variant="headline"
-          gutterBottom
-        >
-          Concepts Selected
-        </Typography>
         <Button
-          className={classes.button}
+          className={classes.buttonn}
           variant="contained"
           color="primary"
           aria-label="Add"
-          onClick={this.props.addConcept}
+          onClick={this.toggleConceptsSelected}
         >
-          <AddIcon />
+          Toggle Concepts Selected
         </Button>
-
-        <div className={classes.conceptList}>
-          {this.state.concepts.map((concept, index) => (
-            <li
-              key={index}
-              className={classes.concept}
-              onClick={this.handleConceptClick.bind(this, concept)}
-            >
-              {concept.name}
-              <br />
-              <img
-                src={"/api/conceptImages/"+concept.id}
-                alt="Could not be downloaded"
-                height="100"
-                width="100"
-              />
-            </li>
-          ))}
-        </div>
-
+        {conceptsSelectedElement}
       </div>
     );
   }

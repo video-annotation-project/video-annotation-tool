@@ -93,7 +93,6 @@ class TreeLevel3 extends Component {
                 level2Id = {this.props.id}
                 level1Id = {this.props.level1Id}
                 unsureOnly={this.props.unsureOnly}
-                toggleDrawer = {this.props.toggleDrawer}
               />
             </Collapse>
           </React.Fragment>

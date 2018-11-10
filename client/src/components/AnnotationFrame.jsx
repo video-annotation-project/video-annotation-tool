@@ -3,6 +3,9 @@ import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import ListItem from '@material-ui/core/ListItem';
 import AWS from 'aws-sdk';
+import ConceptsSelected from './ConceptsSelected.jsx';
+import DialogModal from './DialogModal.jsx';
+import axios from 'axios';
 
 AWS.config.update(
   {
@@ -14,6 +17,7 @@ AWS.config.update(
 
 const styles = theme => ({
   item: {
+    display: 'inline',
     paddingTop: 0,
     width: '1300px',
     height: '730px',
@@ -34,6 +38,13 @@ class AnnotationFrame extends Component {
       error: null,
       width: null,
       height: null,
+      dialogTitle: null,
+      dialogMsg: null,
+      dialogPlaceholder: null,
+      dialogOpen: false,
+      clickedConcept: null,
+      closeHandler: null,
+      enterEnabled: true,
     };
   }
   encode = (data) => {
@@ -64,6 +75,59 @@ class AnnotationFrame extends Component {
       });
   };
 
+  postEditAnnotation = (comment, unsure) => {
+    if (comment === "") {
+      comment = this.props.annotation.comment;
+    }
+    const body = {
+      'conceptId': this.state.clickedConcept.id,
+      'comment': comment,
+      'unsure': unsure,
+      'id': this.props.annotation.id
+    }
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + localStorage.getItem('token')
+      }
+    }
+    axios.post('/api/editAnnotation', body, config).then(res => {
+      this.handleDialogClose();
+      let updatedAnnotation = res.data;
+      this.props.reloadAnnotations(updatedAnnotation.id, updatedAnnotation.name);
+    }).catch(error => {
+      this.handleDialogClose();
+      console.log(error);
+      if (error.response) {
+        console.log(error.response.data.detail);
+      }
+    })
+  }
+
+  handleDialogClose = () => {
+    this.setState({
+      enterEnabled: false,
+      dialogOpen: false,
+      dialogMsg: null,
+      dialogPlaceholder: null,
+      dialogTitle: "", //If set to null, raises a warning to the console
+      clickedConcept: null,
+    });
+  }
+
+  handleConceptClick = (concept) => {
+    this.setState({
+      dialogMsg:  "Switch " + this.props.annotation.name +
+                   " to " + concept.name + "?",
+      dialogOpen: true,
+      dialogTitle: "Confirm Annotation Edit",
+      dialogPlaceholder: "Comments",
+      clickedConcept: concept,
+      enterEnabled: true,
+      closeHandler: this.handleDialogClose
+    })
+  }
+
   render () {
     const { error, isLoaded, image } = this.state;
     const { classes } = this.props;
@@ -75,10 +139,22 @@ class AnnotationFrame extends Component {
     }
     return (
       <React.Fragment>
+        <DialogModal
+          title={this.state.dialogTitle}
+          message={this.state.dialogMsg}
+          placeholder={this.state.dialogPlaceholder}
+          inputHandler={this.postEditAnnotation}
+          open={this.state.dialogOpen}
+          handleClose={this.state.closeHandler}
+          enterEnabled={this.state.enterEnabled}
+        />
         <ListItem className={classes.item}>
           <div id='test'></div>
           <img className={classes.img} id='imageId' src={image} alt='error' />
         </ListItem>
+        <ConceptsSelected
+          handleConceptClick={this.handleConceptClick}
+        />
       </React.Fragment>
     );
   }

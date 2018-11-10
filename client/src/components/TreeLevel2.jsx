@@ -102,7 +102,6 @@ class TreeLevel2 extends Component {
                     id = {data.id}
                     level1Id = {this.props.id}
                     unsureOnly={this.props.unsureOnly}
-                    toggleDrawer = {this.props.toggleDrawer} 
                   />
                 )}
 
