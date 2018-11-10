@@ -39,7 +39,7 @@ class ConceptsSelected extends React.Component {
     this.state = {
       isLoaded: false,
       conceptsSelected: [],
-      conceptsSelectedOpen: false,
+      conceptsSelectedOpen: this.props.initOpen !== undefined ? this.props.initOpen : true,
       searchModalOpen: false
     };
   }

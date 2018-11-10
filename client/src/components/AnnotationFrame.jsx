@@ -145,6 +145,7 @@ class AnnotationFrame extends Component {
         </ListItem>
         <ConceptsSelected
           handleConceptClick={this.handleConceptClick}
+          initOpen={false}
         />
       </React.Fragment>
     );
