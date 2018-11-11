@@ -7,6 +7,13 @@ import argparse
 import imutils
 import time
 import cv2
+from pgdb import connect
+
+# connect to db
+con = connect(database='dbname', host='deep-sea-annotations.cet7hhddo9tj.us-west-1.rds.amazonaws.com', user='psMaster', password='mypassword123')
+cursor = con.cursor()
+cursor.execute("SELECT videoid, timeinvideo, x1, y1, x2, y2, videowidth, videoheight FROM annotations")
+cursor.fetchmany(10)
 
 # construct the argument parser and parse the arguments
 ap = argparse.ArgumentParser()
@@ -50,7 +57,7 @@ out = cv2.VideoWriter('output.mp4',cv2.VideoWriter_fourcc('M','P','4', 'V'), 20,
 
 # initialize bounding box in first frame
 frame = vs.read()
-frame = frame[1] if args.get("video", False) else frame
+frame = frame[1]
 frame = imutils.resize(frame, width=640, height=360)
 out.write(frame)
 cv2.imshow("Frame", frame)
@@ -58,12 +65,11 @@ cv2.waitKey(1)
 tracker = OPENCV_OBJECT_TRACKERS[args["tracker"]]()
 trackers.add(tracker, frame, box)
 
-# loop over frames from the video stream
 while True:
 	# grab the current frame, then handle if we are using a
 	# VideoStream or VideoCapture object
 	frame = vs.read()
-	frame = frame[1] if args.get("video", False) else frame
+	frame = frame[1]
 
 	# check to see if we have reached the end of the stream
 	if frame is None:
@@ -77,21 +83,23 @@ while True:
 	(success, boxes) = trackers.update(frame)
 
 	# loop over the bounding boxes and draw then on the frame
-	for box in boxes:
-		(x, y, w, h) = [int(v) for v in box]
-		cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+	if success:
+		for box in boxes:
+			(x, y, w, h) = [int(v) for v in box]
+			cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
-	# show the output frame
-	counter += 1
-#	cv2.imwrite(str(counter) + ".png", frame)
-	out.write(frame)
-	cv2.imshow("Frame", frame)
-	cv2.waitKey(1) 
-
+		# show the output frame
+		counter += 1
+#		cv2.imwrite(str(counter) + ".png", frame)
+		out.write(frame)
+		cv2.imshow("Frame", frame)
+		cv2.waitKey(1) 
+	else:
+		break
 	# check if its been 2 s
-	current = int(vs.get(0))
-	if (end <= current + 10) and (end >= current - 10):
-		break 
+#	current = int(vs.get(0))
+#	if (end <= current + 10) and (end >= current - 10):
+#		break 
 
 vs.release()
 
