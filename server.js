@@ -1,6 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
+const request = require('request')
 
 const _ = require('lodash');
 const passport = require('passport');
@@ -587,17 +588,45 @@ async function getConceptId(value) {
   }
 }
 
+async function aiAnnotate(data) {
+  url = "https://78en7l8mod.execute-api.us-west-1.amazonaws.com/default/generateAnnotations"
+  header = {"x-api-key": '72TH2dC5k04UKbw9wolyi6r9DQmuSCYj3ytHYK5p'}
+  payload = {
+    "videoId": data[0],
+    "userId": data[1],
+    "conceptId": data[2],
+    "timeinvideo": data[3],
+    "x1": data[4],
+    "y1": data[5],
+    "x2": data[6],
+    "y2": data[7],
+    "videoWidth": data[8],
+    "videoHeight": data[9],
+    "image": data[10],
+    "imagewithbox": data[11],    
+    "comment": data[12],
+    "unsure": data[13]};
+  try{ 
+    request.post({
+      url: url,
+      json: payload,
+      headers: header,
+      method: 'POST'
+    },
+    function (e, r, body) {
+        console.log(body);
+    });
+  } catch (error) { 
+    console.log(error);
+  }
+}
+
 app.post('/annotate', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
   let videoId = await getVideoId(req.body.videoId);
   let userId = req.user.id;
   let conceptId = await getConceptId(req.body.conceptId);
-  queryText = 'INSERT INTO annotations(videoid, userid, conceptid, timeinvideo, x1, \
-               y1, x2, y2, videoWidth, videoHeight, image, imagewithbox, comment, unsure, dateannotated) \
-               VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, current_timestamp) RETURNING *';
-  try {
-    let insertRes = await psql.query(queryText,
-      [videoId,
+  data = [videoId,
       userId,
       conceptId,
       req.body.timeinvideo,
@@ -610,8 +639,14 @@ app.post('/annotate', passport.authenticate('jwt', {session: false}),
       req.body.image,
       req.body.imagewithbox,
       req.body.comment,
-      req.body.unsure]);
+      req.body.unsure];
+  queryText = 'INSERT INTO annotations(videoid, userid, conceptid, timeinvideo, x1, \
+               y1, x2, y2, videoWidth, videoHeight, image, imagewithbox, comment, unsure, dateannotated) \
+               VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, current_timestamp) RETURNING *';
+  try {
+    let insertRes = await psql.query(queryText,data);
     res.json({message: "Annotated", value: JSON.stringify(insertRes.rows[0])});
+    let aiRes = await aiAnnotate(data);
   } catch(error) {
     console.log(error)
     res.json({message: "error: " + error})
