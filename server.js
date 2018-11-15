@@ -607,8 +607,8 @@ app.post('/api/annotate', passport.authenticate('jwt', {session: false}),
       req.body.y2,
       req.body.videoWidth,
       req.body.videoHeight,
-      req.body.image,
-      req.body.imagewithbox,
+      req.body.image+'.png',
+      req.body.imagewithbox+'.png',
       req.body.comment,
       req.body.unsure]);
     res.json({
