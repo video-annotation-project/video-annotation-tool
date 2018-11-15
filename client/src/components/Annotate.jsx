@@ -311,7 +311,6 @@ class Annotate extends Component {
     ctx.strokeStyle = "coral";
     ctx.rect(x1, y1, dragBoxCord.width, dragBoxCord.height);
     ctx.stroke();
-    img.setAttribute('crossOrigin', 'use-credentials');
     img.src = canvas.toDataURL(1.0);
     this.putVideoImage(img, date, true);
   }
