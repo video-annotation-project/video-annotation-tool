@@ -628,7 +628,7 @@ app.post('/api/uploadImage', passport.authenticate('jwt', {session: false}), (re
     key += '_box';
   }
   var params = {
-    Key: key,
+    Key: key+'.png',
     Bucket: process.env.AWS_S3_BUCKET_NAME,
     ContentEncoding: 'base64',
     ContentType: 'image/png',
