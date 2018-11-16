@@ -34,7 +34,10 @@ class DialogModal extends Component {
 
   handleClose = () => {
     this.props.handleClose();
-    this.setState({unsure: false});
+    this.setState({
+      unsure: false,
+      comment: ''
+    });
   };
 
   handleKeyPress = (e) => {
