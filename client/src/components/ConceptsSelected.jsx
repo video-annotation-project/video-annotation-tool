@@ -14,7 +14,7 @@ const styles = theme => ({
   },
   conceptsSelectedElement: {
     position: 'relative',
-    width: '420px' //ayy
+    width: '420px', //ayy
   },
   addButton: {
     position: 'absolute',
@@ -24,7 +24,7 @@ const styles = theme => ({
   conceptList: {
     fontSize: '130%',
     display: 'flex' ,
-    flexFlow: 'row wrap'
+    flexFlow: 'row wrap',
   },
   concept: {
     width: '210px',
@@ -39,7 +39,7 @@ class ConceptsSelected extends React.Component {
     this.state = {
       isLoaded: false,
       conceptsSelected: [],
-      conceptsSelectedOpen: true,
+      conceptsSelectedOpen: this.props.initOpen !== undefined ? this.props.initOpen : true,
       searchModalOpen: false
     };
   }
@@ -159,7 +159,6 @@ class ConceptsSelected extends React.Component {
           open={this.state.searchModalOpen}
           handleClose={this.closeSearchModel}
         />
-
         <Button
           className={classes.buttonn}
           variant="contained"
@@ -169,9 +168,7 @@ class ConceptsSelected extends React.Component {
         >
           Toggle Concepts Selected
         </Button>
-
         {conceptsSelectedElement}
-
       </div>
     );
   }

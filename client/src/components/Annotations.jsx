@@ -1,28 +1,25 @@
 import React, { Component } from 'react';
+import axios from 'axios';
+
 import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
-import axios from 'axios';
 import Collapse from '@material-ui/core/Collapse';
 import ExpandLess from '@material-ui/icons/ExpandLess';
 import ExpandMore from '@material-ui/icons/ExpandMore';
-import AnnotationFrame from './AnnotationFrame.jsx';
 import DeleteIcon from '@material-ui/icons/Delete';
 import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
 import IconButton from '@material-ui/core/IconButton';
 import Icon from '@material-ui/core/Icon';
-import Button from '@material-ui/core/Button';
+
+import AnnotationFrame from './AnnotationFrame.jsx';
+
 
 const styles = theme => ({
   root: {
     backgroundColor: theme.palette.background.paper,
-  },
-  delete: {
-    float: 'left',
-    position: 'relative',
-    left: '-50px'
   },
   button: {
     margin: theme.spacing.unit
@@ -76,7 +73,10 @@ class Annotations extends Component {
     event.stopPropagation();
     fetch('/api/delete', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json','Authorization': 'Bearer ' + localStorage.getItem('token')},
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + localStorage.getItem('token')
+      },
       body: JSON.stringify({
         'id': id
       })
@@ -84,8 +84,23 @@ class Annotations extends Component {
       let annotations = JSON.parse(JSON.stringify(this.state.annotations));
       annotations = annotations.filter(annotation => annotation.id !== id);
       this.setState({
+        isLoaded: false,
         annotations: annotations
       });
+      this.setState({
+        isLoaded: true
+      });
+    });
+  }
+
+  reloadAnnotations = (id, updatedName, updatedComment, updatedUnsure) => {
+    let annotations = JSON.parse(JSON.stringify(this.state.annotations));
+    let annotation = annotations.find(annotation => annotation.id === id);
+    annotation.name = updatedName;
+    annotation.comment = updatedComment;
+    annotation.unsure = updatedUnsure;
+    this.setState({
+      annotations: annotations
     });
   }
 
@@ -103,28 +118,50 @@ class Annotations extends Component {
         <List className={classes.root}>
           {annotations.map((annotation, index) => (
             <React.Fragment key={index}>
-              <ListItem button onClick={() => this.handleClick(annotation.timeinvideo, annotation.filename, annotation.id)}>
-                {annotation.unsure ? (
-                  <Button variant="fab" color="primary" aria-label="Edit" className={classes.button}>
-                    <Icon>edit_icon</Icon>
-                  </Button>
-                ):(
-                  <div></div>
-                )}
+              <ListItem button
+                 onClick={() => this.handleClick(
+                   annotation.timeinvideo,
+                   annotation.filename,
+                   annotation.id
+                   )
+                 }
+              >
+
                 <ListItemText
-                  primary={'At '+ Math.floor(annotation.timeinvideo/60) + ' minutes '+ annotation.timeinvideo%60 + " seconds Annotated: " + annotation.name}
-                  secondary={(annotation.comment ? "Annotation Comment: " + annotation.comment : "")}
+                  primary={
+                    'At '+ Math.floor(annotation.timeinvideo/60) +
+                    ' minutes '+ annotation.timeinvideo%60 +
+                    ' seconds Annotated: ' +
+                    annotation.name
+                  }
+                  secondary={
+                    (annotation.comment ?
+                      "Annotation Comment: " + annotation.comment
+                      :
+                      ""
+                    )
+                  }
                 />
 
                 <ListItemSecondaryAction >
-                  <IconButton className={classes.delete} aria-label="Delete">
-                    <DeleteIcon onClick = {(e) => this.handleDelete(e, annotation.id)} />
+                  {annotation.unsure ? (
+                      <Icon>help</Icon>
+                  ):(
+                    <div></div>
+                  )}
+                  <IconButton aria-label="Delete">
+                    <DeleteIcon
+                      onClick = {(e) => this.handleDelete(e, annotation.id)}
+                    />
                   </IconButton>
+                  {annotation.expanded ? <ExpandLess /> : <ExpandMore />}
                 </ListItemSecondaryAction>
-                {annotation.expanded ? <ExpandLess /> : <ExpandMore />}
               </ListItem>
               <Collapse in={annotation.expanded} timeout='auto' unmountOnExit>
-                <AnnotationFrame annotation={annotation} />
+                <AnnotationFrame
+                  annotation={annotation}
+                  reloadAnnotations={this.reloadAnnotations}
+                />
               </Collapse>
             </React.Fragment>
           ))}

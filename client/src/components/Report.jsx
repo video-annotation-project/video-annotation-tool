@@ -34,7 +34,7 @@ class Report extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      open: false,
+      openReportSelector: false,
       level1: '',
       level2: '',
       level3: '',
@@ -45,7 +45,9 @@ class Report extends React.Component {
         {"name":"Concept", "selected":false},
         {"name":"User", "selected":false}
       ],
-      unsureOnly: false
+      unsureOnly: false,
+      openConcepts: false,
+      searchOpen: false,
     };
   }
 
@@ -60,7 +62,7 @@ class Report extends React.Component {
     }
   }
 
-  handleOptionToggle = (level, optionSelected) => {
+  handleOptionAvailableToggle = (level, optionSelected) => {
     let tempOptions = JSON.parse(JSON.stringify(this.state.options));
     tempOptions.filter(option => option.selected === level)
                .map(option => option.selected = false);
@@ -71,31 +73,31 @@ class Report extends React.Component {
     });
   }
 
-  handleChange = name => event => {
+  handleChangeOption = name => event => {
     this.setState({ [name]: event.target.value });
-    this.handleOptionToggle(name, event.target.value);
+    this.handleOptionAvailableToggle(name, event.target.value);
   };
 
-  handleCheckBoxChange = name => event => {
+  handleUnsureCheckbox = name => event => {
     this.setState({ [name]: event.target.checked });
   };
 
-  handleClickOpen = () => {
+  handleReportSelectorOpen = () => {
     this.setState({
-      open: true,
+      openReportSelector: true,
       renderTree: false
     });
   };
 
-  handleCancel = () => {
+  handleReportSelectorCancel = () => {
     this.setState({
-       open: false,
+       openReportSelector: false,
      });
   };
 
-  handleOk = () => {
+  handleReportSelectorOk = () => {
     this.setState({
-       open: false
+       openReportSelector: false
      });
      if (this.state.level1 !== '') {
        this.setState({
@@ -104,15 +106,33 @@ class Report extends React.Component {
      }
   };
 
+  toggleConceptsSelected = () => {
+    this.setState({
+      openConcepts: !this.state.openConcepts
+    })
+  }
+
+  addConcept = () => {
+    this.setState({
+      searchOpen: true,
+    });
+  }
+
+  handleSearchClose = () => {
+    this.setState({
+      searchOpen: false,
+    });
+  }
+
   render() {
     const { classes } = this.props;
     return (
       <div className={classes.root}>
-        <Button onClick={this.handleClickOpen}>Open select dialog</Button>
+        <Button onClick={this.handleReportSelectorOpen}>Open Report Selector</Button>
         <Dialog
           disableBackdropClick
-          open={this.state.open}
-          onClose={this.handleCancel}
+          open={this.state.openReportSelector}
+          onClose={this.handleReportSelectorCancel}
         >
           <DialogTitle>Select Tree Structure:</DialogTitle>
           <DialogContent>
@@ -122,7 +142,7 @@ class Report extends React.Component {
                 <Select
                   native
                   value={this.state.level1}
-                  onChange={this.handleChange('level1')}
+                  onChange={this.handleChangeOption('level1')}
                 >
                   {this.state.options
                     .filter(option => option.selected === false || option.selected === 'level1')
@@ -134,7 +154,7 @@ class Report extends React.Component {
                 <Select
                   native
                   value={this.state.level2}
-                  onChange={this.handleChange('level2')}
+                  onChange={this.handleChangeOption('level2')}
                 >
                   {this.state.options
                     .filter(option => option.selected === false || option.selected === 'level2')
@@ -147,7 +167,7 @@ class Report extends React.Component {
                   <Select
                     native
                     value={this.state.level3}
-                    onChange={this.handleChange('level3')}
+                    onChange={this.handleChangeOption('level3')}
                   >
                     {this.state.options
                       .filter(option => option.selected === false || option.selected === 'level3')
@@ -161,7 +181,7 @@ class Report extends React.Component {
                 control={
                   <Checkbox
                   checked={this.state.unsureOnly}
-                  onChange={this.handleCheckBoxChange('unsureOnly')}
+                  onChange={this.handleUnsureCheckbox('unsureOnly')}
                   value="unsureOnly"
                   color='primary'
                   />
@@ -171,16 +191,22 @@ class Report extends React.Component {
             </form>
           </DialogContent>
           <DialogActions>
-            <Button onClick={this.handleCancel} color="primary">
+            <Button onClick={this.handleReportSelectorCancel} color="primary">
               Cancel
             </Button>
-            <Button onClick={this.handleOk} color="primary">
+            <Button onClick={this.handleReportSelectorOk} color="primary">
               Ok
             </Button>
           </DialogActions>
         </Dialog>
         {this.state.renderTree ? (
-          <Level1 level1={this.state.level1} level2={this.state.level2} level3={this.state.level3} unsureOnly={this.state.unsureOnly}/>
+          <Level1
+            level1={this.state.level1}
+            level2={this.state.level2}
+            level3={this.state.level3}
+            unsureOnly={this.state.unsureOnly}
+            toggleConceptsSelected = {this.state.toggleConceptsSelected}
+          />
         ):(
           <div></div>
         )}

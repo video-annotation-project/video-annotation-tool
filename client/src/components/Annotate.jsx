@@ -19,22 +19,6 @@ const styles = theme => ({
     border: '2px coral solid',
     borderStyle: 'ridge'
   },
-  // videoListContainer: {
-  //   position: 'relative',
-  //   float: 'right',
-  //   width: '400px',
-  //   height: '1000px',
-  //   backgroundColor: 'white',
-  //   borderLeft: '1px black solid',
-  //   overflow: 'auto'
-  // },
-  // videoListText: {
-  //   fontWeight: 'bold',
-  //   textAlign: 'center',
-  //   fontSize: '200%',
-  //   marginTop: '10px',
-  //   marginLeft: '10px'
-  // },
   button: {
     marginTop: '10px',
     marginLeft: '20px',
@@ -221,22 +205,6 @@ class Annotate extends Component {
     }
   };
 
-  handleConceptClick = (concept) => {
-    var myVideo = document.getElementById("video");
-    this.setState({
-      dialogMsg:  concept.name +
-                  " in video " + this.state.videoName +
-                  " at time " + Math.floor(myVideo.currentTime/60) + ' minutes '
-                  + myVideo.currentTime%60 + " seconds",
-      dialogOpen: true,
-      dialogTitle: "Confirm Annotation",
-      dialogPlaceholder: "Comments",
-      clickedConcept: concept,
-      enterEnabled: true,
-      closeHandler: this.handleDialogClose
-    })
-  }
-
   postAnnotation = (comment, unsure) => {
     var myVideo = document.getElementById("video");
     var cTime = myVideo.currentTime;
@@ -338,6 +306,22 @@ class Annotate extends Component {
       }
     });
   }
+  
+  handleConceptClick = (concept) => {
+  var myVideo = document.getElementById("video");
+  this.setState({
+    dialogMsg:  concept.name +
+                " in video " + this.state.videoName +
+                " at time " + Math.floor(myVideo.currentTime/60) + ' minutes '
+                + myVideo.currentTime%60 + " seconds",
+    dialogOpen: true,
+    dialogTitle: "Confirm Annotation",
+    dialogPlaceholder: "Comments",
+    clickedConcept: concept,
+    enterEnabled: true,
+    closeHandler: this.handleDialogClose
+  })
+}
 
   handleErrorClose = () => {
     this.setState({ errorOpen: false });
@@ -402,11 +386,9 @@ class Annotate extends Component {
           <p><input type="text" id="playSpeedId" placeholder="100" />&ensp; %</p>
           <input type="submit" value="Enter" onClick={this.changeSpeed} />
         </div>
-
         <ConceptsSelected
           handleConceptClick={this.handleConceptClick}
         />
-
         <VideoList handleVideoClick={this.handleVideoClick} />
       </React.Fragment>
     );
