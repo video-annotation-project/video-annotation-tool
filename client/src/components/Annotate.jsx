@@ -297,6 +297,22 @@ class Annotate extends Component {
       }
     });
   }
+  
+  handleConceptClick = (concept) => {
+  var myVideo = document.getElementById("video");
+  this.setState({
+    dialogMsg:  concept.name +
+                " in video " + this.state.videoName +
+                " at time " + Math.floor(myVideo.currentTime/60) + ' minutes '
+                + myVideo.currentTime%60 + " seconds",
+    dialogOpen: true,
+    dialogTitle: "Confirm Annotation",
+    dialogPlaceholder: "Comments",
+    clickedConcept: concept,
+    enterEnabled: true,
+    closeHandler: this.handleDialogClose
+  })
+}
 
   handleErrorClose = () => {
     this.setState({ errorOpen: false });
