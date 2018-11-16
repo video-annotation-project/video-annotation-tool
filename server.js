@@ -587,7 +587,7 @@ async function getConceptId(value) {
   }
 }
 
-app.post('/annotate', passport.authenticate('jwt', {session: false}),
+app.post('/api/annotate', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
   let videoId = await getVideoId(req.body.videoId);
   let userId = req.user.id;
@@ -607,39 +607,42 @@ app.post('/annotate', passport.authenticate('jwt', {session: false}),
       req.body.y2,
       req.body.videoWidth,
       req.body.videoHeight,
-      req.body.image,
-      req.body.imagewithbox,
+      req.body.image+'.png',
+      req.body.imagewithbox+'.png',
       req.body.comment,
       req.body.unsure]);
-    res.json({message: "Annotated", value: JSON.stringify(insertRes.rows[0])});
-  } catch(error) {
+    res.json({
+      message: "successfully uploaded annotation to SQL server",
+      value: JSON.stringify(insertRes.rows[0])
+    });
+  } catch (error) {
     console.log(error)
-    res.json({message: "error: " + error})
+    res.status(400).json(error);
   }
 });
 
-app.post('/uploadImage', (req, res) => {
+app.post('/api/uploadImage', passport.authenticate('jwt', {session: false}), (req, res) => {
   let s3 = new AWS.S3();
   var key = process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + req.body.date;
   if (req.body.box) {
     key += '_box';
   }
   var params = {
-    Key: key,
+    Key: key+'.png',
     Bucket: process.env.AWS_S3_BUCKET_NAME,
     ContentEncoding: 'base64',
     ContentType: 'image/png',
     Body: Buffer(req.body.buf) //the base64 string is now the body
   };
-  s3.putObject(params, function(err, data) {
+  s3.putObject(params, (err, data) => {
     if (err) {
       console.log(err)
+      res.status(400).json(error);
     } else {
-      res.json({message: "success"})
+      res.json({message: "successfully uploaded image to S3"});
     }
   });
 });
-
 
 app.post("/updateCheckpoint", passport.authenticate('jwt', {session: false}),
   async (req, res) => {
