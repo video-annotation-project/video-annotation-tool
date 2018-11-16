@@ -93,11 +93,12 @@ class Annotations extends Component {
     });
   }
 
-  reloadAnnotations = (id, updatedName, updatedComment) => {
+  reloadAnnotations = (id, updatedName, updatedComment, updatedUnsure) => {
     let annotations = JSON.parse(JSON.stringify(this.state.annotations));
     let annotation = annotations.find(annotation => annotation.id === id);
     annotation.name = updatedName;
     annotation.comment = updatedComment;
+    annotation.unsure = updatedUnsure;
     this.setState({
       annotations: annotations
     });
