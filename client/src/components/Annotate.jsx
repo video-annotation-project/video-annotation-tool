@@ -259,38 +259,43 @@ class Annotate extends Component {
     var date = Date.now().toString();
     this.drawImages(vidCord, dragBoxCord, myVideo, date, x1, y1);
 
-    fetch('/annotate', {
-      method: 'POST',
+    const body = {
+      'conceptId': this.state.clickedConcept.name,
+      'videoId': this.state.videoName,
+      'timeinvideo': cTime,
+      'x1': x1,
+      'y1': y1,
+      'x2': x2,
+      'y2': y2,
+      'videoWidth': 1600,
+      'videoHeight': 900,
+      'image': date,
+      'imagewithbox': date + "_box",
+      'comment': comment,
+      'unsure' : unsure
+    };
+    const config = {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + localStorage.getItem('token')
-      },
-      body: JSON.stringify({
-        'conceptId': this.state.clickedConcept.name,
-        'videoId': this.state.videoName,
-        'timeinvideo': cTime,
-        'x1': x1,
-        'y1': y1,
-        'x2': x2,
-        'y2': y2,
-        'videoWidth': 1600,
-        'videoHeight': 900,
-        'image': date,
-        'imagewithbox': date + "_box",
-        'comment': comment,
-        'unsure' : unsure
-      })
-    }).then(res => res.json()).then(res => {
-      if (res.message === "Annotated") {
-        this.handleDialogClose();
-      } else {
+      }
+    };
+    axios.post('/api/annotate', body, config).then(async res => {
+      console.log(res.data.message);
+      this.handleDialogClose();
+    })
+    .catch(error => {
+      console.log(error);
+      if (error.response) {
+        console.log(error.response.data);
         this.setState({
-          errorMsg: res.message,
+          errorMsg: error.response.data,
           errorOpen: true
         });
       }
     });
   }
+
 
   drawImages = (vidCord, dragBoxCord, myVideo, date, x1, y1) => {
     var canvas = document.createElement('canvas');
@@ -306,26 +311,30 @@ class Annotate extends Component {
     ctx.strokeStyle = "coral";
     ctx.rect(x1, y1, dragBoxCord.width, dragBoxCord.height);
     ctx.stroke();
-    var imgWithBox = new Image();
-    imgWithBox.setAttribute('crossOrigin', 'use-credentials');
-    imgWithBox.src = canvas.toDataURL(1.0);
-    this.putVideoImage(imgWithBox, date, true);
+    img.src = canvas.toDataURL(1.0);
+    this.putVideoImage(img, date, true);
   }
 
-  putVideoImage = async(img, date, box) => {
+  putVideoImage = async (img, date, box) => {
     let buf = new Buffer(img.src.replace(/^data:image\/\w+;base64,/, ""),'base64');
-    fetch('/uploadImage', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({
-        'buf': buf,
-        'date': date,
-        'box': box,
-      })
-    }).then(res => res.json())
-    .then(res => {
-      if(res.message !== "success") {
-        console.log("error uploading image to S3")
+    const body = {
+      'buf': buf,
+      'date': date,
+      'box': box
+    }
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + localStorage.getItem('token')
+      }
+    }
+    axios.post('/api/uploadImage', body, config).then(async res => {
+      console.log(res.data.message);
+    }).catch(error => {
+      console.log(error);
+      console.log(JSON.stringify(error));
+      if (error.response) {
+        console.log(error.response.data);
       }
     });
   }
