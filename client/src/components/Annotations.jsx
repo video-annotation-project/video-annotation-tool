@@ -10,6 +10,8 @@ import Collapse from '@material-ui/core/Collapse';
 import ExpandLess from '@material-ui/icons/ExpandLess';
 import ExpandMore from '@material-ui/icons/ExpandMore';
 import DeleteIcon from '@material-ui/icons/Delete';
+import OndemandVideo from '@material-ui/icons/OndemandVideo';
+import Photo from '@material-ui/icons/Photo';
 import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
 import IconButton from '@material-ui/core/IconButton';
 import Icon from '@material-ui/core/Icon';
@@ -20,6 +22,11 @@ import AnnotationFrame from './AnnotationFrame.jsx';
 const styles = theme => ({
   root: {
     backgroundColor: theme.palette.background.paper,
+  },
+  icons: {
+    float: 'left',
+    position: 'relative',
+    left: '-50px'
   },
   button: {
     margin: theme.spacing.unit
@@ -56,7 +63,7 @@ class Annotations extends Component {
     annotations.map(annotation => annotation.expanded = false);
     this.setState({
       isLoaded: true,
-      annotations: annotations
+      annotations: annotations,
     });
   };
 
@@ -64,6 +71,19 @@ class Annotations extends Component {
     let annotations = JSON.parse(JSON.stringify(this.state.annotations));
     let annotation = annotations.find(annotation => annotation.id === id);
     annotation.expanded = !annotation.expanded;
+    this.setState({
+      annotations: annotations
+    });
+  }
+
+  showVideo = async (event, id) => {  
+    let annotations = this.state.annotations
+    let annotation = annotations.find(annotation => annotation.id === id);
+    if(annotation.showVideo){
+      annotation.showVideo = false;
+    }else{
+      annotation.showVideo = true;
+    }
     this.setState({
       annotations: annotations
     });
@@ -142,26 +162,31 @@ class Annotations extends Component {
                     )
                   }
                 />
-
                 <ListItemSecondaryAction >
                   {annotation.unsure ? (
                       <Icon>help</Icon>
                   ):(
                     <div></div>
                   )}
-                  <IconButton aria-label="Delete">
-                    <DeleteIcon
-                      onClick = {(e) => this.handleDelete(e, annotation.id)}
-                    />
+                  <IconButton className={classes.icons} aria-label="OndemandVideo">
+                  {annotation.showVideo ? (<Photo onClick = {(e) => this.showVideo(e, annotation.id)} />):
+                (<OndemandVideo onClick = {(e) => this.showVideo(e, annotation.id)} />)}
+                    
+                  </IconButton>
+                  <IconButton className={classes.icons} aria-label="Delete">
+                    <DeleteIcon onClick = {(e) => this.handleDelete(e, annotation.id)} />
                   </IconButton>
                   {annotation.expanded ? <ExpandLess /> : <ExpandMore />}
                 </ListItemSecondaryAction>
               </ListItem>
               <Collapse in={annotation.expanded} timeout='auto' unmountOnExit>
-                <AnnotationFrame
+                {annotation.showVideo ? (<video id="video"  width="800" height="450" src={'api/videos/Y7Ek6tndnA/Ventana-3881_20151028T173548Z_01-20-16-11TC_h264.mp4'} type='video/mp4' controls>
+                  Your browser does not support the video tag.
+                </video>):
+                (<AnnotationFrame
                   annotation={annotation}
                   reloadAnnotations={this.reloadAnnotations}
-                />
+                />)}
               </Collapse>
             </React.Fragment>
           ))}
