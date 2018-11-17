@@ -621,7 +621,7 @@ async function aiAnnotate(data) {
   }
 }
 
-app.post('/annotate', passport.authenticate('jwt', {session: false}),
+app.post('/api/annotate', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
   let videoId = await getVideoId(req.body.videoId);
   let userId = req.user.id;
@@ -636,8 +636,8 @@ app.post('/annotate', passport.authenticate('jwt', {session: false}),
       req.body.y2,
       req.body.videoWidth,
       req.body.videoHeight,
-      req.body.image,
-      req.body.imagewithbox,
+      req.body.image+'.png',
+      req.body.imagewithbox+'.png',
       req.body.comment,
       req.body.unsure];
   queryText = 'INSERT INTO annotations(videoid, userid, conceptid, timeinvideo, x1, \
@@ -649,32 +649,32 @@ app.post('/annotate', passport.authenticate('jwt', {session: false}),
     let aiRes = await aiAnnotate(data);
   } catch(error) {
     console.log(error)
-    res.json({message: "error: " + error})
+    res.status(400).json(error);
   }
 });
 
-app.post('/uploadImage', (req, res) => {
+app.post('/api/uploadImage', passport.authenticate('jwt', {session: false}), (req, res) => {
   let s3 = new AWS.S3();
   var key = process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + req.body.date;
   if (req.body.box) {
     key += '_box';
   }
   var params = {
-    Key: key,
+    Key: key+'.png',
     Bucket: process.env.AWS_S3_BUCKET_NAME,
     ContentEncoding: 'base64',
     ContentType: 'image/png',
     Body: Buffer(req.body.buf) //the base64 string is now the body
   };
-  s3.putObject(params, function(err, data) {
+  s3.putObject(params, (err, data) => {
     if (err) {
       console.log(err)
+      res.status(400).json(error);
     } else {
-      res.json({message: "success"})
+      res.json({message: "successfully uploaded image to S3"});
     }
   });
 });
-
 
 app.post("/updateCheckpoint", passport.authenticate('jwt', {session: false}),
   async (req, res) => {
@@ -702,6 +702,35 @@ app.post("/updateCheckpoint", passport.authenticate('jwt', {session: false}),
     res.json({message: "updated"});
   }
 });
+
+app.post('/api/editAnnotation', passport.authenticate('jwt', {session: false}),
+  async (req, res) => {
+    queryText = 'UPDATE annotations \
+                 SET conceptid = $1, comment = $2, unsure = $3 \
+                 WHERE annotations.id=$4 RETURNING *';
+    queryUpdate = 'SELECT annotations.id, annotations.comment, annotations.unsure, annotations.timeinvideo, annotations.x1, annotations.y1, \
+                 annotations.x2, annotations.y2, annotations.videoWidth, annotations.videoHeight, \
+                 annotations.imagewithbox, concepts.name FROM annotations, concepts \
+                 WHERE annotations.id = $1 AND annotations.conceptid=concepts.id';
+    try {
+      var editRes = await psql.query(
+                            queryText,
+                            [req.body.conceptId,
+                            req.body.comment,
+                            req.body.unsure,
+                            req.body.id]
+                          );
+      var updatedRow = await psql.query(
+        queryUpdate,
+        [req.body.id]
+      );
+      res.json(updatedRow.rows[0]);
+    } catch (error) {
+      console.log(error);
+      res.json(error);
+    }
+  }
+);
 
 app.post('/api/delete', passport.authenticate('jwt', {session: false}),
   async (req, res) => {

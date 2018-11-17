@@ -27,28 +27,37 @@ class DialogModal extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      unsure: false
+      unsure: false,
+      comment: ''
     };
   }
 
   handleClose = () => {
     this.props.handleClose();
-    this.setState({unsure: false});
+    this.setState({
+      unsure: false,
+      comment: ''
+    });
   };
 
   handleKeyPress = (e) => {
     if (e.key === 'Enter' && this.props.enterEnabled) {
-      this.props.inputHandler(e.target.value, this.state.unsure);
+      this.handleSubmit();
       this.handleClose();
     }
     else {
-      this.comment = e.target.value + e.key // saves the comment
+      this.setState({
+        comment: this.state.comment + e.key
+      })
     }
   };
 
   handleSubmit = () => {
-    this.props.inputHandler(this.comment, this.state.unsure)
-    this.setState({unsure : false});
+    this.props.inputHandler(this.state.comment, this.state.unsure)
+    this.setState({
+      unsure : false,
+      comment: ''
+    });
   };
 
   handleChange = () => event => {
