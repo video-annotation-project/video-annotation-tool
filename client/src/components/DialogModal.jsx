@@ -47,7 +47,7 @@ class DialogModal extends Component {
     }
     else {
       this.setState({
-        comment: this.state.comment + e.key
+        comment: e.target.value + e.key
       })
     }
   };
