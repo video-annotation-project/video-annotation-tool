@@ -1,0 +1,31 @@
+This is an explanation of how to set up an ec2 instance as a server 
+to recieve annotation data and use it to generate further annotation 
+data using opencv tracking methods.
+
+
+First have to set up the ec2 instance, choose an ubutuntu server AMI, and make 
+sure to add extra storage space(NOT MEMORY, 32Gigs on an ssd should be enough).
+
+1. SETTING UP OPENCV
+	SSH into the ec2 instance and follow
+	https://www.pyimagesearch.com/opencv-tutorials-resources-guides/
+	to set up opencv, make sure to add '-DWITH_FFMPEG=ON' to the cmake command. You'll have to download
+	a couple of extra packages along the way, and make sure to update paths to point to the correct places.
+	*** Make sure to be doing everything on python 3.6 and in a virtual env***
+	Confirm that it is working with 'python -c 'import cv2; print(cv2.__version__);'
+	(Hopefully we can have a test script at some point)
+	You'll have to pip install a bunch of packages (WHILE IN VENV)
+
+2. SETTING UP FLASK
+	While SSH'd in the ec2 instance follow 
+	https://www.datasciencebytes.com/bytes/2015/02/24/running-a-flask-app-on-aws-ec2/ 
+	to set up a flask server. Make sure that you specifiy mod_wsgi for python3 with 'sudo apt-get install libapache2-mod-wsgi-py3'.
+	Before it starts working you'll have to set up the server to run on your virtual environment, this 
+	adding 'activate_this = '/path/to/virtualenv/bin/activate_this.py; execfile(activate_this, dict(__file__=activate_this))' 
+	to your .wsgi file should do the trick.
+	*** Use 'sudo apachectl restart' whenever you make a change ***
+
+3. FOR DEVELOPMENT
+	Set up opencv in the same manner on your local machine and then just pip install flask and run the
+	flask server with 'python app.py' in order to test it, uploading the file to ec2 when ready.
+	I used Postman to test post requests that would be used by the video annotation server.
