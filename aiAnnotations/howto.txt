@@ -29,3 +29,11 @@ sure to add extra storage space(NOT MEMORY, 32Gigs on an ssd should be enough).
 	Set up opencv in the same manner on your local machine and then just pip install flask and run the
 	flask server with 'python app.py' in order to test it, uploading the file to ec2 when ready.
 	I used Postman to test post requests that would be used by the video annotation server.
+
+
+
+ai video?
+script to remove all ai annotations and redo
+remove duplicates in db!
+
+clean up s3 and db.
