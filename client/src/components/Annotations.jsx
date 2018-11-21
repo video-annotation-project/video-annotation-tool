@@ -79,6 +79,9 @@ class Annotations extends Component {
   showVideo = async (event, id) => {  
     let annotations = this.state.annotations
     let annotation = annotations.find(annotation => annotation.id === id);
+    if(!annotation.expanded){
+      annotation.expanded = true;
+    }
     if(annotation.showVideo){
       annotation.showVideo = false;
     }else{
@@ -169,8 +172,8 @@ class Annotations extends Component {
                     <div></div>
                   )}
                   <IconButton className={classes.icons} aria-label="OndemandVideo">
-                  {annotation.showVideo ? (<Photo onClick = {(e) => this.showVideo(e, annotation.id)} />):
-                (<OndemandVideo onClick = {(e) => this.showVideo(e, annotation.id)} />)}
+                  {annotation.showVideo ? (<OndemandVideo onClick = {(e) => this.showVideo(e, annotation.id)} />):
+                (<Photo onClick = {(e) => this.showVideo(e, annotation.id)} />)}
                     
                   </IconButton>
                   <IconButton className={classes.icons} aria-label="Delete">
@@ -180,7 +183,7 @@ class Annotations extends Component {
                 </ListItemSecondaryAction>
               </ListItem>
               <Collapse in={annotation.expanded} timeout='auto' unmountOnExit>
-                {annotation.showVideo ? (<video id="video"  width="800" height="450" src={'api/videos/Y7Ek6tndnA/Ventana-3881_20151028T173548Z_01-20-16-11TC_h264.mp4'} type='video/mp4' controls>
+              {annotation.showVideo ? (<video id="video"  width="800" height="450" src={'api/videos/Y7Ek6tndnA/317_ai.mp4'} type='video/mp4' controls>
                   Your browser does not support the video tag.
                 </video>):
                 (<AnnotationFrame
@@ -201,3 +204,7 @@ Annotations.propTypes = {
 };
 
 export default withStyles(styles)(Annotations);
+                //{annotation.showVideo ? (<video id="video"  width="800" height="450" src={'api/videos/Y7Ek6tndnA/Ventana-3881_20151028T173548Z_01-20-16-11TC_h264.mp4'} type='video/mp4' controls>
+
+//{annotation.showVideo ? (<video id="video"  width="800" height="450" src={'api/videos/Y7Ek6tndnA/' + annotation.id + '_ai.mp4'} type='video/mp4' controls>
+                

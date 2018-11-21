@@ -11,32 +11,29 @@ import os
 from dotenv import load_dotenv
 import datetime
 import copy
+import time
 
+#Load environment variables
 load_dotenv(dotenv_path="../.env")
-
-# aws stuff
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 S3_BUCKET = os.getenv('AWS_S3_BUCKET_NAME')
 s3 = boto3.client('s3', aws_access_key_id = AWS_ACCESS_KEY_ID, aws_secret_access_key = AWS_SECRET_ACCESS_KEY)
+S3_ANNOTATION_FOLDER = os.getenv("AWS_S3_BUCKET_ANNOTATIONS_FOLDER")
+S3_VIDEO_FOLDER = os.getenv('AWS_S3_BUCKET_VIDEOS_FOLDER')
+S3_TRACKING_FOLDER = os.getenv("AWS_S3_BUCKET_TRACKING_FOLDER")
 
 # connect to db
 DB_NAME = os.getenv("DB_NAME")
 DB_HOST = os.getenv("DB_HOST")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
-con = connect(database=DB_NAME, host=DB_HOST, user=DB_USER, password=DB_PASSWORD)
-cursor = con.cursor()
 
 # video/image properties
 length = 4000 # length of video before and after annotation in ms (ex: length = 4000, vid = 8 s max)
 images_per_sec = 10
 VIDEO_WIDTH = 640
 VIDEO_HEIGHT = 360
-
-# get annotations from Ali
-cursor.execute("SELECT * FROM annotations WHERE userid=6")
-rows = cursor.fetchmany(1)
 
 # initialize a dictionary that maps strings to their corresponding
 # OpenCV object tracker implementations
@@ -50,11 +47,6 @@ OPENCV_OBJECT_TRACKERS = {
 	"mosse": cv2.TrackerMOSSE_create
 }
 
-
-#get AI userid
-cursor.execute("SELECT id FROM users WHERE username=%s", ("ai",))
-AI_id = cursor.fetchone().id
-
 def get_next_frame(frames, video_object, num):
 	if video_object:
 		check, frame = frames.read()
@@ -62,13 +54,14 @@ def get_next_frame(frames, video_object, num):
 		frame = frames.pop()
 	return frame
 
-def upload_image(name, frame, frame_w_box, annotation, x1, y1, x2, y2):
+#Uploads images and adds annotation to database
+def upload_image(name, frame, frame_w_box, annotation, x1, y1, x2, y2, cursor, con, AI_ID):
 	no_box = str(annotation.id) + "_" + name + "_ai.png"
 	box = str(annotation.id) + "_" + name + "_box_ai.png"
 	cv2.imwrite("img.png", frame)
-	s3.upload_file("img.png", S3_BUCKET, os.getenv("AWS_S3_BUCKET_ANNOTATIONS_FOLDER") + no_box) 
+	s3.upload_file("img.png", S3_BUCKET, S3_ANNOTATION_FOLDER + no_box) 
 	cv2.imwrite("img_box.png", frame_w_box)
-	s3.upload_file("img_box.png", S3_BUCKET, os.getenv("AWS_S3_BUCKET_ANNOTATIONS_FOLDER") + box)
+	s3.upload_file("img_box.png", S3_BUCKET, S3_ANNOTATION_FOLDER + box)
 	cursor.execute(
 		"""
 			INSERT INTO annotations (
@@ -77,17 +70,18 @@ def upload_image(name, frame, frame_w_box, annotation, x1, y1, x2, y2):
 			VALUES (%d, %d, %d, %f, %f, %f, %f, %f, %d, %d, %s, %s, %s, %s, %s, %d)
 		""",
 		(
-			annotation.videoid, AI_id, annotation.conceptid, annotation.timeinvideo, x1, y1, 
+			annotation.videoid, AI_ID, annotation.conceptid, annotation.timeinvideo, x1, y1, 
 			x2, y2, VIDEO_WIDTH, VIDEO_HEIGHT, datetime.datetime.now().date(), no_box, box, 
 			annotation.comment, annotation.unsure, annotation.id
 		)
 	)
 	con.commit()
 
-def track_object(frames, box, video_object, end):
+#Tracks the object forwards and backwards in a video
+def track_object(frames, box, video_object, end, original, cursor, con, AI_ID):
         frame_list = []
         trackers = cv2.MultiTracker_create()
-        
+
         # initialize bounding box in first frame
         frame = get_next_frame(frames, video_object, 0)
         frame = imutils.resize(frame, width=640, height=360)
@@ -110,7 +104,7 @@ def track_object(frames, box, video_object, end):
                                 cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
                         frame_list.append(frame)
                         if (counter % images_counter == 0):
-                                upload_image(str(int(counter // images_counter)), frame_no_box, frame, i, x, y, (x+w), (y+h))
+                                upload_image(str(int(counter // images_counter)), frame_no_box, frame, original, x, y, (x+w), (y+h), cursor, con, AI_ID)
                         counter += 1
                 else:
                         break
@@ -119,7 +113,15 @@ def track_object(frames, box, video_object, end):
         cv2.destroyAllWindows()
         return frame_list
 
+#original must be pgdb row
 def ai_annotation(original):
+	con = connect(database=DB_NAME, host=DB_HOST, user=DB_USER, password=DB_PASSWORD)
+	cursor = con.cursor()
+
+	#get AI userid
+	cursor.execute("SELECT id FROM users WHERE username=%s", ("ai",))
+	AI_ID = cursor.fetchone().id
+
 	# get video name
 	cursor.execute("SELECT filename FROM videos WHERE id=%s", str(original.videoid))
 	video_name = cursor.fetchone().filename
@@ -127,7 +129,7 @@ def ai_annotation(original):
 	# grab video stream
 	url = s3.generate_presigned_url('get_object', 
 		Params = {'Bucket': S3_BUCKET, 
-		'Key': os.getenv('AWS_S3_BUCKET_VIDEOS_FOLDER') + video_name}, 
+		'Key': S3_VIDEO_FOLDER + video_name}, 
 		ExpiresIn = 100)
 	cap = cv2.VideoCapture(url)
 
@@ -159,33 +161,35 @@ def ai_annotation(original):
 
 	# get object tracking frames prior to annotation
 	frames = frame_list
-	reverse_frames = track_object(frames, box, False, 0)
+	reverse_frames = track_object(frames, box, False, 0, original, cursor, con, AI_ID)
 	reverse_frames.reverse()
 
     # new video capture object for frames after annotation
 	vs = cv2.VideoCapture(url)
 	vs.set(0, start)
 	frames = vs
-	forward_frames = track_object(frames, box, True, start + length)
+	forward_frames = track_object(frames, box, True, start + length, original, cursor, con, AI_ID)
 	vs.release()
 
-	print("writing final video..")
-	out = cv2.VideoWriter('output.mp4', cv2.VideoWriter_fourcc('M','P','4', 'V'), 20, (VIDEO_WIDTH, VIDEO_HEIGHT))
+	out = cv2.VideoWriter('output.mp4', cv2.VideoWriter_fourcc(*'MP4V'), 20, (VIDEO_WIDTH, VIDEO_HEIGHT))
 	reverse_frames.extend(forward_frames)
 	for frame in reverse_frames:
 		out.write(frame)		
-		cv2.imshow("Frame", frame)
-		cv2.waitKey(1)
-	'''
-	#upload video..
-	(s3.upload_file('output.mp4',
-	S3_BUCKET, 
-	os.getenv("AWS_S3_BUCKET_TRACKING_FOLDER") + str(original.id) + "_ai.mp4", 
-	ExtraArgs = {'ContentType':'video/mp4'}))
-	'''
-	cap.release()
-	cv2.destroyAllWindows()
+		#cv2.imshow("Frame", frame)
+		#cv2.waitKey(1)
+	out.release()
+	
+	os.system('ffmpeg -i output.mp4 -codec:v libx264 converted.mp4')
 
-for i in rows:
-	ai_annotation(i)
-con.close()
+	#upload video..
+	s3.upload_file(
+		'converted.mp4', 
+		S3_BUCKET, 
+		S3_VIDEO_FOLDER + str(original.id) + "_ai.mp4", 
+		ExtraArgs = {'ContentType':'video/mp4'}
+	)
+
+	os.system('rm converted.mp4')
+
+	cv2.destroyAllWindows()
+	con.close()
