@@ -12,6 +12,7 @@ from dotenv import load_dotenv
 import datetime
 import copy
 import time
+import uuid
 
 #Load environment variables
 load_dotenv(dotenv_path="../.env")
@@ -58,10 +59,13 @@ def get_next_frame(frames, video_object, num):
 def upload_image(name, frame, frame_w_box, annotation, x1, y1, x2, y2, cursor, con, AI_ID):
 	no_box = str(annotation.id) + "_" + name + "_ai.png"
 	box = str(annotation.id) + "_" + name + "_box_ai.png"
-	cv2.imwrite("img.png", frame)
-	s3.upload_file("img.png", S3_BUCKET, S3_ANNOTATION_FOLDER + no_box) 
-	cv2.imwrite("img_box.png", frame_w_box)
-	s3.upload_file("img_box.png", S3_BUCKET, S3_ANNOTATION_FOLDER + box)
+	temp_file = str(uuid.uuid4()) + ".png"
+	cv2.imwrite(temp_file, frame)
+	s3.upload_file(temp_file, S3_BUCKET, S3_ANNOTATION_FOLDER + no_box, ExtraArgs={'ContentType':'image/png'}) 
+	os.system('rm '+ temp_file)
+	cv2.imwrite(temp_file, frame_w_box)
+	s3.upload_file(temp_file, S3_BUCKET, S3_ANNOTATION_FOLDER + box,  ExtraArgs={'ContentType':'image/png'})
+	os.system('rm '+ temp_file)
 	cursor.execute(
 		"""
 			INSERT INTO annotations (
@@ -171,7 +175,11 @@ def ai_annotation(original):
 	forward_frames = track_object(frames, box, True, start + length, original, cursor, con, AI_ID)
 	vs.release()
 
-	out = cv2.VideoWriter('output.mp4', cv2.VideoWriter_fourcc(*'MP4V'), 20, (VIDEO_WIDTH, VIDEO_HEIGHT))
+
+	output_file = str(uuid.uuid4()) + ".mp4"
+	converted_file = str(uuid.uuid4()) + ".mp4"
+
+	out = cv2.VideoWriter(output_file, cv2.VideoWriter_fourcc(*'MP4V'), 20, (VIDEO_WIDTH, VIDEO_HEIGHT))
 	reverse_frames.extend(forward_frames)
 	for frame in reverse_frames:
 		out.write(frame)		
@@ -179,17 +187,18 @@ def ai_annotation(original):
 		#cv2.waitKey(1)
 	out.release()
 	
-	os.system('ffmpeg -i output.mp4 -codec:v libx264 converted.mp4')
+	os.system('ffmpeg -loglevel 0 -i ' + output_file + ' -codec:v libx264 '+ converted_file)
 
 	#upload video..
 	s3.upload_file(
-		'converted.mp4', 
+		converted_file, 
 		S3_BUCKET, 
 		S3_VIDEO_FOLDER + str(original.id) + "_ai.mp4", 
-		ExtraArgs = {'ContentType':'video/mp4'}
+		ExtraArgs={'ContentType':'video/mp4'}
 	)
 
-	os.system('rm converted.mp4')
+	os.system('rm '+ output_file)
+	os.system('rm '+ converted_file)
 
 	cv2.destroyAllWindows()
 	con.close()
