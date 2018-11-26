@@ -536,6 +536,9 @@ app.get('/api/videos/Y7Ek6tndnA/:name', (req, res) => {
     if (err) {
       return res.sendStatus(404);
     }
+    if (!data.Contents[0]){
+      return res.redirect('/api/videos/Y7Ek6tndnA/error.mp4');
+    }
     if (req != null && req.headers.range != null) {
       var range = req.headers.range;
       var bytes = range.replace(/bytes=/, '').split('-');

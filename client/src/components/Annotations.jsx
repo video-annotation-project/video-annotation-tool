@@ -183,7 +183,7 @@ class Annotations extends Component {
                 </ListItemSecondaryAction>
               </ListItem>
               <Collapse in={annotation.expanded} timeout='auto' unmountOnExit>
-              {annotation.showVideo ? (<video id="video"  width="800" height="450" src={'api/videos/Y7Ek6tndnA/317_ai.mp4'} type='video/mp4' controls>
+              {annotation.showVideo ? (<video id="video"  width="800" height="450" src={'api/videos/Y7Ek6tndnA/' + annotation.id +'_ai.mp4'} type='video/mp4' controls>
                   Your browser does not support the video tag.
                 </video>):
                 (<AnnotationFrame
@@ -204,7 +204,3 @@ Annotations.propTypes = {
 };
 
 export default withStyles(styles)(Annotations);
-                //{annotation.showVideo ? (<video id="video"  width="800" height="450" src={'api/videos/Y7Ek6tndnA/Ventana-3881_20151028T173548Z_01-20-16-11TC_h264.mp4'} type='video/mp4' controls>
-
-//{annotation.showVideo ? (<video id="video"  width="800" height="450" src={'api/videos/Y7Ek6tndnA/' + annotation.id + '_ai.mp4'} type='video/mp4' controls>
-                
