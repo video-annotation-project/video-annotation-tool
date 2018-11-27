@@ -23,6 +23,7 @@ DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 con = connect(database=DB_NAME, host=DB_HOST, user=DB_USER, password=DB_PASSWORD)
 cursor = con.cursor()
+
 #get AI userid
 cursor.execute("SELECT id FROM users WHERE username=%s", ("ai",))
 AI_ID = cursor.fetchone().id
@@ -35,7 +36,7 @@ while True:
     processes = []
     print("Annotating " + str(len(rows)) + " videos.")
     for count, i in enumerate(rows):
-        print("\rWorking annotation: " + str(count), end="")
+        print("Working annotation: " + str(count))
         results = s3.list_objects(Bucket=S3_BUCKET, Prefix=S3_VIDEO_FOLDER + str(i.id) + "_ai.mp4")
         if 'Contents' in results:
             continue
@@ -43,7 +44,7 @@ while True:
         process.start()
         processes.append((process,i.id))
         
-        while(len(active_children()) >= cpu_count()*1/2):
+        while(len(active_children()) >= cpu_count()*3/4):
             pass
 
     for p, originid in processes:

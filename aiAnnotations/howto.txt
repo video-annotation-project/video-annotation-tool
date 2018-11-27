@@ -37,3 +37,7 @@ sure to add extra storage space(NOT MEMORY, 32Gigs on an ssd should be enough).
 	I used Postman to test post requests that would be used by the video annotation server.
 
 
+DELETE FROM annotations T1
+    USING   annotations T2
+WHERE   T1.id < T2.id  -- delete the older versions
+    AND T1.image  = T2.image;
