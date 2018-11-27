@@ -23,30 +23,33 @@ DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 con = connect(database=DB_NAME, host=DB_HOST, user=DB_USER, password=DB_PASSWORD)
 cursor = con.cursor()
+#get AI userid
+cursor.execute("SELECT id FROM users WHERE username=%s", ("ai",))
+AI_ID = cursor.fetchone().id
 
-# get annotations from test
-cursor.execute("SELECT * FROM annotations WHERE userid=5")
-rows = cursor.fetchall()
-con.close()
+while True:
+    # get annotations from test
+    cursor.execute("SELECT * FROM annotations where userid!=%d",(AI_ID,))
+    rows = cursor.fetchall()
 
-processes = []
-print("Annotating " + str(len(rows)) + " videos.")
-for count, i in enumerate(rows):
+    processes = []
+    print("Annotating " + str(len(rows)) + " videos.")
+    for count, i in enumerate(rows):
         print("\rWorking annotation: " + str(count), end="")
         results = s3.list_objects(Bucket=S3_BUCKET, Prefix=S3_VIDEO_FOLDER + str(i.id) + "_ai.mp4")
         if 'Contents' in results:
-                continue
+            continue
         process = Process(target=aiAnnotate.ai_annotation, args=(i,))
         process.start()
         processes.append((process,i.id))
         
         while(len(active_children()) >= cpu_count()*1/2):
-                pass
+            pass
 
-for p, originid in processes:
-	p.join()
+    for p, originid in processes:
+        p.join()
 
-for i in rows:
-	results = s3.list_objects(Bucket=S3_BUCKET, Prefix=S3_VIDEO_FOLDER + str(i.id) + "_ai.mp4")
-	if 'Contents' not in results:
-		print("Failed on video for annotation: " + str(i.id))
+    for i in rows:
+        results = s3.list_objects(Bucket=S3_BUCKET, Prefix=S3_VIDEO_FOLDER + str(i.id) + "_ai.mp4")
+        if 'Contents' not in results:
+            print("Failed on video for annotation: " + str(i.id))
