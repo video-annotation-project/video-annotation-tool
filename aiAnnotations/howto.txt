@@ -20,20 +20,6 @@ sure to add extra storage space(NOT MEMORY, 32Gigs on an ssd should be enough).
 	'sudo apt install ffmpeg'
 	'sudo apt-get install libpq-dev'
 
-2. SETTING UP FLASK
-	While SSH'd in the ec2 instance follow 
-	https://www.datasciencebytes.com/bytes/2015/02/24/running-a-flask-app-on-aws-ec2/ 
-	to set up a flask server. Make sure that you specifiy mod_wsgi for python3 with 'sudo apt-get install libapache2-mod-wsgi-py3'.
-	Before it starts working you'll have to set up the server to run on your virtual environment,
-	adding 'activate_this = '/path/to/virtualenv/bin/activate_this.py; execfile(activate_this, dict(__file__=activate_this))' 
-	to your .wsgi file should do the trick.
-	*** Use 'sudo apachectl restart' whenever you make a change ***
-	sudo ln -sT ~/video-annotation-tool/aiAnnotations/ /var/www/html/flaskapp
-
-
-3. FOR DEVELOPMENT
-	Set up opencv in the same manner on your local machine and then just pip install flask and run the
-	flask server with 'python app.py' in order to test it, uploading the file to ec2 when ready.
-	I used Postman to test post requests that would be used by the video annotation server.
+2. Just run 'nohup python annotateAll.py &' to begin automatic annotationins 
 
 
