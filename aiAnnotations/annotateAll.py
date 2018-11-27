@@ -24,19 +24,24 @@ DB_PASSWORD = os.getenv("DB_PASSWORD")
 con = connect(database=DB_NAME, host=DB_HOST, user=DB_USER, password=DB_PASSWORD)
 cursor = con.cursor()
 
-# get annotations from Ali
-cursor.execute("SELECT * FROM annotations WHERE userid=6")
-rows = cursor.fetchmany(10)
+# get annotations from test
+cursor.execute("SELECT * FROM annotations WHERE userid=5")
+rows = cursor.fetchall()
 con.close()
 
 processes = []
-for i in rows:
-	process = Process(target=aiAnnotate.ai_annotation, args=(i,))
-	process.start()
-	processes.append((process,i.id))
-
-	while(len(active_children()) >= cpu_count()*1/2):
-		pass
+print("Annotating " + str(len(rows)) + " videos.")
+for count, i in enumerate(rows):
+        print("\rWorking annotation: " + str(count), end="")
+        results = s3.list_objects(Bucket=S3_BUCKET, Prefix=S3_VIDEO_FOLDER + str(i.id) + "_ai.mp4")
+        if 'Contents' in results:
+                continue
+        process = Process(target=aiAnnotate.ai_annotation, args=(i,))
+        process.start()
+        processes.append((process,i.id))
+        
+        while(len(active_children()) >= cpu_count()*1/2):
+                pass
 
 for p, originid in processes:
 	p.join()
