@@ -20,10 +20,24 @@ sure to add extra storage space(NOT MEMORY, 32Gigs on an ssd should be enough).
 	'sudo apt install ffmpeg'
 	'sudo apt-get install libpq-dev'
 
-2. Just run 'nohup python annotateAll.py &' to begin automatic annotationins 
+2. GETTING ANNOTATIONS
+	Just run 'nohup python annotateAll.py &' to begin automatic annotations.
+	Can view status with 'tail nohup.out'.
+	This script runs constantly, atttempting to process each annotation from the current day.
 
+HELPFUL SQL QUERIES:
 
-DELETE FROM annotations T1
-    USING   annotations T2
-WHERE   T1.id < T2.id  -- delete the older versions
-    AND T1.image  = T2.image;
+   Lists any duplicated annotations (can happen when restarting the script)
+	SELECT (annotations.*)::image, count(*)
+	FROM annotations
+	GROUP BY annotations.*
+	HAVING count(*) > 1
+
+   Removes any duplicate annotations
+	DELETE FROM annotations T1
+    	USING   annotations T2
+	WHERE   T1.id < T2.id
+    	AND T1.image  = T2.image;
+                                
+
+	TODO: Set originalid to itself in order to tell if its been annotated. 

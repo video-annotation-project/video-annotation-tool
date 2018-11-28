@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 import aiAnnotate
 from multiprocessing import Process, active_children, cpu_count
 import boto3
+import datetime
 
 load_dotenv(dotenv_path="../.env")
 
@@ -30,7 +31,7 @@ AI_ID = cursor.fetchone().id
 
 while True:
     # get annotations from test
-    cursor.execute("SELECT * FROM annotations where userid!=%d",(AI_ID,))
+    cursor.execute("SELECT * FROM annotations where userid!=%d and dateannotated=%s",(AI_ID,str(datetime.date.today()),))
     rows = cursor.fetchall()
 
     processes = []
@@ -46,6 +47,11 @@ while True:
         
         while(len(active_children()) >= cpu_count()*3/4):
             pass
+        
+        if(len(processes) > 256):
+            for p, originid in processes:
+                p.join()
+            processes = []
 
     for p, originid in processes:
         p.join()

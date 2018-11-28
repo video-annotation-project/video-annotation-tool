@@ -201,10 +201,10 @@ def ai_annotation(original):
                 S3_VIDEO_FOLDER + str(original.id) + "_ai.mp4", 
                 ExtraArgs={'ContentType':'video/mp4'}
             )
-            os.system('rm '+ output_file)
             os.system('rm '+ converted_file)
         else:
             print("no video made for " + str(original.id))
-        
+
+        os.system('rm '+ output_file)
         cv2.destroyAllWindows()
         con.close()
