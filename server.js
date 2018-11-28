@@ -591,39 +591,6 @@ async function getConceptId(value) {
   }
 }
 
-async function aiAnnotate(data) {
-  url = "https://78en7l8mod.execute-api.us-west-1.amazonaws.com/default/generateAnnotations"
-  header = {"x-api-key": '72TH2dC5k04UKbw9wolyi6r9DQmuSCYj3ytHYK5p'}
-  payload = {
-    "videoId": data[0],
-    "userId": data[1],
-    "conceptId": data[2],
-    "timeinvideo": data[3],
-    "x1": data[4],
-    "y1": data[5],
-    "x2": data[6],
-    "y2": data[7],
-    "videoWidth": data[8],
-    "videoHeight": data[9],
-    "image": data[10],
-    "imagewithbox": data[11],    
-    "comment": data[12],
-    "unsure": data[13]};
-  try{ 
-    request.post({
-      url: url,
-      json: payload,
-      headers: header,
-      method: 'POST'
-    },
-    function (e, r, body) {
-        console.log(body);
-    });
-  } catch (error) { 
-    console.log(error);
-  }
-}
-
 app.post('/api/annotate', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
   let videoId = await getVideoId(req.body.videoId);
@@ -649,7 +616,6 @@ app.post('/api/annotate', passport.authenticate('jwt', {session: false}),
   try {
     let insertRes = await psql.query(queryText,data);
     res.json({message: "Annotated", value: JSON.stringify(insertRes.rows[0])});
-    let aiRes = await aiAnnotate(data);
   } catch(error) {
     console.log(error)
     res.status(400).json(error);

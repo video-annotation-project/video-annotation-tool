@@ -5,6 +5,7 @@ import aiAnnotate
 from multiprocessing import Process, active_children, cpu_count
 import boto3
 import datetime
+import math
 
 load_dotenv(dotenv_path="../.env")
 
@@ -45,7 +46,7 @@ while True:
         process.start()
         processes.append((process,i.id))
         
-        while(len(active_children()) >= cpu_count()*3/4):
+        while(len(active_children()) >= math.floor(cpu_count()*3/4)):
             pass
         
         if(len(processes) > 256):

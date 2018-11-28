@@ -16,7 +16,7 @@ import uuid
 import sys
 
 #Load environment variables
-load_dotenv(dotenv_path="/home/ubuntu/video-annotation-tool/.env")
+load_dotenv(dotenv_path="../.env")
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 S3_BUCKET = os.getenv('AWS_S3_BUCKET_NAME')
@@ -161,10 +161,12 @@ def ai_annotation(original):
 	# initialize vars for getting frames after annotation
         start = original.timeinvideo * 1000
         end = start + length
-        x1 = original.x1 / 2
-        y1 = original.y1 / 2
-        width = (original.x2 / 2) - x1
-        height = (original.y2 / 2) - y1
+        x_ratio = (original.videowidth / VIDEO_WIDTH)
+        y_ratio = (original.videoheight / VIDEO_HEIGHT)
+        x1 = original.x1 / x_ratio
+        y1 = original.y1 / y_ratio
+        width = (original.x2 / x_ratio) - x1
+        height = (original.y2 / y_ratio) - y1
         box = (x1, y1, width, height)
         
         # get object tracking frames prior to annotation
