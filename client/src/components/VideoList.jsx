@@ -5,12 +5,10 @@ import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
 import { withStyles } from '@material-ui/core/styles';
-//import Divider from '@material-ui/core/Divider';
-
-//import ListSubheader from '@material-ui/core/ListSubheader';
 import Collapse from '@material-ui/core/Collapse';
 import ExpandLess from '@material-ui/icons/ExpandLess';
 import ExpandMore from '@material-ui/icons/ExpandMore';
+import axios from 'axios';
 
 const styles = theme => ({
   root: {
@@ -31,43 +29,36 @@ class VideoList extends Component {
     super(props);
     this.state = {
       videoListOpen: true,
-
       currentListOpen: false,
       unwatchedListOpen: false,
       watchedListOpen: false,
-
       currentVideos: [],
       unwatchedVideos: [],
       watchedVideos: []
     };
   }
 
-
+  // Is it possible to combine all three get requests into one?
   componentDidMount = () => {
-    // this can be optimized by combining all three fetch requests into one
-    // also we would want to use axios.get() instead of fetch() for consistency reasons
-    fetch('/api/userVideos/false', {
+    axios.get('/api/userVideos/false', {
       headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')}
-    })
-      .then(res => res.json())
+    }).then(res => res.data)
       .then(res => {
         this.setState({
           currentVideos: res.rows
       })
     })
-    fetch('/api/userUnwatchedVideos/', {
+    axios.get('/api/userUnwatchedVideos/', {
       headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')}
-    })
-      .then(res => res.json())
+    }).then(res => res.data)
       .then(res => {
         this.setState({
           unwatchedVideos: res.rows
       })
     })
-    fetch('/api/userVideos/true', {
+    axios.get('/api/userVideos/true', {
       headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')}
-    })
-      .then(res => res.json())
+    }).then(res => res.data)
       .then(res => {
         this.setState({
           watchedVideos: res.rows
@@ -80,12 +71,9 @@ class VideoList extends Component {
       videoListOpen: !this.state.videoListOpen
     });
   }
-
   handleVideoClick = (filename) => {
     this.props.handleVideoClick(filename);
   }
-
-
   handleCurrentClick = () => {
     this.setState(state => ({ currentListOpen: !state.currentListOpen }));
   }
@@ -95,12 +83,6 @@ class VideoList extends Component {
   handleWatchedClick = () => {
     this.setState(state => ({ watchedListOpen: !state.watchedListOpen }));
   }
-
-
-  // handleListClick = (list) => {
-  //   this.setState(state => ({ [list]: !state[list] }));
-  // };
-
 
   render () {
     const { classes } = this.props;
@@ -152,7 +134,6 @@ class VideoList extends Component {
               ))}
             </List>
           </Collapse>
-
 
         </div>
       </div>
