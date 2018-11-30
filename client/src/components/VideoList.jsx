@@ -5,6 +5,7 @@ import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
 import { withStyles } from '@material-ui/core/styles';
+import axios from 'axios';
 //import Divider from '@material-ui/core/Divider';
 
 const styles = theme => ({
@@ -33,33 +34,16 @@ class VideoList extends Component {
   }
 
   componentDidMount = () => {
-    // this can be optimized by combining all three fetch requests into one
-    // also we would want to use axios.get() instead of fetch() for consistency reasons
-    fetch('/api/userVideos/false', {
-      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')}
-    })
-      .then(res => res.json())
-      .then(res => {
-        this.setState({
-          currentVideos: res.rows
-      })
-    })
-    fetch('/api/userUnwatchedVideos/', {
-      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')}
-    })
-      .then(res => res.json())
-      .then(res => {
-        this.setState({
-          unwatchedVideos: res.rows
-      })
-    })
-    fetch('/api/userVideos/true', {
-      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')}
-    })
-      .then(res => res.json())
-      .then(res => {
-        this.setState({
-          watchedVideos: res.rows
+    const config = {
+      headers: {
+        'Authorization': 'Bearer ' + localStorage.getItem('token')
+      }
+    };
+    axios.get('/api/listVideos/', config).then(res => {
+      this.setState({
+        currentVideos: res.data[0].rows,
+        unwatchedVideos: res.data[1].rows,
+        watchedVideos: res.data[2].rows
       })
     })
   }
@@ -70,12 +54,13 @@ class VideoList extends Component {
     });
   }
 
-  handleVideoClick = (filename) => {
-    this.props.handleVideoClick(filename);
+  handleVideoClick = (video, videoList) => {
+    this.props.handleVideoClick(video.filename);
   }
 
   render () {
     const { classes } = this.props;
+    const { currentVideos, unwatchedVideos, watchedVideos } = this.state;
     return (
       <div className={classes.root}>
         <Button variant="contained" color="primary" onClick={this.toggleVideoList}>
@@ -84,24 +69,24 @@ class VideoList extends Component {
         <div className={classes.videos} style={{display: this.state.videoListOpen ? '' : 'none'}}>
           Current Videos
           <List component="nav">
-            {this.state.currentVideos.map((video, index) => (
-              <ListItem button key={video.id} onClick={() => this.handleVideoClick(video.filename)}>
+            {currentVideos.map((video, index) => (
+              <ListItem button key={video.id} onClick={() => this.handleVideoClick(video, currentVideos)}>
                 <ListItemText primary={video.id + '. ' + video.filename} />
               </ListItem>
             ))}
           </List>
           Unwatched Videos
           <List component="nav">
-            {this.state.unwatchedVideos.map((video, index) => (
-              <ListItem button key={video.id} onClick={() => this.handleVideoClick(video.filename)}>
+            {unwatchedVideos.map((video, index) => (
+              <ListItem button key={video.id} onClick={() => this.handleVideoClick(video, unwatchedVideos)}>
                 <ListItemText primary={video.id + '. ' + video.filename} />
               </ListItem>
             ))}
           </List>
           Watched Videos
           <List component="nav">
-            {this.state.watchedVideos.map((video, index) => (
-              <ListItem button key={video.id} onClick={() => this.handleVideoClick(video.filename)}>
+            {watchedVideos.map((video, index) => (
+              <ListItem button key={video.id} onClick={() => this.handleVideoClick(video, watchedVideos)}>
                 <ListItemText primary={video.id + '. ' + video.filename} />
               </ListItem>
             ))}

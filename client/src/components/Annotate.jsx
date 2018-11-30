@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import Rnd from 'react-rnd';
 import axios from 'axios';
-// import AWS from 'aws-sdk';
 
 import ConceptsSelected from './ConceptsSelected.jsx';
 import VideoList from './VideoList.jsx';
@@ -39,8 +38,7 @@ class Annotate extends Component {
     super(props);
     this.state = {
       error: null,
-      // might want to change this. use function that retrieves last watched video?
-      videoName: 'DocRicketts-0569_20131213T224337Z_00-00-01-00TC_h264.mp4',
+      videoName: '',
       errorMsg: null,
       errorOpen: false,
       dialogMsg: null,
@@ -50,34 +48,52 @@ class Annotate extends Component {
       clickedConcept: null,
       closeHandler: null,
       enterEnabled: true,
+      isLoaded: false
     };
   }
 
   getCurrentVideo = async () => {
-    let videoData = await axios.get('/api/latestVideoId', {
-      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')},
-    })
+    const config = {
+      headers: {
+        'Authorization': 'Bearer ' + localStorage.getItem('token')
+      }
+    };
+    let videoData = await axios.get('/api/latestWatchedVideo', config)
     if (videoData.data.length > 0) { // they've started watching a video
-      let videoid = videoData.data[0].videoid;
       let startTime = videoData.data[0].timeinvideo;
-      let filename = await axios.get(`/api/latestVideoName/${videoid}`, {
-        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')},
-      });
+      let filename = videoData.data[0].filename;
       return {
-        filename: filename.data[0].filename,
+        filename: filename,
         time: startTime
       };
+    } else {
+      axios.get('/api/unwatchedVideos', config).then(res => {
+        if (typeof res.data.rows !== 'undefined') {
+          return {
+            filename: res.data.rows[0].filename,
+            time: 0
+          };
+        } else {
+          console.log('No unwatched videos found');
+          return {
+            filename: 'DocRicketts-0569_20131213T224337Z_00-00-01-00TC_h264.mp4',
+            time: 0
+          };
+        }
+      }).catch(error => {
+        console.log(error);
+        if (error.response) {
+          console.log(error.response.data.detail);
+        }
+      })
     }
-    return {
-      filename: 'DocRicketts-0569_20131213T224337Z_00-00-01-00TC_h264.mp4',
-      time: 0
-    };
-  };
+  }
 
   componentDidMount = async () => {
     let currentVideo = await this.getCurrentVideo();
     this.setState({
       videoName: currentVideo.filename,
+      isLoaded: true,
     }, () => {
       var myVideo = document.getElementById("video");
       myVideo.currentTime = currentVideo.time;
@@ -106,63 +122,72 @@ class Annotate extends Component {
   }
 
   updateCheckpoint = async (finished) => {
+    const config = {
+      headers: {
+        'Authorization': 'Bearer ' + localStorage.getItem('token')
+      }
+    };
     var myVideo = document.getElementById("video");
     var time = myVideo.currentTime;
-    if (localStorage.getItem('token') == null) {
-      return;
-    }
     if (finished) {
       time = 0;
     }
-    if (time > 0 || finished) {
-      fetch('/updateCheckpoint', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token')},
-        body: JSON.stringify({
-          'videoId': this.state.videoName,
-          'timeinvideo': time,
-          'finished' : finished
-        })
-      }).then(res => res.json())
-      .then(res => {
-        if (res.message !== "updated") {
-          console.log("error");
-        }
-      })
+    const body = {
+      'videoName': this.state.videoName,
+      'timeinvideo': time,
+      'finished' : finished
     }
+    await axios.post('/api/updateCheckpoint', body, config).then(res => {
+      if (res.data.message !== "updated") {
+        console.log(res.data.message);
+      }
+    }).catch(error => {
+      this.handleDialogClose();
+      console.log(error);
+      if (error.response) {
+        console.log(error.response.data.detail);
+      }
+    })
     // show next video on resume list
     if (finished) {
-      fetch('/api/userVideos/false', {
-        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')}
-      }).then(res => res.json())
-      .then(res => {
-        if (typeof res.rows[0] !== 'undefined') {
+      axios.get('/api/userCurrentVideos', config).then(res => {
+        if (res.data.rowCount > 0) {
           this.setState({
-            videoName: res.rows[0].filename
+            videoName: res.data.rows[0].filename
           }, () => {
-            // get saved time from videoid
-            fetch(`/api/timeAtVideo/${res.rows[0].id}`, {
-              headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')}
-            }).then(res => res.json())
-            .then(res => {
-              if (typeof res.rows !== 'undefined') {
+            axios.get(`/api/timeAtVideo/${res.data.rows[0].id}`, config).then(res => {
+              if (res.data.rowCount > 0) {
                 var myVideo = document.getElementById("video");
-                myVideo.currentTime = res.rows[0].timeinvideo;
+                myVideo.currentTime = res.data.rows[0].timeinvideo;
+              }
+            }).catch(error => {
+              console.log(error);
+              if (error.response) {
+                console.log(error.response.data.detail);
               }
             })
-          });
-        }
-        else { // no videos on resume list, get from unwatched list
-          fetch('/api/userUnwatchedVideos/', {
-            headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')}
-          }).then(res => res.json())
-          .then(res => {
-            if (typeof res.rows !== 'undefined') {
+          })
+        } else {
+          // no videos on resume list, get from unwatched list
+          axios.get('/api/unwatchedVideos', config).then(res => {
+            if (res.data.rowCount > 0) {
               this.setState({
-                videoName: res.rows[0].filename
-              });
+                videoName: res.data.rows[0].filename
+              })
+            } else {
+              console.log('No unwatched videos found');
+            }
+          }).catch(error => {
+            console.log(error);
+            if (error.response) {
+              console.log(error.response.data.detail);
             }
           })
+        }
+      }).catch(error => {
+        console.log(error);
+        if (error.response) {
+          console.log(error.response.data.detail);
         }
       })
     }
@@ -251,8 +276,7 @@ class Annotate extends Component {
     axios.post('/api/annotate', body, config).then(async res => {
       console.log(res.data.message);
       this.handleDialogClose();
-    })
-    .catch(error => {
+    }).catch(error => {
       console.log(error);
       if (error.response) {
         console.log(error.response.data);
@@ -263,7 +287,6 @@ class Annotate extends Component {
       }
     });
   }
-
 
   drawImages = (vidCord, dragBoxCord, myVideo, date, x1, y1) => {
     var canvas = document.createElement('canvas');
@@ -306,7 +329,7 @@ class Annotate extends Component {
       }
     });
   }
-  
+
   handleConceptClick = (concept) => {
   var myVideo = document.getElementById("video");
   this.setState({
@@ -340,6 +363,10 @@ class Annotate extends Component {
 
   render() {
     const { classes } = this.props;
+    const { isLoaded } = this.state;
+    if (!isLoaded) {
+      return <div>Loading...</div>
+    }
     return (
       <React.Fragment>
         <ErrorModal
@@ -358,7 +385,14 @@ class Annotate extends Component {
         {this.state.videoName}
 
         <div>
-          <video onPause={this.updateCheckpoint.bind(this, false)} id="video"  width="1600" height="900" src={'api/videos/Y7Ek6tndnA/'+this.state.videoName} type='video/mp4' controls>
+          <video
+              onPause={this.updateCheckpoint.bind(this, false)}
+              id="video"
+              width="1600"
+              height="900"
+              src={'api/videos/Y7Ek6tndnA/'+this.state.videoName}
+              type='video/mp4'
+          >
             Your browser does not support the video tag.
           </video>
           <Rnd id="dragBox"
@@ -389,7 +423,9 @@ class Annotate extends Component {
         <ConceptsSelected
           handleConceptClick={this.handleConceptClick}
         />
-        <VideoList handleVideoClick={this.handleVideoClick} />
+        <VideoList
+          handleVideoClick={this.handleVideoClick}
+        />
       </React.Fragment>
     );
   }

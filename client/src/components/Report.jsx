@@ -176,7 +176,7 @@ class Report extends React.Component {
                 </FormControl>
               ):(
                 <div></div>
-              )}
+        )}
               <FormControlLabel
                 control={
                   <Checkbox
