@@ -60,7 +60,7 @@ class VideoList extends Component {
     });
   }
 
-  handleVideoClick = (video, videoList) => {
+  handleVideoClick = (video) => {
     this.props.handleVideoClick(video.filename);
   }
   handleCurrentClick = () => {
@@ -80,7 +80,7 @@ class VideoList extends Component {
       unwatchedVideos,
       watchedVideos,
       currentListOpen,
-      unwatchedListOpen, 
+      unwatchedListOpen,
       watchedListOpen
     } = this.state;
     return (
@@ -96,7 +96,7 @@ class VideoList extends Component {
           <Collapse in={currentListOpen} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
               {currentVideos.map((video, index) => (
-                <ListItem button key={video.id} onClick={() => this.handleVideoClick(video.filename)}>
+                <ListItem button key={video.id} onClick={() => this.handleVideoClick(video)}>
                   <ListItemText primary={video.id + '. ' + video.filename} />
                 </ListItem>
               ))}
@@ -110,7 +110,7 @@ class VideoList extends Component {
           <Collapse in={unwatchedListOpen} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
               {unwatchedVideos.map((video, index) => (
-                <ListItem button key={video.id} onClick={() => this.handleVideoClick(video.filename)}>
+                <ListItem button key={video.id} onClick={() => this.handleVideoClick(video)}>
                   <ListItemText primary={video.id + '. ' + video.filename} />
                 </ListItem>
               ))}
@@ -124,7 +124,7 @@ class VideoList extends Component {
           <Collapse in={watchedListOpen} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
               {watchedVideos.map((video, index) => (
-                <ListItem button key={video.id} onClick={() => this.handleVideoClick(video.filename)}>
+                <ListItem button key={video.id} onClick={() => this.handleVideoClick(video)}>
                   <ListItemText primary={video.id + '. ' + video.filename} />
                 </ListItem>
               ))}

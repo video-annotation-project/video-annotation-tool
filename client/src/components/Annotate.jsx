@@ -227,7 +227,7 @@ class Annotate extends Component {
 
   handleVideoClick = async (filename) => {
     this.setState({
-      videoName: filename
+      videoName: filename,
     })
     let currentTime = await this.getVideoStartTime(filename);
     if (currentTime.data.length === 1) {
