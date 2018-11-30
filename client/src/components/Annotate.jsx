@@ -12,6 +12,12 @@ import { withStyles } from '@material-ui/core/styles';
 
 
 const styles = theme => ({
+  boxContainer: {
+    postion: 'absolute',
+    top: '50px',
+    width: '1600px',
+    height: '900px'
+  },
   dragBox: {
     margin: '0px',
     backgroundColor: 'transparent',
@@ -363,7 +369,7 @@ class Annotate extends Component {
 
   render() {
     const { classes } = this.props;
-    const { isLoaded } = this.state;
+    const { isLoaded, reloadVideoList } = this.state;
     if (!isLoaded) {
       return <div>Loading...</div>
     }
@@ -385,31 +391,33 @@ class Annotate extends Component {
         {this.state.videoName}
 
         <div>
-          <video
-              onPause={this.updateCheckpoint.bind(this, false)}
-              id="video"
-              width="1600"
-              height="900"
-              src={'api/videos/Y7Ek6tndnA/'+this.state.videoName}
-              type='video/mp4'
-          >
-            Your browser does not support the video tag.
-          </video>
-          <Rnd id="dragBox"
-            default={{
-              x: 30,
-              y: 30,
-              width: 60,
-              height: 60,
-          }}
-            minWidth={25}
-            minHeight={25}
-            maxWidth={900}
-            maxHeight={650}
-            bounds="parent"
-            className={classes.dragBox}
-          >
-          </Rnd>
+          <div className = {classes.boxContainer}>
+            <video
+                onPause={this.updateCheckpoint.bind(this, false)}
+                id="video"
+                width="1600"
+                height="900"
+                src={'api/videos/Y7Ek6tndnA/'+this.state.videoName}
+                type='video/mp4'
+            >
+              Your browser does not support the video tag.
+            </video>
+            <Rnd id="dragBox"
+              default={{
+                x: 30,
+                y: 30,
+                width: 60,
+                height: 60,
+            }}
+              minWidth={25}
+              minHeight={25}
+              maxWidth={900}
+              maxHeight={650}
+              bounds="parent"
+              className={classes.dragBox}
+            >
+            </Rnd>
+          </div>
           <br />
           <Button variant="contained" color="primary" className={classes.button} onClick={this.rewind}>-5 sec</Button>
           <Button variant="contained" color="primary" className={classes.button} onClick={this.playPause}>Play/Pause</Button>
