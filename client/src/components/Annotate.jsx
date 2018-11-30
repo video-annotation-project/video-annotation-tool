@@ -369,7 +369,7 @@ class Annotate extends Component {
 
   render() {
     const { classes } = this.props;
-    const { isLoaded, reloadVideoList } = this.state;
+    const { isLoaded } = this.state;
     if (!isLoaded) {
       return <div>Loading...</div>
     }
