@@ -38,32 +38,25 @@ class VideoList extends Component {
     };
   }
 
-  // Is it possible to combine all three get requests into one?
   componentDidMount = () => {
-    axios.get('/api/userVideos/false', {
-      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')}
-    }).then(res => res.data)
-      .then(res => {
+    axios.all([
+        axios.get('/api/userVideos/false', {
+          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')}
+        }),
+        axios.get('/api/userUnwatchedVideos/', {
+          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')}
+        }),
+        axios.get('/api/userVideos/true', {
+          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')}
+        })
+      ])
+      .then(axios.spread( (currentResp, unwatchedResp, watchedResp) => {
         this.setState({
-          currentVideos: res.rows
-      })
-    })
-    axios.get('/api/userUnwatchedVideos/', {
-      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')}
-    }).then(res => res.data)
-      .then(res => {
-        this.setState({
-          unwatchedVideos: res.rows
-      })
-    })
-    axios.get('/api/userVideos/true', {
-      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')}
-    }).then(res => res.data)
-      .then(res => {
-        this.setState({
-          watchedVideos: res.rows
-      })
-    })
+          currentVideos : currentResp.data.rows,
+          unwatchedVideos : unwatchedResp.data.rows,
+          watchedVideos : watchedResp.data.rows
+        })
+      }));
   }
 
   toggleVideoList = () => {
@@ -71,17 +64,13 @@ class VideoList extends Component {
       videoListOpen: !this.state.videoListOpen
     });
   }
+
   handleVideoClick = (filename) => {
     this.props.handleVideoClick(filename);
   }
-  handleCurrentClick = () => {
-    this.setState(state => ({ currentListOpen: !state.currentListOpen }));
-  }
-  handleUnwatchedClick = () => {
-    this.setState(state => ({ unwatchedListOpen: !state.unwatchedListOpen }));
-  }
-  handleWatchedClick = () => {
-    this.setState(state => ({ watchedListOpen: !state.watchedListOpen }));
+
+  handleListClick = (list) => {
+    this.setState(state => ({ [list]: !state[list] }));
   }
 
   render () {
@@ -93,7 +82,7 @@ class VideoList extends Component {
         </Button>
         <div className={classes.videos} style={{display: this.state.videoListOpen ? '' : 'none'}}>
 
-          <ListItem button onClick={this.handleCurrentClick}>
+          <ListItem button onClick={() => this.handleListClick("currentListOpen")}>
             <ListItemText inset primary="Current Videos" />
             {this.state.currentListOpen ? <ExpandLess /> : <ExpandMore />}
           </ListItem>
@@ -107,7 +96,7 @@ class VideoList extends Component {
             </List>
           </Collapse>
 
-          <ListItem button onClick={this.handleUnwatchedClick}>
+          <ListItem button onClick={() => this.handleListClick("unwatchedListOpen")}>
             <ListItemText inset primary="Unwatched Videos" />
             {this.state.unwatchedListOpen ? <ExpandLess /> : <ExpandMore />}
           </ListItem>
@@ -121,7 +110,7 @@ class VideoList extends Component {
             </List>
           </Collapse>
 
-          <ListItem button onClick={this.handleWatchedClick}>
+          <ListItem button onClick={() => this.handleListClick("watchedListOpen")}>
             <ListItemText inset primary="Watched Videos" />
             {this.state.watchedListOpen ? <ExpandLess /> : <ExpandMore />}
           </ListItem>
