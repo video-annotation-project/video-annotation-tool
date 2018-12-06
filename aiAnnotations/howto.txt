@@ -23,13 +23,13 @@ sure to add extra storage space(NOT MEMORY, 32Gigs on an ssd should be enough).
 2. GETTING ANNOTATIONS
 	Just run 'nohup python annotateAll.py &' to begin automatic annotations.
 	Can view status with 'tail nohup.out'.
-	This script runs constantly, atttempting to process each annotation from the current day.
+	This script runs constantly, looking up unprocessed annotations and tracking for any it finds.
 
 
 
 HELPFUL SQL QUERIES:
 
-Lists any duplicated annotations (generated when stopping and starting the script):
+Lists any duplicated annotations (possibly generated when stopping and starting the script):
 
 SELECT (annotations.image)::text, count(*)
 FROM annotations
@@ -42,8 +42,5 @@ DELETE FROM annotations T1
 USING   annotations T2
 WHERE   T1.id < T2.id
 AND T1.image  = T2.image;
-                                
-	TODO: Edit ai anotations when original is edited
-		- can probably just update the database calls in api/editAnnotation
 
 
