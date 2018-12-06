@@ -32,7 +32,8 @@ AI_ID = cursor.fetchone().id
 
 while True:
     # get annotations from test
-    cursor.execute("SELECT * FROM annotations where userid!=%d and dateannotated=%s",(AI_ID,str(datetime.date.today()),))
+    #cursor.execute("SELECT * FROM annotations where userid!=%d and dateannotated=%s",(AI_ID,str(datetime.date.today()),))
+    cursor.execute("SELECT * FROM annotations WHERE originalid IS NULL AND userid=5")
     rows = cursor.fetchall()
 
     processes = []
@@ -61,3 +62,4 @@ while True:
         results = s3.list_objects(Bucket=S3_BUCKET, Prefix=S3_VIDEO_FOLDER + str(i.id) + "_ai.mp4")
         if 'Contents' not in results:
             print("Failed on video for annotation: " + str(i.id))
+        cursor.execute("UPDATE annotations SET originalid=%d WHERE id=%d;",(i.id, i.id,))
