@@ -96,6 +96,7 @@ class Annotate extends Component {
   }
 
   componentDidMount = async () => {
+    document.addEventListener('keydown', this.handleKeyDown);
     let currentVideo = await this.getCurrentVideo();
     this.setState({
       currentVideo: currentVideo.video,
@@ -106,10 +107,29 @@ class Annotate extends Component {
     });
   }
 
-  rewind = () => {
+
+  componentWillUnmount = () => {
+     this.updateCheckpoint(false);
+     document.removeEventListener('keydown', this.handleKeyDown)
+  }
+
+  handleKeyDown = (e) => {
+    e.preventDefault();
+    if (e.code === "Space") {
+      this.playPause();
+    }
+    if (e.code === "ArrowRight") {
+      this.skipVideoTime(1);
+    }
+    if (e.code === "ArrowLeft") {
+      this.skipVideoTime(-1);
+    }
+  }
+
+  skipVideoTime = (time) => {
      var myVideo = document.getElementById("video");
      var cTime = myVideo.currentTime;
-     myVideo.currentTime = (cTime - 5);
+     myVideo.currentTime = (cTime + time);
   }
 
   playPause = () => {
@@ -119,12 +139,6 @@ class Annotate extends Component {
     } else {
       myVideo.pause();
     }
-  }
-
-  fastForward = () => {
-    var myVideo = document.getElementById("video");
-    var cTime = myVideo.currentTime;
-    myVideo.currentTime = (cTime + 5);
   }
 
   updateCheckpoint = async (finished) => {
@@ -215,10 +229,6 @@ class Annotate extends Component {
       alert("invalid input");
       myVideo.playbackRate = 1;
     }
-  }
-
-  componentWillUnmount = () => {
-     this.updateCheckpoint(false);
   }
 
   getVideoStartTime = async (filename) => {
@@ -422,9 +432,9 @@ class Annotate extends Component {
             </Rnd>
           </div>
           <br />
-          <Button variant="contained" color="primary" className={classes.button} onClick={this.rewind}>-5 sec</Button>
+          <Button variant="contained" color="primary" className={classes.button} onClick={() => this.skipVideoTime(-5)}>-5 sec</Button>
           <Button variant="contained" color="primary" className={classes.button} onClick={this.playPause}>Play/Pause</Button>
-          <Button variant="contained" color="primary" className={classes.button} onClick={this.fastForward}>+5 sec</Button>
+          <Button variant="contained" color="primary" className={classes.button} onClick={() => this.skipVideoTime(5)}>+5 sec</Button>
           <Button variant="contained" color="primary" className={classes.button} onClick={() => this.updateCheckpoint(true)}>Done</Button>
           <br />
           <span>Play at speed:</span>
