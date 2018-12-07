@@ -1,6 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
+const request = require('request')
 
 const _ = require('lodash');
 const passport = require('passport');
@@ -535,6 +536,9 @@ app.get('/api/videos/Y7Ek6tndnA/:name', (req, res) => {
     if (err) {
       return res.sendStatus(404);
     }
+    if (!data.Contents[0]){
+      return res.redirect('/api/videos/Y7Ek6tndnA/error.mp4');
+    }
     if (req != null && req.headers.range != null) {
       var range = req.headers.range;
       var bytes = range.replace(/bytes=/, '').split('-');
@@ -592,12 +596,7 @@ app.post('/api/annotate', passport.authenticate('jwt', {session: false}),
   let videoId = await getVideoId(req.body.videoId);
   let userId = req.user.id;
   let conceptId = await getConceptId(req.body.conceptId);
-  queryText = 'INSERT INTO annotations(videoid, userid, conceptid, timeinvideo, x1, \
-               y1, x2, y2, videoWidth, videoHeight, image, imagewithbox, comment, unsure, dateannotated) \
-               VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, current_timestamp) RETURNING *';
-  try {
-    let insertRes = await psql.query(queryText,
-      [videoId,
+  data = [videoId,
       userId,
       conceptId,
       req.body.timeinvideo,
@@ -610,12 +609,14 @@ app.post('/api/annotate', passport.authenticate('jwt', {session: false}),
       req.body.image+'.png',
       req.body.imagewithbox+'.png',
       req.body.comment,
-      req.body.unsure]);
-    res.json({
-      message: "successfully uploaded annotation to SQL server",
-      value: JSON.stringify(insertRes.rows[0])
-    });
-  } catch (error) {
+      req.body.unsure];
+  queryText = 'INSERT INTO annotations(videoid, userid, conceptid, timeinvideo, x1, \
+               y1, x2, y2, videoWidth, videoHeight, image, imagewithbox, comment, unsure, dateannotated) \
+               VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, current_timestamp) RETURNING *';
+  try {
+    let insertRes = await psql.query(queryText,data);
+    res.json({message: "Annotated", value: JSON.stringify(insertRes.rows[0])});
+  } catch(error) {
     console.log(error)
     res.status(400).json(error);
   }
@@ -675,7 +676,7 @@ app.post('/api/editAnnotation', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
     queryText = 'UPDATE annotations \
                  SET conceptid = $1, comment = $2, unsure = $3 \
-                 WHERE annotations.id=$4 RETURNING *';
+                 WHERE annotations.id=$4 OR annotations.originalid=$4 RETURNING *';
     queryUpdate = 'SELECT annotations.id, annotations.comment, annotations.unsure, annotations.timeinvideo, annotations.x1, annotations.y1, \
                  annotations.x2, annotations.y2, annotations.videoWidth, annotations.videoHeight, \
                  annotations.imagewithbox, concepts.name FROM annotations, concepts \
