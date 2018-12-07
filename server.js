@@ -319,7 +319,6 @@ app.get('/api/unwatchedVideos', passport.authenticate('jwt', {session: false}),
     queryPass = 'SELECT id, filename FROM videos WHERE id NOT IN (SELECT videoid FROM checkpoints);'
     try {
       const videoData = await psql.query(queryPass);
-      console.log('here');
       res.json(videoData);
     } catch (error) {
       res.json(error);
@@ -355,7 +354,7 @@ app.get('/api/listVideos/', passport.authenticate('jwt', {session: false}),
 app.get('/api/latestWatchedVideo', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
     let userId = req.user.id;
-    queryPass = 'SELECT checkpoints.timeinvideo, videos.filename \
+    queryPass = 'SELECT checkpoints.timeinvideo, videos.filename, videos.id \
                  FROM checkpoints, videos \
                  WHERE userid=$1 AND \
                  checkpoints.videoid=videos.id \
@@ -570,46 +569,6 @@ app.get('/api/annotationImage/:name', (req, res) => {
   })
 });
 
-app.get('/api/videos/Y7Ek6tndnA/:name', (req, res) => {
-  var s3 = new AWS.S3();
-  const mimetype = 'video/mp4';
-  const file = process.env.AWS_S3_BUCKET_VIDEOS_FOLDER + req.params.name;
-  const cache = 0;
-  s3.listObjectsV2({Bucket: process.env.AWS_S3_BUCKET_NAME, MaxKeys: 1, Prefix: file}, function(err, data) {
-    if (err) {
-      return res.sendStatus(404);
-    }
-    if (req != null && req.headers.range != null) {
-      var range = req.headers.range;
-      var bytes = range.replace(/bytes=/, '').split('-');
-      var start = parseInt(bytes[0], 10);
-      var total = data.Contents[0].Size;
-      var end = bytes[1] ? parseInt(bytes[1], 10) : total - 1;
-      var chunksize = (end - start) + 1;
-
-      res.writeHead(206, {
-        'Content-Range'  : 'bytes ' + start + '-' + end + '/' + total,
-        'Accept-Ranges'  : 'bytes',
-        'Content-Length' : chunksize,
-        'Last-Modified'  : data.Contents[0].LastModified,
-        'Content-Type'   : mimetype
-      });
-      s3.getObject({Bucket: process.env.AWS_S3_BUCKET_NAME, Key: file, Range: range}).createReadStream().pipe(res);
-    }
-    else
-    {
-      res.writeHead(200,
-      {
-        'Cache-Control' : 'max-age=' + cache + ', private',
-        'Content-Length': data.Contents[0].Size,
-        'Last-Modified' : data.Contents[0].LastModified,
-        'Content-Type'  : mimetype
-      });
-      s3.getObject({Bucket: process.env.AWS_S3_BUCKET_NAME, Key: file}).createReadStream().pipe(res);
-    }
-  });
-});
-
 async function getVideoId(value) {
   queryPass = 'select id from videos where videos.filename=$1';
   try {
@@ -633,7 +592,7 @@ async function getConceptId(value) {
 
 app.post('/api/annotate', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
-  let videoId = await getVideoId(req.body.videoId);
+  let videoId = await getVideoId(req.body.videoFilename);
   let userId = req.user.id;
   let conceptId = await getConceptId(req.body.conceptId);
   queryText = 'INSERT INTO annotations(videoid, userid, conceptid, timeinvideo, x1, \

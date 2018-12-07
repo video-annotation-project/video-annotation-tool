@@ -44,7 +44,7 @@ class Annotate extends Component {
     super(props);
     this.state = {
       error: null,
-      videoName: '',
+      currentVideo: null,
       errorMsg: null,
       errorOpen: false,
       dialogMsg: null,
@@ -54,7 +54,8 @@ class Annotate extends Component {
       clickedConcept: null,
       closeHandler: null,
       enterEnabled: true,
-      isLoaded: false
+      isLoaded: false,
+      videoDone: null
     };
   }
 
@@ -67,22 +68,21 @@ class Annotate extends Component {
     let videoData = await axios.get('/api/latestWatchedVideo', config)
     if (videoData.data.length > 0) { // they've started watching a video
       let startTime = videoData.data[0].timeinvideo;
-      let filename = videoData.data[0].filename;
       return {
-        filename: filename,
+        video: {'id': videoData.data[0].id, 'filename': videoData.data[0].filename},
         time: startTime
       };
     } else {
       axios.get('/api/unwatchedVideos', config).then(res => {
-        if (typeof res.data.rows !== 'undefined') {
+        if (res.data.rowCount > 0) {
           return {
-            filename: res.data.rows[0].filename,
+            video: res.data[0],
             time: 0
           };
         } else {
           console.log('No unwatched videos found');
           return {
-            filename: 'DocRicketts-0569_20131213T224337Z_00-00-01-00TC_h264.mp4',
+            video: {'id': 1, 'filename': 'DocRicketts-0569_20131213T224337Z_00-00-01-00TC_h264.mp4'},
             time: 0
           };
         }
@@ -98,7 +98,7 @@ class Annotate extends Component {
   componentDidMount = async () => {
     let currentVideo = await this.getCurrentVideo();
     this.setState({
-      videoName: currentVideo.filename,
+      currentVideo: currentVideo.video,
       isLoaded: true,
     }, () => {
       var myVideo = document.getElementById("video");
@@ -137,9 +137,12 @@ class Annotate extends Component {
     var time = myVideo.currentTime;
     if (finished) {
       time = 0;
+      this.setState({
+        videoDone: this.state.currentVideo
+      })
     }
     const body = {
-      'videoName': this.state.videoName,
+      'videoName': this.state.currentVideo.filename,
       'timeinvideo': time,
       'finished' : finished
     }
@@ -159,7 +162,7 @@ class Annotate extends Component {
       axios.get('/api/userCurrentVideos', config).then(res => {
         if (res.data.rowCount > 0) {
           this.setState({
-            videoName: res.data.rows[0].filename
+            currentVideo: res.data.rows[0]
           }, () => {
             axios.get(`/api/timeAtVideo/${res.data.rows[0].id}`, config).then(res => {
               if (res.data.rowCount > 0) {
@@ -178,7 +181,7 @@ class Annotate extends Component {
           axios.get('/api/unwatchedVideos', config).then(res => {
             if (res.data.rowCount > 0) {
               this.setState({
-                videoName: res.data.rows[0].filename
+                currentVideo: res.data.rows[0]
               })
             } else {
               console.log('No unwatched videos found');
@@ -225,11 +228,11 @@ class Annotate extends Component {
     return currentTime;
   };
 
-  handleVideoClick = async (filename) => {
+  handleVideoClick = async (video) => {
     this.setState({
-      videoName: filename,
+      currentVideo: video,
     })
-    let currentTime = await this.getVideoStartTime(filename);
+    let currentTime = await this.getVideoStartTime(video.filename);
     if (currentTime.data.length === 1) {
       var myVideo = document.getElementById("video");
       myVideo.currentTime = currentTime.data[0].timeinvideo;
@@ -260,7 +263,7 @@ class Annotate extends Component {
 
     const body = {
       'conceptId': this.state.clickedConcept.name,
-      'videoId': this.state.videoName,
+      'videoFilename': this.state.currentVideo.filename,
       'timeinvideo': cTime,
       'x1': x1,
       'y1': y1,
@@ -337,20 +340,20 @@ class Annotate extends Component {
   }
 
   handleConceptClick = (concept) => {
-  var myVideo = document.getElementById("video");
-  this.setState({
-    dialogMsg:  concept.name +
-                " in video " + this.state.videoName +
-                " at time " + Math.floor(myVideo.currentTime/60) + ' minutes '
-                + myVideo.currentTime%60 + " seconds",
-    dialogOpen: true,
-    dialogTitle: "Confirm Annotation",
-    dialogPlaceholder: "Comments",
-    clickedConcept: concept,
-    enterEnabled: true,
-    closeHandler: this.handleDialogClose
-  })
-}
+    var myVideo = document.getElementById("video");
+    this.setState({
+      dialogMsg:  concept.name +
+                  " in video " + this.state.currentVideo.filename +
+                  " at time " + Math.floor(myVideo.currentTime/60) + ' minutes '
+                  + myVideo.currentTime%60 + " seconds",
+      dialogOpen: true,
+      dialogTitle: "Confirm Annotation",
+      dialogPlaceholder: "Comments",
+      clickedConcept: concept,
+      enterEnabled: true,
+      closeHandler: this.handleDialogClose
+    })
+  }
 
   handleErrorClose = () => {
     this.setState({ errorOpen: false });
@@ -369,7 +372,7 @@ class Annotate extends Component {
 
   render() {
     const { classes } = this.props;
-    const { isLoaded } = this.state;
+    const { isLoaded, videoDone } = this.state;
     if (!isLoaded) {
       return <div>Loading...</div>
     }
@@ -388,7 +391,7 @@ class Annotate extends Component {
           handleClose={this.state.closeHandler}
           enterEnabled={this.state.enterEnabled}
         />
-        {this.state.videoName}
+      {this.state.currentVideo.id + " " + this.state.currentVideo.filename}
 
         <div>
           <div className = {classes.boxContainer}>
@@ -397,7 +400,7 @@ class Annotate extends Component {
                 id="video"
                 width="1600"
                 height="900"
-                src={'api/videos/Y7Ek6tndnA/'+this.state.videoName}
+                src={'http://d1bnpmj61iqorj.cloudfront.net/videos/'+this.state.currentVideo.filename}
                 type='video/mp4'
             >
               Your browser does not support the video tag.
@@ -433,6 +436,7 @@ class Annotate extends Component {
         />
         <VideoList
           handleVideoClick={this.handleVideoClick}
+          videoDone = {videoDone}
         />
       </React.Fragment>
     );

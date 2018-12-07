@@ -45,13 +45,22 @@ class VideoList extends Component {
         'Authorization': 'Bearer ' + localStorage.getItem('token')
       }
     };
-    axios.get('/api/listVideos/', config).then(res => {
+    if (this.props.videoDone) {
+      let videoList = JSON.parse(JSON.stringify(this.state.currentVideos));
+      videoList = videoList.filter(vid => vid.id !== this.props.videoDone.id);
       this.setState({
-        currentVideos: res.data[0].rows,
-        unwatchedVideos: res.data[1].rows,
-        watchedVideos: res.data[2].rows
+        currentVideos: videoList,
+        watchedVideos: this.state.watchedVideos.concat([this.props.videoDone])
       })
-    })
+    } else {
+      axios.get('/api/listVideos/', config).then(res => {
+        this.setState({
+          currentVideos: res.data[0].rows,
+          unwatchedVideos: res.data[1].rows,
+          watchedVideos: res.data[2].rows
+        })
+      })
+    }
   }
 
   toggleVideoList = () => {
@@ -60,8 +69,14 @@ class VideoList extends Component {
     });
   }
 
-  handleVideoClick = (video) => {
-    this.props.handleVideoClick(video.filename);
+  handleVideoClick = (video, videoListName) => {
+    let videoList = JSON.parse(JSON.stringify(this.state[videoListName]));
+    videoList = videoList.filter(vid => vid.id !== video.id);
+    this.setState({
+      currentVideos: this.state.currentVideos.concat([video]),
+      [videoListName]: videoList
+    })
+    this.props.handleVideoClick(video);
   }
   handleCurrentClick = () => {
     this.setState(state => ({ currentListOpen: !state.currentListOpen }));
@@ -96,7 +111,7 @@ class VideoList extends Component {
           <Collapse in={currentListOpen} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
               {currentVideos.map((video, index) => (
-                <ListItem button key={video.id} onClick={() => this.handleVideoClick(video)}>
+                <ListItem button key={video.id} onClick={() => this.handleVideoClick(video, 'currentVideos')}>
                   <ListItemText primary={video.id + '. ' + video.filename} />
                 </ListItem>
               ))}
@@ -110,7 +125,7 @@ class VideoList extends Component {
           <Collapse in={unwatchedListOpen} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
               {unwatchedVideos.map((video, index) => (
-                <ListItem button key={video.id} onClick={() => this.handleVideoClick(video)}>
+                <ListItem button key={video.id} onClick={() => this.handleVideoClick(video, 'unwatchedVideos')}>
                   <ListItemText primary={video.id + '. ' + video.filename} />
                 </ListItem>
               ))}
@@ -124,7 +139,7 @@ class VideoList extends Component {
           <Collapse in={watchedListOpen} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
               {watchedVideos.map((video, index) => (
-                <ListItem button key={video.id} onClick={() => this.handleVideoClick(video)}>
+                <ListItem button key={video.id} onClick={() => this.handleVideoClick(video, 'watchedVideos')}>
                   <ListItemText primary={video.id + '. ' + video.filename} />
                 </ListItem>
               ))}
