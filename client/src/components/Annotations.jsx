@@ -165,9 +165,11 @@ class Annotations extends Component {
                     <div></div>
                   )}
                   <IconButton className={classes.icons} aria-label="OndemandVideo">
-                  {annotation.showVideo ? (<OndemandVideo onClick = {(e) => this.showVideo(e, annotation.id)} />):
-                (<Photo onClick = {(e) => this.showVideo(e, annotation.id)} />)}
-
+                    {annotation.showVideo ?
+                      (<OndemandVideo onClick = {(e) => this.showVideo(e, annotation.id)} />)
+                      :
+                      (<Photo onClick = {(e) => this.showVideo(e, annotation.id)} />)
+                    }
                   </IconButton>
                   <IconButton className={classes.icons} aria-label="Delete">
                     <DeleteIcon onClick = {(e) => this.handleDelete(e, annotation.id)} />
