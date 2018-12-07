@@ -109,7 +109,7 @@ class Annotations extends Component {
     });
   }
 
-  reloadAnnotations = (id, updatedName, updatedComment, updatedUnsure) => {
+  updateAnnotations = (id, updatedName, updatedComment, updatedUnsure) => {
     let annotations = JSON.parse(JSON.stringify(this.state.annotations));
     let annotation = annotations.find(annotation => annotation.id === id);
     annotation.name = updatedName;
@@ -135,12 +135,11 @@ class Annotations extends Component {
           {annotations.map((annotation, index) => (
             <React.Fragment key={index}>
               <ListItem button
-                 onClick={() => this.handleClick(
-                   annotation.timeinvideo,
-                   annotation.filename,
-                   annotation.id
-                   )
-                 }
+                onClick={() => this.handleClick(
+                  annotation.timeinvideo,
+                  annotation.filename,
+                  annotation.id
+                )}
               >
 
                 <ListItemText
@@ -151,40 +150,48 @@ class Annotations extends Component {
                     annotation.name
                   }
                   secondary={
-                    (annotation.comment ?
+                    annotation.comment ? (
                       "Annotation Comment: " + annotation.comment
-                      :
+                    ):(
                       ""
                     )
                   }
                 />
+
                 <ListItemSecondaryAction >
                   {annotation.unsure ? (
-                      <Icon>help</Icon>
+                    <Icon>help</Icon>
                   ):(
                     <div></div>
                   )}
                   <IconButton className={classes.icons} aria-label="OndemandVideo">
-                    {annotation.showVideo ?
-                      (<OndemandVideo onClick = {(e) => this.showVideo(e, annotation.id)} />)
-                      :
-                      (<Photo onClick = {(e) => this.showVideo(e, annotation.id)} />)
-                    }
+                    {annotation.showVideo ? (
+                      <OndemandVideo onClick={(e) => this.toggleShowVideo(e, annotation.id)} />
+                    ):(
+                      <Photo onClick={(e) => this.toggleShowVideo(e, annotation.id)} />
+                    )}
                   </IconButton>
                   <IconButton className={classes.icons} aria-label="Delete">
-                    <DeleteIcon onClick = {(e) => this.handleDelete(e, annotation.id)} />
+                    <DeleteIcon onClick={(e) => this.handleDelete(e, annotation.id)} />
                   </IconButton>
                   {annotation.expanded ? <ExpandLess /> : <ExpandMore />}
                 </ListItemSecondaryAction>
               </ListItem>
+
               <Collapse in={annotation.expanded} timeout='auto' unmountOnExit>
-              {annotation.showVideo ? (<video id="video"  width="800" height="450" src={'api/videos/Y7Ek6tndnA/' + annotation.id +'_ai.mp4'} type='video/mp4' controls>
-                  Your browser does not support the video tag.
-                </video>):
-                (<AnnotationFrame
-                  annotation={annotation}
-                  reloadAnnotations={this.reloadAnnotations}
-                />)}
+                {annotation.showVideo ? (
+                  <video
+                    id="video"  width="800" height="450"
+                    src={'api/videos/Y7Ek6tndnA/' + annotation.id + '_ai.mp4'}
+                    type='video/mp4' controls>
+                    Your browser does not support the video tag.
+                  </video>
+                ):(
+                  <AnnotationFrame
+                    annotation={annotation}
+                    updateAnnotations={this.updateAnnotations}
+                  />
+                )}
               </Collapse>
             </React.Fragment>
           ))}
