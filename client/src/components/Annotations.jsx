@@ -20,9 +20,6 @@ import AnnotationFrame from './AnnotationFrame.jsx';
 
 
 const styles = theme => ({
-  root: {
-    backgroundColor: theme.palette.background.paper,
-  },
   icons: {
     float: 'left',
     position: 'relative',
@@ -76,17 +73,13 @@ class Annotations extends Component {
     });
   }
 
-  showVideo = async (event, id) => {  
-    let annotations = this.state.annotations
+  toggleShowVideo = async (event, id) => {
+    let annotations = this.state.annotations;
     let annotation = annotations.find(annotation => annotation.id === id);
-    if(!annotation.expanded){
+    if (!annotation.expanded) {
       annotation.expanded = true;
     }
-    if(annotation.showVideo){
-      annotation.showVideo = false;
-    }else{
-      annotation.showVideo = true;
-    }
+    annotation.showVideo = !annotation.showVideo;
     this.setState({
       annotations: annotations
     });
@@ -138,7 +131,7 @@ class Annotations extends Component {
     }
     return (
       <React.Fragment>
-        <List className={classes.root}>
+        <List>
           {annotations.map((annotation, index) => (
             <React.Fragment key={index}>
               <ListItem button
@@ -174,7 +167,7 @@ class Annotations extends Component {
                   <IconButton className={classes.icons} aria-label="OndemandVideo">
                   {annotation.showVideo ? (<OndemandVideo onClick = {(e) => this.showVideo(e, annotation.id)} />):
                 (<Photo onClick = {(e) => this.showVideo(e, annotation.id)} />)}
-                    
+
                   </IconButton>
                   <IconButton className={classes.icons} aria-label="Delete">
                     <DeleteIcon onClick = {(e) => this.handleDelete(e, annotation.id)} />
