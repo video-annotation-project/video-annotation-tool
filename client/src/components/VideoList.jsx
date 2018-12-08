@@ -102,7 +102,7 @@ class VideoList extends Component {
           Toggle Video List
         </Button>
         <div className={classes.videos} style={{display: this.state.videoListOpen ? '' : 'none'}}>
-          <ListItem button onClick={() => this.handleListClick("currentVideos"}>
+          <ListItem button onClick={() => this.handleListClick("currentListOpen")}>
             <ListItemText inset primary="Current Videos" />
             {currentListOpen ? <ExpandLess /> : <ExpandMore />}
           </ListItem>
@@ -116,7 +116,7 @@ class VideoList extends Component {
             </List>
           </Collapse>
 
-          <ListItem button onClick={() => this.handleListClick("unwatchedVideos"}>
+          <ListItem button onClick={() => this.handleListClick("unwatchedListOpen")}>
             <ListItemText inset primary="Unwatched Videos" />
             {unwatchedListOpen ? <ExpandLess /> : <ExpandMore />}
           </ListItem>
@@ -130,7 +130,7 @@ class VideoList extends Component {
             </List>
           </Collapse>
 
-          <ListItem button onClick={() => this.handleListClick("watchedListOpen"}>
+          <ListItem button onClick={() => this.handleListClick("watchedListOpen")}>
             <ListItemText inset primary="Watched Videos" />
             {watchedListOpen ? <ExpandLess /> : <ExpandMore />}
           </ListItem>
