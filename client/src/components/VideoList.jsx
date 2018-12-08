@@ -38,29 +38,19 @@ class VideoList extends Component {
     };
   }
 
-  // Is it possible to combine all three get requests into one?
   componentDidMount = () => {
     const config = {
       headers: {
         'Authorization': 'Bearer ' + localStorage.getItem('token')
       }
     };
-    if (this.props.videoDone) {
-      let videoList = JSON.parse(JSON.stringify(this.state.currentVideos));
-      videoList = videoList.filter(vid => vid.id !== this.props.videoDone.id);
+    axios.get('/api/listVideos/', config).then(res => {
       this.setState({
-        currentVideos: videoList,
-        watchedVideos: this.state.watchedVideos.concat([this.props.videoDone])
+        currentVideos: res.data[0].rows,
+        unwatchedVideos: res.data[1].rows,
+        watchedVideos: res.data[2].rows
       })
-    } else {
-      axios.get('/api/listVideos/', config).then(res => {
-        this.setState({
-          currentVideos: res.data[0].rows,
-          unwatchedVideos: res.data[1].rows,
-          watchedVideos: res.data[2].rows
-        })
-      })
-    }
+    })
   }
 
   toggleVideoList = () => {
@@ -70,24 +60,32 @@ class VideoList extends Component {
   }
 
   handleVideoClick = (video, videoListName) => {
+    /*
+    If click unwatched remove from unwatchced and placed in current
+    If current clicked stay there unless complete then remove and add to watchedVideos
+    If video in watched is clicked then it should stay there
+    */
     let videoList = JSON.parse(JSON.stringify(this.state[videoListName]));
-    videoList = videoList.filter(vid => vid.id !== video.id);
-    this.setState({
-      currentVideos: this.state.currentVideos.concat([video]),
-      [videoListName]: videoList
-    })
+    if (videoListName === 'unwatchedVideos') {
+      videoList = videoList.filter(vid => vid.id !== video.id);
+      this.setState({
+        [videoListName]: videoList
+      })
+    }
+    let currentVideosList = JSON.parse(JSON.stringify(this.state.currentVideos));
+    let videoInCurrent = currentVideosList.find(vid => vid.id === video.id);
+    if (videoInCurrent === undefined) {
+      currentVideosList = currentVideosList.concat([video]);
+      this.setState({
+        currentVideos: currentVideosList
+      })
+    }
+
     this.props.handleVideoClick(video);
   }
-  handleCurrentClick = () => {
-    this.setState(state => ({ currentListOpen: !state.currentListOpen }));
+  handleListClick = (list) => {
+    this.setState(state => ({ [list]: !state[list] }));
   }
-  handleUnwatchedClick = () => {
-    this.setState(state => ({ unwatchedListOpen: !state.unwatchedListOpen }));
-  }
-  handleWatchedClick = () => {
-    this.setState(state => ({ watchedListOpen: !state.watchedListOpen }));
-  }
-
   render () {
     const { classes } = this.props;
     const {
@@ -104,7 +102,7 @@ class VideoList extends Component {
           Toggle Video List
         </Button>
         <div className={classes.videos} style={{display: this.state.videoListOpen ? '' : 'none'}}>
-          <ListItem button onClick={this.handleCurrentClick}>
+          <ListItem button onClick={() => this.handleListClick("currentVideos"}>
             <ListItemText inset primary="Current Videos" />
             {currentListOpen ? <ExpandLess /> : <ExpandMore />}
           </ListItem>
@@ -118,7 +116,7 @@ class VideoList extends Component {
             </List>
           </Collapse>
 
-          <ListItem button onClick={this.handleUnwatchedClick}>
+          <ListItem button onClick={() => this.handleListClick("unwatchedVideos"}>
             <ListItemText inset primary="Unwatched Videos" />
             {unwatchedListOpen ? <ExpandLess /> : <ExpandMore />}
           </ListItem>
@@ -132,7 +130,7 @@ class VideoList extends Component {
             </List>
           </Collapse>
 
-          <ListItem button onClick={this.handleWatchedClick}>
+          <ListItem button onClick={() => this.handleListClick("watchedListOpen"}>
             <ListItemText inset primary="Watched Videos" />
             {watchedListOpen ? <ExpandLess /> : <ExpandMore />}
           </ListItem>

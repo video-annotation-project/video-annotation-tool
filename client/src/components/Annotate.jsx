@@ -55,7 +55,6 @@ class Annotate extends Component {
       closeHandler: null,
       enterEnabled: true,
       isLoaded: false,
-      videoDone: null
     };
   }
 
@@ -151,9 +150,6 @@ class Annotate extends Component {
     var time = myVideo.currentTime;
     if (finished) {
       time = 0;
-      this.setState({
-        videoDone: this.state.currentVideo
-      })
     }
     const body = {
       'videoName': this.state.currentVideo.filename,
@@ -382,7 +378,7 @@ class Annotate extends Component {
 
   render() {
     const { classes } = this.props;
-    const { isLoaded, videoDone } = this.state;
+    const { isLoaded } = this.state;
     if (!isLoaded) {
       return <div>Loading...</div>
     }
@@ -446,7 +442,6 @@ class Annotate extends Component {
         />
         <VideoList
           handleVideoClick={this.handleVideoClick}
-          videoDone = {videoDone}
         />
       </React.Fragment>
     );
