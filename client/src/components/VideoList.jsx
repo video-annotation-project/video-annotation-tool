@@ -65,23 +65,21 @@ class VideoList extends Component {
     If current clicked stay there unless complete then remove and add to watchedVideos
     If video in watched is clicked then it should stay there
     */
-    let videoList = JSON.parse(JSON.stringify(this.state[videoListName]));
     if (videoListName === 'unwatchedVideos') {
+      let videoList = JSON.parse(JSON.stringify(this.state[videoListName]));
       videoList = videoList.filter(vid => vid.id !== video.id);
       this.setState({
         [videoListName]: videoList
       })
-    }
-    let currentVideosList = JSON.parse(JSON.stringify(this.state.currentVideos));
-    let videoInCurrent = currentVideosList.find(vid => vid.id === video.id);
-    if (videoInCurrent === undefined) {
-      currentVideosList = currentVideosList.concat([video]);
+      let currentVideosList = JSON.parse(JSON.stringify(this.state.currentVideos));
       this.setState({
-        currentVideos: currentVideosList
+        currentVideos: currentVideosList.concat([video])
       })
     }
 
-    this.props.handleVideoClick(video);
+    if (videoListName === 'unwatchedVideos' || videoListName === 'currentVideos') {
+      this.props.handleVideoClick(video);
+    }
   }
   handleListClick = (list) => {
     this.setState(state => ({ [list]: !state[list] }));
