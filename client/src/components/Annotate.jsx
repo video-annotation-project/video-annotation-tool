@@ -170,6 +170,7 @@ class Annotate extends Component {
     var time = myVideo.currentTime;
     if (finished) {
       time = 0;
+      //
     }
     const body = {
       'videoName': this.state.currentVideo.filename,
@@ -181,7 +182,6 @@ class Annotate extends Component {
         console.log(res.data.message);
       }
     }).catch(error => {
-      this.handleDialogClose();
       console.log(error);
       if (error.response) {
         console.log(error.response.data.detail);
@@ -207,7 +207,7 @@ class Annotate extends Component {
             })
           })
         } else {
-          // no videos on resume list, get from unwatched list
+          // no current videos, get next video from unwatchedVideos
           axios.get('/api/unwatchedVideos', config).then(res => {
             if (res.data.rowCount > 0) {
               this.setState({
