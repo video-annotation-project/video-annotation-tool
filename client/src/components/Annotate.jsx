@@ -55,6 +55,9 @@ class Annotate extends Component {
       closeHandler: null,
       enterEnabled: true,
       isLoaded: false,
+      currentVideos: [],
+      unwatchedVideos: [],
+      watchedVideos: []
     };
   }
 
@@ -95,17 +98,34 @@ class Annotate extends Component {
   }
 
   componentDidMount = async () => {
+
+    // adds event listeners for different key presses
     document.addEventListener('keydown', this.handleKeyDown);
+
+    // retrieves the last watched video
     let currentVideo = await this.getCurrentVideo();
     this.setState({
       currentVideo: currentVideo.video,
-      isLoaded: true,
-    }, () => {
-      var myVideo = document.getElementById("video");
-      myVideo.currentTime = currentVideo.time;
     });
-  }
 
+    // loading the video list data
+    const config = {
+      headers: {
+        'Authorization': 'Bearer ' + localStorage.getItem('token')
+      }
+    };
+    axios.get('/api/listVideos/', config).then(res => {
+      this.setState({
+        currentVideos: res.data[0].rows,
+        unwatchedVideos: res.data[1].rows,
+        watchedVideos: res.data[2].rows,
+        isLoaded: true,
+      }, () => {
+        var myVideo = document.getElementById("video");
+        myVideo.currentTime = currentVideo.time;
+      });
+    })
+  }
 
   componentWillUnmount = () => {
      this.updateCheckpoint(false);
@@ -234,14 +254,41 @@ class Annotate extends Component {
     return currentTime;
   };
 
-  handleVideoClick = async (video) => {
-    this.setState({
-      currentVideo: video,
-    })
-    let currentTime = await this.getVideoStartTime(video.filename);
-    if (currentTime.data.length === 1) {
-      var myVideo = document.getElementById("video");
-      myVideo.currentTime = currentTime.data[0].timeinvideo;
+  handleVideoClick = async (video, videoListName) => {
+
+    /*
+    If an unwatched video was clicked, remove it from unwatchedVideos and add it
+    to currentVideos
+    If a current video or watched video was clicked, do nothing
+    */
+    if (videoListName === 'unwatchedVideos') {
+      let unwatchedVideos = JSON.parse(JSON.stringify(this.state.unwatchedVideos));
+      unwatchedVideos = unwatchedVideos.filter(vid => vid.id !== video.id);
+      let currentVideos = JSON.parse(JSON.stringify(this.state.currentVideos));
+      currentVideos = currentVideos.concat([video]);
+      this.setState({
+        currentVideos: currentVideos,
+        unwatchedVideos: unwatchedVideos
+      });
+    }
+
+    /*
+    Right now our database's architecture requires that watchedVideos never be
+    played by the end user. Talk to Ishaan or Hanson for more details on this.
+    It's interesting, I promise.
+    Down the road, one solution is to change our database's architecture, which
+    might be kinda hard. Another solution is to let end users change
+    watchedVideos into unwatchedVideos.
+    */
+    if (videoListName === 'unwatchedVideos' || videoListName === 'currentVideos') {
+      this.setState({
+        currentVideo: video,
+      })
+      let currentTime = await this.getVideoStartTime(video.filename);
+      if (currentTime.data.length === 1) {
+        var myVideo = document.getElementById("video");
+        myVideo.currentTime = currentTime.data[0].timeinvideo;
+      }
     }
   };
 
@@ -442,6 +489,9 @@ class Annotate extends Component {
         />
         <VideoList
           handleVideoClick={this.handleVideoClick}
+          currentVideos={this.state.currentVideos}
+          unwatchedVideos={this.state.unwatchedVideos}
+          watchedVideos={this.state.watchedVideos}
         />
       </React.Fragment>
     );

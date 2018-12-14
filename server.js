@@ -329,9 +329,9 @@ app.get('/api/unwatchedVideos', passport.authenticate('jwt', {session: false}),
 app.get('/api/listVideos/', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
     let userId = req.user.id;
-    queryUserCurrentlyWatched = 'SELECT id, filename \
-                                 FROM videos \
-                                 WHERE id IN (SELECT videoid FROM checkpoints WHERE userid=$1 AND finished=false);'
+    queryUserCurrentVideos = 'SELECT id, filename \
+                              FROM videos \
+                              WHERE id IN (SELECT videoid FROM checkpoints WHERE userid=$1 AND finished=false);'
     queryGlobalNotWatched = 'SELECT id, filename \
                              FROM videos \
                              WHERE id NOT IN (SELECT videoid FROM checkpoints);'
@@ -339,11 +339,10 @@ app.get('/api/listVideos/', passport.authenticate('jwt', {session: false}),
                               FROM videos \
                               WHERE id IN (SELECT videoid FROM checkpoints WHERE finished=true);'
     try {
-
-      const currentlyWatched = await psql.query(queryUserCurrentlyWatched, [userId]);
+      const currentVideos = await psql.query(queryUserCurrentVideos, [userId]);
       const notDoneVideos = await psql.query(queryGlobalNotWatched);
       const doneVideos = await psql.query(queryGlobalDoneWatched);
-      const videoData = [currentlyWatched, notDoneVideos, doneVideos];
+      const videoData = [currentVideos, notDoneVideos, doneVideos];
       res.json(videoData);
     } catch (error) {
       res.json(error);
