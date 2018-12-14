@@ -1,0 +1,46 @@
+This is an explanation of how to set up an ec2 instance as a server 
+to recieve annotation data and use it to generate further annotation 
+data using opencv tracking methods.
+
+
+First have to set up the ec2 instance, choose an ubutuntu server AMI, and make 
+sure to add extra storage space(NOT MEMORY, 32Gigs on an ssd should be enough).
+
+1. SETTING UP OPENCV
+	SSH into the ec2 instance and follow
+	https://www.pyimagesearch.com/opencv-tutorials-resources-guides/
+	to set up opencv, make sure to add '-DWITH_FFMPEG=ON' to the cmake command. You'll have to download
+	a couple of extra packages along the way, and make sure to update paths to point to the correct places.
+	*** Make sure to be doing everything on python 3.6 and in a virtual env***
+	Confirm that it is working with 'python -c 'import cv2; print(cv2.__version__);'
+	(Hopefully we can have a test script at some point)
+	You'll have to pip install a bunch of packages (WHILE IN VENV)
+	pip install python-dotenv
+	As well as 
+	'sudo apt install ffmpeg'
+	'sudo apt-get install libpq-dev'
+
+2. GETTING ANNOTATIONS
+	Just run 'nohup python annotateAll.py &' to begin automatic annotations.
+	Can view status with 'tail nohup.out'.
+	This script runs constantly, looking up unprocessed annotations and tracking for any it finds.
+
+
+
+HELPFUL SQL QUERIES:
+
+Lists any duplicated annotations (possibly generated when stopping and starting the script):
+
+SELECT (annotations.image)::text, count(*)
+FROM annotations
+GROUP BY annotations.image
+HAVING count(*) > 1;
+
+Removes any duplicate annotations:
+
+DELETE FROM annotations T1
+USING   annotations T2
+WHERE   T1.id < T2.id
+AND T1.image  = T2.image;
+
+
