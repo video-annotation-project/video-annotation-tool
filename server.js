@@ -356,8 +356,9 @@ app.get('/api/latestWatchedVideo', passport.authenticate('jwt', {session: false}
     let userId = req.user.id;
     queryPass = 'SELECT checkpoints.timeinvideo, videos.filename, videos.id \
                  FROM checkpoints, videos \
-                 WHERE userid=$1 AND \
-                 checkpoints.videoid=videos.id \
+                 WHERE checkpoints.userid=$1 AND \
+                 checkpoints.videoid=videos.id AND \
+                 checkpoints.finished=false \
                  ORDER BY timestamp DESC;'
     try {
       const videoData = await psql.query(queryPass, [userId]);

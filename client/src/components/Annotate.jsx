@@ -62,38 +62,33 @@ class Annotate extends Component {
   }
 
   getCurrentVideo = async () => {
-    const config = {
-      headers: {
-        'Authorization': 'Bearer ' + localStorage.getItem('token')
-      }
-    };
-    let videoData = await axios.get('/api/latestWatchedVideo', config)
-    if (videoData.data.length > 0) { // they've started watching a video
-      let startTime = videoData.data[0].timeinvideo;
+    if (this.state.currentVideos.length > 0) { // they have current videos
+      let currentTime = await this.getVideoStartTime(this.state.currentVideos[0].filename);
       return {
-        video: {'id': videoData.data[0].id, 'filename': videoData.data[0].filename},
-        time: startTime
+        video: this.state.currentVideos[0],
+        time: currentTime
       };
-    } else {
-      axios.get('/api/unwatchedVideos', config).then(res => {
-        if (res.data.rowCount > 0) {
-          return {
-            video: res.data[0],
-            time: 0
-          };
-        } else {
-          console.log('No unwatched videos found');
-          return {
-            video: {'id': 1, 'filename': 'DocRicketts-0569_20131213T224337Z_00-00-01-00TC_h264.mp4'},
-            time: 0
-          };
-        }
-      }).catch(error => {
-        console.log(error);
-        if (error.response) {
-          console.log(error.response.data.detail);
-        }
-      })
+    } else if (this.state.unwatchedVideos.length > 0) { // they have unwatched videos
+      let video = this.state.unwatchedVideos[0]
+      // remove from unwatched list
+      let unwatchedVideos = JSON.parse(JSON.stringify(this.state.unwatchedVideos));
+      unwatchedVideos = unwatchedVideos.filter(vid => vid.id !== video.id);
+      // Add unwatched video to current videos
+      let currentVideos = JSON.parse(JSON.stringify(this.state.currentVideos));
+      currentVideos = currentVideos.concat(video);
+      this.setState({
+        currentVideos: currentVideos,
+        unwatchedVideos: unwatchedVideos
+      });
+      return {
+        video: video,
+        time: 0
+      };
+    } else { // they dont have a video to be played returns default video 1
+      return {
+        video: {'id': 1, 'filename': 'DocRicketts-0569_20131213T224337Z_00-00-01-00TC_h264.mp4'},
+        time: 0
+      };
     }
   }
 
@@ -102,29 +97,32 @@ class Annotate extends Component {
     // adds event listeners for different key presses
     document.addEventListener('keydown', this.handleKeyDown);
 
-    // retrieves the last watched video
-    let currentVideo = await this.getCurrentVideo();
-    this.setState({
-      currentVideo: currentVideo.video,
-    });
-
     // loading the video list data
     const config = {
       headers: {
         'Authorization': 'Bearer ' + localStorage.getItem('token')
       }
     };
-    axios.get('/api/listVideos/', config).then(res => {
+
+    await axios.get('/api/listVideos/', config).then(res => {
       this.setState({
         currentVideos: res.data[0].rows,
         unwatchedVideos: res.data[1].rows,
         watchedVideos: res.data[2].rows,
-        isLoaded: true,
-      }, () => {
-        var myVideo = document.getElementById("video");
-        myVideo.currentTime = currentVideo.time;
       });
     })
+
+    // retrieves the last watched video
+    let currentVideo = await this.getCurrentVideo();
+    this.setState({
+      currentVideo: currentVideo.video,
+      isLoaded: true,
+    }, () => {
+      var myVideo = document.getElementById("video");
+      myVideo.currentTime = currentVideo.time;
+    });
+
+
   }
 
   componentWillUnmount = () => {
@@ -168,7 +166,11 @@ class Annotate extends Component {
     };
     var myVideo = document.getElementById("video");
     var time = myVideo.currentTime;
-    // If video is watched reset the time to 0
+    /*
+      If video is watched reset the time to 0
+      So in the future if a watched video is clicked
+      it will play from the begining
+    */
     if (finished) {
       time = 0;
     }
@@ -189,11 +191,23 @@ class Annotate extends Component {
     })
   };
 
-  doneWatching = async () => {
+  handleDoneClick = async () => {
     //Update video checkpoint to watched
     await this.updateCheckpoint(true);
 
-    //Get next video
+    // Handle remove from current list, add to watched list
+    let currentVideos = JSON.parse(JSON.stringify(this.state.currentVideos));
+    currentVideos = currentVideos.filter(vid => vid.id !== this.state.currentVideo.id);
+    let watchedVideos = JSON.parse(JSON.stringify(this.state.watchedVideos));
+    if (!watchedVideos.some(vid => vid.id === this.state.currentVideo.id)) {
+      watchedVideos = watchedVideos.concat(this.state.currentVideo);
+    }
+    this.setState({
+      currentVideos: currentVideos,
+      watchedVideos: watchedVideos
+    });
+
+    //Get next video and play it
     let currentVideo = await this.getCurrentVideo();
     this.setState({
       currentVideo: currentVideo.video,
@@ -216,10 +230,24 @@ class Annotate extends Component {
   }
 
   getVideoStartTime = async (filename) => {
-    let currentTime = await axios.get(`/api/videos/currentTime/${filename}`, {
-      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')},
-    })
-    return currentTime;
+    const config = {
+      headers: {
+        'Authorization': 'Bearer ' + localStorage.getItem('token')
+      }
+    };
+    try {
+      let videoTime = await axios.get(`/api/videos/currentTime/${filename}`, config);
+      if (videoTime.data.length > 0) {
+        return videoTime.data[0].timeinvideo;
+      } else {
+        return 0;
+      }
+    } catch (error) {
+      console.log(error);
+      if (error.response) {
+        console.log(error.response.data.detail);
+      }
+    }
   };
 
   handleVideoClick = async (video, videoListName) => {
@@ -233,7 +261,7 @@ class Annotate extends Component {
       let unwatchedVideos = JSON.parse(JSON.stringify(this.state.unwatchedVideos));
       unwatchedVideos = unwatchedVideos.filter(vid => vid.id !== video.id);
       let currentVideos = JSON.parse(JSON.stringify(this.state.currentVideos));
-      currentVideos = currentVideos.concat([video]);
+      currentVideos = currentVideos.concat(video);
       this.setState({
         currentVideos: currentVideos,
         unwatchedVideos: unwatchedVideos
@@ -253,10 +281,9 @@ class Annotate extends Component {
         currentVideo: video,
       })
       let currentTime = await this.getVideoStartTime(video.filename);
-      if (currentTime.data.length === 1) {
-        var myVideo = document.getElementById("video");
-        myVideo.currentTime = currentTime.data[0].timeinvideo;
-      }
+      console.log(currentTime);
+      var myVideo = document.getElementById("video");
+      myVideo.currentTime = currentTime;
     }
   };
 
@@ -336,7 +363,7 @@ class Annotate extends Component {
     this.putVideoImage(img, date, true);
   }
 
-  putVideoImage = async (img, date, box) => {
+  putVideoImage = (img, date, box) => {
     let buf = new Buffer(img.src.replace(/^data:image\/\w+;base64,/, ""),'base64');
     const body = {
       'buf': buf,
@@ -450,7 +477,7 @@ class Annotate extends Component {
           <Button variant="contained" color="primary" className={classes.button} onClick={() => this.skipVideoTime(-5)}>-5 sec</Button>
           <Button variant="contained" color="primary" className={classes.button} onClick={this.playPause}>Play/Pause</Button>
           <Button variant="contained" color="primary" className={classes.button} onClick={() => this.skipVideoTime(5)}>+5 sec</Button>
-          <Button variant="contained" color="primary" className={classes.button} onClick={() => this.doneWatching()}>Done</Button>
+          <Button variant="contained" color="primary" className={classes.button} onClick={() => this.handleDoneClick()}>Done</Button>
           <br />
           <span>Play at speed:</span>
           <p><input type="text" id="playSpeedId" placeholder="100" />&ensp; %</p>
