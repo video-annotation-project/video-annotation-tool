@@ -86,7 +86,7 @@ class AnnotationFrame extends Component {
     axios.post('/api/editAnnotation', body, config).then(res => {
       this.handleDialogClose();
       let updatedAnnotation = res.data;
-      this.props.reloadAnnotations(updatedAnnotation.id, updatedAnnotation.name, updatedAnnotation.comment, updatedAnnotation.unsure);
+      this.props.updateAnnotations(updatedAnnotation.id, updatedAnnotation.name, updatedAnnotation.comment, updatedAnnotation.unsure);
     }).catch(error => {
       this.handleDialogClose();
       console.log(error);
