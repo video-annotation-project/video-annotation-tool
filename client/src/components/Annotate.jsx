@@ -129,7 +129,7 @@ class Annotate extends Component {
 
   componentWillUnmount = () => {
      this.updateCheckpoint(false);
-     document.removeEventListener('keydown', this.handleKeyDown)
+     document.removeEventListener('keydown', this.handleKeyDown);
   }
 
   handleKeyDown = (e) => {
@@ -168,9 +168,9 @@ class Annotate extends Component {
     };
     var myVideo = document.getElementById("video");
     var time = myVideo.currentTime;
+    // If video is watched reset the time to 0
     if (finished) {
       time = 0;
-      //
     }
     const body = {
       'videoName': this.state.currentVideo.filename,
@@ -187,50 +187,18 @@ class Annotate extends Component {
         console.log(error.response.data.detail);
       }
     })
-    // show next video on resume list
-    if (finished) {
-      axios.get('/api/userCurrentVideos', config).then(res => {
-        if (res.data.rowCount > 0) {
-          this.setState({
-            currentVideo: res.data.rows[0]
-          }, () => {
-            axios.get(`/api/timeAtVideo/${res.data.rows[0].id}`, config).then(res => {
-              if (res.data.rowCount > 0) {
-                var myVideo = document.getElementById("video");
-                myVideo.currentTime = res.data.rows[0].timeinvideo;
-              }
-            }).catch(error => {
-              console.log(error);
-              if (error.response) {
-                console.log(error.response.data.detail);
-              }
-            })
-          })
-        } else {
-          // no current videos, get next video from unwatchedVideos
-          axios.get('/api/unwatchedVideos', config).then(res => {
-            if (res.data.rowCount > 0) {
-              this.setState({
-                currentVideo: res.data.rows[0]
-              })
-            } else {
-              console.log('No unwatched videos found');
-            }
-          }).catch(error => {
-            console.log(error);
-            if (error.response) {
-              console.log(error.response.data.detail);
-            }
-          })
-        }
-      }).catch(error => {
-        console.log(error);
-        if (error.response) {
-          console.log(error.response.data.detail);
-        }
-      })
-    }
   };
+
+  doneWatching = async () => {
+    //Update video checkpoint to watched
+    await this.updateCheckpoint(true);
+
+    //Get next video
+    let currentVideo = await this.getCurrentVideo();
+    this.setState({
+      currentVideo: currentVideo.video,
+    });
+  }
 
   changeSpeed = () => {
     try {
@@ -393,6 +361,8 @@ class Annotate extends Component {
   }
 
   handleConceptClick = (concept) => {
+    // Remove key listener to allow comment to be typed
+    document.removeEventListener('keydown', this.handleKeyDown);
     var myVideo = document.getElementById("video");
     this.setState({
       dialogMsg:  concept.name +
@@ -421,6 +391,7 @@ class Annotate extends Component {
       dialogTitle: "", //If set to null, raises a warning to the console
       clickedConcept: null,
     });
+    document.addEventListener('keydown', this.handleKeyDown);
   }
 
   render() {
@@ -455,6 +426,7 @@ class Annotate extends Component {
                 height="900"
                 src={'http://d1bnpmj61iqorj.cloudfront.net/videos/'+this.state.currentVideo.filename}
                 type='video/mp4'
+                crossOrigin='use-credentials'
             >
               Your browser does not support the video tag.
             </video>
@@ -478,7 +450,7 @@ class Annotate extends Component {
           <Button variant="contained" color="primary" className={classes.button} onClick={() => this.skipVideoTime(-5)}>-5 sec</Button>
           <Button variant="contained" color="primary" className={classes.button} onClick={this.playPause}>Play/Pause</Button>
           <Button variant="contained" color="primary" className={classes.button} onClick={() => this.skipVideoTime(5)}>+5 sec</Button>
-          <Button variant="contained" color="primary" className={classes.button} onClick={() => this.updateCheckpoint(true)}>Done</Button>
+          <Button variant="contained" color="primary" className={classes.button} onClick={() => this.doneWatching()}>Done</Button>
           <br />
           <span>Play at speed:</span>
           <p><input type="text" id="playSpeedId" placeholder="100" />&ensp; %</p>
