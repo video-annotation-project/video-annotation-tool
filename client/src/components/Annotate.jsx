@@ -28,7 +28,19 @@ const styles = theme => ({
     marginTop: '10px',
     marginLeft: '20px',
     marginBottom: '10px'
-  }
+  },
+  conceptSectionContainer: {
+    position: 'relative',
+    float: 'right',
+    width: '460px',
+    height: '1000px',
+    backgroundColor: 'white',
+    borderLeft: '1px black solid',
+    overflow: 'auto'
+  },
+  videoSectionContainer: {
+    float: 'left'
+  },
 });
 
 window.addEventListener("beforeunload", (ev) => {
@@ -57,7 +69,8 @@ class Annotate extends Component {
       isLoaded: false,
       currentVideos: [],
       unwatchedVideos: [],
-      watchedVideos: []
+      watchedVideos: [],
+      videoPlaybackRate: 1
     };
   }
 
@@ -214,19 +227,13 @@ class Annotate extends Component {
     });
   }
 
-  changeSpeed = () => {
-    try {
+  handleChangeSpeed = (event) => {
+    this.setState({
+      videoPlaybackRate: event.target.value
+    }, () => {
       var myVideo = document.getElementById("video");
-      var speed = document.getElementById("playSpeedId").value;
-      if ((speed / 100) === 0) {
-        myVideo.playbackRate = (1);
-      } else {
-        myVideo.playbackRate = (speed / 100);
-      }
-    } catch(err) {
-      alert("invalid input");
-      myVideo.playbackRate = 1;
-    }
+      myVideo.playbackRate = this.state.videoPlaybackRate;
+    });
   }
 
   getVideoStartTime = async (filename) => {
@@ -442,48 +449,54 @@ class Annotate extends Component {
           handleClose={this.state.closeHandler}
           enterEnabled={this.state.enterEnabled}
         />
-      {this.state.currentVideo.id + " " + this.state.currentVideo.filename}
-
-        <div>
-          <div className = {classes.boxContainer}>
-            <video
-                onPause={this.updateCheckpoint.bind(this, false)}
-                id="video"
-                width="1600"
-                height="900"
-                src={'http://d1bnpmj61iqorj.cloudfront.net/videos/'+this.state.currentVideo.filename}
-                type='video/mp4'
-                crossOrigin='use-credentials'
-            >
-              Your browser does not support the video tag.
-            </video>
-            <Rnd id="dragBox"
-              default={{
-                x: 30,
-                y: 30,
-                width: 60,
-                height: 60,
-            }}
-              minWidth={25}
-              minHeight={25}
-              maxWidth={900}
-              maxHeight={650}
-              bounds="parent"
-              className={classes.dragBox}
-            >
-            </Rnd>
-          </div>
-          <br />
-          <Button variant="contained" color="primary" className={classes.button} onClick={() => this.skipVideoTime(-5)}>-5 sec</Button>
-          <Button variant="contained" color="primary" className={classes.button} onClick={this.playPause}>Play/Pause</Button>
-          <Button variant="contained" color="primary" className={classes.button} onClick={() => this.skipVideoTime(5)}>+5 sec</Button>
-          <Button variant="contained" color="primary" className={classes.button} onClick={() => this.handleDoneClick()}>Done</Button>
-          <br />
-          <span>Play at speed:</span>
-          <p><input type="text" id="playSpeedId" placeholder="100" />&ensp; %</p>
-          <input type="submit" value="Enter" onClick={this.changeSpeed} />
+      <div className = {classes.videoSectionContainer}>
+        {this.state.currentVideo.id + " " + this.state.currentVideo.filename}
+        <div className = {classes.boxContainer}>
+          <video
+              onPause={this.updateCheckpoint.bind(this, false)}
+              id="video"
+              width="1600"
+              height="900"
+              src={'http://d1bnpmj61iqorj.cloudfront.net/videos/'+this.state.currentVideo.filename}
+              type='video/mp4'
+              crossOrigin='use-credentials'
+          >
+            Your browser does not support the video tag.
+          </video>
+          <Rnd id="dragBox"
+            default={{
+              x: 30,
+              y: 30,
+              width: 60,
+              height: 60,
+          }}
+            minWidth={25}
+            minHeight={25}
+            maxWidth={900}
+            maxHeight={650}
+            bounds="parent"
+            className={classes.dragBox}
+          >
+          </Rnd>
         </div>
+        <br />
+        <Button variant="contained" color="primary" className={classes.button} onClick={() => this.skipVideoTime(-5)}>-5 sec</Button>
+        <Button variant="contained" color="primary" className={classes.button} onClick={this.playPause}>Play/Pause</Button>
+        <Button variant="contained" color="primary" className={classes.button} onClick={() => this.skipVideoTime(5)}>+5 sec</Button>
+        <Button variant="contained" color="primary" className={classes.button} onClick={() => this.handleDoneClick()}>Done</Button>
+        <br />
+        <span>Play Rate: {this.state.videoPlaybackRate}</span>
+        <input
+          type="range"
+          id="playSpeedId"
+          min="0" max="4"
+          value={this.state.videoPlaybackRate}
+          onChange={this.handleChangeSpeed}
+          step=".1"
+        />
+      </div>
         <ConceptsSelected
+          className = {classes.conceptSectionContainer}
           handleConceptClick={this.handleConceptClick}
         />
         <VideoList
