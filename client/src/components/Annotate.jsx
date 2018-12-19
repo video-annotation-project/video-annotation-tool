@@ -288,7 +288,6 @@ class Annotate extends Component {
         currentVideo: video,
       })
       let currentTime = await this.getVideoStartTime(video.filename);
-      console.log(currentTime);
       var myVideo = document.getElementById("video");
       myVideo.currentTime = currentTime;
     }
