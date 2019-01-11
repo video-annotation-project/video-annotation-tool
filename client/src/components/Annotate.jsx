@@ -140,7 +140,7 @@ class Annotate extends Component {
   }
 
   handleKeyDown = (e) => {
-    if (e.code === "Space" && e.target === document.body) {  
+    if (e.code === "Space" && e.target === document.body) {
       e.preventDefault();
       this.playPause();
     }
@@ -164,6 +164,15 @@ class Annotate extends Component {
       myVideo.play();
     } else {
       myVideo.pause();
+    }
+  }
+
+  toggleVideoControls = () => {
+    var video = document.getElementById("video");
+    if (video.hasAttribute("controls")) {
+      video.removeAttribute("controls")
+    } else {
+      video.setAttribute("controls","controls")
     }
   }
 
@@ -466,6 +475,7 @@ class Annotate extends Component {
         <Button variant="contained" color="primary" className={classes.button} onClick={() => this.skipVideoTime(-5)}>-5 sec</Button>
         <Button variant="contained" color="primary" className={classes.button} onClick={this.playPause}>Play/Pause</Button>
         <Button variant="contained" color="primary" className={classes.button} onClick={() => this.skipVideoTime(5)}>+5 sec</Button>
+        <Button variant="contained" color="primary" className={classes.button} onClick={() => this.toggleVideoControls()}>Toggle Controls</Button>
         <Button variant="contained" color="primary" className={classes.button} onClick={() => this.handleDoneClick()}>Done</Button>
         <br />
         <span>Play Rate: {this.state.videoPlaybackRate}</span>
