@@ -140,8 +140,8 @@ class Annotate extends Component {
   }
 
   handleKeyDown = (e) => {
-    e.preventDefault();
-    if (e.code === "Space") {
+    if (e.code === "Space" && e.target === document.body) {  
+      e.preventDefault();
       this.playPause();
     }
     if (e.code === "ArrowRight") {
