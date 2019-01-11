@@ -14,6 +14,7 @@ import copy
 import time
 import uuid
 import sys
+import math
 
 #Load environment variables
 load_dotenv(dotenv_path="../.env")
@@ -59,9 +60,9 @@ def get_next_frame(frames, video_object, num):
 	return frame
 
 #Uploads images and adds annotation to database
-def upload_image(name, frame, frame_w_box, annotation, x1, y1, x2, y2, cursor, con, AI_ID):
-	no_box = str(annotation.id) + "_" + name + "_ai.png"
-	box = str(annotation.id) + "_" + name + "_box_ai.png"
+def upload_image(timeinvideo, frame, frame_w_box, annotation, x1, y1, x2, y2, cursor, con, AI_ID):
+	no_box = str(annotation.id) + "_" + str(timeinvideo) + "_ai.png"
+	box = str(annotation.id) + "_" + str(timeinvideo) + "_box_ai.png"
 	temp_file = str(uuid.uuid4()) + ".png"
 	cv2.imwrite(temp_file, frame)
 	s3.upload_file(temp_file, S3_BUCKET, S3_ANNOTATION_FOLDER + no_box, ExtraArgs={'ContentType':'image/png'}) 
@@ -77,7 +78,7 @@ def upload_image(name, frame, frame_w_box, annotation, x1, y1, x2, y2, cursor, c
 			VALUES (%d, %d, %d, %f, %f, %f, %f, %f, %d, %d, %s, %s, %s, %s, %s, %d)
 		""",
 		(
-			annotation.videoid, AI_ID, annotation.conceptid, annotation.timeinvideo, x1, y1, 
+			annotation.videoid, AI_ID, annotation.conceptid, timeinvideo, x1, y1, 
 			x2, y2, VIDEO_WIDTH, VIDEO_HEIGHT, datetime.datetime.now().date(), no_box, box, 
 			annotation.comment, annotation.unsure, annotation.id
 		)
@@ -85,7 +86,7 @@ def upload_image(name, frame, frame_w_box, annotation, x1, y1, x2, y2, cursor, c
 	con.commit()
 
 #Tracks the object forwards and backwards in a video
-def track_object(frames, box, video_object, end, original, cursor, con, AI_ID):
+def track_object(frames, box, video_object, end, original, cursor, con, AI_ID, fps):
         frame_list = []
         trackers = cv2.MultiTracker_create()
 
@@ -98,7 +99,7 @@ def track_object(frames, box, video_object, end, original, cursor, con, AI_ID):
         tracker = OPENCV_OBJECT_TRACKERS["kcf"]()
         trackers.add(tracker, frame, box)
         counter = 0
-        images_counter = 20 / images_per_sec # vids are about 20 fps
+        images_counter = math.floor(fps / images_per_sec) # vids are about 20 fps
 
         while True:
                 frame = get_next_frame(frames, video_object, counter)
@@ -113,7 +114,12 @@ def track_object(frames, box, video_object, end, original, cursor, con, AI_ID):
                                 cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
                         frame_list.append(frame)
                         if (counter % images_counter == 0):
-                                upload_image(str(int(counter // images_counter)), frame_no_box, frame, original, x, y, (x+w), (y+h), cursor, con, AI_ID)
+                                timeinvideo = (1 + counter)/fps
+                                if video_object:
+                                        timeinvideo = original.timeinvideo + timeinvideo
+                                else:
+                                        timeinvideo = original.timeinvideo - timeinvideo
+                                upload_image(timeinvideo, frame_no_box, frame, original, x, y, (x+w), (y+h), cursor, con, AI_ID)
                         counter += 1
                 else:
                         break
@@ -141,6 +147,7 @@ def ai_annotation(original):
                     'Key': S3_VIDEO_FOLDER + video_name}, 
                 ExpiresIn = 100)
         cap = cv2.VideoCapture(url)
+        fps = cap.get(cv2.CAP_PROP_FPS)
 	
         # initialize video for grabbing frames before annotation
         start = ((original.timeinvideo * 1000) - length) # start 3 secs before obj appears
@@ -171,14 +178,14 @@ def ai_annotation(original):
         
         # get object tracking frames prior to annotation
         frames = frame_list
-        reverse_frames = track_object(frames, box, False, 0, original, cursor, con, AI_ID)
+        reverse_frames = track_object(frames, box, False, 0, original, cursor, con, AI_ID, fps)
         reverse_frames.reverse()
         
         # new video capture object for frames after annotation
         vs = cv2.VideoCapture(url)
         vs.set(0, start)
         frames = vs
-        forward_frames = track_object(frames, box, True, start + length, original, cursor, con, AI_ID)
+        forward_frames = track_object(frames, box, True, start + length, original, cursor, con, AI_ID, fps)
         vs.release()
         
         output_file = str(uuid.uuid4()) + ".mp4"
