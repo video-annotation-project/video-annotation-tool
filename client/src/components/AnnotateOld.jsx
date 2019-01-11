@@ -4,6 +4,7 @@ import axios from 'axios';
 
 import ConceptsSelected from './ConceptsSelected.jsx';
 import VideoList from './VideoList.jsx';
+import ErrorModal from './ErrorModal.jsx';
 import DialogModal from './DialogModal.jsx';
 
 import Button from '@material-ui/core/Button';
@@ -54,7 +55,10 @@ class Annotate extends Component {
   constructor(props) {
     super(props);
     this.state = {
+      error: null,
       currentVideo: null,
+      errorMsg: null,
+      errorOpen: false,
       dialogMsg: null,
       dialogTitle: null,
       dialogPlaceholder: null,
@@ -140,8 +144,8 @@ class Annotate extends Component {
   }
 
   handleKeyDown = (e) => {
-    e.preventDefault();
     if (e.code === "Space") {
+      e.preventDefault();
       this.playPause();
     }
     if (e.code === "ArrowRight") {
@@ -339,6 +343,10 @@ class Annotate extends Component {
       console.log(error);
       if (error.response) {
         console.log(error.response.data);
+        this.setState({
+          errorMsg: error.response.data,
+          errorOpen: true
+        });
       }
     });
   }
@@ -403,6 +411,10 @@ class Annotate extends Component {
     })
   }
 
+  handleErrorClose = () => {
+    this.setState({ errorOpen: false });
+  }
+
   handleDialogClose = () => {
     this.setState({
       enterEnabled: false,
@@ -423,6 +435,10 @@ class Annotate extends Component {
     }
     return (
       <React.Fragment>
+        <ErrorModal
+          errorMsg={this.state.errorMsg}
+          open={this.state.errorOpen}
+          handleClose={this.handleErrorClose}/>
         <DialogModal
           title={this.state.dialogTitle}
           message={this.state.dialogMsg}
@@ -448,8 +464,8 @@ class Annotate extends Component {
           </video>
           <Rnd id="dragBox"
             default={{
-              x: 30,
-              y: 30,
+              x: 0,
+              y: 0,
               width: 60,
               height: 60,
           }}
