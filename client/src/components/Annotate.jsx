@@ -61,7 +61,6 @@ class Annotate extends Component {
       dialogOpen: false,
       clickedConcept: null,
       closeHandler: null,
-      enterEnabled: true,
       isLoaded: false,
       currentVideos: [],
       unwatchedVideos: [],
@@ -396,7 +395,6 @@ class Annotate extends Component {
 
   handleConceptClick = (concept) => {
     // Remove key listener to allow comment to be typed
-    document.removeEventListener('keydown', this.handleKeyDown);
     var myVideo = document.getElementById("video");
     this.setState({
       dialogMsg:  concept.name +
@@ -407,21 +405,18 @@ class Annotate extends Component {
       dialogTitle: "Confirm Annotation",
       dialogPlaceholder: "Comments",
       clickedConcept: concept,
-      enterEnabled: true,
       closeHandler: this.handleDialogClose
     })
   }
 
   handleDialogClose = () => {
     this.setState({
-      enterEnabled: false,
       dialogOpen: false,
       dialogMsg: null,
       dialogPlaceholder: null,
       dialogTitle: "", //If set to null, raises a warning to the console
       clickedConcept: null,
     });
-    document.addEventListener('keydown', this.handleKeyDown);
   }
 
   render() {
@@ -439,7 +434,6 @@ class Annotate extends Component {
           inputHandler={this.postAnnotation}
           open={this.state.dialogOpen}
           handleClose={this.state.closeHandler}
-          enterEnabled={this.state.enterEnabled}
         />
       <div className = {classes.videoSectionContainer}>
         {this.state.currentVideo.id + " " + this.state.currentVideo.filename}
