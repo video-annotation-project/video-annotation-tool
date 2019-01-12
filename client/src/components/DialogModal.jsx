@@ -42,9 +42,8 @@ class DialogModal extends Component {
   };
 
   handleKeyPress = (e) => {
-    if (e.key === 'Enter' & this.notSent) {
+    if (e.key === 'Enter') {
       this.handleSubmit();
-      this.notSent = false;
       this.handleClose();
     }
     else {
@@ -55,7 +54,10 @@ class DialogModal extends Component {
   };
 
   handleSubmit = () => {
-    this.props.inputHandler(this.state.comment, this.state.unsure)
+    if (this.notSent) {
+      this.props.inputHandler(this.state.comment, this.state.unsure);
+      this.notSent = false;
+    }
   };
 
   handleChange = () => event => {
