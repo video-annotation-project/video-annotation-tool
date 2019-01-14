@@ -13,7 +13,7 @@ const styles= {
   }
 };
 
-class Form extends Component {
+class Login extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -83,4 +83,4 @@ class Form extends Component {
   }
 }
 
-export default withStyles(styles)(Form);
+export default withStyles(styles)(Login);
