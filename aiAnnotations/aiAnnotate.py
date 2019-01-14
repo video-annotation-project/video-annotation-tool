@@ -33,8 +33,8 @@ DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 
 # video/image properties
-length = 4000 # length of video before and after annotation in ms (ex: length = 4000, vid = 8 s max)
-images_per_sec = 10
+LENGTH = 8000 # length of video in milliseconds
+IMAGES_PER_SEC = 10
 VIDEO_WIDTH = 640
 VIDEO_HEIGHT = 360
 
@@ -50,6 +50,13 @@ OPENCV_OBJECT_TRACKERS = {
 	"mosse": cv2.TrackerMOSSE_create
 }
 
+def main():
+    con = connect(database=DB_NAME, host=DB_HOST, user=DB_USER, password=DB_PASSWORD)
+    cursor = con.cursor()
+    cursor.execute("SELECT * FROM annotations WHERE id=1289614")
+    row = cursor.fetchone()
+    ai_annotation(row)
+
 def get_next_frame(frames, video_object, num):
 	if video_object:
 		check, frame = frames.read()
@@ -60,25 +67,27 @@ def get_next_frame(frames, video_object, num):
 	return frame
 
 #Uploads images and adds annotation to database
-def upload_image(timeinvideo, frame, frame_w_box, annotation, x1, y1, x2, y2, cursor, con, AI_ID):
+def upload_image(frame_num, timeinvideo, frame, frame_w_box, annotation, x1, y1, x2, y2, cursor, con, AI_ID):
 	no_box = str(annotation.id) + "_" + str(timeinvideo) + "_ai.png"
 	box = str(annotation.id) + "_" + str(timeinvideo) + "_box_ai.png"
 	temp_file = str(uuid.uuid4()) + ".png"
 	cv2.imwrite(temp_file, frame)
-	s3.upload_file(temp_file, S3_BUCKET, S3_ANNOTATION_FOLDER + no_box, ExtraArgs={'ContentType':'image/png'}) 
+#	s3.upload_file(temp_file, S3_BUCKET, S3_ANNOTATION_FOLDER + no_box, ExtraArgs={'ContentType':'image/png'}) 
+#	s3.upload_file(temp_file, S3_BUCKET, "actual_test_folder/" + no_box, ExtraArgs={'ContentType':'image/png'})
 	os.system('rm '+ temp_file)
 	cv2.imwrite(temp_file, frame_w_box)
-	s3.upload_file(temp_file, S3_BUCKET, S3_ANNOTATION_FOLDER + box,  ExtraArgs={'ContentType':'image/png'})
+#	s3.upload_file(temp_file, S3_BUCKET, S3_ANNOTATION_FOLDER + box,  ExtraArgs={'ContentType':'image/png'})
+#	s3.upload_file(temp_file, S3_BUCKET, "actual_test_folder/" + box,  ExtraArgs={'ContentType':'image/png'})
 	os.system('rm '+ temp_file)
 	cursor.execute(
 		"""
-			INSERT INTO annotations (
-			videoid, userid, conceptid, timeinvideo, x1, y1, x2, y2, 
+			INSERT INTO annotations_test (
+			framenumber, videoid, userid, conceptid, timeinvideo, x1, y1, x2, y2, 
 			videowidth, videoheight, dateannotated, image, imagewithbox, comment, unsure, originalid) 
-			VALUES (%d, %d, %d, %f, %f, %f, %f, %f, %d, %d, %s, %s, %s, %s, %s, %d)
+			VALUES (%d, %d, %d, %d, %f, %f, %f, %f, %f, %d, %d, %s, %s, %s, %s, %s, %d)
 		""",
 		(
-			annotation.videoid, AI_ID, annotation.conceptid, timeinvideo, x1, y1, 
+			frame_num, annotation.videoid, AI_ID, annotation.conceptid, timeinvideo, x1, y1, 
 			x2, y2, VIDEO_WIDTH, VIDEO_HEIGHT, datetime.datetime.now().date(), no_box, box, 
 			annotation.comment, annotation.unsure, annotation.id
 		)
@@ -86,7 +95,7 @@ def upload_image(timeinvideo, frame, frame_w_box, annotation, x1, y1, x2, y2, cu
 	con.commit()
 
 #Tracks the object forwards and backwards in a video
-def track_object(frames, box, video_object, end, original, cursor, con, AI_ID, fps):
+def track_object(frame_num, frames, box, video_object, end, original, cursor, con, AI_ID, fps):
         frame_list = []
         trackers = cv2.MultiTracker_create()
 
@@ -96,15 +105,27 @@ def track_object(frames, box, video_object, end, original, cursor, con, AI_ID, f
             return []
         frame = imutils.resize(frame, width=640, height=360)
 
+        # initialize tracking, add first frame (original annotation)
         tracker = OPENCV_OBJECT_TRACKERS["kcf"]()
         trackers.add(tracker, frame, box)
-        counter = 0
-        images_counter = math.floor(fps / images_per_sec) # vids are about 20 fps
+        (success, boxes) = trackers.update(frame)
+        if success:
+           for box in boxes:
+              (x, y, w, h) = [int(v) for v in box]
+              cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+        frame_list.append(frame)
 
+        counter = 0
+        images_counter = (fps // IMAGES_PER_SEC) # vids are about 30 fps
+        print("im counter: " + str(images_counter))
         while True:
                 frame = get_next_frame(frames, video_object, counter)
                 if frame is None:
                         break
+                if video_object:
+                   frame_num += 1
+                else:
+                   frame_num -= 1
                 frame = imutils.resize(frame, width=VIDEO_WIDTH, height=VIDEO_HEIGHT)
                 frame_no_box = copy.deepcopy(frame)
                 (success, boxes) = trackers.update(frame)
@@ -119,7 +140,9 @@ def track_object(frames, box, video_object, end, original, cursor, con, AI_ID, f
                                         timeinvideo = original.timeinvideo + timeinvideo
                                 else:
                                         timeinvideo = original.timeinvideo - timeinvideo
-                                upload_image(timeinvideo, frame_no_box, frame, original, x, y, (x+w), (y+h), cursor, con, AI_ID)
+                                print("frame num: " + str(frame_num))
+                                print("time in video :" + str(timeinvideo))
+                                upload_image(frame_num, timeinvideo, frame_no_box, frame, original, x, y, (x+w), (y+h), cursor, con, AI_ID)
                         counter += 1
                 else:
                         break
@@ -147,11 +170,11 @@ def ai_annotation(original):
                     'Key': S3_VIDEO_FOLDER + video_name}, 
                 ExpiresIn = 100)
         cap = cv2.VideoCapture(url)
-        fps = cap.get(cv2.CAP_PROP_FPS)
+        fps = math.ceil(cap.get(cv2.CAP_PROP_FPS))
 	
         # initialize video for grabbing frames before annotation
-        start = ((original.timeinvideo * 1000) - length) # start 3 secs before obj appears
-        end = start + length # end when annotation occurs
+        start = ((original.timeinvideo * 1000) - (LENGTH / 2)) # start vidlen/2 secs before obj appears
+        end = start + (LENGTH / 2) # end when annotation occurs
         cap.set(0, start) # tell video to start at 'start' time
         check = True
         frame_list = []
@@ -164,10 +187,9 @@ def ai_annotation(original):
             curr = int(cap.get(0))
         cap.release()
 
-
 	# initialize vars for getting frames after annotation
         start = original.timeinvideo * 1000
-        end = start + length
+        end = start + (LENGTH / 2)
         x_ratio = (original.videowidth / VIDEO_WIDTH)
         y_ratio = (original.videoheight / VIDEO_HEIGHT)
         x1 = original.x1 / x_ratio
@@ -176,17 +198,21 @@ def ai_annotation(original):
         height = (original.y2 / y_ratio) - y1
         box = (x1, y1, width, height)
         
-        # get object tracking frames prior to annotation
-        frames = frame_list
-        reverse_frames = track_object(frames, box, False, 0, original, cursor, con, AI_ID, fps)
-        reverse_frames.reverse()
-        
         # new video capture object for frames after annotation
         vs = cv2.VideoCapture(url)
         vs.set(0, start)
         frames = vs
-        forward_frames = track_object(frames, box, True, start + length, original, cursor, con, AI_ID, fps)
+        frame_num = (int(frames.get(1)))
+        print("first frame = " + str(frame_num))
+        print("tracking forwards..")
+        forward_frames = track_object(frame_num, frames, box, True, start + (LENGTH / 2), original, cursor, con, AI_ID, fps)
         vs.release()
+
+        # get object tracking frames prior to annotation
+        frames = frame_list
+        print("tracking backwards..")
+        reverse_frames = track_object(frame_num, frames, box, False, 0, original, cursor, con, AI_ID, fps)
+        reverse_frames.reverse()
         
         output_file = str(uuid.uuid4()) + ".mp4"
         converted_file = str(uuid.uuid4()) + ".mp4"
@@ -195,8 +221,8 @@ def ai_annotation(original):
         reverse_frames.extend(forward_frames)
         for frame in reverse_frames:
             out.write(frame)		
-            #cv2.imshow("Frame", frame)
-            #cv2.waitKey(1)
+#            cv2.imshow("Frame", frame)
+#            cv2.waitKey(1)
             
         out.release()
         
@@ -214,6 +240,9 @@ def ai_annotation(original):
         else:
             print("no video made for " + str(original.id))
 
-        os.system('rm '+ output_file)
+#        os.system('rm '+ output_file)
         cv2.destroyAllWindows()
         con.close()
+
+if __name__ == '__main__':
+  main()
