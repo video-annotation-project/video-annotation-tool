@@ -65,7 +65,7 @@ class Annotate extends Component {
       currentVideos: [],
       unwatchedVideos: [],
       watchedVideos: [],
-      videoPlaybackRate: 1
+      videoPlaybackRate: 1.0
     };
   }
 
@@ -475,7 +475,9 @@ class Annotate extends Component {
         <Button variant="contained" color="primary" className={classes.button} onClick={() => this.toggleVideoControls()}>Toggle Controls</Button>
         <Button variant="contained" color="primary" className={classes.button} onClick={() => this.handleDoneClick()}>Done</Button>
         <br />
-        <span>Play Rate: {this.state.videoPlaybackRate}</span>
+        <div width="250">
+          Play Rate: {this.state.videoPlaybackRate}
+        </div>
         <input
           type="range"
           id="playSpeedId"
