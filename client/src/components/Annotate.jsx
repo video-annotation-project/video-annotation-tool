@@ -62,7 +62,7 @@ class Annotate extends Component {
       clickedConcept: null,
       closeHandler: null,
       isLoaded: false,
-      currentVideos: [],
+      startedVideos: [],
       unwatchedVideos: [],
       watchedVideos: [],
       videoPlaybackRate: 1.0
@@ -70,34 +70,36 @@ class Annotate extends Component {
   }
 
   getCurrentVideo = async () => {
-    if (this.state.currentVideos.length > 0) { // they have current videos
-      let currentTime = await this.getVideoStartTime(this.state.currentVideos[0].filename);
+    if (this.state.startedVideos.length > 0) { // user has current videos
+      // current video
+      let currentTime = await this.getVideoStartTime(this.state.startedVideos[0].filename);
       return {
-        video: this.state.currentVideos[0],
+        video: this.state.startedVideos[0],
         time: currentTime
       };
-    } else if (this.state.unwatchedVideos.length > 0) { // they have unwatched videos
+    }
+    if (this.state.unwatchedVideos.length > 0) { // they have unwatched videos
       let video = this.state.unwatchedVideos[0]
       // remove from unwatched list
       let unwatchedVideos = JSON.parse(JSON.stringify(this.state.unwatchedVideos));
       unwatchedVideos = unwatchedVideos.filter(vid => vid.id !== video.id);
       // Add unwatched video to current videos
-      let currentVideos = JSON.parse(JSON.stringify(this.state.currentVideos));
-      currentVideos = currentVideos.concat(video);
+      let startedVideos = JSON.parse(JSON.stringify(this.state.startedVideos));
+      startedVideos = startedVideos.concat(video);
       this.setState({
-        currentVideos: currentVideos,
+        startedVideos: startedVideos,
         unwatchedVideos: unwatchedVideos
       });
       return {
         video: video,
         time: 0
       };
-    } else { // they dont have a video to be played returns default video 1
-      return {
-        video: {'id': 1, 'filename': 'DocRicketts-0569_20131213T224337Z_00-00-01-00TC_h264.mp4'},
-        time: 0
-      };
     }
+    // they dont have a video to be played returns default video 1
+    return {
+      video: {'id': 1, 'filename': 'DocRicketts-0569_20131213T224337Z_00-00-01-00TC_h264.mp4'},
+      time: 0
+    };
   }
 
   componentDidMount = async () => {
@@ -114,7 +116,7 @@ class Annotate extends Component {
 
     await axios.get('/api/listVideos/', config).then(res => {
       this.setState({
-        currentVideos: res.data[0].rows,
+        startedVideos: res.data[0].rows,
         unwatchedVideos: res.data[1].rows,
         watchedVideos: res.data[2].rows,
       });
@@ -216,14 +218,14 @@ class Annotate extends Component {
     await this.updateCheckpoint(true);
 
     // Handle remove from current list, add to watched list
-    let currentVideos = JSON.parse(JSON.stringify(this.state.currentVideos));
-    currentVideos = currentVideos.filter(vid => vid.id !== this.state.currentVideo.id);
+    let startedVideos = JSON.parse(JSON.stringify(this.state.startedVideos));
+    startedVideos = startedVideos.filter(vid => vid.id !== this.state.currentVideo.id);
     let watchedVideos = JSON.parse(JSON.stringify(this.state.watchedVideos));
     if (!watchedVideos.some(vid => vid.id === this.state.currentVideo.id)) {
       watchedVideos = watchedVideos.concat(this.state.currentVideo);
     }
     this.setState({
-      currentVideos: currentVideos,
+      startedVideos: startedVideos,
       watchedVideos: watchedVideos
     });
 
@@ -268,16 +270,16 @@ class Annotate extends Component {
 
     /*
     If an unwatched video was clicked, remove it from unwatchedVideos and add it
-    to currentVideos
+    to startedVideos
     If a current video or watched video was clicked, do nothing
     */
     if (videoListName === 'unwatchedVideos') {
       let unwatchedVideos = JSON.parse(JSON.stringify(this.state.unwatchedVideos));
       unwatchedVideos = unwatchedVideos.filter(vid => vid.id !== video.id);
-      let currentVideos = JSON.parse(JSON.stringify(this.state.currentVideos));
-      currentVideos = currentVideos.concat(video);
+      let startedVideos = JSON.parse(JSON.stringify(this.state.startedVideos));
+      startedVideos = startedVideos.concat(video);
       this.setState({
-        currentVideos: currentVideos,
+        startedVideos: startedVideos,
         unwatchedVideos: unwatchedVideos
       });
     }
@@ -290,7 +292,7 @@ class Annotate extends Component {
     might be kinda hard. Another solution is to let end users change
     watchedVideos into unwatchedVideos.
     */
-    if (videoListName === 'unwatchedVideos' || videoListName === 'currentVideos') {
+    if (videoListName === 'unwatchedVideos' || videoListName === 'startedVideos') {
       this.setState({
         currentVideo: video,
       })
@@ -493,7 +495,7 @@ class Annotate extends Component {
         />
         <VideoList
           handleVideoClick={this.handleVideoClick}
-          currentVideos={this.state.currentVideos}
+          startedVideos={this.state.startedVideos}
           unwatchedVideos={this.state.unwatchedVideos}
           watchedVideos={this.state.watchedVideos}
         />

@@ -29,7 +29,7 @@ class VideoList extends Component {
     super(props);
     this.state = {
       videoListOpen: true,
-      currentListOpen: false,
+      startedListOpen: false,
       unwatchedListOpen: false,
       watchedListOpen: false,
     };
@@ -47,12 +47,12 @@ class VideoList extends Component {
   render () {
     const {
       classes,
-      currentVideos,
+      startedVideos,
       unwatchedVideos,
       watchedVideos
     } = this.props;
     const {
-      currentListOpen,
+      startedListOpen,
       unwatchedListOpen,
       watchedListOpen
     } = this.state;
@@ -63,14 +63,14 @@ class VideoList extends Component {
           Toggle Video List
         </Button>
         <div className={classes.videos} style={{display: this.state.videoListOpen ? '' : 'none'}}>
-          <ListItem button onClick={() => this.toggleList("currentListOpen")}>
-            <ListItemText inset primary="Current Videos" />
-            {currentListOpen ? <ExpandLess /> : <ExpandMore />}
+          <ListItem button onClick={() => this.toggleList("startedListOpen")}>
+            <ListItemText inset primary="Started Videos" />
+            {startedListOpen ? <ExpandLess /> : <ExpandMore />}
           </ListItem>
-          <Collapse in={currentListOpen} timeout="auto" unmountOnExit>
+          <Collapse in={startedListOpen} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
-              {currentVideos.map((video, index) => (
-                <ListItem button key={video.id} onClick={() => this.props.handleVideoClick(video, 'currentVideos')}>
+              {startedVideos.map((video, index) => (
+                <ListItem button key={video.id} onClick={() => this.props.handleVideoClick(video, 'startedVideos')}>
                   <ListItemText primary={video.id + '. ' + video.filename} />
                 </ListItem>
               ))}
