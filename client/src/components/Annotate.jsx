@@ -114,13 +114,20 @@ class Annotate extends Component {
       }
     };
 
-    await axios.get('/api/listVideos/', config).then(res => {
-      this.setState({
-        startedVideos: res.data[0].rows,
-        unwatchedVideos: res.data[1].rows,
-        watchedVideos: res.data[2].rows,
-      });
-    })
+    try {
+      await axios.get('/api/listVideos/', config).then(res => {
+        this.setState({
+          startedVideos: res.data[0].rows,
+          unwatchedVideos: res.data[1].rows,
+          watchedVideos: res.data[2].rows,
+        });
+      })
+    } catch (error) {
+      console.log(error);
+      if (error.response) {
+        console.log(error.response.data.detail);
+      }
+    }
 
     // retrieves the last watched video
     let currentVideo = await this.getCurrentVideo();

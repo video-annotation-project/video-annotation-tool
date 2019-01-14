@@ -330,20 +330,20 @@ app.get('/api/unwatchedVideos', passport.authenticate('jwt', {session: false}),
 app.get('/api/listVideos/', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
     let userId = req.user.id;
-    queryUserCurrentVideos = 'SELECT id, filename \
+    queryUserStartedVideos = 'SELECT id, filename \
                               FROM videos \
                               WHERE id IN (SELECT videoid FROM checkpoints WHERE userid=$1 AND finished=false);'
-    queryGlobalNotWatched = 'SELECT id, filename \
+    queryGlobalUnwatched = 'SELECT id, filename \
                              FROM videos \
                              WHERE id NOT IN (SELECT videoid FROM checkpoints);'
-    queryGlobalDoneWatched = 'SELECT id, filename \
+    queryGlobalWatched = 'SELECT id, filename \
                               FROM videos \
                               WHERE id IN (SELECT videoid FROM checkpoints WHERE finished=true);'
     try {
-      const currentVideos = await psql.query(queryUserCurrentVideos, [userId]);
-      const notDoneVideos = await psql.query(queryGlobalNotWatched);
-      const doneVideos = await psql.query(queryGlobalDoneWatched);
-      const videoData = [currentVideos, notDoneVideos, doneVideos];
+      const startedVideos = await psql.query(queryUserStartedVideos, [userId]);
+      const unwatchedVideos = await psql.query(queryGlobalUnwatched);
+      const watchedVideos = await psql.query(queryGlobalWatched);
+      const videoData = [startedVideos, unwatchedVideos, watchedVideos];
       res.json(videoData);
     } catch (error) {
       res.json(error);
