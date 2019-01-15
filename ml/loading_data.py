@@ -11,14 +11,23 @@ import numpy as np
 import os
 from dotenv import load_dotenv
 from pascal_voc_writer import Writer
-client = boto3.client('s3')
+
+
 load_dotenv(dotenv_path="../.env")
 S3_BUCKET = os.getenv('AWS_S3_BUCKET_NAME')
 SRC_IMG_FOLDER = 'test'
 DB_NAME = os.getenv("DB_NAME")
 DB_HOST = os.getenv("DB_HOST")
 DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
+
+# DO NOT PUSH PASSWORD 
+#DB_PASSWORD = os.getenv("DB_PASSWORD")
+DB_PASSWORD = '2yG5$A#LkJkvnWh*'
+
+
+client = boto3.client('s3',
+    aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
+    aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'))
 
 
 # SQL queries to the database
@@ -33,7 +42,7 @@ def queryDB(query):
     conn.close()
     return result
 
-annotations = queryDB("select * from annotations limit 100")
+annotations = queryDB("select * from annotations where conceptid in (383,2136,236,1948,347) limit 1000")
 annotations.head()
 
 def format_annotations(annotations, split=.8, img_folder='test'):
@@ -51,14 +60,19 @@ def format_annotations(annotations, split=.8, img_folder='test'):
         img.save(img_location)
         
         #create voc writer
-        writer = Writer(img_location, first['videowidth'], first['videoheight'])
+        writer = Writer(img_location, int(first['videowidth']), int(first['videoheight']))
 
         for index, row in group.iterrows():
-            writer.addObject(row['conceptid'], row['x1'], row['y1'], row['x2'], row['y2'])
+            writer.addObject(row['conceptid'], 
+                int(row['x1']), 
+                int(row['y1']), 
+                int(row['x2']), 
+                int(row['y2']))
             
         if(count > len(groups) * split):
             folder = 'valid'
         count += 1
         writer.save(folder + '_annot_folder/' + first['image'][:-3] + "xml")
+    print(count)
 
 format_annotations(annotations)

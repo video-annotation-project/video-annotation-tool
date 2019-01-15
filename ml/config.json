@@ -1,15 +1,15 @@
 {
     "model" : {
-        "backend":              "Tiny Yolo",
+        "backend":              "Full Yolo",
         "input_size":           416,
-        "anchors":              [1.77,2.20, 3.46,5.32, 4.42,9.63, 6.97,6.22, 8.75,9.80],
+        "anchors":              [0.65,1.06, 0.85,1.84, 1.36,2.60, 2.26,1.99, 2.37,3.27],
         "max_box_per_image":    10,        
-        "labels":               ["kangaroo"]
+        "labels":               ["383", "2136", "236", "1948", "347"]
     },
 
     "train": {
-        "train_image_folder":   "/Users/kylemaxwell/Desktop/DeepSea/kangaroo/images/",
-        "train_annot_folder":   "/Users/kylemaxwell/Desktop/DeepSea/kangaroo/annots/",     
+        "train_image_folder":   "./train_image_folder/",
+        "train_annot_folder":   "./train_annot_folder/",     
           
         "train_times":          8,
         "pretrained_weights":   "",
@@ -23,13 +23,13 @@
         "coord_scale":          1.0,
         "class_scale":          1.0,
 
-        "saved_weights_name":   "new_trained_full_yolo_kangaroo.h5",
+        "saved_weights_name":   "new_trained_full_yolo_test.h5",
         "debug":                true
     },
 
     "valid": {
-        "valid_image_folder":   "",
-        "valid_annot_folder":   "",
+        "valid_image_folder":   "./valid_image_folder/",
+        "valid_annot_folder":   "./valid_annot_folder/",
 
         "valid_times":          1
     }
