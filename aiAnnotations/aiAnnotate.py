@@ -34,7 +34,6 @@ DB_PASSWORD = os.getenv("DB_PASSWORD")
 
 # video/image properties
 length = 4000 # length of video before and after annotation in ms (ex: length = 4000, vid = 8 s max)
-images_per_sec = 10
 VIDEO_WIDTH = 640
 VIDEO_HEIGHT = 360
 
@@ -61,8 +60,8 @@ def get_next_frame(frames, video_object, num):
 
 #Uploads images and adds annotation to database
 def upload_image(timeinvideo, frame, frame_w_box, annotation, x1, y1, x2, y2, cursor, con, AI_ID):
-	no_box = str(annotation.id) + "_" + str(timeinvideo) + "_ai.png"
-	box = str(annotation.id) + "_" + str(timeinvideo) + "_box_ai.png"
+	no_box = str(annotation.videoid) + "_" + str(timeinvideo) + ".png"
+	box = str(annotation.videoid) + "_" + str(timeinvideo) + "_box.png"
 	temp_file = str(uuid.uuid4()) + ".png"
 	cv2.imwrite(temp_file, frame)
 	s3.upload_file(temp_file, S3_BUCKET, S3_ANNOTATION_FOLDER + no_box, ExtraArgs={'ContentType':'image/png'}) 
@@ -99,7 +98,6 @@ def track_object(frames, box, video_object, end, original, cursor, con, AI_ID, f
         tracker = OPENCV_OBJECT_TRACKERS["kcf"]()
         trackers.add(tracker, frame, box)
         counter = 0
-        images_counter = math.floor(fps / images_per_sec) # vids are about 20 fps
 
         while True:
                 frame = get_next_frame(frames, video_object, counter)
@@ -113,13 +111,12 @@ def track_object(frames, box, video_object, end, original, cursor, con, AI_ID, f
                                 (x, y, w, h) = [int(v) for v in box]
                                 cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
                         frame_list.append(frame)
-                        if (counter % images_counter == 0):
-                                timeinvideo = (1 + counter)/fps
-                                if video_object:
-                                        timeinvideo = original.timeinvideo + timeinvideo
-                                else:
-                                        timeinvideo = original.timeinvideo - timeinvideo
-                                upload_image(timeinvideo, frame_no_box, frame, original, x, y, (x+w), (y+h), cursor, con, AI_ID)
+                        timeinvideo = (1 + counter)/fps
+                        if video_object:
+                                timeinvideo = original.timeinvideo + timeinvideo
+                        else:
+                                timeinvideo = original.timeinvideo - timeinvideo
+                        upload_image(timeinvideo, frame_no_box, frame, original, x, y, (x+w), (y+h), cursor, con, AI_ID)
                         counter += 1
                 else:
                         break
