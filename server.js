@@ -138,27 +138,18 @@ app.post('/changePassword', passport.authenticate('jwt', {session: false}),
 )
 
 //Code for create users
-app.post('/createUser', passport.authenticate('jwt', {session: false}),
+app.post('/api/createUser', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
-    if(req.user.admin) {
-      queryText = "INSERT INTO users(username, password, admin) VALUES($1, $2, $3) RETURNING *"
-      const saltRounds = 10;
-      try {
-        var hash = await bcrypt.hash(req.body.password, saltRounds);
-      } catch (error) {
-        res.json({message: "error hashing" + error.message})
-        res.end()
-      }
-      try {
-        const insertUser = await psql.query(queryText,[req.body.username, hash, req.body.admin]);
-        res.json({message: "user created", user: insertUser.rows[0]});
-      } catch (error) {
-        res.json({message: "error inserting: " + error.message})
-        res.end();
-      }
-    } else {
-      res.status(401).json({message: "Must be admin to create new user!"})
-      res.end();
+    const queryText = "INSERT INTO users(username, password, admin) VALUES($1, $2, $3) RETURNING *";
+    const saltRounds = 10;
+    try {
+      const hash = await bcrypt.hash(req.body.password, saltRounds);
+      const data = [req.body.username, hash, req.body.admin];
+      const insertUser = await psql.query(queryText, data);
+      console.log(insertUser);
+      res.json({message: "user created", user: insertUser.rows[0]});
+    } catch (error) {
+      res.status(400).json(error);
     }
 });
 
@@ -275,70 +266,51 @@ app.get('/api/userCurrentVideos', passport.authenticate('jwt', {session: false})
   }
 );
 
+// this function needs to be improved
 app.post("/api/updateCheckpoint", passport.authenticate('jwt', {session: false}),
   async (req, res) => {
-  let videoId =  await getVideoId(req.body.videoName);
-  let userId = req.user.id;
-  queryText = 'UPDATE checkpoints SET timeinvideo=$1, timestamp=current_timestamp, finished=$2 WHERE userid=$3 AND videoid=$4';
+  const { videoId, timeinvideo, finished } = req.body;
+  const userId = req.user.id;
+  const data = [timeinvideo, finished, userId, videoId];
+  queryText = 'UPDATE checkpoints \
+               SET timeinvideo=$1, timestamp=current_timestamp, finished=$2 \
+               WHERE userid=$3 AND videoid=$4';
   try {
-    const updateRes = await psql.query(queryText, [req.body.timeinvideo, req.body.finished, userId, videoId]);
-    if (updateRes.rowCount == 0) { // user just started watching video
-      queryText = 'INSERT INTO checkpoints(userid, videoid, timeinvideo, timestamp, finished) VALUES($1, $2, $3, current_timestamp, $4)';
-      try {
-        let insertRes = await psql.query(queryText, [userId, videoId, req.body.timeinvideo, req.body.finished]);
-        res.json({
-          message: "updated"
-        });
-      }
-      catch(error) {
-        res.json({message: "error: " + error});
-      }
-    } else {
+    const updateRes = await psql.query(queryText, data);
+    if (updateRes.rowCount > 0) {
       res.json({message: "updated"});
+      return;
     }
+    // User has no checkpoint for this video
+    queryText = 'INSERT INTO checkpoints \
+                 (timeinvideo, finished, userid, videoid, timestamp) \
+                 VALUES($1, $2, $3, $4, current_timestamp)';
+    let insertRes = await psql.query(queryText, data);
+    res.json({message: "updated"});
   } catch(error) {
-    res.json({message: "error: " + error});
+    res.json(error);
   }
 
 });
 
-app.get('/api/timeAtVideo/:videoid', passport.authenticate('jwt', {session: false}),
-  async (req, res) => {
-    let userId = req.user.id;
-    queryPass = 'SELECT timeinvideo FROM checkpoints WHERE userid=$1 AND videoid=$2;'
-    try {
-      const videoData = await psql.query(queryPass, [userId, req.params.videoid]);
-      res.json(videoData);
-    } catch (error) {
-      res.json(error);
-    }
-  }
-);
-
-app.get('/api/unwatchedVideos', passport.authenticate('jwt', {session: false}),
-  async (req, res) => {
-    queryPass = 'SELECT id, filename FROM videos WHERE id NOT IN (SELECT videoid FROM checkpoints);'
-    try {
-      const videoData = await psql.query(queryPass);
-      res.json(videoData);
-    } catch (error) {
-      res.json(error);
-    }
-  }
-);
-
 app.get('/api/listVideos/', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
     let userId = req.user.id;
-    queryUserStartedVideos = 'SELECT id, filename \
-                              FROM videos \
-                              WHERE id IN (SELECT videoid FROM checkpoints WHERE userid=$1 AND finished=false);'
-    queryGlobalUnwatched = 'SELECT id, filename \
-                             FROM videos \
-                             WHERE id NOT IN (SELECT videoid FROM checkpoints);'
-    queryGlobalWatched = 'SELECT id, filename \
-                              FROM videos \
-                              WHERE id IN (SELECT videoid FROM checkpoints WHERE finished=true);'
+    queryUserStartedVideos = 'SELECT videos.id, videos.filename, checkpoints.finished, checkpoints.timeinvideo \
+                              FROM videos, checkpoints \
+                              WHERE checkpoints.userid=$1 \
+                              AND videos.id=checkpoints.videoid \
+                              AND checkpoints.finished=false \
+                              ORDER BY videos.id;'
+    queryGlobalUnwatched = 'SELECT videos.id, videos.filename, false as finished, 0 as timeinvideo \
+                            FROM videos \
+                            WHERE id NOT IN (SELECT videoid FROM checkpoints) \
+                            ORDER BY videos.id;'
+    queryGlobalWatched = 'SELECT DISTINCT videos.id, videos.filename, checkpoints.finished, 0 as timeinvideo \
+                          FROM videos, checkpoints \
+                          WHERE videos.id=checkpoints.videoid \
+                          AND checkpoints.finished=true \
+                          ORDER BY videos.id;'
     try {
       const startedVideos = await psql.query(queryUserStartedVideos, [userId]);
       const unwatchedVideos = await psql.query(queryGlobalUnwatched);
@@ -346,6 +318,7 @@ app.get('/api/listVideos/', passport.authenticate('jwt', {session: false}),
       const videoData = [startedVideos, unwatchedVideos, watchedVideos];
       res.json(videoData);
     } catch (error) {
+      console.log(error);
       res.json(error);
     }
   }
@@ -538,21 +511,6 @@ app.get('/api/annotations', passport.authenticate('jwt', {session: false}),
   }
 );
 
-
-app.get('/api/videos/currentTime/:videoname', passport.authenticate('jwt', {session: false}),
-  async (req, res) => {
-    let videoId = await getVideoId(req.params.videoname);
-    let userId = req.user.id;
-    let queryPass = 'SELECT timeinvideo FROM checkpoints WHERE checkpoints.videoid=$1 AND checkpoints.userid=$2';
-    try {
-      const currentTime = await psql.query(queryPass, [videoId, userId]);
-      res.json(currentTime.rows);
-    } catch (error) {
-      res.json(error);
-    }
-  }
-);
-
 app.get('/api/annotationImage/:name', (req, res) => {
   let s3 = new AWS.S3();
   let key = process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + req.params.name;
@@ -570,48 +528,48 @@ app.get('/api/annotationImage/:name', (req, res) => {
   })
 });
 
-app.get('/api/videos/Y7Ek6tndnA/:name', (req, res) => {
-  var s3 = new AWS.S3();
-  const mimetype = 'video/mp4';
-  const file = process.env.AWS_S3_BUCKET_VIDEOS_FOLDER + req.params.name;
-  const cache = 0;
-  s3.listObjectsV2({Bucket: process.env.AWS_S3_BUCKET_NAME, MaxKeys: 1, Prefix: file}, function(err, data) {
-    if (err) {
-      return res.sendStatus(404);
-    }
-    if (!data.Contents[0]){
-      return res.redirect('/api/videos/Y7Ek6tndnA/error.mp4');
-    }
-    if (req != null && req.headers.range != null) {
-      var range = req.headers.range;
-      var bytes = range.replace(/bytes=/, '').split('-');
-      var start = parseInt(bytes[0], 10);
-      var total = data.Contents[0].Size;
-      var end = bytes[1] ? parseInt(bytes[1], 10) : total - 1;
-      var chunksize = (end - start) + 1;
-
-      res.writeHead(206, {
-        'Content-Range'  : 'bytes ' + start + '-' + end + '/' + total,
-        'Accept-Ranges'  : 'bytes',
-        'Content-Length' : chunksize,
-        'Last-Modified'  : data.Contents[0].LastModified,
-        'Content-Type'   : mimetype
-      });
-      s3.getObject({Bucket: process.env.AWS_S3_BUCKET_NAME, Key: file, Range: range}).createReadStream().pipe(res);
-    }
-    else
-    {
-      res.writeHead(200,
-      {
-        'Cache-Control' : 'max-age=' + cache + ', private',
-        'Content-Length': data.Contents[0].Size,
-        'Last-Modified' : data.Contents[0].LastModified,
-        'Content-Type'  : mimetype
-      });
-      s3.getObject({Bucket: process.env.AWS_S3_BUCKET_NAME, Key: file}).createReadStream().pipe(res);
-    }
-  });
-});
+// app.get('/api/videos/Y7Ek6tndnA/:name', (req, res) => {
+//   var s3 = new AWS.S3();
+//   const mimetype = 'video/mp4';
+//   const file = process.env.AWS_S3_BUCKET_VIDEOS_FOLDER + req.params.name;
+//   const cache = 0;
+//   s3.listObjectsV2({Bucket: process.env.AWS_S3_BUCKET_NAME, MaxKeys: 1, Prefix: file}, function(err, data) {
+//     if (err) {
+//       return res.sendStatus(404);
+//     }
+//     if (!data.Contents[0]){
+//       return res.redirect('/api/videos/Y7Ek6tndnA/error.mp4');
+//     }
+//     if (req != null && req.headers.range != null) {
+//       var range = req.headers.range;
+//       var bytes = range.replace(/bytes=/, '').split('-');
+//       var start = parseInt(bytes[0], 10);
+//       var total = data.Contents[0].Size;
+//       var end = bytes[1] ? parseInt(bytes[1], 10) : total - 1;
+//       var chunksize = (end - start) + 1;
+//
+//       res.writeHead(206, {
+//         'Content-Range'  : 'bytes ' + start + '-' + end + '/' + total,
+//         'Accept-Ranges'  : 'bytes',
+//         'Content-Length' : chunksize,
+//         'Last-Modified'  : data.Contents[0].LastModified,
+//         'Content-Type'   : mimetype
+//       });
+//       s3.getObject({Bucket: process.env.AWS_S3_BUCKET_NAME, Key: file, Range: range}).createReadStream().pipe(res);
+//     }
+//     else
+//     {
+//       res.writeHead(200,
+//       {
+//         'Cache-Control' : 'max-age=' + cache + ', private',
+//         'Content-Length': data.Contents[0].Size,
+//         'Last-Modified' : data.Contents[0].LastModified,
+//         'Content-Type'  : mimetype
+//       });
+//       s3.getObject({Bucket: process.env.AWS_S3_BUCKET_NAME, Key: file}).createReadStream().pipe(res);
+//     }
+//   });
+// });
 
 async function getVideoId(value) {
   queryPass = 'select id from videos where videos.filename=$1';

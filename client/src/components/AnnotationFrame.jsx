@@ -35,7 +35,6 @@ class AnnotationFrame extends Component {
       dialogOpen: false,
       clickedConcept: null,
       closeHandler: null,
-      enterEnabled: true,
     };
   }
   encode = (data) => {
@@ -67,7 +66,6 @@ class AnnotationFrame extends Component {
   };
 
   postEditAnnotation = (comment, unsure) => {
-    console.log(comment);
     if (comment === "") {
       comment = this.props.annotation.comment;
     }
@@ -98,7 +96,6 @@ class AnnotationFrame extends Component {
 
   handleDialogClose = () => {
     this.setState({
-      enterEnabled: false,
       dialogOpen: false,
       dialogMsg: null,
       dialogPlaceholder: null,
@@ -115,7 +112,6 @@ class AnnotationFrame extends Component {
       dialogTitle: "Confirm Annotation Edit",
       dialogPlaceholder: "Comments",
       clickedConcept: concept,
-      enterEnabled: true,
       closeHandler: this.handleDialogClose
     })
   }
@@ -138,7 +134,6 @@ class AnnotationFrame extends Component {
           inputHandler={this.postEditAnnotation}
           open={this.state.dialogOpen}
           handleClose={this.state.closeHandler}
-          enterEnabled={this.state.enterEnabled}
         />
         <ListItem className={classes.item}>
           <div id='test'></div>
