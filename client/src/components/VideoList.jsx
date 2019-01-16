@@ -5,7 +5,10 @@ import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
 import { withStyles } from '@material-ui/core/styles';
-//import Divider from '@material-ui/core/Divider';
+import Collapse from '@material-ui/core/Collapse';
+import ExpandLess from '@material-ui/icons/ExpandLess';
+import ExpandMore from '@material-ui/icons/ExpandMore';
+
 
 const styles = theme => ({
   root: {
@@ -26,86 +29,82 @@ class VideoList extends Component {
     super(props);
     this.state = {
       videoListOpen: true,
-      currentVideos: [],
-      unwatchedVideos: [],
-      watchedVideos: []
+      startedListOpen: false,
+      unwatchedListOpen: false,
+      watchedListOpen: false,
     };
   }
 
   componentDidMount = () => {
-    // this can be optimized by combining all three fetch requests into one
-    // also we would want to use axios.get() instead of fetch() for consistency reasons
-    fetch('/api/userVideos/false', {
-      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')}
-    })
-      .then(res => res.json())
-      .then(res => {
-        this.setState({
-          currentVideos: res.rows
-      })
-    })
-    fetch('/api/userUnwatchedVideos/', {
-      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')}
-    })
-      .then(res => res.json())
-      .then(res => {
-        this.setState({
-          unwatchedVideos: res.rows
-      })
-    })
-    fetch('/api/userVideos/true', {
-      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')}
-    })
-      .then(res => res.json())
-      .then(res => {
-        this.setState({
-          watchedVideos: res.rows
-      })
-    })
   }
 
-  toggleVideoList = () => {
+  toggleList = (list) => {
     this.setState({
-      videoListOpen: !this.state.videoListOpen
+      [list]: !this.state[list]
     });
   }
 
-  handleVideoClick = (filename) => {
-    this.props.handleVideoClick(filename);
-  }
-
   render () {
-    const { classes } = this.props;
+    const {
+      classes,
+      startedVideos,
+      unwatchedVideos,
+      watchedVideos
+    } = this.props;
+    const {
+      startedListOpen,
+      unwatchedListOpen,
+      watchedListOpen
+    } = this.state;
+
     return (
       <div className={classes.root}>
-        <Button variant="contained" color="primary" onClick={this.toggleVideoList}>
+        <Button variant="contained" color="primary" onClick={() => this.toggleList("videoListOpen")}>
           Toggle Video List
         </Button>
         <div className={classes.videos} style={{display: this.state.videoListOpen ? '' : 'none'}}>
-          Current Videos
-          <List component="nav">
-            {this.state.currentVideos.map((video, index) => (
-              <ListItem button key={video.id} onClick={() => this.handleVideoClick(video.filename)}>
-                <ListItemText primary={video.id + '. ' + video.filename} />
-              </ListItem>
-            ))}
-          </List>
-          Unwatched Videos
-          <List component="nav">
-            {this.state.unwatchedVideos.map((video, index) => (
-              <ListItem button key={video.id} onClick={() => this.handleVideoClick(video.filename)}>
-                <ListItemText primary={video.id + '. ' + video.filename} />
-              </ListItem>
-            ))}
-          </List>
-          Watched Videos
-          <List component="nav">
-            {this.state.watchedVideos.map((video, index) => (
-              <ListItem button key={video.id} onClick={() => this.handleVideoClick(video.filename)}>
-                <ListItemText primary={video.id + '. ' + video.filename} />
-              </ListItem>
-            ))}
-          </List>
+          <ListItem button onClick={() => this.toggleList("startedListOpen")}>
+            <ListItemText inset primary="Started Videos" />
+            {startedListOpen ? <ExpandLess /> : <ExpandMore />}
+          </ListItem>
+          <Collapse in={startedListOpen} timeout="auto" unmountOnExit>
+            <List component="div" disablePadding>
+              {startedVideos.map((video, index) => (
+                <ListItem button key={video.id} onClick={() => this.props.handleVideoClick(video, 'startedVideos')}>
+                  <ListItemText primary={video.id + '. ' + video.filename} />
+                </ListItem>
+              ))}
+            </List>
+          </Collapse>
+
+          <ListItem button onClick={() => this.toggleList("unwatchedListOpen")}>
+            <ListItemText inset primary="Unwatched Videos" />
+            {unwatchedListOpen ? <ExpandLess /> : <ExpandMore />}
+          </ListItem>
+          <Collapse in={unwatchedListOpen} timeout="auto" unmountOnExit>
+            <List component="div" disablePadding>
+              {unwatchedVideos.map((video, index) => (
+                <ListItem button key={video.id} onClick={() => this.props.handleVideoClick(video, 'unwatchedVideos')}>
+                  <ListItemText primary={video.id + '. ' + video.filename} />
+                </ListItem>
+              ))}
+            </List>
+          </Collapse>
+
+          <ListItem button onClick={() => this.toggleList("watchedListOpen")}>
+            <ListItemText inset primary="Watched Videos" />
+            {watchedListOpen ? <ExpandLess /> : <ExpandMore />}
+          </ListItem>
+          <Collapse in={watchedListOpen} timeout="auto" unmountOnExit>
+            <List component="div" disablePadding>
+              {watchedVideos.map((video, index) => (
+                <ListItem button key={video.id} onClick={() => this.props.handleVideoClick(video, 'watchedVideos')}>
+                  <ListItemText primary={video.id + '. ' + video.filename} />
+                </ListItem>
+              ))}
+            </List>
+          </Collapse>
+
         </div>
       </div>
     );

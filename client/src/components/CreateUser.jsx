@@ -1,7 +1,10 @@
 import React, { Component } from 'react';
+import axios from 'axios';
+
 import ErrorModal from './ErrorModal.jsx';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
+
 
 const styles= {
   root: {
@@ -37,8 +40,34 @@ class CreateUser extends Component {
     });
   }
 
-  handleSubmit = event => {
+  handleSubmit = async (event) => {
     event.preventDefault();
+    const config = {
+      headers: {
+        'Authorization': 'Bearer ' + localStorage.getItem('token')
+      }
+    };
+    const body = {
+      'username': this.state.username,
+      'password': this.state.password,
+      'admin': this.state.admin,
+    };
+    try {
+      let newUserInfo = await axios.post('/api/createUser', body, config);
+      console.log(newUserInfo);
+      alert("Created a new user: " + JSON.stringify(newUserInfo.data.user));
+      this.props.history.push('/');
+    } catch (error) {
+      console.log(error);
+      if (error.response) {
+        this.setState({
+          errorMsg: error.response.data.detail,
+          open: true
+        });
+      }
+    }
+  };
+/*
     fetch('/createUser', {
       method: 'POST',
       headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token')},
@@ -58,7 +87,8 @@ class CreateUser extends Component {
         });
       }
     })
-  };
+*/
+
 
   //Code for closing modal
   handleClose = () => {

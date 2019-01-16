@@ -30,6 +30,7 @@ class DialogModal extends Component {
       unsure: false,
       comment: ''
     };
+    this.notSent = true;
   }
 
   handleClose = () => {
@@ -41,7 +42,7 @@ class DialogModal extends Component {
   };
 
   handleKeyPress = (e) => {
-    if (e.key === 'Enter' && this.props.enterEnabled) {
+    if (e.key === 'Enter') {
       this.handleSubmit();
       this.handleClose();
     }
@@ -53,11 +54,10 @@ class DialogModal extends Component {
   };
 
   handleSubmit = () => {
-    this.props.inputHandler(this.state.comment, this.state.unsure)
-    this.setState({
-      unsure : false,
-      comment: ''
-    });
+    if (this.notSent) {
+      this.props.inputHandler(this.state.comment, this.state.unsure);
+      this.notSent = false;
+    }
   };
 
   handleChange = () => event => {

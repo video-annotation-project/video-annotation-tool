@@ -1,11 +1,9 @@
 import React, { Component } from 'react';
 import Rnd from 'react-rnd';
 import axios from 'axios';
-// import AWS from 'aws-sdk';
 
 import ConceptsSelected from './ConceptsSelected.jsx';
 import VideoList from './VideoList.jsx';
-import ErrorModal from './ErrorModal.jsx';
 import DialogModal from './DialogModal.jsx';
 
 import Button from '@material-ui/core/Button';
@@ -13,6 +11,12 @@ import { withStyles } from '@material-ui/core/styles';
 
 
 const styles = theme => ({
+  boxContainer: {
+    postion: 'absolute',
+    top: '50px',
+    width: '1600px',
+    height: '900px'
+  },
   dragBox: {
     margin: '0px',
     backgroundColor: 'transparent',
@@ -23,12 +27,24 @@ const styles = theme => ({
     marginTop: '10px',
     marginLeft: '20px',
     marginBottom: '10px'
-  }
+  },
+  conceptSectionContainer: {
+    position: 'relative',
+    float: 'right',
+    width: '460px',
+    height: '1000px',
+    backgroundColor: 'white',
+    borderLeft: '1px black solid',
+    overflow: 'auto'
+  },
+  videoSectionContainer: {
+    float: 'left'
+  },
 });
 
 window.addEventListener("beforeunload", (ev) => {
-  var myVideo = document.getElementById("video");
-  if (!myVideo.paused) {
+  var videoElement = document.getElementById("video");
+  if (!videoElement.paused) {
     ev.preventDefault();
     return ev.returnValue = 'Are you sure you want to close?';
   }
@@ -38,178 +54,251 @@ class Annotate extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      error: null,
-      // might want to change this. use function that retrieves last watched video?
-      videoName: 'DocRicketts-0569_20131213T224337Z_00-00-01-00TC_h264.mp4',
-      errorMsg: null,
-      errorOpen: false,
+      currentVideo: null,
       dialogMsg: null,
       dialogTitle: null,
       dialogPlaceholder: null,
       dialogOpen: false,
       clickedConcept: null,
       closeHandler: null,
-      enterEnabled: true,
+      isLoaded: false,
+      startedVideos: [],
+      unwatchedVideos: [],
+      watchedVideos: [],
+      videoPlaybackRate: 1.0
     };
   }
 
-  getCurrentVideo = async () => {
-    let videoData = await axios.get('/api/latestVideoId', {
-      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')},
-    })
-    if (videoData.data.length > 0) { // they've started watching a video
-      let videoid = videoData.data[0].videoid;
-      let startTime = videoData.data[0].timeinvideo;
-      let filename = await axios.get(`/api/latestVideoName/${videoid}`, {
-        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')},
-      });
-      return {
-        filename: filename.data[0].filename,
-        time: startTime
-      };
+  getCurrentVideo = () => {
+    if (this.state.startedVideos.length > 0) {
+      // currentVideo is the first item in startedVideos
+      let currentVideo = this.state.startedVideos[0];
+      return currentVideo;
     }
+    if (this.state.unwatchedVideos.length > 0) {
+      // currentVideo is the first item in unwatchedVideos
+      let currentVideo = this.state.unwatchedVideos[0]
+      // remove from unwatched list
+      let unwatchedVideos = JSON.parse(JSON.stringify(this.state.unwatchedVideos));
+      unwatchedVideos = unwatchedVideos.filter(vid => vid.id !== currentVideo.id);
+      // Add unwatched video to current videos
+      let startedVideos = JSON.parse(JSON.stringify(this.state.startedVideos));
+      startedVideos = startedVideos.concat(currentVideo);
+      this.setState({
+        startedVideos: startedVideos,
+        unwatchedVideos: unwatchedVideos
+      });
+      return currentVideo;
+    }
+    // user does not have a video to be played
+    // return default video 1
     return {
-      filename: 'DocRicketts-0569_20131213T224337Z_00-00-01-00TC_h264.mp4',
-      time: 0
+      'id': 1,
+      'filename': 'DocRicketts-0569_20131213T224337Z_00-00-01-00TC_h264.mp4',
+      'timeinvideo': 0,
+      'finished': true
     };
-  };
+  }
 
   componentDidMount = async () => {
-    let currentVideo = await this.getCurrentVideo();
-    this.setState({
-      videoName: currentVideo.filename,
-    }, () => {
-      var myVideo = document.getElementById("video");
-      myVideo.currentTime = currentVideo.time;
-    });
-  }
 
-  rewind = () => {
-     var myVideo = document.getElementById("video");
-     var cTime = myVideo.currentTime;
-     myVideo.currentTime = (cTime - 5);
-  }
+    // adds event listeners for different key presses
+    document.addEventListener('keydown', this.handleKeyDown);
 
-  playPause = () => {
-    var myVideo = document.getElementById("video");
-    if (myVideo.paused) {
-      myVideo.play();
-    } else {
-      myVideo.pause();
-    }
-  }
+    // loading the video list data
+    const config = {
+      headers: {
+        'Authorization': 'Bearer ' + localStorage.getItem('token')
+      }
+    };
 
-  fastForward = () => {
-    var myVideo = document.getElementById("video");
-    var cTime = myVideo.currentTime;
-    myVideo.currentTime = (cTime + 5);
-  }
-
-  updateCheckpoint = async (finished) => {
-    var myVideo = document.getElementById("video");
-    var time = myVideo.currentTime;
-    if (localStorage.getItem('token') == null) {
+    try {
+      await axios.get('/api/listVideos/', config).then(res => {
+        this.setState({
+          startedVideos: res.data[0].rows,
+          unwatchedVideos: res.data[1].rows,
+          watchedVideos: res.data[2].rows,
+        });
+      })
+    } catch (error) {
+      console.log(error);
+      if (error.response) {
+        console.log(error.response.data.detail);
+      }
       return;
     }
-    if (finished) {
-      time = 0;
-    }
-    if (time > 0 || finished) {
-      fetch('/updateCheckpoint', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token')},
-        body: JSON.stringify({
-          'videoId': this.state.videoName,
-          'timeinvideo': time,
-          'finished' : finished
-        })
-      }).then(res => res.json())
-      .then(res => {
-        if (res.message !== "updated") {
-          console.log("error");
-        }
-      })
-    }
-    // show next video on resume list
-    if (finished) {
-      fetch('/api/userVideos/false', {
-        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')}
-      }).then(res => res.json())
-      .then(res => {
-        if (typeof res.rows[0] !== 'undefined') {
-          this.setState({
-            videoName: res.rows[0].filename
-          }, () => {
-            // get saved time from videoid
-            fetch(`/api/timeAtVideo/${res.rows[0].id}`, {
-              headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')}
-            }).then(res => res.json())
-            .then(res => {
-              if (typeof res.rows !== 'undefined') {
-                var myVideo = document.getElementById("video");
-                myVideo.currentTime = res.rows[0].timeinvideo;
-              }
-            })
-          });
-        }
-        else { // no videos on resume list, get from unwatched list
-          fetch('/api/userUnwatchedVideos/', {
-            headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')}
-          }).then(res => res.json())
-          .then(res => {
-            if (typeof res.rows !== 'undefined') {
-              this.setState({
-                videoName: res.rows[0].filename
-              });
-            }
-          })
-        }
-      })
-    }
-  };
 
-  changeSpeed = () => {
-    try {
-      var myVideo = document.getElementById("video");
-      var speed = document.getElementById("playSpeedId").value;
-      if ((speed / 100) === 0) {
-        myVideo.playbackRate = (1);
-      } else {
-        myVideo.playbackRate = (speed / 100);
-      }
-    } catch(err) {
-      alert("invalid input");
-      myVideo.playbackRate = 1;
-    }
+    // retrieve the current video and put it in the state
+    this.setState({
+      currentVideo: this.getCurrentVideo(),
+      isLoaded: true,
+    }, () => {
+      var videoElement = document.getElementById("video");
+      videoElement.currentTime = this.state.currentVideo.timeinvideo;
+    });
   }
 
   componentWillUnmount = () => {
      this.updateCheckpoint(false);
+     document.removeEventListener('keydown', this.handleKeyDown);
   }
 
-  getVideoStartTime = async (filename) => {
-    let currentTime = await axios.get(`/api/videos/currentTime/${filename}`, {
-      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')},
-    })
-    return currentTime;
+  handleKeyDown = (e) => {
+    if (e.target !== document.body) {
+      return;
+    }
+    if (e.code === "Space") {
+      e.preventDefault();
+      this.playPause();
+    }
+    if (e.code === "ArrowRight") {
+      this.skipVideoTime(1);
+    }
+    if (e.code === "ArrowLeft") {
+      this.skipVideoTime(-1);
+    }
+  }
+
+  skipVideoTime = (time) => {
+     var videoElement = document.getElementById("video");
+     var cTime = videoElement.currentTime;
+     videoElement.currentTime = (cTime + time);
+  }
+
+  playPause = () => {
+    var videoElement = document.getElementById("video");
+    if (videoElement.paused) {
+      videoElement.play();
+    } else {
+      videoElement.pause();
+    }
+  }
+
+  toggleVideoControls = () => {
+    var video = document.getElementById("video");
+    if (video.hasAttribute("controls")) {
+      video.removeAttribute("controls")
+    } else {
+      video.setAttribute("controls","controls")
+    }
+  }
+
+  updateCheckpoint = async (finished) => {
+    // when the checkpoint for a video is updated,
+    // there are three places that need to reflect this: this.state.currentVideo,
+    // this.state.startedVideos, and the checkpoints table in the SQL database
+    // upon successful resolution of the SQL database update, we update
+    // currentVideo and startedVideos
+
+    const config = {
+      headers: {
+        'Authorization': 'Bearer ' + localStorage.getItem('token')
+      }
+    };
+    let videoElement = document.getElementById("video");
+    const body = {
+      'videoId': this.state.currentVideo.id,
+      'timeinvideo': videoElement.currentTime,
+      'finished' : finished
+    }
+    // update SQL database
+    await axios.post('/api/updateCheckpoint', body, config).then(res => {
+      if (res.data.message !== "updated") {
+        console.log(res.data.message);
+      }
+
+      // update this.state.startedVideos
+      let startedVideos = JSON.parse(JSON.stringify(this.state.startedVideos));
+      let currentVideo = startedVideos.find(vid => vid.id === this.state.currentVideo.id)
+      currentVideo.timeinvideo = videoElement.currentTime;
+      currentVideo.finished = finished;
+
+      this.setState({
+        // update this.state.currentVideo
+        currentVideo: JSON.parse(JSON.stringify(currentVideo)),
+        startedVideos: startedVideos
+      });
+    }, error => {
+      console.log(error);
+      if (error.response) {
+        console.log(error.response.data.detail);
+      }
+    });
   };
 
-  handleVideoClick = async (filename) => {
+  handleDoneClick = async () => {
+    //Update video checkpoint to watched
+    await this.updateCheckpoint(true);
+
+    // remove currentVideo from startedVideos, add to watchedVideos
+    let startedVideos = JSON.parse(JSON.stringify(this.state.startedVideos));
+    startedVideos = startedVideos.filter(vid => vid.id !== this.state.currentVideo.id);
+    let watchedVideos = JSON.parse(JSON.stringify(this.state.watchedVideos));
+    if (!watchedVideos.some(vid => vid.id === this.state.currentVideo.id)) {
+      watchedVideos = watchedVideos.concat(this.state.currentVideo);
+    }
     this.setState({
-      videoName: filename
-    })
-    let currentTime = await this.getVideoStartTime(filename);
-    if (currentTime.data.length === 1) {
-      var myVideo = document.getElementById("video");
-      myVideo.currentTime = currentTime.data[0].timeinvideo;
+      startedVideos: startedVideos,
+      watchedVideos: watchedVideos
+    });
+
+    //Get next video and play it
+    let currentVideo = await this.getCurrentVideo();
+    this.setState({
+      currentVideo: currentVideo,
+    });
+  }
+
+  handleChangeSpeed = (event) => {
+    this.setState({
+      videoPlaybackRate: event.target.value
+    }, () => {
+      var videoElement = document.getElementById("video");
+      videoElement.playbackRate = this.state.videoPlaybackRate;
+    });
+  }
+
+  handleVideoClick = async (clickedVideo, videoListName) => {
+
+    await this.updateCheckpoint(this.state.currentVideo.finished);
+    /*
+    If an unwatched video was clicked, remove it from unwatchedVideos and add it
+    to startedVideos
+    If a current video or watched video was clicked, do nothing
+    */
+    if (videoListName === 'unwatchedVideos') {
+      let unwatchedVideos = JSON.parse(JSON.stringify(this.state.unwatchedVideos));
+      unwatchedVideos = unwatchedVideos.filter(vid => vid.id !== clickedVideo.id);
+      let startedVideos = JSON.parse(JSON.stringify(this.state.startedVideos));
+      startedVideos = startedVideos.concat(clickedVideo);
+      this.setState({
+        startedVideos: startedVideos,
+        unwatchedVideos: unwatchedVideos
+      });
+    }
+
+    /*
+    Right now our database's architecture requires that watchedVideos never be
+    played by the end user. Talk to Ishaan or Hanson for more details on this.
+    It's interesting, I promise.
+    Down the road, one solution is to change our database's architecture, which
+    might be kinda hard. Another solution is to let end users change
+    watchedVideos into unwatchedVideos.
+    */
+    if (videoListName === 'unwatchedVideos' || videoListName === 'startedVideos') {
+      this.setState({
+        currentVideo: clickedVideo,
+      })
+      var videoElement = document.getElementById("video");
+      videoElement.currentTime = clickedVideo.timeinvideo;
     }
   };
 
   postAnnotation = (comment, unsure) => {
-    var myVideo = document.getElementById("video");
-    var cTime = myVideo.currentTime;
+    var videoElement = document.getElementById("video");
+    var cTime = videoElement.currentTime;
     var dragBoxCord = document.getElementById("dragBox").getBoundingClientRect();
-    var vidCord = myVideo.getBoundingClientRect("dragBox");
+    var vidCord = videoElement.getBoundingClientRect("dragBox");
     var x1_video = vidCord.left;
     var y1_video = vidCord.top;
 
@@ -225,11 +314,10 @@ class Annotate extends Component {
 
     //draw video with and without bounding box to canvas and save as img
     var date = Date.now().toString();
-    this.drawImages(vidCord, dragBoxCord, myVideo, date, x1, y1);
 
     const body = {
       'conceptId': this.state.clickedConcept.name,
-      'videoId': this.state.videoName,
+      'videoFilename': this.state.currentVideo.filename,
       'timeinvideo': cTime,
       'x1': x1,
       'y1': y1,
@@ -251,53 +339,7 @@ class Annotate extends Component {
     axios.post('/api/annotate', body, config).then(async res => {
       console.log(res.data.message);
       this.handleDialogClose();
-    })
-    .catch(error => {
-      console.log(error);
-      if (error.response) {
-        console.log(error.response.data);
-        this.setState({
-          errorMsg: error.response.data,
-          errorOpen: true
-        });
-      }
-    });
-  }
-
-
-  drawImages = (vidCord, dragBoxCord, myVideo, date, x1, y1) => {
-    var canvas = document.createElement('canvas');
-    canvas.height = vidCord.height;
-    canvas.width = vidCord.width;
-    var ctx = canvas.getContext('2d');
-    ctx.drawImage(myVideo, 0, 0, canvas.width, canvas.height);
-    var img = new Image();
-    img.setAttribute('crossOrigin', 'use-credentials');
-    img.src = canvas.toDataURL(1.0);
-    this.putVideoImage(img, date, false);
-    ctx.lineWidth = "2";
-    ctx.strokeStyle = "coral";
-    ctx.rect(x1, y1, dragBoxCord.width, dragBoxCord.height);
-    ctx.stroke();
-    img.src = canvas.toDataURL(1.0);
-    this.putVideoImage(img, date, true);
-  }
-
-  putVideoImage = async (img, date, box) => {
-    let buf = new Buffer(img.src.replace(/^data:image\/\w+;base64,/, ""),'base64');
-    const body = {
-      'buf': buf,
-      'date': date,
-      'box': box
-    }
-    const config = {
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + localStorage.getItem('token')
-      }
-    }
-    axios.post('/api/uploadImage', body, config).then(async res => {
-      console.log(res.data.message);
+      this.createAndUploadImages(vidCord, dragBoxCord, videoElement, date, x1, y1);
     }).catch(error => {
       console.log(error);
       console.log(JSON.stringify(error));
@@ -306,30 +348,58 @@ class Annotate extends Component {
       }
     });
   }
-  
-  handleConceptClick = (concept) => {
-  var myVideo = document.getElementById("video");
-  this.setState({
-    dialogMsg:  concept.name +
-                " in video " + this.state.videoName +
-                " at time " + Math.floor(myVideo.currentTime/60) + ' minutes '
-                + myVideo.currentTime%60 + " seconds",
-    dialogOpen: true,
-    dialogTitle: "Confirm Annotation",
-    dialogPlaceholder: "Comments",
-    clickedConcept: concept,
-    enterEnabled: true,
-    closeHandler: this.handleDialogClose
-  })
-}
 
-  handleErrorClose = () => {
-    this.setState({ errorOpen: false });
+  createAndUploadImages = async (vidCord, dragBoxCord, videoElement, date, x1, y1) => {
+    var canvas = document.createElement('canvas');
+    canvas.height = vidCord.height;
+    canvas.width = vidCord.width;
+    var ctx = canvas.getContext('2d');
+    ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+    var img = new Image();
+    img.setAttribute('crossOrigin', 'use-credentials');
+    img.src = canvas.toDataURL(1.0);
+    await this.uploadImage(img, date, false);
+    ctx.lineWidth = "2";
+    ctx.strokeStyle = "coral";
+    ctx.rect(x1, y1, dragBoxCord.width, dragBoxCord.height);
+    ctx.stroke();
+    img.src = canvas.toDataURL(1.0);
+    await this.uploadImage(img, date, true);
   }
+
+  uploadImage = (img, date, box) => {
+    let buf = new Buffer(img.src.replace(/^data:image\/\w+;base64,/, ""),'base64');
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + localStorage.getItem('token')
+      }
+    };
+    const body = {
+      'buf': buf,
+      'date': date,
+      'box': box
+    };
+    return axios.post('/api/uploadImage', body, config);
+  }
+
+  handleConceptClick = (concept) => {
+    var videoElement = document.getElementById("video");
+    this.setState({
+      dialogMsg:  concept.name +
+                  " in video " + this.state.currentVideo.filename +
+                  " at time " + Math.floor(videoElement.currentTime/60) + ' minutes '
+                  + videoElement.currentTime%60 + " seconds",
+      dialogOpen: true,
+      dialogTitle: "Confirm Annotation",
+      dialogPlaceholder: "Comments",
+      clickedConcept: concept,
+      closeHandler: this.handleDialogClose
+    })
+  };
 
   handleDialogClose = () => {
     this.setState({
-      enterEnabled: false,
       dialogOpen: false,
       dialogMsg: null,
       dialogPlaceholder: null,
@@ -340,12 +410,12 @@ class Annotate extends Component {
 
   render() {
     const { classes } = this.props;
+    const { isLoaded } = this.state;
+    if (!isLoaded) {
+      return <div>Loading...</div>
+    }
     return (
       <React.Fragment>
-        <ErrorModal
-          errorMsg={this.state.errorMsg}
-          open={this.state.errorOpen}
-          handleClose={this.handleErrorClose}/>
         <DialogModal
           title={this.state.dialogTitle}
           message={this.state.dialogMsg}
@@ -353,12 +423,19 @@ class Annotate extends Component {
           inputHandler={this.postAnnotation}
           open={this.state.dialogOpen}
           handleClose={this.state.closeHandler}
-          enterEnabled={this.state.enterEnabled}
         />
-        {this.state.videoName}
-
-        <div>
-          <video onPause={this.updateCheckpoint.bind(this, false)} id="video"  width="1600" height="900" src={'api/videos/Y7Ek6tndnA/'+this.state.videoName} type='video/mp4' controls>
+      <div className = {classes.videoSectionContainer}>
+        {this.state.currentVideo.id + " " + this.state.currentVideo.filename}
+        <div className = {classes.boxContainer}>
+          <video
+              onPause={this.updateCheckpoint.bind(this, false)}
+              id="video"
+              width="1600"
+              height="900"
+              src={'http://d1bnpmj61iqorj.cloudfront.net/videos/'+this.state.currentVideo.filename}
+              type='video/mp4'
+              crossOrigin='use-credentials'
+          >
             Your browser does not support the video tag.
           </video>
           <Rnd id="dragBox"
@@ -376,20 +453,36 @@ class Annotate extends Component {
             className={classes.dragBox}
           >
           </Rnd>
-          <br />
-          <Button variant="contained" color="primary" className={classes.button} onClick={this.rewind}>-5 sec</Button>
-          <Button variant="contained" color="primary" className={classes.button} onClick={this.playPause}>Play/Pause</Button>
-          <Button variant="contained" color="primary" className={classes.button} onClick={this.fastForward}>+5 sec</Button>
-          <Button variant="contained" color="primary" className={classes.button} onClick={() => this.updateCheckpoint(true)}>Done</Button>
-          <br />
-          <span>Play at speed:</span>
-          <p><input type="text" id="playSpeedId" placeholder="100" />&ensp; %</p>
-          <input type="submit" value="Enter" onClick={this.changeSpeed} />
         </div>
+        <br />
+        <Button variant="contained" color="primary" className={classes.button} onClick={() => this.skipVideoTime(-5)}>-5 sec</Button>
+        <Button variant="contained" color="primary" className={classes.button} onClick={this.playPause}>Play/Pause</Button>
+        <Button variant="contained" color="primary" className={classes.button} onClick={() => this.skipVideoTime(5)}>+5 sec</Button>
+        <Button variant="contained" color="primary" className={classes.button} onClick={() => this.toggleVideoControls()}>Toggle Controls</Button>
+        <Button variant="contained" color="primary" className={classes.button} onClick={() => this.handleDoneClick()}>Done</Button>
+        <br />
+        <div width="250">
+          Play Rate: {this.state.videoPlaybackRate}
+        </div>
+        <input
+          type="range"
+          id="playSpeedId"
+          min="0" max="4"
+          value={this.state.videoPlaybackRate}
+          onChange={this.handleChangeSpeed}
+          step=".1"
+        />
+      </div>
         <ConceptsSelected
+          className = {classes.conceptSectionContainer}
           handleConceptClick={this.handleConceptClick}
         />
-        <VideoList handleVideoClick={this.handleVideoClick} />
+        <VideoList
+          handleVideoClick={this.handleVideoClick}
+          startedVideos={this.state.startedVideos}
+          unwatchedVideos={this.state.unwatchedVideos}
+          watchedVideos={this.state.watchedVideos}
+        />
       </React.Fragment>
     );
   }

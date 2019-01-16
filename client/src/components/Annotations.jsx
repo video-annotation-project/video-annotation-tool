@@ -100,11 +100,11 @@ class Annotations extends Component {
       let annotations = JSON.parse(JSON.stringify(this.state.annotations));
       annotations = annotations.filter(annotation => annotation.id !== id);
       this.setState({
+        annotations: annotations,
         isLoaded: false,
-        annotations: annotations
       });
       this.setState({
-        isLoaded: true
+        isLoaded: true,
       });
     });
   }
@@ -182,7 +182,7 @@ class Annotations extends Component {
                 {annotation.showVideo ? (
                   <video
                     id="video"  width="800" height="450"
-                    src={'api/videos/Y7Ek6tndnA/' + annotation.id + '_ai.mp4'}
+                    src={'http://d1bnpmj61iqorj.cloudfront.net/videos/' + annotation.id + '_ai.mp4'}
                     type='video/mp4' controls>
                     Your browser does not support the video tag.
                   </video>
