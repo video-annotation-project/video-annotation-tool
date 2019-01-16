@@ -8,4 +8,6 @@ npm-debug.log
 # AWS EC2 instances
 # the .env on the EC2 instances should always contain the production
 # version of the DB_HOST url
-.env
+
+# jk this is commented out for now until because it introduced a new bug
+# .env
