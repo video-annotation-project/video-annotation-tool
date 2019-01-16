@@ -175,12 +175,8 @@ class Annotate extends Component {
   }
 
   toggleVideoControls = () => {
-    var video = document.getElementById("video");
-    if (video.hasAttribute("controls")) {
-      video.removeAttribute("controls")
-    } else {
-      video.setAttribute("controls","controls")
-    }
+    var videoElement = document.getElementById("video");
+    videoElement.controls = !videoElement.controls;
   }
 
   updateCheckpoint = async (finished) => {
