@@ -1,3 +1,11 @@
 node_modules
 npm-debug.log
 
+# .env contains private passwords and such, as well as the DB_HOST url
+# .env is included in .gitignore and this is specifically to exclude
+# it from the remote GitHub repository
+# .env is included in .ebignore but this is not to exclude it from the
+# AWS EC2 instances
+# the .env on the EC2 instances should always contain the production
+# version of the DB_HOST url
+.env
