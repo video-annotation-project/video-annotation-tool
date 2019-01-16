@@ -26,13 +26,8 @@ DB_PASSWORD = os.getenv("DB_PASSWORD")
 con = connect(database=DB_NAME, host=DB_HOST, user=DB_USER, password=DB_PASSWORD)
 cursor = con.cursor()
 
-#get AI userid
-cursor.execute("SELECT id FROM users WHERE username=%s", ("ai",))
-AI_ID = cursor.fetchone().id
-
 while True:
     # get annotations from test
-    #cursor.execute("SELECT * FROM annotations where userid!=%d and dateannotated=%s",(AI_ID,str(datetime.date.today()),))
     cursor.execute("SELECT * FROM annotations WHERE originalid IS NULL")
     rows = cursor.fetchall()
 
