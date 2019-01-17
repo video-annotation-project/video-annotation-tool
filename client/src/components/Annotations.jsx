@@ -182,7 +182,7 @@ class Annotations extends Component {
                 {annotation.showVideo ? (
                   <video
                     id="video"  width="800" height="450"
-                    src={'http://d1bnpmj61iqorj.cloudfront.net/videos/' + annotation.id + '_ai.mp4'}
+                    src={'https://d1bnpmj61iqorj.cloudfront.net/videos/' + annotation.id + '_ai.mp4'}
                     type='video/mp4' controls>
                     Your browser does not support the video tag.
                   </video>
