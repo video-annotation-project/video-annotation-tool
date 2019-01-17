@@ -34,7 +34,6 @@ DB_PASSWORD = os.getenv("DB_PASSWORD")
 
 # video/image properties
 length = 4000 # length of video before and after annotation in ms (ex: length = 4000, vid = 8 s max)
-images_per_sec = 10
 VIDEO_WIDTH = 640
 VIDEO_HEIGHT = 360
 
@@ -99,8 +98,7 @@ def track_object(frames, box, video_object, end, original, cursor, con, AI_ID, f
     tracker = OPENCV_OBJECT_TRACKERS["kcf"]()
     trackers.add(tracker, frame, box)
     counter = 0
-    images_counter = math.floor(fps / images_per_sec) # vids are about 20 fps
-
+    
     while True:
         frame = get_next_frame(frames, video_object, counter)
         if frame is None:
