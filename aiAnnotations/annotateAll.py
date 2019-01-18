@@ -59,6 +59,4 @@ while True:
             print("Failed on video for annotation: " + str(i.id))
         cursor.execute("UPDATE annotations SET originalid=%d WHERE id=%d;",(i.id, i.id,))
     con.commit()
-    con.close()
-    exit()
-    
+    con.close()    
