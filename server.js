@@ -60,56 +60,37 @@ app.post("/api/login", async function(req, res) {
     if (user.rowCount === 0) {
       res.status(400).json({detail: "No username found"})
     }
-    if (await bcrypt.compare(password,user.rows[0].password)) {
-      const payload = {id: user.rows[0].id};
-      const token = jwt.sign(payload, jwtOptions.secretOrKey);
-      res.json({token: token, admin: user.rows[0].admin});
-    } else {
+    if (!await bcrypt.compare(password,user.rows[0].password)) {
       res.status(400).json({detail: "wrong password"});
     }
+    const payload = {id: user.rows[0].id};
+    const token = jwt.sign(payload, jwtOptions.secretOrKey);
+    res.json({token: token, admin: user.rows[0].admin});
   } catch (error) {
     res.status(400).json(error);
   }
 });
 
 //Code for profile modification
-app.post('/changePassword', passport.authenticate('jwt', {session: false}),
+app.post('/api/changePassword', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
-    if (req.body.password1 != req.body.password2) {
-      res.json({message: "New passwords not matching"});
-      res.end();
+  const {password, newPassword1, newPassword2} = req.body;
+  const username = req.user.username;
+  const queryPass = 'select password from users where users.username=$1';
+  try {
+    const currentPass = await psql.query(queryPass,[username]);
+    if (!await bcrypt.compare(password, currentPass.rows[0].password)) {
+      res.status(400).json({detail: "Wrong Password!"});
     }
-    queryPass = 'select password from users where users.username=$1';
-    try {
-      const currentPass = await psql.query(queryPass,[req.user.username]);
-      try {
-        const match = await bcrypt.compare(req.body.password, currentPass.rows[0].password);
-        if (match) {
-          const saltRounds = 10;
-          const hash = await bcrypt.hash(req.body.password1, saltRounds);
-          queryUpdate = 'UPDATE users SET password=$1 WHERE username=$2';
-          try {
-            const update = await psql.query(queryUpdate,[hash,req.user.username]);
-            res.json({message: 'Changed'});
-            res.end();
-          } catch (error) {
-            res.json({message: "error: " + error.message});
-            res.end();
-          }
-        } else {
-          res.json({message: "Wrong Password!"});
-          res.end();
-        }
-      } catch (error) {
-        res.json({message: "error: " + error.message});
-        res.end();
-      }
-    } catch (error) {
-      res.json({message: "error: " + error.message});
-      res.end();
-    }
+    const saltRounds = 10;
+    const hash = await bcrypt.hash(newPassword1, saltRounds);
+    queryUpdate = 'UPDATE users SET password=$1 WHERE username=$2';
+    const update = await psql.query(queryUpdate,[hash,username]);
+    res.json({message: 'Changed'});
+  } catch (error) {
+    res.status(400).json(error);
   }
-)
+})
 
 //Code for create users
 app.post('/api/createUser', passport.authenticate('jwt', {session: false}),

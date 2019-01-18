@@ -1,4 +1,6 @@
 import React, { Component } from 'react';
+import axios from 'axios';
+
 import ErrorModal from './ErrorModal.jsx';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
@@ -18,8 +20,8 @@ class Profile extends Component {
     super(props);
     this.state = {
       password: '',
-      password1: '',
-      password2: '',
+      newPassword1: '',
+      newPassword2: '',
       errorMsg: null,
       open: false,
     };
@@ -33,21 +35,33 @@ class Profile extends Component {
 
   handleSubmit = event => {
     event.preventDefault();
-    fetch('/changePassword', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token')},
-      body: JSON.stringify({
-        'password': this.state.password,
-        'password1': this.state.password1,
-        'password2': this.state.password2,
-      })
-    }).then(res => res.json()).then(res => {
-      if (res.message === "Changed") {
-        alert(res.message)
-        this.props.history.push('/')
-      } else {
+    const {password, newPassword1, newPassword2} = this.state;
+    if (newPassword1 !== newPassword2) {
+      this.setState({
+        errorMsg: "New passwords do not match!",
+        open: true
+      });
+      return;
+    }
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + localStorage.getItem('token')
+      }
+    }
+    const body = {
+      'password': password,
+      'newPassword1': newPassword1,
+      'newPassword2': newPassword2,
+    }
+    axios.post('/api/changePassword', body, config).then(res => {
+      alert(res.data.message)
+      this.props.history.push('/')
+    }).catch(error => {
+      console.log(error);
+      if (error.response) {
         this.setState({
-          errorMsg: res.message,
+          errorMsg: error.response.data.detail,
           open: true
         });
       }
@@ -69,10 +83,10 @@ class Profile extends Component {
           <input type='password' name='password' value={this.state.password} onChange= {this.handleChange}/>
           <br /><br />
           <div>New Password: </div>
-          <input type='password' name='password1' value={this.state.password1} onChange= {this.handleChange}/>
+          <input type='password' name='newPassword1' value={this.state.newPassword1} onChange= {this.handleChange}/>
           <br /><br />
           <div>Confirm Password: </div>
-          <input type="password" name="password2" value={this.state.password2} onChange= {this.handleChange} />
+          <input type="password" name="newPassword2" value={this.state.newPassword2} onChange= {this.handleChange} />
           <br /><br /><br />
           <input type='submit' value='Submit'/>
         </form>
