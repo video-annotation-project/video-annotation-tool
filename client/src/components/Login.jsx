@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import ErrorModal from './ErrorModal.jsx';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
+import axios from 'axios';
 
 const styles= {
   root: {
@@ -32,30 +33,34 @@ class Login extends Component {
 
   handleSubmit = event => {
     event.preventDefault();
-    fetch('/login', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({
-        'username': this.state.username,
-        'password': this.state.password
-      })
-    }).then(res => res.json()).then(res => {
-      if (res.message === 'welcome') {
-        localStorage.setItem('isAuthed', 'true');
-        localStorage.setItem('token', res.token);
-        //Add code for admin
-        if (res.admin) {
-          localStorage.setItem('admin', res.admin);
-        }
-        this.props.history.push('/');
-      } else {
-        localStorage.clear();
-        this.setState({
-          errorMsg: res.message,
-          open: true
-        });
+    const {username, password} = this.state;
+    if (!username | !password) {
+      return;
+    }
+    const body = {
+      'username': username,
+      'password': password
+    }
+    axios.post('/api/login', body, {
+      headers: {'Content-Type': 'application/json'}
+    }).then(res => {
+      localStorage.setItem('isAuthed', 'true');
+      localStorage.setItem('token', res.data.token);
+      //Add code for admin
+      if (res.data.admin) {
+        localStorage.setItem('admin', res.data.admin);
       }
-    });
+      this.props.history.push('/');
+    }).catch(error => {
+      console.log(error);
+      if (error.response) {
+        console.log(error.response)
+        this.setState({
+          errorMsg: error.response.data.detail,
+          open: true
+        })
+      }
+    })
   };
 
   //Code for closing modal

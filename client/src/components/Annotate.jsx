@@ -340,7 +340,7 @@ class Annotate extends Component {
       console.log(error);
       console.log(JSON.stringify(error));
       if (error.response) {
-        console.log(error.response.data);
+        console.log(error.response.data.detail);
       }
     });
   }

@@ -87,26 +87,30 @@ class Annotations extends Component {
 
   handleDelete = async (event, id) => {
     event.stopPropagation();
-    fetch('/api/delete', {
-      method: 'POST',
+    const config = {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + localStorage.getItem('token')
-      },
-      body: JSON.stringify({
-        'id': id
-      })
-    }).then(res => res.json()).then(res => {
+      }
+    };
+    const body = {
+      'id': id
+    }
+    axios.post('/api/delete', body, config).then(res => {
       let annotations = JSON.parse(JSON.stringify(this.state.annotations));
       annotations = annotations.filter(annotation => annotation.id !== id);
       this.setState({
-        annotations: annotations,
-        isLoaded: false,
-      });
-      this.setState({
-        isLoaded: true,
-      });
-    });
+        annotations: annotations
+      })
+    }).catch(error => {
+      console.log(error);
+      if (error.response) {
+        console.log(error.response.data.detail);
+        this.setState({
+          error: error.response.data.detail
+        })
+      }
+    })
   }
 
   updateAnnotations = (id, updatedName, updatedComment, updatedUnsure) => {
@@ -132,8 +136,8 @@ class Annotations extends Component {
     return (
       <React.Fragment>
         <List>
-          {annotations.map((annotation, index) => (
-            <React.Fragment key={index}>
+          {annotations.map(annotation => (
+            <React.Fragment key={annotation.id}>
               <ListItem button
                 onClick={() => this.handleClick(
                   annotation.timeinvideo,
