@@ -96,7 +96,7 @@ class ConceptsSelected extends React.Component {
         'Authorization': 'Bearer ' + localStorage.getItem('token')
       }
     }
-    axios.post('/api/conceptsSelected', body, config).then(async res => {
+    axios.post('/api/updateConceptsSelected', body, config).then(async res => {
       this.closeSearchModel();
       this.setState({
         isLoaded:false
