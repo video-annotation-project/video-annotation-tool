@@ -175,12 +175,8 @@ class Annotate extends Component {
   }
 
   toggleVideoControls = () => {
-    var video = document.getElementById("video");
-    if (video.hasAttribute("controls")) {
-      video.removeAttribute("controls")
-    } else {
-      video.setAttribute("controls","controls")
-    }
+    var videoElement = document.getElementById("video");
+    videoElement.controls = !videoElement.controls;
   }
 
   updateCheckpoint = async (finished) => {
@@ -344,7 +340,7 @@ class Annotate extends Component {
       console.log(error);
       console.log(JSON.stringify(error));
       if (error.response) {
-        console.log(error.response.data);
+        console.log(error.response.data.detail);
       }
     });
   }
@@ -416,18 +412,24 @@ class Annotate extends Component {
     }
     return (
       <React.Fragment>
+        {
+        this.state.dialogOpen &&
         <DialogModal
           title={this.state.dialogTitle}
           message={this.state.dialogMsg}
           placeholder={this.state.dialogPlaceholder}
           inputHandler={this.postAnnotation}
-          open={this.state.dialogOpen}
+          open={true /*The DialogModal 'openness' is controlled through boolean
+            logic rather than by passing in a variable as an attribute. This is
+            to force DialogModal to unmount when it closes so that its state
+            is reset. */}
           handleClose={this.state.closeHandler}
         />
-      <div className = {classes.videoSectionContainer}>
-        {this.state.currentVideo.id + " " + this.state.currentVideo.filename}
-        <div className = {classes.boxContainer}>
-          <video
+        }
+        <div className = {classes.videoSectionContainer}>
+          {this.state.currentVideo.id + " " + this.state.currentVideo.filename}
+          <div className = {classes.boxContainer}>
+            <video
               onPause={this.updateCheckpoint.bind(this, false)}
               id="video"
               width="1600"
@@ -435,44 +437,44 @@ class Annotate extends Component {
               src={'https://d1bnpmj61iqorj.cloudfront.net/videos/'+this.state.currentVideo.filename}
               type='video/mp4'
               crossOrigin='use-credentials'
-          >
-            Your browser does not support the video tag.
-          </video>
-          <Rnd id="dragBox"
-            default={{
-              x: 30,
-              y: 30,
-              width: 60,
-              height: 60,
-          }}
-            minWidth={25}
-            minHeight={25}
-            maxWidth={900}
-            maxHeight={650}
-            bounds="parent"
-            className={classes.dragBox}
-          >
-          </Rnd>
+              >
+              Your browser does not support the video tag.
+            </video>
+            <Rnd id="dragBox"
+              default={{
+                x: 30,
+                y: 30,
+                width: 60,
+                height: 60,
+              }}
+              minWidth={25}
+              minHeight={25}
+              maxWidth={900}
+              maxHeight={650}
+              bounds="parent"
+              className={classes.dragBox}
+              >
+            </Rnd>
+          </div>
+          <br />
+          <Button variant="contained" color="primary" className={classes.button} onClick={() => this.skipVideoTime(-5)}>-5 sec</Button>
+          <Button variant="contained" color="primary" className={classes.button} onClick={this.playPause}>Play/Pause</Button>
+          <Button variant="contained" color="primary" className={classes.button} onClick={() => this.skipVideoTime(5)}>+5 sec</Button>
+          <Button variant="contained" color="primary" className={classes.button} onClick={() => this.toggleVideoControls()}>Toggle Controls</Button>
+          <Button variant="contained" color="primary" className={classes.button} onClick={() => this.handleDoneClick()}>Done</Button>
+          <br />
+          <div width="250">
+            Play Rate: {this.state.videoPlaybackRate}
+          </div>
+          <input
+            type="range"
+            id="playSpeedId"
+            min="0" max="4"
+            value={this.state.videoPlaybackRate}
+            onChange={this.handleChangeSpeed}
+            step=".1"
+          />
         </div>
-        <br />
-        <Button variant="contained" color="primary" className={classes.button} onClick={() => this.skipVideoTime(-5)}>-5 sec</Button>
-        <Button variant="contained" color="primary" className={classes.button} onClick={this.playPause}>Play/Pause</Button>
-        <Button variant="contained" color="primary" className={classes.button} onClick={() => this.skipVideoTime(5)}>+5 sec</Button>
-        <Button variant="contained" color="primary" className={classes.button} onClick={() => this.toggleVideoControls()}>Toggle Controls</Button>
-        <Button variant="contained" color="primary" className={classes.button} onClick={() => this.handleDoneClick()}>Done</Button>
-        <br />
-        <div width="250">
-          Play Rate: {this.state.videoPlaybackRate}
-        </div>
-        <input
-          type="range"
-          id="playSpeedId"
-          min="0" max="4"
-          value={this.state.videoPlaybackRate}
-          onChange={this.handleChangeSpeed}
-          step=".1"
-        />
-      </div>
         <ConceptsSelected
           className = {classes.conceptSectionContainer}
           handleConceptClick={this.handleConceptClick}

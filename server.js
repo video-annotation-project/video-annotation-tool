@@ -52,90 +52,48 @@ app.use(passport.initialize());
 app.use(bodyParser.json({limit: '50mb'}));
 app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
 
-async function userLogin(username, password) {
-  queryPass = 'select id, password, admin from users where users.username=$1';
-
-  const user = await psql.query(queryPass,[username]);
-  if (user.rows.length > 1) {
-    return -1;
-  }
-  if (user.rows.length == 0) {
-    return 1;
-  }
-  const res = await bcrypt.compare(password,user.rows[0].password);
-  if (res) {
-    return user.rows[0];
-  } else {
-    return 2;
-  }
-}
-
-app.post("/login", async function(req, res) {
-  if (!req.body.username || !req.body.password) {
-    res.json({
-      message: "Invalid parameters: username and password required"
-    });
-    return;
-  }
-  var username = req.body.username;
-  var password = req.body.password;
-  var choice = await userLogin(username, password);
-  switch(choice) {
-    case -1:
-      res.json({message: "sorry, something went wrong"});
-      break;
-    case 1:
-      res.json({message:"username not found"});
-      break;
-    case 2:
-      res.json({message:"wrong password"});
-      break;
-    default:
-      var payload = {id: choice.id};
-      var token = jwt.sign(payload, jwtOptions.secretOrKey);
-      res.json({message: "welcome", token: token, admin: choice.admin});
-      break;
+app.post("/api/login", async function(req, res) {
+  const {username, password} = req.body;
+  let queryPass = 'select id, password, admin from users where users.username=$1';
+  try {
+    const user = await psql.query(queryPass,[username]);
+    if (user.rowCount === 0) {
+      res.status(400).json({detail: "No username found"});
+      return;
+    }
+    if (!await bcrypt.compare(password,user.rows[0].password)) {
+      res.status(400).json({detail: "wrong password"});
+      return;
+    }
+    const payload = {id: user.rows[0].id};
+    const token = jwt.sign(payload, jwtOptions.secretOrKey);
+    res.json({token: token, admin: user.rows[0].admin});
+  } catch (error) {
+    res.status(500).json(error);
   }
 });
 
 //Code for profile modification
-app.post('/changePassword', passport.authenticate('jwt', {session: false}),
+app.post('/api/changePassword', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
-    if (req.body.password1 != req.body.password2) {
-      res.json({message: "New passwords not matching"});
-      res.end();
+  const {password, newPassword1, newPassword2} = req.body;
+  const username = req.user.username;
+  const queryPass = 'select password from users where users.username=$1';
+  try {
+    const currentPass = await psql.query(queryPass,[username]);
+    if (!await bcrypt.compare(password, currentPass.rows[0].password)) {
+      res.status(400).json({detail: "Wrong Password!"});
+      return;
     }
-    queryPass = 'select password from users where users.username=$1';
-    try {
-      const currentPass = await psql.query(queryPass,[req.user.username]);
-      try {
-        const match = await bcrypt.compare(req.body.password, currentPass.rows[0].password);
-        if (match) {
-          const saltRounds = 10;
-          const hash = await bcrypt.hash(req.body.password1, saltRounds);
-          queryUpdate = 'UPDATE users SET password=$1 WHERE username=$2';
-          try {
-            const update = await psql.query(queryUpdate,[hash,req.user.username]);
-            res.json({message: 'Changed'});
-            res.end();
-          } catch (error) {
-            res.json({message: "error: " + error.message});
-            res.end();
-          }
-        } else {
-          res.json({message: "Wrong Password!"});
-          res.end();
-        }
-      } catch (error) {
-        res.json({message: "error: " + error.message});
-        res.end();
-      }
-    } catch (error) {
-      res.json({message: "error: " + error.message});
-      res.end();
-    }
+    const saltRounds = 10;
+    const hash = await bcrypt.hash(newPassword1, saltRounds);
+    queryUpdate = 'UPDATE users SET password=$1 WHERE username=$2';
+    const update = await psql.query(queryUpdate,[hash,username]);
+    res.json({message: 'Changed'});
+  } catch (error) {
+    res.status(500).json(error);
   }
-)
+})
 
 //Code for create users
 app.post('/api/createUser', passport.authenticate('jwt', {session: false}),
@@ -146,7 +104,6 @@ app.post('/api/createUser', passport.authenticate('jwt', {session: false}),
       const hash = await bcrypt.hash(req.body.password, saltRounds);
       const data = [req.body.username, hash, req.body.admin];
       const insertUser = await psql.query(queryText, data);
-      console.log(insertUser);
       res.json({message: "user created", user: insertUser.rows[0]});
     } catch (error) {
       res.status(400).json(error);
@@ -159,7 +116,6 @@ app.get('/api/concepts', passport.authenticate('jwt', {session: false}),
     try {
       const concepts = await psql.query(queryText, [req.query.id]);
       res.json(concepts.rows);
-
     } catch (error) {
       res.status(400).json(error);
     }
@@ -168,7 +124,11 @@ app.get('/api/concepts', passport.authenticate('jwt', {session: false}),
 
 app.get('/api/conceptsSelected', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
-    queryText = 'select * from profile, concepts where profile.userid=$1 AND concepts.id=profile.conceptId ORDER BY concepts.name';
+    queryText = 'select * \
+                 from profile, concepts \
+                 where profile.userid=$1 \
+                 AND concepts.id=profile.conceptId \
+                 ORDER BY concepts.name';
     try {
       let concepts = await psql.query(queryText, [req.user.id]);
       res.json(concepts.rows);
@@ -179,15 +139,15 @@ app.get('/api/conceptsSelected', passport.authenticate('jwt', {session: false}),
   }
 );
 
-app.post('/api/conceptsSelected', passport.authenticate('jwt', {session: false}),
+app.post('/api/updateConceptsSelected', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
-    queryText = 'DELETE FROM profile WHERE profile.userid=$1 AND profile.conceptid=$2 RETURNING *';
+    let queryText = 'DELETE FROM profile WHERE profile.userid=$1 AND profile.conceptid=$2 RETURNING *';
     if (req.body.checked) {
       queryText = 'INSERT INTO profile(userid, conceptid) VALUES($1, $2) RETURNING *';
     }
     try {
       let insert = await psql.query(queryText, [req.user.id, req.body.id]);
-      res.json({message: "Changed", value: JSON.stringify(insert.rows)});
+      res.json({value: JSON.stringify(insert.rows)});
     } catch (error) {
       res.status(400).json(error);
     }
@@ -199,7 +159,10 @@ app.post('/api/conceptsSelected', passport.authenticate('jwt', {session: false})
 app.post('/api/searchConcepts', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
     let concepts = null
-    queryText = "Select id, name, similarity($1,name) from concepts where similarity($1, name) > .01 order by similarity desc limit 10";
+    const queryText = "Select id, name, similarity($1,name) \
+                       from concepts \
+                       where similarity($1, name) > .01 \
+                       order by similarity desc limit 10";
     try {
       concepts = await psql.query(queryText, [req.body.name]);
     } catch (error) {
@@ -683,6 +646,7 @@ app.post('/api/delete', passport.authenticate('jwt', {session: false}),
       res.json(deleteRes.rows);
     } catch (error) {
       console.log(error);
+      res.status(400).json(error);
     }
   }
 );

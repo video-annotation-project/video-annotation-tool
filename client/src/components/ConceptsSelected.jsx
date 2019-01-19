@@ -48,10 +48,9 @@ class ConceptsSelected extends React.Component {
     axios.get('/api/conceptsSelected', {
       headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')},
     }).then(res => {
-      let conceptsSelected = res.data;
       this.setState({
         isLoaded: true,
-        conceptsSelected: conceptsSelected
+        conceptsSelected: res.data
       })
     })
     .catch(error => {
@@ -96,7 +95,7 @@ class ConceptsSelected extends React.Component {
         'Authorization': 'Bearer ' + localStorage.getItem('token')
       }
     }
-    axios.post('/api/conceptsSelected', body, config).then(async res => {
+    axios.post('/api/updateConceptsSelected', body, config).then(async res => {
       this.closeSearchModel();
       this.setState({
         isLoaded:false
@@ -131,9 +130,9 @@ class ConceptsSelected extends React.Component {
             <AddIcon />
           </Button>
           <div className={classes.conceptList}>
-            {this.state.conceptsSelected.map((concept, index) => (
+            {this.state.conceptsSelected.map(concept => (
               <li
-                key={index}
+                key={concept.id}
                 className={classes.concept}
                 onClick={() => this.props.handleConceptClick(concept)}
               >
