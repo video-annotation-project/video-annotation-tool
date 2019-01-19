@@ -28,23 +28,14 @@ class DialogModal extends Component {
     super(props);
     this.state = {
       unsure: false,
-      comment: ''
+      comment: '',
+      submitted: false
     };
-    this.notSent = true;
   }
-
-  handleClose = () => {
-    this.props.handleClose();
-    this.setState({
-      unsure: false,
-      comment: ''
-    });
-  };
 
   handleKeyPress = (e) => {
     if (e.key === 'Enter') {
       this.handleSubmit();
-      this.handleClose();
     }
     else {
       this.setState({
@@ -54,11 +45,25 @@ class DialogModal extends Component {
   };
 
   handleSubmit = () => {
-    if (this.notSent) {
-      this.props.inputHandler(this.state.comment, this.state.unsure);
-      this.notSent = false;
+    if (this.state.submitted) {
+      return;
     }
+    console.log(this.state.submitted);
+    this.setState({
+      submitted: true
+    }, () => {
+      this.props.inputHandler(this.state.comment, this.state.unsure);
+      this.props.handleClose();
+    })
   };
+
+  componentDidMount = () => {
+    console.log("DialogModal has mounted");
+  }
+
+  componentWillUnmount = () => {
+    console.log("DialogModal has unmounted");
+  }
 
   handleChange = () => event => {
     this.setState({ unsure: event.target.checked });
@@ -66,29 +71,28 @@ class DialogModal extends Component {
 
   render() {
     return (
-      <React.Fragment>
-        <Dialog
-          open={this.props.open}
-          aria-labelledby="form-dialog-title"
-        >
-          <DialogTitle id="form-dialog-title">{this.props.title}</DialogTitle>
-          <DialogContent>
-            <DialogContentText>
-              {this.props.message}
-            </DialogContentText>
-            <br/>
-            <Input
-              onKeyPress={this.handleKeyPress}
-              autoFocus
-              margin="dense"
-              id="concept"
-              type="text"
-              placeholder={this.props.placeholder}
-              fullWidth
-            />
-          </DialogContent>
-          <DialogActions>
-            <FormControlLabel
+      <Dialog
+        open={this.props.open}
+        aria-labelledby="form-dialog-title"
+      >
+        <DialogTitle id="form-dialog-title">{this.props.title}</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            {this.props.message}
+          </DialogContentText>
+          <br/>
+          <Input
+            onKeyPress={this.handleKeyPress}
+            autoFocus
+            margin="dense"
+            id="concept"
+            type="text"
+            placeholder={this.props.placeholder}
+            fullWidth
+          />
+        </DialogContent>
+        <DialogActions>
+          <FormControlLabel
             control={
               <Checkbox
                 checked={this.state.unsure}
@@ -98,16 +102,15 @@ class DialogModal extends Component {
               />
             }
             label="Unsure"
-            />
-            <Button onClick={this.handleClose} color="primary">
-              Cancel
-            </Button>
-            <Button onClick={this.handleSubmit} color="primary">
-              Submit
-            </Button>
-          </DialogActions>
-        </Dialog>
-      </React.Fragment>
+          />
+          <Button onClick={this.props.handleClose} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={this.handleSubmit} color="primary">
+            Submit
+          </Button>
+        </DialogActions>
+      </Dialog>
     );
   }
 }
