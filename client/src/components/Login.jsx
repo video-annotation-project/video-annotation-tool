@@ -34,7 +34,7 @@ class Login extends Component {
   handleSubmit = event => {
     event.preventDefault();
     const {username, password} = this.state;
-    if (!username | !password) {
+    if (!username || !password) {
       return;
     }
     const body = {
