@@ -53,6 +53,8 @@ def format_annotations(annotations, split=.8, img_folder='test'):
     for name,group in groups:
         first = group.iloc[0]
         img_location = folder + "_image_folder/" + first['image']
+        if ".png" not in img_location:
+           img_location += ".png"
         
         #download image
         obj = client.get_object(Bucket=S3_BUCKET, Key= SRC_IMG_FOLDER + "/" +first['image'])
@@ -69,10 +71,9 @@ def format_annotations(annotations, split=.8, img_folder='test'):
                 int(row['x2']), 
                 int(row['y2']))
             
+        writer.save(folder + '_annot_folder/' + first['image'][:-3] + "xml")
+        count += 1
         if(count > len(groups) * split):
             folder = 'valid'
-        count += 1
-        writer.save(folder + '_annot_folder/' + first['image'][:-3] + "xml")
-    print(count)
 
 format_annotations(annotations)
