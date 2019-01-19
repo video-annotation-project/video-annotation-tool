@@ -58,16 +58,18 @@ app.post("/api/login", async function(req, res) {
   try {
     const user = await psql.query(queryPass,[username]);
     if (user.rowCount === 0) {
-      res.status(400).json({detail: "No username found"})
+      res.status(400).json({detail: "No username found"});
+      return;
     }
     if (!await bcrypt.compare(password,user.rows[0].password)) {
       res.status(400).json({detail: "wrong password"});
+      return;
     }
     const payload = {id: user.rows[0].id};
     const token = jwt.sign(payload, jwtOptions.secretOrKey);
     res.json({token: token, admin: user.rows[0].admin});
   } catch (error) {
-    res.status(400).json(error);
+    res.status(500).json(error);
   }
 });
 
@@ -81,6 +83,7 @@ app.post('/api/changePassword', passport.authenticate('jwt', {session: false}),
     const currentPass = await psql.query(queryPass,[username]);
     if (!await bcrypt.compare(password, currentPass.rows[0].password)) {
       res.status(400).json({detail: "Wrong Password!"});
+      return;
     }
     const saltRounds = 10;
     const hash = await bcrypt.hash(newPassword1, saltRounds);
@@ -88,7 +91,7 @@ app.post('/api/changePassword', passport.authenticate('jwt', {session: false}),
     const update = await psql.query(queryUpdate,[hash,username]);
     res.json({message: 'Changed'});
   } catch (error) {
-    res.status(400).json(error);
+    res.status(500).json(error);
   }
 })
 
@@ -101,7 +104,6 @@ app.post('/api/createUser', passport.authenticate('jwt', {session: false}),
       const hash = await bcrypt.hash(req.body.password, saltRounds);
       const data = [req.body.username, hash, req.body.admin];
       const insertUser = await psql.query(queryText, data);
-      console.log(insertUser);
       res.json({message: "user created", user: insertUser.rows[0]});
     } catch (error) {
       res.status(400).json(error);
@@ -114,7 +116,6 @@ app.get('/api/concepts', passport.authenticate('jwt', {session: false}),
     try {
       const concepts = await psql.query(queryText, [req.query.id]);
       res.json(concepts.rows);
-
     } catch (error) {
       res.status(400).json(error);
     }
