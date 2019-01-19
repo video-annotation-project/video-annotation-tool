@@ -42,11 +42,11 @@ def queryDB(query):
     conn.close()
     return result
 
-annotations = queryDB("select * from annotations where conceptid in (383,2136,236,1948,347) limit 1000")
+annotations = queryDB("select * from annotations where conceptid in (383,2136,236,1948,79)")
+annotations.sample(frac=1)
 annotations.head()
 
-def format_annotations(annotations, split=.8, img_folder='test'):
-    annotations.sample(frac=1)
+def format_annotations(annotations, total, split=.9, img_folder='test'):
     count = 0
     folder = 'train'
     groups = annotations.groupby(['videoid','timeinvideo'])
@@ -73,7 +73,9 @@ def format_annotations(annotations, split=.8, img_folder='test'):
             
         writer.save(folder + '_annot_folder/' + first['image'][:-3] + "xml")
         count += 1
-        if(count > len(groups) * split):
+        if(count > total * split):
             folder = 'valid'
+        if(count == total):
+            break
 
-format_annotations(annotations)
+format_annotations(annotations,10000)
