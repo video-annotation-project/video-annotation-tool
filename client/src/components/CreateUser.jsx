@@ -67,28 +67,6 @@ class CreateUser extends Component {
       }
     }
   };
-/*
-    fetch('/createUser', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token')},
-      body: JSON.stringify({
-        'username': this.state.username,
-        'password': this.state.password,
-        'admin': this.state.admin,
-      })
-    }).then(res => res.json()).then(res => {
-      if (res.message === "user created") {
-        alert("Created a new user: " + JSON.stringify(res.user))
-        this.props.history.push('/');
-      } else {
-        this.setState({
-          errorMsg: res.message,
-          open: true
-        });
-      }
-    })
-*/
-
 
   //Code for closing modal
   handleClose = () => {

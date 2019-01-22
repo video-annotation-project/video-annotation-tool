@@ -69,7 +69,7 @@ class VideoList extends Component {
           </ListItem>
           <Collapse in={startedListOpen} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
-              {startedVideos.map((video, index) => (
+              {startedVideos.map(video => (
                 <ListItem button key={video.id} onClick={() => this.props.handleVideoClick(video, 'startedVideos')}>
                   <ListItemText primary={video.id + '. ' + video.filename} />
                 </ListItem>
@@ -83,7 +83,7 @@ class VideoList extends Component {
           </ListItem>
           <Collapse in={unwatchedListOpen} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
-              {unwatchedVideos.map((video, index) => (
+              {unwatchedVideos.map(video => (
                 <ListItem button key={video.id} onClick={() => this.props.handleVideoClick(video, 'unwatchedVideos')}>
                   <ListItemText primary={video.id + '. ' + video.filename} />
                 </ListItem>
@@ -97,7 +97,7 @@ class VideoList extends Component {
           </ListItem>
           <Collapse in={watchedListOpen} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
-              {watchedVideos.map((video, index) => (
+              {watchedVideos.map(video => (
                 <ListItem button key={video.id} onClick={() => this.props.handleVideoClick(video, 'watchedVideos')}>
                   <ListItemText primary={video.id + '. ' + video.filename} />
                 </ListItem>

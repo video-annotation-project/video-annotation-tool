@@ -37,32 +37,26 @@ class AnnotationFrame extends Component {
       closeHandler: null,
     };
   }
+
   encode = (data) => {
     var str = data.reduce(function(a,b) { return a+String.fromCharCode(b) },'');
     return btoa(str).replace(/.{76}(?=.)/g,'$&\n');
   }
 
   componentDidMount = async () => {
-    fetch(`/api/annotationImage/${this.props.annotation.imagewithbox}`)
-      .then(res => res.json())
-      .then(res => {
-        this.setState({
-          image: 'data:image/png;base64, ' + this.encode(res.image.data),
-          isLoaded: true
-        });
-      })
-      .catch(error => {
-        console.log("Error: " + error);
-        this.setState({
-          isLoaded: true
-        });
-      })
-      .catch(error => {
-        console.log(error);
-        this.setState({
-          isLoaded: true
-        })
+    axios.get(
+      `/api/annotationImage/${this.props.annotation.imagewithbox}`
+    ).then(res => {
+      this.setState({
+        image: 'data:image/png;base64, ' + this.encode(res.data.image.data),
+        isLoaded: true
       });
+    }).catch(error => {
+      console.log(error);
+      this.setState({
+        error: error.response.data.detail
+      })
+    });
   };
 
   postEditAnnotation = (comment, unsure) => {
