@@ -29,7 +29,6 @@ class DialogModal extends Component {
     this.state = {
       unsure: false,
       comment: '',
-      submitted: false
     };
   }
 
@@ -45,25 +44,9 @@ class DialogModal extends Component {
   };
 
   handleSubmit = () => {
-    if (this.state.submitted) {
-      return;
-    }
-    console.log(this.state.submitted);
-    this.setState({
-      submitted: true
-    }, () => {
-      this.props.inputHandler(this.state.comment, this.state.unsure);
-      this.props.handleClose();
-    })
+    this.props.inputHandler(this.state.comment, this.state.unsure);
+    this.props.handleClose();
   };
-
-  componentDidMount = () => {
-    console.log("DialogModal has mounted");
-  }
-
-  componentWillUnmount = () => {
-    console.log("DialogModal has unmounted");
-  }
 
   handleChange = () => event => {
     this.setState({ unsure: event.target.checked });
