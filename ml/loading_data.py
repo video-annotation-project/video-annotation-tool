@@ -11,7 +11,7 @@ import numpy as np
 import os
 from dotenv import load_dotenv
 from pascal_voc_writer import Writer
-
+import random
 
 load_dotenv(dotenv_path="../.env")
 S3_BUCKET = os.getenv('AWS_S3_BUCKET_NAME')
@@ -42,40 +42,64 @@ def queryDB(query):
     conn.close()
     return result
 
-annotations = queryDB("select * from annotations where conceptid in (383,2136,236,1948,79)")
-annotations.sample(frac=1)
-annotations.head()
-
-def format_annotations(annotations, total, split=.9, img_folder='test'):
+def format_annotations(min_examples, concepts, split=.8, img_folder='test'):
+    annotations = queryDB("select * from annotations where conceptid in " + str(tuple(concepts)))
+    groups = annotations.groupby(['videoid','timeinvideo'], sort=False)
+    groups = [df for _, df in groups]
+    random.shuffle(groups)
+    selected = []
+    concept_count = {}
+    for concept in concepts:
+        concept_count[concept] = 0
+    
+    #selects images that we'll use (each group has annotations for an image)
+    for group in groups:
+        if not any(v < min_examples for v in concept_count.values()):
+            break
+        in_annot = []
+        for index, row in group.iterrows():
+            concept_count[row['conceptid']] += 1
+            in_annot.append(row['conceptid'])
+        #checks if we have more of one concept than we want
+        if any(v > min_examples for v in concept_count.values()):
+            #gets all concepts that we have to many of
+            excess = list({key:value for (key,value) in concept_count.items() if value > min_examples})
+            #don't save the annotation if it doens't include concept that we need more of
+            if set(excess) >= set(in_annot):
+                for a in in_annot:
+                    concept_count[a] -= 1
+                continue
+        selected.append(group)
+    print(concept_count)
+    print(len(selected))
+        
     count = 0
     folder = 'train'
-    groups = annotations.groupby(['videoid','timeinvideo'])
-    for name,group in groups:
+    for group in selected:
         first = group.iloc[0]
         img_location = folder + "_image_folder/" + first['image']
         if ".png" not in img_location:
            img_location += ".png"
         
-        #download image
-        obj = client.get_object(Bucket=S3_BUCKET, Key= SRC_IMG_FOLDER + "/" +first['image'])
-        img = Image.open(obj['Body'])
-        img.save(img_location)
-        
         #create voc writer
         writer = Writer(img_location, int(first['videowidth']), int(first['videoheight']))
-
+        
         for index, row in group.iterrows():
             writer.addObject(row['conceptid'], 
                 int(row['x1']), 
                 int(row['y1']), 
                 int(row['x2']), 
                 int(row['y2']))
-            
+        
+        #download image
+        obj = client.get_object(Bucket=S3_BUCKET, Key= SRC_IMG_FOLDER + "/" +first['image'])
+        img = Image.open(obj['Body'])
+        img.save(img_location)
+        
         writer.save(folder + '_annot_folder/' + first['image'][:-3] + "xml")
         count += 1
-        if(count > total * split):
+        
+        if count >= len(selected) * split:
             folder = 'valid'
-        if(count == total):
-            break
-
-format_annotations(annotations,10000)
+            
+format_annotations(5,[383,2136,236,1948,79])
