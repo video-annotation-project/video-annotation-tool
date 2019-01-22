@@ -419,10 +419,11 @@ class Annotate extends Component {
           message={this.state.dialogMsg}
           placeholder={this.state.dialogPlaceholder}
           inputHandler={this.postAnnotation}
-          open={true /*The DialogModal 'openness' is controlled through boolean
+          open={true /* The DialogModal 'openness' is controlled through boolean
             logic rather than by passing in a variable as an attribute. This is
             to force DialogModal to unmount when it closes so that its state
-            is reset. */}
+            is reset. This also prevents the accidental double submission bug,
+            by implicitly reducing the transition time of DialogModal to zero. */}
           handleClose={this.state.closeHandler}
         />
         }
