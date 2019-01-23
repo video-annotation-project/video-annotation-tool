@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import Button from '@material-ui/core/Button';
+import Drawer from '@material-ui/core/Drawer';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
@@ -9,26 +10,27 @@ import Collapse from '@material-ui/core/Collapse';
 import ExpandLess from '@material-ui/icons/ExpandLess';
 import ExpandMore from '@material-ui/icons/ExpandMore';
 
-
 const styles = theme => ({
   root: {
-    float: 'right',
-    padding: '10px'
+    // float: 'right',
+    // padding: '10px'
   },
-  videos: {
-    width: '400px',
-    height: '1000px',
-    padding: '15px',
-    borderLeft: '1px black solid',
+  drawer: {
+    // height: '1000px',
+    // padding: '15px',
+    width: '550px',
     overflow: 'auto'
   },
+  toggleButton: {
+    marginTop: '5px'
+  }
 });
 
 class VideoList extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      videoListOpen: true,
+      videoListOpen: false,
       startedListOpen: false,
       unwatchedListOpen: false,
       watchedListOpen: false,
@@ -38,7 +40,7 @@ class VideoList extends Component {
   componentDidMount = () => {
   }
 
-  toggleList = (list) => {
+  toggle = (list) => {
     this.setState({
       [list]: !this.state[list]
     });
@@ -59,46 +61,67 @@ class VideoList extends Component {
 
     return (
       <div className={classes.root}>
-        <Button variant="contained" color="primary" onClick={() => this.toggleList("videoListOpen")}>
+        <Button
+          className={classes.toggleButton}
+          variant="contained"
+          color="primary"
+          onClick={() => this.toggle("videoListOpen")}
+        >
           Toggle Video List
         </Button>
-        <div className={classes.videos} style={{display: this.state.videoListOpen ? '' : 'none'}}>
-          <ListItem button onClick={() => this.toggleList("startedListOpen")}>
+
+        <Drawer
+          anchor="left"
+          open={this.state.videoListOpen}
+          onClose={() => this.toggle('videoListOpen')}
+        >
+        <div className={classes.drawer}>
+
+          <ListItem button onClick={() => this.toggle("startedListOpen")}>
             <ListItemText inset primary="Started Videos" />
             {startedListOpen ? <ExpandLess /> : <ExpandMore />}
           </ListItem>
           <Collapse in={startedListOpen} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
               {startedVideos.map(video => (
-                <ListItem button key={video.id} onClick={() => this.props.handleVideoClick(video, 'startedVideos')}>
+                <ListItem
+                  button key={video.id}
+                  onClick={() => this.props.handleVideoClick(video, 'startedVideos')}
+                >
                   <ListItemText primary={video.id + '. ' + video.filename} />
                 </ListItem>
               ))}
             </List>
           </Collapse>
 
-          <ListItem button onClick={() => this.toggleList("unwatchedListOpen")}>
+          <ListItem button onClick={() => this.toggle("unwatchedListOpen")}>
             <ListItemText inset primary="Unwatched Videos" />
             {unwatchedListOpen ? <ExpandLess /> : <ExpandMore />}
           </ListItem>
           <Collapse in={unwatchedListOpen} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
               {unwatchedVideos.map(video => (
-                <ListItem button key={video.id} onClick={() => this.props.handleVideoClick(video, 'unwatchedVideos')}>
+                <ListItem
+                  button key={video.id}
+                  onClick={() => this.props.handleVideoClick(video, 'unwatchedVideos')}
+                >
                   <ListItemText primary={video.id + '. ' + video.filename} />
                 </ListItem>
               ))}
             </List>
           </Collapse>
 
-          <ListItem button onClick={() => this.toggleList("watchedListOpen")}>
+          <ListItem button onClick={() => this.toggle("watchedListOpen")}>
             <ListItemText inset primary="Watched Videos" />
             {watchedListOpen ? <ExpandLess /> : <ExpandMore />}
           </ListItem>
           <Collapse in={watchedListOpen} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
               {watchedVideos.map(video => (
-                <ListItem button key={video.id} onClick={() => this.props.handleVideoClick(video, 'watchedVideos')}>
+                <ListItem
+                  button key={video.id}
+                  onClick={() => this.props.handleVideoClick(video, 'watchedVideos')}
+                >
                   <ListItemText primary={video.id + '. ' + video.filename} />
                 </ListItem>
               ))}
@@ -106,6 +129,8 @@ class VideoList extends Component {
           </Collapse>
 
         </div>
+        </Drawer>
+
       </div>
     );
   }

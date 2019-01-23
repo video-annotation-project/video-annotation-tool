@@ -5,26 +5,34 @@ import SearchModal from './SearchModal.jsx';
 
 import AddIcon from '@material-ui/icons/Add';
 import Button from '@material-ui/core/Button';
+import Drawer from '@material-ui/core/Drawer';
 import { withStyles } from '@material-ui/core/styles';
 
 const styles = theme => ({
   root: {
+    // float: 'right',
+    // padding: '10px'
+  },
+  toggleButton: {
     float: 'right',
-    padding: '10px',
+    marginTop: '5px'
   },
   conceptsSelectedElement: {
     position: 'relative',
-    width: '420px', //ayy
+    width: '420px',
+    textAlign: 'center'
   },
   addButton: {
-    position: 'absolute',
-    right: '70px',
-    top: '-38px'
+    // position: 'absolute',
+    // right: '70px',
+    // top: '-38px'
+    display: 'inline-block'
   },
   conceptList: {
     fontSize: '130%',
     display: 'flex' ,
     flexFlow: 'row wrap',
+    justifyContent: 'center'
   },
   concept: {
     width: '210px',
@@ -39,7 +47,7 @@ class ConceptsSelected extends React.Component {
     this.state = {
       isLoaded: false,
       conceptsSelected: [],
-      conceptsSelectedOpen: this.props.initOpen !== undefined ? this.props.initOpen : true,
+      conceptsSelectedOpen: false,
       searchModalOpen: false
     };
   }
@@ -98,7 +106,7 @@ class ConceptsSelected extends React.Component {
     axios.post('/api/updateConceptsSelected', body, config).then(async res => {
       this.closeSearchModel();
       this.setState({
-        isLoaded:false
+        isLoaded: false
       });
       await this.getConceptsSelected();
     }).catch(error => {
@@ -110,14 +118,21 @@ class ConceptsSelected extends React.Component {
     })
   }
 
+  // Closes the ConceptsSelected Drawer, opens the DialogModal
+  handleConceptClick = (concept) => {
+    this.setState({
+      conceptsSelectedOpen: false
+    });
+    this.props.handleConceptClick(concept);
+  }
+
   render() {
     const { classes } = this.props;
 
     let conceptsSelectedElement = <div></div>;
-    if (this.state.conceptsSelectedOpen && !this.state.isLoaded) {
+    if (!this.state.isLoaded) {
       conceptsSelectedElement = <div>Loading...</div>;
-    }
-    if (this.state.conceptsSelectedOpen && this.state.isLoaded) {
+    } else {
       conceptsSelectedElement = (
         <div className={classes.conceptsSelectedElement}>
           <Button
@@ -134,15 +149,15 @@ class ConceptsSelected extends React.Component {
               <li
                 key={concept.id}
                 className={classes.concept}
-                onClick={() => this.props.handleConceptClick(concept)}
+                onClick={() => this.handleConceptClick(concept)}
               >
                 {concept.name}
                 <br />
                 <img
                   src={"/api/conceptImages/"+concept.id}
                   alt="Could not be downloaded"
-                  height="100"
-                  width="100"
+                  height="50"
+                  width="50"
                 />
               </li>
             ))}
@@ -159,15 +174,20 @@ class ConceptsSelected extends React.Component {
           handleClose={this.closeSearchModel}
         />
         <Button
-          className={classes.buttonn}
+          className={classes.toggleButton}
           variant="contained"
           color="primary"
-          aria-label="Add"
           onClick={this.toggleConceptsSelected}
         >
           Toggle Concepts Selected
         </Button>
-        {conceptsSelectedElement}
+        <Drawer
+          anchor="right"
+          open={this.state.conceptsSelectedOpen}
+          onClose={this.toggleConceptsSelected}
+        >
+          {conceptsSelectedElement}
+        </Drawer>
       </div>
     );
   }
