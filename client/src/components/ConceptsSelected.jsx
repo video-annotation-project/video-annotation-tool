@@ -13,9 +13,12 @@ const styles = theme => ({
     // float: 'right',
     // padding: '10px'
   },
+  toggleButton: {
+    float: 'right'
+  },
   conceptsSelectedElement: {
     position: 'relative',
-    width: '230px',
+    width: '420px',
     textAlign: 'center'
   },
   addButton: {
@@ -144,8 +147,8 @@ class ConceptsSelected extends React.Component {
                 <img
                   src={"/api/conceptImages/"+concept.id}
                   alt="Could not be downloaded"
-                  height="100"
-                  width="100"
+                  height="50"
+                  width="50"
                 />
               </li>
             ))}
@@ -162,10 +165,9 @@ class ConceptsSelected extends React.Component {
           handleClose={this.closeSearchModel}
         />
         <Button
-          className={classes.buttonn}
+          className={classes.toggleButton}
           variant="contained"
           color="primary"
-          aria-label="Add"
           onClick={this.toggleConceptsSelected}
         >
           Toggle Concepts Selected

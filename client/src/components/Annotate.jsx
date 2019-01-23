@@ -412,20 +412,16 @@ class Annotate extends Component {
     }
     return (
       <React.Fragment>
-        {this.state.dialogOpen &&
-          <DialogModal
-            title={this.state.dialogTitle}
-            message={this.state.dialogMsg}
-            placeholder={this.state.dialogPlaceholder}
-            inputHandler={this.postAnnotation}
-            open={true /* The DialogModal 'openness' is controlled through boolean
-              logic rather than by passing in a variable as an attribute. This is
-              to force DialogModal to unmount when it closes so that its state
-              is reset. This also prevents the accidental double submission bug,
-              by implicitly reducing the transition time of DialogModal to zero. */}
-            handleClose={this.state.closeHandler}
-          />
-        }
+        <ConceptsSelected
+          className = {classes.conceptSectionContainer}
+          handleConceptClick={this.handleConceptClick}
+        />
+        <VideoList
+          handleVideoClick={this.handleVideoClick}
+          startedVideos={this.state.startedVideos}
+          unwatchedVideos={this.state.unwatchedVideos}
+          watchedVideos={this.state.watchedVideos}
+        />
         <div className = {classes.videoSectionContainer}>
           {this.state.currentVideo.id + " " + this.state.currentVideo.filename}
           <div className = {classes.boxContainer}>
@@ -475,16 +471,20 @@ class Annotate extends Component {
             step=".1"
           />
         </div>
-        <ConceptsSelected
-          className = {classes.conceptSectionContainer}
-          handleConceptClick={this.handleConceptClick}
-        />
-        <VideoList
-          handleVideoClick={this.handleVideoClick}
-          startedVideos={this.state.startedVideos}
-          unwatchedVideos={this.state.unwatchedVideos}
-          watchedVideos={this.state.watchedVideos}
-        />
+        {this.state.dialogOpen &&
+          <DialogModal
+            title={this.state.dialogTitle}
+            message={this.state.dialogMsg}
+            placeholder={this.state.dialogPlaceholder}
+            inputHandler={this.postAnnotation}
+            open={true /* The DialogModal 'openness' is controlled through boolean
+              logic rather than by passing in a variable as an attribute. This is
+              to force DialogModal to unmount when it closes so that its state
+              is reset. This also prevents the accidental double submission bug,
+              by implicitly reducing the transition time of DialogModal to zero. */}
+            handleClose={this.state.closeHandler}
+          />
+        }
       </React.Fragment>
     );
   }

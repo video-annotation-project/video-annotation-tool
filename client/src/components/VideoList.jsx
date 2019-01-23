@@ -21,6 +21,9 @@ const styles = theme => ({
     width: '550px',
     overflow: 'auto'
   },
+  toggleButton: {
+
+  }
 });
 
 class VideoList extends Component {
@@ -58,7 +61,12 @@ class VideoList extends Component {
 
     return (
       <div className={classes.root}>
-        <Button variant="contained" color="primary" onClick={() => this.toggle("videoListOpen")}>
+        <Button
+          className={classes.toggleButton}
+          variant="contained"
+          color="primary"
+          onClick={() => this.toggle("videoListOpen")}
+        >
           Toggle Video List
         </Button>
 
