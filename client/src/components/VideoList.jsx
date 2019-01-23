@@ -22,7 +22,7 @@ const styles = theme => ({
     overflow: 'auto'
   },
   toggleButton: {
-
+    marginTop: '5px'
   }
 });
 

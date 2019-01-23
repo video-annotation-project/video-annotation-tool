@@ -14,7 +14,8 @@ const styles = theme => ({
     // padding: '10px'
   },
   toggleButton: {
-    float: 'right'
+    float: 'right',
+    marginTop: '5px'
   },
   conceptsSelectedElement: {
     position: 'relative',
@@ -105,7 +106,7 @@ class ConceptsSelected extends React.Component {
     axios.post('/api/updateConceptsSelected', body, config).then(async res => {
       this.closeSearchModel();
       this.setState({
-        isLoaded:false
+        isLoaded: false
       });
       await this.getConceptsSelected();
     }).catch(error => {
@@ -115,6 +116,14 @@ class ConceptsSelected extends React.Component {
         console.log(error.response.data.detail);
       }
     })
+  }
+
+  // Closes the ConceptsSelected Drawer, opens the DialogModal
+  handleConceptClick = (concept) => {
+    this.setState({
+      conceptsSelectedOpen: false
+    });
+    this.props.handleConceptClick(concept);
   }
 
   render() {
@@ -140,7 +149,7 @@ class ConceptsSelected extends React.Component {
               <li
                 key={concept.id}
                 className={classes.concept}
-                onClick={() => this.props.handleConceptClick(concept)}
+                onClick={() => this.handleConceptClick(concept)}
               >
                 {concept.name}
                 <br />
