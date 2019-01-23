@@ -639,7 +639,7 @@ app.post('/api/editAnnotation', passport.authenticate('jwt', {session: false}),
 
 app.post('/api/delete', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
-    queryText = 'DELETE FROM annotations WHERE annotations.id=$1 RETURNING *';
+    queryText = 'DELETE FROM annotations WHERE annotations.id=$1 or annotations.originalid=$1 RETURNING *';
     try {
       var deleteRes = await psql.query(queryText, [req.body.id]);
       res.json(deleteRes.rows);
