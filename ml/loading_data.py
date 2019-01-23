@@ -42,8 +42,10 @@ def queryDB(query):
     conn.close()
     return result
 
-def format_annotations(min_examples, concepts, split=.8, img_folder='test'):
-    annotations = queryDB("select * from annotations where conceptid in " + str(tuple(concepts)))
+def format_annotations(min_examples, concepts, bad_users, split=.8, img_folder='test'):
+    annotations = queryDB("select * from annotations A1 where conceptid in " + 
+                          str(tuple(concepts))+ " and userid not in " + 
+                          str(tuple(bad_users)))
     groups = annotations.groupby(['videoid','timeinvideo'], sort=False)
     groups = [df for _, df in groups]
     random.shuffle(groups)
@@ -102,4 +104,6 @@ def format_annotations(min_examples, concepts, split=.8, img_folder='test'):
         if count >= len(selected) * split:
             folder = 'valid'
             
-format_annotations(5,[383,2136,236,1948,79])
+concepts = [383,2136,236,1948,79]
+bad_users = [7,8,9,10,14,4,5,19]
+format_annotations(5,concepts, bad_users)
