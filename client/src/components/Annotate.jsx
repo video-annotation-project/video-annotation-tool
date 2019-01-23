@@ -147,14 +147,16 @@ class Annotate extends Component {
     if (e.target !== document.body) {
       return;
     }
-    e.preventDefault();
     if (e.code === "Space") {
+      e.preventDefault();
       this.playPause();
     }
     if (e.code === "ArrowRight") {
+      e.preventDefault();
       this.skipVideoTime(1);
     }
     if (e.code === "ArrowLeft") {
+      e.preventDefault();
       this.skipVideoTime(-1);
     }
   }
