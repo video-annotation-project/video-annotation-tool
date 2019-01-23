@@ -412,20 +412,19 @@ class Annotate extends Component {
     }
     return (
       <React.Fragment>
-        {
-        this.state.dialogOpen &&
-        <DialogModal
-          title={this.state.dialogTitle}
-          message={this.state.dialogMsg}
-          placeholder={this.state.dialogPlaceholder}
-          inputHandler={this.postAnnotation}
-          open={true /* The DialogModal 'openness' is controlled through boolean
-            logic rather than by passing in a variable as an attribute. This is
-            to force DialogModal to unmount when it closes so that its state
-            is reset. This also prevents the accidental double submission bug,
-            by implicitly reducing the transition time of DialogModal to zero. */}
-          handleClose={this.state.closeHandler}
-        />
+        {this.state.dialogOpen &&
+          <DialogModal
+            title={this.state.dialogTitle}
+            message={this.state.dialogMsg}
+            placeholder={this.state.dialogPlaceholder}
+            inputHandler={this.postAnnotation}
+            open={true /* The DialogModal 'openness' is controlled through boolean
+              logic rather than by passing in a variable as an attribute. This is
+              to force DialogModal to unmount when it closes so that its state
+              is reset. This also prevents the accidental double submission bug,
+              by implicitly reducing the transition time of DialogModal to zero. */}
+            handleClose={this.state.closeHandler}
+          />
         }
         <div className = {classes.videoSectionContainer}>
           {this.state.currentVideo.id + " " + this.state.currentVideo.filename}

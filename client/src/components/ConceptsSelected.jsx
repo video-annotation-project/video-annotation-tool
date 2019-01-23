@@ -5,26 +5,30 @@ import SearchModal from './SearchModal.jsx';
 
 import AddIcon from '@material-ui/icons/Add';
 import Button from '@material-ui/core/Button';
+import Drawer from '@material-ui/core/Drawer';
 import { withStyles } from '@material-ui/core/styles';
 
 const styles = theme => ({
   root: {
-    float: 'right',
-    padding: '10px',
+    // float: 'right',
+    // padding: '10px'
   },
   conceptsSelectedElement: {
     position: 'relative',
-    width: '420px', //ayy
+    width: '230px',
+    textAlign: 'center'
   },
   addButton: {
-    position: 'absolute',
-    right: '70px',
-    top: '-38px'
+    // position: 'absolute',
+    // right: '70px',
+    // top: '-38px'
+    display: 'inline-block'
   },
   conceptList: {
     fontSize: '130%',
     display: 'flex' ,
     flexFlow: 'row wrap',
+    justifyContent: 'center'
   },
   concept: {
     width: '210px',
@@ -39,7 +43,7 @@ class ConceptsSelected extends React.Component {
     this.state = {
       isLoaded: false,
       conceptsSelected: [],
-      conceptsSelectedOpen: this.props.initOpen !== undefined ? this.props.initOpen : true,
+      conceptsSelectedOpen: false,
       searchModalOpen: false
     };
   }
@@ -114,10 +118,9 @@ class ConceptsSelected extends React.Component {
     const { classes } = this.props;
 
     let conceptsSelectedElement = <div></div>;
-    if (this.state.conceptsSelectedOpen && !this.state.isLoaded) {
+    if (!this.state.isLoaded) {
       conceptsSelectedElement = <div>Loading...</div>;
-    }
-    if (this.state.conceptsSelectedOpen && this.state.isLoaded) {
+    } else {
       conceptsSelectedElement = (
         <div className={classes.conceptsSelectedElement}>
           <Button
@@ -167,7 +170,13 @@ class ConceptsSelected extends React.Component {
         >
           Toggle Concepts Selected
         </Button>
-        {conceptsSelectedElement}
+        <Drawer
+          anchor="right"
+          open={this.state.conceptsSelectedOpen}
+          onClose={this.toggleConceptsSelected}
+        >
+          {conceptsSelectedElement}
+        </Drawer>
       </div>
     );
   }
