@@ -26,9 +26,13 @@ DB_PASSWORD = os.getenv("DB_PASSWORD")
 con = connect(database=DB_NAME, host=DB_HOST, user=DB_USER, password=DB_PASSWORD)
 cursor = con.cursor()
 
+#list of users with illegitimate annotations
+bad_users = [7,8,9,10,14,4,5,19]
+
 while True:
     # get annotations from test
-    cursor.execute("SELECT * FROM annotations WHERE originalid IS NULL")
+    cursor.execute("SELECT * FROM annotations WHERE originalid IS NULL and userid not in " + 
+                          str(tuple(bad_users)))")
     rows = cursor.fetchall()
 
     processes = []
