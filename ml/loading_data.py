@@ -19,6 +19,7 @@ SRC_IMG_FOLDER = 'test'
 DB_NAME = os.getenv("DB_NAME")
 DB_HOST = os.getenv("DB_HOST")
 DB_USER = os.getenv("DB_USER")
+BAD_USERS = os.getenv("BAD_USERS")
 
 # DO NOT PUSH PASSWORD 
 #DB_PASSWORD = os.getenv("DB_PASSWORD")
@@ -105,5 +106,4 @@ def format_annotations(min_examples, concepts, bad_users, split=.8, img_folder='
             folder = 'valid'
             
 concepts = [383,2136,236,1948,79]
-bad_users = [7,8,9,10,14,4,5,19]
-format_annotations(5,concepts, bad_users)
+format_annotations(5,concepts, BAD_USERS)
