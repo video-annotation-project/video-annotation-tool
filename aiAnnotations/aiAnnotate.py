@@ -239,4 +239,3 @@ def ai_annotation(original):
 
 if __name__ == '__main__':
   main()
-

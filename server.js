@@ -52,113 +52,61 @@ app.use(passport.initialize());
 app.use(bodyParser.json({limit: '50mb'}));
 app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
 
-async function userLogin(username, password) {
-  queryPass = 'select id, password, admin from users where users.username=$1';
-
-  const user = await psql.query(queryPass,[username]);
-  if (user.rows.length > 1) {
-    return -1;
-  }
-  if (user.rows.length == 0) {
-    return 1;
-  }
-  const res = await bcrypt.compare(password,user.rows[0].password);
-  if (res) {
-    return user.rows[0];
-  } else {
-    return 2;
-  }
-}
-
-app.post("/login", async function(req, res) {
-  if (!req.body.username || !req.body.password) {
-    res.json({
-      message: "Invalid parameters: username and password required"
-    });
-    return;
-  }
-  var username = req.body.username;
-  var password = req.body.password;
-  var choice = await userLogin(username, password);
-  switch(choice) {
-    case -1:
-      res.json({message: "sorry, something went wrong"});
-      break;
-    case 1:
-      res.json({message:"username not found"});
-      break;
-    case 2:
-      res.json({message:"wrong password"});
-      break;
-    default:
-      var payload = {id: choice.id};
-      var token = jwt.sign(payload, jwtOptions.secretOrKey);
-      res.json({message: "welcome", token: token, admin: choice.admin});
-      break;
+app.post("/api/login", async function(req, res) {
+  const {username, password} = req.body;
+  let queryPass = 'select id, password, admin from users where users.username=$1';
+  try {
+    const user = await psql.query(queryPass,[username]);
+    if (user.rowCount === 0) {
+      res.status(400).json({detail: "No username found"});
+      return;
+    }
+    if (!await bcrypt.compare(password,user.rows[0].password)) {
+      res.status(400).json({detail: "wrong password"});
+      return;
+    }
+    const payload = {id: user.rows[0].id};
+    const token = jwt.sign(payload, jwtOptions.secretOrKey);
+    res.json({token: token, admin: user.rows[0].admin});
+  } catch (error) {
+    res.status(500).json(error);
   }
 });
 
 //Code for profile modification
-app.post('/changePassword', passport.authenticate('jwt', {session: false}),
+app.post('/api/changePassword', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
-    if (req.body.password1 != req.body.password2) {
-      res.json({message: "New passwords not matching"});
-      res.end();
+  const {password, newPassword1, newPassword2} = req.body;
+  const username = req.user.username;
+  const queryPass = 'select password from users where users.username=$1';
+  try {
+    const currentPass = await psql.query(queryPass,[username]);
+    if (!await bcrypt.compare(password, currentPass.rows[0].password)) {
+      res.status(400).json({detail: "Wrong Password!"});
+      return;
     }
-    queryPass = 'select password from users where users.username=$1';
-    try {
-      const currentPass = await psql.query(queryPass,[req.user.username]);
-      try {
-        const match = await bcrypt.compare(req.body.password, currentPass.rows[0].password);
-        if (match) {
-          const saltRounds = 10;
-          const hash = await bcrypt.hash(req.body.password1, saltRounds);
-          queryUpdate = 'UPDATE users SET password=$1 WHERE username=$2';
-          try {
-            const update = await psql.query(queryUpdate,[hash,req.user.username]);
-            res.json({message: 'Changed'});
-            res.end();
-          } catch (error) {
-            res.json({message: "error: " + error.message});
-            res.end();
-          }
-        } else {
-          res.json({message: "Wrong Password!"});
-          res.end();
-        }
-      } catch (error) {
-        res.json({message: "error: " + error.message});
-        res.end();
-      }
-    } catch (error) {
-      res.json({message: "error: " + error.message});
-      res.end();
-    }
+    const saltRounds = 10;
+    const hash = await bcrypt.hash(newPassword1, saltRounds);
+    queryUpdate = 'UPDATE users SET password=$1 WHERE username=$2';
+    const update = await psql.query(queryUpdate,[hash,username]);
+    res.json({message: 'Changed'});
+  } catch (error) {
+    res.status(500).json(error);
   }
-)
+})
 
 //Code for create users
-app.post('/createUser', passport.authenticate('jwt', {session: false}),
+app.post('/api/createUser', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
-    if(req.user.admin) {
-      queryText = "INSERT INTO users(username, password, admin) VALUES($1, $2, $3) RETURNING *"
-      const saltRounds = 10;
-      try {
-        var hash = await bcrypt.hash(req.body.password, saltRounds);
-      } catch (error) {
-        res.json({message: "error hashing" + error.message})
-        res.end()
-      }
-      try {
-        const insertUser = await psql.query(queryText,[req.body.username, hash, req.body.admin]);
-        res.json({message: "user created", user: insertUser.rows[0]});
-      } catch (error) {
-        res.json({message: "error inserting: " + error.message})
-        res.end();
-      }
-    } else {
-      res.status(401).json({message: "Must be admin to create new user!"})
-      res.end();
+    const queryText = "INSERT INTO users(username, password, admin) VALUES($1, $2, $3) RETURNING *";
+    const saltRounds = 10;
+    try {
+      const hash = await bcrypt.hash(req.body.password, saltRounds);
+      const data = [req.body.username, hash, req.body.admin];
+      const insertUser = await psql.query(queryText, data);
+      res.json({message: "user created", user: insertUser.rows[0]});
+    } catch (error) {
+      res.status(400).json(error);
     }
 });
 
@@ -168,7 +116,6 @@ app.get('/api/concepts', passport.authenticate('jwt', {session: false}),
     try {
       const concepts = await psql.query(queryText, [req.query.id]);
       res.json(concepts.rows);
-
     } catch (error) {
       res.status(400).json(error);
     }
@@ -177,7 +124,11 @@ app.get('/api/concepts', passport.authenticate('jwt', {session: false}),
 
 app.get('/api/conceptsSelected', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
-    queryText = 'select * from profile, concepts where profile.userid=$1 AND concepts.id=profile.conceptId';
+    queryText = 'select * \
+                 from profile, concepts \
+                 where profile.userid=$1 \
+                 AND concepts.id=profile.conceptId \
+                 ORDER BY concepts.name';
     try {
       let concepts = await psql.query(queryText, [req.user.id]);
       res.json(concepts.rows);
@@ -188,15 +139,15 @@ app.get('/api/conceptsSelected', passport.authenticate('jwt', {session: false}),
   }
 );
 
-app.post('/api/conceptsSelected', passport.authenticate('jwt', {session: false}),
+app.post('/api/updateConceptsSelected', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
-    queryText = 'DELETE FROM profile WHERE profile.userid=$1 AND profile.conceptid=$2 RETURNING *';
+    let queryText = 'DELETE FROM profile WHERE profile.userid=$1 AND profile.conceptid=$2 RETURNING *';
     if (req.body.checked) {
       queryText = 'INSERT INTO profile(userid, conceptid) VALUES($1, $2) RETURNING *';
     }
     try {
       let insert = await psql.query(queryText, [req.user.id, req.body.id]);
-      res.json({message: "Changed", value: JSON.stringify(insert.rows)});
+      res.json({value: JSON.stringify(insert.rows)});
     } catch (error) {
       res.status(400).json(error);
     }
@@ -208,7 +159,10 @@ app.post('/api/conceptsSelected', passport.authenticate('jwt', {session: false})
 app.post('/api/searchConcepts', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
     let concepts = null
-    queryText = "Select id, name, similarity($1,name) from concepts where similarity($1, name) > .01 order by similarity desc limit 10";
+    const queryText = "Select id, name, similarity($1,name) \
+                       from concepts \
+                       where similarity($1, name) > .01 \
+                       order by similarity desc limit 10";
     try {
       concepts = await psql.query(queryText, [req.body.name]);
     } catch (error) {
@@ -261,12 +215,13 @@ app.get('/api/userInfo', passport.authenticate('jwt', {session: false}),
   }
 );
 
-app.get('/api/userVideos/:finished', passport.authenticate('jwt', {session: false}),
+app.get('/api/userCurrentVideos', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
-    let userId = req.user.id;
-    queryPass = 'SELECT id, filename FROM videos WHERE id IN (SELECT videoid FROM checkpoints WHERE userid=$1 AND finished=$2);'
+    queryPass = 'SELECT id, filename \
+                 FROM videos \
+                 WHERE id IN (SELECT videoid FROM checkpoints WHERE userid=$1 AND finished=false);'
     try {
-      const videoData = await psql.query(queryPass, [userId, req.params.finished]);
+      const videoData = await psql.query(queryPass, [req.user.id]);
       res.json(videoData);
     } catch (error) {
       res.json(error);
@@ -274,52 +229,76 @@ app.get('/api/userVideos/:finished', passport.authenticate('jwt', {session: fals
   }
 );
 
-app.get('/api/timeAtVideo/:videoid', passport.authenticate('jwt', {session: false}),
+// this function needs to be improved
+app.post("/api/updateCheckpoint", passport.authenticate('jwt', {session: false}),
+  async (req, res) => {
+  const { videoId, timeinvideo, finished } = req.body;
+  const userId = req.user.id;
+  const data = [timeinvideo, finished, userId, videoId];
+  queryText = 'UPDATE checkpoints \
+               SET timeinvideo=$1, timestamp=current_timestamp, finished=$2 \
+               WHERE userid=$3 AND videoid=$4';
+  try {
+    const updateRes = await psql.query(queryText, data);
+    if (updateRes.rowCount > 0) {
+      res.json({message: "updated"});
+      return;
+    }
+    // User has no checkpoint for this video
+    queryText = 'INSERT INTO checkpoints \
+                 (timeinvideo, finished, userid, videoid, timestamp) \
+                 VALUES($1, $2, $3, $4, current_timestamp)';
+    let insertRes = await psql.query(queryText, data);
+    res.json({message: "updated"});
+  } catch(error) {
+    res.json(error);
+  }
+
+});
+
+app.get('/api/listVideos/', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
     let userId = req.user.id;
-    queryPass = 'SELECT timeinvideo FROM checkpoints WHERE userid=$1 AND videoid=$2;'
+    queryUserStartedVideos = 'SELECT videos.id, videos.filename, checkpoints.finished, checkpoints.timeinvideo \
+                              FROM videos, checkpoints \
+                              WHERE checkpoints.userid=$1 \
+                              AND videos.id=checkpoints.videoid \
+                              AND checkpoints.finished=false \
+                              ORDER BY videos.id;'
+    queryGlobalUnwatched = 'SELECT videos.id, videos.filename, false as finished, 0 as timeinvideo \
+                            FROM videos \
+                            WHERE id NOT IN (SELECT videoid FROM checkpoints) \
+                            ORDER BY videos.id;'
+    queryGlobalWatched = 'SELECT DISTINCT videos.id, videos.filename, checkpoints.finished, 0 as timeinvideo \
+                          FROM videos, checkpoints \
+                          WHERE videos.id=checkpoints.videoid \
+                          AND checkpoints.finished=true \
+                          ORDER BY videos.id;'
     try {
-      const videoData = await psql.query(queryPass, [userId, req.params.videoid]);
+      const startedVideos = await psql.query(queryUserStartedVideos, [userId]);
+      const unwatchedVideos = await psql.query(queryGlobalUnwatched);
+      const watchedVideos = await psql.query(queryGlobalWatched);
+      const videoData = [startedVideos, unwatchedVideos, watchedVideos];
       res.json(videoData);
     } catch (error) {
+      console.log(error);
       res.json(error);
     }
   }
 );
 
-app.get('/api/userUnwatchedVideos/', passport.authenticate('jwt', {session: false}),
+app.get('/api/latestWatchedVideo', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
     let userId = req.user.id;
-    queryPass = 'SELECT id, filename FROM videos WHERE id NOT IN (SELECT videoid FROM checkpoints WHERE userid=$1);'
-    try {
-      const videoData = await psql.query(queryPass, [userId]);
-      res.json(videoData);
-    } catch (error) {
-      res.json(error);
-    }
-  }
-);
-
-app.get('/api/latestVideoId', passport.authenticate('jwt', {session: false}),
-  async (req, res) => {
-    let userId = req.user.id;
-    queryPass = 'SELECT videoid, timeinvideo FROM checkpoints WHERE userid=$1 ORDER BY timestamp DESC;'
+    queryPass = 'SELECT checkpoints.timeinvideo, videos.filename, videos.id \
+                 FROM checkpoints, videos \
+                 WHERE checkpoints.userid=$1 AND \
+                 checkpoints.videoid=videos.id AND \
+                 checkpoints.finished=false \
+                 ORDER BY timestamp DESC;'
     try {
       const videoData = await psql.query(queryPass, [userId]);
       res.json(videoData.rows);
-    } catch (error) {
-      res.json(error);
-    }
-  }
-);
-
-app.get('/api/latestVideoName/:videoid', passport.authenticate('jwt', {session: false}),
-  async (req, res) => {
-    let videoId = req.params.videoid;
-    queryPass = 'SELECT filename FROM videos WHERE id=$1;'
-    try {
-      const videoName = await psql.query(queryPass, [videoId]);
-      res.json(videoName.rows);
     } catch (error) {
       res.json(error);
     }
@@ -495,21 +474,6 @@ app.get('/api/annotations', passport.authenticate('jwt', {session: false}),
   }
 );
 
-
-app.get('/api/videos/currentTime/:videoname', passport.authenticate('jwt', {session: false}),
-  async (req, res) => {
-    let videoId = await getVideoId(req.params.videoname);
-    let userId = req.user.id;
-    let queryPass = 'SELECT timeinvideo FROM checkpoints WHERE checkpoints.videoid=$1 AND checkpoints.userid=$2';
-    try {
-      const currentTime = await psql.query(queryPass, [videoId, userId]);
-      res.json(currentTime.rows);
-    } catch (error) {
-      res.json(error);
-    }
-  }
-);
-
 app.get('/api/annotationImage/:name', (req, res) => {
   let s3 = new AWS.S3();
   let key = process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + req.params.name;
@@ -517,58 +481,57 @@ app.get('/api/annotationImage/:name', (req, res) => {
     Key: key,
     Bucket: process.env.AWS_S3_BUCKET_NAME,
   };
-  s3.getObject(params, async (err, data) => {
+  s3.getObject(params, (err, data) => {
     if (err) {
-      res.json(err);
+      res.status(500).json(err);
+      return;
     }
-    else {
-      res.json({image: data.Body});
-    }
-  })
-});
-
-app.get('/api/videos/Y7Ek6tndnA/:name', (req, res) => {
-  var s3 = new AWS.S3();
-  const mimetype = 'video/mp4';
-  const file = process.env.AWS_S3_BUCKET_VIDEOS_FOLDER + req.params.name;
-  const cache = 0;
-  s3.listObjectsV2({Bucket: process.env.AWS_S3_BUCKET_NAME, MaxKeys: 1, Prefix: file}, function(err, data) {
-    if (err) {
-      return res.sendStatus(404);
-    }
-    if (!data.Contents[0]){
-      return res.redirect('/api/videos/Y7Ek6tndnA/error.mp4');
-    }
-    if (req != null && req.headers.range != null) {
-      var range = req.headers.range;
-      var bytes = range.replace(/bytes=/, '').split('-');
-      var start = parseInt(bytes[0], 10);
-      var total = data.Contents[0].Size;
-      var end = bytes[1] ? parseInt(bytes[1], 10) : total - 1;
-      var chunksize = (end - start) + 1;
-
-      res.writeHead(206, {
-        'Content-Range'  : 'bytes ' + start + '-' + end + '/' + total,
-        'Accept-Ranges'  : 'bytes',
-        'Content-Length' : chunksize,
-        'Last-Modified'  : data.Contents[0].LastModified,
-        'Content-Type'   : mimetype
-      });
-      s3.getObject({Bucket: process.env.AWS_S3_BUCKET_NAME, Key: file, Range: range}).createReadStream().pipe(res);
-    }
-    else
-    {
-      res.writeHead(200,
-      {
-        'Cache-Control' : 'max-age=' + cache + ', private',
-        'Content-Length': data.Contents[0].Size,
-        'Last-Modified' : data.Contents[0].LastModified,
-        'Content-Type'  : mimetype
-      });
-      s3.getObject({Bucket: process.env.AWS_S3_BUCKET_NAME, Key: file}).createReadStream().pipe(res);
-    }
+    res.json({image: data.Body});
   });
 });
+
+// app.get('/api/videos/Y7Ek6tndnA/:name', (req, res) => {
+//   var s3 = new AWS.S3();
+//   const mimetype = 'video/mp4';
+//   const file = process.env.AWS_S3_BUCKET_VIDEOS_FOLDER + req.params.name;
+//   const cache = 0;
+//   s3.listObjectsV2({Bucket: process.env.AWS_S3_BUCKET_NAME, MaxKeys: 1, Prefix: file}, function(err, data) {
+//     if (err) {
+//       return res.sendStatus(404);
+//     }
+//     if (!data.Contents[0]){
+//       return res.redirect('/api/videos/Y7Ek6tndnA/error.mp4');
+//     }
+//     if (req != null && req.headers.range != null) {
+//       var range = req.headers.range;
+//       var bytes = range.replace(/bytes=/, '').split('-');
+//       var start = parseInt(bytes[0], 10);
+//       var total = data.Contents[0].Size;
+//       var end = bytes[1] ? parseInt(bytes[1], 10) : total - 1;
+//       var chunksize = (end - start) + 1;
+//
+//       res.writeHead(206, {
+//         'Content-Range'  : 'bytes ' + start + '-' + end + '/' + total,
+//         'Accept-Ranges'  : 'bytes',
+//         'Content-Length' : chunksize,
+//         'Last-Modified'  : data.Contents[0].LastModified,
+//         'Content-Type'   : mimetype
+//       });
+//       s3.getObject({Bucket: process.env.AWS_S3_BUCKET_NAME, Key: file, Range: range}).createReadStream().pipe(res);
+//     }
+//     else
+//     {
+//       res.writeHead(200,
+//       {
+//         'Cache-Control' : 'max-age=' + cache + ', private',
+//         'Content-Length': data.Contents[0].Size,
+//         'Last-Modified' : data.Contents[0].LastModified,
+//         'Content-Type'  : mimetype
+//       });
+//       s3.getObject({Bucket: process.env.AWS_S3_BUCKET_NAME, Key: file}).createReadStream().pipe(res);
+//     }
+//   });
+// });
 
 async function getVideoId(value) {
   queryPass = 'select id from videos where videos.filename=$1';
@@ -593,7 +556,7 @@ async function getConceptId(value) {
 
 app.post('/api/annotate', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
-  let videoId = await getVideoId(req.body.videoId);
+  let videoId = await getVideoId(req.body.videoFilename);
   let userId = req.user.id;
   let conceptId = await getConceptId(req.body.conceptId);
   data = [videoId,
@@ -645,33 +608,6 @@ app.post('/api/uploadImage', passport.authenticate('jwt', {session: false}), (re
   });
 });
 
-app.post("/updateCheckpoint", passport.authenticate('jwt', {session: false}),
-  async (req, res) => {
-  let videoId = await getVideoId(req.body.videoId);
-  let userId = req.user.id;
-  var updateRes = null;
-  queryText = 'UPDATE checkpoints SET timeinvideo=$1, timestamp=current_timestamp, finished=$2 WHERE userid=$3 AND videoid=$4';
-  try {
-    updateRes = await psql.query(queryText, [req.body.timeinvideo, req.body.finished, userId, videoId]);
-  }
-  catch(error) {
-    res.json({message: "error: " + error});
-  }
-  if (updateRes.rowCount == 0) { // user just started watching video
-    queryText = 'INSERT INTO checkpoints(userid, videoid, timeinvideo, timestamp, finished) VALUES($1, $2, $3, current_timestamp, $4)';
-    try {
-      let insertRes = await psql.query(queryText, [userId, videoId, req.body.timeinvideo, req.body.finished]);
-      res.json({message: "updated"});
-    }
-    catch(error) {
-      res.json({message: "error: " + error});
-    }
-  }
-  else {
-    res.json({message: "updated"});
-  }
-});
-
 app.post('/api/editAnnotation', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
     queryText = 'UPDATE annotations \
@@ -709,18 +645,7 @@ app.post('/api/delete', passport.authenticate('jwt', {session: false}),
       res.json(deleteRes.rows);
     } catch (error) {
       console.log(error);
-    }
-  }
-);
-
-app.get('/api/missingAnnotations', passport.authenticate('jwt', {session: false}),
-  async (req, res) => {
-    let queryPass = 'select annotations.id, videoid, userid, conceptid, timeinvideo, x1, y1, x2, y2, videowidth, videoheight, filename from annotations, videos where videos.id=annotations.videoid and (image is NULL OR imagewithbox is NULL) LIMIT 10';
-    try {
-      const annotations = await psql.query(queryPass);
-      res.json(annotations.rows);
-    } catch (error) {
-      res.json(error);
+      res.status(400).json(error);
     }
   }
 );

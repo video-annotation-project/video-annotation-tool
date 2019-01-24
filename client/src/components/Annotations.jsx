@@ -87,26 +87,30 @@ class Annotations extends Component {
 
   handleDelete = async (event, id) => {
     event.stopPropagation();
-    fetch('/api/delete', {
-      method: 'POST',
+    const config = {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + localStorage.getItem('token')
-      },
-      body: JSON.stringify({
-        'id': id
-      })
-    }).then(res => res.json()).then(res => {
+      }
+    };
+    const body = {
+      'id': id
+    }
+    axios.post('/api/delete', body, config).then(res => {
       let annotations = JSON.parse(JSON.stringify(this.state.annotations));
       annotations = annotations.filter(annotation => annotation.id !== id);
       this.setState({
-        isLoaded: false,
         annotations: annotations
-      });
-      this.setState({
-        isLoaded: true
-      });
-    });
+      })
+    }).catch(error => {
+      console.log(error);
+      if (error.response) {
+        console.log(error.response.data.detail);
+        this.setState({
+          error: error.response.data.detail
+        })
+      }
+    })
   }
 
   updateAnnotations = (id, updatedName, updatedComment, updatedUnsure) => {
@@ -132,8 +136,8 @@ class Annotations extends Component {
     return (
       <React.Fragment>
         <List>
-          {annotations.map((annotation, index) => (
-            <React.Fragment key={index}>
+          {annotations.map(annotation => (
+            <React.Fragment key={annotation.id}>
               <ListItem button
                 onClick={() => this.handleClick(
                   annotation.timeinvideo,
@@ -182,7 +186,7 @@ class Annotations extends Component {
                 {annotation.showVideo ? (
                   <video
                     id="video"  width="800" height="450"
-                    src={'api/videos/Y7Ek6tndnA/' + annotation.id + '_ai.mp4'}
+                    src={'https://d1bnpmj61iqorj.cloudfront.net/videos/' + annotation.id + '_ai.mp4'}
                     type='video/mp4' controls>
                     Your browser does not support the video tag.
                   </video>
