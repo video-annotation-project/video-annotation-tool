@@ -15,11 +15,10 @@ import random
 
 load_dotenv(dotenv_path="../.env")
 S3_BUCKET = os.getenv('AWS_S3_BUCKET_NAME')
-SRC_IMG_FOLDER = 'test'
+SRC_IMG_FOLDER = os.getenv('AWS_S3_BUCKET_ANNOTATIONS_FOLDER')
 DB_NAME = os.getenv("DB_NAME")
 DB_HOST = os.getenv("DB_HOST")
 DB_USER = os.getenv("DB_USER")
-BAD_USERS = json.loads(os.getenv("BAD_USERS"))
 
 # DO NOT PUSH PASSWORD 
 #DB_PASSWORD = os.getenv("DB_PASSWORD")
@@ -43,7 +42,13 @@ def queryDB(query):
     conn.close()
     return result
 
-def format_annotations(min_examples, concepts, bad_users, split=.8, img_folder='test'):
+
+# Function to download annotation data and format it for training
+#   min_examples: minimum number of annotation examples for each concept
+#   concepts: list of concepts that will be used
+#   bad_users: users whose annotations will be ignored
+#   split: fraction of annotation images that willbe used for training (rest used in validation)
+def download_annotations(min_examples, concepts, bad_users, split=.8):
     annotations = queryDB("select * from annotations A1 where conceptid in " + 
                           str(tuple(concepts))+ " and userid not in " + 
                           str(tuple(bad_users)))
@@ -95,7 +100,7 @@ def format_annotations(min_examples, concepts, bad_users, split=.8, img_folder='
                 int(row['y2']))
         
         #download image
-        obj = client.get_object(Bucket=S3_BUCKET, Key= SRC_IMG_FOLDER + "/" +first['image'])
+        obj = client.get_object(Bucket=S3_BUCKET, Key= SRC_IMG_FOLDER +first['image'])
         img = Image.open(obj['Body'])
         img.save(img_location)
         
@@ -104,9 +109,3 @@ def format_annotations(min_examples, concepts, bad_users, split=.8, img_folder='
         
         if count >= len(selected) * split:
             folder = 'valid'
-            
-with open("config.json") as config_buffer:    
-    config = json.loads(config_buffer.read())
-concepts = list(map(int, config['model']['labels']))
-
-format_annotations(10,concepts, BAD_USERS)

@@ -1,36 +1,41 @@
 {
-    "model" : {
-        "backend":              "Full Yolo",
-        "input_size":           416,
-        "anchors":              [0.65,1.06, 0.85,1.84, 1.36,2.60, 2.26,1.99, 2.37,3.27],
-        "max_box_per_image":    10,        
-        "labels":               ["383", "2136"]
+    "data": {
+        "min_examples": 5,
+        "num_anchors": 5
+    },
+
+    "model": {
+        "backend": "Full Yolo",
+        "input_size": 416,
+        "anchors": [0.65, 1.06, 0.85, 1.84, 1.36, 2.60, 2.26, 1.99, 2.37, 3.27],
+        "max_box_per_image": 10,
+        "labels": ["383", "2136"]
     },
 
     "train": {
-        "train_image_folder":   "./train_image_folder/",
-        "train_annot_folder":   "./train_annot_folder/",     
-          
-        "train_times":          8,
-        "pretrained_weights":   "",
-        "batch_size":           16,
-        "learning_rate":        1e-4,
-        "nb_epochs":            1,
-        "warmup_epochs":        1,
+        "train_image_folder": "./train_image_folder/",
+        "train_annot_folder": "./train_annot_folder/",
 
-        "object_scale":         5.0 ,
-        "no_object_scale":      1.0,
-        "coord_scale":          1.0,
-        "class_scale":          1.0,
+        "train_times": 8,
+        "pretrained_weights": "",
+        "batch_size": 16,
+        "learning_rate": 1e-4,
+        "nb_epochs": 1,
+        "warmup_epochs": 1,
 
-        "saved_weights_name":   "new_trained_full_yolo_test.h5",
-        "debug":                true
+        "object_scale": 5.0,
+        "no_object_scale": 1.0,
+        "coord_scale": 1.0,
+        "class_scale": 1.0,
+
+        "saved_weights_name": "new_trained_full_yolo_test.h5",
+        "debug": true
     },
 
     "valid": {
-        "valid_image_folder":   "./valid_image_folder/",
-        "valid_annot_folder":   "./valid_annot_folder/",
+        "valid_image_folder": "./valid_image_folder/",
+        "valid_annot_folder": "./valid_annot_folder/",
 
-        "valid_times":          1
+        "valid_times": 1
     }
 }
