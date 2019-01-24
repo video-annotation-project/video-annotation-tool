@@ -30,7 +30,6 @@ DB_PASSWORD = os.getenv("DB_PASSWORD")
 
 # video/image properties
 LENGTH = 8000 # length of video in milliseconds
-IMAGES_PER_SEC = 10
 VIDEO_WIDTH = 640
 VIDEO_HEIGHT = 360
 
@@ -45,14 +44,6 @@ OPENCV_OBJECT_TRACKERS = {
    "medianflow": cv2.TrackerMedianFlow_create,
    "mosse": cv2.TrackerMOSSE_create
 }
-
-# for testing 
-#def main():
-#    con = connect(database=DB_NAME, host=DB_HOST, user=DB_USER, password=DB_PASSWORD)
-#    cursor = con.cursor()
-#    cursor.execute("SELECT * FROM annotations WHERE id=2159193")
-#    row = cursor.fetchone()
-#    ai_annotation(row)
 
 def get_next_frame(frames, video_object, num):
    if video_object:
@@ -167,7 +158,7 @@ def ai_annotation(original):
                       'Key': S3_VIDEO_FOLDER + video_name}, 
                        ExpiresIn = 100)
    cap = cv2.VideoCapture(url)
-   fps = math.ceil(cap.get(cv2.CAP_PROP_FPS))
+   fps = cap.get(cv2.CAP_PROP_FPS)
 	
    # initialize video for grabbing frames before annotation
    start = ((original.timeinvideo * 1000) - (LENGTH / 2)) # start vidlen/2 secs before obj appears
@@ -236,6 +227,15 @@ def ai_annotation(original):
    os.system('rm ' + output_file)
    cv2.destroyAllWindows()
    con.close()
+'''
+# for testing 
+def main():
+    con = connect(database=DB_NAME, host=DB_HOST, user=DB_USER, password=DB_PASSWORD)
+    cursor = con.cursor()
+    cursor.execute("SELECT * FROM annotations WHERE id=2159193")
+    row = cursor.fetchone()
+    ai_annotation(row)
 
 if __name__ == '__main__':
   main()
+'''
