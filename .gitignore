@@ -3,6 +3,10 @@ node_modules
 npm-debug.log
 client/build
 
+# private info in here
+# includes DB_HOST url, which has a dev and a production version
+.env
+
 # Elastic Beanstalk Files
 .elasticbeanstalk/*
 !.elasticbeanstalk/*.cfg.yml

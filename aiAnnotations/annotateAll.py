@@ -23,13 +23,13 @@ DB_NAME = os.getenv("DB_NAME")
 DB_HOST = os.getenv("DB_HOST")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
-con = connect(database=DB_NAME, host=DB_HOST, user=DB_USER, password=DB_PASSWORD)
-cursor = con.cursor()
 
 #list of users with illegitimate annotations
 BAD_USERS = os.getenv("BAD_USERS")
 
 while True:
+    con = connect(database=DB_NAME, host=DB_HOST, user=DB_USER, password=DB_PASSWORD)
+    cursor = con.cursor()
     # get annotations from test
     cursor.execute("SELECT * FROM annotations WHERE originalid IS NULL and userid not in " + str(tuple(BAD_USERS)))
     rows = cursor.fetchall()
@@ -62,4 +62,4 @@ while True:
             print("Failed on video for annotation: " + str(i.id))
         cursor.execute("UPDATE annotations SET originalid=%d WHERE id=%d;",(i.id, i.id,))
     con.commit()
-    
+    con.close()    

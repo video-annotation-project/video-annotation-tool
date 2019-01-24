@@ -9,7 +9,7 @@ import Navbar from './components/Navbar.jsx';
 import Home from './components/Home.jsx';
 import Concepts from './components/Concepts.jsx';
 import Annotate from './components/Annotate.jsx';
-import Form from './components/Form.jsx';
+import Login from './components/Login.jsx';
 import CreateUser from './components/CreateUser.jsx';
 import Profile from './components/Profile.jsx';
 import Report from './components/Report.jsx';
@@ -43,7 +43,7 @@ class App extends React.Component {
               <Route exact path='/profile' component={Profile} />
             </React.Fragment>
           ) : (
-            <Route exact path='/login' component={Form} />
+            <Route exact path='/login' component={Login} />
           )}
           <Route render={() => <Redirect to={'/'} />} />
         </Switch>
