@@ -19,7 +19,7 @@ SRC_IMG_FOLDER = 'test'
 DB_NAME = os.getenv("DB_NAME")
 DB_HOST = os.getenv("DB_HOST")
 DB_USER = os.getenv("DB_USER")
-BAD_USERS = os.getenv("BAD_USERS")
+BAD_USERS = json.loads(os.getenv("BAD_USERS"))
 
 # DO NOT PUSH PASSWORD 
 #DB_PASSWORD = os.getenv("DB_PASSWORD")
@@ -105,5 +105,8 @@ def format_annotations(min_examples, concepts, bad_users, split=.8, img_folder='
         if count >= len(selected) * split:
             folder = 'valid'
             
-concepts = [383,2136,236,1948,79]
-format_annotations(5,concepts, BAD_USERS)
+with open("config.json") as config_buffer:    
+    config = json.loads(config_buffer.read())
+concepts = list(map(int, config['model']['labels']))
+
+format_annotations(10,concepts, BAD_USERS)
