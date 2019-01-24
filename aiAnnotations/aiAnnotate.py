@@ -50,7 +50,7 @@ OPENCV_OBJECT_TRACKERS = {
 #def main():
 #    con = connect(database=DB_NAME, host=DB_HOST, user=DB_USER, password=DB_PASSWORD)
 #    cursor = con.cursor()
-#    cursor.execute("SELECT * FROM annotations WHERE id=1289614")
+#    cursor.execute("SELECT * FROM annotations WHERE id=2159193")
 #    row = cursor.fetchone()
 #    ai_annotation(row)
 
@@ -65,7 +65,7 @@ def get_next_frame(frames, video_object, num):
 
 #Uploads images and puts annotation in database
 def upload_image(frame_num, timeinvideo, frame, frame_w_box, annotation, x1, y1, x2, y2, cursor, con, AI_ID):
-   no_box = str(annotation.id) + "_" + str(timeinvideo) + "_ai.png"
+   no_box = str(annotation.videoid) + "_" + str(timeinvideo) + "_ai.png"
    box = str(annotation.id) + "_" + str(timeinvideo) + "_box_ai.png"
    temp_file = str(uuid.uuid4()) + ".png"
    cv2.imwrite(temp_file, frame)
@@ -76,8 +76,8 @@ def upload_image(frame_num, timeinvideo, frame, frame_w_box, annotation, x1, y1,
    os.system('rm '+ temp_file)
    cursor.execute(
       """
-	 INSERT INTO ai_annotations (
-	 framenumber, videoid, userid, conceptid, timeinvideo, x1, y1, x2, y2, 
+	 INSERT INTO annotations (
+	 framenum, videoid, userid, conceptid, timeinvideo, x1, y1, x2, y2, 
 	 videowidth, videoheight, dateannotated, image, imagewithbox, comment, unsure, originalid) 
 	 VALUES (%d, %d, %d, %d, %f, %f, %f, %f, %f, %d, %d, %s, %s, %s, %s, %s, %d)
       """,
@@ -239,3 +239,4 @@ def ai_annotation(original):
 
 if __name__ == '__main__':
   main()
+
