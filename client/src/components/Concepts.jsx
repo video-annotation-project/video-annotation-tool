@@ -24,9 +24,10 @@ class Concepts extends React.Component {
   }
 
   getConceptsSelected = async () => {
-    return axios.get('/api/conceptsSelected', {
-      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')},
-    }).then(res => res.data).then(conceptsSelectedList => {
+    return axios.get(
+      '/api/conceptsSelected', {
+        headers: {'Authorization': 'Bearer ' + localStorage.getItem('token')}
+      }).then(res => res.data).then(conceptsSelectedList => {
       let conceptsSelectedObj = {};
       conceptsSelectedList.forEach(concept => {
         conceptsSelectedObj[concept.conceptid] = true;
@@ -49,27 +50,31 @@ class Concepts extends React.Component {
   }
 
   changeConceptsSelected = async (id) => {
-    let conceptsSelected = this.state.conceptsSelected;
+    let conceptsSelected = JSON.parse(JSON.stringify(this.state.conceptsSelected));
     conceptsSelected[id] = !conceptsSelected[id];
-    fetch('/api/conceptsSelected', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token')},
-      body: JSON.stringify({
-        'id': id,
-        'checked': conceptsSelected[id]
-      })
-    }).then(res => res.json()).then(res => {
-      if (res.message === "Changed") {
-        alert(res.message + ": " + res.value)
-      } else {
-        alert(res)
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + localStorage.getItem('token')
       }
-    }).catch(error => {
+    }
+    const body = {
+      'id': id,
+      'checked': conceptsSelected[id]
+    }
+    axios.post('/api/updateConceptsSelected', body, config).then(res => {
+      alert("Changed: " + res.data.value);
       this.setState({
-        isloaded: true,
-        error: error
-      });
-    });
+        conceptsSelected: conceptsSelected
+      })
+    }).catch(error => {
+      console.log(error);
+      if (error.response) {
+        this.setState({
+          error: error.response.data.detail
+        })
+      }
+    })
   }
 
   render() {

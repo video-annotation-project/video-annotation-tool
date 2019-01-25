@@ -65,7 +65,7 @@ def get_next_frame(frames, video_object, num):
 
 #Uploads images and puts annotation in database
 def upload_image(frame_num, timeinvideo, frame, frame_w_box, annotation, x1, y1, x2, y2, cursor, con, AI_ID):
-   no_box = str(annotation.id) + "_" + str(timeinvideo) + "_ai.png"
+   no_box = str(annotation.videoid) + "_" + str(timeinvideo) + "_ai.png"
    box = str(annotation.id) + "_" + str(timeinvideo) + "_box_ai.png"
    temp_file = str(uuid.uuid4()) + ".png"
    cv2.imwrite(temp_file, frame)
@@ -173,7 +173,7 @@ def ai_annotation(original):
                       'Key': S3_VIDEO_FOLDER + video_name}, 
                        ExpiresIn = 100)
    cap = cv2.VideoCapture(url)
-   fps = math.ceil(cap.get(cv2.CAP_PROP_FPS))
+   fps = cap.get(cv2.CAP_PROP_FPS)
 	
    # initialize video for grabbing frames before annotation
    start = ((original.timeinvideo * 1000) - (LENGTH / 2)) # start vidlen/2 secs before obj appears
@@ -242,5 +242,5 @@ def ai_annotation(original):
    cv2.destroyAllWindows()
    con.close()
 
-if __name__ == '__main__':
-  main()
+#if __name__ == '__main__':
+#  main()

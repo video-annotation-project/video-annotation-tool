@@ -1,4 +1,6 @@
 import React, { Component } from 'react';
+import axios from 'axios';
+
 import Dialog from '@material-ui/core/Dialog';
 import DialogContent from '@material-ui/core/DialogContent';
 import DialogContentText from '@material-ui/core/DialogContentText';
@@ -61,16 +63,25 @@ class SearchModal extends Component {
   //Queries database with term, expects a list of concepts.
   //Should open a dialogue for selecting from the list (currently just selects 1st result)
   searchConcepts = (concept) => {
-    fetch("/api/searchConcepts", {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token')},
-      body: JSON.stringify({
-        'name': concept
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + localStorage.getItem('token')
+      }
+    }
+    const body = {
+      'name': concept
+    }
+    axios.post('/api/searchConcepts', body, config).then(res => {
+      this.setState({
+        concepts: res.data
       })
-    }).then(res => res.json())
-      .then(async res => {
-        this.setState({concepts: res});
-      })
+    }).catch(error => {
+      console.log(error);
+      if (error.response) {
+        console.log(error.response.data.detail);
+      }
+    })
    };
 
   render() {
