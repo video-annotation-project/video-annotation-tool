@@ -46,6 +46,14 @@ OPENCV_OBJECT_TRACKERS = {
    "mosse": cv2.TrackerMOSSE_create
 }
 
+# for testing 
+#def main():
+#    con = connect(database=DB_NAME, host=DB_HOST, user=DB_USER, password=DB_PASSWORD)
+#    cursor = con.cursor()
+#    cursor.execute("SELECT * FROM annotations WHERE id=9006")
+#    row = cursor.fetchone()
+#    ai_annotation(row)
+
 def get_next_frame(frames, video_object, num):
    if video_object:
       check, frame = frames.read()
@@ -214,8 +222,8 @@ def ai_annotation(original):
    reverse_frames.extend(forward_frames)
    for frame in reverse_frames:
       out.write(frame)		
-      cv2.imshow("Frame", frame)
-      cv2.waitKey(1)
+#      cv2.imshow("Frame", frame)
+#      cv2.waitKey(1)
             
    out.release()
    os.system('ffmpeg -loglevel 0 -i ' + output_file + ' -codec:v libx264 '+ converted_file)
@@ -233,15 +241,6 @@ def ai_annotation(original):
    os.system('rm ' + output_file)
    cv2.destroyAllWindows()
    con.close()
-'''
-# for testing 
-def main():
-    con = connect(database=DB_NAME, host=DB_HOST, user=DB_USER, password=DB_PASSWORD)
-    cursor = con.cursor()
-    cursor.execute("SELECT * FROM annotations WHERE id=2159193")
-    row = cursor.fetchone()
-    ai_annotation(row)
 
-if __name__ == '__main__':
-  main()
-'''
+#if __name__ == '__main__':
+#  main()
