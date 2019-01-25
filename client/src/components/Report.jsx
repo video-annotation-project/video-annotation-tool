@@ -42,8 +42,7 @@ class Report extends React.Component {
       options: [
         {"name":"", "selected":false},
         {"name":"Video", "selected":false},
-        {"name":"Concept", "selected":false},
-        {"name":"User", "selected":false}
+        {"name":"Concept", "selected":false}
       ],
       unsureOnly: false,
       openConcepts: false,
@@ -52,12 +51,9 @@ class Report extends React.Component {
   }
 
   componentDidMount = () => {
-    if (!localStorage.getItem('admin')) {
-      let tempOptions = JSON.parse(JSON.stringify(this.state.options));
-      tempOptions.filter(option => option.name === "User")
-                 .map(option => option.selected = true);
+    if (localStorage.getItem('admin')) {
       this.setState({
-        options: tempOptions
+        options: [...this.state.options, {"name":"User", "selected":false}]
       });
     }
   }
@@ -96,15 +92,17 @@ class Report extends React.Component {
   };
 
   handleReportSelectorOk = () => {
-    this.setState({
-       openReportSelector: false
-     });
-     if (this.state.level1 !== '') {
-       this.setState({
-         renderTree: true
-       });
-     }
-  };
+      if (this.state.level1 === '') {
+        return;
+      }
+      if (this.state.level2 === '' && this.state.level3 !== '') {
+        return;
+      }
+      this.setState({
+        renderTree: true,
+        openReportSelector: false
+      });
+  }
 
   toggleConceptsSelected = () => {
     this.setState({
@@ -145,8 +143,16 @@ class Report extends React.Component {
                   onChange={this.handleChangeOption('level1')}
                 >
                   {this.state.options
-                    .filter(option => option.selected === false || option.selected === 'level1')
-                    .map(choice => <option key={'level1'+choice.name} value={choice.name}>{choice.name}</option>)}
+                    .filter(option =>
+                      option.selected === false
+                      || option.selected === 'level1')
+                    .map(choice =>
+                      <option
+                        key={'level1'+choice.name}
+                        value={choice.name}
+                      >
+                        {choice.name}
+                      </option>)}
                 </Select>
               </FormControl>
               <FormControl className={classes.formControl}>
@@ -157,8 +163,16 @@ class Report extends React.Component {
                   onChange={this.handleChangeOption('level2')}
                 >
                   {this.state.options
-                    .filter(option => option.selected === false || option.selected === 'level2')
-                    .map(choice => <option key={'level1'+choice.name} value={choice.name}>{choice.name}</option>)}
+                    .filter(option =>
+                      option.selected === false
+                      || option.selected === 'level2')
+                    .map(choice =>
+                      <option
+                        key={'level2'+choice.name}
+                        value={choice.name}
+                      >
+                        {choice.name}
+                      </option>)}
                 </Select>
               </FormControl>
               {localStorage.getItem('admin') ? (
@@ -171,12 +185,18 @@ class Report extends React.Component {
                   >
                     {this.state.options
                       .filter(option => option.selected === false || option.selected === 'level3')
-                      .map(choice => <option key={'level1'+choice.name} value={choice.name}>{choice.name}</option>)}
+                      .map(choice =>
+                        <option
+                          key={'level3'+choice.name}
+                          value={choice.name}
+                        >
+                          {choice.name}
+                        </option>)}
                   </Select>
                 </FormControl>
               ):(
                 <div></div>
-              )}
+        )}
               <FormControlLabel
                 control={
                   <Checkbox

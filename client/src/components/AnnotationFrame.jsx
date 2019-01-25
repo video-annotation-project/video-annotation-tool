@@ -35,39 +35,38 @@ class AnnotationFrame extends Component {
       dialogOpen: false,
       clickedConcept: null,
       closeHandler: null,
-      enterEnabled: true,
     };
   }
+
   encode = (data) => {
     var str = data.reduce(function(a,b) { return a+String.fromCharCode(b) },'');
     return btoa(str).replace(/.{76}(?=.)/g,'$&\n');
   }
 
   componentDidMount = async () => {
-    fetch(`/api/annotationImage/${this.props.annotation.imagewithbox}`)
-      .then(res => res.json())
-      .then(res => {
-        this.setState({
-          image: 'data:image/png;base64, ' + this.encode(res.image.data),
-          isLoaded: true
-        });
-      })
-      .catch(error => {
-        console.log("Error: " + error);
-        this.setState({
-          isLoaded: true
-        });
-      })
-      .catch(error => {
-        console.log(error);
-        this.setState({
-          isLoaded: true
-        })
+    axios.get(
+      `/api/annotationImage/${this.props.annotation.imagewithbox}`
+    ).then(res => {
+      this.setState({
+        image: 'data:image/png;base64, ' + this.encode(res.data.image.data),
+        isLoaded: true
       });
+    }).catch(error => {
+      console.log(error);
+      console.log(JSON.parse(JSON.stringify(error)));
+      if (!error.response) {
+        return;
+      }
+      let errMsg = error.response.data.detail || error.response.data.message;
+      console.log(errMsg);
+      this.setState({
+        isLoaded: true,
+        error: errMsg
+      });
+    });
   };
 
   postEditAnnotation = (comment, unsure) => {
-    console.log(comment);
     if (comment === "") {
       comment = this.props.annotation.comment;
     }
@@ -86,7 +85,7 @@ class AnnotationFrame extends Component {
     axios.post('/api/editAnnotation', body, config).then(res => {
       this.handleDialogClose();
       let updatedAnnotation = res.data;
-      this.props.reloadAnnotations(updatedAnnotation.id, updatedAnnotation.name, updatedAnnotation.comment, updatedAnnotation.unsure);
+      this.props.updateAnnotations(updatedAnnotation.id, updatedAnnotation.name, updatedAnnotation.comment, updatedAnnotation.unsure);
     }).catch(error => {
       this.handleDialogClose();
       console.log(error);
@@ -98,7 +97,6 @@ class AnnotationFrame extends Component {
 
   handleDialogClose = () => {
     this.setState({
-      enterEnabled: false,
       dialogOpen: false,
       dialogMsg: null,
       dialogPlaceholder: null,
@@ -115,7 +113,6 @@ class AnnotationFrame extends Component {
       dialogTitle: "Confirm Annotation Edit",
       dialogPlaceholder: "Comments",
       clickedConcept: concept,
-      enterEnabled: true,
       closeHandler: this.handleDialogClose
     })
   }
@@ -127,7 +124,7 @@ class AnnotationFrame extends Component {
       return <div>Loading...</div>;
     }
     if (error)  {
-      return <div>Error: {error.message}</div>;
+      return <div>Error: {error}</div>;
     }
     return (
       <React.Fragment>
@@ -138,7 +135,6 @@ class AnnotationFrame extends Component {
           inputHandler={this.postEditAnnotation}
           open={this.state.dialogOpen}
           handleClose={this.state.closeHandler}
-          enterEnabled={this.state.enterEnabled}
         />
         <ListItem className={classes.item}>
           <div id='test'></div>
@@ -146,7 +142,6 @@ class AnnotationFrame extends Component {
         </ListItem>
         <ConceptsSelected
           handleConceptClick={this.handleConceptClick}
-          initOpen={false}
         />
       </React.Fragment>
     );
