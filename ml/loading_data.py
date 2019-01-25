@@ -19,10 +19,7 @@ SRC_IMG_FOLDER = os.getenv('AWS_S3_BUCKET_ANNOTATIONS_FOLDER')
 DB_NAME = os.getenv("DB_NAME")
 DB_HOST = os.getenv("DB_HOST")
 DB_USER = os.getenv("DB_USER")
-
-# DO NOT PUSH PASSWORD 
-#DB_PASSWORD = os.getenv("DB_PASSWORD")
-DB_PASSWORD = '2yG5$A#LkJkvnWh*'
+DB_PASSWORD = os.getenv("DB_PASSWORD")
 
 
 client = boto3.client('s3',
