@@ -31,8 +31,8 @@ DB_PASSWORD = os.getenv("DB_PASSWORD")
 # video/image properties
 LENGTH = 8000 # length of video in milliseconds
 IMAGES_PER_SEC = 10
-VIDEO_WIDTH = 640
-VIDEO_HEIGHT = 360
+VIDEO_WIDTH = 1280
+VIDEO_HEIGHT = 720
 
 # initialize a dictionary that maps strings to their corresponding
 # OpenCV object tracker implementations
@@ -50,7 +50,7 @@ OPENCV_OBJECT_TRACKERS = {
 def main():
     con = connect(database=DB_NAME, host=DB_HOST, user=DB_USER, password=DB_PASSWORD)
     cursor = con.cursor()
-    cursor.execute("SELECT * FROM annotations WHERE id=2158919")
+    cursor.execute("SELECT * FROM annotations WHERE id=9006")
     row = cursor.fetchone()
     ai_annotation(row)
 
@@ -193,9 +193,6 @@ def ai_annotation(original):
    # initialize vars for getting frames after annotation
    start = original.timeinvideo * 1000
    end = start + (LENGTH / 2)
-#   width = original.x2 - original.x1
-#   height = original.y2 - original.y1
-#   box = (original.x1, original.y1, width, height)
    x_ratio = (original.videowidth / VIDEO_WIDTH)
    y_ratio = (original.videoheight / VIDEO_HEIGHT)
    x1 = original.x1 / x_ratio
@@ -241,7 +238,7 @@ def ai_annotation(original):
       os.system('rm '+ converted_file)
    else:
       print("no video made for " + str(original.id))
-#   os.system('rm ' + output_file)
+   os.system('rm ' + output_file)
    cv2.destroyAllWindows()
    con.close()
 
