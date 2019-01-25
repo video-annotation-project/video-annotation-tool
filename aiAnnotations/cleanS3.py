@@ -15,7 +15,17 @@ results = s3.list_objects(Bucket=S3_BUCKET, Prefix=os.getenv("AWS_S3_BUCKET_ANNO
 while True:
 	results = s3.list_objects(Bucket=S3_BUCKET, Prefix=os.getenv("AWS_S3_BUCKET_ANNOTATIONS_FOLDER"))
 	if 'Contents' not in results:
-		exit()
+		break
+	for i in results['Contents']:
+		file = i["Key"]
+		if "_ai" in file:
+			s3.delete_object(Bucket=S3_BUCKET, Key=file)
+			print(file)
+
+while True:
+	results = s3.list_objects(Bucket=S3_BUCKET, Prefix=os.getenv('AWS_S3_BUCKET_VIDEOS_FOLDER'))
+	if 'Contents' not in results:
+		break
 	for i in results['Contents']:
 		file = i["Key"]
 		if "_ai" in file:
