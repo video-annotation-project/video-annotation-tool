@@ -47,12 +47,12 @@ OPENCV_OBJECT_TRACKERS = {
 }
 
 # for testing 
-#def main():
-#    con = connect(database=DB_NAME, host=DB_HOST, user=DB_USER, password=DB_PASSWORD)
-#    cursor = con.cursor()
-#    cursor.execute("SELECT * FROM annotations WHERE id=1289614")
-#    row = cursor.fetchone()
-#    ai_annotation(row)
+def main():
+    con = connect(database=DB_NAME, host=DB_HOST, user=DB_USER, password=DB_PASSWORD)
+    cursor = con.cursor()
+    cursor.execute("SELECT * FROM annotations WHERE id=2158919")
+    row = cursor.fetchone()
+    ai_annotation(row)
 
 def get_next_frame(frames, video_object, num):
    if video_object:
@@ -76,8 +76,8 @@ def upload_image(frame_num, timeinvideo, frame, frame_w_box, annotation, x1, y1,
    os.system('rm '+ temp_file)
    cursor.execute(
       """
-	 INSERT INTO ai_annotations (
-	 framenumber, videoid, userid, conceptid, timeinvideo, x1, y1, x2, y2, 
+	 INSERT INTO annotations (
+	 framenum, videoid, userid, conceptid, timeinvideo, x1, y1, x2, y2, 
 	 videowidth, videoheight, dateannotated, image, imagewithbox, comment, unsure, originalid) 
 	 VALUES (%d, %d, %d, %d, %f, %f, %f, %f, %f, %d, %d, %s, %s, %s, %s, %s, %d)
       """,
@@ -105,7 +105,7 @@ def track_object(frame_num, frames, box, video_object, end, original, cursor, co
    frame = get_next_frame(frames, video_object, 0)
    if frame is None:
       return []
-   frame = imutils.resize(frame, width=640, height=360)
+   frame = imutils.resize(frame, width=VIDEO_WIDTH, height=VIDEO_HEIGHT)
    frame_num = increment_frame_num(video_object, frame_num)
 
    # initialize tracking, add first frame (original annotation)
@@ -118,7 +118,7 @@ def track_object(frame_num, frames, box, video_object, end, original, cursor, co
          cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
       frame_list.append(frame)
    counter = 1
-
+   time_elapsed = 1/fps
    # keep tracking object until its out of frame or time is up
    while True:
       frame = get_next_frame(frames, video_object, counter)
@@ -141,6 +141,12 @@ def track_object(frame_num, frames, box, video_object, end, original, cursor, co
          timeinvideo = round(timeinvideo, 2)
          upload_image(frame_num, timeinvideo, frame_no_box, frame, original, x, y, (x+w), (y+h), cursor, con, AI_ID)
          counter += 1
+         time_elapsed += (1/fps)
+      # make video at least 4 seconds long (2 before and 2 after annotation) even if object isn't tracked
+      elif (time_elapsed < 2):
+         frame_list.append(frame)
+         counter += 1
+         time_elapsed += (1/fps)
       else:
          break
       if (video_object and frames.get(0) > end): 
@@ -187,6 +193,9 @@ def ai_annotation(original):
    # initialize vars for getting frames after annotation
    start = original.timeinvideo * 1000
    end = start + (LENGTH / 2)
+#   width = original.x2 - original.x1
+#   height = original.y2 - original.y1
+#   box = (original.x1, original.y1, width, height)
    x_ratio = (original.videowidth / VIDEO_WIDTH)
    y_ratio = (original.videoheight / VIDEO_HEIGHT)
    x1 = original.x1 / x_ratio
@@ -212,13 +221,12 @@ def ai_annotation(original):
 
    output_file = str(uuid.uuid4()) + ".mp4"
    converted_file = str(uuid.uuid4()) + ".mp4"
-
    out = cv2.VideoWriter(output_file, cv2.VideoWriter_fourcc(*'mp4v'), 20, (VIDEO_WIDTH, VIDEO_HEIGHT))
    reverse_frames.extend(forward_frames)
    for frame in reverse_frames:
       out.write(frame)		
-#     cv2.imshow("Frame", frame)
-#     cv2.waitKey(1)
+      cv2.imshow("Frame", frame)
+      cv2.waitKey(1)
             
    out.release()
    os.system('ffmpeg -loglevel 0 -i ' + output_file + ' -codec:v libx264 '+ converted_file)
@@ -233,7 +241,7 @@ def ai_annotation(original):
       os.system('rm '+ converted_file)
    else:
       print("no video made for " + str(original.id))
-   os.system('rm ' + output_file)
+#   os.system('rm ' + output_file)
    cv2.destroyAllWindows()
    con.close()
 
