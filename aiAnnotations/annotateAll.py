@@ -6,6 +6,7 @@ from multiprocessing import Process, active_children, cpu_count
 import boto3
 import datetime
 import math
+import json
 
 load_dotenv(dotenv_path="../.env")
 
@@ -24,11 +25,14 @@ DB_HOST = os.getenv("DB_HOST")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 
+#list of users with illegitimate annotations
+BAD_USERS = json.loads(os.getenv("BAD_USERS"))
+
 while True:
     con = connect(database=DB_NAME, host=DB_HOST, user=DB_USER, password=DB_PASSWORD)
     cursor = con.cursor()
     # get annotations from test
-    cursor.execute("SELECT * FROM annotations WHERE originalid IS NULL")
+    cursor.execute("SELECT * FROM annotations WHERE originalid IS NULL and userid not in " + str(tuple(BAD_USERS)))
     rows = cursor.fetchall()
 
     processes = []
