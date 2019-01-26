@@ -46,7 +46,7 @@ while True:
         process.start()
         processes.append((process,i.id))
         
-        while(len(active_children()) >= math.floor(cpu_count()*3/4)):
+        while(len(active_children()) >= cpu_count()-1):
             pass
         
         if(len(processes) > 256):
