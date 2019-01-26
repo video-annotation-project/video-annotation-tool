@@ -39,7 +39,6 @@ def queryDB(query):
     conn.close()
     return result
 
-
 # Function to download annotation data and format it for training
 #   min_examples: minimum number of annotation examples for each concept
 #   concepts: list of concepts that will be used
@@ -75,8 +74,8 @@ def download_annotations(min_examples, concepts, bad_users, split=.8):
                     concept_count[a] -= 1
                 continue
         selected.append(group)
-    print(concept_count)
-    print(len(selected))
+    print("Concept counts: " + str(concept_count))
+    print("Number of images: " + str(len(selected)))
         
     count = 0
     folder = 'train'
