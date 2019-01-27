@@ -75,6 +75,7 @@ start = time.time()
 p = subprocess.Popen(("python3 train.py -c " + config_path).split(),
                      stdout=subprocess.PIPE)
 
+p.wait()
 
 end = time.time()
 print("Done Training: " + str((end - start)/60) + " minutes")

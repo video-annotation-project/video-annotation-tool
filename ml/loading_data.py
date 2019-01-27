@@ -45,9 +45,11 @@ def queryDB(query):
 #   bad_users: users whose annotations will be ignored
 #   split: fraction of annotation images that willbe used for training (rest used in validation)
 def download_annotations(min_examples, concepts, bad_users, split=.8):
-    annotations = queryDB("select * from annotations A1 where conceptid in " + 
-                          str(tuple(concepts))+ " and userid not in " + 
-                          str(tuple(bad_users)))
+    annotations = queryDB("select * from annotations as temp where conceptid in " + 
+                           str(tuple(concepts)) + 
+                           "and exists (select id, userid from annotations WHERE id=temp.originalid and userid not in " + 
+                           str(tuple(bad_users)) + ")")
+
     groups = annotations.groupby(['videoid','timeinvideo'], sort=False)
     groups = [df for _, df in groups]
     random.shuffle(groups)
