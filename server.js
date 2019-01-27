@@ -527,10 +527,13 @@ app.post('/api/editAnnotation', passport.authenticate('jwt', {session: false}),
     queryText = 'UPDATE annotations \
                  SET conceptid = $1, comment = $2, unsure = $3 \
                  WHERE annotations.id=$4 OR annotations.originalid=$4 RETURNING *';
-    queryUpdate = 'SELECT annotations.id, annotations.comment, annotations.unsure, annotations.timeinvideo, annotations.x1, annotations.y1, \
-                 annotations.x2, annotations.y2, annotations.videoWidth, annotations.videoHeight, \
-                 annotations.imagewithbox, concepts.name FROM annotations, concepts \
-                 WHERE annotations.id = $1 AND annotations.conceptid=concepts.id';
+    queryUpdate = 'SELECT annotations.id, annotations.comment,\
+                   annotations.unsure, annotations.timeinvideo, \
+                   annotations.videoWidth, annotations.videoHeight, \
+                   annotations.imagewithbox, concepts.name \
+                   FROM annotations, concepts \
+                   WHERE annotations.id = $1 \
+                   AND annotations.conceptid=concepts.id';
     try {
       var editRes = await psql.query(
                             queryText,
