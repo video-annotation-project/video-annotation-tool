@@ -37,9 +37,9 @@ folders.append(config['valid']["valid_annot_folder"])
 folders.append(config['valid']["valid_image_folder"])
 
 for dir in folders:
-	if os.path.exists(dir):
-	    shutil.rmtree(dir)
-	os.makedirs(dir)
+    if os.path.exists(dir):
+        shutil.rmtree(dir)
+    os.makedirs(dir)
 
 end = time.time()
 print("Done Initializing: " + str((end - start)/60) + " minutes")
@@ -64,7 +64,7 @@ anchors = json.loads(preprocessed.decode('UTF-8'))
 config['model']['anchors'] = anchors
 
 with open(config_path, 'w') as file:
-	json.dump(config, file, sort_keys=True, indent=4)
+    json.dump(config, file, sort_keys=True, indent=4)
 
 end = time.time()
 print("Done Getting Anchors: " + str((end - start)/60) + " minutes")
@@ -75,6 +75,10 @@ start = time.time()
 p = subprocess.Popen(("python3 train.py -c " + config_path).split(),
                      stdout=subprocess.PIPE)
 
+p.wait()
+preprocessed, _ = p.communicate()
+print("Training Results: ")
+print(preprocessed.decode('UTF-8'))
 
 end = time.time()
 print("Done Training: " + str((end - start)/60) + " minutes")
