@@ -53,9 +53,16 @@ class AnnotationFrame extends Component {
       });
     }).catch(error => {
       console.log(error);
+      console.log(JSON.parse(JSON.stringify(error)));
+      if (!error.response) {
+        return;
+      }
+      let errMsg = error.response.data.detail || error.response.data.message;
+      console.log(errMsg);
       this.setState({
-        error: error.response.data.detail
-      })
+        isLoaded: true,
+        error: errMsg
+      });
     });
   };
 
@@ -117,7 +124,7 @@ class AnnotationFrame extends Component {
       return <div>Loading...</div>;
     }
     if (error)  {
-      return <div>Error: {error.message}</div>;
+      return <div>Error: {error}</div>;
     }
     return (
       <React.Fragment>

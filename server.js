@@ -394,14 +394,13 @@ app.get('/api/annotationImage/:name', (req, res) => {
     Key: key,
     Bucket: process.env.AWS_S3_BUCKET_NAME,
   };
-  s3.getObject(params, async (err, data) => {
+  s3.getObject(params, (err, data) => {
     if (err) {
-      res.json(err);
+      res.status(500).json(err);
+      return;
     }
-    else {
-      res.json({image: data.Body});
-    }
-  })
+    res.json({image: data.Body});
+  });
 });
 
 // app.get('/api/videos/Y7Ek6tndnA/:name', (req, res) => {
