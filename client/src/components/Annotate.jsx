@@ -65,7 +65,8 @@ class Annotate extends Component {
       startedVideos: [],
       unwatchedVideos: [],
       watchedVideos: [],
-      videoPlaybackRate: 1.0
+      videoPlaybackRate: 1.0,
+      error: null
     };
   }
 
@@ -122,9 +123,16 @@ class Annotate extends Component {
       })
     } catch (error) {
       console.log(error);
-      if (error.response) {
-        console.log(error.response.data.detail);
+      console.log(JSON.parse(JSON.stringify(error)));
+      if (!error.response) {
+        return;
       }
+      let errMsg = error.response.data.detail || error.response.data.message;
+      console.log(errMsg);
+      this.setState({
+        isLoaded: true,
+        error: errMsg
+      });
       return;
     }
 
@@ -218,9 +226,16 @@ class Annotate extends Component {
       });
     }, error => {
       console.log(error);
-      if (error.response) {
-        console.log(error.response.data.detail);
+      console.log(JSON.parse(JSON.stringify(error)));
+      if (!error.response) {
+        return;
       }
+      let errMsg = error.response.data.detail || error.response.data.message;
+      console.log(errMsg);
+      this.setState({
+        isLoaded: true,
+        error: errMsg
+      });
     });
   };
 
@@ -340,10 +355,16 @@ class Annotate extends Component {
       this.createAndUploadImages(vidCord, dragBoxCord, videoElement, date, x1, y1);
     }).catch(error => {
       console.log(error);
-      console.log(JSON.stringify(error));
-      if (error.response) {
-        console.log(error.response.data.detail);
+      console.log(JSON.parse(JSON.stringify(error)));
+      if (!error.response) {
+        return;
       }
+      let errMsg = error.response.data.detail || error.response.data.message;
+      console.log(errMsg);
+      this.setState({
+        isLoaded: true,
+        error: errMsg
+      });
     });
   }
 
@@ -408,9 +429,12 @@ class Annotate extends Component {
 
   render() {
     const { classes } = this.props;
-    const { isLoaded } = this.state;
+    const { isLoaded, error } = this.state;
     if (!isLoaded) {
       return <div>Loading...</div>
+    }
+    if (error)  {
+      return <div>Error: {error}</div>;
     }
     return (
       <React.Fragment>

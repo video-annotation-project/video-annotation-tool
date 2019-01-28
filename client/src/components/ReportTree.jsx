@@ -43,13 +43,22 @@ class ReportTree extends Component {
         `unsureOnly=${this.props.unsureOnly}&`+
         `admin=${localStorage.getItem('admin')}`,
         config);
-      console.log(treeData.data);
       this.setState({
         treeData: treeData.data,
         isLoaded: true
       })
     } catch (error) {
       console.log(error);
+      console.log(JSON.parse(JSON.stringify(error)));
+      if (!error.response) {
+        return;
+      }
+      let errMsg = error.response.data.detail || error.response.data.message;
+      console.log(errMsg);
+      this.setState({
+        isLoaded: true,
+        error: errMsg
+      });
     }
 
   }
@@ -64,10 +73,13 @@ class ReportTree extends Component {
   }
 
   render () {
-    const { isLoaded, treeData } = this.state;
+    const { isLoaded, treeData, error } = this.state;
     const { classes, levels, treeDepth, queryConditions, unsureOnly } = this.props;
     if (!isLoaded) {
       return <List>Loading...</List>;
+    }
+    if (error)  {
+      return <div>Error: {error}</div>;
     }
     return (
       <List className={classes.root}>

@@ -58,6 +58,16 @@ class Annotations extends Component {
       });
     } catch (error) {
       console.log(error);
+      console.log(JSON.parse(JSON.stringify(error)));
+      if (!error.response) {
+        return;
+      }
+      let errMsg = error.response.data.detail || error.response.data.message;
+      console.log(errMsg);
+      this.setState({
+        isLoaded: true,
+        error: errMsg
+      });
     }
   };
 
@@ -101,12 +111,16 @@ class Annotations extends Component {
       })
     }).catch(error => {
       console.log(error);
-      if (error.response) {
-        console.log(error.response.data.detail);
-        this.setState({
-          error: error.response.data.detail
-        })
+      console.log(JSON.parse(JSON.stringify(error)));
+      if (!error.response) {
+        return;
       }
+      let errMsg = error.response.data.detail || error.response.data.message;
+      console.log(errMsg);
+      this.setState({
+        isLoaded: true,
+        error: errMsg
+      });
     })
   }
 
