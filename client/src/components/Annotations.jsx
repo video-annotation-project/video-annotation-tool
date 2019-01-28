@@ -40,31 +40,38 @@ class Annotations extends Component {
     };
   }
 
-  getAnnotations = async () => {
-    let port = `/api/annotations?level1=${this.props.level1}&id=${this.props.id}` +
-               `&admin=${localStorage.getItem('admin')}&unsureOnly=${this.props.unsureOnly}`;
-    if (this.props.level2) {
-      port = port + `&level2=${this.props.level2}&level1Id=${this.props.level1Id}`;
-    }
-    if (this.props.level3) {
-      port = port + `&level3=${this.props.level3}&level2Id=${this.props.level2Id}`;
-    }
-    let annotations = await axios.get(port, {
-      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')},
-    });
-    return annotations.data;
-  };
-
   componentDidMount = async () => {
-    let annotations = await this.getAnnotations();
-    annotations.map(annotation => annotation.expanded = false);
-    this.setState({
-      isLoaded: true,
-      annotations: annotations,
-    });
+    const config = {
+      headers: {
+        'Authorization': 'Bearer ' + localStorage.getItem('token')
+      }
+    }
+    try {
+      let annotations = await axios.get(`/api/annotations?`+
+        `queryConditions=${this.props.queryConditions}&`+
+        `unsureOnly=${this.props.unsureOnly}&`+
+        `admin=${localStorage.getItem('admin')}`, config);
+      console.log(annotations);
+      this.setState({
+        isLoaded: true,
+        annotations: annotations.data,
+      });
+    } catch (error) {
+      console.log(error);
+      console.log(JSON.parse(JSON.stringify(error)));
+      if (!error.response) {
+        return;
+      }
+      let errMsg = error.response.data.detail || error.response.data.message;
+      console.log(errMsg);
+      this.setState({
+        isLoaded: true,
+        error: errMsg
+      });
+    }
   };
 
-  handleClick = async (time, filename, id) => {
+  handleClick = (time, filename, id) => {
     let annotations = JSON.parse(JSON.stringify(this.state.annotations));
     let annotation = annotations.find(annotation => annotation.id === id);
     annotation.expanded = !annotation.expanded;
@@ -73,7 +80,7 @@ class Annotations extends Component {
     });
   }
 
-  toggleShowVideo = async (event, id) => {
+  toggleShowVideo = (event, id) => {
     let annotations = this.state.annotations;
     let annotation = annotations.find(annotation => annotation.id === id);
     if (!annotation.expanded) {
@@ -104,12 +111,16 @@ class Annotations extends Component {
       })
     }).catch(error => {
       console.log(error);
-      if (error.response) {
-        console.log(error.response.data.detail);
-        this.setState({
-          error: error.response.data.detail
-        })
+      console.log(JSON.parse(JSON.stringify(error)));
+      if (!error.response) {
+        return;
       }
+      let errMsg = error.response.data.detail || error.response.data.message;
+      console.log(errMsg);
+      this.setState({
+        isLoaded: true,
+        error: errMsg
+      });
     })
   }
 
