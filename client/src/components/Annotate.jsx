@@ -105,13 +105,12 @@ class Annotate extends Component {
     // adds event listeners for different key presses
     document.addEventListener('keydown', this.handleKeyDown);
 
-    // loading the video list data
+    // load all videos
     const config = {
       headers: {
         'Authorization': 'Bearer ' + localStorage.getItem('token')
       }
     };
-
     try {
       await axios.get('/api/listVideos/', config).then(res => {
         this.setState({
@@ -182,11 +181,10 @@ class Annotate extends Component {
   }
 
   updateCheckpoint = async (finished) => {
-    // when the checkpoint for a video is updated,
-    // there are three places that need to reflect this: this.state.currentVideo,
-    // this.state.startedVideos, and the checkpoints table in the SQL database
-    // upon successful resolution of the SQL database update, we update
-    // currentVideo and startedVideos
+    // when the checkpoint for a video is updated, there are three places that
+    // need to reflect this: this.state.currentVideo, this.state.startedVideos,
+    // and the checkpoints table in the SQL database. Upon successful resolution
+    // of the SQL database update, we update currentVideo and startedVideos.
 
     const config = {
       headers: {
@@ -207,7 +205,8 @@ class Annotate extends Component {
 
       // update this.state.startedVideos
       let startedVideos = JSON.parse(JSON.stringify(this.state.startedVideos));
-      let currentVideo = startedVideos.find(vid => vid.id === this.state.currentVideo.id)
+      let currentVideo = startedVideos.find(vid =>
+        vid.id === this.state.currentVideo.id);
       currentVideo.timeinvideo = videoElement.currentTime;
       currentVideo.finished = finished;
 
@@ -230,7 +229,8 @@ class Annotate extends Component {
 
     // remove currentVideo from startedVideos, add to watchedVideos
     let startedVideos = JSON.parse(JSON.stringify(this.state.startedVideos));
-    startedVideos = startedVideos.filter(vid => vid.id !== this.state.currentVideo.id);
+    startedVideos = startedVideos.filter(vid =>
+      vid.id !== this.state.currentVideo.id);
     let watchedVideos = JSON.parse(JSON.stringify(this.state.watchedVideos));
     if (!watchedVideos.some(vid => vid.id === this.state.currentVideo.id)) {
       watchedVideos = watchedVideos.concat(this.state.currentVideo);
@@ -347,7 +347,8 @@ class Annotate extends Component {
     });
   }
 
-  createAndUploadImages = async (vidCord, dragBoxCord, videoElement, date, x1, y1) => {
+  createAndUploadImages = async (vidCord, dragBoxCord, videoElement, date,
+     x1, y1) => {
     var canvas = document.createElement('canvas');
     canvas.height = vidCord.height;
     canvas.width = vidCord.width;
@@ -366,7 +367,8 @@ class Annotate extends Component {
   }
 
   uploadImage = (img, date, box) => {
-    let buf = new Buffer(img.src.replace(/^data:image\/\w+;base64,/, ""),'base64');
+    let buf = new Buffer(
+      img.src.replace(/^data:image\/\w+;base64,/, ""), 'base64');
     const config = {
       headers: {
         'Content-Type': 'application/json',
@@ -384,10 +386,11 @@ class Annotate extends Component {
   handleConceptClick = (concept) => {
     var videoElement = document.getElementById("video");
     this.setState({
-      dialogMsg:  concept.name +
-                  " in video " + this.state.currentVideo.filename +
-                  " at time " + Math.floor(videoElement.currentTime/60) + ' minutes '
-                  + videoElement.currentTime%60 + " seconds",
+      dialogMsg:
+        concept.name +
+        " in video " + this.state.currentVideo.filename +
+        " at time " + Math.floor(videoElement.currentTime/60) + ' minutes '
+        + videoElement.currentTime%60 + " seconds",
       dialogOpen: true,
       dialogTitle: "Confirm Annotation",
       dialogPlaceholder: "Comments",
@@ -432,7 +435,8 @@ class Annotate extends Component {
               id="video"
               width="1600"
               height="900"
-              src={'https://d1bnpmj61iqorj.cloudfront.net/videos/'+this.state.currentVideo.filename}
+              src={'https://d1bnpmj61iqorj.cloudfront.net/videos/'+
+                this.state.currentVideo.filename}
               type='video/mp4'
               crossOrigin='use-credentials'
               >
@@ -455,11 +459,26 @@ class Annotate extends Component {
             </Rnd>
           </div>
           <br />
-          <Button variant="contained" color="primary" className={classes.button} onClick={() => this.skipVideoTime(-5)}>-5 sec</Button>
-          <Button variant="contained" color="primary" className={classes.button} onClick={this.playPause}>Play/Pause</Button>
-          <Button variant="contained" color="primary" className={classes.button} onClick={() => this.skipVideoTime(5)}>+5 sec</Button>
-          <Button variant="contained" color="primary" className={classes.button} onClick={() => this.toggleVideoControls()}>Toggle Controls</Button>
-          <Button variant="contained" color="primary" className={classes.button} onClick={() => this.handleDoneClick()}>Done</Button>
+          <Button variant="contained" color="primary"
+            className={classes.button}
+            onClick={() => this.skipVideoTime(-5)}>-5 sec
+          </Button>
+          <Button variant="contained" color="primary"
+            className={classes.button}
+            onClick={this.playPause}>Play/Pause
+            </Button>
+          <Button variant="contained" color="primary"
+            className={classes.button}
+            onClick={() => this.skipVideoTime(5)}>+5 sec
+          </Button>
+          <Button variant="contained" color="primary"
+            className={classes.button}
+            onClick={() => this.toggleVideoControls()}>Toggle Controls
+          </Button>
+          <Button variant="contained" color="primary"
+            className={classes.button}
+            onClick={() => this.handleDoneClick()}>Done
+          </Button>
           <br />
           <div width="250">
             Play Rate: {this.state.videoPlaybackRate}
@@ -479,11 +498,12 @@ class Annotate extends Component {
             message={this.state.dialogMsg}
             placeholder={this.state.dialogPlaceholder}
             inputHandler={this.postAnnotation}
-            open={true /* The DialogModal 'openness' is controlled through boolean
-              logic rather than by passing in a variable as an attribute. This is
-              to force DialogModal to unmount when it closes so that its state
-              is reset. This also prevents the accidental double submission bug,
-              by implicitly reducing the transition time of DialogModal to zero. */}
+            open={true /* The DialogModal 'openness' is controlled through
+              boolean logic rather than by passing in a variable as an
+              attribute. This is to force DialogModal to unmount when it closes
+              so that its state is reset. This also prevents the accidental
+              double submission bug, by implicitly reducing the transition time
+              of DialogModal to zero. */}
             handleClose={this.state.closeHandler}
           />
         }
