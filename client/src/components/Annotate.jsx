@@ -70,6 +70,30 @@ class Annotate extends Component {
     };
   }
 
+  loadVideos = () => {
+    const config = {
+      headers: {
+        'Authorization': 'Bearer ' + localStorage.getItem('token')
+      }
+    };
+    axios.get('/api/listVideos/', config).then(res => {
+      this.setState({
+        startedVideos: res.data[0].rows,
+        unwatchedVideos: res.data[1].rows,
+        watchedVideos: res.data[2].rows,
+      }, () => {
+        // get current video and put it in the state
+        this.setState({
+          currentVideo: this.getCurrentVideo(),
+          isLoaded: true,
+        }, () => {
+          var videoElement = document.getElementById("video");
+          videoElement.currentTime = this.state.currentVideo.timeinvideo;
+        });
+      });
+    })
+  }
+
   getCurrentVideo = () => {
     if (this.state.startedVideos.length > 0) {
       // currentVideo is the first item in startedVideos
@@ -91,8 +115,7 @@ class Annotate extends Component {
       });
       return currentVideo;
     }
-    // user does not have a video to be played
-    // return default video 1
+    // user does not have a video to be played. return default video 1
     return {
       'id': 1,
       'filename': 'DocRicketts-0569_20131213T224337Z_00-00-01-00TC_h264.mp4',
@@ -102,24 +125,11 @@ class Annotate extends Component {
   }
 
   componentDidMount = async () => {
-
     // adds event listeners for different key presses
     document.addEventListener('keydown', this.handleKeyDown);
 
-    // load all videos
-    const config = {
-      headers: {
-        'Authorization': 'Bearer ' + localStorage.getItem('token')
-      }
-    };
     try {
-      await axios.get('/api/listVideos/', config).then(res => {
-        this.setState({
-          startedVideos: res.data[0].rows,
-          unwatchedVideos: res.data[1].rows,
-          watchedVideos: res.data[2].rows,
-        });
-      })
+      this.loadVideos();
     } catch (error) {
       console.log(error);
       console.log(JSON.parse(JSON.stringify(error)));
@@ -132,17 +142,7 @@ class Annotate extends Component {
         isLoaded: true,
         error: errMsg
       });
-      return;
     }
-
-    // retrieve the current video and put it in the state
-    this.setState({
-      currentVideo: this.getCurrentVideo(),
-      isLoaded: true,
-    }, () => {
-      var videoElement = document.getElementById("video");
-      videoElement.currentTime = this.state.currentVideo.timeinvideo;
-    });
   }
 
   componentWillUnmount = () => {
@@ -193,7 +193,6 @@ class Annotate extends Component {
     // need to reflect this: this.state.currentVideo, this.state.startedVideos,
     // and the checkpoints table in the SQL database. Upon successful resolution
     // of the SQL database update, we update currentVideo and startedVideos.
-
     const config = {
       headers: {
         'Authorization': 'Bearer ' + localStorage.getItem('token')
@@ -207,10 +206,6 @@ class Annotate extends Component {
     }
     // update SQL database
     await axios.post('/api/updateCheckpoint', body, config).then(res => {
-      if (res.data.message !== "updated") {
-        console.log(res.data.message);
-      }
-
       // update this.state.startedVideos
       let startedVideos = JSON.parse(JSON.stringify(this.state.startedVideos));
       let currentVideo = startedVideos.find(vid =>
@@ -223,7 +218,7 @@ class Annotate extends Component {
         currentVideo: JSON.parse(JSON.stringify(currentVideo)),
         startedVideos: startedVideos
       });
-    }, error => {
+    }).catch(error => {
       console.log(error);
       console.log(JSON.parse(JSON.stringify(error)));
       if (!error.response) {
@@ -256,7 +251,7 @@ class Annotate extends Component {
     });
 
     //Get next video and play it
-    let currentVideo = await this.getCurrentVideo();
+    let currentVideo = this.getCurrentVideo();
     this.setState({
       currentVideo: currentVideo,
     });
