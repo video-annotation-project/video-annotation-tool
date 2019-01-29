@@ -57,7 +57,10 @@ class AnnotationFrame extends Component {
       if (!error.response) {
         return;
       }
-      let errMsg = error.response.data.detail || error.response.data.message;
+      let errMsg =
+      error.response.data.detail ||
+      error.response.data.message ||
+      'Error';
       console.log(errMsg);
       this.setState({
         isLoaded: true,

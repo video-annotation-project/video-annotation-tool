@@ -136,7 +136,10 @@ class Annotate extends Component {
       if (!error.response) {
         return;
       }
-      let errMsg = error.response.data.detail || error.response.data.message;
+      let errMsg =
+      error.response.data.detail ||
+      error.response.data.message ||
+      'Error';
       console.log(errMsg);
       this.setState({
         isLoaded: true,
@@ -188,7 +191,7 @@ class Annotate extends Component {
     videoElement.controls = !videoElement.controls;
   }
 
-  updateCheckpoint = async (finished) => {
+  updateCheckpoint = (finished) => {
     // when the checkpoint for a video is updated, there are three places that
     // need to reflect this: this.state.currentVideo, this.state.startedVideos,
     // and the checkpoints table in the SQL database. Upon successful resolution
@@ -205,7 +208,7 @@ class Annotate extends Component {
       'finished' : finished
     }
     // update SQL database
-    await axios.post('/api/updateCheckpoint', body, config).then(res => {
+    axios.post('/api/updateCheckpoint', body, config).then(res => {
       // update this.state.startedVideos
       let startedVideos = JSON.parse(JSON.stringify(this.state.startedVideos));
       let currentVideo = startedVideos.find(vid =>
@@ -224,7 +227,10 @@ class Annotate extends Component {
       if (!error.response) {
         return;
       }
-      let errMsg = error.response.data.detail || error.response.data.message;
+      let errMsg =
+      error.response.data.detail ||
+      error.response.data.message ||
+      'Error';
       console.log(errMsg);
       this.setState({
         isLoaded: true,
@@ -354,7 +360,10 @@ class Annotate extends Component {
       if (!error.response) {
         return;
       }
-      let errMsg = error.response.data.detail || error.response.data.message;
+      let errMsg =
+       error.response.data.detail ||
+       error.response.data.message ||
+       'Error';
       console.log(errMsg);
       this.setState({
         isLoaded: true,
