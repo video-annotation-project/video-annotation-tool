@@ -134,16 +134,19 @@ app.get('/api/conceptsSelected', passport.authenticate('jwt', {session: false}),
       res.json(concepts.rows);
     } catch (error) {
       console.log(error);
-      res.json(error);
+      res.status(500).json(error);
     }
   }
 );
 
 app.post('/api/updateConceptsSelected', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
-    let queryText = 'DELETE FROM profile WHERE profile.userid=$1 AND profile.conceptid=$2 RETURNING *';
+    let queryText = 'DELETE FROM profile \
+                     WHERE profile.userid=$1 AND \
+                     profile.conceptid=$2 RETURNING *';
     if (req.body.checked) {
-      queryText = 'INSERT INTO profile(userid, conceptid) VALUES($1, $2) RETURNING *';
+      queryText = 'INSERT INTO profile(userid, conceptid) \
+                   VALUES($1, $2) RETURNING *';
     }
     try {
       let insert = await psql.query(queryText, [req.user.id, req.body.id]);
@@ -190,46 +193,6 @@ app.get('/api/conceptImages/:id',
   }
 );
 
-app.get('/api/videoNames', passport.authenticate('jwt', {session: false}),
-  async (req, res) => {
-    queryPass = 'select id, filename from videos;'
-    try {
-      const videoData = await psql.query(queryPass);
-      res.json(videoData);
-    } catch (error) {
-      res.json(error);
-    }
-  }
-);
-
-app.get('/api/userInfo', passport.authenticate('jwt', {session: false}),
-  async (req, res) => {
-    let userId = req.user.id;
-    queryPass = 'SELECT * FROM users WHERE id=$1;'
-    try {
-      const videoData = await psql.query(queryPass, [userId]);
-      res.json(videoData);
-    } catch (error) {
-      res.json(error);
-    }
-  }
-);
-
-app.get('/api/userCurrentVideos', passport.authenticate('jwt', {session: false}),
-  async (req, res) => {
-    queryPass = 'SELECT id, filename \
-                 FROM videos \
-                 WHERE id IN (SELECT videoid FROM checkpoints WHERE userid=$1 AND finished=false);'
-    try {
-      const videoData = await psql.query(queryPass, [req.user.id]);
-      res.json(videoData);
-    } catch (error) {
-      res.json(error);
-    }
-  }
-);
-
-// this function needs to be improved
 app.post("/api/updateCheckpoint", passport.authenticate('jwt', {session: false}),
   async (req, res) => {
   const { videoId, timeinvideo, finished } = req.body;
@@ -251,7 +214,8 @@ app.post("/api/updateCheckpoint", passport.authenticate('jwt', {session: false})
     let insertRes = await psql.query(queryText, data);
     res.json({message: "updated"});
   } catch(error) {
-    res.json(error);
+    console.log(error);
+    res.status(500).json(error);
   }
 
 });
@@ -259,17 +223,20 @@ app.post("/api/updateCheckpoint", passport.authenticate('jwt', {session: false})
 app.get('/api/listVideos/', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
     let userId = req.user.id;
-    queryUserStartedVideos = 'SELECT videos.id, videos.filename, checkpoints.finished, checkpoints.timeinvideo \
+    queryUserStartedVideos = 'SELECT videos.id, videos.filename, \
+                              checkpoints.finished, checkpoints.timeinvideo \
                               FROM videos, checkpoints \
                               WHERE checkpoints.userid=$1 \
                               AND videos.id=checkpoints.videoid \
                               AND checkpoints.finished=false \
                               ORDER BY videos.id;'
-    queryGlobalUnwatched = 'SELECT videos.id, videos.filename, false as finished, 0 as timeinvideo \
+    queryGlobalUnwatched = 'SELECT videos.id, videos.filename, \
+                            false as finished, 0 as timeinvideo \
                             FROM videos \
                             WHERE id NOT IN (SELECT videoid FROM checkpoints) \
                             ORDER BY videos.id;'
-    queryGlobalWatched = 'SELECT DISTINCT videos.id, videos.filename, checkpoints.finished, 0 as timeinvideo \
+    queryGlobalWatched = 'SELECT DISTINCT videos.id, videos.filename, \
+                          checkpoints.finished, 0 as timeinvideo \
                           FROM videos, checkpoints \
                           WHERE videos.id=checkpoints.videoid \
                           AND checkpoints.finished=true \
@@ -282,25 +249,7 @@ app.get('/api/listVideos/', passport.authenticate('jwt', {session: false}),
       res.json(videoData);
     } catch (error) {
       console.log(error);
-      res.json(error);
-    }
-  }
-);
-
-app.get('/api/latestWatchedVideo', passport.authenticate('jwt', {session: false}),
-  async (req, res) => {
-    let userId = req.user.id;
-    queryPass = 'SELECT checkpoints.timeinvideo, videos.filename, videos.id \
-                 FROM checkpoints, videos \
-                 WHERE checkpoints.userid=$1 AND \
-                 checkpoints.videoid=videos.id AND \
-                 checkpoints.finished=false \
-                 ORDER BY timestamp DESC;'
-    try {
-      const videoData = await psql.query(queryPass, [userId]);
-      res.json(videoData.rows);
-    } catch (error) {
-      res.json(error);
+      res.status(500).json(error);
     }
   }
 );
@@ -363,12 +312,12 @@ app.get('/api/annotations', passport.authenticate('jwt', {session: false}),
     let params = [];
     //Build query string
     let queryPass = 'SELECT annotations.id, annotations.comment,\
-                 annotations.unsure, annotations.timeinvideo, \
-                 annotations.imagewithbox, concepts.name, \
-                 false as extended \
-                 FROM annotations, concepts\
-                 WHERE annotations.conceptid=concepts.id' +
-                 req.query.queryConditions;
+                     annotations.unsure, annotations.timeinvideo, \
+                     annotations.imagewithbox, concepts.name, \
+                     false as extended \
+                     FROM annotations, concepts\
+                     WHERE annotations.conceptid=concepts.id' +
+                     req.query.queryConditions;
     if (req.query.unsureOnly === 'true') {
       queryPass = queryPass + ' AND annotations.unsure = true';
     }
@@ -382,7 +331,7 @@ app.get('/api/annotations', passport.authenticate('jwt', {session: false}),
       res.json(annotations.rows);
     } catch (error) {
       console.log(error);
-      res.json(error);
+      res.status(500).json(error);
     }
   }
 );
@@ -472,23 +421,30 @@ app.post('/api/annotate', passport.authenticate('jwt', {session: false}),
   let videoId = await getVideoId(req.body.videoFilename);
   let userId = req.user.id;
   let conceptId = await getConceptId(req.body.conceptId);
-  data = [videoId,
-      userId,
-      conceptId,
-      req.body.timeinvideo,
-      req.body.x1,
-      req.body.y1,
-      req.body.x2,
-      req.body.y2,
-      req.body.videoWidth,
-      req.body.videoHeight,
-      req.body.image+'.png',
-      req.body.imagewithbox+'.png',
-      req.body.comment,
-      req.body.unsure];
-  queryText = 'INSERT INTO annotations(videoid, userid, conceptid, timeinvideo, x1, \
-               y1, x2, y2, videoWidth, videoHeight, image, imagewithbox, comment, unsure, dateannotated) \
-               VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, current_timestamp) RETURNING *';
+  data = [
+    videoId,
+    userId,
+    conceptId,
+    req.body.timeinvideo,
+    req.body.x1,
+    req.body.y1,
+    req.body.x2,
+    req.body.y2,
+    req.body.videoWidth,
+    req.body.videoHeight,
+    req.body.image+'.png',
+    req.body.imagewithbox+'.png',
+    req.body.comment,
+    req.body.unsure
+  ];
+  queryText = 'INSERT INTO annotations(videoid, userid,\
+               conceptid, timeinvideo, \
+               x1, y1, x2, y2, \
+               videoWidth, videoHeight, \
+               image, imagewithbox, \
+               comment, unsure, dateannotated) \
+               VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10,\
+               $11, $12, $13, $14, current_timestamp) RETURNING *';
   try {
     let insertRes = await psql.query(queryText,data);
     res.json({message: "Annotated", value: JSON.stringify(insertRes.rows[0])});
