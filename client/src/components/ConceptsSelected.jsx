@@ -17,7 +17,7 @@ const styles = theme => ({
     float: 'right',
     marginTop: '5px'
   },
-  conceptsSelectedElement: {
+  drawer: {
     position: 'relative',
     width: '420px',
     textAlign: 'center'
@@ -28,7 +28,7 @@ const styles = theme => ({
     // top: '-38px'
     display: 'inline-block'
   },
-  conceptList: {
+  conceptsList: {
     fontSize: '130%',
     display: 'flex' ,
     flexFlow: 'row wrap',
@@ -47,8 +47,9 @@ class ConceptsSelected extends React.Component {
     this.state = {
       isLoaded: false,
       conceptsSelected: [],
-      conceptsSelectedOpen: false,
-      searchModalOpen: false
+      drawerOpen: false,
+      searchModalOpen: false,
+      draggedItem: null
     };
   }
 
@@ -60,8 +61,7 @@ class ConceptsSelected extends React.Component {
         isLoaded: true,
         conceptsSelected: res.data
       })
-    })
-    .catch(error => {
+    }).catch(error => {
       this.setState({
         isLoaded: true,
         error: error
@@ -73,21 +73,15 @@ class ConceptsSelected extends React.Component {
     await this.getConceptsSelected();
   }
 
-  toggleConceptsSelected = () => {
+  toggleDrawer = (boolean) => {
     this.setState({
-      conceptsSelectedOpen: !this.state.conceptsSelectedOpen
+      drawerOpen: boolean
     });
   }
 
-  openSearchModel = () => {
+  toggleSearchModal = (boolean) => {
     this.setState({
-      searchModalOpen: true
-    });
-  }
-
-  closeSearchModel = () => {
-    this.setState({
-      searchModalOpen: false
+      searchModalOpen: boolean
     });
   }
 
@@ -104,13 +98,13 @@ class ConceptsSelected extends React.Component {
       }
     }
     axios.post('/api/updateConceptsSelected', body, config).then(async res => {
-      this.closeSearchModel();
+      this.toggleSearchModal(false);
       this.setState({
         isLoaded: false
       });
       await this.getConceptsSelected();
     }).catch(error => {
-      this.closeSearchModel();
+      this.toggleSearchModal(false);
       console.log(error);
       if (error.response) {
         console.log(error.response.data.detail);
@@ -121,35 +115,67 @@ class ConceptsSelected extends React.Component {
   // Closes the ConceptsSelected Drawer, opens the DialogModal
   handleConceptClick = (concept) => {
     this.setState({
-      conceptsSelectedOpen: false
+      drawerOpen: false
     });
     this.props.handleConceptClick(concept);
   }
 
+  onDragStart = (event, index) => {
+    this.setState({
+      draggedItem: this.state.conceptsSelected[index]
+    });
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/html", event.target.parentNode);
+    event.dataTransfer.setDragImage(event.target.parentNode, 20, 20);
+  }
+
+  onDragOver = index => {
+    const draggedOverItem = this.state.conceptsSelected[index];
+    // if the item is dragged over itself, ignore
+    if (this.state.draggedItem === draggedOverItem) {
+      return;
+    }
+    // filter out the currently dragged item
+    let items = this.state.conceptsSelected.filter(item =>
+      item !== this.state.draggedItem);
+    // add the dragged item after the dragged over item
+    items.splice(index, 0, this.state.draggedItem);
+    this.setState({
+      conceptsSelected: items
+    });
+  };
+
+  onDragEnd = () => {
+    this.setState({
+      draggedItem: null
+    });
+  };
+
   render() {
     const { classes } = this.props;
 
-    let conceptsSelectedElement = <div></div>;
+    let drawer = <div></div>;
     if (!this.state.isLoaded) {
-      conceptsSelectedElement = <div>Loading...</div>;
+      drawer = <div>Loading...</div>;
     } else {
-      conceptsSelectedElement = (
-        <div className={classes.conceptsSelectedElement}>
+      drawer = (
+        <div className={classes.drawer}>
           <Button
             className={classes.addButton}
             variant="contained"
             color="primary"
             aria-label="Add"
-            onClick={this.openSearchModel}
+            onClick={() => this.toggleSearchModal(true)}
           >
             <AddIcon />
           </Button>
-          <div className={classes.conceptList}>
-            {this.state.conceptsSelected.map(concept => (
+          <div className={classes.conceptsList}>
+            {this.state.conceptsSelected.map((concept, index) => (
               <li
                 key={concept.id}
                 className={classes.concept}
                 onClick={() => this.handleConceptClick(concept)}
+                onDragOver={() => this.onDragOver(index)}
               >
                 {concept.name}
                 <br />
@@ -158,6 +184,9 @@ class ConceptsSelected extends React.Component {
                   alt="Could not be downloaded"
                   height="50"
                   width="50"
+                  draggable
+                  onDragStart={event => this.onDragStart(event, index)}
+                  onDragEnd={this.onDragEnd}
                 />
               </li>
             ))}
@@ -171,22 +200,22 @@ class ConceptsSelected extends React.Component {
         <SearchModal
           inputHandler={this.selectConcept}
           open={this.state.searchModalOpen}
-          handleClose={this.closeSearchModel}
+          handleClose={() => this.toggleSearchModal(false)}
         />
         <Button
           className={classes.toggleButton}
           variant="contained"
           color="primary"
-          onClick={this.toggleConceptsSelected}
+          onClick={() => this.toggleDrawer(true)}
         >
           Toggle Concepts Selected
         </Button>
         <Drawer
           anchor="right"
-          open={this.state.conceptsSelectedOpen}
-          onClose={this.toggleConceptsSelected}
+          open={this.state.drawerOpen}
+          onClose={() => this.toggleDrawer(false)}
         >
-          {conceptsSelectedElement}
+          {drawer}
         </Drawer>
       </div>
     );
