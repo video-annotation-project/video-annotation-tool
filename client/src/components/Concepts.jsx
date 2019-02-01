@@ -24,8 +24,7 @@ class Concepts extends React.Component {
   }
 
   getConceptsSelected = async () => {
-    return axios.get(
-      '/api/conceptsSelected', {
+    return axios.get('/api/conceptsSelected', {
         headers: {'Authorization': 'Bearer ' + localStorage.getItem('token')}
       }).then(res => res.data).then(conceptsSelectedList => {
       let conceptsSelectedObj = {};
@@ -39,10 +38,8 @@ class Concepts extends React.Component {
       if (!error.response) {
         return;
       }
-      let errMsg =
-      error.response.data.detail ||
-      error.response.data.message ||
-      'Error';
+      let errMsg = error.response.data.detail ||
+        error.response.data.message || 'Error';
       console.log(errMsg);
       this.setState({
         isLoaded: true,
@@ -60,8 +57,6 @@ class Concepts extends React.Component {
   }
 
   changeConceptsSelected = async (id) => {
-    let conceptsSelected = JSON.parse(JSON.stringify(this.state.conceptsSelected));
-    conceptsSelected[id] = !conceptsSelected[id];
     const config = {
       headers: {
         'Content-Type': 'application/json',
@@ -70,9 +65,11 @@ class Concepts extends React.Component {
     }
     const body = {
       'id': id,
-      'checked': conceptsSelected[id]
     }
-    axios.post('/api/updateConceptsSelected', body, config).then(res => {
+    let conceptsSelected = JSON.parse(JSON.stringify(this.state.conceptsSelected));
+    conceptsSelected[id] = !conceptsSelected[id];
+    const httpRequest = conceptsSelected[id] ? axios.post : axios.delete;
+    httpRequest('/api/conceptsSelected', body, config).then(res => {
       alert("Changed: " + res.data.value);
       this.setState({
         conceptsSelected: conceptsSelected
@@ -83,16 +80,14 @@ class Concepts extends React.Component {
       if (!error.response) {
         return;
       }
-      let errMsg =
-      error.response.data.detail ||
-      error.response.data.message ||
-      'Error';
+      let errMsg = error.response.data.detail ||
+        error.response.data.message || 'Error';
       console.log(errMsg);
       this.setState({
         isLoaded: true,
         error: errMsg
       });
-    })
+    });
   }
 
   render() {

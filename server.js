@@ -128,7 +128,7 @@ app.get('/api/conceptsSelected', passport.authenticate('jwt', {session: false}),
                  from profile, concepts \
                  where profile.userid=$1 \
                  AND concepts.id=profile.conceptId \
-                 ORDER BY concepts.name';
+                 ORDER BY profile.conceptidx, concepts.name';
     try {
       let concepts = await psql.query(queryText, [req.user.id]);
       res.json(concepts.rows);
@@ -139,21 +139,49 @@ app.get('/api/conceptsSelected', passport.authenticate('jwt', {session: false}),
   }
 );
 
-app.post('/api/updateConceptsSelected', passport.authenticate('jwt', {session: false}),
+app.post('/api/conceptsSelected', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
-    let queryText = 'DELETE FROM profile \
-                     WHERE profile.userid=$1 AND \
-                     profile.conceptid=$2 RETURNING *';
-    if (req.body.checked) {
-      queryText = 'INSERT INTO profile(userid, conceptid) \
-                   VALUES($1, $2) RETURNING *';
-    }
+    queryText = 'INSERT INTO profile(userid, conceptid) \
+                 VALUES($1, $2) RETURNING *';
     try {
       let insert = await psql.query(queryText, [req.user.id, req.body.id]);
       res.json({value: JSON.stringify(insert.rows)});
     } catch (error) {
       res.status(400).json(error);
     }
+  }
+);
+
+app.delete('/api/conceptsSelected', passport.authenticate('jwt', {session: false}),
+  async (req, res) => {
+    let queryText = 'DELETE FROM profile \
+                     WHERE profile.userid=$1 AND \
+                     profile.conceptid=$2 RETURNING *';
+    try {
+      let insert = await psql.query(queryText, [req.user.id, req.body.id]);
+      res.json({value: JSON.stringify(insert.rows)});
+    } catch (error) {
+      res.status(400).json(error);
+    }
+  }
+);
+
+// handles updates to all conceptsSelected, which happends when they are
+// reordered
+app.patch('/api/conceptsSelected', passport.authenticate('jwt', {session: false}),
+  async (req, res) => {
+    // yo hanson whats this supposed to be lol
+    // let queryText = 'DELETE FROM profile \
+    //                  WHERE profile.userid=$1 AND \
+    //                  profile.conceptid=$2 RETURNING *';
+    // try {
+    //   let insert = await psql.query(queryText, [req.user.id, req.body.id]);
+    //   res.json({value: JSON.stringify(insert.rows)});
+    // } catch (error) {
+    //   res.status(400).json(error);
+    // }
+    console.log(req);
+    res.json({value: true});
   }
 );
 

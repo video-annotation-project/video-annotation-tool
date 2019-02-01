@@ -53,7 +53,7 @@ class ConceptsSelected extends React.Component {
     };
   }
 
-  getConceptsSelected = async () => {
+  getConceptsSelected = () => {
     axios.get('/api/conceptsSelected', {
       headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')},
     }).then(res => {
@@ -69,8 +69,8 @@ class ConceptsSelected extends React.Component {
     });
   }
 
-  componentDidMount = async () => {
-    await this.getConceptsSelected();
+  componentDidMount = () => {
+    this.getConceptsSelected();
   }
 
   toggleDrawer = (boolean) => {
@@ -89,7 +89,6 @@ class ConceptsSelected extends React.Component {
   selectConcept = (conceptId) => {
     const body = {
       'id': conceptId,
-      'checked': true
     }
     const config = {
       headers: {
@@ -97,19 +96,19 @@ class ConceptsSelected extends React.Component {
         'Authorization': 'Bearer ' + localStorage.getItem('token')
       }
     }
-    axios.post('/api/updateConceptsSelected', body, config).then(async res => {
+    axios.post('/api/conceptsSelected', body, config).then(async res => {
       this.toggleSearchModal(false);
       this.setState({
         isLoaded: false
       });
-      await this.getConceptsSelected();
+      this.getConceptsSelected();
     }).catch(error => {
       this.toggleSearchModal(false);
       console.log(error);
       if (error.response) {
         console.log(error.response.data.detail);
       }
-    })
+    });
   }
 
   // Closes the ConceptsSelected Drawer, opens the DialogModal
@@ -148,6 +147,27 @@ class ConceptsSelected extends React.Component {
   onDragEnd = () => {
     this.setState({
       draggedItem: null
+    });
+    let conceptsSelected = this.state.conceptsSelected;
+    conceptsSelected.forEach((concept, idx) => {
+      concept.conceptidx = idx;
+    });
+    const body = {
+      'conceptsSelected': conceptsSelected
+    }
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + localStorage.getItem('token')
+      }
+    }
+    axios.patch('/api/conceptsSelected', body, config).then(async res => {
+    }).catch(error => {
+      this.toggleSearchModal(false);
+      console.log(error);
+      if (error.response) {
+        console.log(error.response.data.detail);
+      }
     });
   };
 

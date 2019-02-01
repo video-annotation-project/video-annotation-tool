@@ -77,6 +77,7 @@ class Annotate extends Component {
       }
     };
     axios.get('/api/listVideos/', config).then(res => {
+      // this can be improved using a function input to setState
       this.setState({
         startedVideos: res.data[0].rows,
         unwatchedVideos: res.data[1].rows,
