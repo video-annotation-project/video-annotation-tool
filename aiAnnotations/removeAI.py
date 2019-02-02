@@ -30,6 +30,7 @@ for i in cursor.fetchall():
         s3.delete_object(Bucket=S3_BUCKET, Key=os.getenv("AWS_S3_BUCKET_ANNOTATIONS_FOLDER") + i.imagewithbox)
         s3.delete_object(Bucket=S3_BUCKET, Key=os.getenv('AWS_S3_BUCKET_VIDEOS_FOLDER') + str(i.originalid) + "_ai.mp4")
         cursor.execute("UPDATE annotations SET originalid=null WHERE id=%d;",(i.originalid,))
+        print(i)
 con.commit()
 con.close()
 
