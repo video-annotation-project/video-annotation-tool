@@ -43,6 +43,13 @@ class Profile extends Component {
       });
       return;
     }
+    if (newPassword1 === "") {
+      this.setState({
+        errorMsg: "Please enter a new password",
+        open: true
+      })
+      return;
+    }
     const config = {
       headers: {
         'Content-Type': 'application/json',
