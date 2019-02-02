@@ -222,33 +222,7 @@ app.get('/api/conceptImages/:id',
   }
 );
 
-app.put("/api/checkpoints", passport.authenticate('jwt', {session: false}),
-  async (req, res) => {
-  const { videoId, timeinvideo, finished } = req.body;
-  const userId = req.user.id;
-  const data = [timeinvideo, finished, userId, videoId];
-  queryText = 'UPDATE checkpoints \
-               SET timeinvideo=$1, timestamp=current_timestamp, finished=$2 \
-               WHERE userid=$3 AND videoid=$4';
-  try {
-    const updateRes = await psql.query(queryText, data);
-    if (updateRes.rowCount > 0) {
-      res.json({message: "updated"});
-      return;
-    }
-    // User has no checkpoint for this video
-    queryText = 'INSERT INTO checkpoints \
-                 (timeinvideo, finished, userid, videoid, timestamp) \
-                 VALUES($1, $2, $3, $4, current_timestamp)';
-    let insertRes = await psql.query(queryText, data);
-    res.json({message: "updated"});
-  } catch(error) {
-    console.log(error);
-    res.status(500).json(error);
-  }
-});
-
-app.get('/api/videos/', passport.authenticate('jwt', {session: false}),
+app.get('/api/videos', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
     let userId = req.user.id;
     queryUserStartedVideos = 'SELECT videos.id, videos.filename, \
@@ -281,6 +255,32 @@ app.get('/api/videos/', passport.authenticate('jwt', {session: false}),
     }
   }
 );
+
+app.put("/api/checkpoints", passport.authenticate('jwt', {session: false}),
+  async (req, res) => {
+  const { videoId, timeinvideo, finished } = req.body;
+  const userId = req.user.id;
+  const data = [timeinvideo, finished, userId, videoId];
+  queryText = 'UPDATE checkpoints \
+               SET timeinvideo=$1, timestamp=current_timestamp, finished=$2 \
+               WHERE userid=$3 AND videoid=$4';
+  try {
+    const updateRes = await psql.query(queryText, data);
+    if (updateRes.rowCount > 0) {
+      res.json({message: "updated"});
+      return;
+    }
+    // User has no checkpoint for this video
+    queryText = 'INSERT INTO checkpoints \
+                 (timeinvideo, finished, userid, videoid, timestamp) \
+                 VALUES($1, $2, $3, $4, current_timestamp)';
+    let insertRes = await psql.query(queryText, data);
+    res.json({message: "updated"});
+  } catch(error) {
+    console.log(error);
+    res.status(500).json(error);
+  }
+});
 
 let selectLevelQuery = (level) => {
   let queryPass = '';
@@ -487,7 +487,7 @@ app.delete('/api/annotations', passport.authenticate('jwt', {session: false}),
   }
 );
 
-app.get('/api/s3Images/:name', (req, res) => {
+app.get('/api/annotationImages/:name', (req, res) => {
   let s3 = new AWS.S3();
   let key = process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + req.params.name;
   var params = {
@@ -503,7 +503,7 @@ app.get('/api/s3Images/:name', (req, res) => {
   });
 });
 
-app.post('/api/s3Images', passport.authenticate('jwt', {session: false}), (req, res) => {
+app.post('/api/annotationImages', passport.authenticate('jwt', {session: false}), (req, res) => {
   let s3 = new AWS.S3();
   var key = process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + req.body.date;
   if (req.body.box) {

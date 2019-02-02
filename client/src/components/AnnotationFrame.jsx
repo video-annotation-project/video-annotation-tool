@@ -45,7 +45,7 @@ class AnnotationFrame extends Component {
 
   componentDidMount = async () => {
     axios.get(
-      `/api/s3Images/${this.props.annotation.imagewithbox}`
+      `/api/annotationImages/${this.props.annotation.imagewithbox}`
     ).then(res => {
       this.setState({
         image: 'data:image/png;base64, ' + this.encode(res.data.image.data),

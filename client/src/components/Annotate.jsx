@@ -76,7 +76,7 @@ class Annotate extends Component {
         'Authorization': 'Bearer ' + localStorage.getItem('token')
       }
     };
-    axios.get('/api/videos/', config).then(res => {
+    axios.get('/api/videos', config).then(res => {
       // this can be improved using a function input to setState
       this.setState({
         startedVideos: res.data[0].rows,
@@ -406,7 +406,7 @@ class Annotate extends Component {
       'date': date,
       'box': box
     };
-    return axios.post('/api/s3Images', body, config);
+    return axios.post('/api/annotationImages', body, config);
   }
 
   handleConceptClick = (concept) => {
