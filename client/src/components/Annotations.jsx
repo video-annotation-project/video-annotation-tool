@@ -106,7 +106,7 @@ class Annotations extends Component {
     const body = {
       'id': id
     }
-    axios.post('/api/delete', body, config).then(res => {
+    axios.delete('/api/annotations', body, config).then(res => {
       let annotations = JSON.parse(JSON.stringify(this.state.annotations));
       annotations = annotations.filter(annotation => annotation.id !== id);
       this.setState({

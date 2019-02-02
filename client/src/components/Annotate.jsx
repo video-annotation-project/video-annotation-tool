@@ -209,7 +209,7 @@ class Annotate extends Component {
       'finished' : finished
     }
     // update SQL database
-    axios.post('/api/updateCheckpoint', body, config).then(res => {
+    axios.patch('/api/checkpoints', body, config).then(res => {
       // update this.state.startedVideos
       let startedVideos = JSON.parse(JSON.stringify(this.state.startedVideos));
       let currentVideo = startedVideos.find(vid =>
@@ -351,7 +351,7 @@ class Annotate extends Component {
         'Authorization': 'Bearer ' + localStorage.getItem('token')
       }
     };
-    axios.post('/api/annotate', body, config).then(async res => {
+    axios.post('/api/annotations', body, config).then(async res => {
       console.log(res.data.message);
       this.handleDialogClose();
       this.createAndUploadImages(vidCord, dragBoxCord, videoElement, date, x1, y1);

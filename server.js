@@ -222,7 +222,7 @@ app.get('/api/conceptImages/:id',
   }
 );
 
-app.post("/api/updateCheckpoint", passport.authenticate('jwt', {session: false}),
+app.patch("/api/checkpoints", passport.authenticate('jwt', {session: false}),
   async (req, res) => {
   const { videoId, timeinvideo, finished } = req.body;
   const userId = req.user.id;
@@ -246,7 +246,6 @@ app.post("/api/updateCheckpoint", passport.authenticate('jwt', {session: false})
     console.log(error);
     res.status(500).json(error);
   }
-
 });
 
 app.get('/api/listVideos/', passport.authenticate('jwt', {session: false}),
@@ -445,7 +444,7 @@ async function getConceptId(value) {
   }
 }
 
-app.post('/api/annotate', passport.authenticate('jwt', {session: false}),
+app.post('/api/annotations', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
   let videoId = await getVideoId(req.body.videoFilename);
   let userId = req.user.id;
@@ -506,7 +505,7 @@ app.post('/api/uploadImage', passport.authenticate('jwt', {session: false}), (re
   });
 });
 
-app.post('/api/editAnnotation', passport.authenticate('jwt', {session: false}),
+app.patch('/api/annotations', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
     queryText = 'UPDATE annotations \
                  SET conceptid = $1, comment = $2, unsure = $3 \
@@ -538,7 +537,7 @@ app.post('/api/editAnnotation', passport.authenticate('jwt', {session: false}),
   }
 );
 
-app.post('/api/delete', passport.authenticate('jwt', {session: false}),
+app.delete('/api/annotations', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
     queryText = 'DELETE FROM annotations WHERE annotations.id=$1 RETURNING *';
     try {

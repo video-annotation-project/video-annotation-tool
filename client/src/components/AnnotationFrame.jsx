@@ -69,7 +69,7 @@ class AnnotationFrame extends Component {
     });
   };
 
-  postEditAnnotation = (comment, unsure) => {
+  editAnnotation = (comment, unsure) => {
     if (comment === "") {
       comment = this.props.annotation.comment;
     }
@@ -85,7 +85,7 @@ class AnnotationFrame extends Component {
         'Authorization': 'Bearer ' + localStorage.getItem('token')
       }
     }
-    axios.post('/api/editAnnotation', body, config).then(res => {
+    axios.patch('/api/annotations', body, config).then(res => {
       this.handleDialogClose();
       let updatedAnnotation = res.data;
       this.props.updateAnnotations(updatedAnnotation.id, updatedAnnotation.name, updatedAnnotation.comment, updatedAnnotation.unsure);
@@ -135,7 +135,7 @@ class AnnotationFrame extends Component {
           title={this.state.dialogTitle}
           message={this.state.dialogMsg}
           placeholder={this.state.dialogPlaceholder}
-          inputHandler={this.postEditAnnotation}
+          inputHandler={this.editAnnotation}
           open={this.state.dialogOpen}
           handleClose={this.state.closeHandler}
         />
