@@ -158,30 +158,31 @@ app.delete('/api/conceptsSelected', passport.authenticate('jwt', {session: false
                      WHERE profile.userid=$1 AND \
                      profile.conceptid=$2 RETURNING *';
     try {
-      let insert = await psql.query(queryText, [req.user.id, req.body.id]);
-      res.json({value: JSON.stringify(insert.rows)});
+      let del = await psql.query(queryText, [req.user.id, req.body.id]);
+      res.json({value: JSON.stringify(del.rows)});
     } catch (error) {
       res.status(400).json(error);
     }
   }
 );
 
-// handles updates to all conceptsSelected, which happends when they are
-// reordered
+// updates conceptsSelected when they are reordered
 app.patch('/api/conceptsSelected', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
-    // yo hanson whats this supposed to be lol
-    // let queryText = 'DELETE FROM profile \
-    //                  WHERE profile.userid=$1 AND \
-    //                  profile.conceptid=$2 RETURNING *';
-    // try {
-    //   let insert = await psql.query(queryText, [req.user.id, req.body.id]);
-    //   res.json({value: JSON.stringify(insert.rows)});
-    // } catch (error) {
-    //   res.status(400).json(error);
-    // }
-    console.log(req);
-    res.json({value: true});
+    const conceptsSelected = JSON.stringify(req.body.conceptsSelected);
+    const queryText = `UPDATE profile AS p \
+                       SET conceptidx=c.conceptidx \
+                       FROM json_populate_recordset(null::profile, \
+                       '${conceptsSelected}') AS c \
+                       WHERE c.userid=p.userid AND \
+                       c.conceptid=p.conceptid`;
+    try {
+      let update = await psql.query(queryText);
+      res.json({value: JSON.stringify(update.rows)});
+    } catch (error) {
+      console.log(error);
+      res.status(400).json(error);
+    }
   }
 );
 
