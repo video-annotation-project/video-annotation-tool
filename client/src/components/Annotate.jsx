@@ -9,7 +9,6 @@ import DialogModal from './DialogModal.jsx';
 import Button from '@material-ui/core/Button';
 import { withStyles } from '@material-ui/core/styles';
 
-
 const styles = theme => ({
   boxContainer: {
     postion: 'absolute',
