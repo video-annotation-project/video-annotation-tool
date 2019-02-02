@@ -248,7 +248,7 @@ app.put("/api/checkpoints", passport.authenticate('jwt', {session: false}),
   }
 });
 
-app.get('/api/listVideos/', passport.authenticate('jwt', {session: false}),
+app.get('/api/videos/', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
     let userId = req.user.id;
     queryUserStartedVideos = 'SELECT videos.id, videos.filename, \
@@ -334,22 +334,6 @@ app.get('/api/reportTreeData', passport.authenticate('jwt', {session: false}),
     res.status(400).json(error);
   }
 })
-
-app.get('/api/annotationImage/:name', (req, res) => {
-  let s3 = new AWS.S3();
-  let key = process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + req.params.name;
-  var params = {
-    Key: key,
-    Bucket: process.env.AWS_S3_BUCKET_NAME,
-  };
-  s3.getObject(params, (err, data) => {
-    if (err) {
-      res.status(500).json(err);
-      return;
-    }
-    res.json({image: data.Body});
-  });
-});
 
 // app.get('/api/videos/Y7Ek6tndnA/:name', (req, res) => {
 //   var s3 = new AWS.S3();
@@ -503,7 +487,23 @@ app.delete('/api/annotations', passport.authenticate('jwt', {session: false}),
   }
 );
 
-app.post('/api/uploadImage', passport.authenticate('jwt', {session: false}), (req, res) => {
+app.get('/api/s3Images/:name', (req, res) => {
+  let s3 = new AWS.S3();
+  let key = process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + req.params.name;
+  var params = {
+    Key: key,
+    Bucket: process.env.AWS_S3_BUCKET_NAME,
+  };
+  s3.getObject(params, (err, data) => {
+    if (err) {
+      res.status(500).json(err);
+      return;
+    }
+    res.json({image: data.Body});
+  });
+});
+
+app.post('/api/s3Images', passport.authenticate('jwt', {session: false}), (req, res) => {
   let s3 = new AWS.S3();
   var key = process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + req.body.date;
   if (req.body.box) {
