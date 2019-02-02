@@ -335,35 +335,6 @@ app.get('/api/reportTreeData', passport.authenticate('jwt', {session: false}),
   }
 })
 
-app.get('/api/annotations', passport.authenticate('jwt', {session: false}),
-  async (req, res) => {
-    let params = [];
-    //Build query string
-    let queryPass = 'SELECT annotations.id, annotations.comment,\
-                     annotations.unsure, annotations.timeinvideo, \
-                     annotations.imagewithbox, concepts.name, \
-                     false as extended \
-                     FROM annotations, concepts\
-                     WHERE annotations.conceptid=concepts.id' +
-                     req.query.queryConditions;
-    if (req.query.unsureOnly === 'true') {
-      queryPass = queryPass + ' AND annotations.unsure = true';
-    }
-    if (req.query.admin !== 'true') {
-      queryPass = queryPass + ' AND annotations.userid = $1';
-      params.push(req.user.id);
-    }
-    queryPass = queryPass + ' ORDER BY annotations.timeinvideo';
-    try {
-      const annotations = await psql.query(queryPass, params);
-      res.json(annotations.rows);
-    } catch (error) {
-      console.log(error);
-      res.status(500).json(error);
-    }
-  }
-);
-
 app.get('/api/annotationImage/:name', (req, res) => {
   let s3 = new AWS.S3();
   let key = process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + req.params.name;
@@ -422,6 +393,35 @@ app.get('/api/annotationImage/:name', (req, res) => {
 //     }
 //   });
 // });
+
+app.get('/api/annotations', passport.authenticate('jwt', {session: false}),
+  async (req, res) => {
+    let params = [];
+    //Build query string
+    let queryPass = 'SELECT annotations.id, annotations.comment,\
+                     annotations.unsure, annotations.timeinvideo, \
+                     annotations.imagewithbox, concepts.name, \
+                     false as extended \
+                     FROM annotations, concepts\
+                     WHERE annotations.conceptid=concepts.id' +
+                     req.query.queryConditions;
+    if (req.query.unsureOnly === 'true') {
+      queryPass = queryPass + ' AND annotations.unsure = true';
+    }
+    if (req.query.admin !== 'true') {
+      queryPass = queryPass + ' AND annotations.userid = $1';
+      params.push(req.user.id);
+    }
+    queryPass = queryPass + ' ORDER BY annotations.timeinvideo';
+    try {
+      const annotations = await psql.query(queryPass, params);
+      res.json(annotations.rows);
+    } catch (error) {
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
+);
 
 async function getVideoId(value) {
   queryPass = 'select id from videos where videos.filename=$1';
@@ -482,29 +482,6 @@ app.post('/api/annotations', passport.authenticate('jwt', {session: false}),
   }
 });
 
-app.post('/api/uploadImage', passport.authenticate('jwt', {session: false}), (req, res) => {
-  let s3 = new AWS.S3();
-  var key = process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + req.body.date;
-  if (req.body.box) {
-    key += '_box';
-  }
-  var params = {
-    Key: key+'.png',
-    Bucket: process.env.AWS_S3_BUCKET_NAME,
-    ContentEncoding: 'base64',
-    ContentType: 'image/png',
-    Body: Buffer(req.body.buf) //the base64 string is now the body
-  };
-  s3.putObject(params, (err, data) => {
-    if (err) {
-      console.log(err)
-      res.status(400).json(error);
-    } else {
-      res.json({message: "successfully uploaded image to S3"});
-    }
-  });
-});
-
 app.patch('/api/annotations', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
     queryText = 'UPDATE annotations \
@@ -549,6 +526,29 @@ app.delete('/api/annotations', passport.authenticate('jwt', {session: false}),
     }
   }
 );
+
+app.post('/api/uploadImage', passport.authenticate('jwt', {session: false}), (req, res) => {
+  let s3 = new AWS.S3();
+  var key = process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + req.body.date;
+  if (req.body.box) {
+    key += '_box';
+  }
+  var params = {
+    Key: key+'.png',
+    Bucket: process.env.AWS_S3_BUCKET_NAME,
+    ContentEncoding: 'base64',
+    ContentType: 'image/png',
+    Body: Buffer(req.body.buf) //the base64 string is now the body
+  };
+  s3.putObject(params, (err, data) => {
+    if (err) {
+      console.log(err)
+      res.status(400).json(error);
+    } else {
+      res.json({message: "successfully uploaded image to S3"});
+    }
+  });
+});
 
 app.post("/updateImage", passport.authenticate('jwt', {session: false}),
   async (req, res) => {
