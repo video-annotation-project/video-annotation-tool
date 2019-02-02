@@ -42,9 +42,13 @@ class AnnotationFrame extends Component {
   }
 
   componentDidMount = async () => {
-    axios.get(
-      `/api/annotationImages/${this.props.annotation.imagewithbox}`
-    ).then(res => {
+    const config = {
+      headers: {
+        'Authorization': 'Bearer ' + localStorage.getItem('token')
+      }
+    };
+    const name = this.props.annotation.imagewithbox;
+    axios.get(`/api/annotationImages/${name}`, config).then(res => {
       this.setState({
         image: 'data:image/png;base64, ' + this.encode(res.data.image.data),
         isLoaded: true
@@ -55,10 +59,8 @@ class AnnotationFrame extends Component {
       if (!error.response) {
         return;
       }
-      let errMsg =
-      error.response.data.detail ||
-      error.response.data.message ||
-      'Error';
+      let errMsg = error.response.data.detail ||
+        error.response.data.message || 'Error';
       console.log(errMsg);
       this.setState({
         isLoaded: true,

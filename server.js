@@ -138,6 +138,8 @@ app.get('/api/concepts', passport.authenticate('jwt', {session: false}),
   }
 );
 
+// in the future, this route as well as the /api/annotationImages route can
+// be circumvented by using cloudfront
 app.get('/api/conceptImages/:id',
   async (req, res) => {
     let s3 = new AWS.S3();
@@ -433,7 +435,11 @@ app.delete('/api/annotations', passport.authenticate('jwt', {session: false}),
   }
 );
 
-app.get('/api/annotationImages/:name', (req, res) => {
+// in the future, this route as well as the /api/conceptImages route can
+// be circumvented by using cloudfront
+app.get('/api/annotationImages/:name', passport.authenticate('jwt', {session: false}),
+  (req, res) => {
+
   let s3 = new AWS.S3();
   let key = process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + req.params.name;
   var params = {

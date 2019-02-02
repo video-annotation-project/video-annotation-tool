@@ -18,7 +18,6 @@ import Icon from '@material-ui/core/Icon';
 
 import AnnotationFrame from './AnnotationFrame.jsx';
 
-
 const styles = theme => ({
   icons: {
     float: 'left',
@@ -51,7 +50,6 @@ class Annotations extends Component {
         `queryConditions=${this.props.queryConditions}&`+
         `unsureOnly=${this.props.unsureOnly}&`+
         `admin=${localStorage.getItem('admin')}`, config);
-      console.log(annotations);
       this.setState({
         isLoaded: true,
         annotations: annotations.data,
@@ -62,10 +60,8 @@ class Annotations extends Component {
       if (!error.response) {
         return;
       }
-      let errMsg =
-      error.response.data.detail ||
-      error.response.data.message ||
-      'Error';
+      let errMsg = error.response.data.detail ||
+        error.response.data.message || 'Error';
       console.log(errMsg);
       this.setState({
         isLoaded: true,
@@ -118,10 +114,8 @@ class Annotations extends Component {
       if (!error.response) {
         return;
       }
-      let errMsg =
-      error.response.data.detail ||
-      error.response.data.message ||
-      'Error';
+      let errMsg = error.response.data.detail ||
+        error.response.data.message || 'Error';
       console.log(errMsg);
       this.setState({
         isLoaded: true,

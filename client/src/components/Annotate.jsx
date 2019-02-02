@@ -80,47 +80,50 @@ class Annotate extends Component {
         startedVideos: res.data[0].rows,
         unwatchedVideos: res.data[1].rows,
         watchedVideos: res.data[2].rows,
-      }, () => {
-        // get current video and put it in the state
-        this.setState({
-          currentVideo: this.getCurrentVideo(),
-          isLoaded: true,
-        }, () => {
-          var videoElement = document.getElementById("video");
-          videoElement.currentTime = this.state.currentVideo.timeinvideo;
-        });
       });
-    })
+      // get current video and put it in the state
+      this.setState(this.getCurrentVideo, () => {
+        var videoElement = document.getElementById("video");
+        videoElement.currentTime = this.state.currentVideo.timeinvideo;
+      });
+    });
   }
 
-  getCurrentVideo = () => {
-    if (this.state.startedVideos.length > 0) {
+  getCurrentVideo = (state) => {
+    if (state.startedVideos.length > 0) {
       // currentVideo is the first item in startedVideos
-      let currentVideo = this.state.startedVideos[0];
-      return currentVideo;
+      return {
+        currentVideo: state.startedVideos[0],
+        isLoaded: true,
+      }
     }
-    if (this.state.unwatchedVideos.length > 0) {
+    if (state.unwatchedVideos.length > 0) {
       // currentVideo is the first item in unwatchedVideos
-      let currentVideo = this.state.unwatchedVideos[0]
+      let currentVideo = state.unwatchedVideos[0]
       // remove from unwatched list
-      let unwatchedVideos = JSON.parse(JSON.stringify(this.state.unwatchedVideos));
+      let unwatchedVideos = JSON.parse(JSON.stringify(state.unwatchedVideos));
       unwatchedVideos = unwatchedVideos.filter(vid => vid.id !== currentVideo.id);
       // Add unwatched video to current videos
-      let startedVideos = JSON.parse(JSON.stringify(this.state.startedVideos));
+      let startedVideos = JSON.parse(JSON.stringify(state.startedVideos));
       startedVideos = startedVideos.concat(currentVideo);
-      this.setState({
+      return {
         startedVideos: startedVideos,
-        unwatchedVideos: unwatchedVideos
-      });
-      return currentVideo;
+        unwatched: unwatchedVideos,
+        currentVideo: currentVideo,
+        isLoaded: true,
+      }
     }
     // user does not have a video to be played. return default video 1
-    return {
+    const currentVideo = {
       'id': 1,
       'filename': 'DocRicketts-0569_20131213T224337Z_00-00-01-00TC_h264.mp4',
       'timeinvideo': 0,
       'finished': true
     };
+    return {
+      currentVideo: currentVideo,
+      isLoaded: true,
+    }
   }
 
   componentDidMount = async () => {
@@ -135,10 +138,8 @@ class Annotate extends Component {
       if (!error.response) {
         return;
       }
-      let errMsg =
-      error.response.data.detail ||
-      error.response.data.message ||
-      'Error';
+      let errMsg = error.response.data.detail ||
+        error.response.data.message || 'Error';
       console.log(errMsg);
       this.setState({
         isLoaded: true,
@@ -226,10 +227,8 @@ class Annotate extends Component {
       if (!error.response) {
         return;
       }
-      let errMsg =
-      error.response.data.detail ||
-      error.response.data.message ||
-      'Error';
+      let errMsg = error.response.data.detail ||
+        error.response.data.message || 'Error';
       console.log(errMsg);
       this.setState({
         isLoaded: true,
@@ -239,7 +238,7 @@ class Annotate extends Component {
   };
 
   handleDoneClick = async () => {
-    //Update video checkpoint to watched
+    // update video checkpoint to watched
     await this.updateCheckpoint(true);
 
     // remove currentVideo from startedVideos, add to watchedVideos
@@ -255,10 +254,10 @@ class Annotate extends Component {
       watchedVideos: watchedVideos
     });
 
-    //Get next video and play it
-    let currentVideo = this.getCurrentVideo();
-    this.setState({
-      currentVideo: currentVideo,
+    // get next video and play it
+    this.setState(this.getCurrentVideo, () => {
+      var videoElement = document.getElementById("video");
+      videoElement.currentTime = this.state.currentVideo.timeinvideo;
     });
   }
 
@@ -359,10 +358,8 @@ class Annotate extends Component {
       if (!error.response) {
         return;
       }
-      let errMsg =
-       error.response.data.detail ||
-       error.response.data.message ||
-       'Error';
+      let errMsg = error.response.data.detail ||
+        error.response.data.message || 'Error';
       console.log(errMsg);
       this.setState({
         isLoaded: true,
