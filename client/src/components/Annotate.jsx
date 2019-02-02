@@ -331,8 +331,8 @@ class Annotate extends Component {
     var date = Date.now().toString();
 
     const body = {
-      'conceptId': this.state.clickedConcept.name,
-      'videoFilename': this.state.currentVideo.filename,
+      'conceptId': this.state.clickedConcept.id,
+      'videoId': this.state.currentVideo.id,
       'timeinvideo': cTime,
       'x1': x1,
       'y1': y1,

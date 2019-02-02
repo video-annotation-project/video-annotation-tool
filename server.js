@@ -423,36 +423,12 @@ app.get('/api/annotations', passport.authenticate('jwt', {session: false}),
   }
 );
 
-async function getVideoId(value) {
-  queryPass = 'select id from videos where videos.filename=$1';
-  try {
-    const user = await psql.query(queryPass,[value]);
-    return user.rows[0].id;
-  } catch (error) {
-    console.log(error);
-  }
-}
-
-async function getConceptId(value) {
-  //Not yet supported
-  queryPass = 'select id from concepts where concepts.name=$1';
-  try {
-    const queryRes = await psql.query(queryPass,[value]);
-    return queryRes.rows[0].id;
-  } catch (error) {
-    console.log(error);
-  }
-}
-
 app.post('/api/annotations', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
-  let videoId = await getVideoId(req.body.videoFilename);
-  let userId = req.user.id;
-  let conceptId = await getConceptId(req.body.conceptId);
   data = [
-    videoId,
-    userId,
-    conceptId,
+    req.user.id,
+    req.body.videoId,
+    req.body.conceptid,
     req.body.timeinvideo,
     req.body.x1,
     req.body.y1,
@@ -465,7 +441,7 @@ app.post('/api/annotations', passport.authenticate('jwt', {session: false}),
     req.body.comment,
     req.body.unsure
   ];
-  queryText = 'INSERT INTO annotations(videoid, userid,\
+  queryText = 'INSERT INTO annotations(userid, videoid,\
                conceptid, timeinvideo, \
                x1, y1, x2, y2, \
                videoWidth, videoHeight, \
