@@ -110,15 +110,33 @@ app.post('/api/createUser', passport.authenticate('jwt', {session: false}),
     }
 });
 
-app.get('/api/concepts', passport.authenticate('jwt', {session: false}),
+app.get('/api/concepts/:id', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
     queryText = 'select id, name from concepts where concepts.parent=$1';
     try {
-      const concepts = await psql.query(queryText, [req.query.id]);
+      const concepts = await psql.query(queryText, [req.params.id]);
       res.json(concepts.rows);
     } catch (error) {
       res.status(400).json(error);
     }
+  }
+);
+
+// get list of concepts based off search criteria in req.query
+// currently just looks for exact concept name match.
+app.get('/api/concepts', passport.authenticate('jwt', {session: false}),
+  async (req, res) => {
+    let concepts = null
+    const queryText = "Select id, name, similarity($1,name) \
+                       from concepts \
+                       where similarity($1, name) > .01 \
+                       order by similarity desc limit 10";
+    try {
+      concepts = await psql.query(queryText, [req.query.name]);
+    } catch (error) {
+      res.status(400).json(error);
+    }
+    res.json(concepts.rows);
   }
 );
 
@@ -201,24 +219,6 @@ app.patch('/api/conceptsSelected', passport.authenticate('jwt', {session: false}
       console.log(error);
       res.status(400).json(error);
     }
-  }
-);
-
-// get list of concept ids based off search criteria
-//Currently just looks for exact concept name match.
-app.post('/api/searchConcepts', passport.authenticate('jwt', {session: false}),
-  async (req, res) => {
-    let concepts = null
-    const queryText = "Select id, name, similarity($1,name) \
-                       from concepts \
-                       where similarity($1, name) > .01 \
-                       order by similarity desc limit 10";
-    try {
-      concepts = await psql.query(queryText, [req.body.name]);
-    } catch (error) {
-      res.status(400).json(error);
-    }
-    res.json(concepts.rows);
   }
 );
 
