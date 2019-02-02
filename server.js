@@ -122,6 +122,24 @@ app.get('/api/concepts', passport.authenticate('jwt', {session: false}),
   }
 );
 
+app.get('/api/conceptImages/:id',
+  async (req, res) => {
+    let s3 = new AWS.S3();
+    queryText = 'select picture from concepts where concepts.id=$1';
+    try {
+      const response = await psql.query(queryText, [req.params.id]);
+      const picture = response.rows[0].picture;
+      const params = {
+        Bucket: process.env.AWS_S3_BUCKET_NAME,
+        Key: process.env.AWS_S3_BUCKET_CONCEPTS_FOLDER + `${picture}`
+      }
+      s3.getObject(params).createReadStream().pipe(res);
+    } catch (error) {
+      res.status(400).json(error);
+    }
+  }
+);
+
 app.get('/api/conceptsSelected', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
     queryText = 'select * \
@@ -186,7 +204,7 @@ app.patch('/api/conceptsSelected', passport.authenticate('jwt', {session: false}
   }
 );
 
-//Will get list of concepts based off search criteria to and returns a list of concept id's.
+// get list of concept ids based off search criteria
 //Currently just looks for exact concept name match.
 app.post('/api/searchConcepts', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
@@ -201,24 +219,6 @@ app.post('/api/searchConcepts', passport.authenticate('jwt', {session: false}),
       res.status(400).json(error);
     }
     res.json(concepts.rows);
-  }
-);
-
-app.get('/api/conceptImages/:id',
-  async (req, res) => {
-    let s3 = new AWS.S3();
-    queryText = 'select picture from concepts where concepts.id=$1';
-    try {
-      const response = await psql.query(queryText, [req.params.id]);
-      const picture = response.rows[0].picture;
-      const params = {
-        Bucket: process.env.AWS_S3_BUCKET_NAME,
-        Key: process.env.AWS_S3_BUCKET_CONCEPTS_FOLDER + `${picture}`
-      }
-      s3.getObject(params).createReadStream().pipe(res);
-    } catch (error) {
-      res.status(400).json(error);
-    }
   }
 );
 
@@ -281,59 +281,6 @@ app.put("/api/checkpoints", passport.authenticate('jwt', {session: false}),
     res.status(500).json(error);
   }
 });
-
-let selectLevelQuery = (level) => {
-  let queryPass = '';
-  if (level === "Video") {
-    queryPass = 'SELECT videos.filename as name,\
-                 videos.id as key,\
-                 COUNT(*) as count, \
-                 false as expanded\
-                 FROM annotations, videos \
-                 WHERE videos.id=annotations.videoid';
-  }
-  if (level === "Concept") {
-    queryPass = 'SELECT concepts.name as name,\
-                 concepts.id as key,\
-                 COUNT(*) as count,\
-                 false as expanded\
-                 FROM annotations, concepts \
-                 WHERE annotations.conceptid=concepts.id';
-  }
-  if (level === "User") {
-    queryPass = 'SELECT users.username as name,\
-                 users.id as key,\
-                 COUNT(*) as count, \
-                 false as expanded \
-                 FROM annotations, users \
-                 WHERE annotations.userid=users.id';
-  }
-  return queryPass;
-}
-
-app.get('/api/reportTreeData', passport.authenticate('jwt', {session: false}),
-  async (req, res) => {
-  let params = [];
-  let queryPass = selectLevelQuery(req.query.levelName);
-  if (req.query.queryConditions) {
-    queryPass = queryPass + req.query.queryConditions;
-  }
-  if (req.query.unsureOnly === 'true') {
-    queryPass = queryPass + ' AND annotations.unsure = true';
-  }
-  if (req.query.admin !== 'true') {
-    queryPass = queryPass + ' AND annotations.userid = $1';
-    params.push(req.user.id);
-  }
-  queryPass = queryPass + ' GROUP BY (name, key) ORDER BY count DESC'
-  try {
-    const data = await psql.query(queryPass, params);
-    res.json(data.rows);
-  } catch(error) {
-    console.log(error);
-    res.status(400).json(error);
-  }
-})
 
 // app.get('/api/videos/Y7Ek6tndnA/:name', (req, res) => {
 //   var s3 = new AWS.S3();
@@ -503,7 +450,9 @@ app.get('/api/annotationImages/:name', (req, res) => {
   });
 });
 
-app.post('/api/annotationImages', passport.authenticate('jwt', {session: false}), (req, res) => {
+app.post('/api/annotationImages', passport.authenticate('jwt', {session: false}),
+  (req, res) => {
+
   let s3 = new AWS.S3();
   var key = process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + req.body.date;
   if (req.body.box) {
@@ -525,6 +474,59 @@ app.post('/api/annotationImages', passport.authenticate('jwt', {session: false})
     }
   });
 });
+
+let selectLevelQuery = (level) => {
+  let queryPass = '';
+  if (level === "Video") {
+    queryPass = 'SELECT videos.filename as name,\
+                 videos.id as key,\
+                 COUNT(*) as count, \
+                 false as expanded\
+                 FROM annotations, videos \
+                 WHERE videos.id=annotations.videoid';
+  }
+  if (level === "Concept") {
+    queryPass = 'SELECT concepts.name as name,\
+                 concepts.id as key,\
+                 COUNT(*) as count,\
+                 false as expanded\
+                 FROM annotations, concepts \
+                 WHERE annotations.conceptid=concepts.id';
+  }
+  if (level === "User") {
+    queryPass = 'SELECT users.username as name,\
+                 users.id as key,\
+                 COUNT(*) as count, \
+                 false as expanded \
+                 FROM annotations, users \
+                 WHERE annotations.userid=users.id';
+  }
+  return queryPass;
+}
+
+app.get('/api/reportTreeData', passport.authenticate('jwt', {session: false}),
+  async (req, res) => {
+  let params = [];
+  let queryPass = selectLevelQuery(req.query.levelName);
+  if (req.query.queryConditions) {
+    queryPass = queryPass + req.query.queryConditions;
+  }
+  if (req.query.unsureOnly === 'true') {
+    queryPass = queryPass + ' AND annotations.unsure = true';
+  }
+  if (req.query.admin !== 'true') {
+    queryPass = queryPass + ' AND annotations.userid = $1';
+    params.push(req.user.id);
+  }
+  queryPass = queryPass + ' GROUP BY (name, key) ORDER BY count DESC'
+  try {
+    const data = await psql.query(queryPass, params);
+    res.json(data.rows);
+  } catch(error) {
+    console.log(error);
+    res.status(400).json(error);
+  }
+})
 
 // Express only serves static assets in production
 if (process.env.NODE_ENV === 'production') {
