@@ -18,7 +18,6 @@ import Icon from '@material-ui/core/Icon';
 
 import AnnotationFrame from './AnnotationFrame.jsx';
 
-
 const styles = theme => ({
   icons: {
     float: 'left',
@@ -51,7 +50,6 @@ class Annotations extends Component {
         `queryConditions=${this.props.queryConditions}&`+
         `unsureOnly=${this.props.unsureOnly}&`+
         `admin=${localStorage.getItem('admin')}`, config);
-      console.log(annotations);
       this.setState({
         isLoaded: true,
         annotations: annotations.data,
