@@ -29,9 +29,7 @@ class AnnotationFrame extends Component {
       error: null,
       width: null,
       height: null,
-      dialogTitle: null,
       dialogMsg: null,
-      dialogPlaceholder: null,
       dialogOpen: false,
       clickedConcept: null,
       closeHandler: null,
@@ -102,8 +100,6 @@ class AnnotationFrame extends Component {
     this.setState({
       dialogOpen: false,
       dialogMsg: null,
-      dialogPlaceholder: null,
-      dialogTitle: "", //If set to null, raises a warning to the console
       clickedConcept: null,
     });
   }
@@ -113,8 +109,6 @@ class AnnotationFrame extends Component {
       dialogMsg:  "Switch " + this.props.annotation.name +
                    " to " + concept.name + "?",
       dialogOpen: true,
-      dialogTitle: "Confirm Annotation Edit",
-      dialogPlaceholder: "Comments",
       clickedConcept: concept,
       closeHandler: this.handleDialogClose
     })
@@ -132,20 +126,19 @@ class AnnotationFrame extends Component {
     return (
       <React.Fragment>
         <DialogModal
-          title={this.state.dialogTitle}
+          title={"Confirm Annotation Edit"}
           message={this.state.dialogMsg}
-          placeholder={this.state.dialogPlaceholder}
+          placeholder={"Comments"}
           inputHandler={this.editAnnotation}
           open={this.state.dialogOpen}
           handleClose={this.state.closeHandler}
         />
-        <ListItem className={classes.item}>
-          <div id='test'></div>
-          <img className={classes.img} id='imageId' src={image} alt='error' />
-        </ListItem>
         <ConceptsSelected
           handleConceptClick={this.handleConceptClick}
         />
+        <ListItem className={classes.item}>
+          <img className={classes.img} id='imageId' src={image} alt='error' />
+        </ListItem>
       </React.Fragment>
     );
   }

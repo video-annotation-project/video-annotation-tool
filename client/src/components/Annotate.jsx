@@ -56,8 +56,6 @@ class Annotate extends Component {
     this.state = {
       currentVideo: null,
       dialogMsg: null,
-      dialogTitle: null,
-      dialogPlaceholder: null,
       dialogOpen: false,
       clickedConcept: null,
       closeHandler: null,
@@ -418,8 +416,6 @@ class Annotate extends Component {
         " at time " + Math.floor(videoElement.currentTime/60) + ' minutes '
         + videoElement.currentTime%60 + " seconds",
       dialogOpen: true,
-      dialogTitle: "Confirm Annotation",
-      dialogPlaceholder: "Comments",
       clickedConcept: concept,
       closeHandler: this.handleDialogClose
     })
@@ -429,8 +425,6 @@ class Annotate extends Component {
     this.setState({
       dialogOpen: false,
       dialogMsg: null,
-      dialogPlaceholder: null,
-      dialogTitle: "", //If set to null, raises a warning to the console
       clickedConcept: null,
     });
   }
@@ -523,9 +517,9 @@ class Annotate extends Component {
         </div>
         {this.state.dialogOpen &&
           <DialogModal
-            title={this.state.dialogTitle}
+            title={"Confirm Annotation"}
             message={this.state.dialogMsg}
-            placeholder={this.state.dialogPlaceholder}
+            placeholder={"Comments"}
             inputHandler={this.postAnnotation}
             open={true /* The DialogModal 'openness' is controlled through
               boolean logic rather than by passing in a variable as an

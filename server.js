@@ -161,6 +161,7 @@ app.delete('/api/conceptsSelected', passport.authenticate('jwt', {session: false
       let del = await psql.query(queryText, [req.user.id, req.body.id]);
       res.json({value: JSON.stringify(del.rows)});
     } catch (error) {
+      console.log(error);
       res.status(400).json(error);
     }
   }
@@ -412,7 +413,7 @@ app.post('/api/annotations', passport.authenticate('jwt', {session: false}),
   data = [
     req.user.id,
     req.body.videoId,
-    req.body.conceptid,
+    req.body.conceptId,
     req.body.timeinvideo,
     req.body.x1,
     req.body.y1,

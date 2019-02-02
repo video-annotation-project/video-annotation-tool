@@ -95,18 +95,18 @@ class Annotations extends Component {
     });
   }
 
-  handleDelete = async (event, id) => {
+  handleDelete = (event, id) => {
     event.stopPropagation();
     const config = {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + localStorage.getItem('token')
+      },
+      data: {
+        'id': id
       }
     };
-    const body = {
-      'id': id
-    }
-    axios.delete('/api/annotations', body, config).then(res => {
+    axios.delete('/api/annotations', config).then(res => {
       let annotations = JSON.parse(JSON.stringify(this.state.annotations));
       annotations = annotations.filter(annotation => annotation.id !== id);
       this.setState({

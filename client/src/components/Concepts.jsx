@@ -58,21 +58,22 @@ class Concepts extends React.Component {
 
   changeConceptsSelected = async (id) => {
     const config = {
+      url: '/api/conceptsSelected',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + localStorage.getItem('token')
+      },
+      data: {
+        'id': id
       }
     }
-    const body = {
-      'id': id,
-    }
-    let conceptsSelected = JSON.parse(JSON.stringify(this.state.conceptsSelected));
+    let conceptsSelected = this.state.conceptsSelected;
     conceptsSelected[id] = !conceptsSelected[id];
-    const httpRequest = conceptsSelected[id] ? axios.post : axios.delete;
-    httpRequest('/api/conceptsSelected', body, config).then(res => {
+    config.method = conceptsSelected[id] ? 'post':'delete';
+    axios.request(config).then(res => {
       alert("Changed: " + res.data.value);
       this.setState({
-        conceptsSelected: conceptsSelected
+        conceptsSelected: JSON.parse(JSON.stringify(conceptsSelected))
       })
     }).catch(error => {
       console.log(error);
