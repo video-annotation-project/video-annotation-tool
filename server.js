@@ -526,26 +526,6 @@ app.post('/api/uploadImage', passport.authenticate('jwt', {session: false}), (re
   });
 });
 
-app.post("/updateImage", passport.authenticate('jwt', {session: false}),
-  async (req, res) => {
-  //id | videoid | userid | conceptid | timeinvideo | topRightx | topRighty | botLeftx | botLefty | dateannotated
-  //get videoId
-  let queryText = 'UPDATE annotations SET image=$1 WHERE id=$2 RETURNING *';
-  let name = req.body.id;
-  if (req.body.box) {
-    queryText = 'UPDATE annotations SET imagewithbox=$1 WHERE id=$2 RETURNING *';
-    name = name + '_box';
-  }
-  try {
-    let updateRes = await psql.query(queryText, [name+'.png', req.body.id]);
-    console.log(updateRes.rows);
-    res.json({message: "Updated", value: JSON.stringify(updateRes.rows[0])});
-  } catch(error) {
-    console.log(error)
-    res.json({message: "error: "+error})
-  }
-});
-
 // Express only serves static assets in production
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, 'client', 'build')));
