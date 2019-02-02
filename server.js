@@ -73,7 +73,6 @@ app.post("/api/login", async function(req, res) {
   }
 });
 
-//Code for profile modification
 app.post('/api/changePassword', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
   const {password, newPassword1, newPassword2} = req.body;
@@ -95,7 +94,6 @@ app.post('/api/changePassword', passport.authenticate('jwt', {session: false}),
   }
 })
 
-//Code for create users
 app.post('/api/createUser', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
     const queryText = "INSERT INTO users(username, password, admin) VALUES($1, $2, $3) RETURNING *";
@@ -122,7 +120,7 @@ app.get('/api/concepts/:id', passport.authenticate('jwt', {session: false}),
   }
 );
 
-// get list of concepts based off search criteria in req.query
+// returns list of concepts based off search criteria in req.query
 // currently just looks for exact concept name match.
 app.get('/api/concepts', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
@@ -133,10 +131,10 @@ app.get('/api/concepts', passport.authenticate('jwt', {session: false}),
                        order by similarity desc limit 10";
     try {
       concepts = await psql.query(queryText, [req.query.name]);
+      res.json(concepts.rows);
     } catch (error) {
       res.status(400).json(error);
     }
-    res.json(concepts.rows);
   }
 );
 
