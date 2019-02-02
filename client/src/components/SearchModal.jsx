@@ -62,17 +62,14 @@ class SearchModal extends Component {
 
   //Queries database with term, expects a list of concepts.
   //Should open a dialogue for selecting from the list (currently just selects 1st result)
-  searchConcepts = (concept) => {
+  searchConcepts = (name) => {
     const config = {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + localStorage.getItem('token')
       }
     }
-    const body = {
-      'name': concept
-    }
-    axios.post('/api/searchConcepts', body, config).then(res => {
+    axios.get(`/api/concepts?name=${name}`, config).then(res => {
       this.setState({
         concepts: res.data
       })

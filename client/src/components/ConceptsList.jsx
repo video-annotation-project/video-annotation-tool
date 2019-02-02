@@ -32,7 +32,7 @@ class ConceptsList extends React.Component {
   }
 
   getChildrenConcepts = async (id) => {
-    return axios.get(`/api/concepts?id=${id}`, {
+    return axios.get(`/api/concepts/${id}`, {
       headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')},
     }).then(res => res.data)
       .catch(error => {

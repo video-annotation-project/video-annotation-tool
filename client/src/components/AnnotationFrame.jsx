@@ -29,9 +29,7 @@ class AnnotationFrame extends Component {
       error: null,
       width: null,
       height: null,
-      dialogTitle: null,
       dialogMsg: null,
-      dialogPlaceholder: null,
       dialogOpen: false,
       clickedConcept: null,
       closeHandler: null,
@@ -44,9 +42,13 @@ class AnnotationFrame extends Component {
   }
 
   componentDidMount = async () => {
-    axios.get(
-      `/api/annotationImage/${this.props.annotation.imagewithbox}`
-    ).then(res => {
+    const config = {
+      headers: {
+        'Authorization': 'Bearer ' + localStorage.getItem('token')
+      }
+    };
+    const name = this.props.annotation.imagewithbox;
+    axios.get(`/api/annotationImages/${name}`, config).then(res => {
       this.setState({
         image: 'data:image/png;base64, ' + this.encode(res.data.image.data),
         isLoaded: true
@@ -57,7 +59,8 @@ class AnnotationFrame extends Component {
       if (!error.response) {
         return;
       }
-      let errMsg = error.response.data.detail || error.response.data.message;
+      let errMsg = error.response.data.detail ||
+        error.response.data.message || 'Error';
       console.log(errMsg);
       this.setState({
         isLoaded: true,
@@ -66,7 +69,7 @@ class AnnotationFrame extends Component {
     });
   };
 
-  postEditAnnotation = (comment, unsure) => {
+  editAnnotation = (comment, unsure) => {
     if (comment === "") {
       comment = this.props.annotation.comment;
     }
@@ -82,7 +85,7 @@ class AnnotationFrame extends Component {
         'Authorization': 'Bearer ' + localStorage.getItem('token')
       }
     }
-    axios.post('/api/editAnnotation', body, config).then(res => {
+    axios.patch('/api/annotations', body, config).then(res => {
       this.handleDialogClose();
       let updatedAnnotation = res.data;
       this.props.updateAnnotations(updatedAnnotation.id, updatedAnnotation.name, updatedAnnotation.comment, updatedAnnotation.unsure);
@@ -99,8 +102,6 @@ class AnnotationFrame extends Component {
     this.setState({
       dialogOpen: false,
       dialogMsg: null,
-      dialogPlaceholder: null,
-      dialogTitle: "", //If set to null, raises a warning to the console
       clickedConcept: null,
     });
   }
@@ -110,8 +111,6 @@ class AnnotationFrame extends Component {
       dialogMsg:  "Switch " + this.props.annotation.name +
                    " to " + concept.name + "?",
       dialogOpen: true,
-      dialogTitle: "Confirm Annotation Edit",
-      dialogPlaceholder: "Comments",
       clickedConcept: concept,
       closeHandler: this.handleDialogClose
     })
@@ -129,20 +128,19 @@ class AnnotationFrame extends Component {
     return (
       <React.Fragment>
         <DialogModal
-          title={this.state.dialogTitle}
+          title={"Confirm Annotation Edit"}
           message={this.state.dialogMsg}
-          placeholder={this.state.dialogPlaceholder}
-          inputHandler={this.postEditAnnotation}
+          placeholder={"Comments"}
+          inputHandler={this.editAnnotation}
           open={this.state.dialogOpen}
           handleClose={this.state.closeHandler}
         />
-        <ListItem className={classes.item}>
-          <div id='test'></div>
-          <img className={classes.img} id='imageId' src={image} alt='error' />
-        </ListItem>
         <ConceptsSelected
           handleConceptClick={this.handleConceptClick}
         />
+        <ListItem className={classes.item}>
+          <img className={classes.img} id='imageId' src={image} alt='error' />
+        </ListItem>
       </React.Fragment>
     );
   }

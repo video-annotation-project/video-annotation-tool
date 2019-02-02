@@ -24,8 +24,7 @@ class Concepts extends React.Component {
   }
 
   getConceptsSelected = async () => {
-    return axios.get(
-      '/api/conceptsSelected', {
+    return axios.get('/api/conceptsSelected', {
         headers: {'Authorization': 'Bearer ' + localStorage.getItem('token')}
       }).then(res => res.data).then(conceptsSelectedList => {
       let conceptsSelectedObj = {};
@@ -34,9 +33,17 @@ class Concepts extends React.Component {
       })
       return conceptsSelectedObj;
     }).catch(error => {
+      console.log(error);
+      console.log(JSON.parse(JSON.stringify(error)));
+      if (!error.response) {
+        return;
+      }
+      let errMsg = error.response.data.detail ||
+        error.response.data.message || 'Error';
+      console.log(errMsg);
       this.setState({
-        isloaded: true,
-        error: error
+        isLoaded: true,
+        error: errMsg
       });
     });
   };
@@ -50,31 +57,38 @@ class Concepts extends React.Component {
   }
 
   changeConceptsSelected = async (id) => {
-    let conceptsSelected = JSON.parse(JSON.stringify(this.state.conceptsSelected));
-    conceptsSelected[id] = !conceptsSelected[id];
     const config = {
+      url: '/api/conceptsSelected',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + localStorage.getItem('token')
+      },
+      data: {
+        'id': id
       }
     }
-    const body = {
-      'id': id,
-      'checked': conceptsSelected[id]
-    }
-    axios.post('/api/updateConceptsSelected', body, config).then(res => {
+    let conceptsSelected = this.state.conceptsSelected;
+    conceptsSelected[id] = !conceptsSelected[id];
+    config.method = conceptsSelected[id] ? 'post':'delete';
+    axios.request(config).then(res => {
       alert("Changed: " + res.data.value);
       this.setState({
-        conceptsSelected: conceptsSelected
+        conceptsSelected: JSON.parse(JSON.stringify(conceptsSelected))
       })
     }).catch(error => {
       console.log(error);
-      if (error.response) {
-        this.setState({
-          error: error.response.data.detail
-        })
+      console.log(JSON.parse(JSON.stringify(error)));
+      if (!error.response) {
+        return;
       }
-    })
+      let errMsg = error.response.data.detail ||
+        error.response.data.message || 'Error';
+      console.log(errMsg);
+      this.setState({
+        isLoaded: true,
+        error: errMsg
+      });
+    });
   }
 
   render() {
