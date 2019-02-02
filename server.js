@@ -222,7 +222,7 @@ app.get('/api/conceptImages/:id',
   }
 );
 
-app.patch("/api/checkpoints", passport.authenticate('jwt', {session: false}),
+app.put("/api/checkpoints", passport.authenticate('jwt', {session: false}),
   async (req, res) => {
   const { videoId, timeinvideo, finished } = req.body;
   const userId = req.user.id;

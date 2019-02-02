@@ -209,7 +209,7 @@ class Annotate extends Component {
       'finished' : finished
     }
     // update SQL database
-    axios.patch('/api/checkpoints', body, config).then(res => {
+    axios.put('/api/checkpoints', body, config).then(res => {
       // update this.state.startedVideos
       let startedVideos = JSON.parse(JSON.stringify(this.state.startedVideos));
       let currentVideo = startedVideos.find(vid =>
