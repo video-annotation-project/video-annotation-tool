@@ -40,42 +40,44 @@ model_path = config['model_weights']
 
 bad_users = json.loads(os.getenv("BAD_USERS"))
 
-folders = []
-folders.append(img_folder)
-for dir in folders:
-    if os.path.exists(dir):
-        shutil.rmtree(dir)
-    os.makedirs(dir)
+if False:
+    folders = []
+    folders.append(img_folder)
+    for dir in folders:
+        if os.path.exists(dir):
+            shutil.rmtree(dir)
+        os.makedirs(dir)
 
-'''
-Initializes the classmap of concept names to training id's.
-(these id's don't represent the conceptid's from our database)
-'''
-start = time.time()
-print("Initializing Classmap.")
+    '''
+    Initializes the classmap of concept names to training id's.
+    (these id's don't represent the conceptid's from our database)
+    '''
+    start = time.time()
+    print("Initializing Classmap.")
 
-classmap = []
-for concept in concepts:
-    name = queryDB("select name from concepts where id=" + str(concept)).iloc[0]["name"]
-    classmap.append([name,concepts.index(concept)])
-classmap = pd.DataFrame(classmap)
-classmap.to_csv(class_map_file,index=False, header=False)
+    classmap = []
+    for concept in concepts:
+        name = queryDB("select name from concepts where id=" + str(concept)).iloc[0]["name"]
+        classmap.append([name,concepts.index(concept)])
+    classmap = pd.DataFrame(classmap)
+    classmap.to_csv(class_map_file,index=False, header=False)
+    classmap = classmap.to_dict()[0]
 
-end = time.time()
-print("Done Initializing Classmap: " + str((end - start)/60) + " minutes")
+    end = time.time()
+    print("Done Initializing Classmap: " + str((end - start)/60) + " minutes")
 
 
-'''
-Downloads the annotation data and saves it into training and validation csv's.
-Also downloads corresponding images.
-'''
-start = time.time()
-print("Starting Download.")
+    '''
+    Downloads the annotation data and saves it into training and validation csv's.
+    Also downloads corresponding images.
+    '''
+    start = time.time()
+    print("Starting Download.")
 
-download_annotations(min_examples,concepts, bad_users, img_folder, train_annot_file, valid_annot_file)
+    download_annotations(min_examples, concepts, classmap, bad_users, img_folder, train_annot_file, valid_annot_file)
 
-end = time.time()
-print("Done Downloading Annotations: " + str((end - start)/60) + " minutes")
+    end = time.time()
+    print("Done Downloading Annotations: " + str((end - start)/60) + " minutes")
 
 
 '''
@@ -84,9 +86,9 @@ Trains the model!!!!! WOOOT WOOOT!
 start = time.time()
 print("Starting Training.")
 
-model = models.backbone('resnet50').retinanet(num_classes=80)
+model = models.backbone('resnet50').retinanet(num_classes=len(concepts))
 
-model.load_weights(model_path)
+#model.load_weights(model_path, skip_mismatch=True)
 
 model.compile(
     loss={
@@ -116,8 +118,9 @@ test_generator = CSVGenerator(
     valid_annot_file,
     class_map_file,
 )
-model.fit_generator(generator, validation_data=test_generator)
+model.fit_generator(train_generator, epochs=10, validation_data=test_generator)
 
 end = time.time()
 print("Done Training Model: " + str((end - start)/60) + " minutes")
+
 

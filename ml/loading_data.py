@@ -42,13 +42,13 @@ def queryDB(query):
 # Function to download annotation data and format it for training
 #   min_examples: minimum number of annotation examples for each concept
 #   concepts: list of concepts that will be used
+#   concept_map: a dict mapping index of concept to concept name
 #   bad_users: users whose annotations will be ignored
 #   img_folder: name of the folder to hold the images
 #   train_annot_file: name of training annotation csv
 #   valid_annot_file: name of validation annotations csv
 #   split: fraction of annotation images that willbe used for training (rest used in validation)
-def download_annotations(min_examples, concepts, bad_users, img_folder, train_annot_file, valid_annot_file, split=.8)
-#def download_annotations(min_examples, concepts, bad_users, split=.8):
+def download_annotations(min_examples, concepts, concept_map, bad_users, img_folder, train_annot_file, valid_annot_file, split=.8):
     annotations = queryDB("select * from annotations as temp where conceptid in " + 
                            str(tuple(concepts)) + 
                            "and exists (select id, userid from annotations WHERE id=temp.originalid and userid not in " + 
@@ -97,25 +97,30 @@ def download_annotations(min_examples, concepts, bad_users, img_folder, train_an
             obj = client.get_object(Bucket=S3_BUCKET, Key= SRC_IMG_FOLDER +first['image'])
             img = Image.open(obj['Body'])
             img.save(img_location)
-            
+            x1 = min(max(int(row['x1']),0), int(row['videowidth']))
+            y1 = min(max(int(row['y1']),0), int(row['videoheight']))
+            x2 = min(max(int(row['x2']),0), int(row['videowidth']))
+            y2 = min(max(int(row['y2']),0), int(row['videoheight']))
+
+
             for index, row in group.iterrows():
                 concept_index = concepts.index(row['conceptid'])
                 if count < len(selected) * split:
                     df_train_annot = df_train_annot.append([[
                         img_location,
-                        int(row['x1']), 
-                        int(row['y1']), 
-                        int(row['x2']), 
-                        int(row['y2']),
-                        concept_index]])
+                        x1,
+                        y1,
+                        x2,
+                        y2,
+                        concept_map[concept_index]]])
                 else:
                     df_valid_annot = df_valid_annot.append([[
                         img_location,
-                        int(row['x1']), 
-                        int(row['y1']), 
-                        int(row['x2']), 
-                        int(row['y2']),
-                        concept_index]])
+                        x1,
+                        y1,
+                        x2,
+                        y2,
+                        concept_map[concept_index]]])
             count += 1
 
         except:
