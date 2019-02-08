@@ -1,5 +1,6 @@
 # Loads data, updates anchor boxes, and trains.
 from loading_data import download_annotations
+from loading_data import queryDB
 import json
 import os
 from dotenv import load_dotenv
@@ -7,15 +8,19 @@ import argparse
 import shutil
 import subprocess
 import time
+from keras_retinanet import models
+from keras_retinanet import losses
+from keras_retinanet.preprocessing.csv_generator import CSVGenerator
+from keras_retinanet.utils.transform import random_transform_generator
+import keras 
+import pandas as pd
 
-start = time.time()
 argparser = argparse.ArgumentParser()
 argparser.add_argument(
     '-c',
     '--conf',
     default='config.json',
     help='path to configuration file')
-
 
 args = argparser.parse_args()
 config_path = args.conf
@@ -24,61 +29,77 @@ load_dotenv(dotenv_path="../.env")
 with open(config_path) as config_buffer:    
     config = json.loads(config_buffer.read())
 
-concepts = list(map(int, config['model']['labels']))
-min_examples = config['data']['min_examples']
-num_anchors = config['data']['num_anchors']
+concepts = config['conceptids']
+train_annot_file = config['train_annot_file']
+valid_annot_file = config['valid_annot_file']
+class_map_file = config['class_map']
+min_examples = config['min_examples']
+model_path = config['model_weights']
 bad_users = json.loads(os.getenv("BAD_USERS"))
 
-
 folders = []
-folders.append(config['train']["train_image_folder"])
-folders.append(config['train']["train_annot_folder"])
-folders.append(config['valid']["valid_annot_folder"])
-folders.append(config['valid']["valid_image_folder"])
-
+folders.append(config['train_image_folder'])
+folders.append(config['valid_image_folder'])
+folders.append()
 for dir in folders:
     if os.path.exists(dir):
         shutil.rmtree(dir)
     os.makedirs(dir)
 
+print("Initializing Classmap.")
+start = time.time()
+classmap = []
+
+for concept in concepts:
+    name = queryDB("select name from concepts where id=" + str(concept)).iloc[0]["name"]
+    classmap.append([name,concepts.index(concept)])
+
+classmap = pd.DataFrame(classmap)
+classmap.to_csv(class_map_file,index=False, header=False)
+
 end = time.time()
-print("Done Initializing: " + str((end - start)/60) + " minutes")
+print("Done Initializing Classmap: " + str((end - start)/60) + " minutes")
+
 
 print("Starting Download.")
 start = time.time()
 
-download_annotations(min_examples,concepts, bad_users)
+#download_annotations(min_examples,concepts, bad_users, config['image_folder'], annotation_file)
 
 end = time.time()
 print("Done Downloading Annotations: " + str((end - start)/60) + " minutes")
 
-print("Getting Anchors.")
-start = time.time()
+model = models.backbone('resnet50').retinanet(num_classes=80)
 
-p = subprocess.Popen(("python3 gen_anchors.py -c " + config_path + " -a " + str(num_anchors)).split(),
-                     stdout=subprocess.PIPE)
-preprocessed, _ = p.communicate()
+model.load_weights(model_path)
 
-anchors = json.loads(preprocessed.decode('UTF-8'))
+model.compile(
+    loss={
+        'regression'    : losses.smooth_l1(),
+        'classification': losses.focal()
+    },
+    optimizer=keras.optimizers.adam(lr=1e-5, clipnorm=0.001)
+)
 
-config['model']['anchors'] = anchors
+transform_generator = random_transform_generator(
+    min_rotation=-0.1,
+    max_rotation=0.1,
+    min_translation=(-0.1, -0.1),
+    max_translation=(0.1, 0.1),
+    min_shear=-0.1,
+    max_shear=0.1,
+    min_scaling=(0.9, 0.9),
+    max_scaling=(1.1, 1.1),
+    flip_x_chance=0.5,
+    flip_y_chance=0.5,
+)
 
-with open(config_path, 'w') as file:
-    json.dump(config, file, sort_keys=True, indent=4)
+'''
+generator = CSVGenerator(
+    annotation_file,
+    class_map_file,
+    transform_generator=transform_generator,
+)
 
-end = time.time()
-print("Done Getting Anchors: " + str((end - start)/60) + " minutes")
-
-print("Starting Training.")
-start = time.time()
-
-p = subprocess.Popen(("python3 train.py -c " + config_path).split(),
-                     stdout=subprocess.PIPE)
-
-p.wait()
-preprocessed, _ = p.communicate()
-print("Training Results: ")
-print(preprocessed.decode('UTF-8'))
-
-end = time.time()
-print("Done Training: " + str((end - start)/60) + " minutes")
+model.fit_generator(generator)
+'''

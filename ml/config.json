@@ -1,48 +1,14 @@
 {
-    "data": {
-        "min_examples": 20,
-        "num_anchors": 5
-    },
-    "model": {
-        "anchors": [
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.32,
-            0.71,
-            0.54,
-            0.82,
-            0.98,
-            1.7
-        ],
-        "backend": "Full Yolo",
-        "input_size": 416,
-        "labels": [
-            "383",
-            "2136"
-        ],
-        "max_box_per_image": 10
-    },
-    "train": {
-        "batch_size": 16,
-        "class_scale": 1.0,
-        "coord_scale": 1.0,
-        "debug": true,
-        "learning_rate": 0.0001,
-        "nb_epochs": 1,
-        "no_object_scale": 1.0,
-        "object_scale": 5.0,
-        "pretrained_weights": "",
-        "saved_weights_name": "new_trained_full_yolo_test.h5",
-        "train_annot_folder": "./train_annot_folder/",
-        "train_image_folder": "./train_image_folder/",
-        "train_times": 8,
-        "warmup_epochs": 1
-    },
-    "valid": {
-        "valid_annot_folder": "./valid_annot_folder/",
-        "valid_image_folder": "./valid_image_folder/",
-        "valid_times": 1
-    }
+    "conceptids" : [
+        383,
+        2136
+    ],
+    "min_examples" : 5,
+    "train_annot_file" : "train_annot_file.csv",
+    "valid_annot_file": "valid_annot_file.csv",
+    "train_image_folder" : "./train_image_folder/",
+    "valid_image_folder": "./valid_image_folder/",
+    "model_weights" : "resnet50_coco_best_v2.1.0.h5",
+    "class_map" : "classmap.csv",
+    "annotations" : "annotations.csv"
 }
