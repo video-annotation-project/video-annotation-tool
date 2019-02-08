@@ -43,8 +43,12 @@ def queryDB(query):
 #   min_examples: minimum number of annotation examples for each concept
 #   concepts: list of concepts that will be used
 #   bad_users: users whose annotations will be ignored
+#   img_folder: name of the folder to hold the images
+#   train_annot_file: name of training annotation csv
+#   valid_annot_file: name of validation annotations csv
 #   split: fraction of annotation images that willbe used for training (rest used in validation)
-def download_annotations(min_examples, concepts, bad_users, split=.8):
+def download_annotations(min_examples, concepts, bad_users, img_folder, train_annot_file, valid_annot_file, split=.8)
+#def download_annotations(min_examples, concepts, bad_users, split=.8):
     annotations = queryDB("select * from annotations as temp where conceptid in " + 
                            str(tuple(concepts)) + 
                            "and exists (select id, userid from annotations WHERE id=temp.originalid and userid not in " + 
@@ -53,7 +57,7 @@ def download_annotations(min_examples, concepts, bad_users, split=.8):
     groups = annotations.groupby(['videoid','timeinvideo'], sort=False)
     groups = [df for _, df in groups]
     random.shuffle(groups)
-    selected = []
+    selected = [] # selected images to ensure that we reach the minimum
     concept_count = {}
     for concept in concepts:
         concept_count[concept] = 0
@@ -79,31 +83,44 @@ def download_annotations(min_examples, concepts, bad_users, split=.8):
     print("Concept counts: " + str(concept_count))
     print("Number of images: " + str(len(selected)))
         
+    df_train_annot = pd.DataFrame()
+    df_valid_annot = pd.DataFrame()
     count = 0
-    folder = 'train'
     for group in selected:
         first = group.iloc[0]
-        img_location = folder + "_image_folder/" + first['image']
+        img_location = img_folder + "/" + first['image']
         if ".png" not in img_location:
            img_location += ".png"
         
-        #create voc writer
-        writer = Writer(img_location, int(first['videowidth']), int(first['videoheight']))
-        
-        for index, row in group.iterrows():
-            writer.addObject(row['conceptid'], 
-                int(row['x1']), 
-                int(row['y1']), 
-                int(row['x2']), 
-                int(row['y2']))
-        
-        #download image
-        obj = client.get_object(Bucket=S3_BUCKET, Key= SRC_IMG_FOLDER +first['image'])
-        img = Image.open(obj['Body'])
-        img.save(img_location)
-        
-        writer.save(folder + '_annot_folder/' + first['image'][:-3] + "xml")
-        count += 1
-        
-        if count >= len(selected) * split:
-            folder = 'valid'
+        try:
+            # try to download image. 
+            obj = client.get_object(Bucket=S3_BUCKET, Key= SRC_IMG_FOLDER +first['image'])
+            img = Image.open(obj['Body'])
+            img.save(img_location)
+            
+            for index, row in group.iterrows():
+                concept_index = concepts.index(row['conceptid'])
+                if count < len(selected) * split:
+                    df_train_annot = df_train_annot.append([[
+                        img_location,
+                        int(row['x1']), 
+                        int(row['y1']), 
+                        int(row['x2']), 
+                        int(row['y2']),
+                        concept_index]])
+                else:
+                    df_valid_annot = df_valid_annot.append([[
+                        img_location,
+                        int(row['x1']), 
+                        int(row['y1']), 
+                        int(row['x2']), 
+                        int(row['y2']),
+                        concept_index]])
+            count += 1
+
+        except:
+            print("FAILED TO LOAD IMAGE")
+
+    df_train_annot.to_csv(path_or_buf=train_annot_file, header=False, index=False)
+    df_valid_annot.to_csv(path_or_buf=valid_annot_file, header=False, index=False)
+

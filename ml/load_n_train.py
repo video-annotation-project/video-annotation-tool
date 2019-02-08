@@ -72,7 +72,7 @@ Also downloads corresponding images.
 start = time.time()
 print("Starting Download.")
 
-#download_annotations(min_examples,concepts, bad_users, img_folder, train_annot_file, valid_annot_file)
+download_annotations(min_examples,concepts, bad_users, img_folder, train_annot_file, valid_annot_file)
 
 end = time.time()
 print("Done Downloading Annotations: " + str((end - start)/60) + " minutes")

@@ -1,14 +1,13 @@
 {
-    "conceptids" : [
-        383,
-        2136
-    ],
-    "min_examples" : 5,
-    "train_annot_file" : "train_annot_file.csv",
-    "valid_annot_file": "valid_annot_file.csv",
-    "train_image_folder" : "./train_image_folder/",
-    "valid_image_folder": "./valid_image_folder/",
-    "model_weights" : "resnet50_coco_best_v2.1.0.h5",
-    "class_map" : "classmap.csv",
-    "annotations" : "annotations.csv"
+   "conceptids" : [
+       383,
+       2136
+   ],
+   "min_examples" : 5,
+   "train_annot_file" : "train_annot_file.csv",
+   "valid_annot_file": "valid_annot_file.csv",
+   "image_folder": "./image_folder",
+   "model_weights" : "resnet50_coco_best_v2.1.0.h5",
+   "class_map" : "classmap.csv",
+   "annotations" : "annotations.csv"
 }
