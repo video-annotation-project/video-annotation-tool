@@ -32,28 +32,32 @@ with open(config_path) as config_buffer:
 concepts = config['conceptids']
 train_annot_file = config['train_annot_file']
 valid_annot_file = config['valid_annot_file']
+img_folder = config['image_folder']
+
 class_map_file = config['class_map']
 min_examples = config['min_examples']
 model_path = config['model_weights']
+
 bad_users = json.loads(os.getenv("BAD_USERS"))
 
 folders = []
-folders.append(config['train_image_folder'])
-folders.append(config['valid_image_folder'])
-folders.append()
+folders.append(img_folder)
 for dir in folders:
     if os.path.exists(dir):
         shutil.rmtree(dir)
     os.makedirs(dir)
 
-print("Initializing Classmap.")
+'''
+Initializes the classmap of concept names to training id's.
+(these id's don't represent the conceptid's from our database)
+'''
 start = time.time()
-classmap = []
+print("Initializing Classmap.")
 
+classmap = []
 for concept in concepts:
     name = queryDB("select name from concepts where id=" + str(concept)).iloc[0]["name"]
     classmap.append([name,concepts.index(concept)])
-
 classmap = pd.DataFrame(classmap)
 classmap.to_csv(class_map_file,index=False, header=False)
 
@@ -61,13 +65,24 @@ end = time.time()
 print("Done Initializing Classmap: " + str((end - start)/60) + " minutes")
 
 
-print("Starting Download.")
+'''
+Downloads the annotation data and saves it into training and validation csv's.
+Also downloads corresponding images.
+'''
 start = time.time()
+print("Starting Download.")
 
-#download_annotations(min_examples,concepts, bad_users, config['image_folder'], annotation_file)
+#download_annotations(min_examples,concepts, bad_users, img_folder, train_annot_file, valid_annot_file)
 
 end = time.time()
 print("Done Downloading Annotations: " + str((end - start)/60) + " minutes")
+
+
+'''
+Trains the model!!!!! WOOOT WOOOT!
+'''
+start = time.time()
+print("Starting Training.")
 
 model = models.backbone('resnet50').retinanet(num_classes=80)
 
@@ -80,7 +95,6 @@ model.compile(
     },
     optimizer=keras.optimizers.adam(lr=1e-5, clipnorm=0.001)
 )
-
 transform_generator = random_transform_generator(
     min_rotation=-0.1,
     max_rotation=0.1,
@@ -93,13 +107,17 @@ transform_generator = random_transform_generator(
     flip_x_chance=0.5,
     flip_y_chance=0.5,
 )
-
-'''
-generator = CSVGenerator(
-    annotation_file,
+train_generator = CSVGenerator(
+    train_annot_file,
     class_map_file,
     transform_generator=transform_generator,
 )
+test_generator = CSVGenerator(
+    valid_annot_file,
+    class_map_file,
+)
+model.fit_generator(generator, validation_data=test_generator)
 
-model.fit_generator(generator)
-'''
+end = time.time()
+print("Done Training Model: " + str((end - start)/60) + " minutes")
+
