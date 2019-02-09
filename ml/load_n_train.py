@@ -14,6 +14,8 @@ from keras_retinanet.preprocessing.csv_generator import CSVGenerator
 from keras_retinanet.utils.transform import random_transform_generator
 import keras 
 import pandas as pd
+from keras_retinanet.utils.model import freeze as freeze_model
+from keras.utils import multi_gpu_model
 
 argparser = argparse.ArgumentParser()
 argparser.add_argument(
@@ -86,9 +88,9 @@ Trains the model!!!!! WOOOT WOOOT!
 start = time.time()
 print("Starting Training.")
 
-model = models.backbone('resnet50').retinanet(num_classes=len(concepts))
-
-#model.load_weights(model_path, skip_mismatch=True)
+model = models.backbone('resnet50').retinanet(num_classes=len(concepts), modifier=freeze_model)
+model = multi_gpu_model(model, gpu=4)
+model.load_weights(model_path, by_name=True, skip_mismatch=True)
 
 model.compile(
     loss={
