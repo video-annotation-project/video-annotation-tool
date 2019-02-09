@@ -97,34 +97,36 @@ def download_annotations(min_examples, concepts, concept_map, bad_users, img_fol
             obj = client.get_object(Bucket=S3_BUCKET, Key= SRC_IMG_FOLDER +first['image'])
             img = Image.open(obj['Body'])
             img.save(img_location)
+        except:
+            print("Failed to load image:" + first['image'])
+            continue
+
+        for index, row in group.iterrows():
+            concept_index = concepts.index(row['conceptid'])
             x1 = min(max(int(row['x1']),0), int(row['videowidth']))
             y1 = min(max(int(row['y1']),0), int(row['videoheight']))
             x2 = min(max(int(row['x2']),0), int(row['videowidth']))
             y2 = min(max(int(row['y2']),0), int(row['videoheight']))
-
-
-            for index, row in group.iterrows():
-                concept_index = concepts.index(row['conceptid'])
-                if count < len(selected) * split:
-                    df_train_annot = df_train_annot.append([[
-                        img_location,
-                        x1,
-                        y1,
-                        x2,
-                        y2,
-                        concept_map[concept_index]]])
-                else:
-                    df_valid_annot = df_valid_annot.append([[
-                        img_location,
-                        x1,
-                        y1,
-                        x2,
-                        y2,
-                        concept_map[concept_index]]])
-            count += 1
-
-        except:
-            print("FAILED TO LOAD IMAGE")
+            if (y1 == y2) or (x1==x2):
+                print("Invalid BBox:" + first['image'])
+                continue
+            if count < len(selected) * split:
+                df_train_annot = df_train_annot.append([[
+                    img_location,
+                    x1,
+                    y1,
+                    x2,
+                    y2,
+                    concept_map[concept_index]]])
+            else:
+                df_valid_annot = df_valid_annot.append([[
+                    img_location,
+                    x1,
+                    y1,
+                    x2,
+                    y2,
+                    concept_map[concept_index]]])
+        count += 1
 
     df_train_annot.to_csv(path_or_buf=train_annot_file, header=False, index=False)
     df_valid_annot.to_csv(path_or_buf=valid_annot_file, header=False, index=False)
