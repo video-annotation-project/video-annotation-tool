@@ -40,6 +40,7 @@ img_folder = config['image_folder']
 class_map_file = config['class_map']
 min_examples = config['min_examples']
 model_path = config['model_weights']
+gpus = config['gpus']
 
 bad_users = json.loads(os.getenv("BAD_USERS"))
 
@@ -90,7 +91,8 @@ start = time.time()
 print("Starting Training.")
 
 model = models.backbone('resnet50').retinanet(num_classes=len(concepts), modifier=freeze_model)
-model = multi_gpu_model(model, gpu=4)
+if gpus > 1:
+    model = multi_gpu_model(model, gpu=gpus)
 model.load_weights(model_path, by_name=True, skip_mismatch=True)
 
 model.compile(
@@ -129,15 +131,14 @@ checkpoint = ModelCheckpoint(filepath, monitor='val_loss', save_best_only=True)
 #stopping: stops training if val_loss stops improving
 stopping = EarlyStopping(monitor='val_loss', min_delta=0, patience=5)
 
-
 history = model.fit_generator(train_generator, 
     epochs=10, 
     callbacks=[checkpoint, stopping],
-    validation_data=test_generator
+    validation_data=test_generator,
+    verbose=2
     ).history
-
 end = time.time()
+
+#print history
+
 print("Done Training Model: " + str((end - start)/60) + " minutes")
-print(history)
-
-
