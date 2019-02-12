@@ -490,7 +490,8 @@ let selectLevelQuery = (level) => {
                  COUNT(*) as count, \
                  false as expanded\
                  FROM annotations, videos \
-                 WHERE videos.id=annotations.videoid';
+                 WHERE videos.id=annotations.videoid \
+                 AND annotations.userid!=17';
   }
   if (level === "Concept") {
     queryPass = 'SELECT concepts.name as name,\
@@ -498,7 +499,8 @@ let selectLevelQuery = (level) => {
                  COUNT(*) as count,\
                  false as expanded\
                  FROM annotations, concepts \
-                 WHERE annotations.conceptid=concepts.id';
+                 WHERE annotations.conceptid=concepts.id \
+                 AND annotations.userid!=17';
   }
   if (level === "User") {
     queryPass = 'SELECT users.username as name,\
@@ -506,7 +508,8 @@ let selectLevelQuery = (level) => {
                  COUNT(*) as count, \
                  false as expanded \
                  FROM annotations, users \
-                 WHERE annotations.userid=users.id';
+                 WHERE annotations.userid=users.id \
+                 AND annotations.userid!=17';
   }
   return queryPass;
 }
