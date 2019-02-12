@@ -17,6 +17,8 @@ import pandas as pd
 from keras_retinanet.utils.model import freeze as freeze_model
 from keras.utils import multi_gpu_model
 from keras.callbacks import ModelCheckpoint, EarlyStopping
+from keras_retinanet.models.retinanet import retinanet_bbox
+from keras_retinanet.utils.eval import evaluate
 
 argparser = argparse.ArgumentParser()
 argparser.add_argument(
@@ -44,7 +46,6 @@ gpus = config['gpus']
 
 bad_users = json.loads(os.getenv("BAD_USERS"))
 
-
 folders = []
 folders.append(img_folder)
 for dir in folders:
@@ -70,7 +71,6 @@ classmap = classmap.to_dict()[0]
 end = time.time()
 print("Done Initializing Classmap: " + str((end - start)/60) + " minutes")
 
-
 '''
 Downloads the annotation data and saves it into training and validation csv's.
 Also downloads corresponding images.
@@ -83,7 +83,6 @@ download_annotations(min_examples, concepts, classmap, bad_users, img_folder, tr
 end = time.time()
 print("Done Downloading Annotations: " + str((end - start)/60) + " minutes")
 
-
 '''
 Trains the model!!!!! WOOOT WOOOT!
 '''
@@ -91,9 +90,12 @@ start = time.time()
 print("Starting Training.")
 
 model = models.backbone('resnet50').retinanet(num_classes=len(concepts), modifier=freeze_model)
-if gpus > 1:
-    model = multi_gpu_model(model, gpu=gpus)
 model.load_weights(model_path, by_name=True, skip_mismatch=True)
+
+evaluation_model = retinanet_bbox(model)
+
+if gpus > 1:
+    model = multi_gpu_model(model, gpus=gpus)
 
 model.compile(
     loss={
@@ -118,10 +120,12 @@ train_generator = CSVGenerator(
     train_annot_file,
     class_map_file,
     transform_generator=transform_generator,
+    batch_size = 16
 )
 test_generator = CSVGenerator(
     valid_annot_file,
     class_map_file,
+    batch_size = 16
 )
 
 # Checkpoint: save models that are improvements
@@ -139,6 +143,9 @@ history = model.fit_generator(train_generator,
     ).history
 end = time.time()
 
-#print history
-
 print("Done Training Model: " + str((end - start)/60) + " minutes")
+
+map_vals = evaluate(test_generator, evaluation_model, save_path="test_images")
+
+for concept, (ap, instances) in map_vals.items():
+    print(classmap[concept] +": " + str(ap))
