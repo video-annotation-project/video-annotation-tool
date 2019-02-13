@@ -10,9 +10,11 @@ import ExpandMore from '@material-ui/icons/ExpandMore';
 import axios from 'axios';
 import Annotations from './Annotations.jsx';
 
+
 const styles = theme => ({
   root: {
     backgroundColor: theme.palette.background.paper,
+    paddingLeft: theme.spacing.unit * 2,
   },
 });
 
@@ -37,7 +39,8 @@ class ReportTree extends Component {
       levelName: this.props.levels[this.props.treeDepth]
     })
     try {
-      let treeData = await axios.get(`/api/reportTreeData?`+
+      let treeData = await axios.get(
+        `/api/reportTreeData?`+
         `levelName=${this.state.levelName}&`+
         `queryConditions=${this.props.queryConditions}&`+
         `unsureOnly=${this.props.unsureOnly}&`+
@@ -83,7 +86,7 @@ class ReportTree extends Component {
       return <div>Error: {error}</div>;
     }
     return (
-      <List className={classes.root}>
+      <List disablePadding className={classes.root}>
         {treeData.map(data =>(
           <React.Fragment key={data.key}>
             <ListItem button onClick={() => this.handleListClick(data.name)}>
@@ -93,16 +96,7 @@ class ReportTree extends Component {
               {data.expanded ? <ExpandLess /> : <ExpandMore />}
             </ListItem>
             <Collapse in={data.expanded} timeout='auto' unmountOnExit>
-                {levels[treeDepth+1] === '' ? (
-                  <Annotations
-                    queryConditions={
-                      queryConditions+
-                      " AND annotations."+
-                      this.state.levelName+"id="
-                      +data.key}
-                    unsureOnly={unsureOnly}
-                  />
-                ):(
+                {levels[treeDepth+1] ? (
                   <ReportTree
                     treeDepth={treeDepth+1}
                     queryConditions={
@@ -113,6 +107,15 @@ class ReportTree extends Component {
                     levels={levels}
                     unsureOnly={unsureOnly}
                     classes={classes}
+                  />
+                ):(
+                  <Annotations
+                    queryConditions={
+                      queryConditions+
+                      " AND annotations."+
+                      this.state.levelName+"id="
+                      +data.key}
+                    unsureOnly={unsureOnly}
                   />
                 )}
 

@@ -9,7 +9,6 @@ import DialogModal from './DialogModal.jsx';
 import Button from '@material-ui/core/Button';
 import { withStyles } from '@material-ui/core/styles';
 
-
 const styles = theme => ({
   boxContainer: {
     postion: 'absolute',
@@ -191,7 +190,14 @@ class Annotate extends Component {
     videoElement.controls = !videoElement.controls;
   }
 
-  updateCheckpoint = (finished) => {
+  updateCheckpoint = async (finished) => {
+    // if the currentVideo is finished, this means that it is a video from the
+    // global watchedVideos list. We don't want to create checkpoints for these
+    // videos.
+    if (this.state.currentVideo.finished) {
+      console.log("currentVideo is finished, so no new checkpoint created");
+      return;
+    }
     // when the checkpoint for a video is updated, there are three places that
     // need to reflect this: this.state.currentVideo, this.state.startedVideos,
     // and the checkpoints table in the SQL database. Upon successful resolution
@@ -208,7 +214,7 @@ class Annotate extends Component {
       'finished' : finished
     }
     // update SQL database
-    axios.put('/api/checkpoints', body, config).then(res => {
+    await axios.put('/api/checkpoints', body, config).then(res => {
       // update this.state.startedVideos
       let startedVideos = JSON.parse(JSON.stringify(this.state.startedVideos));
       let currentVideo = startedVideos.find(vid =>
@@ -290,20 +296,16 @@ class Annotate extends Component {
     }
 
     /*
-    Right now our database's architecture requires that watchedVideos never be
-    played by the end user. Talk to Ishaan or Hanson for more details on this.
-    It's interesting, I promise.
-    Down the road, one solution is to change our database's architecture, which
-    might be kinda hard. Another solution is to let end users change
-    watchedVideos into unwatchedVideos.
+    We need to be careful when a video from watchedVideos is played by the user.
+    It creates the possibility of creating duplicate checkpoints for the same
+    video, as watchedVideos is a global list.
+    At some point we could let users change watchedVideos into unwatchedVideos.
     */
-    if (videoListName === 'unwatchedVideos' || videoListName === 'startedVideos') {
-      this.setState({
-        currentVideo: clickedVideo,
-      })
-      var videoElement = document.getElementById("video");
-      videoElement.currentTime = clickedVideo.timeinvideo;
-    }
+    this.setState({
+      currentVideo: clickedVideo,
+    })
+    var videoElement = document.getElementById("video");
+    videoElement.currentTime = clickedVideo.timeinvideo;
   };
 
   postAnnotation = (comment, unsure) => {
