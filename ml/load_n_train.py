@@ -1,6 +1,7 @@
 # Loads data, updates anchor boxes, and trains.
 from loading_data import download_annotations
 from loading_data import queryDB
+from model_scoring import evaluate
 import json
 import os
 from dotenv import load_dotenv
@@ -18,7 +19,6 @@ from keras_retinanet.utils.model import freeze as freeze_model
 from keras.utils import multi_gpu_model
 from keras.callbacks import ModelCheckpoint, EarlyStopping
 from keras_retinanet.models.retinanet import retinanet_bbox
-from keras_retinanet.utils.eval import evaluate
 
 argparser = argparse.ArgumentParser()
 argparser.add_argument(
@@ -38,16 +38,19 @@ concepts = config['conceptids']
 train_annot_file = config['train_annot_file']
 valid_annot_file = config['valid_annot_file']
 img_folder = config['image_folder']
-
 class_map_file = config['class_map']
-min_examples = config['min_examples']
 model_path = config['model_weights']
+
+min_examples = config['min_examples']
 gpus = config['gpus']
 test_examples = config['test_examples']
+epochs = config['epochs']
+
 
 bad_users = json.loads(os.getenv("BAD_USERS"))
 
 folders = []
+folders.append(test_examples)
 folders.append(img_folder)
 for dir in folders:
     if os.path.exists(dir):
@@ -137,7 +140,7 @@ checkpoint = ModelCheckpoint(filepath, monitor='val_loss', save_best_only=True)
 stopping = EarlyStopping(monitor='val_loss', min_delta=0, patience=5)
 
 history = model.fit_generator(train_generator, 
-    epochs=10, 
+    epochs=epochs, 
     callbacks=[checkpoint, stopping],
     validation_data=test_generator,
     verbose=2
@@ -146,9 +149,12 @@ end = time.time()
 
 print("Done Training Model: " + str((end - start)/60) + " minutes")
 
-map_vals = evaluate(test_generator, evaluation_model, save_path=test_examples)
+recall, precision, average_precisions = evaluate(test_generator, evaluation_model, save_path=test_examples)
 
-for concept, (ap, instances) in map_vals.items():
+print(recall)
+print(precision)
+
+for concept, (ap, instances) in average_precisions.items():
     print(classmap[concept] +": " + str(ap))
 
 print("Find evaluation examples in: " + test_examples)

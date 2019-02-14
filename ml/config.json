@@ -2,7 +2,7 @@
    "conceptids" : [
       2124, 1009, 79, 1210, 236, 506, 347, 1948, 1629,383
    ],
-   "min_examples" : 1000,
+   "min_examples" : 1,
    "train_annot_file" : "train_annot_file.csv",
    "valid_annot_file": "valid_annot_file.csv",
    "image_folder": "image_folder",
@@ -10,5 +10,6 @@
    "model_weights" : "weights-09-1.8853.h5",
    "class_map" : "classmap.csv",
    "annotations" : "annotations.csv",
-   "gpus" : 2
+   "gpus" : 1,
+   "epochs" : 1
 }

@@ -14,6 +14,7 @@ from keras_retinanet import losses
 from keras_retinanet.preprocessing.csv_generator import CSVGenerator
 from keras_retinanet.models.retinanet import retinanet_bbox
 import keras
+from model_scoring import evaluate
 
 argparser = argparse.ArgumentParser()
 argparser.add_argument(
@@ -40,12 +41,9 @@ test_examples = config['test_examples']
 
 bad_users = json.loads(os.getenv("BAD_USERS"))
 
-folders = []
-folders.append(img_folder)
-for dir in folders:
-    if os.path.exists(dir):
-        shutil.rmtree(dir)
-    os.makedirs(dir)
+'''
+Loading new data for evaluation
+'''
 
 classmap = []
 for concept in concepts:
@@ -55,8 +53,20 @@ classmap = pd.DataFrame(classmap)
 classmap.to_csv(class_map_file,index=False, header=False)
 classmap = classmap.to_dict()[0]
 
-download_annotations(10, concepts, classmap, bad_users, img_folder, train_annot_file, valid_annot_file, split=0)
+'''
+folders = []
+folders.append(test_examples)
+folders.append(img_folder)
+for dir in folders:
+    if os.path.exists(dir):
+        shutil.rmtree(dir)
+    os.makedirs(dir)
+download_annotations(min_examples, concepts, classmap, bad_users, img_folder, train_annot_file, valid_annot_file, split=0)
+'''
 
+'''
+Initializing model for eval
+'''
 model = models.backbone('resnet50').retinanet(num_classes=len(concepts), modifier=freeze_model)
 model.load_weights(model_path, by_name=True, skip_mismatch=True)
 model = retinanet_bbox(model)
@@ -64,9 +74,13 @@ test_generator = CSVGenerator(
     valid_annot_file,
     class_map_file,
 )
-map_vals = evaluate(test_generator,model,save_path=test_examples)
 
-for concept, (ap, instances) in map_vals.items():
+recall, precision, average_precisions = evaluate(test_generator, model, save_path=test_examples)
+
+print(recall)
+print(precision)
+
+for concept, (ap, instances) in average_precisions.items():
     print(classmap[concept] +": " + str(ap))
 
 print("Find evaluation examples in: " + test_examples)
