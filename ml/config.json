@@ -6,7 +6,8 @@
    "train_annot_file" : "train_annot_file.csv",
    "valid_annot_file": "valid_annot_file.csv",
    "image_folder": "image_folder",
-   "model_weights" : "weights/weights-20-2.1226.h5",
+   "test_examples" : "test_examples",
+   "model_weights" : "weights-09-1.8853.h5",
    "class_map" : "classmap.csv",
    "annotations" : "annotations.csv",
    "gpus" : 2

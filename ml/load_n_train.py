@@ -43,6 +43,7 @@ class_map_file = config['class_map']
 min_examples = config['min_examples']
 model_path = config['model_weights']
 gpus = config['gpus']
+test_examples = config['test_examples']
 
 bad_users = json.loads(os.getenv("BAD_USERS"))
 
@@ -145,7 +146,9 @@ end = time.time()
 
 print("Done Training Model: " + str((end - start)/60) + " minutes")
 
-map_vals = evaluate(test_generator, evaluation_model, save_path="test_images")
+map_vals = evaluate(test_generator, evaluation_model, save_path=test_examples)
 
 for concept, (ap, instances) in map_vals.items():
     print(classmap[concept] +": " + str(ap))
+
+print("Find evaluation examples in: " + test_examples)
