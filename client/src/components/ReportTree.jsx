@@ -8,7 +8,7 @@ import Collapse from '@material-ui/core/Collapse';
 import ExpandLess from '@material-ui/icons/ExpandLess';
 import ExpandMore from '@material-ui/icons/ExpandMore';
 import axios from 'axios';
-import Annotations from './Annotations.jsx';
+import AnnotationGroups from './AnnotationGroups.jsx';
 
 
 const styles = theme => ({
@@ -109,7 +109,7 @@ class ReportTree extends Component {
                     classes={classes}
                   />
                 ):(
-                  <Annotations
+                  <AnnotationGroups
                     queryConditions={
                       queryConditions+
                       " AND annotations."+

@@ -325,6 +325,41 @@ app.put("/api/checkpoints", passport.authenticate('jwt', {session: false}),
 //     }
 //   });
 // });
+app.get('/api/annotationGroups', passport.authenticate('jwt', {session: false}),
+  async (req, res) => {
+    let params = [];
+    //Build query string
+    let queryPass = 'SELECT count(*)\
+                     FROM annotations\
+                     WHERE';
+    if (req.query.unsureOnly === 'true') {
+      queryPass = queryPass +
+                  (queryPass.length === 78 ? '':' AND') +
+                  ' annotations.unsure = true';
+    }
+    if (req.query.admin !== 'true') {
+      queryPass = queryPass +
+                  (queryPass.length === 78 ? '':' AND') +
+                  ' annotations.userid = $1';
+      params.push(req.user.id);
+    }
+    queryPass = queryPass +
+                (queryPass.length === 78 ? '':' AND') +
+                req.query.queryConditions.substr(4);
+    try {
+      const countData = await psql.query(queryPass, params);
+      const { count } = countData.rows[0];
+      const groupInterval = req.query.groupInterval;
+      let genTimes = 'SELECT generate_series as offset, false as expanded \
+                      FROM generate_series(0,'+count+','+groupInterval+')'
+      const timeData = await psql.query(genTimes);
+      res.json(timeData.rows);
+    } catch (error) {
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
+);
 
 app.get('/api/annotations', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
@@ -335,8 +370,7 @@ app.get('/api/annotations', passport.authenticate('jwt', {session: false}),
                      annotations.imagewithbox, concepts.name, \
                      false as extended \
                      FROM annotations, concepts\
-                     WHERE annotations.conceptid=concepts.id' +
-                     req.query.queryConditions;
+                     WHERE annotations.conceptid=concepts.id'
     if (req.query.unsureOnly === 'true') {
       queryPass = queryPass + ' AND annotations.unsure = true';
     }
@@ -344,8 +378,12 @@ app.get('/api/annotations', passport.authenticate('jwt', {session: false}),
       queryPass = queryPass + ' AND annotations.userid = $1';
       params.push(req.user.id);
     }
-    queryPass = queryPass + ' ORDER BY annotations.timeinvideo';
+    queryPass = queryPass +
+                req.query.queryConditions +
+                ' ORDER BY annotations.timeinvideo' +
+                req.query.queryLimit;
     try {
+      console.log(queryPass);
       const annotations = await psql.query(queryPass, params);
       res.json(annotations.rows);
     } catch (error) {
