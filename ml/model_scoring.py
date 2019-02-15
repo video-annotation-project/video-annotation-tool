@@ -22,6 +22,8 @@ def evaluate(generator,model,iou_threshold=0.5,score_threshold=0.05,max_detectio
     all_detections     = _get_detections(generator, model, score_threshold=score_threshold, max_detections=max_detections, save_path=save_path)
     all_annotations    = _get_annotations(generator)
     average_precisions = {}
+    recalls = {}
+    precisions = {}
 
     # process detections and annotations
     for label in range(generator.num_classes()):
@@ -77,8 +79,11 @@ def evaluate(generator,model,iou_threshold=0.5,score_threshold=0.05,max_detectio
         recall    = true_positives / num_annotations
         precision = true_positives / np.maximum(true_positives + false_positives, np.finfo(np.float64).eps)
 
+        recalls[label] = recall
+        precisions[label] = precision
+
         # compute average precision
         average_precision  = _compute_ap(recall, precision)
         average_precisions[label] = average_precision, num_annotations
 
-    return recall, precision, average_precisions
+    return recalls, precisions, average_precisions

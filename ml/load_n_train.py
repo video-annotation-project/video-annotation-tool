@@ -129,7 +129,8 @@ train_generator = CSVGenerator(
 test_generator = CSVGenerator(
     valid_annot_file,
     class_map_file,
-    batch_size = 16
+    batch_size = 16,
+    shuffle_groups=False
 )
 
 # Checkpoint: save models that are improvements
@@ -149,12 +150,12 @@ end = time.time()
 
 print("Done Training Model: " + str((end - start)/60) + " minutes")
 
-recall, precision, average_precisions = evaluate(test_generator, evaluation_model, save_path=test_examples)
-
-print(recall)
-print(precision)
+recalls, precisions, average_precisions = evaluate(test_generator, model, save_path=test_examples)
 
 for concept, (ap, instances) in average_precisions.items():
-    print(classmap[concept] +": " + str(ap))
+    print(classmap[concept] +": " + str(ap) + "with " + str(instances) + " instances")
+    print("recall: " + str(recalls[concept]))
+    print("precision: " + str(precisions[concept]))
+
 
 print("Find evaluation examples in: " + test_examples)

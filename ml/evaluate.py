@@ -76,14 +76,15 @@ model = retinanet_bbox(model)
 test_generator = CSVGenerator(
     valid_annot_file,
     class_map_file,
+    shuffle_groups=False,
+    batch_size=16
 )
 
-recall, precision, average_precisions = evaluate(test_generator, model, save_path=test_examples)
-
-print(recall)
-print(precision)
+recalls, precisions, average_precisions = evaluate(test_generator, model, save_path=test_examples)
 
 for concept, (ap, instances) in average_precisions.items():
-    print(classmap[concept] +": " + str(ap) + "with " + str(instances) + "instances")
+    print(classmap[concept] +": " + str(ap) + "with " + str(instances) + " instances")
+    print("recall: " + str(recalls[concept]))
+    print("precision: " + str(precisions[concept]))
 
 print("Find evaluation examples in: " + test_examples)
