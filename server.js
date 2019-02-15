@@ -19,7 +19,8 @@ jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
 jwtOptions.secretOrKey = process.env.JWT_KEY;
 
 async function findUser(userId) {
-  queryPass = 'select id, username, password, admin from users where users.id=$1';
+  queryPass = 'select id, username, password, admin \
+               from users where users.id=$1';
   const user = await psql.query(queryPass,[userId]);
   if (user.rows.length == 1) {
     return user.rows[0];
@@ -54,7 +55,8 @@ app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
 
 app.post("/api/login", async function(req, res) {
   const {username, password} = req.body;
-  let queryPass = 'select id, password, admin from users where users.username=$1';
+  let queryPass = 'select id, password, admin \
+                   from users where users.username=$1';
   try {
     const user = await psql.query(queryPass,[username]);
     if (user.rowCount === 0) {
@@ -96,7 +98,8 @@ app.post('/api/changePassword', passport.authenticate('jwt', {session: false}),
 
 app.post('/api/createUser', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
-    const queryText = "INSERT INTO users(username, password, admin) VALUES($1, $2, $3) RETURNING *";
+    const queryText = "INSERT INTO users(username, password, admin) \
+                       VALUES($1, $2, $3) RETURNING *";
     const saltRounds = 10;
     try {
       const hash = await bcrypt.hash(req.body.password, saltRounds);
@@ -325,41 +328,6 @@ app.put("/api/checkpoints", passport.authenticate('jwt', {session: false}),
 //     }
 //   });
 // });
-app.get('/api/annotationGroups', passport.authenticate('jwt', {session: false}),
-  async (req, res) => {
-    let params = [];
-    //Build query string
-    let queryPass = 'SELECT count(*)\
-                     FROM annotations\
-                     WHERE';
-    if (req.query.unsureOnly === 'true') {
-      queryPass = queryPass +
-                  (queryPass.length === 78 ? '':' AND') +
-                  ' annotations.unsure = true';
-    }
-    if (req.query.admin !== 'true') {
-      queryPass = queryPass +
-                  (queryPass.length === 78 ? '':' AND') +
-                  ' annotations.userid = $1';
-      params.push(req.user.id);
-    }
-    queryPass = queryPass +
-                (queryPass.length === 78 ? '':' AND') +
-                req.query.queryConditions.substr(4);
-    try {
-      const countData = await psql.query(queryPass, params);
-      const { count } = countData.rows[0];
-      const groupInterval = req.query.groupInterval;
-      let genTimes = 'SELECT generate_series as offset, false as expanded \
-                      FROM generate_series(0,'+count+','+groupInterval+')'
-      const timeData = await psql.query(genTimes);
-      res.json(timeData.rows);
-    } catch (error) {
-      console.log(error);
-      res.status(500).json(error);
-    }
-  }
-);
 
 app.get('/api/annotations', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
@@ -378,12 +346,15 @@ app.get('/api/annotations', passport.authenticate('jwt', {session: false}),
       queryPass = queryPass + ' AND annotations.userid = $1';
       params.push(req.user.id);
     }
+    // Adds query conditions from report tree
     queryPass = queryPass +
                 req.query.queryConditions +
-                ' ORDER BY annotations.timeinvideo' +
-                req.query.queryLimit;
+                ' ORDER BY annotations.timeinvideo';
+    // Retrieves only selected 100 if queryLimit exists
+    if (req.query.queryLimit !== 'undefined') {
+      queryPass = queryPass + req.query.queryLimit;
+    }
     try {
-      console.log(queryPass);
       const annotations = await psql.query(queryPass, params);
       res.json(annotations.rows);
     } catch (error) {

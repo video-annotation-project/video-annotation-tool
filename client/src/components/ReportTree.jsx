@@ -8,7 +8,9 @@ import Collapse from '@material-ui/core/Collapse';
 import ExpandLess from '@material-ui/icons/ExpandLess';
 import ExpandMore from '@material-ui/icons/ExpandMore';
 import axios from 'axios';
+
 import AnnotationGroups from './AnnotationGroups.jsx';
+import Annotations from './Annotations.jsx';
 
 
 const styles = theme => ({
@@ -109,16 +111,27 @@ class ReportTree extends Component {
                     classes={classes}
                   />
                 ):(
-                  <AnnotationGroups
-                    queryConditions={
-                      queryConditions+
-                      " AND annotations."+
-                      this.state.levelName+"id="
-                      +data.key}
-                    unsureOnly={unsureOnly}
-                  />
+                  data.count > 100 ? (
+                    <AnnotationGroups
+                      queryConditions={
+                        queryConditions+
+                        " AND annotations."+
+                        this.state.levelName+"id="
+                        +data.key}
+                      unsureOnly={unsureOnly}
+                      count={data.count}
+                    />
+                  ) : (
+                    <Annotations
+                      queryConditions={
+                        queryConditions+
+                        " AND annotations."+
+                        this.state.levelName+"id="
+                        +data.key}
+                      unsureOnly={unsureOnly}
+                    />
+                  )
                 )}
-
             </Collapse>
           </React.Fragment>
         ))}

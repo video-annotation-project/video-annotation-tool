@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import axios from 'axios';
 
 import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
@@ -39,35 +38,14 @@ class AnnotationTimes extends Component {
   }
 
   componentDidMount = async () => {
-    const config = {
-      headers: {
-        'Authorization': 'Bearer ' + localStorage.getItem('token')
-      }
+    let annotationGroups = []
+    for (let i = 0; i<this.props.count;i+=this.state.groupInterval) {
+      annotationGroups.push({offset: i, extended: false})
     }
-    try {
-      let annotationGroups = await axios.get(`/api/annotationGroups?`+
-        `queryConditions=${this.props.queryConditions}&`+
-        `unsureOnly=${this.props.unsureOnly}&`+
-        `admin=${localStorage.getItem('admin')}&`+
-        `groupInterval=${this.state.groupInterval}`, config);
-      this.setState({
-        isLoaded: true,
-        annotationGroups: annotationGroups.data,
-      });
-    } catch (error) {
-      console.log(error);
-      console.log(JSON.parse(JSON.stringify(error)));
-      if (!error.response) {
-        return;
-      }
-      let errMsg = error.response.data.detail ||
-        error.response.data.message || 'Error';
-      console.log(errMsg);
-      this.setState({
-        isLoaded: true,
-        error: errMsg
-      });
-    }
+    this.setState({
+      isLoaded: true,
+      annotationGroups: annotationGroups,
+    });
   };
 
   handleClick = (offset) => {
@@ -102,7 +80,7 @@ class AnnotationTimes extends Component {
               >
                 <ListItemText
                   primary={
-                    group.offset+
+                    group.offset+1+
                     ' to '+ (parseFloat(group.offset)+groupInterval)
                   }
                 />
