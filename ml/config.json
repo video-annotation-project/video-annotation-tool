@@ -2,14 +2,14 @@
    "conceptids" : [
       2124, 1009, 79, 1210, 236, 506, 347, 1948, 1629,383
    ],
-   "min_examples" : 1,
+   "min_examples" : 1000,
    "train_annot_file" : "train_annot_file.csv",
    "valid_annot_file": "valid_annot_file.csv",
    "image_folder": "image_folder",
    "test_examples" : "test_examples",
-   "model_weights" : "weights-09-1.8853.h5",
+   "model_weights" : "resnet50_coco_best_v2.1.0.h5",
    "class_map" : "classmap.csv",
    "annotations" : "annotations.csv",
-   "gpus" : 1,
-   "epochs" : 1
+   "gpus" : 2,
+   "epochs" : 100
 }

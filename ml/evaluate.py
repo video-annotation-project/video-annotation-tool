@@ -42,9 +42,13 @@ test_examples = config['test_examples']
 bad_users = json.loads(os.getenv("BAD_USERS"))
 
 '''
+Just load classmap without loading new data
+'''
+classmap = pd.read_csv(class_map_file, header=None).to_dict()[0]
+'''
 Loading new data for evaluation
 '''
-
+'''
 classmap = []
 for concept in concepts:
     name = queryDB("select name from concepts where id=" + str(concept)).iloc[0]["name"]
@@ -53,7 +57,6 @@ classmap = pd.DataFrame(classmap)
 classmap.to_csv(class_map_file,index=False, header=False)
 classmap = classmap.to_dict()[0]
 
-'''
 folders = []
 folders.append(test_examples)
 folders.append(img_folder)
@@ -81,6 +84,6 @@ print(recall)
 print(precision)
 
 for concept, (ap, instances) in average_precisions.items():
-    print(classmap[concept] +": " + str(ap))
+    print(classmap[concept] +": " + str(ap) + "with " + str(instances) + "instances")
 
 print("Find evaluation examples in: " + test_examples)
