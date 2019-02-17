@@ -26,7 +26,7 @@ const styles = theme => ({
   }
 });
 
-class AnnotationTimes extends Component {
+class AnnotationsGroup extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -61,7 +61,7 @@ class AnnotationTimes extends Component {
 
   render () {
     const { error, isLoaded, annotationGroups, groupInterval } = this.state;
-    const { classes, queryConditions, unsureOnly } = this.props;
+    const { classes, queryConditions, unsureOnly, count } = this.props;
     if (!isLoaded) {
       return <List>Loading...</List>;
     }
@@ -81,7 +81,11 @@ class AnnotationTimes extends Component {
                 <ListItemText
                   primary={
                     group.offset+1+
-                    ' to '+ (parseFloat(group.offset)+groupInterval)
+                    ' to '+
+                    ((parseFloat(group.offset)+groupInterval) > count ?
+                      count:
+                      (parseFloat(group.offset)+groupInterval)
+                    )
                   }
                 />
                 {group.expanded ? <ExpandLess /> : <ExpandMore />}
@@ -105,8 +109,8 @@ class AnnotationTimes extends Component {
   }
 }
 
-AnnotationTimes.propTypes = {
+AnnotationsGroup.propTypes = {
   classes: PropTypes.object.isRequired,
 };
 
-export default withStyles(styles)(AnnotationTimes);
+export default withStyles(styles)(AnnotationsGroup);

@@ -116,7 +116,8 @@ class ConceptsSelected extends React.Component {
     this.setState({
       drawerOpen: false
     });
-    this.props.handleConceptClick(concept);
+    //This need sto be called once drawer is closed for autoFocus to work
+    setTimeout(() => {this.props.handleConceptClick(concept)}, 220);
   }
 
   onDragStart = (event, index) => {
@@ -194,7 +195,7 @@ class ConceptsSelected extends React.Component {
               <li
                 key={concept.id}
                 className={classes.concept}
-                onClick={() => this.handleConceptClick(concept)}
+                onClick={() =>  this.handleConceptClick(concept)}
                 onDragOver={() => this.onDragOver(index)}
               >
                 {concept.name}

@@ -9,7 +9,7 @@ import ExpandLess from '@material-ui/icons/ExpandLess';
 import ExpandMore from '@material-ui/icons/ExpandMore';
 import axios from 'axios';
 
-import AnnotationGroups from './AnnotationGroups.jsx';
+import AnnotationsGroup from './AnnotationsGroup.jsx';
 import Annotations from './Annotations.jsx';
 
 
@@ -112,7 +112,7 @@ class ReportTree extends Component {
                   />
                 ):(
                   data.count > 100 ? (
-                    <AnnotationGroups
+                    <AnnotationsGroup
                       queryConditions={
                         queryConditions+
                         " AND annotations."+
