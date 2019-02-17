@@ -1,8 +1,8 @@
 {
    "conceptids" : [
-      2124, 1009, 79, 1210, 236, 506, 347, 1948, 1629,383
+      1629, 1210, 236, 383
    ],
-   "min_examples" : 1000,
+   "min_examples" : 5000,
    "train_annot_file" : "train_annot_file.csv",
    "valid_annot_file": "valid_annot_file.csv",
    "image_folder": "image_folder",
