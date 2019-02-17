@@ -83,7 +83,9 @@ test_generator = CSVGenerator(
 recalls, precisions, average_precisions = evaluate(test_generator, model, save_path=test_examples)
 
 for concept, (ap, instances) in average_precisions.items():
-    print(classmap[concept] +": " + str(ap) + "with " + str(instances) + " instances")
+    print(classmap[concept] +": " + str(ap) + " with " + str(instances) + " instances")
+    if concept not in recalls:
+        continue
     print("recall: " + str(recalls[concept]))
     print("precision: " + str(precisions[concept]))
 

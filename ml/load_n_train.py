@@ -57,10 +57,12 @@ for dir in folders:
         shutil.rmtree(dir)
     os.makedirs(dir)
 
+
 '''
 Initializes the classmap of concept names to training id's.
 (these id's don't represent the conceptid's from our database)
 '''
+
 start = time.time()
 print("Initializing Classmap.")
 
@@ -146,14 +148,16 @@ history = model.fit_generator(train_generator,
     validation_data=test_generator,
     verbose=2
     ).history
-end = time.time()
 
+end = time.time()
 print("Done Training Model: " + str((end - start)/60) + " minutes")
 
-recalls, precisions, average_precisions = evaluate(test_generator, model, save_path=test_examples)
+recalls, precisions, average_precisions = evaluate(test_generator, evaluation_model, save_path=test_examples)
 
 for concept, (ap, instances) in average_precisions.items():
-    print(classmap[concept] +": " + str(ap) + "with " + str(instances) + " instances")
+    print(classmap[concept] +": " + str(ap) + " with " + str(instances) + " instances")
+    if concept not in recalls:
+        continue
     print("recall: " + str(recalls[concept]))
     print("precision: " + str(precisions[concept]))
 
