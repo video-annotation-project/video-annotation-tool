@@ -247,6 +247,7 @@ app.get('/api/videos', passport.authenticate('jwt', {session: false}),
                           WHERE videos.id=checkpoints.videoid \
                           AND checkpoints.finished=true \
                           ORDER BY videos.id;'
+
     try {
       const startedVideos = await psql.query(queryUserStartedVideos, [userId]);
       const unwatchedVideos = await psql.query(queryGlobalUnwatched);

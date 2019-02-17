@@ -63,6 +63,7 @@ class Annotate extends Component {
       startedVideos: [],
       unwatchedVideos: [],
       watchedVideos: [],
+      inProgressVideos: [],
       videoPlaybackRate: 1.0,
       error: null
     };
@@ -80,6 +81,7 @@ class Annotate extends Component {
         startedVideos: res.data[0].rows,
         unwatchedVideos: res.data[1].rows,
         watchedVideos: res.data[2].rows,
+        inProgressVideos: res.data[3].rows
       });
       // get current video and put it in the state
       this.setState(this.getCurrentVideo, () => {
@@ -446,6 +448,7 @@ class Annotate extends Component {
           startedVideos={this.state.startedVideos}
           unwatchedVideos={this.state.unwatchedVideos}
           watchedVideos={this.state.watchedVideos}
+          inProgressVideos={this.state.inProgressVideos}
         />
         <div className = {classes.videoSectionContainer}>
           {this.state.currentVideo.id + " " + this.state.currentVideo.filename}

@@ -34,6 +34,7 @@ class VideoList extends Component {
       startedListOpen: false,
       unwatchedListOpen: false,
       watchedListOpen: false,
+      inProgressListOpen: false,
     };
   }
 
@@ -51,12 +52,14 @@ class VideoList extends Component {
       classes,
       startedVideos,
       unwatchedVideos,
-      watchedVideos
+      watchedVideos,
+      inProgressVideos
     } = this.props;
     const {
       startedListOpen,
       unwatchedListOpen,
-      watchedListOpen
+      watchedListOpen,
+      inProgressListOpen
     } = this.state;
 
     return (
@@ -128,6 +131,22 @@ class VideoList extends Component {
             </List>
           </Collapse>
 
+          <ListItem button onClick={() => this.toggle("inProgressListOpen")}>
+            <ListItemText inset primary="In Progress Videos" />
+            {inProgressListOpen ? <ExpandLess /> : <ExpandMore />}
+          </ListItem>
+          <Collapse in={inProgressListOpen} timeout="auto" unmountOnExit>
+            <List component="div" disablePadding>
+              {inProgressVideos.map(video => (
+                <ListItem
+                  button key={video.id}
+                  onClick={() => this.props.handleVideoClick(video, 'inProgressVideos')}
+                >
+                  <ListItemText primary={video.id + '. ' + video.filename} />
+                </ListItem>
+              ))}
+            </List>
+          </Collapse>
         </div>
         </Drawer>
 
