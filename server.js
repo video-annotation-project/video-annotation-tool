@@ -229,30 +229,45 @@ app.patch('/api/conceptsSelected', passport.authenticate('jwt', {session: false}
 app.get('/api/videos', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
     let userId = req.user.id;
-    queryUserStartedVideos = 'SELECT videos.id, videos.filename, \
-                              checkpoints.finished, checkpoints.timeinvideo \
+    let queryUserStartedVideos = 'SELECT videos.id, videos.filename, \
+                                  checkpoints.finished, checkpoints.timeinvideo \
+                                  FROM videos, checkpoints \
+                                  WHERE checkpoints.userid=$1 \
+                                  AND videos.id=checkpoints.videoid \
+                                  AND checkpoints.finished=false \
+                                  ORDER BY videos.id';
+    let queryGlobalUnwatched = 'SELECT videos.id, videos.filename, \
+                                false as finished, 0 as timeinvideo \
+                                FROM videos \
+                                WHERE id NOT IN (SELECT videoid FROM checkpoints) \
+                                ORDER BY videos.id';
+    let queryGlobalWatched = 'SELECT DISTINCT videos.id, videos.filename, \
+                              checkpoints.finished, 0 as timeinvideo \
                               FROM videos, checkpoints \
-                              WHERE checkpoints.userid=$1 \
-                              AND videos.id=checkpoints.videoid \
-                              AND checkpoints.finished=false \
-                              ORDER BY videos.id;'
-    queryGlobalUnwatched = 'SELECT videos.id, videos.filename, \
-                            false as finished, 0 as timeinvideo \
-                            FROM videos \
-                            WHERE id NOT IN (SELECT videoid FROM checkpoints) \
-                            ORDER BY videos.id;'
-    queryGlobalWatched = 'SELECT DISTINCT videos.id, videos.filename, \
-                          checkpoints.finished, 0 as timeinvideo \
-                          FROM videos, checkpoints \
-                          WHERE videos.id=checkpoints.videoid \
-                          AND checkpoints.finished=true \
-                          ORDER BY videos.id;'
+                              WHERE videos.id=checkpoints.videoid \
+                              AND checkpoints.finished=true \
+                              ORDER BY videos.id';
+    let queryInProgress = 'SELECT DISTINCT ON (videos.id) videos.id, \
+                           videos.filename, false as finished, \
+                           checkpoints.timeinvideo \
+                           FROM videos, checkpoints \
+                           WHERE videos.id=checkpoints.videoid \
+                           AND checkpoints.finished=false \
+                           AND videos.id NOT IN (SELECT videoid \
+                           FROM checkpoints \
+                           WHERE finished=true) \
+                           ORDER BY videos.id'
 
     try {
       const startedVideos = await psql.query(queryUserStartedVideos, [userId]);
       const unwatchedVideos = await psql.query(queryGlobalUnwatched);
       const watchedVideos = await psql.query(queryGlobalWatched);
-      const videoData = [startedVideos, unwatchedVideos, watchedVideos];
+      const inProgressVideos = await psql.query(queryInProgress);
+      const videoData = [
+        startedVideos,
+        unwatchedVideos,
+        watchedVideos,
+        inProgressVideos];
       res.json(videoData);
     } catch (error) {
       console.log(error);
