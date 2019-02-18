@@ -2,7 +2,7 @@
    "conceptids" : [
       1629, 1210, 236, 383
    ],
-   "min_examples" : 10,
+   "min_examples" : 5000,
    "train_annot_file" : "train_annot_file.csv",
    "valid_annot_file": "valid_annot_file.csv",
    "image_folder": "image_folder",

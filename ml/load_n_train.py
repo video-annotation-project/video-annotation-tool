@@ -49,6 +49,7 @@ epochs = config['epochs']
 
 bad_users = json.loads(os.getenv("BAD_USERS"))
 
+
 folders = []
 folders.append(test_examples)
 folders.append(img_folder)
@@ -57,12 +58,10 @@ for dir in folders:
         shutil.rmtree(dir)
     os.makedirs(dir)
 
-
 '''
 Initializes the classmap of concept names to training id's.
 (these id's don't represent the conceptid's from our database)
 '''
-
 start = time.time()
 print("Initializing Classmap.")
 
@@ -81,6 +80,7 @@ print("Done Initializing Classmap: " + str((end - start)/60) + " minutes")
 Downloads the annotation data and saves it into training and validation csv's.
 Also downloads corresponding images.
 '''
+
 start = time.time()
 print("Starting Download.")
 
@@ -97,8 +97,6 @@ print("Starting Training.")
 
 model = models.backbone('resnet50').retinanet(num_classes=len(concepts), modifier=freeze_model)
 model.load_weights(model_path, by_name=True, skip_mismatch=True)
-
-evaluation_model = retinanet_bbox(model)
 
 if gpus > 1:
     model = multi_gpu_model(model, gpus=gpus)
@@ -147,19 +145,7 @@ history = model.fit_generator(train_generator,
     callbacks=[checkpoint, stopping],
     validation_data=test_generator,
     verbose=2
-    ).history
+).history
 
 end = time.time()
 print("Done Training Model: " + str((end - start)/60) + " minutes")
-
-recalls, precisions, average_precisions = evaluate(test_generator, evaluation_model, save_path=test_examples)
-
-for concept, (ap, instances) in average_precisions.items():
-    print(classmap[concept] +": " + str(ap) + " with " + str(instances) + " instances")
-    if concept not in recalls:
-        continue
-    print("recall: " + str(recalls[concept]))
-    print("precision: " + str(precisions[concept]))
-
-
-print("Find evaluation examples in: " + test_examples)
