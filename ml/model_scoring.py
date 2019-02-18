@@ -3,10 +3,11 @@ import numpy as np
 import os
 from keras_retinanet.utils.eval import _get_detections
 from keras_retinanet.utils.eval import _get_annotations
-from keras_retinanet.utils.eval import _compute_ap
 from keras_retinanet.utils.anchors import compute_overlap
 
-def evaluate(generator,model,iou_threshold=0.5,score_threshold=0.05,max_detections=100,save_path=None):
+
+
+def f1_evaluation(generator,model,iou_threshold=0.5,score_threshold=0.05,max_detections=100,save_path=None):
     """ Evaluate a given dataset using a given model.
     # Arguments
         generator       : The generator that represents the dataset to evaluate.
@@ -21,9 +22,7 @@ def evaluate(generator,model,iou_threshold=0.5,score_threshold=0.05,max_detectio
     # gather all detections and annotations
     all_detections     = _get_detections(generator, model, score_threshold=score_threshold, max_detections=max_detections, save_path=save_path)
     all_annotations    = _get_annotations(generator)
-    average_precisions = {}
-    recalls = {}
-    precisions = {}
+    f1_curves = []
 
     # process detections and annotations
     for label in range(generator.num_classes()):
@@ -63,7 +62,6 @@ def evaluate(generator,model,iou_threshold=0.5,score_threshold=0.05,max_detectio
 
         # no annotations -> AP for this class is 0 (is this correct?)
         if num_annotations == 0:
-            average_precisions[label] = 0, 0
             continue
 
         # sort by score
@@ -79,11 +77,33 @@ def evaluate(generator,model,iou_threshold=0.5,score_threshold=0.05,max_detectio
         recall    = true_positives / num_annotations
         precision = true_positives / np.maximum(true_positives + false_positives, np.finfo(np.float64).eps)
 
-        recalls[label] = recall
-        precisions[label] = precision
+        # recall, precision, and scores(confidence level) are arrays for a given class with values for each image
+        f1_points = []
 
-        # compute average precision
-        average_precision  = _compute_ap(recall, precision)
-        average_precisions[label] = average_precision, num_annotations
+        # Compute f1 scores
+        for r, p in zip(recall,precision):
+            if r + p == 0:    #if precision and recall are 0, f1 becomes 0
+                f1_points.append(0) 
+            else:
+                f1_points.append((2 * r * p) / (r + p))
+        f1_points = np.array(f1_points)
 
-    return recalls, precisions, average_precisions
+        # Create an approximated function for f1 score based off confidence threshold
+        degree = 2 #TO-DO: examine and expiriment
+        curve = np.poly1d(np.polyfit(scores[indices], f1_points, degree))
+        f1_curves.append(curve)
+
+    # Sample the f1 curves between 0.0 and 1.0 at a regular interval
+    scores = np.linspace(0,1,100)
+    f1_curves = [poly(scores) for poly in f1_curves]
+    # Compute the average f1_scores across classes
+    averages = np.mean(np.array(f1_curves),axis=0)
+
+    threshold = scores[np.argmax(averages)]
+    max_f1 = np.max(averages)
+
+    # This is the best possible avergae f1 score across all predicted classes.
+    # This threshold is the value to achieve the maximum f1 score.
+    # Using a higher threshold will compromise recall, a lower threshold will compromise precision.
+    # It is NOT necessarily the optimal threshold to use on predictions.
+    return max_f1, threshold
