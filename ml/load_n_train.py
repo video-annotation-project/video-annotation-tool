@@ -57,7 +57,6 @@ for dir in folders:
     if os.path.exists(dir):
         shutil.rmtree(dir)
     os.makedirs(dir)
-
 '''
 Initializes the classmap of concept names to training id's.
 (these id's don't represent the conceptid's from our database)
@@ -75,12 +74,10 @@ classmap = classmap.to_dict()[0]
 
 end = time.time()
 print("Done Initializing Classmap: " + str((end - start)/60) + " minutes")
-
 '''
 Downloads the annotation data and saves it into training and validation csv's.
 Also downloads corresponding images.
 '''
-
 start = time.time()
 print("Starting Download.")
 
@@ -88,7 +85,6 @@ download_annotations(min_examples, concepts, classmap, bad_users, img_folder, tr
 
 end = time.time()
 print("Done Downloading Annotations: " + str((end - start)/60) + " minutes")
-
 '''
 Trains the model!!!!! WOOOT WOOOT!
 '''
