@@ -8,6 +8,6 @@
    "model_weights" : "resnet50_coco_best_v2.1.0.h5",
    "class_map" : "classmap.csv",
    "annotations" : "annotations.csv",
-   "gpus" : 2,
+   "gpus" : 1,
    "epochs" : 100
 }

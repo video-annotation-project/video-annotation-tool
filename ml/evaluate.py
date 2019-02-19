@@ -14,7 +14,8 @@ from keras_retinanet import losses
 from keras_retinanet.preprocessing.csv_generator import CSVGenerator
 from keras_retinanet.models.retinanet import retinanet_bbox
 import keras
-from model_scoring import evaluate
+from model_scoring import f1_evaluation
+from keras_retinanet.utils.eval import evaluate
 
 argparser = argparse.ArgumentParser()
 argparser.add_argument(
@@ -66,7 +67,6 @@ for dir in folders:
     os.makedirs(dir)
 download_annotations(min_examples, concepts, classmap, bad_users, img_folder, train_annot_file, valid_annot_file, split=0)
 '''
-
 '''
 Initializing model for eval
 '''
@@ -80,13 +80,22 @@ test_generator = CSVGenerator(
     batch_size=16
 )
 
-recalls, precisions, average_precisions = evaluate(test_generator, model, save_path=test_examples)
+best_f1, best_thresh = f1_evaluation(test_generator, model, save_path=test_examples)
+
+total_f1 = 0
+for concept, f1 in best_f1.items():
+    print("Concept: " + classmap[concept])
+    print("F1 Score: " + str(f1))
+    print("Confidence Threshold: " + str(best_thresh[concept]))
+    print("")
+    total_f1 += f1
+
+print("Average F1: " + str(total_f1/len(best_f1)))
+'''
+average_precisions = evaluate(test_generator, model, save_path=test_examples)
 
 for concept, (ap, instances) in average_precisions.items():
     print(classmap[concept] +": " + str(ap) + " with " + str(instances) + " instances")
-    if concept not in recalls:
-        continue
-    print("recall: " + str(recalls[concept]))
-    print("precision: " + str(precisions[concept]))
-
+    
 print("Find evaluation examples in: " + test_examples)
+'''
