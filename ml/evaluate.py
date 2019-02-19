@@ -80,11 +80,17 @@ test_generator = CSVGenerator(
     batch_size=16
 )
 
-max_f1, threshold = f1_evaluation(test_generator, model, save_path=test_examples)
+best_f1, best_thresh = f1_evaluation(test_generator, model, save_path=test_examples)
 
-print("Maximum F1 value: " + str(max_f1))
-print("Best threshold value: " + str(threshold))
+total_f1 = 0
+for concept, f1 in best_f1.items():
+    print("Concept: " + classmap[concept])
+    print("F1 Score: " + str(f1))
+    print("Confidence Threshold: " + str(best_thresh[concept]))
+    print("")
+    total_f1 += f1
 
+print("Average F1: " + str(total_f1/len(best_f1)))
 '''
 average_precisions = evaluate(test_generator, model, save_path=test_examples)
 

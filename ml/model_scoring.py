@@ -22,8 +22,8 @@ def f1_evaluation(generator,model,iou_threshold=0.5,score_threshold=0.05,max_det
     # gather all detections and annotations
     all_detections     = _get_detections(generator, model, score_threshold=score_threshold, max_detections=max_detections, save_path=save_path)
     all_annotations    = _get_annotations(generator)
-    f1_curves = []
-
+    best_thresh = {}
+    best_f1 = {}
     # process detections and annotations
     for label in range(generator.num_classes()):
         if not generator.has_label(label):
@@ -86,24 +86,16 @@ def f1_evaluation(generator,model,iou_threshold=0.5,score_threshold=0.05,max_det
                 f1_points.append(0) 
             else:
                 f1_points.append((2 * r * p) / (r + p))
+        
+        if len(f1_points) == 0:
+            best_f1[label] = 0
+            best_thresh[label] = 0
+            continue
+
         f1_points = np.array(f1_points)
+        best_f1[label] = np.max(f1_points)
+        best_thresh[label] = scores[np.argmax(f1_points)]
 
-        # Create an approximated function for f1 score based off confidence threshold
-        degree = 2 #TO-DO: examine and expiriment
-        curve = np.poly1d(np.polyfit(scores[indices], f1_points, degree))
-        f1_curves.append(curve)
-
-    # Sample the f1 curves between 0.0 and 1.0 at a regular interval
-    scores = np.linspace(0,1,100)
-    f1_curves = [poly(scores) for poly in f1_curves]
-    # Compute the average f1_scores across classes
-    averages = np.mean(np.array(f1_curves),axis=0)
-
-    threshold = scores[np.argmax(averages)]
-    max_f1 = np.max(averages)
-
-    # This is the best possible avergae f1 score across all predicted classes.
-    # This threshold is the value to achieve the maximum f1 score.
-    # Using a higher threshold will compromise recall, a lower threshold will compromise precision.
-    # It is NOT necessarily the optimal threshold to use on predictions.
-    return max_f1, threshold
+    # These are the best possible f1 score for each class
+    # These are the corresponding threshold values to achieve these maximum f1 scores.
+    return best_f1, best_thresh
