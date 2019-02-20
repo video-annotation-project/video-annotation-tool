@@ -19,6 +19,7 @@ from keras_retinanet.utils.model import freeze as freeze_model
 from keras.utils import multi_gpu_model
 from keras.callbacks import ModelCheckpoint, EarlyStopping
 from keras_retinanet.models.retinanet import retinanet_bbox
+from keras_retinanet.callbacks import RedirectModel
 
 argparser = argparse.ArgumentParser()
 argparser.add_argument(
@@ -49,7 +50,17 @@ epochs = config['epochs']
 
 bad_users = json.loads(os.getenv("BAD_USERS"))
 
-
+'''
+Just load classmap without loading new data
+'''
+classmap = pd.read_csv(class_map_file, header=None).to_dict()[0]
+'''
+Initializes the classmap of concept names to training id's.
+(these id's don't represent the conceptid's from our database)
+Then downloads the annotation data and saves it into training and validation csv's.
+Also downloads corresponding images.
+'''
+'''
 folders = []
 folders.append(test_examples)
 folders.append(img_folder)
@@ -57,10 +68,7 @@ for dir in folders:
     if os.path.exists(dir):
         shutil.rmtree(dir)
     os.makedirs(dir)
-'''
-Initializes the classmap of concept names to training id's.
-(these id's don't represent the conceptid's from our database)
-'''
+
 start = time.time()
 print("Initializing Classmap.")
 
@@ -74,10 +82,7 @@ classmap = classmap.to_dict()[0]
 
 end = time.time()
 print("Done Initializing Classmap: " + str((end - start)/60) + " minutes")
-'''
-Downloads the annotation data and saves it into training and validation csv's.
-Also downloads corresponding images.
-'''
+
 start = time.time()
 print("Starting Download.")
 
@@ -85,6 +90,7 @@ download_annotations(min_examples, concepts, classmap, bad_users, img_folder, tr
 
 end = time.time()
 print("Done Downloading Annotations: " + str((end - start)/60) + " minutes")
+'''
 '''
 Trains the model!!!!! WOOOT WOOOT!
 '''
@@ -95,9 +101,11 @@ model = models.backbone('resnet50').retinanet(num_classes=len(concepts), modifie
 model.load_weights(model_path, by_name=True, skip_mismatch=True)
 
 if gpus > 1:
-    model = multi_gpu_model(model, gpus=gpus)
+    training_model = multi_gpu_model(model, gpus=gpus)
+else:
+    training_model = model
 
-model.compile(
+training_model.compile(
     loss={
         'regression'    : losses.smooth_l1(),
         'classification': losses.focal()
@@ -132,11 +140,12 @@ test_generator = CSVGenerator(
 # Checkpoint: save models that are improvements
 filepath = "weights/weights-{epoch:02d}-{val_loss:.4f}.h5"
 checkpoint = ModelCheckpoint(filepath, monitor='val_loss', save_best_only=True)
+checkpoint = RedirectModel(checkpoint, model)
 
 #stopping: stops training if val_loss stops improving
 stopping = EarlyStopping(monitor='val_loss', min_delta=0, patience=5)
 
-history = model.fit_generator(train_generator, 
+history = training_model.fit_generator(train_generator, 
     epochs=epochs, 
     callbacks=[checkpoint, stopping],
     validation_data=test_generator,

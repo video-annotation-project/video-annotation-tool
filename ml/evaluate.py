@@ -1,4 +1,3 @@
-from keras_retinanet.utils.eval import evaluate
 import argparse
 import os
 from dotenv import load_dotenv
@@ -16,6 +15,9 @@ from keras_retinanet.models.retinanet import retinanet_bbox
 import keras
 from model_scoring import f1_evaluation
 from keras_retinanet.utils.eval import evaluate
+from keras_retinanet.models import convert_model
+from keras_retinanet.models import load_model
+ 
 
 argparser = argparse.ArgumentParser()
 argparser.add_argument(
@@ -70,9 +72,9 @@ download_annotations(min_examples, concepts, classmap, bad_users, img_folder, tr
 '''
 Initializing model for eval
 '''
-model = models.backbone('resnet50').retinanet(num_classes=len(concepts), modifier=freeze_model)
-model.load_weights(model_path, by_name=True, skip_mismatch=True)
-model = retinanet_bbox(model)
+model = load_model(model_path, backbone_name='resnet50')
+model = convert_model(model)
+
 test_generator = CSVGenerator(
     valid_annot_file,
     class_map_file,
