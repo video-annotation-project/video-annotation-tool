@@ -50,6 +50,7 @@ class VideoList extends Component {
   render () {
     const {
       classes,
+      handleVideoClick,
       startedVideos,
       unwatchedVideos,
       watchedVideos,
@@ -89,7 +90,8 @@ class VideoList extends Component {
               {startedVideos.map(video => (
                 <ListItem
                   button key={video.id}
-                  onClick={() => this.props.handleVideoClick(video, 'startedVideos')}
+                  style={video.count>1?{backgroundColor: 'red'}:{}}
+                  onClick={() => handleVideoClick(video, 'startedVideos')}
                 >
                   <ListItemText primary={video.id + '. ' + video.filename} />
                 </ListItem>
@@ -106,7 +108,7 @@ class VideoList extends Component {
               {unwatchedVideos.map(video => (
                 <ListItem
                   button key={video.id}
-                  onClick={() => this.props.handleVideoClick(video, 'unwatchedVideos')}
+                  onClick={() => handleVideoClick(video, 'unwatchedVideos')}
                 >
                   <ListItemText primary={video.id + '. ' + video.filename} />
                 </ListItem>
@@ -123,7 +125,7 @@ class VideoList extends Component {
               {watchedVideos.map(video => (
                 <ListItem
                   button key={video.id}
-                  onClick={() => this.props.handleVideoClick(video, 'watchedVideos')}
+                  onClick={() => handleVideoClick(video, 'watchedVideos')}
                 >
                   <ListItemText primary={video.id + '. ' + video.filename} />
                 </ListItem>
@@ -140,7 +142,7 @@ class VideoList extends Component {
               {inProgressVideos.map(video => (
                 <ListItem
                   button key={video.id}
-                  onClick={() => this.props.handleVideoClick(video, 'inProgressVideos')}
+                  onClick={() => handleVideoClick(video, 'inProgressVideos')}
                 >
                   <ListItemText primary={video.id + '. ' + video.filename} />
                 </ListItem>

@@ -230,8 +230,12 @@ app.get('/api/videos', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
     let userId = req.user.id;
     let queryUserStartedVideos = 'SELECT videos.id, videos.filename, \
-                                  checkpoints.finished, checkpoints.timeinvideo \
+                                  checkpoints.finished, checkpoints.timeinvideo, \
+                                  count.count \
                                   FROM videos, checkpoints \
+                                  LEFT JOIN (select videoid, count(*) \
+                                  from checkpoints group by videoid) as count \
+                                  ON count.videoid=checkpoints.videoid \
                                   WHERE checkpoints.userid=$1 \
                                   AND videos.id=checkpoints.videoid \
                                   AND checkpoints.finished=false \
