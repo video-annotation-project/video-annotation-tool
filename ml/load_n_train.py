@@ -1,7 +1,5 @@
-# Loads data, updates anchor boxes, and trains.
 from loading_data import download_annotations
 from loading_data import queryDB
-from model_scoring import evaluate
 import json
 import os
 from dotenv import load_dotenv
