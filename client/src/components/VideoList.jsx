@@ -38,9 +38,6 @@ class VideoList extends Component {
     };
   }
 
-  componentDidMount = () => {
-  }
-
   toggle = (list) => {
     this.setState({
       [list]: !this.state[list]

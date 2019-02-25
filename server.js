@@ -1,7 +1,10 @@
-const express = require('express');
+const app = require('express')();
+const server = require('http').createServer(app);
+const io = require('socket.io')(server);
+
 const bodyParser = require('body-parser');
 const path = require('path');
-const request = require('request')
+const request = require('request');
 
 const _ = require('lodash');
 const passport = require('passport');
@@ -9,8 +12,8 @@ const jwt = require('jsonwebtoken');
 const passportJWT = require('passport-jwt');
 const ExtractJwt = passportJWT.ExtractJwt;
 const JwtStrategy = passportJWT.Strategy;
-
 const bcrypt = require('bcrypt');
+
 const psql = require('./db/simpleConnect');
 const AWS = require('aws-sdk');
 
@@ -41,8 +44,6 @@ var strategy = new JwtStrategy(jwtOptions, async function(jwt_payload, next) {
 });
 
 passport.use(strategy);
-
-const app = express();
 
 app.use(passport.initialize());
 
@@ -567,6 +568,20 @@ app.get('/api/reportTreeData', passport.authenticate('jwt', {session: false}),
   }
 })
 
+// This websocket sends a list of videos to the client that update in realtime
+io.on('connection', (socket) => {
+  console.log('a user connected');
+  socket.on('chat message', (msg) => {
+    console.log(msg);
+  });
+  socket.on('connect_failed', () => {
+    console.log('connection failed');
+  })
+  socket.on('disconnect', () => {
+    console.log('user disconnected');
+  });
+});
+
 // Express only serves static assets in production
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, 'client', 'build')));
@@ -575,8 +590,6 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
-app.set('port', (process.env.PORT || 3001));
-
-app.listen(app.get('port'), () => {
+server.listen(process.env.PORT || 3001, () => {
   console.log(`Find the server at: http://localhost:${app.get('port')}/`); // eslint-disable-line no-console
 });
