@@ -587,6 +587,8 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
-server.listen(process.env.PORT || 3001, () => {
+app.set('port', process.env.PORT || 3001);
+
+server.listen(app.get('port'), () => {
   console.log(`Find the server at: http://localhost:${app.get('port')}/`); // eslint-disable-line no-console
 });
