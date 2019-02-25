@@ -34,10 +34,8 @@ class VideoList extends Component {
       startedListOpen: false,
       unwatchedListOpen: false,
       watchedListOpen: false,
+      inProgressListOpen: false,
     };
-  }
-
-  componentDidMount = () => {
   }
 
   toggle = (list) => {
@@ -49,14 +47,17 @@ class VideoList extends Component {
   render () {
     const {
       classes,
+      handleVideoClick,
       startedVideos,
       unwatchedVideos,
-      watchedVideos
+      watchedVideos,
+      inProgressVideos
     } = this.props;
     const {
       startedListOpen,
       unwatchedListOpen,
-      watchedListOpen
+      watchedListOpen,
+      inProgressListOpen
     } = this.state;
 
     return (
@@ -78,7 +79,7 @@ class VideoList extends Component {
         <div className={classes.drawer}>
 
           <ListItem button onClick={() => this.toggle("startedListOpen")}>
-            <ListItemText inset primary="Started Videos" />
+            <ListItemText inset primary="My In Progress Videos" />
             {startedListOpen ? <ExpandLess /> : <ExpandMore />}
           </ListItem>
           <Collapse in={startedListOpen} timeout="auto" unmountOnExit>
@@ -86,7 +87,8 @@ class VideoList extends Component {
               {startedVideos.map(video => (
                 <ListItem
                   button key={video.id}
-                  onClick={() => this.props.handleVideoClick(video, 'startedVideos')}
+                  style={video.count>1?{backgroundColor: 'red'}:{}}
+                  onClick={() => handleVideoClick(video, 'startedVideos')}
                 >
                   <ListItemText primary={video.id + '. ' + video.filename} />
                 </ListItem>
@@ -103,7 +105,7 @@ class VideoList extends Component {
               {unwatchedVideos.map(video => (
                 <ListItem
                   button key={video.id}
-                  onClick={() => this.props.handleVideoClick(video, 'unwatchedVideos')}
+                  onClick={() => handleVideoClick(video, 'unwatchedVideos')}
                 >
                   <ListItemText primary={video.id + '. ' + video.filename} />
                 </ListItem>
@@ -112,7 +114,7 @@ class VideoList extends Component {
           </Collapse>
 
           <ListItem button onClick={() => this.toggle("watchedListOpen")}>
-            <ListItemText inset primary="Watched Videos" />
+            <ListItemText inset primary="Annotated Videos" />
             {watchedListOpen ? <ExpandLess /> : <ExpandMore />}
           </ListItem>
           <Collapse in={watchedListOpen} timeout="auto" unmountOnExit>
@@ -120,7 +122,7 @@ class VideoList extends Component {
               {watchedVideos.map(video => (
                 <ListItem
                   button key={video.id}
-                  onClick={() => this.props.handleVideoClick(video, 'watchedVideos')}
+                  onClick={() => handleVideoClick(video, 'watchedVideos')}
                 >
                   <ListItemText primary={video.id + '. ' + video.filename} />
                 </ListItem>
@@ -128,6 +130,22 @@ class VideoList extends Component {
             </List>
           </Collapse>
 
+          <ListItem button onClick={() => this.toggle("inProgressListOpen")}>
+            <ListItemText inset primary="All In Progress Videos" />
+            {inProgressListOpen ? <ExpandLess /> : <ExpandMore />}
+          </ListItem>
+          <Collapse in={inProgressListOpen} timeout="auto" unmountOnExit>
+            <List component="div" disablePadding>
+              {inProgressVideos.map(video => (
+                <ListItem
+                  button key={video.id}
+                  onClick={() => handleVideoClick(video, 'inProgressVideos')}
+                >
+                  <ListItemText primary={video.id + '. ' + video.filename} />
+                </ListItem>
+              ))}
+            </List>
+          </Collapse>
         </div>
         </Drawer>
 

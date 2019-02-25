@@ -1,7 +1,10 @@
-const express = require('express');
+const app = require('express')();
+const server = require('http').createServer(app);
+const io = require('socket.io')(server);
+
 const bodyParser = require('body-parser');
 const path = require('path');
-const request = require('request')
+const request = require('request');
 
 const _ = require('lodash');
 const passport = require('passport');
@@ -9,8 +12,8 @@ const jwt = require('jsonwebtoken');
 const passportJWT = require('passport-jwt');
 const ExtractJwt = passportJWT.ExtractJwt;
 const JwtStrategy = passportJWT.Strategy;
-
 const bcrypt = require('bcrypt');
+
 const psql = require('./db/simpleConnect');
 const AWS = require('aws-sdk');
 
@@ -19,7 +22,8 @@ jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
 jwtOptions.secretOrKey = process.env.JWT_KEY;
 
 async function findUser(userId) {
-  queryPass = 'select id, username, password, admin from users where users.id=$1';
+  queryPass = 'select id, username, password, admin \
+               from users where users.id=$1';
   const user = await psql.query(queryPass,[userId]);
   if (user.rows.length == 1) {
     return user.rows[0];
@@ -41,8 +45,6 @@ var strategy = new JwtStrategy(jwtOptions, async function(jwt_payload, next) {
 
 passport.use(strategy);
 
-const app = express();
-
 app.use(passport.initialize());
 
 // parse application/x-www-form-urlencoded
@@ -54,7 +56,8 @@ app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
 
 app.post("/api/login", async function(req, res) {
   const {username, password} = req.body;
-  let queryPass = 'select id, password, admin from users where users.username=$1';
+  let queryPass = 'select id, password, admin \
+                   from users where users.username=$1';
   try {
     const user = await psql.query(queryPass,[username]);
     if (user.rowCount === 0) {
@@ -96,7 +99,8 @@ app.post('/api/changePassword', passport.authenticate('jwt', {session: false}),
 
 app.post('/api/createUser', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
-    const queryText = "INSERT INTO users(username, password, admin) VALUES($1, $2, $3) RETURNING *";
+    const queryText = "INSERT INTO users(username, password, admin) \
+                       VALUES($1, $2, $3) RETURNING *";
     const saltRounds = 10;
     try {
       const hash = await bcrypt.hash(req.body.password, saltRounds);
@@ -226,29 +230,48 @@ app.patch('/api/conceptsSelected', passport.authenticate('jwt', {session: false}
 app.get('/api/videos', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
     let userId = req.user.id;
-    queryUserStartedVideos = 'SELECT videos.id, videos.filename, \
-                              checkpoints.finished, checkpoints.timeinvideo \
+    let queryUserStartedVideos = 'SELECT videos.id, videos.filename, \
+                                  checkpoints.finished, checkpoints.timeinvideo, \
+                                  count.count \
+                                  FROM videos, checkpoints \
+                                  LEFT JOIN (select videoid, count(*) \
+                                  from checkpoints group by videoid) as count \
+                                  ON count.videoid=checkpoints.videoid \
+                                  WHERE checkpoints.userid=$1 \
+                                  AND videos.id=checkpoints.videoid \
+                                  AND checkpoints.finished=false \
+                                  ORDER BY videos.id';
+    let queryGlobalUnwatched = 'SELECT videos.id, videos.filename, \
+                                false as finished, 0 as timeinvideo \
+                                FROM videos \
+                                WHERE id NOT IN (SELECT videoid FROM checkpoints) \
+                                ORDER BY videos.id';
+    let queryGlobalWatched = 'SELECT DISTINCT videos.id, videos.filename, \
+                              checkpoints.finished, 0 as timeinvideo \
                               FROM videos, checkpoints \
-                              WHERE checkpoints.userid=$1 \
-                              AND videos.id=checkpoints.videoid \
-                              AND checkpoints.finished=false \
-                              ORDER BY videos.id;'
-    queryGlobalUnwatched = 'SELECT videos.id, videos.filename, \
-                            false as finished, 0 as timeinvideo \
-                            FROM videos \
-                            WHERE id NOT IN (SELECT videoid FROM checkpoints) \
-                            ORDER BY videos.id;'
-    queryGlobalWatched = 'SELECT DISTINCT videos.id, videos.filename, \
-                          checkpoints.finished, 0 as timeinvideo \
-                          FROM videos, checkpoints \
-                          WHERE videos.id=checkpoints.videoid \
-                          AND checkpoints.finished=true \
-                          ORDER BY videos.id;'
+                              WHERE videos.id=checkpoints.videoid \
+                              AND checkpoints.finished=true \
+                              ORDER BY videos.id';
+    let queryGlobalInProgress = 'SELECT DISTINCT ON (videos.id) videos.id, \
+                           videos.filename, checkpoints.finished, \
+                           0 as timeinvideo \
+                           FROM videos, checkpoints \
+                           WHERE videos.id=checkpoints.videoid \
+                           AND videos.id NOT IN (SELECT videoid \
+                           FROM checkpoints \
+                           WHERE finished=true) \
+                           ORDER BY videos.id'
+
     try {
       const startedVideos = await psql.query(queryUserStartedVideos, [userId]);
       const unwatchedVideos = await psql.query(queryGlobalUnwatched);
       const watchedVideos = await psql.query(queryGlobalWatched);
-      const videoData = [startedVideos, unwatchedVideos, watchedVideos];
+      const inProgressVideos = await psql.query(queryGlobalInProgress);
+      const videoData = [
+        startedVideos,
+        unwatchedVideos,
+        watchedVideos,
+        inProgressVideos];
       res.json(videoData);
     } catch (error) {
       console.log(error);
@@ -335,8 +358,7 @@ app.get('/api/annotations', passport.authenticate('jwt', {session: false}),
                      annotations.imagewithbox, concepts.name, \
                      false as extended \
                      FROM annotations, concepts\
-                     WHERE annotations.conceptid=concepts.id' +
-                     req.query.queryConditions;
+                     WHERE annotations.conceptid=concepts.id'
     if (req.query.unsureOnly === 'true') {
       queryPass = queryPass + ' AND annotations.unsure = true';
     }
@@ -344,7 +366,14 @@ app.get('/api/annotations', passport.authenticate('jwt', {session: false}),
       queryPass = queryPass + ' AND annotations.userid = $1';
       params.push(req.user.id);
     }
-    queryPass = queryPass + ' ORDER BY annotations.timeinvideo';
+    // Adds query conditions from report tree
+    queryPass = queryPass +
+                req.query.queryConditions +
+                ' ORDER BY annotations.timeinvideo';
+    // Retrieves only selected 100 if queryLimit exists
+    if (req.query.queryLimit !== 'undefined') {
+      queryPass = queryPass + req.query.queryLimit;
+    }
     try {
       const annotations = await psql.query(queryPass, params);
       res.json(annotations.rows);
@@ -538,6 +567,18 @@ app.get('/api/reportTreeData', passport.authenticate('jwt', {session: false}),
   }
 })
 
+// This websocket sends a list of videos to the client that update in realtime
+io.on('connection', (socket) => {
+  socket.on('refresh videos', () => {
+    socket.broadcast.emit('refresh videos');
+  });
+  socket.on('connect_failed', () => {
+    console.log('socket connection failed');
+  })
+  socket.on('disconnect', () => {
+  });
+});
+
 // Express only serves static assets in production
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, 'client', 'build')));
@@ -546,8 +587,6 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
-app.set('port', (process.env.PORT || 3001));
-
-app.listen(app.get('port'), () => {
+server.listen(process.env.PORT || 3001, () => {
   console.log(`Find the server at: http://localhost:${app.get('port')}/`); // eslint-disable-line no-console
 });

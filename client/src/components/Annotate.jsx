@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import Rnd from 'react-rnd';
 import axios from 'axios';
+import io from 'socket.io-client';
 
 import ConceptsSelected from './ConceptsSelected.jsx';
 import VideoList from './VideoList.jsx';
@@ -52,6 +53,13 @@ window.addEventListener("beforeunload", (ev) => {
 class Annotate extends Component {
   constructor(props) {
     super(props);
+
+    const socket = io();
+    socket.on('refresh videos', this.loadVideos);
+    socket.on('disconnect', reason => {
+      console.log(reason);
+    });
+
     this.state = {
       currentVideo: null,
       dialogMsg: null,
@@ -62,94 +70,11 @@ class Annotate extends Component {
       startedVideos: [],
       unwatchedVideos: [],
       watchedVideos: [],
+      inProgressVideos: [],
       videoPlaybackRate: 1.0,
-      error: null
+      error: null,
+      socket: socket
     };
-  }
-
-  loadVideos = () => {
-    const config = {
-      headers: {
-        'Authorization': 'Bearer ' + localStorage.getItem('token')
-      }
-    };
-    axios.get('/api/videos', config).then(res => {
-      // this can be improved using a function input to setState
-      this.setState({
-        startedVideos: res.data[0].rows,
-        unwatchedVideos: res.data[1].rows,
-        watchedVideos: res.data[2].rows,
-      });
-      // get current video and put it in the state
-      this.setState(this.getCurrentVideo, () => {
-        var videoElement = document.getElementById("video");
-        videoElement.currentTime = this.state.currentVideo.timeinvideo;
-      });
-    });
-  }
-
-  getCurrentVideo = (state) => {
-    if (state.startedVideos.length > 0) {
-      // currentVideo is the first item in startedVideos
-      return {
-        currentVideo: state.startedVideos[0],
-        isLoaded: true,
-      }
-    }
-    if (state.unwatchedVideos.length > 0) {
-      // currentVideo is the first item in unwatchedVideos
-      let currentVideo = state.unwatchedVideos[0]
-      // remove from unwatched list
-      let unwatchedVideos = JSON.parse(JSON.stringify(state.unwatchedVideos));
-      unwatchedVideos = unwatchedVideos.filter(vid => vid.id !== currentVideo.id);
-      // Add unwatched video to current videos
-      let startedVideos = JSON.parse(JSON.stringify(state.startedVideos));
-      startedVideos = startedVideos.concat(currentVideo);
-      return {
-        startedVideos: startedVideos,
-        unwatched: unwatchedVideos,
-        currentVideo: currentVideo,
-        isLoaded: true,
-      }
-    }
-    // user does not have a video to be played. return default video 1
-    const currentVideo = {
-      'id': 1,
-      'filename': 'DocRicketts-0569_20131213T224337Z_00-00-01-00TC_h264.mp4',
-      'timeinvideo': 0,
-      'finished': true
-    };
-    return {
-      currentVideo: currentVideo,
-      isLoaded: true,
-    }
-  }
-
-  componentDidMount = async () => {
-    // adds event listeners for different key presses
-    document.addEventListener('keydown', this.handleKeyDown);
-
-    try {
-      this.loadVideos();
-    } catch (error) {
-      console.log(error);
-      console.log(JSON.parse(JSON.stringify(error)));
-      if (!error.response) {
-        return;
-      }
-      let errMsg = error.response.data.detail ||
-        error.response.data.message || 'Error';
-      console.log(errMsg);
-      this.setState({
-        isLoaded: true,
-        error: errMsg
-      });
-    }
-  }
-
-  componentWillUnmount = () => {
-     this.updateCheckpoint(false);
-     document.removeEventListener('keydown', this.handleKeyDown);
   }
 
   handleKeyDown = (e) => {
@@ -190,7 +115,90 @@ class Annotate extends Component {
     videoElement.controls = !videoElement.controls;
   }
 
-  updateCheckpoint = async (finished) => {
+  handleChangeSpeed = (event) => {
+    this.setState({
+      videoPlaybackRate: event.target.value
+    }, () => {
+      var videoElement = document.getElementById("video");
+      videoElement.playbackRate = this.state.videoPlaybackRate;
+    });
+  }
+
+  componentDidMount = async () => {
+    // adds event listeners for different key presses
+    document.addEventListener('keydown', this.handleKeyDown);
+
+    try {
+      this.loadVideos(this.getCurrentVideo);
+    } catch (error) {
+      console.log(error);
+      console.log(JSON.parse(JSON.stringify(error)));
+      if (!error.response) {
+        return;
+      }
+      let errMsg = error.response.data.detail ||
+        error.response.data.message || 'Error';
+      console.log(errMsg);
+      this.setState({
+        isLoaded: true,
+        error: errMsg
+      });
+    }
+  }
+
+  componentWillUnmount = () => {
+    this.updateCheckpoint(false);
+    this.state.socket.disconnect();
+    document.removeEventListener('keydown', this.handleKeyDown);
+  }
+
+  loadVideos = (callback) => {
+    const config = {
+      headers: {
+        'Authorization': 'Bearer ' + localStorage.getItem('token')
+      }
+    };
+    return axios.get('/api/videos', config).then(res => {
+      // this can be improved using a function input to setState
+      this.setState({
+        startedVideos: res.data[0].rows,
+        unwatchedVideos: res.data[1].rows,
+        watchedVideos: res.data[2].rows,
+        inProgressVideos: res.data[3].rows
+      }, () => {
+        if (callback) {
+          callback();
+        }
+      });
+    });
+  }
+
+  getCurrentVideo = () => {
+    // if user does not have a video to be played, return default video 1
+    let currentVideo = {
+      'id': 1,
+      'filename': 'DocRicketts-0569_20131213T224337Z_00-00-01-00TC_h264.mp4',
+      'timeinvideo': 0,
+      'finished': true
+    };
+    if (this.state.startedVideos.length > 0) {
+      // currentVideo is the first item in startedVideos
+      currentVideo = this.state.startedVideos[0];
+    } else if (this.state.unwatchedVideos.length > 0) {
+      // currentVideo is the first item in unwatchedVideos
+      currentVideo = this.state.unwatchedVideos[0]
+    }
+    this.setState({
+      currentVideo: currentVideo,
+      isLoaded: true,
+    }, () => {
+      var videoElement = document.getElementById("video");
+      videoElement.currentTime = this.state.currentVideo.timeinvideo;
+      this.updateCheckpoint(false);
+    });
+  }
+
+  updateCheckpoint = (finished) => {
     // if the currentVideo is finished, this means that it is a video from the
     // global watchedVideos list. We don't want to create checkpoints for these
     // videos.
@@ -214,19 +222,8 @@ class Annotate extends Component {
       'finished' : finished
     }
     // update SQL database
-    await axios.put('/api/checkpoints', body, config).then(res => {
-      // update this.state.startedVideos
-      let startedVideos = JSON.parse(JSON.stringify(this.state.startedVideos));
-      let currentVideo = startedVideos.find(vid =>
-        vid.id === this.state.currentVideo.id);
-      currentVideo.timeinvideo = videoElement.currentTime;
-      currentVideo.finished = finished;
-
-      this.setState({
-        // update this.state.currentVideo
-        currentVideo: JSON.parse(JSON.stringify(currentVideo)),
-        startedVideos: startedVideos
-      });
+    return axios.put('/api/checkpoints', body, config).then(res => {
+      return this.loadVideos(finished ? this.getCurrentVideo : null);
     }).catch(error => {
       console.log(error);
       console.log(JSON.parse(JSON.stringify(error)));
@@ -237,7 +234,6 @@ class Annotate extends Component {
         error.response.data.message || 'Error';
       console.log(errMsg);
       this.setState({
-        isLoaded: true,
         error: errMsg
       });
     });
@@ -246,66 +242,25 @@ class Annotate extends Component {
   handleDoneClick = async () => {
     // update video checkpoint to watched
     await this.updateCheckpoint(true);
-
-    // remove currentVideo from startedVideos, add to watchedVideos
-    let startedVideos = JSON.parse(JSON.stringify(this.state.startedVideos));
-    startedVideos = startedVideos.filter(vid =>
-      vid.id !== this.state.currentVideo.id);
-    let watchedVideos = JSON.parse(JSON.stringify(this.state.watchedVideos));
-    if (!watchedVideos.some(vid => vid.id === this.state.currentVideo.id)) {
-      watchedVideos = watchedVideos.concat(this.state.currentVideo);
-    }
-    this.setState({
-      startedVideos: startedVideos,
-      watchedVideos: watchedVideos
-    });
-
-    // get next video and play it
-    this.setState(this.getCurrentVideo, () => {
-      var videoElement = document.getElementById("video");
-      videoElement.currentTime = this.state.currentVideo.timeinvideo;
-    });
-  }
-
-  handleChangeSpeed = (event) => {
-    this.setState({
-      videoPlaybackRate: event.target.value
-    }, () => {
-      var videoElement = document.getElementById("video");
-      videoElement.playbackRate = this.state.videoPlaybackRate;
-    });
+    this.state.socket.emit('refresh videos');
   }
 
   handleVideoClick = async (clickedVideo, videoListName) => {
-
-    await this.updateCheckpoint(this.state.currentVideo.finished);
-    /*
-    If an unwatched video was clicked, remove it from unwatchedVideos and add it
-    to startedVideos
-    If a current video or watched video was clicked, do nothing
-    */
-    if (videoListName === 'unwatchedVideos') {
-      let unwatchedVideos = JSON.parse(JSON.stringify(this.state.unwatchedVideos));
-      unwatchedVideos = unwatchedVideos.filter(vid => vid.id !== clickedVideo.id);
-      let startedVideos = JSON.parse(JSON.stringify(this.state.startedVideos));
-      startedVideos = startedVideos.concat(clickedVideo);
-      this.setState({
-        startedVideos: startedVideos,
-        unwatchedVideos: unwatchedVideos
-      });
-    }
-
+    await this.updateCheckpoint(false);
+    this.setState({
+      currentVideo: clickedVideo,
+    }, async () => {
+      var videoElement = document.getElementById("video");
+      videoElement.currentTime = this.state.currentVideo.timeinvideo;
+      await this.updateCheckpoint(false);
+      this.state.socket.emit('refresh videos');
+    });
     /*
     We need to be careful when a video from watchedVideos is played by the user.
     It creates the possibility of creating duplicate checkpoints for the same
     video, as watchedVideos is a global list.
     At some point we could let users change watchedVideos into unwatchedVideos.
     */
-    this.setState({
-      currentVideo: clickedVideo,
-    })
-    var videoElement = document.getElementById("video");
-    videoElement.currentTime = clickedVideo.timeinvideo;
   };
 
   postAnnotation = (comment, unsure) => {
@@ -364,7 +319,6 @@ class Annotate extends Component {
         error.response.data.message || 'Error';
       console.log(errMsg);
       this.setState({
-        isLoaded: true,
         error: errMsg
       });
     });
@@ -448,6 +402,7 @@ class Annotate extends Component {
           startedVideos={this.state.startedVideos}
           unwatchedVideos={this.state.unwatchedVideos}
           watchedVideos={this.state.watchedVideos}
+          inProgressVideos={this.state.inProgressVideos}
         />
         <div className = {classes.videoSectionContainer}>
           {this.state.currentVideo.id + " " + this.state.currentVideo.filename}
