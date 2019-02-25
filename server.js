@@ -252,12 +252,11 @@ app.get('/api/videos', passport.authenticate('jwt', {session: false}),
                               WHERE videos.id=checkpoints.videoid \
                               AND checkpoints.finished=true \
                               ORDER BY videos.id';
-    let queryInProgress = 'SELECT DISTINCT ON (videos.id) videos.id, \
-                           videos.filename, false as finished, \
-                           checkpoints.timeinvideo \
+    let queryGlobalInProgress = 'SELECT DISTINCT ON (videos.id) videos.id, \
+                           videos.filename, checkpoints.finished, \
+                           0 as timeinvideo \
                            FROM videos, checkpoints \
                            WHERE videos.id=checkpoints.videoid \
-                           AND checkpoints.finished=false \
                            AND videos.id NOT IN (SELECT videoid \
                            FROM checkpoints \
                            WHERE finished=true) \
@@ -267,7 +266,7 @@ app.get('/api/videos', passport.authenticate('jwt', {session: false}),
       const startedVideos = await psql.query(queryUserStartedVideos, [userId]);
       const unwatchedVideos = await psql.query(queryGlobalUnwatched);
       const watchedVideos = await psql.query(queryGlobalWatched);
-      const inProgressVideos = await psql.query(queryInProgress);
+      const inProgressVideos = await psql.query(queryGlobalInProgress);
       const videoData = [
         startedVideos,
         unwatchedVideos,
@@ -570,15 +569,13 @@ app.get('/api/reportTreeData', passport.authenticate('jwt', {session: false}),
 
 // This websocket sends a list of videos to the client that update in realtime
 io.on('connection', (socket) => {
-  console.log('a user connected');
-  socket.on('chat message', (msg) => {
-    console.log(msg);
+  socket.on('refresh videos', () => {
+    socket.broadcast.emit('refresh videos');
   });
   socket.on('connect_failed', () => {
-    console.log('connection failed');
+    console.log('socket connection failed');
   })
   socket.on('disconnect', () => {
-    console.log('user disconnected');
   });
 });
 

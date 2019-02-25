@@ -239,19 +239,21 @@ class Annotate extends Component {
     });
   };
 
-  handleDoneClick = () => {
+  handleDoneClick = async () => {
     // update video checkpoint to watched
-    this.updateCheckpoint(true);
+    await this.updateCheckpoint(true);
+    this.state.socket.emit('refresh videos');
   }
 
   handleVideoClick = async (clickedVideo, videoListName) => {
     await this.updateCheckpoint(false);
     this.setState({
       currentVideo: clickedVideo,
-    }, () => {
+    }, async () => {
       var videoElement = document.getElementById("video");
       videoElement.currentTime = this.state.currentVideo.timeinvideo;
-      this.updateCheckpoint(false);
+      await this.updateCheckpoint(false);
+      this.state.socket.emit('refresh videos');
     });
     /*
     We need to be careful when a video from watchedVideos is played by the user.

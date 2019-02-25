@@ -79,7 +79,7 @@ class VideoList extends Component {
         <div className={classes.drawer}>
 
           <ListItem button onClick={() => this.toggle("startedListOpen")}>
-            <ListItemText inset primary="Started Videos" />
+            <ListItemText inset primary="My In Progress Videos" />
             {startedListOpen ? <ExpandLess /> : <ExpandMore />}
           </ListItem>
           <Collapse in={startedListOpen} timeout="auto" unmountOnExit>
@@ -114,7 +114,7 @@ class VideoList extends Component {
           </Collapse>
 
           <ListItem button onClick={() => this.toggle("watchedListOpen")}>
-            <ListItemText inset primary="Watched Videos" />
+            <ListItemText inset primary="Annotated Videos" />
             {watchedListOpen ? <ExpandLess /> : <ExpandMore />}
           </ListItem>
           <Collapse in={watchedListOpen} timeout="auto" unmountOnExit>
@@ -131,7 +131,7 @@ class VideoList extends Component {
           </Collapse>
 
           <ListItem button onClick={() => this.toggle("inProgressListOpen")}>
-            <ListItemText inset primary="In Progress Videos" />
+            <ListItemText inset primary="All In Progress Videos" />
             {inProgressListOpen ? <ExpandLess /> : <ExpandMore />}
           </ListItem>
           <Collapse in={inProgressListOpen} timeout="auto" unmountOnExit>
