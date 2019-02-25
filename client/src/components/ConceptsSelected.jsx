@@ -117,7 +117,7 @@ class ConceptsSelected extends React.Component {
       drawerOpen: false
     });
     //This need sto be called once drawer is closed for autoFocus to work
-    setTimeout(() => {this.props.handleConceptClick(concept)}, 220);
+    setTimeout(() => {this.props.handleConceptClick(concept)}, 250);
   }
 
   onDragStart = (event, index) => {
