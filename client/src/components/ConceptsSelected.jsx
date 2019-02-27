@@ -5,7 +5,10 @@ import SearchModal from './SearchModal.jsx';
 
 import AddIcon from '@material-ui/icons/Add';
 import Button from '@material-ui/core/Button';
+import ChevronRightIcon from '@material-ui/icons/ChevronRight';
+import Divider from '@material-ui/core/Divider';
 import Drawer from '@material-ui/core/Drawer';
+import IconButton from '@material-ui/core/IconButton';
 import { withStyles } from '@material-ui/core/styles';
 
 const styles = theme => ({
@@ -17,18 +20,18 @@ const styles = theme => ({
     float: 'right',
     marginTop: '5px'
   },
-  drawer: {
+  drawerContent: {
     position: 'relative',
-    width: '420px',
     textAlign: 'center'
   },
   addButton: {
     // position: 'absolute',
     // right: '70px',
     // top: '-38px'
-    display: 'inline-block'
+    // display: 'inline-block'
   },
   conceptsList: {
+    width: '420px',
     fontSize: '130%',
     display: 'flex' ,
     flexFlow: 'row wrap',
@@ -113,9 +116,10 @@ class ConceptsSelected extends React.Component {
 
   // Closes the ConceptsSelected Drawer, opens the DialogModal
   handleConceptClick = (concept) => {
-    this.setState({
-      drawerOpen: false
-    });
+    // this.setState({
+    //   drawerOpen: false
+    // });
+
     //This need sto be called once drawer is closed for autoFocus to work
     setTimeout(() => {this.props.handleConceptClick(concept)}, 250);
   }
@@ -175,12 +179,21 @@ class ConceptsSelected extends React.Component {
   render() {
     const { classes } = this.props;
 
-    let drawer = <div></div>;
+    let drawerContent = <div></div>;
     if (!this.state.isLoaded) {
-      drawer = <div>Loading...</div>;
+      drawerContent = <div>Loading...</div>;
     } else {
-      drawer = (
-        <div className={classes.drawer}>
+      drawerContent = (
+        <div className={classes.drawerContent}>
+          <IconButton onClick={() => this.toggleDrawer(false)} style={{
+            // float: 'left',
+            position: 'absolute',
+            left: 0,
+            margin: '10px',
+          }}>
+            <ChevronRightIcon />
+          </IconButton>
+          <br />
           <Button
             className={classes.addButton}
             variant="contained"
@@ -218,11 +231,6 @@ class ConceptsSelected extends React.Component {
 
     return (
       <div className={classes.root}>
-        <SearchModal
-          inputHandler={this.selectConcept}
-          open={this.state.searchModalOpen}
-          handleClose={() => this.toggleSearchModal(false)}
-        />
         <Button
           className={classes.toggleButton}
           variant="contained"
@@ -231,16 +239,36 @@ class ConceptsSelected extends React.Component {
         >
           Toggle Concepts Selected
         </Button>
-        <Drawer
-          anchor="right"
-          open={this.state.drawerOpen}
-          onClose={() => this.toggleDrawer(false)}
-        >
-          {drawer}
-        </Drawer>
+        <div style={{
+          height: '100%',
+          width: this.state.drawerOpen ? '420px' : '0px',
+          position: 'fixed',
+          zIndex: 1,
+          top: 0,
+          right: 0,
+          backgroundColor: 'white',
+          overflowX: 'hidden',
+          transition: '0.3s',
+        }}>
+          {drawerContent}
+        </div>
+        <SearchModal
+          inputHandler={this.selectConcept}
+          open={this.state.searchModalOpen}
+          handleClose={() => this.toggleSearchModal(false)}
+        />
       </div>
     );
   }
 }
+
+        // <Drawer
+        //   variant="persistent"
+        //   anchor="right"
+        //   open={this.state.drawerOpen}
+        //   onClose={() => this.toggleDrawer(false)}
+        // >
+        //   {drawerContent}
+        // </Drawer>
 
 export default withStyles(styles)(ConceptsSelected);
