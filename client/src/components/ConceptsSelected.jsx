@@ -13,8 +13,6 @@ import { withStyles } from '@material-ui/core/styles';
 
 const styles = theme => ({
   root: {
-    // float: 'right',
-    // padding: '10px'
   },
   toggleButton: {
     float: 'right',
@@ -24,21 +22,21 @@ const styles = theme => ({
     position: 'relative',
     textAlign: 'center'
   },
+  retractButton: {
+    position: 'absolute',
+    left: 0,
+    margin: '10px',
+  },
   addButton: {
-    // position: 'absolute',
-    // right: '70px',
-    // top: '-38px'
-    // display: 'inline-block'
   },
   conceptsList: {
-    width: '420px',
     fontSize: '130%',
     display: 'flex' ,
     flexFlow: 'row wrap',
     justifyContent: 'center'
   },
   concept: {
-    width: '210px',
+    width: '50%',
     listStyleType: 'none',
     cursor: 'pointer',
   },
@@ -114,12 +112,8 @@ class ConceptsSelected extends React.Component {
     });
   }
 
-  // Closes the ConceptsSelected Drawer, opens the DialogModal
+  // opens the DialogModal
   handleConceptClick = (concept) => {
-    // this.setState({
-    //   drawerOpen: false
-    // });
-
     //This need sto be called once drawer is closed for autoFocus to work
     setTimeout(() => {this.props.handleConceptClick(concept)}, 250);
   }
@@ -185,12 +179,9 @@ class ConceptsSelected extends React.Component {
     } else {
       drawerContent = (
         <div className={classes.drawerContent}>
-          <IconButton onClick={() => this.toggleDrawer(false)} style={{
-            // float: 'left',
-            position: 'absolute',
-            left: 0,
-            margin: '10px',
-          }}>
+          <IconButton
+            onClick={() => this.toggleDrawer(false)}
+            className={classes.retractButton}>
             <ChevronRightIcon />
           </IconButton>
           <br />
@@ -241,7 +232,7 @@ class ConceptsSelected extends React.Component {
         </Button>
         <div style={{
           height: '100%',
-          width: this.state.drawerOpen ? '420px' : '0px',
+          width: this.state.drawerOpen ? '440px' : '0px',
           position: 'fixed',
           zIndex: 1,
           top: 0,
@@ -262,6 +253,8 @@ class ConceptsSelected extends React.Component {
   }
 }
 
+// persistent Drawer component from material.ui is buggy, so I implemented
+// my own
         // <Drawer
         //   variant="persistent"
         //   anchor="right"
