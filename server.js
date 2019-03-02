@@ -33,7 +33,7 @@ async function findUser(userId) {
 }
 
 var strategy = new JwtStrategy(jwtOptions, async function(jwt_payload, next) {
-  console.log('payload received', jwt_payload);
+  // console.log('payload received', jwt_payload);
 
   var user = await findUser(jwt_payload.id);
   if (user) {
@@ -368,7 +368,10 @@ app.put("/api/checkpoints", passport.authenticate('jwt', {session: false}),
 //   const mimetype = 'video/mp4';
 //   const file = process.env.AWS_S3_BUCKET_VIDEOS_FOLDER + req.params.name;
 //   const cache = 0;
-//   s3.listObjectsV2({Bucket: process.env.AWS_S3_BUCKET_NAME, MaxKeys: 1, Prefix: file}, function(err, data) {
+//   s3.listObjectsV2({
+//     Bucket: process.env.AWS_S3_BUCKET_NAME, 
+//     MaxKeys: 1, Prefix: file
+//   }, (err, data) => {
 //     if (err) {
 //       return res.sendStatus(404);
 //     }
@@ -626,13 +629,15 @@ app.get('/api/reportTreeData', passport.authenticate('jwt', {session: false}),
 
 // This websocket sends a list of videos to the client that update in realtime
 io.on('connection', (socket) => {
+  console.log('socket connected');
   socket.on('refresh videos', () => {
     socket.broadcast.emit('refresh videos');
   });
   socket.on('connect_failed', () => {
     console.log('socket connection failed');
-  })
+  });
   socket.on('disconnect', () => {
+    console.log('socket disconnected');
   });
 });
 
@@ -647,5 +652,5 @@ if (process.env.NODE_ENV === 'production') {
 app.set('port', process.env.PORT || 3001);
 
 server.listen(app.get('port'), () => {
-  console.log(`Find the server at: http://localhost:${app.get('port')}/`); // eslint-disable-line no-console
+  console.log(`Find the server at: http://localhost:${app.get('port')}/`); 
 });

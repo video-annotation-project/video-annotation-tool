@@ -42,19 +42,14 @@ const styles = theme => ({
   },
 });
 
-window.addEventListener("beforeunload", (ev) => {
-  var videoElement = document.getElementById("video");
-  if (!videoElement.paused) {
-    ev.preventDefault();
-    return ev.returnValue = 'Are you sure you want to close?';
-  }
-});
-
 class Annotate extends Component {
   constructor(props) {
     super(props);
 
     const socket = io();
+    socket.on('connect', () => {
+      console.log('socket connected!');
+    });
     socket.on('refresh videos', this.loadVideos);
     socket.on('disconnect', reason => {
       console.log(reason);
@@ -75,6 +70,43 @@ class Annotate extends Component {
       error: null,
       socket: socket
     };
+  }
+
+  componentDidMount = async () => {
+    // add event listener for closing window
+    window.addEventListener("beforeunload", (ev) => {
+      var videoElement = document.getElementById("video");
+      if (!videoElement.paused) {
+        ev.preventDefault();
+        ev.returnValue = 'Are you sure you want to close?';
+      }
+    });
+
+    // adds event listener for different key presses
+    document.addEventListener('keydown', this.handleKeyDown);
+
+    try {
+      this.loadVideos(this.getCurrentVideo);
+    } catch (error) {
+      console.log(error);
+      console.log(JSON.parse(JSON.stringify(error)));
+      if (!error.response) {
+        return;
+      }
+      let errMsg = error.response.data.detail ||
+        error.response.data.message || 'Error';
+      console.log(errMsg);
+      this.setState({
+        isLoaded: true,
+        error: errMsg
+      });
+    }
+  }
+
+  componentWillUnmount = () => {
+    this.updateCheckpoint(false, false);
+    this.state.socket.disconnect();
+    document.removeEventListener('keydown', this.handleKeyDown);
   }
 
   handleKeyDown = (e) => {
@@ -122,34 +154,6 @@ class Annotate extends Component {
       var videoElement = document.getElementById("video");
       videoElement.playbackRate = this.state.videoPlaybackRate;
     });
-  }
-
-  componentDidMount = async () => {
-    // adds event listeners for different key presses
-    document.addEventListener('keydown', this.handleKeyDown);
-
-    try {
-      this.loadVideos(this.getCurrentVideo);
-    } catch (error) {
-      console.log(error);
-      console.log(JSON.parse(JSON.stringify(error)));
-      if (!error.response) {
-        return;
-      }
-      let errMsg = error.response.data.detail ||
-        error.response.data.message || 'Error';
-      console.log(errMsg);
-      this.setState({
-        isLoaded: true,
-        error: errMsg
-      });
-    }
-  }
-
-  componentWillUnmount = () => {
-    this.updateCheckpoint(false, false);
-    this.state.socket.disconnect();
-    document.removeEventListener('keydown', this.handleKeyDown);
   }
 
   loadVideos = (callback) => {
