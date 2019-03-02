@@ -260,7 +260,7 @@ app.get('/api/videos', passport.authenticate('jwt', {session: false}),
                               AND checkpoints.finished=true \
                               ORDER BY videos.id';
     let queryGlobalInProgress = 'SELECT DISTINCT ON (videos.id) \
-                                 videos.id, videos.filename, checkpoints.finished, \
+                                videos.id, videos.filename, checkpoints.finished, \
                                  CASE WHEN c.timeinvideo IS null THEN 0 \
                                  ELSE c.timeinvideo END AS timeinvideo \
                                  FROM checkpoints, videos \
@@ -393,7 +393,10 @@ app.put("/api/checkpoints", passport.authenticate('jwt', {session: false}),
 //         'Last-Modified'  : data.Contents[0].LastModified,
 //         'Content-Type'   : mimetype
 //       });
-//       s3.getObject({Bucket: process.env.AWS_S3_BUCKET_NAME, Key: file, Range: range}).createReadStream().pipe(res);
+//       s3.getObject({
+//         Bucket: process.env.AWS_S3_BUCKET_NAME, 
+//         Key: file, Range: range
+//       }).createReadStream().pipe(res);
 //     }
 //     else
 //     {
@@ -404,7 +407,10 @@ app.put("/api/checkpoints", passport.authenticate('jwt', {session: false}),
 //         'Last-Modified' : data.Contents[0].LastModified,
 //         'Content-Type'  : mimetype
 //       });
-//       s3.getObject({Bucket: process.env.AWS_S3_BUCKET_NAME, Key: file}).createReadStream().pipe(res);
+//       s3.getObject({
+//         Bucket: process.env.AWS_S3_BUCKET_NAME, 
+//         Key: file
+//       }).createReadStream().pipe(res);
 //     }
 //   });
 // });
@@ -528,9 +534,8 @@ app.delete('/api/annotations', passport.authenticate('jwt', {session: false}),
 
 // in the future, this route as well as the /api/conceptImages route can
 // be circumvented by using cloudfront
-app.get('/api/annotationImages/:name', passport.authenticate('jwt', {session: false}),
-  (req, res) => {
-
+app.get('/api/annotationImages/:name', 
+  passport.authenticate('jwt', {session: false}), (req, res) => {
   let s3 = new AWS.S3();
   let key = process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + req.params.name;
   var params = {
