@@ -290,6 +290,53 @@ app.get('/api/videos', passport.authenticate('jwt', {session: false}),
   }
 );
 
+app.get(
+  '/api/videos/:videoid',
+  passport.authenticate('jwt', {session: false}),
+  async (req, res) => {
+    let queryText = 'SELECT \
+                       usernames.userswatching, \
+                       videos.* \
+                     FROM \
+                       (SELECT \
+                         videos.id,\
+                         array_agg(users.username) AS userswatching \
+                         FROM videos \
+                         FULL OUTER JOIN checkpoints \
+                         ON checkpoints.videoid=videos.id \
+                         LEFT JOIN users \
+                         ON users.id=checkpoints.userid \
+                         WHERE videos.id=$1 \
+                         GROUP BY videos.id) \
+                       AS usernames \
+                     LEFT JOIN videos \
+                     ON videos.id=usernames.id';
+    try {
+      const videoMetadata = await psql.query(queryText, [req.params.videoid]);
+      res.json(videoMetadata.rows);
+    } catch (error) {
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
+);
+
+app.patch('/api/videos/:videoid',
+  passport.authenticate('jwt', {session: false}), async (req, res) => {
+  let queryText = 'UPDATE videos \
+                   SET description=$1 \
+                   WHERE id=$2 RETURNING *';
+  try {
+    const updateRes = await psql.query(
+      queryText,
+      [req.body.description,req.params.videoid]
+    );
+    res.json(updateRes.rows);
+  } catch (error) {
+    res.status(500).json(error);
+  }
+});
+
 app.put("/api/checkpoints", passport.authenticate('jwt', {session: false}),
   async (req, res) => {
   const { videoId, timeinvideo, finished } = req.body;
