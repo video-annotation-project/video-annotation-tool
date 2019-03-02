@@ -47,13 +47,18 @@ class Annotate extends Component {
     super(props);
 
     const socket = io();
+    // const socket = io({transports: ['polling']});
+    // ^ this works arrrghhh
     socket.on('connect', () => {
       console.log('socket connected!');
     });
-    socket.on('refresh videos', this.loadVideos);
+    socket.on('reconnect_attempt', (attemptNumber) => {
+      console.log('reconnect attempt', attemptNumber);
+    });
     socket.on('disconnect', reason => {
       console.log(reason);
     });
+    socket.on('refresh videos', this.loadVideos);
 
     this.state = {
       currentVideo: null,

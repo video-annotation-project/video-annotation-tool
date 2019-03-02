@@ -634,15 +634,15 @@ app.get('/api/reportTreeData', passport.authenticate('jwt', {session: false}),
 
 // This websocket sends a list of videos to the client that update in realtime
 io.on('connection', (socket) => {
-  console.log('socket connected');
-  socket.on('refresh videos', () => {
-    socket.broadcast.emit('refresh videos');
-  });
+  console.log('socket connected!');
   socket.on('connect_failed', () => {
     console.log('socket connection failed');
   });
   socket.on('disconnect', () => {
     console.log('socket disconnected');
+  });
+  socket.on('refresh videos', () => {
+    socket.broadcast.emit('refresh videos');
   });
 });
 
