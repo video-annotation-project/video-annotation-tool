@@ -147,7 +147,7 @@ class Annotate extends Component {
   }
 
   componentWillUnmount = () => {
-    this.updateCheckpoint(false);
+    this.updateCheckpoint(false, false);
     this.state.socket.disconnect();
     document.removeEventListener('keydown', this.handleKeyDown);
   }
@@ -159,17 +159,12 @@ class Annotate extends Component {
       }
     };
     return axios.get('/api/videos', config).then(res => {
-      // this can be improved using a function input to setState
       this.setState({
         startedVideos: res.data[0].rows,
         unwatchedVideos: res.data[1].rows,
         watchedVideos: res.data[2].rows,
         inProgressVideos: res.data[3].rows
-      }, () => {
-        if (callback) {
-          callback();
-        }
-      });
+      }, callback);
     });
   }
 
@@ -194,11 +189,11 @@ class Annotate extends Component {
     }, () => {
       var videoElement = document.getElementById("video");
       videoElement.currentTime = this.state.currentVideo.timeinvideo;
-      this.updateCheckpoint(false);
+      this.updateCheckpoint(false, true);
     });
   }
 
-  updateCheckpoint = (finished) => {
+  updateCheckpoint = (finished, updateComponent) => {
     // if the currentVideo is finished, this means that it is a video from the
     // global watchedVideos list. We don't want to create checkpoints for these
     // videos.
@@ -223,7 +218,9 @@ class Annotate extends Component {
     }
     // update SQL database
     return axios.put('/api/checkpoints', body, config).then(res => {
-      return this.loadVideos(finished ? this.getCurrentVideo : null);
+      if (updateComponent) {
+        return this.loadVideos(finished ? this.getCurrentVideo : null);
+      }
     }).catch(error => {
       console.log(error);
       console.log(JSON.parse(JSON.stringify(error)));
@@ -241,18 +238,18 @@ class Annotate extends Component {
 
   handleDoneClick = async () => {
     // update video checkpoint to watched
-    await this.updateCheckpoint(true);
+    await this.updateCheckpoint(true, true);
     this.state.socket.emit('refresh videos');
   }
 
   handleVideoClick = async (clickedVideo, videoListName) => {
-    await this.updateCheckpoint(false);
+    await this.updateCheckpoint(false, true);
     this.setState({
       currentVideo: clickedVideo,
     }, async () => {
       var videoElement = document.getElementById("video");
       videoElement.currentTime = this.state.currentVideo.timeinvideo;
-      await this.updateCheckpoint(false);
+      await this.updateCheckpoint(false, true);
       this.state.socket.emit('refresh videos');
     });
     /*
@@ -408,7 +405,7 @@ class Annotate extends Component {
           {this.state.currentVideo.id + " " + this.state.currentVideo.filename}
           <div className = {classes.boxContainer}>
             <video
-              onPause={this.updateCheckpoint.bind(this, false)}
+              onPause={() => this.updateCheckpoint(false, true)}
               id="video"
               width="1600"
               height="900"
