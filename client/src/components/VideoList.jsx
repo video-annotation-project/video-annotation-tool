@@ -5,10 +5,13 @@ import Drawer from '@material-ui/core/Drawer';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
+import IconButton from '@material-ui/core/IconButton';
+import Description from '@material-ui/icons/Description';
 import { withStyles } from '@material-ui/core/styles';
 import Collapse from '@material-ui/core/Collapse';
 import ExpandLess from '@material-ui/icons/ExpandLess';
 import ExpandMore from '@material-ui/icons/ExpandMore';
+import VideoMetadata from './VideoMetadata.jsx';
 
 const styles = theme => ({
   root: {
@@ -35,12 +38,33 @@ class VideoList extends Component {
       unwatchedListOpen: false,
       watchedListOpen: false,
       inProgressListOpen: false,
+      descriptionOpen: false,
+      videoid: null
     };
   }
 
   toggle = (list) => {
     this.setState({
       [list]: !this.state[list]
+    });
+  }
+
+  //Methods for video meta data
+  openVideoMetadata = (event, videoid) => {
+    event.stopPropagation()
+    this.setState({
+      descriptionOpen: true,
+      videoid: videoid
+    })
+  }
+
+  inputHandler = () => {
+    console.log('Input');
+  }
+
+  closeVideoMetadata = () => {
+    this.setState({
+      descriptionOpen: false
     });
   }
 
@@ -91,6 +115,13 @@ class VideoList extends Component {
                   onClick={() => handleVideoClick(video, 'startedVideos')}
                 >
                   <ListItemText primary={video.id + '. ' + video.filename} />
+                  <IconButton>
+                    <Description
+                      onClick={
+                        (event) => this.openVideoMetadata(event, video.id)
+                      }
+                    />
+                  </IconButton>
                 </ListItem>
               ))}
             </List>
@@ -108,6 +139,13 @@ class VideoList extends Component {
                   onClick={() => handleVideoClick(video, 'unwatchedVideos')}
                 >
                   <ListItemText primary={video.id + '. ' + video.filename} />
+                  <IconButton>
+                    <Description
+                      onClick={
+                        (event) => this.openVideoMetadata(event, video.id)
+                      }
+                    />
+                  </IconButton>
                 </ListItem>
               ))}
             </List>
@@ -125,6 +163,13 @@ class VideoList extends Component {
                   onClick={() => handleVideoClick(video, 'watchedVideos')}
                 >
                   <ListItemText primary={video.id + '. ' + video.filename} />
+                  <IconButton>
+                    <Description
+                      onClick={
+                        (event) => this.openVideoMetadata(event, video.id)
+                      }
+                    />
+                  </IconButton>
                 </ListItem>
               ))}
             </List>
@@ -142,13 +187,31 @@ class VideoList extends Component {
                   onClick={() => handleVideoClick(video, 'inProgressVideos')}
                 >
                   <ListItemText primary={video.id + '. ' + video.filename} />
+                  <IconButton>
+                    <Description
+                      onClick={
+                        (event) => this.openVideoMetadata(event, video.id)
+                      }
+                    />
+                  </IconButton>
                 </ListItem>
               ))}
             </List>
           </Collapse>
         </div>
         </Drawer>
-
+        {this.state.descriptionOpen &&
+          <VideoMetadata
+            open={true /* The DialogModal 'openness' is controlled through
+              boolean logic rather than by passing in a variable as an
+              attribute. This is to force DialogModal to unmount when it closes
+              so that its state is reset. This also prevents the accidental
+              double submission bug, by implicitly reducing the transition time
+              of DialogModal to zero. */}
+            handleClose={this.closeVideoMetadata}
+            videoid={this.state.videoid}
+          />
+        }
       </div>
     );
   }
