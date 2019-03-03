@@ -85,16 +85,10 @@ class Annotate extends Component {
   }
 
   componentDidMount = async () => {
-    // add event listener for closing window
-    window.addEventListener("beforeunload", (ev) => {
-      var videoElement = document.getElementById("video");
-      if (!videoElement.paused) {
-        ev.preventDefault();
-        ev.returnValue = 'Are you sure you want to close?';
-      }
-    });
+    // add event listener for closing or reloading window
+    window.addEventListener('beforeunload', this.handleUnload);
 
-    // adds event listener for different key presses
+    // add event listener for different key presses
     document.addEventListener('keydown', this.handleKeyDown);
 
     try {
@@ -118,7 +112,16 @@ class Annotate extends Component {
   componentWillUnmount = () => {
     this.updateCheckpoint(false, false);
     this.state.socket.disconnect();
+    window.removeEventListener('beforeunload', this.handleUnload);
     document.removeEventListener('keydown', this.handleKeyDown);
+  }
+
+  handleUnload = (ev) => {
+    var videoElement = document.getElementById("video");
+    if (!videoElement.paused) {
+      ev.preventDefault();
+      ev.returnValue = 'Are you sure you want to close?';
+    }
   }
 
   handleKeyDown = (e) => {
