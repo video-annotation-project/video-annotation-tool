@@ -4,14 +4,16 @@ import axios from 'axios';
 import io from 'socket.io-client';
 
 import ConceptsSelected from './ConceptsSelected.jsx';
-import VideoList from './VideoList.jsx';
 import DialogModal from './DialogModal.jsx';
+import VideoList from './VideoList.jsx';
 
 import Button from '@material-ui/core/Button';
+import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
+import Slider from '@material-ui/lab/Slider';
 
 const styles = theme => ({
-  boxContainer: {
+  videoContainer: {
     postion: 'absolute',
     top: '50px',
     width: '1600px',
@@ -27,18 +29,6 @@ const styles = theme => ({
     marginTop: '10px',
     marginLeft: '20px',
     marginBottom: '10px'
-  },
-  conceptSectionContainer: {
-    position: 'relative',
-    float: 'right',
-    width: '460px',
-    height: '1000px',
-    backgroundColor: 'white',
-    borderLeft: '1px black solid',
-    overflow: 'auto'
-  },
-  videoSectionContainer: {
-    float: 'left'
   },
 });
 
@@ -143,9 +133,9 @@ class Annotate extends Component {
   }
 
   skipVideoTime = (time) => {
-     var videoElement = document.getElementById("video");
-     var cTime = videoElement.currentTime;
-     videoElement.currentTime = (cTime + time);
+    var videoElement = document.getElementById("video");
+    var cTime = videoElement.currentTime;
+    videoElement.currentTime = (cTime + time);
   }
 
   playPause = () => {
@@ -162,11 +152,11 @@ class Annotate extends Component {
     videoElement.controls = !videoElement.controls;
   }
 
-  handleChangeSpeed = (event) => {
+  handleChangeSpeed = (event, value) => {
     this.setState({
-      videoPlaybackRate: event.target.value
+      videoPlaybackRate: Math.round(value * 10) / 10
     }, () => {
-      var videoElement = document.getElementById("video");
+      const videoElement = document.getElementById("video");
       videoElement.playbackRate = this.state.videoPlaybackRate;
     });
   }
@@ -233,7 +223,7 @@ class Annotate extends Component {
     const body = {
       'videoId': this.state.currentVideo.id,
       'timeinvideo': videoElement.currentTime,
-      'finished' : finished
+      'finished': finished
     }
     // update SQL database
     return axios.put('/api/checkpoints', body, config).then(res => {
@@ -292,10 +282,10 @@ class Annotate extends Component {
     var height = dragBoxCord.height;
     var width = dragBoxCord.width;
 
-    var x1 = Math.max((x1_box - x1_video),0);
-    var y1 = Math.max((y1_box - y1_video),0);
-    var x2 = Math.min((x1 + width),1599);
-    var y2 = Math.min((y1 + height),899);
+    var x1 = Math.max((x1_box - x1_video), 0);
+    var y1 = Math.max((y1_box - y1_video), 0);
+    var x2 = Math.min((x1 + width), 1599);
+    var y2 = Math.min((y1 + height), 899);
 
     //draw video with and without bounding box to canvas and save as img
     var date = Date.now().toString();
@@ -313,7 +303,7 @@ class Annotate extends Component {
       'image': date,
       'imagewithbox': date + "_box",
       'comment': comment,
-      'unsure' : unsure
+      'unsure': unsure
     };
     const config = {
       headers: {
@@ -341,7 +331,7 @@ class Annotate extends Component {
   }
 
   createAndUploadImages = async (vidCord, dragBoxCord, videoElement, date,
-     x1, y1) => {
+    x1, y1) => {
     var canvas = document.createElement('canvas');
     canvas.height = vidCord.height;
     canvas.width = vidCord.width;
@@ -382,8 +372,8 @@ class Annotate extends Component {
       dialogMsg:
         concept.name +
         " in video " + this.state.currentVideo.filename +
-        " at time " + Math.floor(videoElement.currentTime/60) + ' minutes '
-        + videoElement.currentTime%60 + " seconds",
+        " at time " + Math.floor(videoElement.currentTime / 60) + ' minutes '
+        + videoElement.currentTime % 60 + " seconds",
       dialogOpen: true,
       clickedConcept: concept,
       closeHandler: this.handleDialogClose
@@ -404,15 +394,12 @@ class Annotate extends Component {
     if (!isLoaded) {
       return <div>Loading...</div>
     }
-    if (error)  {
+    if (error) {
       return <div>Error: {error}</div>;
     }
     return (
       <React.Fragment>
-        <ConceptsSelected
-          className = {classes.conceptSectionContainer}
-          handleConceptClick={this.handleConceptClick}
-        />
+        <ConceptsSelected handleConceptClick={this.handleConceptClick} />
         <VideoList
           handleVideoClick={this.handleVideoClick}
           startedVideos={this.state.startedVideos}
@@ -420,22 +407,24 @@ class Annotate extends Component {
           watchedVideos={this.state.watchedVideos}
           inProgressVideos={this.state.inProgressVideos}
         />
-        <div className = {classes.videoSectionContainer}>
+        <div>
           {this.state.currentVideo.id + " " + this.state.currentVideo.filename}
-          <div className = {classes.boxContainer}>
+          <div className={classes.videoContainer}>
             <video
               onPause={() => this.updateCheckpoint(false, true)}
               id="video"
               width="1600"
               height="900"
-              src={'https://d1bnpmj61iqorj.cloudfront.net/videos/'+
+              src={'https://d1bnpmj61iqorj.cloudfront.net/videos/' +
                 this.state.currentVideo.filename}
               type='video/mp4'
               crossOrigin='use-credentials'
-              >
+            >
               Your browser does not support the video tag.
             </video>
-            <Rnd id="dragBox"
+            <Rnd 
+              id="dragBox"
+              className={classes.dragBox}
               default={{
                 x: 30,
                 y: 30,
@@ -447,11 +436,31 @@ class Annotate extends Component {
               maxWidth={900}
               maxHeight={650}
               bounds="parent"
-              className={classes.dragBox}
-              >
+            >
             </Rnd>
           </div>
-          <br />
+          <div style={{
+            marginTop: '10px',
+            marginLeft: '20px',
+            marginBottom: '10px',
+            float: 'left'
+          }}>
+            <Slider style={{
+              width: 200,
+              marginTop: 10,
+            }}
+              value={this.state.videoPlaybackRate}
+              min={0}
+              max={4}
+              step={0.1}
+              onChange={this.handleChangeSpeed}
+            />
+            <Typography style={{
+              marginTop: 20
+            }}>
+              Play Rate: {this.state.videoPlaybackRate}
+            </Typography>
+          </div>
           <Button variant="contained" color="primary"
             className={classes.button}
             onClick={() => this.skipVideoTime(-5)}>-5 sec
@@ -472,18 +481,6 @@ class Annotate extends Component {
             className={classes.button}
             onClick={() => this.handleDoneClick()}>Done
           </Button>
-          <br />
-          <div width="250">
-            Play Rate: {this.state.videoPlaybackRate}
-          </div>
-          <input
-            type="range"
-            id="playSpeedId"
-            min="0" max="4"
-            value={this.state.videoPlaybackRate}
-            onChange={this.handleChangeSpeed}
-            step=".1"
-          />
         </div>
         {this.state.dialogOpen &&
           <DialogModal
