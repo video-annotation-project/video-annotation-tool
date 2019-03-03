@@ -46,9 +46,16 @@ class Annotate extends Component {
   constructor(props) {
     super(props);
 
-    const socket = io();
-    // const socket = io({transports: ['polling']});
-    // ^ this works arrrghhh
+    // here we do a manual conditional proxy because React won't do it for us
+    let socket;
+    if (window.location.origin === 'http://localhost:3000') {
+      console.log('manually proxying socket')
+      socket = io('http://localhost:3001');
+    } else {
+      socket = io();
+    }
+    // const socket = io({transports: ['polling, websocket']});
+
     socket.on('connect', () => {
       console.log('socket connected!');
     });
