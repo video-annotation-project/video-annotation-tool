@@ -230,6 +230,7 @@ app.patch('/api/conceptsSelected', passport.authenticate('jwt', {session: false}
 app.get('/api/videos', passport.authenticate('jwt', {session: false}),
   async (req, res) => {
     let userId = req.user.id;
+    //These need to be updated using joins to become optimal
     let queryUserStartedVideos = 'SELECT videos.id, videos.filename, \
                                   checkpoints.finished, checkpoints.timeinvideo, \
                                   count.count \

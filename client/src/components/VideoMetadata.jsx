@@ -38,8 +38,6 @@ class VideoMetadata extends Component {
       '/api/videos/'+this.props.videoid,
       config
     ).then(videoMetadata => {
-      console.log('Loaded');
-      console.log(videoMetadata);
       this.setState({
         videoMetadata: videoMetadata.data[0],
         isLoaded: true
