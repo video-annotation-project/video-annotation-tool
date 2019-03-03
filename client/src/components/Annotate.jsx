@@ -42,23 +42,30 @@ const styles = theme => ({
   },
 });
 
-window.addEventListener("beforeunload", (ev) => {
-  var videoElement = document.getElementById("video");
-  if (!videoElement.paused) {
-    ev.preventDefault();
-    return ev.returnValue = 'Are you sure you want to close?';
-  }
-});
-
 class Annotate extends Component {
   constructor(props) {
     super(props);
 
-    const socket = io();
-    socket.on('refresh videos', this.loadVideos);
+    // here we do a manual conditional proxy because React won't do it for us
+    let socket;
+    if (window.location.origin === 'http://localhost:3000') {
+      console.log('manually proxying socket')
+      socket = io('http://localhost:3001');
+    } else {
+      socket = io();
+    }
+    // const socket = io({transports: ['polling, websocket']});
+
+    socket.on('connect', () => {
+      console.log('socket connected!');
+    });
+    socket.on('reconnect_attempt', (attemptNumber) => {
+      console.log('reconnect attempt', attemptNumber);
+    });
     socket.on('disconnect', reason => {
       console.log(reason);
     });
+    socket.on('refresh videos', this.loadVideos);
 
     this.state = {
       currentVideo: null,
@@ -75,6 +82,46 @@ class Annotate extends Component {
       error: null,
       socket: socket
     };
+  }
+
+  componentDidMount = async () => {
+    // add event listener for closing or reloading window
+    window.addEventListener('beforeunload', this.handleUnload);
+
+    // add event listener for different key presses
+    document.addEventListener('keydown', this.handleKeyDown);
+
+    try {
+      this.loadVideos(this.getCurrentVideo);
+    } catch (error) {
+      console.log(error);
+      console.log(JSON.parse(JSON.stringify(error)));
+      if (!error.response) {
+        return;
+      }
+      let errMsg = error.response.data.detail ||
+        error.response.data.message || 'Error';
+      console.log(errMsg);
+      this.setState({
+        isLoaded: true,
+        error: errMsg
+      });
+    }
+  }
+
+  componentWillUnmount = () => {
+    this.updateCheckpoint(false, false);
+    this.state.socket.disconnect();
+    window.removeEventListener('beforeunload', this.handleUnload);
+    document.removeEventListener('keydown', this.handleKeyDown);
+  }
+
+  handleUnload = (ev) => {
+    var videoElement = document.getElementById("video");
+    if (!videoElement.paused) {
+      ev.preventDefault();
+      ev.returnValue = 'Are you sure you want to close?';
+    }
   }
 
   handleKeyDown = (e) => {
@@ -124,34 +171,6 @@ class Annotate extends Component {
     });
   }
 
-  componentDidMount = async () => {
-    // adds event listeners for different key presses
-    document.addEventListener('keydown', this.handleKeyDown);
-
-    try {
-      this.loadVideos(this.getCurrentVideo);
-    } catch (error) {
-      console.log(error);
-      console.log(JSON.parse(JSON.stringify(error)));
-      if (!error.response) {
-        return;
-      }
-      let errMsg = error.response.data.detail ||
-        error.response.data.message || 'Error';
-      console.log(errMsg);
-      this.setState({
-        isLoaded: true,
-        error: errMsg
-      });
-    }
-  }
-
-  componentWillUnmount = () => {
-    this.updateCheckpoint(false);
-    this.state.socket.disconnect();
-    document.removeEventListener('keydown', this.handleKeyDown);
-  }
-
   loadVideos = (callback) => {
     const config = {
       headers: {
@@ -159,17 +178,12 @@ class Annotate extends Component {
       }
     };
     return axios.get('/api/videos', config).then(res => {
-      // this can be improved using a function input to setState
       this.setState({
         startedVideos: res.data[0].rows,
         unwatchedVideos: res.data[1].rows,
         watchedVideos: res.data[2].rows,
         inProgressVideos: res.data[3].rows
-      }, () => {
-        if (callback) {
-          callback();
-        }
-      });
+      }, callback);
     });
   }
 
@@ -194,11 +208,11 @@ class Annotate extends Component {
     }, () => {
       var videoElement = document.getElementById("video");
       videoElement.currentTime = this.state.currentVideo.timeinvideo;
-      this.updateCheckpoint(false);
+      this.updateCheckpoint(false, true);
     });
   }
 
-  updateCheckpoint = (finished) => {
+  updateCheckpoint = (finished, updateComponent) => {
     // if the currentVideo is finished, this means that it is a video from the
     // global watchedVideos list. We don't want to create checkpoints for these
     // videos.
@@ -223,7 +237,9 @@ class Annotate extends Component {
     }
     // update SQL database
     return axios.put('/api/checkpoints', body, config).then(res => {
-      return this.loadVideos(finished ? this.getCurrentVideo : null);
+      if (updateComponent) {
+        return this.loadVideos(finished ? this.getCurrentVideo : null);
+      }
     }).catch(error => {
       console.log(error);
       console.log(JSON.parse(JSON.stringify(error)));
@@ -241,18 +257,18 @@ class Annotate extends Component {
 
   handleDoneClick = async () => {
     // update video checkpoint to watched
-    await this.updateCheckpoint(true);
+    await this.updateCheckpoint(true, true);
     this.state.socket.emit('refresh videos');
   }
 
   handleVideoClick = async (clickedVideo, videoListName) => {
-    await this.updateCheckpoint(false);
+    await this.updateCheckpoint(false, true);
     this.setState({
       currentVideo: clickedVideo,
     }, async () => {
       var videoElement = document.getElementById("video");
       videoElement.currentTime = this.state.currentVideo.timeinvideo;
-      await this.updateCheckpoint(false);
+      await this.updateCheckpoint(false, true);
       this.state.socket.emit('refresh videos');
     });
     /*
@@ -408,7 +424,7 @@ class Annotate extends Component {
           {this.state.currentVideo.id + " " + this.state.currentVideo.filename}
           <div className = {classes.boxContainer}>
             <video
-              onPause={this.updateCheckpoint.bind(this, false)}
+              onPause={() => this.updateCheckpoint(false, true)}
               id="video"
               width="1600"
               height="900"

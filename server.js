@@ -33,7 +33,7 @@ async function findUser(userId) {
 }
 
 var strategy = new JwtStrategy(jwtOptions, async function(jwt_payload, next) {
-  console.log('payload received', jwt_payload);
+  // console.log('payload received', jwt_payload);
 
   var user = await findUser(jwt_payload.id);
   if (user) {
@@ -247,26 +247,36 @@ app.get('/api/videos', passport.authenticate('jwt', {session: false}),
                                 WHERE id NOT IN (SELECT videoid FROM checkpoints) \
                                 ORDER BY videos.id';
     let queryGlobalWatched = 'SELECT DISTINCT videos.id, videos.filename, \
-                              checkpoints.finished, 0 as timeinvideo \
-                              FROM videos, checkpoints \
+                              checkpoints.finished, \
+                              CASE WHEN c.timeinvideo IS null \
+                              THEN 0 ELSE c.timeinvideo END AS timeinvideo \
+                              FROM checkpoints, videos \
+                              LEFT JOIN (SELECT videoid, timeinvideo \
+                                FROM checkpoints \
+                                WHERE userid=$1)\
+                              AS c \
+                              ON c.videoid=videos.id \
                               WHERE videos.id=checkpoints.videoid \
                               AND checkpoints.finished=true \
                               ORDER BY videos.id';
-    let queryGlobalInProgress = 'SELECT DISTINCT ON (videos.id) videos.id, \
-                           videos.filename, checkpoints.finished, \
-                           0 as timeinvideo \
-                           FROM videos, checkpoints \
-                           WHERE videos.id=checkpoints.videoid \
-                           AND videos.id NOT IN (SELECT videoid \
-                           FROM checkpoints \
-                           WHERE finished=true) \
-                           ORDER BY videos.id'
-
+    let queryGlobalInProgress = 'SELECT DISTINCT ON (videos.id) \
+                                videos.id, videos.filename, checkpoints.finished, \
+                                 CASE WHEN c.timeinvideo IS null THEN 0 \
+                                 ELSE c.timeinvideo END AS timeinvideo \
+                                 FROM checkpoints, videos \
+                                 LEFT JOIN (SELECT videoid, timeinvideo \
+                                   FROM checkpoints WHERE userid=$1) AS c \
+                                 ON c.videoid=videos.id \
+                                 WHERE videos.id=checkpoints.videoid \
+                                 AND videos.id NOT IN (SELECT videoid \
+                                   FROM checkpoints \
+                                   WHERE finished=true) \
+                                 ORDER BY videos.id';
     try {
       const startedVideos = await psql.query(queryUserStartedVideos, [userId]);
       const unwatchedVideos = await psql.query(queryGlobalUnwatched);
-      const watchedVideos = await psql.query(queryGlobalWatched);
-      const inProgressVideos = await psql.query(queryGlobalInProgress);
+      const watchedVideos = await psql.query(queryGlobalWatched, [userId]);
+      const inProgressVideos = await psql.query(queryGlobalInProgress, [userId]);
       const videoData = [
         startedVideos,
         unwatchedVideos,
@@ -279,6 +289,53 @@ app.get('/api/videos', passport.authenticate('jwt', {session: false}),
     }
   }
 );
+
+app.get(
+  '/api/videos/:videoid',
+  passport.authenticate('jwt', {session: false}),
+  async (req, res) => {
+    let queryText = 'SELECT \
+                       usernames.userswatching, \
+                       videos.* \
+                     FROM \
+                       (SELECT \
+                         videos.id,\
+                         array_agg(users.username) AS userswatching \
+                         FROM videos \
+                         FULL OUTER JOIN checkpoints \
+                         ON checkpoints.videoid=videos.id \
+                         LEFT JOIN users \
+                         ON users.id=checkpoints.userid \
+                         WHERE videos.id=$1 \
+                         GROUP BY videos.id) \
+                       AS usernames \
+                     LEFT JOIN videos \
+                     ON videos.id=usernames.id';
+    try {
+      const videoMetadata = await psql.query(queryText, [req.params.videoid]);
+      res.json(videoMetadata.rows);
+    } catch (error) {
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
+);
+
+app.patch('/api/videos/:videoid',
+  passport.authenticate('jwt', {session: false}), async (req, res) => {
+  let queryText = 'UPDATE videos \
+                   SET description=$1 \
+                   WHERE id=$2 RETURNING *';
+  try {
+    const updateRes = await psql.query(
+      queryText,
+      [req.body.description,req.params.videoid]
+    );
+    res.json(updateRes.rows);
+  } catch (error) {
+    res.status(500).json(error);
+  }
+});
 
 app.put("/api/checkpoints", passport.authenticate('jwt', {session: false}),
   async (req, res) => {
@@ -311,7 +368,10 @@ app.put("/api/checkpoints", passport.authenticate('jwt', {session: false}),
 //   const mimetype = 'video/mp4';
 //   const file = process.env.AWS_S3_BUCKET_VIDEOS_FOLDER + req.params.name;
 //   const cache = 0;
-//   s3.listObjectsV2({Bucket: process.env.AWS_S3_BUCKET_NAME, MaxKeys: 1, Prefix: file}, function(err, data) {
+//   s3.listObjectsV2({
+//     Bucket: process.env.AWS_S3_BUCKET_NAME, 
+//     MaxKeys: 1, Prefix: file
+//   }, (err, data) => {
 //     if (err) {
 //       return res.sendStatus(404);
 //     }
@@ -333,7 +393,10 @@ app.put("/api/checkpoints", passport.authenticate('jwt', {session: false}),
 //         'Last-Modified'  : data.Contents[0].LastModified,
 //         'Content-Type'   : mimetype
 //       });
-//       s3.getObject({Bucket: process.env.AWS_S3_BUCKET_NAME, Key: file, Range: range}).createReadStream().pipe(res);
+//       s3.getObject({
+//         Bucket: process.env.AWS_S3_BUCKET_NAME, 
+//         Key: file, Range: range
+//       }).createReadStream().pipe(res);
 //     }
 //     else
 //     {
@@ -344,7 +407,10 @@ app.put("/api/checkpoints", passport.authenticate('jwt', {session: false}),
 //         'Last-Modified' : data.Contents[0].LastModified,
 //         'Content-Type'  : mimetype
 //       });
-//       s3.getObject({Bucket: process.env.AWS_S3_BUCKET_NAME, Key: file}).createReadStream().pipe(res);
+//       s3.getObject({
+//         Bucket: process.env.AWS_S3_BUCKET_NAME, 
+//         Key: file
+//       }).createReadStream().pipe(res);
 //     }
 //   });
 // });
@@ -468,9 +534,8 @@ app.delete('/api/annotations', passport.authenticate('jwt', {session: false}),
 
 // in the future, this route as well as the /api/conceptImages route can
 // be circumvented by using cloudfront
-app.get('/api/annotationImages/:name', passport.authenticate('jwt', {session: false}),
-  (req, res) => {
-
+app.get('/api/annotationImages/:name', 
+  passport.authenticate('jwt', {session: false}), (req, res) => {
   let s3 = new AWS.S3();
   let key = process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + req.params.name;
   var params = {
@@ -569,13 +634,15 @@ app.get('/api/reportTreeData', passport.authenticate('jwt', {session: false}),
 
 // This websocket sends a list of videos to the client that update in realtime
 io.on('connection', (socket) => {
-  socket.on('refresh videos', () => {
-    socket.broadcast.emit('refresh videos');
-  });
+  console.log('socket connected!');
   socket.on('connect_failed', () => {
     console.log('socket connection failed');
-  })
+  });
   socket.on('disconnect', () => {
+    console.log('socket disconnected');
+  });
+  socket.on('refresh videos', () => {
+    socket.broadcast.emit('refresh videos');
   });
 });
 
@@ -590,5 +657,5 @@ if (process.env.NODE_ENV === 'production') {
 app.set('port', process.env.PORT || 3001);
 
 server.listen(app.get('port'), () => {
-  console.log(`Find the server at: http://localhost:${app.get('port')}/`); // eslint-disable-line no-console
+  console.log(`Find the server at: http://localhost:${app.get('port')}/`); 
 });
