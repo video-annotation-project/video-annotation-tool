@@ -202,14 +202,8 @@ class Annotate extends Component {
     });
   }
 
-  updateCheckpoint = (finished, updateComponent) => {
-    // if the currentVideo is finished, this means that it is a video from the
-    // global watchedVideos list. We don't want to create checkpoints for these
-    // videos.
-    if (this.state.currentVideo.finished) {
-      console.log("currentVideo is finished, so no new checkpoint created");
-      return;
-    }
+  updateCheckpoint = (finished, reloadVideos) => {
+    finished = finished || this.state.currentVideo.finished;
     // when the checkpoint for a video is updated, there are three places that
     // need to reflect this: this.state.currentVideo, this.state.startedVideos,
     // and the checkpoints table in the SQL database. Upon successful resolution
@@ -221,28 +215,30 @@ class Annotate extends Component {
     };
     let videoElement = document.getElementById("video");
     const body = {
-      'videoId': this.state.currentVideo.id,
       'timeinvideo': videoElement.currentTime,
       'finished': finished
     }
     // update SQL database
-    return axios.put('/api/checkpoints', body, config).then(res => {
-      if (updateComponent) {
-        return this.loadVideos(finished ? this.getCurrentVideo : null);
-      }
-    }).catch(error => {
-      console.log(error);
-      console.log(JSON.parse(JSON.stringify(error)));
-      if (!error.response) {
-        return;
-      }
-      let errMsg = error.response.data.detail ||
-        error.response.data.message || 'Error';
-      console.log(errMsg);
-      this.setState({
-        error: errMsg
+    return axios.put(
+      '/api/checkpoints/' + this.state.currentVideo.id,
+      body,
+      config).then(res => {
+        if (reloadVideos) {
+          return this.loadVideos(finished ? this.getCurrentVideo : null);
+        }
+      }).catch(error => {
+        console.log(error);
+        console.log(JSON.parse(JSON.stringify(error)));
+        if (!error.response) {
+          return;
+        }
+        let errMsg = error.response.data.detail ||
+          error.response.data.message || 'Error';
+        console.log(errMsg);
+        this.setState({
+          error: errMsg
+        });
       });
-    });
   };
 
   handleDoneClick = async () => {
@@ -390,7 +386,7 @@ class Annotate extends Component {
 
   render() {
     const { classes } = this.props;
-    const { isLoaded, error } = this.state;
+    const { isLoaded, error, socket } = this.state;
     if (!isLoaded) {
       return <div>Loading...</div>
     }
@@ -406,6 +402,8 @@ class Annotate extends Component {
           unwatchedVideos={this.state.unwatchedVideos}
           watchedVideos={this.state.watchedVideos}
           inProgressVideos={this.state.inProgressVideos}
+          socket={socket}
+          loadVideos={this.loadVideos}
         />
         <div>
           {this.state.currentVideo.id + " " + this.state.currentVideo.filename}
