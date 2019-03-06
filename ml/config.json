@@ -1,5 +1,5 @@
 {
-   "conceptids" : [1629, 1210, 236, 383, 1133],
+   "conceptids" : [1151, 1009, 2117, 853, 347],
    "min_examples" : 10000,
    "train_annot_file" : "train_annot_file.csv",
    "valid_annot_file": "valid_annot_file.csv",

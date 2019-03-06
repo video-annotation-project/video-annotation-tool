@@ -51,13 +51,12 @@ bad_users = json.loads(os.getenv("BAD_USERS"))
 '''
 Just load classmap without loading new data
 '''
-classmap = pd.read_csv(class_map_file, header=None).to_dict()[0]
+#classmap = pd.read_csv(class_map_file, header=None).to_dict()[0]
 '''
 Initializes the classmap of concept names to training id's.
 (these id's don't represent the conceptid's from our database)
 Then downloads the annotation data and saves it into training and validation csv's.
 Also downloads corresponding images.
-'''
 '''
 folders = []
 folders.append(test_examples)
@@ -88,7 +87,6 @@ download_annotations(min_examples, concepts, classmap, bad_users, img_folder, tr
 
 end = time.time()
 print("Done Downloading Annotations: " + str((end - start)/60) + " minutes")
-'''
 '''
 Trains the model!!!!! WOOOT WOOOT!
 '''
