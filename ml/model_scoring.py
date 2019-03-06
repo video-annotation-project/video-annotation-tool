@@ -3,10 +3,11 @@ import numpy as np
 import os
 from keras_retinanet.utils.eval import _get_detections
 from keras_retinanet.utils.eval import _get_annotations
-from keras_retinanet.utils.eval import _compute_ap
 from keras_retinanet.utils.anchors import compute_overlap
 
-def evaluate(generator,model,iou_threshold=0.5,score_threshold=0.05,max_detections=100,save_path=None):
+
+
+def f1_evaluation(generator,model,iou_threshold=0.5,score_threshold=0.05,max_detections=100,save_path=None):
     """ Evaluate a given dataset using a given model.
     # Arguments
         generator       : The generator that represents the dataset to evaluate.
@@ -21,10 +22,8 @@ def evaluate(generator,model,iou_threshold=0.5,score_threshold=0.05,max_detectio
     # gather all detections and annotations
     all_detections     = _get_detections(generator, model, score_threshold=score_threshold, max_detections=max_detections, save_path=save_path)
     all_annotations    = _get_annotations(generator)
-    average_precisions = {}
-    recalls = {}
-    precisions = {}
-
+    best_thresh = {}
+    best_f1 = {}
     # process detections and annotations
     for label in range(generator.num_classes()):
         if not generator.has_label(label):
@@ -63,11 +62,11 @@ def evaluate(generator,model,iou_threshold=0.5,score_threshold=0.05,max_detectio
 
         # no annotations -> AP for this class is 0 (is this correct?)
         if num_annotations == 0:
-            average_precisions[label] = 0, 0
             continue
 
         # sort by score
         indices         = np.argsort(-scores)
+        scores = scores[indices]
         false_positives = false_positives[indices]
         true_positives  = true_positives[indices]
 
@@ -79,11 +78,25 @@ def evaluate(generator,model,iou_threshold=0.5,score_threshold=0.05,max_detectio
         recall    = true_positives / num_annotations
         precision = true_positives / np.maximum(true_positives + false_positives, np.finfo(np.float64).eps)
 
-        recalls[label] = recall
-        precisions[label] = precision
+        # recall, precision, and scores(confidence level) are arrays for a given class with values for each image
+        f1_points = []
 
-        # compute average precision
-        average_precision  = _compute_ap(recall, precision)
-        average_precisions[label] = average_precision, num_annotations
+        # Compute f1 scores
+        for r, p in zip(recall,precision):
+            if r + p == 0:    #if precision and recall are 0, f1 becomes 0
+                f1_points.append(0) 
+            else:
+                f1_points.append((2 * r * p) / (r + p))
+        
+        if len(f1_points) == 0:
+            best_f1[label] = 0
+            best_thresh[label] = 0
+            continue
 
-    return recalls, precisions, average_precisions
+        f1_points = np.array(f1_points)
+        best_f1[label] = np.max(f1_points)
+        best_thresh[label] = scores[np.argmax(f1_points)]
+
+    # These are the best possible f1 score for each class
+    # These are the corresponding threshold values to achieve these maximum f1 scores.
+    return best_f1, best_thresh
