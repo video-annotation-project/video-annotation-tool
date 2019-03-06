@@ -11,13 +11,10 @@ import Button from '@material-ui/core/Button';
 import Radio from '@material-ui/core/Radio';
 import { withStyles } from '@material-ui/core/styles';
 
-
-
-
 const styles = theme => ({
   dialogStyle: {
     width: theme.spacing.unit * 50,
-    height: theme.spacing.unit * 60,
+    height: theme.spacing.unit * 65,
     boxShadow: theme.shadows[5],
     margin: 'auto',
     outline: 'none'
@@ -50,13 +47,7 @@ class VideoMetadata extends Component {
       let usersFinished = response.data[0].usersfinished;
       let userIndex = usersWatching.indexOf(username);
       let videoStatus = 'inProgress';
-      console.log(response.data[0]);
-      
-      console.log(userIndex);
-      console.log(usersWatching);
-      console.log(username);
-      
-      
+
       if (userIndex === -1) {
         videoStatus = 'unwatched';
       } else if (usersFinished[userIndex]) {
@@ -88,7 +79,7 @@ class VideoMetadata extends Component {
 
   update = () => {
     this.updateVideoDescription();
-    this.updatevideoStatus();
+    this.updateVideoStatus();
   }
 
   updateVideoDescription = () => {
@@ -113,7 +104,7 @@ class VideoMetadata extends Component {
     this.props.handleClose();
   }
 
-  updatevideoStatus = () => {
+  updateVideoStatus = () => {
     const config = {
       url: '/api/checkpoints/' + this.props.openedVideo.id,
       headers: {
@@ -136,7 +127,7 @@ class VideoMetadata extends Component {
     });
   }
 
-  handlevideoStatusChange = (event) => {
+  handleVideoStatusChange = (event) => {
     this.setState({
       videoStatus: event.target.value
     })
@@ -201,37 +192,31 @@ class VideoMetadata extends Component {
             />
           </DialogContent>
           <Radio
-            checked={
-              videoStatus === 'unwatched'
-            }
-            onChange={this.handlevideoStatusChange}
+            checked={videoStatus === 'unwatched'}
+            onChange={this.handleVideoStatusChange}
             value="unwatched"
             color="default"
           />
           Unwatched
           <Radio
-            checked={
-              videoStatus === 'annotated'
-            }
-            onChange={this.handlevideoStatusChange}
+            checked={videoStatus === 'annotated'}
+            onChange={this.handleVideoStatusChange}
             value="annotated"
             color="default"
           />
           Annotated
           <Radio
-            checked={
-              videoStatus === 'inProgress'
-            }
-            onChange={this.handlevideoStatusChange}
+            checked={videoStatus === 'inProgress'}
+            onChange={this.handleVideoStatusChange}
             value="inProgress"
             color="default"
           />
           In Progress
           <DialogActions>
-            <Button onClick={() => this.props.handleClose()} color="primary">
+            <Button onClick={this.props.handleClose} color="primary">
               Cancel
             </Button>
-            <Button onClick={() => this.update()} color="primary">
+            <Button onClick={this.update} color="primary">
               Update
             </Button>
           </DialogActions>
