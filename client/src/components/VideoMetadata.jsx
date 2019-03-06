@@ -75,7 +75,7 @@ class VideoMetadata extends Component {
 
   handleKeyPress = (e) => {
     if (e.key === 'Enter') {
-      this.updateDescription();
+      this.update();
     }
     else {
       let videoMetadata = this.state.videoMetadata;
@@ -139,6 +139,12 @@ class VideoMetadata extends Component {
   handlevideoStatusChange = (event) => {
     this.setState({
       videoStatus: event.target.value
+    })
+  }
+
+  handleVideoTypeChange = (event) => {
+    this.setState({
+      videoType: event.target.value
     })
   }
 

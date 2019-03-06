@@ -4,14 +4,16 @@ import axios from 'axios';
 import io from 'socket.io-client';
 
 import ConceptsSelected from './ConceptsSelected.jsx';
-import VideoList from './VideoList.jsx';
 import DialogModal from './DialogModal.jsx';
+import VideoList from './VideoList.jsx';
 
 import Button from '@material-ui/core/Button';
+import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
+import Slider from '@material-ui/lab/Slider';
 
 const styles = theme => ({
-  boxContainer: {
+  videoContainer: {
     postion: 'absolute',
     top: '50px',
     width: '1600px',
@@ -28,27 +30,22 @@ const styles = theme => ({
     marginLeft: '20px',
     marginBottom: '10px'
   },
-  conceptSectionContainer: {
-    position: 'relative',
-    float: 'right',
-    width: '460px',
-    height: '1000px',
-    backgroundColor: 'white',
-    borderLeft: '1px black solid',
-    overflow: 'auto'
-  },
-  videoSectionContainer: {
-    float: 'left'
-  },
 });
 
 class Annotate extends Component {
   constructor(props) {
     super(props);
 
-    const socket = io();
-    // const socket = io({transports: ['polling']});
-    // ^ this works arrrghhh
+    // here we do a manual conditional proxy because React won't do it for us
+    let socket;
+    if (window.location.origin === 'http://localhost:3000') {
+      console.log('manually proxying socket')
+      socket = io('http://localhost:3001');
+    } else {
+      socket = io();
+    }
+    // const socket = io({transports: ['polling, websocket']});
+
     socket.on('connect', () => {
       console.log('socket connected!');
     });
@@ -78,16 +75,10 @@ class Annotate extends Component {
   }
 
   componentDidMount = async () => {
-    // add event listener for closing window
-    window.addEventListener("beforeunload", (ev) => {
-      var videoElement = document.getElementById("video");
-      if (!videoElement.paused) {
-        ev.preventDefault();
-        ev.returnValue = 'Are you sure you want to close?';
-      }
-    });
+    // add event listener for closing or reloading window
+    window.addEventListener('beforeunload', this.handleUnload);
 
-    // adds event listener for different key presses
+    // add event listener for different key presses
     document.addEventListener('keydown', this.handleKeyDown);
 
     try {
@@ -111,7 +102,16 @@ class Annotate extends Component {
   componentWillUnmount = () => {
     this.updateCheckpoint(false, false);
     this.state.socket.disconnect();
+    window.removeEventListener('beforeunload', this.handleUnload);
     document.removeEventListener('keydown', this.handleKeyDown);
+  }
+
+  handleUnload = (ev) => {
+    var videoElement = document.getElementById("video");
+    if (!videoElement.paused) {
+      ev.preventDefault();
+      ev.returnValue = 'Are you sure you want to close?';
+    }
   }
 
   handleKeyDown = (e) => {
@@ -152,11 +152,11 @@ class Annotate extends Component {
     videoElement.controls = !videoElement.controls;
   }
 
-  handleChangeSpeed = (event) => {
+  handleChangeSpeed = (event, value) => {
     this.setState({
-      videoPlaybackRate: event.target.value
+      videoPlaybackRate: Math.round(value * 10) / 10
     }, () => {
-      var videoElement = document.getElementById("video");
+      const videoElement = document.getElementById("video");
       videoElement.playbackRate = this.state.videoPlaybackRate;
     });
   }
@@ -395,10 +395,7 @@ class Annotate extends Component {
     }
     return (
       <React.Fragment>
-        <ConceptsSelected
-          className={classes.conceptSectionContainer}
-          handleConceptClick={this.handleConceptClick}
-        />
+        <ConceptsSelected handleConceptClick={this.handleConceptClick} />
         <VideoList
           handleVideoClick={this.handleVideoClick}
           startedVideos={this.state.startedVideos}
@@ -408,9 +405,9 @@ class Annotate extends Component {
           socket={socket}
           loadVideos={this.loadVideos}
         />
-        <div className={classes.videoSectionContainer}>
+        <div>
           {this.state.currentVideo.id + " " + this.state.currentVideo.filename}
-          <div className={classes.boxContainer}>
+          <div className={classes.videoContainer}>
             <video
               onPause={() => this.updateCheckpoint(false, true)}
               id="video"
@@ -423,7 +420,9 @@ class Annotate extends Component {
             >
               Your browser does not support the video tag.
             </video>
-            <Rnd id="dragBox"
+            <Rnd 
+              id="dragBox"
+              className={classes.dragBox}
               default={{
                 x: 30,
                 y: 30,
@@ -435,11 +434,31 @@ class Annotate extends Component {
               maxWidth={900}
               maxHeight={650}
               bounds="parent"
-              className={classes.dragBox}
             >
             </Rnd>
           </div>
-          <br />
+          <div style={{
+            marginTop: '10px',
+            marginLeft: '20px',
+            marginBottom: '10px',
+            float: 'left'
+          }}>
+            <Slider style={{
+              width: 200,
+              marginTop: 10,
+            }}
+              value={this.state.videoPlaybackRate}
+              min={0}
+              max={4}
+              step={0.1}
+              onChange={this.handleChangeSpeed}
+            />
+            <Typography style={{
+              marginTop: 20
+            }}>
+              Play Rate: {this.state.videoPlaybackRate}
+            </Typography>
+          </div>
           <Button variant="contained" color="primary"
             className={classes.button}
             onClick={() => this.skipVideoTime(-5)}>-5 sec
@@ -460,18 +479,6 @@ class Annotate extends Component {
             className={classes.button}
             onClick={() => this.handleDoneClick()}>Done
           </Button>
-          <br />
-          <div width="250">
-            Play Rate: {this.state.videoPlaybackRate}
-          </div>
-          <input
-            type="range"
-            id="playSpeedId"
-            min="0" max="4"
-            value={this.state.videoPlaybackRate}
-            onChange={this.handleChangeSpeed}
-            step=".1"
-          />
         </div>
         {this.state.dialogOpen &&
           <DialogModal
