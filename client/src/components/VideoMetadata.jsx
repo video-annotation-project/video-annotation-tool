@@ -80,6 +80,7 @@ class VideoMetadata extends Component {
   update = () => {
     this.updateVideoDescription();
     this.updateVideoStatus();
+    this.props.handleClose();
   }
 
   updateVideoDescription = () => {
@@ -101,7 +102,7 @@ class VideoMetadata extends Component {
       console.log('Error in VideoMetadata.jsx patch /api/videos');
       console.log(error.response.data);
     })
-    this.props.handleClose();
+
   }
 
   updateVideoStatus = () => {
@@ -120,7 +121,7 @@ class VideoMetadata extends Component {
     axios.request(config).then(res => {
       this.props.loadVideos();
       this.props.socket.emit('refresh videos');
-      alert("Changed: " + res.data.message);
+      console.log("Changed: " + res.data.message);
     }).catch(error => {
       console.log('Error in /api/videos ' + config.method);
       console.log(error);
@@ -130,12 +131,6 @@ class VideoMetadata extends Component {
   handleVideoStatusChange = (event) => {
     this.setState({
       videoStatus: event.target.value
-    })
-  }
-
-  handleVideoTypeChange = (event) => {
-    this.setState({
-      videoType: event.target.value
     })
   }
 
