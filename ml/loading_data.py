@@ -39,29 +39,23 @@ def queryDB(query):
     conn.close()
     return result
 
-# Function to download annotation data and format it for training
-#   min_examples: minimum number of annotation examples for each concept
-#   concepts: list of concepts that will be used
-#   concept_map: a dict mapping index of concept to concept name
-#   bad_users: users whose annotations will be ignored
-#   img_folder: name of the folder to hold the images
-#   train_annot_file: name of training annotation csv
-#   valid_annot_file: name of validation annotations csv
-#   split: fraction of annotation images that willbe used for training (rest used in validation)
-def download_annotations(min_examples, concepts, concept_map, bad_users, img_folder, train_annot_file, valid_annot_file, split=.8):
-    annotations = queryDB("select * from annotations as temp where conceptid in " + 
-                           str(tuple(concepts)) + 
-                           "and exists (select id, userid from annotations WHERE id=temp.originalid and userid not in " + 
-                           str(tuple(bad_users)) + ")")
 
-    groups = annotations.groupby(['videoid','timeinvideo'], sort=False)
-    groups = [df for _, df in groups]
-    random.shuffle(groups)
-    selected = [] # selected images to ensure that we reach the minimum
+
+def select_annotations(annotations, min_examples):
+    selected = []
+
     concept_count = {}
     for concept in concepts:
         concept_count[concept] = 0
-    
+
+    groups = annotations.groupby(['videoid','timeinvideo'], sort=False)
+    groups = [df for _, df in groups]
+    random.shuffle(groups) # Shuffle BEFORE the sort
+
+    # Sort the grouped annotations by whether or not it contains a human annotation, prioritizing them
+    ai_id = queryDB("SELECT id FROM users WHERE username='ai'").id[0]
+    groups.sort(key=(lambda x : ai_id in x['userid'].values))
+
     #selects images that we'll use (each group has annotations for an image)
     for group in groups:
         if not any(v < min_examples for v in concept_count.values()):
@@ -80,6 +74,31 @@ def download_annotations(min_examples, concepts, concept_map, bad_users, img_fol
                     concept_count[a] -= 1
                 continue
         selected.append(group)
+    return selected, concept_count
+
+
+
+# Function to download annotation data and format it for training
+#   min_examples: minimum number of annotation examples for each concept
+#   concepts: list of concepts that will be used
+#   concept_map: a dict mapping index of concept to concept name
+#   bad_users: users whose annotations will be ignored
+#   img_folder: name of the folder to hold the images
+#   train_annot_file: name of training annotation csv
+#   valid_annot_file: name of validation annotations csv
+#   split: fraction of annotation images that willbe used for training (rest used in validation)
+def download_annotations(min_examples, concepts, concept_map, bad_users, img_folder, train_annot_file, valid_annot_file, split=.8):
+    annotations = queryDB(
+        ''' SELECT *
+            FROM annotations as A
+            WHERE conceptid in ''' + str(tuple(concepts)) + 
+            ''' AND EXISTS (''' +
+                ''' SELECT id, userid 
+                    FROM annotations 
+                    WHERE id=A.originalid 
+                        AND userid NOT IN ''' + str(tuple(bad_users)) + ")")
+
+    selected, concept_count = select_annotations(annotations, min_examples)
     print("Concept counts: " + str(concept_count))
     print("Number of images: " + str(len(selected)))
         
