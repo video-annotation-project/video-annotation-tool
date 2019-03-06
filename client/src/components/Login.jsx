@@ -45,10 +45,11 @@ class Login extends Component {
       headers: {'Content-Type': 'application/json'}
     }).then(res => {
       localStorage.setItem('isAuthed', 'true');
+      localStorage.setItem('username', username);
       localStorage.setItem('token', res.data.token);
-      //Add code for admin
-      if (res.data.admin) {
-        localStorage.setItem('admin', res.data.admin);
+      //Add code for isAdmin
+      if (res.data.isAdmin) {
+        localStorage.setItem('admin', res.data.isAdmin);
       }
       this.props.history.push('/');
     }).catch(error => {

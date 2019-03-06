@@ -133,9 +133,9 @@ class Annotate extends Component {
   }
 
   skipVideoTime = (time) => {
-     var videoElement = document.getElementById("video");
-     var cTime = videoElement.currentTime;
-     videoElement.currentTime = (cTime + time);
+    var videoElement = document.getElementById("video");
+    var cTime = videoElement.currentTime;
+    videoElement.currentTime = (cTime + time);
   }
 
   playPause = () => {
@@ -202,14 +202,8 @@ class Annotate extends Component {
     });
   }
 
-  updateCheckpoint = (finished, updateComponent) => {
-    // if the currentVideo is finished, this means that it is a video from the
-    // global watchedVideos list. We don't want to create checkpoints for these
-    // videos.
-    if (this.state.currentVideo.finished) {
-      console.log("currentVideo is finished, so no new checkpoint created");
-      return;
-    }
+  updateCheckpoint = (finished, reloadVideos) => {
+    finished = finished || this.state.currentVideo.finished;
     // when the checkpoint for a video is updated, there are three places that
     // need to reflect this: this.state.currentVideo, this.state.startedVideos,
     // and the checkpoints table in the SQL database. Upon successful resolution
@@ -221,28 +215,30 @@ class Annotate extends Component {
     };
     let videoElement = document.getElementById("video");
     const body = {
-      'videoId': this.state.currentVideo.id,
       'timeinvideo': videoElement.currentTime,
-      'finished' : finished
+      'finished': finished
     }
     // update SQL database
-    return axios.put('/api/checkpoints', body, config).then(res => {
-      if (updateComponent) {
-        return this.loadVideos(finished ? this.getCurrentVideo : null);
-      }
-    }).catch(error => {
-      console.log(error);
-      console.log(JSON.parse(JSON.stringify(error)));
-      if (!error.response) {
-        return;
-      }
-      let errMsg = error.response.data.detail ||
-        error.response.data.message || 'Error';
-      console.log(errMsg);
-      this.setState({
-        error: errMsg
+    return axios.put(
+      '/api/checkpoints/' + this.state.currentVideo.id,
+      body,
+      config).then(res => {
+        if (reloadVideos) {
+          return this.loadVideos(finished ? this.getCurrentVideo : null);
+        }
+      }).catch(error => {
+        console.log(error);
+        console.log(JSON.parse(JSON.stringify(error)));
+        if (!error.response) {
+          return;
+        }
+        let errMsg = error.response.data.detail ||
+          error.response.data.message || 'Error';
+        console.log(errMsg);
+        this.setState({
+          error: errMsg
+        });
       });
-    });
   };
 
   handleDoneClick = async () => {
@@ -282,10 +278,10 @@ class Annotate extends Component {
     var height = dragBoxCord.height;
     var width = dragBoxCord.width;
 
-    var x1 = Math.max((x1_box - x1_video),0);
-    var y1 = Math.max((y1_box - y1_video),0);
-    var x2 = Math.min((x1 + width),1599);
-    var y2 = Math.min((y1 + height),899);
+    var x1 = Math.max((x1_box - x1_video), 0);
+    var y1 = Math.max((y1_box - y1_video), 0);
+    var x2 = Math.min((x1 + width), 1599);
+    var y2 = Math.min((y1 + height), 899);
 
     //draw video with and without bounding box to canvas and save as img
     var date = Date.now().toString();
@@ -303,7 +299,7 @@ class Annotate extends Component {
       'image': date,
       'imagewithbox': date + "_box",
       'comment': comment,
-      'unsure' : unsure
+      'unsure': unsure
     };
     const config = {
       headers: {
@@ -331,7 +327,7 @@ class Annotate extends Component {
   }
 
   createAndUploadImages = async (vidCord, dragBoxCord, videoElement, date,
-     x1, y1) => {
+    x1, y1) => {
     var canvas = document.createElement('canvas');
     canvas.height = vidCord.height;
     canvas.width = vidCord.width;
@@ -372,8 +368,8 @@ class Annotate extends Component {
       dialogMsg:
         concept.name +
         " in video " + this.state.currentVideo.filename +
-        " at time " + Math.floor(videoElement.currentTime/60) + ' minutes '
-        + videoElement.currentTime%60 + " seconds",
+        " at time " + Math.floor(videoElement.currentTime / 60) + ' minutes '
+        + videoElement.currentTime % 60 + " seconds",
       dialogOpen: true,
       clickedConcept: concept,
       closeHandler: this.handleDialogClose
@@ -390,17 +386,17 @@ class Annotate extends Component {
 
   render() {
     const { classes } = this.props;
-    const { isLoaded, error } = this.state;
+    const { isLoaded, error, socket } = this.state;
     if (!isLoaded) {
       return <div>Loading...</div>
     }
-    if (error)  {
+    if (error) {
       return <div>Error: {error}</div>;
     }
     return (
       <React.Fragment>
         <ConceptsSelected
-          className = {classes.conceptSectionContainer}
+          className={classes.conceptSectionContainer}
           handleConceptClick={this.handleConceptClick}
         />
         <VideoList
@@ -409,20 +405,22 @@ class Annotate extends Component {
           unwatchedVideos={this.state.unwatchedVideos}
           watchedVideos={this.state.watchedVideos}
           inProgressVideos={this.state.inProgressVideos}
+          socket={socket}
+          loadVideos={this.loadVideos}
         />
-        <div className = {classes.videoSectionContainer}>
+        <div className={classes.videoSectionContainer}>
           {this.state.currentVideo.id + " " + this.state.currentVideo.filename}
-          <div className = {classes.boxContainer}>
+          <div className={classes.boxContainer}>
             <video
               onPause={() => this.updateCheckpoint(false, true)}
               id="video"
               width="1600"
               height="900"
-              src={'https://d1bnpmj61iqorj.cloudfront.net/videos/'+
+              src={'https://d1bnpmj61iqorj.cloudfront.net/videos/' +
                 this.state.currentVideo.filename}
               type='video/mp4'
               crossOrigin='use-credentials'
-              >
+            >
               Your browser does not support the video tag.
             </video>
             <Rnd id="dragBox"
@@ -438,7 +436,7 @@ class Annotate extends Component {
               maxHeight={650}
               bounds="parent"
               className={classes.dragBox}
-              >
+            >
             </Rnd>
           </div>
           <br />

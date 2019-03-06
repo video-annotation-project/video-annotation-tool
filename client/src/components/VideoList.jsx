@@ -39,8 +39,7 @@ class VideoList extends Component {
       watchedListOpen: false,
       inProgressListOpen: false,
       descriptionOpen: false,
-      openedVideoid: null,
-      openedVideoType: null,
+      openedVideo: null
     };
   }
 
@@ -51,12 +50,11 @@ class VideoList extends Component {
   }
 
   //Methods for video meta data
-  openVideoMetadata = (event, openedVideoid, openedVideoType) => {
+  openVideoMetadata = (event, video) => {
     event.stopPropagation()
     this.setState({
       descriptionOpen: true,
-      openedVideoid: openedVideoid,
-      openedVideoType: openedVideoType
+      openedVideo: video
     })
   }
 
@@ -67,8 +65,7 @@ class VideoList extends Component {
   closeVideoMetadata = () => {
     this.setState({
       descriptionOpen: false,
-      openedVideoid: null,
-      openedVideoType: null
+      openedVideo: null
     });
   }
 
@@ -86,8 +83,7 @@ class VideoList extends Component {
       unwatchedListOpen,
       watchedListOpen,
       inProgressListOpen,
-      openedVideoType,
-      openedVideoid
+      openedVideo
     } = this.state;
 
     return (
@@ -127,8 +123,7 @@ class VideoList extends Component {
                           (event) =>
                             this.openVideoMetadata(
                               event,
-                              video.id,
-                              'myInProgress'
+                              video,
                             )
                         }
                       />
@@ -156,8 +151,7 @@ class VideoList extends Component {
                           (event) =>
                             this.openVideoMetadata(
                               event,
-                              video.id,
-                              'unwatched'
+                              video,
                             )
                         }
                       />
@@ -185,8 +179,7 @@ class VideoList extends Component {
                           (event) =>
                             this.openVideoMetadata(
                               event,
-                              video.id,
-                              'annotated'
+                              video,
                             )
                         }
                       />
@@ -214,8 +207,7 @@ class VideoList extends Component {
                           (event) =>
                             this.openVideoMetadata(
                               event,
-                              video.id,
-                              'inProgress'
+                              video,
                             )
                         }
                       />
@@ -235,8 +227,9 @@ class VideoList extends Component {
               accidental double submission bug, by implicitly reducing 
               the transition time of VideoMetadata to zero. */}
             handleClose={this.closeVideoMetadata}
-            openedVideoid={openedVideoid}
-            openedVideoType={openedVideoType}
+            openedVideo={openedVideo}
+            socket={this.props.socket}
+            loadVideos={this.props.loadVideos}
           />
         }
       </div>

@@ -29,7 +29,7 @@ class VideoMetadata extends Component {
     super(props);
     this.state = {
       videoMetadata: null,
-      videoType: null,
+      videoStatus: null,
       isLoaded: false
     };
   }
@@ -41,14 +41,30 @@ class VideoMetadata extends Component {
       }
     }
     axios.get(
-      '/api/videos/' + this.props.openedVideoid,
+      '/api/videos/' + this.props.openedVideo.id,
       config
-    ).then(videoMetadata => {
-      console.log('Loaded');
-      console.log(videoMetadata);
+    ).then(response => {
+      //Logic to check video's status from user checkpoints
+      let username = localStorage.getItem('username');
+      let usersWatching = response.data[0].userswatching;
+      let usersFinished = response.data[0].usersfinished;
+      let userIndex = usersWatching.indexOf(username);
+      let videoStatus = 'inProgress';
+      console.log(response.data[0]);
+      
+      console.log(userIndex);
+      console.log(usersWatching);
+      console.log(username);
+      
+      
+      if (userIndex === -1) {
+        videoStatus = 'unwatched';
+      } else if (usersFinished[userIndex]) {
+        videoStatus = 'annotated';
+      }
       this.setState({
-        videoMetadata: videoMetadata.data[0],
-        videoType: this.props.openedVideoType,
+        videoMetadata: response.data[0],
+        videoStatus: videoStatus,
         isLoaded: true
       });
     }).catch(error => {
@@ -68,9 +84,14 @@ class VideoMetadata extends Component {
         videoMetadata: JSON.parse(JSON.stringify(videoMetadata))
       });
     }
-  };
+  }
 
   update = () => {
+    this.updateVideoDescription();
+    this.updatevideoStatus();
+  }
+
+  updateVideoDescription = () => {
     const body = {
       'description': this.state.videoMetadata.description
     }
@@ -80,7 +101,7 @@ class VideoMetadata extends Component {
       }
     }
     axios.patch(
-      '/api/videos/' + this.props.openedVideoid,
+      '/api/videos/' + this.props.openedVideo.id,
       body,
       config
     ).then(updateRes => {
@@ -90,17 +111,40 @@ class VideoMetadata extends Component {
       console.log(error.response.data);
     })
     this.props.handleClose();
-  };
+  }
 
-  handleVideoTypeChange = (event) => {
+  updatevideoStatus = () => {
+    const config = {
+      url: '/api/checkpoints/' + this.props.openedVideo.id,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + localStorage.getItem('token')
+      },
+      data: {
+        'timeinvideo': this.props.openedVideo.timeinvideo,
+        'finished': this.state.videoStatus === 'annotated' ? true : false
+      }
+    };
+    config.method = this.state.videoStatus === 'unwatched' ? 'delete' : 'put';
+    axios.request(config).then(res => {
+      this.props.loadVideos();
+      this.props.socket.emit('refresh videos');
+      alert("Changed: " + res.data.message);
+    }).catch(error => {
+      console.log('Error in /api/videos ' + config.method);
+      console.log(error);
+    });
+  }
+
+  handlevideoStatusChange = (event) => {
     this.setState({
-      videoType: event.target.value
+      videoStatus: event.target.value
     })
   }
 
   render() {
-    const { classes, openedVideoid } = this.props;
-    const { isLoaded, videoType } = this.state;
+    const { classes, openedVideo } = this.props;
+    const { isLoaded, videoStatus } = this.state;
     if (!isLoaded) {
       return <div>Loading...</div>
     }
@@ -124,7 +168,7 @@ class VideoMetadata extends Component {
         <div className={classes.dialogStyle}>
           <DialogTitle id="form-dialog-title">
             <small>
-              Video:{openedVideoid}<br />
+              Video:{openedVideo.id}<br />
               {filename}
             </small>
 
@@ -151,31 +195,37 @@ class VideoMetadata extends Component {
             />
           </DialogContent>
           <Radio
-            checked={videoType==='unwatched'}
-            onChange={this.handleVideoTypeChange}
+            checked={
+              videoStatus === 'unwatched'
+            }
+            onChange={this.handlevideoStatusChange}
             value="unwatched"
             color="default"
           />
           Unwatched
           <Radio
-            checked={videoType==='annotated'}
-            onChange={this.handleVideoTypeChange}
+            checked={
+              videoStatus === 'annotated'
+            }
+            onChange={this.handlevideoStatusChange}
             value="annotated"
             color="default"
           />
           Annotated
           <Radio
-            checked={videoType==='inProgress' | videoType==='myInProgress'}
-            onChange={this.handleVideoTypeChange}
-            value="myInProgress"
+            checked={
+              videoStatus === 'inProgress'
+            }
+            onChange={this.handlevideoStatusChange}
+            value="inProgress"
             color="default"
           />
           In Progress
           <DialogActions>
-            <Button onClick={this.props.handleClose} color="primary">
+            <Button onClick={() => this.props.handleClose()} color="primary">
               Cancel
             </Button>
-            <Button onClick={this.update} color="primary">
+            <Button onClick={() => this.update()} color="primary">
               Update
             </Button>
           </DialogActions>
