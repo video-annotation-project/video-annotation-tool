@@ -13,7 +13,7 @@ import { withStyles } from '@material-ui/core/styles';
 const styles = theme => ({
   root: {
   },
-  toggleButton: {
+  extendDrawerButton: {
     float: 'right',
     marginTop: '5px'
   },
@@ -21,22 +21,21 @@ const styles = theme => ({
     position: 'relative',
     textAlign: 'center'
   },
-  retractButton: {
+  retractDrawerButton: {
     position: 'absolute',
     left: 0,
     margin: '10px',
   },
-  addButton: {
+  addConceptButton: {
+    marginTop: '15px'
   },
   conceptsList: {
     fontSize: '130%',
-    display: 'flex' ,
+    display: 'flex',
     flexFlow: 'row wrap',
-    justifyContent: 'center'
   },
   concept: {
     width: '50%',
-    listStyleType: 'none',
     cursor: 'pointer',
   },
 });
@@ -46,16 +45,16 @@ class ConceptsSelected extends React.Component {
     super(props);
     this.state = {
       isLoaded: false,
-      conceptsSelected: [],
       drawerOpen: false,
+      conceptsSelected: [],
+      draggedConcept: null,
       searchModalOpen: false,
-      draggedItem: null
     };
   }
 
   getConceptsSelected = () => {
     axios.get('/api/conceptsSelected', {
-      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token')},
+      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') },
     }).then(res => {
       this.setState({
         isLoaded: true,
@@ -113,32 +112,32 @@ class ConceptsSelected extends React.Component {
 
   onDragStart = (event, index) => {
     this.setState({
-      draggedItem: this.state.conceptsSelected[index]
+      draggedConcept: this.state.conceptsSelected[index]
     });
     event.dataTransfer.effectAllowed = "move";
-    event.dataTransfer.setData("text/html", event.target.parentNode);
-    event.dataTransfer.setDragImage(event.target.parentNode, 20, 20);
+    event.dataTransfer.setData("text/html", event.currentTarget);
+    event.dataTransfer.setDragImage(event.currentTarget, 20, 20);
   }
 
-  onDragOver = index => {
-    const draggedOverItem = this.state.conceptsSelected[index];
-    // if the item is dragged over itself, ignore
-    if (this.state.draggedItem === draggedOverItem) {
+  onDragOver = (index) => {
+    // if the concept is dragged over itself, ignore
+    if (this.state.draggedConcept === this.state.conceptsSelected[index]) {
       return;
     }
-    // filter out the currently dragged item
-    let items = this.state.conceptsSelected.filter(item =>
-      item !== this.state.draggedItem);
-    // add the dragged item after the dragged over item
-    items.splice(index, 0, this.state.draggedItem);
+    // filter out the dragged concept
+    let conceptsSelected = this.state.conceptsSelected.filter(concept => 
+      concept !== this.state.draggedConcept
+    );
+    // insert the dragged concept after the dragged over concept
+    conceptsSelected.splice(index, 0, this.state.draggedConcept);
     this.setState({
-      conceptsSelected: items
+      conceptsSelected: conceptsSelected
     });
   };
 
   onDragEnd = () => {
     this.setState({
-      draggedItem: null
+      draggedConcept: null
     });
     let conceptsSelected = this.state.conceptsSelected;
     conceptsSelected.forEach((concept, idx) => {
@@ -155,13 +154,26 @@ class ConceptsSelected extends React.Component {
     }
     axios.patch('/api/conceptsSelected', body, config).then(async res => {
     }).catch(error => {
-      this.toggleSearchModal(false);
       console.log(error);
       if (error.response) {
         console.log(error.response.data.detail);
       }
     });
   };
+
+  onMouseEnter = (event) => {
+    if (this.state.draggedConcept) {
+      return;
+    }
+    event.currentTarget.style.backgroundColor = 'lightgrey';
+  }
+
+  onMouseLeave = (event) => {
+    if (this.state.draggedConcept) {
+      return;
+    }
+    event.currentTarget.style.backgroundColor = 'white';
+  }
 
   render() {
     const { classes } = this.props;
@@ -173,13 +185,12 @@ class ConceptsSelected extends React.Component {
       drawerContent = (
         <div className={classes.drawerContent}>
           <IconButton
-            onClick={() => this.toggleDrawer(false)}
-            className={classes.retractButton}>
+            className={classes.retractDrawerButton}
+            onClick={() => this.toggleDrawer(false)} >
             <ChevronRightIcon />
           </IconButton>
-          <br />
           <Button
-            className={classes.addButton}
+            className={classes.addConceptButton}
             variant="contained"
             color="primary"
             aria-label="Add"
@@ -189,24 +200,26 @@ class ConceptsSelected extends React.Component {
           </Button>
           <div className={classes.conceptsList}>
             {this.state.conceptsSelected.map((concept, index) => (
-              <li
+              <div
                 key={concept.id}
                 className={classes.concept}
                 onClick={() => this.props.handleConceptClick(concept)}
+                draggable
+                onDragStart={event => this.onDragStart(event, index)}
                 onDragOver={() => this.onDragOver(index)}
+                onDragEnd={this.onDragEnd}
+                onMouseEnter={event => this.onMouseEnter(event)}
+                onMouseLeave={event => this.onMouseLeave(event)}
               >
                 {concept.name}
                 <br />
                 <img
-                  src={"/api/conceptImages/"+concept.id}
+                  src={"/api/conceptImages/" + concept.id}
                   alt="Could not be downloaded"
                   height="50"
                   width="50"
-                  draggable
-                  onDragStart={event => this.onDragStart(event, index)}
-                  onDragEnd={this.onDragEnd}
                 />
-              </li>
+              </div>
             ))}
           </div>
         </div>
@@ -216,7 +229,7 @@ class ConceptsSelected extends React.Component {
     return (
       <div className={classes.root}>
         <Button
-          className={classes.toggleButton}
+          className={classes.extendDrawerButton}
           variant="contained"
           color="primary"
           onClick={() => this.toggleDrawer(true)}
@@ -248,13 +261,13 @@ class ConceptsSelected extends React.Component {
 
 // persistent Drawer component from material.ui is buggy, so I implemented
 // my own
-        // <Drawer
-        //   variant="persistent"
-        //   anchor="right"
-        //   open={this.state.drawerOpen}
-        //   onClose={() => this.toggleDrawer(false)}
-        // >
-        //   {drawerContent}
-        // </Drawer>
+// <Drawer
+//   variant="persistent"
+//   anchor="right"
+//   open={this.state.drawerOpen}
+//   onClose={() => this.toggleDrawer(false)}
+// >
+//   {drawerContent}
+// </Drawer>
 
 export default withStyles(styles)(ConceptsSelected);
