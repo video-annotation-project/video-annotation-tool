@@ -127,20 +127,16 @@ app.get('/api/concepts/:id', passport.authenticate('jwt', { session: false }),
   }
 );
 
-// returns list of concepts based off search criteria in req.query
-// currently just looks for exact concept name match.
+// returns a list of concept names
 app.get('/api/concepts', passport.authenticate('jwt', { session: false }),
   async (req, res) => {
-    let concepts = null
-    const queryText = "Select id, name, similarity($1,name) \
-                       from concepts \
-                       where similarity($1, name) > .01 \
-                       order by similarity desc limit 10";
+    const queryText = 'SELECT id, name \
+                       FROM concepts';
     try {
-      concepts = await psql.query(queryText, [req.query.name]);
+      const concepts = await psql.query(queryText);
       res.json(concepts.rows);
     } catch (error) {
-      res.status(400).json(error);
+      res.status(500).json(error);
     }
   }
 );

@@ -32,16 +32,36 @@ const styles = theme => ({
 class SearchModal extends Component {
   constructor(props) {
     super(props);
-    this.state = {concepts: []};
+    this.state = {
+      concepts: null,
+      conceptsLikeSearch: []
+    };
+  }
+
+  componentDidMount = () => {
+    const config = {
+      headers: {
+        'Authorization': 'Bearer ' + localStorage.getItem('token')
+      }
+    }
+    axios.get(`/api/concepts`, config).then(res => {
+      this.setState({
+        concepts: res.data
+      })
+    }).catch(error => {
+      console.log('Error in get /api/concepts');
+      console.log(error);
+      if (error.response) {
+        console.log(error.response.data.detail);
+      }
+    })
   }
 
   getId = (concept) => {
-    for(var item of this.state.concepts){
-      if(item['name'] === concept){
-        return item['id'];
-      }
-    }
-    return null;
+    const match = this.state.concepts.find(item => {
+      return item.name === concept;
+    });
+    return match ? match.id : null;
   };
 
   handleClose = () => {
@@ -50,38 +70,48 @@ class SearchModal extends Component {
 
   handleKeyPress = (e) => {
     if (e.key === 'Enter') {
-      if(this.getId(e.target.value)){
+      if (this.getId(e.target.value)) {
         this.props.inputHandler(this.getId(e.target.value));
-      }else{
+      } else {
         this.handleClose();
       }
-    }else{
+    } else {
       this.searchConcepts(e.target.value + e.key);
+    }
+  }
+
+  handleKeyDown = (e) => {
+    //Backspace does not trigger handleKeyPress
+    //So this will search when backspace
+    if (e.keyCode === 8 || e.keyCode === 46) {
+      this.searchConcepts(e.target.value.slice(0,-1));
     }
   }
 
   //Queries database with term, expects a list of concepts.
   //Should open a dialogue for selecting from the list (currently just selects 1st result)
-  searchConcepts = (name) => {
-    const config = {
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + localStorage.getItem('token')
-      }
-    }
-    axios.get(`/api/concepts?name=${name}`, config).then(res => {
-      this.setState({
-        concepts: res.data
-      })
-    }).catch(error => {
-      console.log(error);
-      if (error.response) {
-        console.log(error.response.data.detail);
-      }
+  searchConcepts = (search) => {
+    const conceptsLikeSearch = this.state.concepts.filter(concept => {
+      return concept.name.match(new RegExp(search, 'i'))
+    });
+
+    this.setState({
+      conceptsLikeSearch: conceptsLikeSearch.slice(0, 10)
     })
-   };
+  };
 
   render() {
+    let { concepts, conceptsLikeSearch } = this.state;
+    if (!concepts) {
+      return (
+        <Dialog
+          open={this.props.open}
+          onClose={this.handleClose}
+        >
+          <div>Loading...</div>
+        </Dialog>
+      )
+    }
     return (
       <React.Fragment>
         <Dialog
@@ -96,17 +126,19 @@ class SearchModal extends Component {
             </DialogContentText>
             <input
               onKeyPress={this.handleKeyPress}
+              onKeyDown={this.handleKeyDown}
               autoFocus
               margin="dense"
               id="concept"
               type="text"
               placeholder="Search Concepts"
               list="data"
+              autoComplete="off"
             />
             <datalist id="data">
-                {this.state.concepts.map((item) =>
-                    <option key={item['id']} value={item['name']} />
-                )}
+              {conceptsLikeSearch.map((item) =>
+                <option key={item.id} value={item.name} />
+              )}
             </datalist>
           </DialogContent>
         </Dialog>
