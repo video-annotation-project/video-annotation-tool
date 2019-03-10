@@ -3,12 +3,12 @@ import axios from 'axios';
 
 import SearchModal from './SearchModal.jsx';
 
-import AddIcon from '@material-ui/icons/Add';
 import Button from '@material-ui/core/Button';
-import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 // import Drawer from '@material-ui/core/Drawer';
 import IconButton from '@material-ui/core/IconButton';
 import { withStyles } from '@material-ui/core/styles';
+import AddIcon from '@material-ui/icons/Add';
+import { ChevronRight, Close } from '@material-ui/icons';
 
 const styles = theme => ({
   root: {
@@ -27,7 +27,7 @@ const styles = theme => ({
     margin: '10px',
   },
   addConceptButton: {
-    marginTop: '15px'
+    margin: '15px 0px 15px 0px'
   },
   conceptsList: {
     fontSize: '130%',
@@ -38,6 +38,14 @@ const styles = theme => ({
     width: '50%',
     cursor: 'pointer',
   },
+  deleteConceptButton: {
+    float: 'right',
+    height: '25px',
+    width: '25px',
+  },
+  deleteConceptIcon: {
+    fontSize: '15px'
+  }
 });
 
 class ConceptsSelected extends React.Component {
@@ -97,12 +105,30 @@ class ConceptsSelected extends React.Component {
     }
     axios.post('/api/conceptsSelected', body, config).then(async res => {
       this.toggleSearchModal(false);
-      this.setState({
-        isLoaded: false
-      });
       this.getConceptsSelected();
     }).catch(error => {
       this.toggleSearchModal(false);
+      console.log(error);
+      if (error.response) {
+        console.log(error.response.data.detail);
+      }
+    });
+  }
+
+  deleteConcept = (event, index) => {
+    event.stopPropagation();
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + localStorage.getItem('token')
+      },
+      data: {
+        'id': this.state.conceptsSelected[index].id,
+      }
+    }
+    axios.delete('/api/conceptsSelected', config).then(async res => {
+      this.getConceptsSelected();
+    }).catch(error => {
       console.log(error);
       if (error.response) {
         console.log(error.response.data.detail);
@@ -125,7 +151,7 @@ class ConceptsSelected extends React.Component {
       return;
     }
     // filter out the dragged concept
-    let conceptsSelected = this.state.conceptsSelected.filter(concept => 
+    let conceptsSelected = this.state.conceptsSelected.filter(concept =>
       concept !== this.state.draggedConcept
     );
     // insert the dragged concept after the dragged over concept
@@ -187,7 +213,7 @@ class ConceptsSelected extends React.Component {
           <IconButton
             className={classes.retractDrawerButton}
             onClick={() => this.toggleDrawer(false)} >
-            <ChevronRightIcon />
+            <ChevronRight />
           </IconButton>
           <Button
             className={classes.addConceptButton}
@@ -211,6 +237,11 @@ class ConceptsSelected extends React.Component {
                 onMouseEnter={event => this.onMouseEnter(event)}
                 onMouseLeave={event => this.onMouseLeave(event)}
               >
+                <IconButton
+                  className={classes.deleteConceptButton}
+                  onClick={event => this.deleteConcept(event, index)} >
+                  <Close className={classes.deleteConceptIcon} />
+                </IconButton>
                 {concept.name}
                 <br />
                 <img
