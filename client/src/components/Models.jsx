@@ -93,8 +93,6 @@ class CreateUser extends Component {
   };
 
   createModel = async (modelName) => {
-    console.log('create new model');
-    
     const config = {
       headers: {
         'Authorization': 'Bearer ' + localStorage.getItem('token')
