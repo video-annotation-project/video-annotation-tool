@@ -70,9 +70,9 @@ app.post("/api/login", async function (req, res) {
     }
     const payload = { id: user.rows[0].id };
     const token = jwt.sign(payload, jwtOptions.secretOrKey);
-    res.json({ 
+    res.json({
       token: token,
-      isAdmin: user.rows[0].admin 
+      isAdmin: user.rows[0].admin
     });
   } catch (error) {
     res.status(500).json(error);
@@ -127,20 +127,16 @@ app.get('/api/concepts/:id', passport.authenticate('jwt', { session: false }),
   }
 );
 
-// returns list of concepts based off search criteria in req.query
-// currently just looks for exact concept name match.
+// returns a list of concept names
 app.get('/api/concepts', passport.authenticate('jwt', { session: false }),
   async (req, res) => {
-    let concepts = null
-    const queryText = "Select id, name, similarity($1,name) \
-                       from concepts \
-                       where similarity($1, name) > .01 \
-                       order by similarity desc limit 10";
+    const queryText = 'SELECT id, name \
+                       FROM concepts';
     try {
-      concepts = await psql.query(queryText, [req.query.name]);
+      const concepts = await psql.query(queryText);
       res.json(concepts.rows);
     } catch (error) {
-      res.status(400).json(error);
+      res.status(500).json(error);
     }
   }
 );
@@ -354,7 +350,7 @@ app.delete('/api/checkpoints/:videoid',
                        RETURNING *';
     try {
       let deleteRes = await psql.query(queryText, [userid, videoid]);
-      res.json({ message: 'unwatched'});
+      res.json({ message: 'unwatched' });
     } catch (error) {
       console.log(error);
       res.status(500).json(error);
@@ -497,14 +493,14 @@ app.post('/api/annotations', passport.authenticate('jwt', { session: false }),
       req.body.comment,
       req.body.unsure
     ];
-    queryText = 'INSERT INTO annotations(userid, videoid,\
-               conceptid, timeinvideo, \
-               x1, y1, x2, y2, \
-               videoWidth, videoHeight, \
-               image, imagewithbox, \
-               comment, unsure, dateannotated) \
-               VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10,\
-               $11, $12, $13, $14, current_timestamp) RETURNING *';
+    const queryText = 'INSERT INTO annotations(userid, videoid,\
+                       conceptid, timeinvideo, \
+                       x1, y1, x2, y2, \
+                       videoWidth, videoHeight, \
+                       image, imagewithbox, \
+                       comment, unsure, dateannotated) \
+                       VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10,\
+                       $11, $12, $13, $14, current_timestamp) RETURNING *';
     try {
       let insertRes = await psql.query(queryText, data);
       res.json({ message: "Annotated", value: JSON.stringify(insertRes.rows[0]) });
@@ -659,7 +655,42 @@ app.get('/api/reportTreeData', passport.authenticate('jwt', { session: false }),
       console.log(error);
       res.status(400).json(error);
     }
-  })
+  }
+)
+
+app.get('/api/models', passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    const queryText = 'select * \
+                       from models';
+    try {
+      let response = await psql.query(queryText);
+      res.json(response.rows);
+    } catch (error) {
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
+);
+
+app.post('/api/models', passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    const queryText = 'INSERT INTO models( \
+                         name, \
+                         timestamp) \
+                       VALUES( \
+                         $1, \
+                         current_timestamp) \
+                       RETURNING *';
+
+    try {
+      let response = await psql.query(queryText, [req.body.name]);
+      res.json(response.rows);
+    } catch (error) {
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
+);
 
 // This websocket sends a list of videos to the client that update in realtime
 io.on('connection', (socket) => {
