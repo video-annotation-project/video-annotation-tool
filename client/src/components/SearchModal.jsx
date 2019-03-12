@@ -88,8 +88,6 @@ class SearchModal extends Component {
     }
   }
 
-  //Queries database with term, expects a list of concepts.
-  //Should open a dialogue for selecting from the list (currently just selects 1st result)
   searchConcepts = (search) => {
     const conceptsLikeSearch = this.state.concepts.filter(concept => {
       return concept.name.match(new RegExp(search, 'i'))
