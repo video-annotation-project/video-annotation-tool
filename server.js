@@ -676,7 +676,7 @@ app.post('/api/models', passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     const queryText = 'INSERT INTO models( \
                          name, \
-                         datecreated) \
+                         timestamp) \
                        VALUES( \
                          $1, \
                          current_timestamp) \

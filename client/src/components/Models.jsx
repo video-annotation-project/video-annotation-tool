@@ -28,6 +28,10 @@ class CreateUser extends Component {
   }
 
   componentDidMount = () => {
+    this.loadExistingModels();
+  }
+
+  loadExistingModels = () => {
     const config = {
       headers: {
         'Authorization': 'Bearer ' + localStorage.getItem('token')
@@ -89,8 +93,6 @@ class CreateUser extends Component {
   };
 
   createModel = async (modelName) => {
-    console.log('create new model');
-    
     const config = {
       headers: {
         'Authorization': 'Bearer ' + localStorage.getItem('token')
@@ -102,6 +104,7 @@ class CreateUser extends Component {
     try {
       axios.post(`/api/models`, body, config).then(res => {
         alert('Created new model ' + modelName);
+        this.loadExistingModels();
         this.loadModel(res.data[0].name)
       })
     } catch (error) {
@@ -146,7 +149,6 @@ class CreateUser extends Component {
           open={errorOpen} 
           handleClose={this.handleClose}
         />
-        <div>Model</div>
         <input 
           type='text' 
           name='model' 
