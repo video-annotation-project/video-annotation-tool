@@ -35,12 +35,10 @@ with open(config_path) as config_buffer:
 
 model_path = config['model_weights']
 
-
 class Tracked_object:
 
    def __init__(self, detection, frame):
-      (x1, y1, x2, y2) = [int(v) for v in detection[0]]
-#      self.concept = concept
+      (x1, y1, x2, y2) = detection[0]
       self.x1 = x1
       self.x2 = x2
       self.y1 = y1
@@ -58,17 +56,6 @@ class Tracked_object:
       self.y2 = y1 + h 
       self.box = (x1, y1, w, h)
       return success, box
-
-   def reinit(self, detection, frame):
-      (x1, y1, x2, y2) = [int(v) for v in detection[0]]
-      self.x1 = x1
-      self.x2 = x2
-      self.y1 = y1
-      self.y2 = y2
-      self.box = (x1, y1, (x2-x1), (y2-y1))
-      self.tracker = cv2.TrackerKCF_create()
-      self.tracker.init(frame, self.box)
-
 
 def main():
    print("Loading Video")
