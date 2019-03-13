@@ -10,7 +10,7 @@ import os
 import boto3
 import keras
 
-NUM_FRAMES = 10 # run prediction on every NUM_FRAMES
+NUM_FRAMES = 5 # run prediction on every NUM_FRAMES
 
 #Load environment variables
 load_dotenv(dotenv_path="../.env")
@@ -35,29 +35,40 @@ with open(config_path) as config_buffer:
 
 model_path = config['model_weights']
 
-trackers = cv2.MultiTracker_create()
 
 class Tracked_object:
 
-   def __init__(self, detection):
-      (x1, y1, x2, y2) = detection[0]
-      self.x1 = x1
-      self.x2 = x2
-      self.y1 = y1
-      self.y2 = y2
+   def __init__(self, detection, frame):
+      (x1, y1, x2, y2) = [int(v) for v in detection[0]]
 #      self.concept = concept
-      self.matched = True
-
-   def update(self, detection):
-      (x1, y1, x2, y2) = detection[0]
       self.x1 = x1
       self.x2 = x2
       self.y1 = y1
       self.y2 = y2
-      self.matched = True
+      self.box = (x1, y1, (x2-x1), (y2-y1))
+      self.tracker = cv2.TrackerKCF_create()
+      self.tracker.init(frame, self.box) 
 
-   def set_unmatched(self):
-      self.matched = False
+   def update(self, frame):
+      success, box = self.tracker.update(frame)
+      (x1, y1, w, h) = [int(v) for v in box]
+      self.x1 = x1
+      self.x2 = x1 + w
+      self.y1 = y1
+      self.y2 = y1 + h 
+      self.box = (x1, y1, w, h)
+      return success, box
+
+   def reinit(self, detection, frame):
+      (x1, y1, x2, y2) = [int(v) for v in detection[0]]
+      self.x1 = x1
+      self.x2 = x2
+      self.y1 = y1
+      self.y2 = y2
+      self.box = (x1, y1, (x2-x1), (y2-y1))
+      self.tracker = cv2.TrackerKCF_create()
+      self.tracker.init(frame, self.box)
+
 
 def main():
    print("Loading Video")
@@ -83,7 +94,8 @@ def get_video_frames(video_name):
    # put frames into frame list
    check = True
 #   while True:
-   for i in range(0, 3750): 
+   vid.set(0, 160000)
+   for i in range(0, 900): 
       check, frame = vid.read()
       if not check:
          break
@@ -99,30 +111,25 @@ def init_model():
 
 def predict_frames(video_frames, model):
    currently_tracked_objects = []
-   frame_counter = 0
-   frame_list = []
-   for frame in range(0, len(video_frames), NUM_FRAMES):
-      # set each tracked object as unmatched for new frame
-      for tracked_object in currently_tracked_objects:
-         tracked_object.set_unmatched()
-      detections = get_predictions(copy.deepcopy(video_frames[frame]), model)
-      # try to match the currently tracked objects with the detections of this frame
-      for detection in detections:
-         # detection = class, bbox coords, confidence level
-         match, matched_object = does_match_existing_tracked_object(detection, currently_tracked_objects)
-         if match:
-             matched_object.update(detection)
-         else:
-            currently_tracked_objects.append(Tracked_object(detection))
-      if (frame + NUM_FRAMES - 1 >= len(video_frames)):
-         stop = len(video_frames)
-      else:
-         stop = frame + NUM_FRAMES - 1
-      # clean up unmatched tracked objects
-      for tracked_object in currently_tracked_objects:
-         if not tracked_object.matched:
-            currently_tracked_objects.remove(tracked_object)
-      track_detections(currently_tracked_objects, video_frames, frame, stop)
+   for i, frame in enumerate(video_frames):
+      # update tracking for currently tracked objects
+      for obj in currently_tracked_objects:
+         success = obj.update(frame)
+         if not success:
+            currently_tracked_objects.remove(obj)
+      # for every NUM_FRAMES, get new predections, check if any detections match a currently tracked object
+      if i % NUM_FRAMES == 0:
+          detections = get_predictions(copy.deepcopy(frame), model)
+          for detection in detections:
+             match, matched_object = does_match_existing_tracked_object(detection, currently_tracked_objects)
+             if not match:
+                currently_tracked_objects.append(Tracked_object(detection, frame))
+#             else:
+#                matched_object.reinit(detection, frame)
+      # draw boxes 
+      for obj in currently_tracked_objects:
+         (x, y, w, h) = obj.box
+         cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)            
    return video_frames
 
 def get_predictions(frame, model):
@@ -137,26 +144,6 @@ def get_predictions(frame, model):
          continue
       filtered_predictions.append((box,score,label))
    return filtered_predictions
-
-# Tracks and adds bounding boxes for detected objects in video frames from start to stop frame.
-# Works in place, so no extra memory use! Woot
-# add new tracker for unmatched objects, use same tracker for matched objects
-def track_detections(currently_tracked_objects, video_frames, start, stop):
-   global trackers
-   frame_list = [] 
-   frame = video_frames[start]
-   for obj in currently_tracked_objects:
-      if not obj.matched:
-         width = obj.x2 - obj.x1
-         height = obj.y2 - obj.y1
-         box = (obj.x1, obj.y1, width, height)
-         trackers.add(cv2.TrackerKCF_create(), frame, box)
-   for frame in video_frames[start:stop]:
-      (success, boxes) = trackers.update(frame)
-      if success:
-         for box in boxes:
-            (x, y, w, h) = [int(v) for v in box]
-            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
 def display_video(frames):
    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
@@ -192,7 +179,7 @@ def does_match_existing_tracked_object(detection, currently_tracked_objects):
        if (iou > max_iou):
           max_iou = iou
           match = obj
-   if max_iou >= 0.70:               
+   if max_iou >= 0.10:               
       print("match")
       return True, match
    return False, None
