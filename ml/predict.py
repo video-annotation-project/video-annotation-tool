@@ -9,8 +9,10 @@ import copy
 import os
 import boto3
 import keras
+import pandas as pd
+import uuid
 
-NUM_FRAMES = 5 # run prediction on every NUM_FRAMES
+NUM_FRAMES = 10 # run prediction on every NUM_FRAMES
 
 #Load environment variables
 load_dotenv(dotenv_path="../.env")
@@ -34,10 +36,38 @@ with open(config_path) as config_buffer:
    config = json.loads(config_buffer.read())
 
 model_path = config['model_weights']
+num_concepts = len(config['conceptids'])
 
 class Tracked_object:
 
-   def __init__(self, detection, frame):
+   def __init__(self, detection, frame, time_in_video):
+      self.annotations = pd.DataFrame(columns=['x1','y1','x2','y2','label', 'confidence', 'objectid','timeinvideo'])
+      (x1, y1, x2, y2) = detection[0]
+      self.id = uuid.uuid4()
+      self.x1 = x1
+      self.x2 = x2
+      self.y1 = y1
+      self.y2 = y2
+      self.box = (x1, y1, (x2-x1), (y2-y1))
+      self.tracker = cv2.TrackerKCF_create()
+      self.tracker.init(frame, self.box)
+      label = detection[2]
+      confidence = detection[1]
+      self.save_annotation(time_in_video,label=label, confidence=confidence)
+
+   def save_annotation(self, time_in_video, label=None, confidence=None):
+      annotation = {}
+      annotation['x1'] = self.x1
+      annotation['y1'] = self.y1
+      annotation['x2'] = self.x2
+      annotation['y2'] = self.y2
+      annotation['label'] = label
+      annotation['confidence'] = confidence
+      annotation['objectid'] = self.id
+      annotation['timeinvideo'] = time_in_video
+      self.annotations = self.annotations.append(annotation, ignore_index=True)
+
+   def reinit(self, detection, frame, time_in_video):
       (x1, y1, x2, y2) = detection[0]
       self.x1 = x1
       self.x2 = x2
@@ -46,24 +76,29 @@ class Tracked_object:
       self.box = (x1, y1, (x2-x1), (y2-y1))
       self.tracker = cv2.TrackerKCF_create()
       self.tracker.init(frame, self.box) 
+      label = detection[2]
+      confidence = detection[1]
+      self.save_annotation(time_in_video, label=label, confidence=confidence)
 
-   def update(self, frame):
+   def update(self, frame, time_in_video):
       success, box = self.tracker.update(frame)
-      (x1, y1, w, h) = [int(v) for v in box]
-      self.x1 = x1
-      self.x2 = x1 + w
-      self.y1 = y1
-      self.y2 = y1 + h 
-      self.box = (x1, y1, w, h)
-      return success, box
+      if success:
+         (x1, y1, w, h) = [int(v) for v in box]
+         self.x1 = x1
+         self.x2 = x1 + w
+         self.y1 = y1
+         self.y2 = y1 + h 
+         self.box = (x1, y1, w, h)
+         self.save_annotation(time_in_video)
+      return success
 
 def main():
    print("Loading Video")
-   frames = get_video_frames("DocRicketts-0701_20141216T212020Z_00-48-12-26TC_h264.mp4")
+   frames, fps = get_video_frames("DocRicketts-0701_20141216T212020Z_00-48-12-26TC_h264.mp4")
    print("Initializing Model")
    model = init_model()
    print("Predicting")
-   predicted_frames = predict_frames(frames, model) 
+   predicted_frames = predict_frames(frames, fps, model) 
    display_video(predicted_frames) 
 
 def get_video_frames(video_name):
@@ -74,6 +109,8 @@ def get_video_frames(video_name):
                       'Key': S3_VIDEO_FOLDER + video_name},
                        ExpiresIn = 100)
    vid = cv2.VideoCapture(url)
+   fps = vid.get(cv2.CAP_PROP_FPS)
+
    print(url)
    while not vid.isOpened():
       continue
@@ -89,30 +126,33 @@ def get_video_frames(video_name):
       frame = cv2.resize(frame,(640,480))
       frames.append(frame)
    vid.release()
-   return frames
+   return frames,fps
 
 def init_model():
    model = load_model(model_path, backbone_name='resnet50')
    model = convert_model(model)
    return model
 
-def predict_frames(video_frames, model):
+def predict_frames(video_frames, fps, model):
    currently_tracked_objects = []
    for i, frame in enumerate(video_frames):
+      time_in_video = round(i/fps, 2)
       # update tracking for currently tracked objects
       for obj in currently_tracked_objects:
-         success = obj.update(frame)
+         success = obj.update(frame, time_in_video)
          if not success:
             currently_tracked_objects.remove(obj)
+            #Should really check if there is a matching prediction if the tracking fails
+
       # for every NUM_FRAMES, get new predections, check if any detections match a currently tracked object
       if i % NUM_FRAMES == 0:
           detections = get_predictions(copy.deepcopy(frame), model)
           for detection in detections:
              match, matched_object = does_match_existing_tracked_object(detection, currently_tracked_objects)
              if not match:
-                currently_tracked_objects.append(Tracked_object(detection, frame))
-#             else:
-#                matched_object.reinit(detection, frame)
+                currently_tracked_objects.append(Tracked_object(detection, frame, time_in_video))
+             else:
+                matched_object.reinit(detection, frame, time_in_video)
       # draw boxes 
       for obj in currently_tracked_objects:
          (x, y, w, h) = obj.box
@@ -123,7 +163,7 @@ def get_predictions(frame, model):
    frame = np.expand_dims(frame, axis=0)
    boxes, scores, labels = model.predict_on_batch(frame)
 
-   thresholds = [.25,.25,.25,.25,.25]
+   thresholds = [.3,.3,.3,.3,.3]
    predictions = zip (boxes[0],scores[0],labels[0])
    filtered_predictions = []
    for box, score,label in predictions:
@@ -166,7 +206,7 @@ def does_match_existing_tracked_object(detection, currently_tracked_objects):
        if (iou > max_iou):
           max_iou = iou
           match = obj
-   if max_iou >= 0.10:               
+   if max_iou >= 0.25:               
       print("match")
       return True, match
    return False, None
