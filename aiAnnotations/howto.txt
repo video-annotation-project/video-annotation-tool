@@ -11,14 +11,19 @@ sure to add extra storage space(NOT MEMORY, 32Gigs on an ssd should be enough).
 	https://www.pyimagesearch.com/opencv-tutorials-resources-guides/
 	to set up opencv, make sure to add '-DWITH_FFMPEG=ON' to the cmake command. You'll have to download
 	a couple of extra packages along the way, and make sure to update paths to point to the correct places.
-	*** Make sure to be doing everything on python 3.6 and in a virtual env***
+
+	*** Make sure to be doing everything on python 3.6 and in a virtual env (usually named 'cv')***
 	Confirm that it is working with 'python -c 'import cv2; print(cv2.__version__);'
 	(Hopefully we can have a test script at some point)
 	You'll have to pip install a bunch of packages (WHILE IN VENV)
 	pip install python-dotenv
+	pip install keras
+	pip install boto3
+	pip install tensorflow
+
 	As well as 
-	'sudo apt install ffmpeg'
-	'sudo apt-get install libpq-dev'
+	sudo apt install ffmpeg
+	sudo apt-get install libpq-dev
 
 2. GETTING ANNOTATIONS
 	Just run 'nohup python annotateAll.py &' to begin automatic annotations.
