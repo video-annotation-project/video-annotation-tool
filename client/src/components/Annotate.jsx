@@ -202,12 +202,14 @@ class Annotate extends Component {
     });
   }
 
-  updateCheckpoint = (finished, reloadVideos) => {
-    finished = finished || this.state.currentVideo.finished;
-    // when the checkpoint for a video is updated, there are three places that
-    // need to reflect this: this.state.currentVideo, this.state.startedVideos,
-    // and the checkpoints table in the SQL database. Upon successful resolution
-    // of the SQL database update, we update currentVideo and startedVideos.
+  updateCheckpoint = (doneClicked, reloadVideos) => {
+    /*
+      when the checkpoint for a video is updated, there are three places that
+      need to reflect this: this.state.currentVideo, the videos list, and the 
+      checkpoints table in the SQL database. Upon successful resolution of the 
+      SQL database update, we reload the videos list by calling this.loadVideos,
+      and if the done button was clicked, we reload this.state.currentVideo.
+    */
     const config = {
       headers: {
         'Authorization': 'Bearer ' + localStorage.getItem('token')
@@ -216,7 +218,7 @@ class Annotate extends Component {
     let videoElement = document.getElementById("video");
     const body = {
       'timeinvideo': videoElement.currentTime,
-      'finished': finished
+      'finished': doneClicked || this.state.currentVideo.finished
     }
     // update SQL database
     return axios.put(
@@ -224,7 +226,7 @@ class Annotate extends Component {
       body,
       config).then(res => {
         if (reloadVideos) {
-          return this.loadVideos(finished ? this.getCurrentVideo : null);
+          return this.loadVideos(doneClicked ? this.getCurrentVideo : null);
         }
       }).catch(error => {
         console.log(error);
