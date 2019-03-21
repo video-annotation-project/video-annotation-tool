@@ -208,7 +208,7 @@ class Annotate extends Component {
       need to reflect this: this.state.currentVideo, the videos list, and the 
       checkpoints table in the SQL database. Upon successful resolution of the 
       SQL database update, we reload the videos list by calling this.loadVideos,
-      and if finished, we reload this.state.currentVideo.
+      and if the done button was clicked, we reload this.state.currentVideo.
     */
     const config = {
       headers: {
