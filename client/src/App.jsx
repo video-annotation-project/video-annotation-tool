@@ -13,7 +13,7 @@ import Login from './components/Login.jsx';
 import CreateUser from './components/CreateUser.jsx';
 import Profile from './components/Profile.jsx';
 import Report from './components/Report.jsx';
-import Models from './components/Models.jsx';
+import RunModel from './components/RunModel.jsx';
 
 require('dotenv').config()
 
@@ -33,7 +33,7 @@ class App extends React.Component {
                     <Route exact path='/annotate' component={Annotate} />
                     <Route exact path='/report' component={Report} />
                     <Route exact path='/createUser' component={CreateUser} />
-                    <Route exact path='/models' component={Models} />
+                    <Route exact path='/RunModel' component={RunModel} />
                   </React.Fragment>
               ):(
                 <React.Fragment>
