@@ -23,6 +23,11 @@ import InputLabel from '@material-ui/core/InputLabel';
 import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
 
+//Select Video
+import FormGroup from '@material-ui/core/FormGroup';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import FormLabel from '@material-ui/core/FormLabel';
+import Checkbox from '@material-ui/core/Checkbox';
 
 const styles = theme => ({
   root: {
@@ -47,6 +52,10 @@ const styles = theme => ({
   resetContainer: {
     padding: theme.spacing.unit * 3,
   },
+  videoSelector: {
+    height: '10%',
+    overflow: 'auto'
+  }
 });
 
 
@@ -56,6 +65,7 @@ class RunModel extends Component {
     this.state = {
       models: null,
       model: '',
+      videos: null,
       activeStep: 0,
       errorMsg: null,
       errorOpen: false //modal code
@@ -65,13 +75,13 @@ class RunModel extends Component {
   getSteps = () => {
     return ['Select model', 'Select videos'];
   }
-  
+
   getStepContent = (step) => {
     switch (step) {
       case 0:
         return this.selectModel();
       case 1:
-        return 'Video Selector';
+        return this.selectVideo();
       default:
         return 'Unknown step';
     }
@@ -94,6 +104,31 @@ class RunModel extends Component {
             </MenuItem>
           ))}
         </Select>
+      </FormControl>
+    );
+  }
+
+  selectVideo = () => {
+    return (
+      <FormControl
+        component="fieldset"
+        className={this.props.classes.videoSelector}
+      >
+        <FormLabel component="legend">Select Videos to Annotate</FormLabel>
+        <FormGroup>
+          {this.state.videos.map(video => (
+            <FormControlLabel
+              key={video.filename}
+              control={
+                <Checkbox
+                  color='primary'
+                />
+              }
+              label={video.filename}
+            >
+            </FormControlLabel>
+          ))}
+        </FormGroup>
       </FormControl>
     );
   }
@@ -124,6 +159,7 @@ class RunModel extends Component {
 
   componentDidMount = () => {
     this.loadExistingModels();
+    this.loadVideoList();
   }
 
   loadExistingModels = () => {
@@ -144,48 +180,26 @@ class RunModel extends Component {
       }
     })
   }
-  
-  handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
-      const model = this.findModel(e.target.value);
-      if (model) {
-        //Model exists
-        //Load model
-        this.loadModel(model);
+
+  loadVideoList = () => {
+    const config = {
+      headers: {
+        'Authorization': 'Bearer ' + localStorage.getItem('token')
       }
-    } else {
-      this.searchModels(e.target.value + e.key);
     }
-  }
-
-  handleKeyDown = (e) => {
-    //Backspace does not trigger handleKeyPress
-    //So this will search when backspace
-    if (e.keyCode === 8 || e.keyCode === 46) {
-      this.searchModels(e.target.value.slice(0,-1));
-    }
-  }
-
-  searchModels = (search) => {
-    const modelsLikeSearch = this.state.models.filter(model => {
-      return model.name.match(new RegExp(search, 'i'))
-    });
-
-    this.setState({
-      modelsLikeSearch: modelsLikeSearch.slice(0, 10)
+    axios.get(`/api/videos`, config).then(res => {
+      let [
+        ,
+        unwatchedVideos,
+        watchedVideos,
+        inProgressVideos] = res.data;
+      const videos = unwatchedVideos.rows.concat(
+        watchedVideos.rows,
+        inProgressVideos.rows);
+      this.setState({
+        videos: videos
+      });
     })
-  };
-
-  findModel = (modelName) => {
-    const match = this.state.models.find(model => {
-      return model.name === modelName;
-    });
-    return match ? match.name : null;
-  };
-
-  loadModel = (model) => {
-    alert('Loaded ' + model);
-    console.log(model);
   }
 
   //Code for closing modal
@@ -199,11 +213,12 @@ class RunModel extends Component {
     const {
       models,
       model,
-      activeStep, 
-      errorMsg, 
+      videos,
+      activeStep,
+      errorMsg,
       errorOpen
     } = this.state;
-    if (!models) {
+    if (!videos) {
       return (
         <div>Loading...</div>
       )
@@ -211,11 +226,11 @@ class RunModel extends Component {
     return (
       <div className={classes.root}>
         <div className={classes.center}>
-          <h1 style={{color: 'red'}}>This page is still in progress</h1>
+          <h1 style={{ color: 'red' }}>This page is still in progress</h1>
           <Typography variant="display1">Run a trained model on video(s)</Typography><br />
-          <ErrorModal 
-            errorMsg={errorMsg} 
-            open={errorOpen} 
+          <ErrorModal
+            errorMsg={errorMsg}
+            open={errorOpen}
             handleClose={this.handleClose}
           />
         </div>
@@ -239,7 +254,7 @@ class RunModel extends Component {
                       color="primary"
                       onClick={this.handleNext}
                       className={classes.button}
-                      disabled={activeStep === 0 & model === '' ? true: false}
+                      disabled={activeStep === 0 & model === '' ? true : false}
                     >
                       {activeStep === steps.length - 1 ? 'Run Model' : 'Next'}
                     </Button>
@@ -252,11 +267,11 @@ class RunModel extends Component {
         {activeStep === steps.length && (
           <Paper square elevation={0} className={classes.resetContainer}>
             <Typography>Model is running/generating images...</Typography>
-            <CircularProgress/>
+            <CircularProgress />
             <Button onClick={this.handleReset} className={classes.button}>
               Stop
             </Button>
-            
+
           </Paper>
         )}
       </div>
