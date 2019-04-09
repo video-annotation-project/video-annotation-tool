@@ -40,8 +40,8 @@ num_concepts = len(config['conceptids'])
 
 class Tracked_object:
 
-   def __init__(self, detection, frame, time_in_video):
-      self.annotations = pd.DataFrame(columns=['x1','y1','x2','y2','label', 'confidence', 'objectid','timeinvideo'])
+   def __init__(self, detection, frame, frame_num):
+      self.annotations = pd.DataFrame(columns=['x1','y1','x2','y2','label', 'confidence', 'objectid','frame_num'])
       (x1, y1, x2, y2) = detection[0]
       self.id = uuid.uuid4()
       self.x1 = x1
@@ -53,9 +53,9 @@ class Tracked_object:
       self.tracker.init(frame, self.box)
       label = detection[2]
       confidence = detection[1]
-      self.save_annotation(time_in_video,label=label, confidence=confidence)
+      self.save_annotation(frame_num,label=label, confidence=confidence)
 
-   def save_annotation(self, time_in_video, label=None, confidence=None):
+   def save_annotation(self, frame_num, label=None, confidence=None):
       annotation = {}
       annotation['x1'] = self.x1
       annotation['y1'] = self.y1
@@ -64,10 +64,10 @@ class Tracked_object:
       annotation['label'] = label
       annotation['confidence'] = confidence
       annotation['objectid'] = self.id
-      annotation['timeinvideo'] = time_in_video
+      annotation['frame_num'] = frame_num
       self.annotations = self.annotations.append(annotation, ignore_index=True)
 
-   def reinit(self, detection, frame, time_in_video):
+   def reinit(self, detection, frame, frame_num):
       (x1, y1, x2, y2) = detection[0]
       self.x1 = x1
       self.x2 = x2
@@ -79,9 +79,9 @@ class Tracked_object:
       label = detection[2]
       confidence = detection[1]
       self.annotations = self.annotations[:-1]
-      self.save_annotation(time_in_video, label=label, confidence=confidence)
+      self.save_annotation(frame_num, label=label, confidence=confidence)
 
-   def update(self, frame, time_in_video):
+   def update(self, frame, frame_num):
       success, box = self.tracker.update(frame)
       if success:
          (x1, y1, w, h) = [int(v) for v in box]
@@ -90,7 +90,7 @@ class Tracked_object:
          self.y1 = y1
          self.y2 = y1 + h 
          self.box = (x1, y1, w, h)
-         self.save_annotation(time_in_video)
+         self.save_annotation(frame_num)
       return success
 
 def main():
@@ -137,10 +137,10 @@ def init_model():
 def predict_frames(video_frames, fps, model):
    currently_tracked_objects = []
    for i, frame in enumerate(video_frames):
-      time_in_video = round(i/fps, 2)
+      frame_num = i
       # update tracking for currently tracked objects
       for obj in currently_tracked_objects:
-         success = obj.update(frame, time_in_video)
+         success = obj.update(frame, frame_num)
          if not success:
             currently_tracked_objects.remove(obj)
             #Should really check if there is a matching prediction if the tracking fails
@@ -151,9 +151,9 @@ def predict_frames(video_frames, fps, model):
           for detection in detections:
              match, matched_object = does_match_existing_tracked_object(detection, currently_tracked_objects)
              if not match:
-                currently_tracked_objects.append(Tracked_object(detection, frame, time_in_video))
+                currently_tracked_objects.append(Tracked_object(detection, frame, frame_num))
              else:
-                matched_object.reinit(detection, frame, time_in_video)
+                matched_object.reinit(detection, frame, frame_num)
       # draw boxes 
       for obj in currently_tracked_objects:
          (x, y, w, h) = obj.box
