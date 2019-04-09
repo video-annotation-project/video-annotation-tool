@@ -78,6 +78,7 @@ class Tracked_object:
       self.tracker.init(frame, self.box) 
       label = detection[2]
       confidence = detection[1]
+      self.annotations = self.annotations[:-1]
       self.save_annotation(time_in_video, label=label, confidence=confidence)
 
    def update(self, frame, time_in_video):
