@@ -39,7 +39,7 @@ class VideoList extends Component {
       watchedListOpen: false,
       inProgressListOpen: false,
       descriptionOpen: false,
-      videoid: null
+      openedVideo: null
     };
   }
 
@@ -50,11 +50,11 @@ class VideoList extends Component {
   }
 
   //Methods for video meta data
-  openVideoMetadata = (event, videoid) => {
+  openVideoMetadata = (event, video) => {
     event.stopPropagation()
     this.setState({
       descriptionOpen: true,
-      videoid: videoid
+      openedVideo: video
     })
   }
 
@@ -64,11 +64,12 @@ class VideoList extends Component {
 
   closeVideoMetadata = () => {
     this.setState({
-      descriptionOpen: false
+      descriptionOpen: false,
+      openedVideo: null
     });
   }
 
-  render () {
+  render() {
     const {
       classes,
       handleVideoClick,
@@ -81,7 +82,8 @@ class VideoList extends Component {
       startedListOpen,
       unwatchedListOpen,
       watchedListOpen,
-      inProgressListOpen
+      inProgressListOpen,
+      openedVideo
     } = this.state;
 
     return (
@@ -100,116 +102,134 @@ class VideoList extends Component {
           open={this.state.videoListOpen}
           onClose={() => this.toggle('videoListOpen')}
         >
-        <div className={classes.drawer}>
+          <div className={classes.drawer}>
 
-          <ListItem button onClick={() => this.toggle("startedListOpen")}>
-            <ListItemText inset primary="My In Progress Videos" />
-            {startedListOpen ? <ExpandLess /> : <ExpandMore />}
-          </ListItem>
-          <Collapse in={startedListOpen} timeout="auto" unmountOnExit>
-            <List component="div" disablePadding>
-              {startedVideos.map(video => (
-                <ListItem
-                  button key={video.id}
-                  style={video.count>1?{backgroundColor: 'red'}:{}}
-                  onClick={() => handleVideoClick(video, 'startedVideos')}
-                >
-                  <ListItemText primary={video.id + '. ' + video.filename} />
-                  <IconButton>
-                    <Description
-                      onClick={
-                        (event) => this.openVideoMetadata(event, video.id)
-                      }
-                    />
-                  </IconButton>
-                </ListItem>
-              ))}
-            </List>
-          </Collapse>
+            <ListItem button onClick={() => this.toggle("startedListOpen")}>
+              <ListItemText inset primary="My In Progress Videos" />
+              {startedListOpen ? <ExpandLess /> : <ExpandMore />}
+            </ListItem>
+            <Collapse in={startedListOpen} timeout="auto" unmountOnExit>
+              <List component="div" disablePadding>
+                {startedVideos.map(video => (
+                  <ListItem
+                    button key={video.id}
+                    style={video.count > 1 ? { backgroundColor: 'red' } : {}}
+                    onClick={() => handleVideoClick(video, 'startedVideos')}
+                  >
+                    <ListItemText primary={video.id + '. ' + video.filename} />
+                    <IconButton>
+                      <Description
+                        onClick={
+                          (event) =>
+                            this.openVideoMetadata(
+                              event,
+                              video,
+                            )
+                        }
+                      />
+                    </IconButton>
+                  </ListItem>
+                ))}
+              </List>
+            </Collapse>
 
-          <ListItem button onClick={() => this.toggle("unwatchedListOpen")}>
-            <ListItemText inset primary="Unwatched Videos" />
-            {unwatchedListOpen ? <ExpandLess /> : <ExpandMore />}
-          </ListItem>
-          <Collapse in={unwatchedListOpen} timeout="auto" unmountOnExit>
-            <List component="div" disablePadding>
-              {unwatchedVideos.map(video => (
-                <ListItem
-                  button key={video.id}
-                  onClick={() => handleVideoClick(video, 'unwatchedVideos')}
-                >
-                  <ListItemText primary={video.id + '. ' + video.filename} />
-                  <IconButton>
-                    <Description
-                      onClick={
-                        (event) => this.openVideoMetadata(event, video.id)
-                      }
-                    />
-                  </IconButton>
-                </ListItem>
-              ))}
-            </List>
-          </Collapse>
+            <ListItem button onClick={() => this.toggle("unwatchedListOpen")}>
+              <ListItemText inset primary="Unwatched Videos" />
+              {unwatchedListOpen ? <ExpandLess /> : <ExpandMore />}
+            </ListItem>
+            <Collapse in={unwatchedListOpen} timeout="auto" unmountOnExit>
+              <List component="div" disablePadding>
+                {unwatchedVideos.map(video => (
+                  <ListItem
+                    button key={video.id}
+                    onClick={() => handleVideoClick(video, 'unwatchedVideos')}
+                  >
+                    <ListItemText primary={video.id + '. ' + video.filename} />
+                    <IconButton>
+                      <Description
+                        onClick={
+                          (event) =>
+                            this.openVideoMetadata(
+                              event,
+                              video,
+                            )
+                        }
+                      />
+                    </IconButton>
+                  </ListItem>
+                ))}
+              </List>
+            </Collapse>
 
-          <ListItem button onClick={() => this.toggle("watchedListOpen")}>
-            <ListItemText inset primary="Annotated Videos" />
-            {watchedListOpen ? <ExpandLess /> : <ExpandMore />}
-          </ListItem>
-          <Collapse in={watchedListOpen} timeout="auto" unmountOnExit>
-            <List component="div" disablePadding>
-              {watchedVideos.map(video => (
-                <ListItem
-                  button key={video.id}
-                  onClick={() => handleVideoClick(video, 'watchedVideos')}
-                >
-                  <ListItemText primary={video.id + '. ' + video.filename} />
-                  <IconButton>
-                    <Description
-                      onClick={
-                        (event) => this.openVideoMetadata(event, video.id)
-                      }
-                    />
-                  </IconButton>
-                </ListItem>
-              ))}
-            </List>
-          </Collapse>
+            <ListItem button onClick={() => this.toggle("watchedListOpen")}>
+              <ListItemText inset primary="Annotated Videos" />
+              {watchedListOpen ? <ExpandLess /> : <ExpandMore />}
+            </ListItem>
+            <Collapse in={watchedListOpen} timeout="auto" unmountOnExit>
+              <List component="div" disablePadding>
+                {watchedVideos.map(video => (
+                  <ListItem
+                    button key={video.id}
+                    onClick={() => handleVideoClick(video, 'watchedVideos')}
+                  >
+                    <ListItemText primary={video.id + '. ' + video.filename} />
+                    <IconButton>
+                      <Description
+                        onClick={
+                          (event) =>
+                            this.openVideoMetadata(
+                              event,
+                              video,
+                            )
+                        }
+                      />
+                    </IconButton>
+                  </ListItem>
+                ))}
+              </List>
+            </Collapse>
 
-          <ListItem button onClick={() => this.toggle("inProgressListOpen")}>
-            <ListItemText inset primary="All In Progress Videos" />
-            {inProgressListOpen ? <ExpandLess /> : <ExpandMore />}
-          </ListItem>
-          <Collapse in={inProgressListOpen} timeout="auto" unmountOnExit>
-            <List component="div" disablePadding>
-              {inProgressVideos.map(video => (
-                <ListItem
-                  button key={video.id}
-                  onClick={() => handleVideoClick(video, 'inProgressVideos')}
-                >
-                  <ListItemText primary={video.id + '. ' + video.filename} />
-                  <IconButton>
-                    <Description
-                      onClick={
-                        (event) => this.openVideoMetadata(event, video.id)
-                      }
-                    />
-                  </IconButton>
-                </ListItem>
-              ))}
-            </List>
-          </Collapse>
-        </div>
+            <ListItem button onClick={() => this.toggle("inProgressListOpen")}>
+              <ListItemText inset primary="All In Progress Videos" />
+              {inProgressListOpen ? <ExpandLess /> : <ExpandMore />}
+            </ListItem>
+            <Collapse in={inProgressListOpen} timeout="auto" unmountOnExit>
+              <List component="div" disablePadding>
+                {inProgressVideos.map(video => (
+                  <ListItem
+                    button key={video.id}
+                    onClick={() => handleVideoClick(video, 'inProgressVideos')}
+                  >
+                    <ListItemText primary={video.id + '. ' + video.filename} />
+                    <IconButton>
+                      <Description
+                        onClick={
+                          (event) =>
+                            this.openVideoMetadata(
+                              event,
+                              video,
+                            )
+                        }
+                      />
+                    </IconButton>
+                  </ListItem>
+                ))}
+              </List>
+            </Collapse>
+          </div>
         </Drawer>
         {this.state.descriptionOpen &&
           <VideoMetadata
-            open={true /* The DialogModal 'openness' is controlled through
+            open={true /* The VideoMetadata 'openness' is controlled through
               boolean logic rather than by passing in a variable as an
-              attribute. This is to force DialogModal to unmount when it closes
-              so that its state is reset. This also prevents the accidental
-              double submission bug, by implicitly reducing the transition time
-              of DialogModal to zero. */}
+              attribute. This is to force VideoMetadata to unmount when it 
+              closes so that its state is reset. This also prevents the 
+              accidental double submission bug, by implicitly reducing 
+              the transition time of VideoMetadata to zero. */}
             handleClose={this.closeVideoMetadata}
-            videoid={this.state.videoid}
+            openedVideo={openedVideo}
+            socket={this.props.socket}
+            loadVideos={this.props.loadVideos}
           />
         }
       </div>

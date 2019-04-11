@@ -1,4 +1,6 @@
 import React, { Component } from 'react';
+import axios from 'axios';
+
 import Input from '@material-ui/core/Input';
 import Dialog from '@material-ui/core/Dialog';
 import DialogContent from '@material-ui/core/DialogContent';
@@ -6,13 +8,13 @@ import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import DialogActions from '@material-ui/core/DialogActions';
 import Button from '@material-ui/core/Button';
+import Radio from '@material-ui/core/Radio';
 import { withStyles } from '@material-ui/core/styles';
-import axios from 'axios';
 
 const styles = theme => ({
-  paper: {
-    width: theme.spacing.unit*50,
-    height: theme.spacing.unit*55,
+  dialogStyle: {
+    width: theme.spacing.unit * 50,
+    height: theme.spacing.unit * 65,
     boxShadow: theme.shadows[5],
     margin: 'auto',
     outline: 'none'
@@ -24,6 +26,7 @@ class VideoMetadata extends Component {
     super(props);
     this.state = {
       videoMetadata: null,
+      videoStatus: null,
       isLoaded: false
     };
   }
@@ -35,13 +38,24 @@ class VideoMetadata extends Component {
       }
     }
     axios.get(
-      '/api/videos/'+this.props.videoid,
+      '/api/videos/' + this.props.openedVideo.id,
       config
-    ).then(videoMetadata => {
-      console.log('Loaded');
-      console.log(videoMetadata);
+    ).then(response => {
+      //Logic to check video's status from user checkpoints
+      let username = localStorage.getItem('username');
+      let usersWatching = response.data[0].userswatching;
+      let usersFinished = response.data[0].usersfinished;
+      let userIndex = usersWatching.indexOf(username);
+      let videoStatus = 'inProgress';
+
+      if (userIndex === -1) {
+        videoStatus = 'unwatched';
+      } else if (usersFinished[userIndex]) {
+        videoStatus = 'annotated';
+      }
       this.setState({
-        videoMetadata: videoMetadata.data[0],
+        videoMetadata: response.data[0],
+        videoStatus: videoStatus,
         isLoaded: true
       });
     }).catch(error => {
@@ -52,7 +66,7 @@ class VideoMetadata extends Component {
 
   handleKeyPress = (e) => {
     if (e.key === 'Enter') {
-      this.updateDescription();
+      this.update();
     }
     else {
       let videoMetadata = this.state.videoMetadata;
@@ -61,9 +75,15 @@ class VideoMetadata extends Component {
         videoMetadata: JSON.parse(JSON.stringify(videoMetadata))
       });
     }
-  };
+  }
 
-  updateDescription = () => {
+  update = () => {
+    this.updateVideoDescription();
+    this.updateVideoStatus();
+    this.props.handleClose();
+  }
+
+  updateVideoDescription = () => {
     const body = {
       'description': this.state.videoMetadata.description
     }
@@ -73,7 +93,7 @@ class VideoMetadata extends Component {
       }
     }
     axios.patch(
-      '/api/videos/'+this.props.videoid,
+      '/api/videos/' + this.props.openedVideo.id,
       body,
       config
     ).then(updateRes => {
@@ -82,12 +102,41 @@ class VideoMetadata extends Component {
       console.log('Error in VideoMetadata.jsx patch /api/videos');
       console.log(error.response.data);
     })
-    this.props.handleClose();
-  };
+
+  }
+
+  updateVideoStatus = () => {
+    const config = {
+      url: '/api/checkpoints/' + this.props.openedVideo.id,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + localStorage.getItem('token')
+      },
+      data: {
+        'timeinvideo': this.props.openedVideo.timeinvideo,
+        'finished': this.state.videoStatus === 'annotated' ? true : false
+      }
+    };
+    config.method = this.state.videoStatus === 'unwatched' ? 'delete' : 'put';
+    axios.request(config).then(res => {
+      this.props.loadVideos();
+      this.props.socket.emit('refresh videos');
+      console.log("Changed: " + res.data.message);
+    }).catch(error => {
+      console.log('Error in /api/videos ' + config.method);
+      console.log(error);
+    });
+  }
+
+  handleVideoStatusChange = (event) => {
+    this.setState({
+      videoStatus: event.target.value
+    })
+  }
 
   render() {
-    const {classes, videoid} = this.props;
-    const { isLoaded } = this.state;
+    const { classes, openedVideo } = this.props;
+    const { isLoaded, videoStatus } = this.state;
     if (!isLoaded) {
       return <div>Loading...</div>
     }
@@ -108,25 +157,25 @@ class VideoMetadata extends Component {
         open={this.props.open}
         aria-labelledby="form-dialog-title"
       >
-        <div className={classes.paper}>
+        <div className={classes.dialogStyle}>
           <DialogTitle id="form-dialog-title">
             <small>
-              Video:{videoid}<br/>
+              Video:{openedVideo.id}<br />
               {filename}
             </small>
 
           </DialogTitle>
           <DialogContent>
             <DialogContentText>
-              Users Watching: {userswatching.join(', ')}<br/>
-              GPS start: {gpsstart.x+', '+gpsstart.y}<br/>
-              GPS stop: {gpsstop.x+', '+gpsstop.y}<br/>
-              Start Depth: {startdepth}<br/>
-              End Depth: {enddepth}<br/>
-              Start Time: {starttime}<br/>
-              End Time: {endtime}<br/>
+              Users Watching: {userswatching.join(', ')}<br />
+              GPS start: {gpsstart.x + ', ' + gpsstart.y}<br />
+              GPS stop: {gpsstop.x + ', ' + gpsstop.y}<br />
+              Start Depth: {startdepth}<br />
+              End Depth: {enddepth}<br />
+              Start Time: {starttime}<br />
+              End Time: {endtime}<br />
             </DialogContentText>
-            <br/>
+            <br />
             <Input
               onKeyPress={this.handleKeyPress}
               autoFocus
@@ -137,12 +186,33 @@ class VideoMetadata extends Component {
               multiline
             />
           </DialogContent>
+          <Radio
+            checked={videoStatus === 'unwatched'}
+            onChange={this.handleVideoStatusChange}
+            value="unwatched"
+            color="default"
+          />
+          Unwatched
+          <Radio
+            checked={videoStatus === 'annotated'}
+            onChange={this.handleVideoStatusChange}
+            value="annotated"
+            color="default"
+          />
+          Annotated
+          <Radio
+            checked={videoStatus === 'inProgress'}
+            onChange={this.handleVideoStatusChange}
+            value="inProgress"
+            color="default"
+          />
+          In Progress
           <DialogActions>
             <Button onClick={this.props.handleClose} color="primary">
               Cancel
             </Button>
-            <Button onClick={this.updateDescription} color="primary">
-              Update Description
+            <Button onClick={this.update} color="primary">
+              Update
             </Button>
           </DialogActions>
         </div>
