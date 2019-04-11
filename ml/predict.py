@@ -99,8 +99,11 @@ def main():
    print("Initializing Model")
    model = init_model()
    print("Predicting")
-   predicted_frames = predict_frames(frames, fps, model) 
-   display_video(predicted_frames) 
+   results =  predict_frames(frames, fps, model)
+   results.frame_num = results.frame_num+ 160 * 30
+   return results
+   #predicted_frames = predict_frames(frames, fps, model) 
+   #display_video(predicted_frames) 
 
 def get_video_frames(video_name):
    frames = []
@@ -120,7 +123,7 @@ def get_video_frames(video_name):
    check = True
 #   while True:
    vid.set(0, 160000)
-   for i in range(0, 900): 
+   for i in range(0, 300): 
       check, frame = vid.read()
       if not check:
          break
@@ -136,12 +139,14 @@ def init_model():
 
 def predict_frames(video_frames, fps, model):
    currently_tracked_objects = []
+   annotations = []
    for i, frame in enumerate(video_frames):
       frame_num = i
       # update tracking for currently tracked objects
       for obj in currently_tracked_objects:
          success = obj.update(frame, frame_num)
          if not success:
+            annotations.append(obj.annotations)
             currently_tracked_objects.remove(obj)
             #Should really check if there is a matching prediction if the tracking fails
 
@@ -157,9 +162,14 @@ def predict_frames(video_frames, fps, model):
       # draw boxes 
       for obj in currently_tracked_objects:
          (x, y, w, h) = obj.box
-         cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)            
-   return video_frames
-
+         cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+   results = pd.concat(annotations)
+   temp = list(results.columns)
+   temp[0] = 'id'
+   results.columns = temp
+   results.to_csv('results.csv')
+   return results
+   
 def get_predictions(frame, model):
    frame = np.expand_dims(frame, axis=0)
    boxes, scores, labels = model.predict_on_batch(frame)
