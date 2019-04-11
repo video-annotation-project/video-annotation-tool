@@ -99,11 +99,10 @@ def main():
    print("Initializing Model")
    model = init_model()
    print("Predicting")
-   results =  predict_frames(frames, fps, model)
+   results, frames =  predict_frames(frames, fps, model)
    results.frame_num = results.frame_num+ 160 * 30
+   save_video (frames) 
    return results
-   #predicted_frames = predict_frames(frames, fps, model) 
-   #display_video(predicted_frames) 
 
 def get_video_frames(video_name):
    frames = []
@@ -168,7 +167,7 @@ def predict_frames(video_frames, fps, model):
    temp[0] = 'id'
    results.columns = temp
    results.to_csv('results.csv')
-   return results
+   return results, video_frames
    
 def get_predictions(frame, model):
    frame = np.expand_dims(frame, axis=0)
@@ -183,12 +182,10 @@ def get_predictions(frame, model):
       filtered_predictions.append((box,score,label))
    return filtered_predictions
 
-def display_video(frames):
+def save_video(frames):
    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
    out = cv2.VideoWriter('output.mp4',fourcc, 30.0, frames[0].shape[::-1][1:3])
    for frame in frames:
-#      cv2.imshow("Frame", frame)
-#      cv2.waitKey(int(1000/30))
       out.write(frame)
    out.release()
    cv2.destroyAllWindows()
