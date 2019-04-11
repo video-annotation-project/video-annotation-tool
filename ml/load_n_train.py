@@ -18,6 +18,7 @@ from keras.utils import multi_gpu_model
 from keras.callbacks import ModelCheckpoint, EarlyStopping
 from keras_retinanet.models.retinanet import retinanet_bbox
 from keras_retinanet.callbacks import RedirectModel
+import tensorflow as tf
 
 argparser = argparse.ArgumentParser()
 argparser.add_argument(
@@ -51,12 +52,13 @@ bad_users = json.loads(os.getenv("BAD_USERS"))
 '''
 Just load classmap without loading new data
 '''
-#classmap = pd.read_csv(class_map_file, header=None).to_dict()[0]
+classmap = pd.read_csv(class_map_file, header=None).to_dict()[0]
 '''
 Initializes the classmap of concept names to training id's.
 (these id's don't represent the conceptid's from our database)
 Then downloads the annotation data and saves it into training and validation csv's.
 Also downloads corresponding images.
+'''
 '''
 folders = []
 folders.append(test_examples)
@@ -88,13 +90,15 @@ download_annotations(min_examples, concepts, classmap, bad_users, img_folder, tr
 end = time.time()
 print("Done Downloading Annotations: " + str((end - start)/60) + " minutes")
 '''
+'''
 Trains the model!!!!! WOOOT WOOOT!
 '''
 start = time.time()
 print("Starting Training.")
 
-model = models.backbone('resnet50').retinanet(num_classes=len(concepts), modifier=freeze_model)
-model.load_weights(model_path, by_name=True, skip_mismatch=True)
+with tf.device('/cpu:0'):
+    model = models.backbone('resnet50').retinanet(num_classes=len(concepts))#modifier=freeze_model)
+    model.load_weights(model_path, by_name=True, skip_mismatch=True)
 
 if gpus > 1:
     training_model = multi_gpu_model(model, gpus=gpus)
@@ -124,12 +128,12 @@ train_generator = CSVGenerator(
     train_annot_file,
     class_map_file,
     transform_generator=transform_generator,
-    batch_size = 16
+    batch_size = 8
 )
 test_generator = CSVGenerator(
     valid_annot_file,
     class_map_file,
-    batch_size = 16,
+    batch_size = 8,
     shuffle_groups=False
 )
 

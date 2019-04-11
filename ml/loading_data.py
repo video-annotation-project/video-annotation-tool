@@ -90,6 +90,7 @@ def download_annotations(min_examples, concepts, concept_map, bad_users, img_fol
     # creates an expanded concept list with all child concepts, mapping these new concepts to their original parent
     parent_map = {}
     expanded_concepts = []
+    '''
     for concept in concepts:
         # grab all children from concept tree for with breadth first traversal
         sub = queryDB('select id,parent from concepts')
@@ -100,7 +101,8 @@ def download_annotations(min_examples, concepts, concept_map, bad_users, img_fol
                 parent_map[parent] = concept
             c = sub.loc[sub['parent'].isin(parents)]
             parents = c['id'].tolist()
-
+    '''
+    expanded_concepts = concepts
     # Get all annotations for given concepts (and child concepts) making sure that any tracking annotations originated from good users
     annotations = queryDB(
         ''' SELECT *
@@ -111,11 +113,11 @@ def download_annotations(min_examples, concepts, concept_map, bad_users, img_fol
                     FROM annotations 
                     WHERE id=A.originalid 
                         AND userid NOT IN ''' + str(tuple(bad_users)) + ")")
-
+    '''
     # Rename child concepts to their parent concepts
     for val,key in parent_map.items():
         annotations.loc[annotations['conceptid'] == val, 'conceptid'] = key
-
+    '''
     selected, concept_count = select_annotations(annotations, min_examples, concepts)
     print("Concept counts: " + str(concept_count))
     print("Number of images: " + str(len(selected)))
