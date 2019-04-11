@@ -692,6 +692,21 @@ app.post('/api/models', passport.authenticate('jwt', { session: false }),
   }
 );
 
+app.get('/api/users', passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    const queryText = 'SELECT id, username \
+                       FROM users;'
+    try {
+      let response = await psql.query(queryText);
+      res.json(response.rows);
+    } catch (error) {
+      console.log('Error in get api/users');
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
+);
+
 // This websocket sends a list of videos to the client that update in realtime
 io.on('connection', (socket) => {
   console.log('socket connected!');

@@ -5,13 +5,14 @@ import Drawer from '@material-ui/core/Drawer';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
-import IconButton from '@material-ui/core/IconButton';
-import Description from '@material-ui/icons/Description';
 import { withStyles } from '@material-ui/core/styles';
 import Collapse from '@material-ui/core/Collapse';
 import ExpandLess from '@material-ui/icons/ExpandLess';
 import ExpandMore from '@material-ui/icons/ExpandMore';
+
 import VideoMetadata from './VideoMetadata.jsx';
+import IconButton from '@material-ui/core/IconButton';
+import Description from '@material-ui/icons/Description';
 
 const styles = theme => ({
   root: {
@@ -56,10 +57,6 @@ class VideoList extends Component {
       descriptionOpen: true,
       openedVideo: video
     })
-  }
-
-  inputHandler = () => {
-    console.log('Input');
   }
 
   closeVideoMetadata = () => {
@@ -230,6 +227,7 @@ class VideoList extends Component {
             openedVideo={openedVideo}
             socket={this.props.socket}
             loadVideos={this.props.loadVideos}
+            model={false}
           />
         }
       </div>

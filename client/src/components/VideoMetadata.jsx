@@ -176,44 +176,59 @@ class VideoMetadata extends Component {
               End Time: {endtime}<br />
             </DialogContentText>
             <br />
-            <Input
-              onKeyPress={this.handleKeyPress}
-              autoFocus
-              id="concept"
-              type="text"
-              defaultValue={description}
-              placeholder={'Description'}
-              multiline
-            />
+            {this.props.model === true ?
+              <div></div>
+              :
+              <Input
+                onKeyPress={this.handleKeyPress}
+                autoFocus
+                id="concept"
+                type="text"
+                defaultValue={description}
+                placeholder={'Description'}
+                multiline
+              />
+            }
+
           </DialogContent>
-          <Radio
-            checked={videoStatus === 'unwatched'}
-            onChange={this.handleVideoStatusChange}
-            value="unwatched"
-            color="default"
-          />
-          Unwatched
-          <Radio
-            checked={videoStatus === 'annotated'}
-            onChange={this.handleVideoStatusChange}
-            value="annotated"
-            color="default"
-          />
-          Annotated
-          <Radio
-            checked={videoStatus === 'inProgress'}
-            onChange={this.handleVideoStatusChange}
-            value="inProgress"
-            color="default"
-          />
-          In Progress
+          {this.props.model === true ? (
+            <div></div>
+          ) : (
+            <div>
+              <Radio
+                checked={videoStatus === 'unwatched'}
+                onChange={this.handleVideoStatusChange}
+                value="unwatched"
+                color="default"
+              />
+              Unwatched
+              <Radio
+                checked={videoStatus === 'annotated'}
+                onChange={this.handleVideoStatusChange}
+                value="annotated"
+                color="default"
+              />
+              Annotated
+              <Radio
+                checked={videoStatus === 'inProgress'}
+                onChange={this.handleVideoStatusChange}
+                value="inProgress"
+                color="default"
+              />
+              In Progress
+            </div>
+          )}
           <DialogActions>
             <Button onClick={this.props.handleClose} color="primary">
               Cancel
             </Button>
-            <Button onClick={this.update} color="primary">
-              Update
-            </Button>
+            {this.props.model ? 
+              <div></div>
+            :
+              <Button onClick={this.update} color="primary">
+                Update
+              </Button>
+            }
           </DialogActions>
         </div>
       </Dialog>

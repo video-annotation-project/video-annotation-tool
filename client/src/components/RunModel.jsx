@@ -29,6 +29,11 @@ import FormControlLabel from '@material-ui/core/FormControlLabel';
 import FormLabel from '@material-ui/core/FormLabel';
 import Checkbox from '@material-ui/core/Checkbox';
 
+//Video description
+import IconButton from '@material-ui/core/IconButton';
+import Description from '@material-ui/icons/Description';
+import VideoMetadata from './VideoMetadata.jsx';
+
 const styles = theme => ({
   root: {
     width: '90%'
@@ -66,100 +71,38 @@ class RunModel extends Component {
       models: null,
       model: '',
       videos: null,
+      videosSelected: [],
+      users: null,
+      userSelected: '',
       activeStep: 0,
       errorMsg: null,
-      errorOpen: false //modal code
+      errorOpen: false, //modal code
+      descriptionOpen: false, //Code for video description
+      openedVideo: null
     };
   }
 
-  getSteps = () => {
-    return ['Select model', 'Select videos'];
-  }
-
-  getStepContent = (step) => {
-    switch (step) {
-      case 0:
-        return this.selectModel();
-      case 1:
-        return this.selectVideo();
-      default:
-        return 'Unknown step';
-    }
-  }
-
-  selectModel = () => {
-    return (
-      <FormControl className={this.props.classes.form}>
-        <InputLabel>Select Model</InputLabel>
-        <Select
-          value={this.state.model}
-          onChange={this.handleModelSelect}
-        >
-          {this.state.models.map(model => (
-            <MenuItem
-              key={model.name}
-              value={model.name}
-            >
-              {model.name}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-    );
-  }
-
-  selectVideo = () => {
-    return (
-      <FormControl
-        component="fieldset"
-        className={this.props.classes.videoSelector}
-      >
-        <FormLabel component="legend">Select Videos to Annotate</FormLabel>
-        <FormGroup>
-          {this.state.videos.map(video => (
-            <FormControlLabel
-              key={video.filename}
-              control={
-                <Checkbox
-                  color='primary'
-                />
-              }
-              label={video.filename}
-            >
-            </FormControlLabel>
-          ))}
-        </FormGroup>
-      </FormControl>
-    );
-  }
-
-  handleModelSelect = (event) => {
+  //Methods for video meta data
+  openVideoMetadata = (event, video) => {
+    event.stopPropagation()
     this.setState({
-      model: event.target.value
+      descriptionOpen: true,
+      openedVideo: video
+    })
+  }
+
+  closeVideoMetadata = () => {
+    this.setState({
+      descriptionOpen: false,
+      openedVideo: null
     });
   }
 
-  handleNext = () => {
-    this.setState(state => ({
-      activeStep: state.activeStep + 1,
-    }));
-  };
-
-  handleBack = () => {
-    this.setState(state => ({
-      activeStep: state.activeStep - 1,
-    }));
-  };
-
-  handleReset = () => {
-    this.setState({
-      activeStep: 0,
-    });
-  };
 
   componentDidMount = () => {
     this.loadExistingModels();
     this.loadVideoList();
+    this.loadUserList();
   }
 
   loadExistingModels = () => {
@@ -202,6 +145,155 @@ class RunModel extends Component {
     })
   }
 
+  loadUserList = () => {
+    const config = {
+      headers: {
+        'Authorization': 'Bearer ' + localStorage.getItem('token')
+      }
+    }
+    axios.get(`/api/users`, config).then(res => {
+      this.setState({
+        users: res.data
+      });
+    })
+  }
+
+  handleSelect = event => {
+    this.setState({
+      [event.target.name]: event.target.value
+    })
+  }
+
+  selectModel = () => {
+    return (
+      <FormControl className={this.props.classes.form}>
+        <InputLabel>Select Model</InputLabel>
+        <Select
+          name='model'
+          value={this.state.model}
+          onChange={this.handleSelect}
+        >
+          {this.state.models.map(model => (
+            <MenuItem
+              key={model.name}
+              value={model.name}
+            >
+              {model.name}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+    );
+  }
+
+  handleVideoSelect = filename => event => {
+    let videosSelected = JSON.parse(JSON.stringify(this.state.videosSelected));
+    if (event.target.checked) {
+      videosSelected.push(filename)
+    } else {
+      videosSelected = videosSelected.filter(video => video !== filename);
+    }
+    this.setState({
+      videosSelected: videosSelected
+    })
+  }
+
+  selectVideo = () => {
+    return (
+      <FormControl
+        component="fieldset"
+        className={this.props.classes.videoSelector}
+      >
+        <FormLabel component="legend">Select Videos to Annotate</FormLabel>
+        <FormGroup>
+          {this.state.videos.map(video => (
+            <div key={video.filename}>
+              <FormControlLabel
+
+                control={
+                  <Checkbox
+                    onChange={this.handleVideoSelect(video.filename)}
+                    color='primary'
+                  />
+                }
+                label={video.filename}
+              >
+              </FormControlLabel>
+              <IconButton>
+                <Description
+                  onClick={
+                    (event) =>
+                      this.openVideoMetadata(
+                        event,
+                        video,
+                      )
+                  }
+                />
+              </IconButton>
+            </div>
+          ))}
+        </FormGroup>
+      </FormControl>
+    );
+  }
+
+  selectUser = () => {
+    return (
+      <FormControl className={this.props.classes.form}>
+        <InputLabel>Select User</InputLabel>
+        <Select
+          name='userSelected'
+          value={this.state.userSelected}
+          onChange={this.handleSelect}
+        >
+          {this.state.users.map(user => (
+            <MenuItem
+              key={user.id}
+              value={user.username}
+            >
+              {user.username}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+    );
+  }
+
+  getSteps = () => {
+    return ['Select model', 'Select videos', 'Select user'];
+  }
+
+  getStepContent = (step) => {
+    switch (step) {
+      case 0:
+        return this.selectModel();
+      case 1:
+        return this.selectVideo();
+      case 2:
+        return this.selectUser();
+      default:
+        return 'Unknown step';
+    }
+  }
+
+  handleNext = () => {
+    this.setState(state => ({
+      activeStep: state.activeStep + 1,
+    }));
+  };
+
+  handleBack = () => {
+    this.setState(state => ({
+      activeStep: state.activeStep - 1,
+    }));
+  };
+
+  handleStop = () => {
+    this.setState({
+      activeStep: 0,
+    });
+  };
+
   //Code for closing modal
   handleClose = () => {
     this.setState({ errorOpen: false });
@@ -211,12 +303,14 @@ class RunModel extends Component {
     const { classes } = this.props;
     const steps = this.getSteps();
     const {
-      models,
       model,
       videos,
+      videosSelected,
+      userSelected,
       activeStep,
       errorMsg,
-      errorOpen
+      errorOpen,
+      openedVideo
     } = this.state;
     if (!videos) {
       return (
@@ -254,7 +348,14 @@ class RunModel extends Component {
                       color="primary"
                       onClick={this.handleNext}
                       className={classes.button}
-                      disabled={activeStep === 0 & model === '' ? true : false}
+                      disabled={
+                        (activeStep === 0 & model === '') |
+                          (activeStep === 1 & videosSelected.length < 1) |
+                          (activeStep === 2 & userSelected === '') ?
+                          true
+                          :
+                          false
+                      }
                     >
                       {activeStep === steps.length - 1 ? 'Run Model' : 'Next'}
                     </Button>
@@ -268,12 +369,27 @@ class RunModel extends Component {
           <Paper square elevation={0} className={classes.resetContainer}>
             <Typography>Model is running/generating images...</Typography>
             <CircularProgress />
-            <Button onClick={this.handleReset} className={classes.button}>
+            <Button onClick={this.handleStop} className={classes.button}>
               Stop
             </Button>
 
           </Paper>
         )}
+        {this.state.descriptionOpen &&
+          <VideoMetadata
+            open={true /* The VideoMetadata 'openness' is controlled through
+              boolean logic rather than by passing in a variable as an
+              attribute. This is to force VideoMetadata to unmount when it 
+              closes so that its state is reset. This also prevents the 
+              accidental double submission bug, by implicitly reducing 
+              the transition time of VideoMetadata to zero. */}
+            handleClose={this.closeVideoMetadata}
+            openedVideo={openedVideo}
+            socket={this.props.socket}
+            loadVideos={this.props.loadVideos}
+            model={true}
+          />
+        }
       </div>
     );
   }
