@@ -27,6 +27,10 @@ const styles = theme => ({
   button: {
     margin: theme.spacing.unit
   },
+  root: {
+    backgroundColor: theme.palette.background.paper,
+    paddingLeft: theme.spacing.unit * 2,
+  },
 });
 
 class Annotations extends Component {
@@ -49,7 +53,8 @@ class Annotations extends Component {
       let annotations = await axios.get(`/api/annotations?`+
         `queryConditions=${this.props.queryConditions}&`+
         `unsureOnly=${this.props.unsureOnly}&`+
-        `admin=${localStorage.getItem('admin')}`, config);
+        `admin=${localStorage.getItem('admin')}&`+
+        `queryLimit=${this.props.queryLimit}`, config);
       this.setState({
         isLoaded: true,
         annotations: annotations.data,
@@ -146,7 +151,7 @@ class Annotations extends Component {
     }
     return (
       <React.Fragment>
-        <List>
+        <List disablePadding className={classes.root}>
           {annotations.map(annotation => (
             <React.Fragment key={annotation.id}>
               <ListItem button

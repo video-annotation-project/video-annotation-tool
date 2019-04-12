@@ -66,6 +66,7 @@ def f1_evaluation(generator,model,iou_threshold=0.5,score_threshold=0.05,max_det
 
         # sort by score
         indices         = np.argsort(-scores)
+        scores = scores[indices]
         false_positives = false_positives[indices]
         true_positives  = true_positives[indices]
 
