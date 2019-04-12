@@ -1,7 +1,5 @@
-# Loads data, updates anchor boxes, and trains.
 from loading_data import download_annotations
 from loading_data import queryDB
-from model_scoring import evaluate
 import json
 import os
 from dotenv import load_dotenv
@@ -20,6 +18,7 @@ from keras.utils import multi_gpu_model
 from keras.callbacks import ModelCheckpoint, EarlyStopping
 from keras_retinanet.models.retinanet import retinanet_bbox
 from keras_retinanet.callbacks import RedirectModel
+import tensorflow as tf
 
 argparser = argparse.ArgumentParser()
 argparser.add_argument(
@@ -60,6 +59,7 @@ Initializes the classmap of concept names to training id's.
 Then downloads the annotation data and saves it into training and validation csv's.
 Also downloads corresponding images.
 '''
+
 '''
 folders = []
 folders.append(test_examples)
@@ -90,15 +90,18 @@ download_annotations(min_examples, concepts, classmap, bad_users, img_folder, tr
 
 end = time.time()
 print("Done Downloading Annotations: " + str((end - start)/60) + " minutes")
+
 '''
+
 '''
 Trains the model!!!!! WOOOT WOOOT!
 '''
 start = time.time()
 print("Starting Training.")
 
-model = models.backbone('resnet50').retinanet(num_classes=len(concepts), modifier=freeze_model)
-model.load_weights(model_path, by_name=True, skip_mismatch=True)
+with tf.device('/cpu:0'):
+    model = models.backbone('resnet50').retinanet(num_classes=len(concepts))#modifier=freeze_model)
+    model.load_weights(model_path, by_name=True, skip_mismatch=True)
 
 if gpus > 1:
     training_model = multi_gpu_model(model, gpus=gpus)
@@ -124,18 +127,29 @@ transform_generator = random_transform_generator(
     flip_x_chance=0.5,
     flip_y_chance=0.5,
 )
-train_generator = CSVGenerator(
+
+class custom(CSVGenerator):
+    def __getitem__(self, index):
+        inputs, targets = CSVGenerator.__getitem__(self, index)
+
+        # put custom augmentation here!!!!
+
+        return inputs, targets
+
+train_generator = custom(
     train_annot_file,
     class_map_file,
     transform_generator=transform_generator,
-    batch_size = 16
+    batch_size = 8
 )
+
 test_generator = CSVGenerator(
     valid_annot_file,
     class_map_file,
-    batch_size = 16,
+    batch_size = 8,
     shuffle_groups=False
 )
+
 
 # Checkpoint: save models that are improvements
 filepath = "weights/weights-{epoch:02d}-{val_loss:.4f}.h5"

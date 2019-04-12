@@ -78,15 +78,38 @@ class CreateUser extends Component {
     return (
       <div className={classes.root}>
         <Typography variant="display1">Create New User</Typography><br />
-        <ErrorModal errorMsg={this.state.errorMsg} open={this.state.open} handleClose={this.handleClose}/>
+        <ErrorModal 
+          errorMsg={this.state.errorMsg} 
+          open={this.state.open} 
+          handleClose={this.handleClose}
+        />
         <form onSubmit={this.handleSubmit}>
           <div>username</div>
-          <input type='text' name='username' value={this.state.username} onChange= {this.handleChange} required />
+          <input 
+            type='text' 
+            name='username' 
+            value={this.state.username} 
+            onChange= {this.handleChange} 
+            required 
+          />
           <br /><br />
           <div>password</div>
-          <input type='password' name='password' value={this.state.password} onChange= {this.handleChange} required />
+          <input 
+            type='password' 
+            name='password' 
+            value={this.state.password} 
+            onChange={this.handleChange} 
+            required 
+          />
           <br /><br />
-          <input type="checkbox" name="admin" checked={this.state.admin} onChange= {this.handleBoxChange} />admin<br />
+          <input 
+            type="checkbox" 
+            name="admin" 
+            checked={this.state.admin} 
+            onChange= {this.handleBoxChange} 
+          />
+            admin
+          <br />
           <input type='submit' value='Create'/>
         </form>
       </div>
