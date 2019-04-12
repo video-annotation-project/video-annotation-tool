@@ -24,6 +24,7 @@ def main():
     print("done predicting")
     results = get_conceptids(results)
     results['videoid'] = 8
+    print(results)
 
 
     #NEED TO REMOVE BAD USERS
@@ -132,7 +133,7 @@ def get_conceptids(annotations):
     for oid, annotations in objects:
         scores = {}
         for k , label in annotations.groupby(['label']):
-            scores[k] = label.confidence.mean()
+            scores[k] = label.confidence.mean() # Maybe the sum?
         idmax = max(scores.keys(), key=(lambda k: scores[k]))
         annotations.loc[annotations.objectid == oid,'label'] = idmax
     annotations['label'] = annotations['label'].apply(lambda x: concepts[int(x)])
