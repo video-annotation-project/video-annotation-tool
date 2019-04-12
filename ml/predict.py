@@ -93,15 +93,15 @@ class Tracked_object:
          self.save_annotation(frame_num)
       return success
 
-def main():
+def main(video_name):
    print("Loading Video")
-   frames, fps = get_video_frames("DocRicketts-0701_20141216T212020Z_00-48-12-26TC_h264.mp4")
+   frames, fps = get_video_frames(video_name)
    print("Initializing Model")
    model = init_model()
    print("Predicting")
    results, frames =  predict_frames(frames, fps, model)
-   results.frame_num = results.frame_num+ 160 * 30
-   save_video (frames) 
+   # results.frame_num = results.frame_num+ 160 * 30
+   save_video(frames)
    return results
 
 def get_video_frames(video_name):
@@ -114,15 +114,14 @@ def get_video_frames(video_name):
    vid = cv2.VideoCapture(url)
    fps = vid.get(cv2.CAP_PROP_FPS)
 
-   print(url)
    while not vid.isOpened():
       continue
    print("Successfully opened video.")
    # put frames into frame list
    check = True
-#   while True:
-   vid.set(0, 160000)
-   for i in range(0, 300): 
+   while True:
+   #vid.set(0, 160000)
+   #for i in range(0, 900): 
       check, frame = vid.read()
       if not check:
          break
@@ -148,7 +147,6 @@ def predict_frames(video_frames, fps, model):
             annotations.append(obj.annotations)
             currently_tracked_objects.remove(obj)
             #Should really check if there is a matching prediction if the tracking fails
-
       # for every NUM_FRAMES, get new predections, check if any detections match a currently tracked object
       if i % NUM_FRAMES == 0:
           detections = get_predictions(copy.deepcopy(frame), model)
@@ -157,7 +155,7 @@ def predict_frames(video_frames, fps, model):
              if not match:
                 currently_tracked_objects.append(Tracked_object(detection, frame, frame_num))
              else:
-                matched_object.reinit(detection, frame, frame_num)
+                 matched_object.reinit(detection, frame, frame_num)
       # draw boxes 
       for obj in currently_tracked_objects:
          (x, y, w, h) = obj.box
@@ -215,7 +213,6 @@ def does_match_existing_tracked_object(detection, currently_tracked_objects):
           max_iou = iou
           match = obj
    if max_iou >= 0.25:               
-      print("match")
       return True, match
    return False, None
 

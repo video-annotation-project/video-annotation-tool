@@ -20,22 +20,25 @@ concepts = config['conceptids']
 classmap = pd.read_csv(class_map_file, header=None).to_dict()[0]
 
 def main():
-    results = predict.main()
+    video_num = 24
+    video_name = queryDB("select * from videos where id = " + str(video_num)).iloc[0].filename
+    
+    results = predict.main(video_name)
     print("done predicting")
     results = get_conceptids(results)
-    results['videoid'] = 8
-    print(results)
-
 
     #NEED TO REMOVE BAD USERS
-    annotations = queryDB('select * from annotations where videoid=8 and userid!=17 and timeinvideo > 160 and timeinvideo < 190')
+    annotations = queryDB('select * from annotations where videoid= ' + str(video_num) + ' and userid!=17') #and timeinvideo > 160 and timeinvideo < 190')
     annotations['frame_num'] = np.rint(annotations['timeinvideo'] * fps)
+
+    groundtruth_counts = pd.DataFrame(annotations.groupby('conceptid').id.count())
+    groundtruth_counts.columns = ['true_num']
+    
 
     grouped = results.groupby(['objectid']).label.mean().reset_index()
     counts = grouped.groupby('label').count()
     counts.columns = ['pred_num']
-    groundtruth_counts = pd.DataFrame(annotations.groupby('conceptid').id.count())
-    groundtruth_counts.columns = ['true_num']
+    
     df = pd.concat((counts, groundtruth_counts), axis=1, join='outer').fillna(0)
     df['accuracy'] = (df.true_num - (df.true_num - df.pred_num).abs()) / df.true_num
     print(df)
@@ -130,15 +133,14 @@ def compute_overlap(annotationA, annotationB):
 def get_conceptids(annotations):
     label = None
     objects = annotations.groupby(['objectid'])
-    for oid, annotations in objects:
+    for oid, group in objects:
         scores = {}
-        for k , label in annotations.groupby(['label']):
+        for k , label in group.groupby(['label']):
             scores[k] = label.confidence.mean() # Maybe the sum?
         idmax = max(scores.keys(), key=(lambda k: scores[k]))
         annotations.loc[annotations.objectid == oid,'label'] = idmax
     annotations['label'] = annotations['label'].apply(lambda x: concepts[int(x)])
     annotations['conceptid'] = annotations['label']
-    #Neccesary?
     return annotations
 
 if __name__ == '__main__':
