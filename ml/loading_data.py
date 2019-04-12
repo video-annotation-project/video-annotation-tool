@@ -21,6 +21,8 @@ DB_HOST = os.getenv("DB_HOST")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 
+FPS = 29.97002997002997
+
 
 client = boto3.client('s3',
     aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
@@ -54,7 +56,8 @@ def download_annotations(min_examples, concepts, concept_map, bad_users, img_fol
                            "and exists (select id, userid from annotations WHERE id=temp.originalid and userid not in " + 
                            str(tuple(bad_users)) + ")")
 
-    groups = annotations.groupby(['videoid','timeinvideo'], sort=False)
+    annotation['frame_num'] = np.rint(annotations['timeinvideo'] * FPS)
+    groups = annotations.groupby(['videoid','frame_num'], sort=False)
     groups = [df for _, df in groups]
     random.shuffle(groups)
     selected = [] # selected images to ensure that we reach the minimum
