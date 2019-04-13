@@ -448,8 +448,9 @@ app.get('/api/annotations', passport.authenticate('jwt', { session: false }),
                      annotations.unsure, annotations.timeinvideo, \
                      annotations.imagewithbox, concepts.name, \
                      false as extended \
-                     FROM annotations, concepts\
-                     WHERE annotations.conceptid=concepts.id'
+                     FROM annotations\
+                     LEFT JOIN concepts ON concepts.id=annotations.conceptid\
+                     WHERE annotations.userid!=17';
     if (req.query.unsureOnly === 'true') {
       queryPass = queryPass + ' AND annotations.unsure = true';
     }
