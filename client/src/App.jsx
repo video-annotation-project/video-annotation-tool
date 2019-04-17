@@ -14,6 +14,7 @@ import CreateUser from './components/CreateUser.jsx';
 import Profile from './components/Profile.jsx';
 import Report from './components/Report.jsx';
 import Models from './components/Models.jsx';
+import Users from './components/Users/Users.jsx';
 
 require('dotenv').config()
 
@@ -34,6 +35,7 @@ class App extends React.Component {
                     <Route exact path='/report' component={Report} />
                     <Route exact path='/createUser' component={CreateUser} />
                     <Route exact path='/models' component={Models} />
+                    <Route exact path='/users' component={Users} />
                   </React.Fragment>
               ):(
                 <React.Fragment>
