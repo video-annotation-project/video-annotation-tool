@@ -168,3 +168,5 @@ history = training_model.fit_generator(train_generator,
 
 end = time.time()
 print("Done Training Model: " + str((end - start)/60) + " minutes")
+
+os.system("sudo shutdown -h")
