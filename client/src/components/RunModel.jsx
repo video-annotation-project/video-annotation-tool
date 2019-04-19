@@ -68,11 +68,11 @@ class RunModel extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      models: null,
-      model: '',
-      videos: null,
+      models: [],
+      modelSelected: '',
+      videos: [],
       videosSelected: [],
-      users: null,
+      users: [],
       userSelected: '',
       activeStep: 0,
       errorMsg: null,
@@ -165,8 +165,8 @@ class RunModel extends Component {
       <FormControl className={this.props.classes.form}>
         <InputLabel>Select Model</InputLabel>
         <Select
-          name='model'
-          value={this.state.model}
+          name='modelSelected'
+          value={this.state.modelSelected}
           onChange={this.handleSelect}
         >
           {this.state.models.map(model => (
@@ -299,7 +299,7 @@ class RunModel extends Component {
     const { classes } = this.props;
     const steps = this.getSteps();
     const {
-      model,
+      modelSelected,
       videos,
       videosSelected,
       userSelected,
@@ -344,7 +344,7 @@ class RunModel extends Component {
                       onClick={this.handleNext}
                       className={classes.button}
                       disabled={
-                        (activeStep === 0 & model === '') |
+                        (activeStep === 0 & modelSelected === '') |
                         (activeStep === 1 & videosSelected.length < 1) |
                         (activeStep === 2 & userSelected === '')
                       }
