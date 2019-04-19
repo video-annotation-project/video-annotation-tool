@@ -130,8 +130,17 @@ app.get('/api/concepts/:id', passport.authenticate('jwt', { session: false }),
 // returns a list of concept names
 app.get('/api/concepts', passport.authenticate('jwt', { session: false }),
   async (req, res) => {
-    const queryText = 'SELECT id, name \
-                       FROM concepts';
+    const queryText = `
+      SELECT concepts.id, concepts.name
+      FROM (
+        SELECT conceptid, count(*)
+        FROM annotations
+        GROUP BY annotations.conceptid
+      ) AS a
+      LEFT JOIN concepts
+      ON a.conceptid=concepts.id
+      ORDER BY a.count DESC
+    `;
     try {
       const concepts = await psql.query(queryText);
       res.json(concepts.rows);
