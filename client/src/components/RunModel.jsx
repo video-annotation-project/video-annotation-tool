@@ -319,7 +319,7 @@ class RunModel extends Component {
           <Typography variant="display1">Run a trained model on video(s)</Typography><br />
           <ErrorModal
             errorMsg={errorMsg}
-            open={errorMsg}
+            open={!!errorMsg}
             handleClose={this.closeErrorModal}
           />
         </div>
@@ -344,9 +344,9 @@ class RunModel extends Component {
                       onClick={this.handleNext}
                       className={classes.button}
                       disabled={
-                        (activeStep === 0 & modelSelected === '') |
-                        (activeStep === 1 & videosSelected.length < 1) |
-                        (activeStep === 2 & userSelected === '')
+                        (activeStep === 0 && modelSelected === '') ||
+                        (activeStep === 1 && videosSelected.length < 1) ||
+                        (activeStep === 2 && userSelected === '')
                       }
                     >
                       {activeStep === steps.length - 1 ? 'Run Model' : 'Next'}

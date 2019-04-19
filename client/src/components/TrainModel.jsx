@@ -60,6 +60,10 @@ const styles = theme => ({
   videoSelector: {
     height: '10%',
     overflow: 'auto'
+  },
+  userSelector: {
+    // height: '50%',
+    overflow: 'auto'
   }
 });
 
@@ -71,7 +75,7 @@ class TrainModel extends Component {
       videos: [],
       videosSelected: [],
       users: [],
-      userSelected: '',
+      usersSelected: [],
       concepts: [],
       conceptsSelected: [],
       models: [],
@@ -101,6 +105,7 @@ class TrainModel extends Component {
     this.loadExistingModels();
     this.loadVideoList();
     this.loadUserList();
+    this.loadConceptList();
   }
 
   loadExistingModels = () => {
@@ -139,6 +144,19 @@ class TrainModel extends Component {
         inProgressVideos.rows);
       this.setState({
         videos: videos
+      });
+    })
+  }
+
+  loadConceptList = () => {
+    const config = {
+      headers: {
+        'Authorization': 'Bearer ' + localStorage.getItem('token')
+      }
+    }
+    axios.get(`/api/concepts`, config).then(res => {
+      this.setState({
+        concepts: res.data
       });
     })
   }
@@ -202,12 +220,11 @@ class TrainModel extends Component {
         component="fieldset"
         className={this.props.classes.videoSelector}
       >
-        <FormLabel component="legend">Select Videos to Annotate</FormLabel>
+        <FormLabel component="legend">Select Videos to Train With</FormLabel>
         <FormGroup>
           {this.state.videos.map(video => (
             <div key={video.filename}>
               <FormControlLabel
-
                 control={
                   <Checkbox
                     onChange={this.handleVideoSelect(video.filename)}
@@ -235,40 +252,100 @@ class TrainModel extends Component {
     );
   }
 
+  handleUserSelect = id => event => {
+    let usersSelected = 
+      JSON.parse(JSON.stringify(this.state.usersSelected));
+    if (event.target.checked) {
+      usersSelected.push(id)
+    } else {
+      usersSelected = usersSelected.filter(user => user !== id);
+    }
+    this.setState({
+      usersSelected: usersSelected
+    })
+  }
+
   selectUser = () => {
     return (
-      <FormControl className={this.props.classes.form}>
-        <InputLabel>Select User</InputLabel>
-        <Select
-          name='userSelected'
-          value={this.state.userSelected}
-          onChange={this.handleSelect}
-        >
+      <FormControl
+        component="fieldset"
+        className={this.props.classes.userSelector}
+      >
+        <FormLabel component="legend">Select Users Whose Annotations to Use</FormLabel>
+        <FormGroup>
           {this.state.users.map(user => (
-            <MenuItem
-              key={user.id}
-              value={user.username}
-            >
-              {user.username}
-            </MenuItem>
+            <div key={user.id}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    onChange={this.handleUserSelect(user.id)}
+                    color='primary'
+                  />
+                }
+                label={user.username}
+              >
+              </FormControlLabel>
+            </div>
           ))}
-        </Select>
+        </FormGroup>
+      </FormControl>
+    );
+  }
+
+  handleConceptSelect = id => event => {
+    let conceptsSelected = 
+      JSON.parse(JSON.stringify(this.state.conceptsSelected));
+    if (event.target.checked) {
+      conceptsSelected.push(id)
+    } else {
+      conceptsSelected = conceptsSelected.filter(concept => concept !== id);
+    }
+    this.setState({
+      conceptsSelected: conceptsSelected
+    })
+  }
+
+  selectConcept = () => {
+    return (
+      <FormControl
+        component="fieldset"
+        className={this.props.classes.videoSelector}
+      >
+        <FormLabel component="legend">Select Concepts to Train With</FormLabel>
+        <FormGroup>
+          {this.state.concepts.slice(0, 100).map(concept => (
+            <div key={concept.id}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    onChange={this.handleConceptSelect(concept.id)}
+                    color='primary'
+                  />
+                }
+                label={concept.name}
+              >
+              </FormControlLabel>
+            </div>
+          ))}
+        </FormGroup>
       </FormControl>
     );
   }
 
   getSteps = () => {
-    return ['Select model', 'Select videos', 'Select user'];
+    return ['Select videos', 'Select user', 'Select concepts', 'Select model'];
   }
 
   getStepContent = (step) => {
     switch (step) {
       case 0:
-        return this.selectModel();
-      case 1:
         return this.selectVideo();
-      case 2:
+      case 1:
         return this.selectUser();
+      case 2:
+        return this.selectConcept();
+      case 3:
+        return this.selectModel();
       default:
         return 'Unknown step';
     }
@@ -301,10 +378,11 @@ class TrainModel extends Component {
     const { classes } = this.props;
     const steps = this.getSteps();
     const {
-      modelSelected,
       videos,
       videosSelected,
-      userSelected,
+      usersSelected,
+      conceptsSelected,
+      modelSelected,
       activeStep,
       errorMsg,
       openedVideo
@@ -318,10 +396,10 @@ class TrainModel extends Component {
       <div className={classes.root}>
         <div className={classes.center}>
           <h1 style={{ color: 'red' }}>This page is still in progress</h1>
-          <Typography variant="display1">Run a trained model on video(s)</Typography><br />
+          <Typography variant="display1">Train a model on video(s)</Typography><br />
           <ErrorModal
             errorMsg={errorMsg}
-            open={errorMsg}
+            open={!!errorMsg}
             handleClose={this.closeErrorModal}
           />
         </div>
@@ -346,12 +424,13 @@ class TrainModel extends Component {
                       onClick={this.handleNext}
                       className={classes.button}
                       disabled={
-                        (activeStep === 0 & modelSelected === '') |
-                        (activeStep === 1 & videosSelected.length < 1) |
-                        (activeStep === 2 & userSelected === '')
+                        (activeStep === 0 && videosSelected.length < 1) ||
+                        (activeStep === 1 && usersSelected.length < 1) ||
+                        (activeStep === 2 && conceptsSelected.length < 1) ||
+                        (activeStep === 3 && modelSelected === '')
                       }
                     >
-                      {activeStep === steps.length - 1 ? 'Run Model' : 'Next'}
+                      {activeStep === steps.length - 1 ? 'Train Model' : 'Next'}
                     </Button>
                   </div>
                 </div>
