@@ -50,6 +50,9 @@ class Navbar extends React.Component {
                     <Button color='inherit' component={Link} to='/createUser'>
                       Create User
                     </Button>
+                    <Button color='inherit' component={Link} to='/trainModel'>
+                      Train Model
+                    </Button>
                     <Button color='inherit' component={Link} to='/runModel'>
                       Run Model
                     </Button>
