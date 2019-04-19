@@ -22,8 +22,11 @@ jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
 jwtOptions.secretOrKey = process.env.JWT_KEY;
 
 async function findUser(userId) {
-  queryPass = 'select id, username, password, admin \
-               from users where users.id=$1';
+  queryPass =  `
+    SELECT id, username, password, admin
+    FROM users
+    WHERE users.id=$1
+  `;
   const user = await psql.query(queryPass, [userId]);
   if (user.rows.length == 1) {
     return user.rows[0];

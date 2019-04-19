@@ -39,7 +39,6 @@ class VideoList extends Component {
       unwatchedListOpen: false,
       watchedListOpen: false,
       inProgressListOpen: false,
-      descriptionOpen: false,
       openedVideo: null
     };
   }
@@ -54,14 +53,12 @@ class VideoList extends Component {
   openVideoMetadata = (event, video) => {
     event.stopPropagation()
     this.setState({
-      descriptionOpen: true,
       openedVideo: video
     })
   }
 
   closeVideoMetadata = () => {
     this.setState({
-      descriptionOpen: false,
       openedVideo: null
     });
   }
@@ -215,7 +212,7 @@ class VideoList extends Component {
             </Collapse>
           </div>
         </Drawer>
-        {this.state.descriptionOpen &&
+        {this.state.openedVideo &&
           <VideoMetadata
             open={true /* The VideoMetadata 'openness' is controlled through
               boolean logic rather than by passing in a variable as an
