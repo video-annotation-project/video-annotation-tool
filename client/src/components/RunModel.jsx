@@ -219,7 +219,7 @@ class RunModel extends Component {
                 label={video.filename}
               >
               </FormControlLabel>
-              <IconButton>
+              <IconButton style={{float:'right'}}> 
                 <Description
                   onClick={
                     (event) =>
@@ -372,7 +372,6 @@ class RunModel extends Component {
             <Button onClick={this.handleStop} className={classes.button}>
               Stop
             </Button>
-
           </Paper>
         )}
         {this.state.descriptionOpen &&
@@ -387,7 +386,7 @@ class RunModel extends Component {
             openedVideo={openedVideo}
             socket={this.props.socket}
             loadVideos={this.props.loadVideos}
-            model={true}
+            modelTab={true}
           />
         }
       </div>

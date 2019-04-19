@@ -154,6 +154,7 @@ class VideoMetadata extends Component {
 
     return (
       <Dialog
+        onClose={this.props.handleClose}
         open={this.props.open}
         aria-labelledby="form-dialog-title"
       >
@@ -176,59 +177,53 @@ class VideoMetadata extends Component {
               End Time: {endtime}<br />
             </DialogContentText>
             <br />
-            {this.props.model === true ?
-              <div></div>
-              :
-              <Input
-                onKeyPress={this.handleKeyPress}
-                autoFocus
-                id="concept"
-                type="text"
-                defaultValue={description}
-                placeholder={'Description'}
-                multiline
-              />
-            }
+            <Input
+              onKeyPress={this.handleKeyPress}
+              autoFocus
+              id="concept"
+              type="text"
+              defaultValue={description}
+              placeholder={'Description'}
+              multiline
+              disabled={this.props.modelTab}
+            />
 
           </DialogContent>
-          {this.props.model === true ? (
-            <div></div>
-          ) : (
-            <div>
-              <Radio
-                checked={videoStatus === 'unwatched'}
-                onChange={this.handleVideoStatusChange}
-                value="unwatched"
-                color="default"
-              />
-              Unwatched
-              <Radio
-                checked={videoStatus === 'annotated'}
-                onChange={this.handleVideoStatusChange}
-                value="annotated"
-                color="default"
-              />
-              Annotated
-              <Radio
-                checked={videoStatus === 'inProgress'}
-                onChange={this.handleVideoStatusChange}
-                value="inProgress"
-                color="default"
-              />
-              In Progress
-            </div>
-          )}
+            <Radio
+              checked={videoStatus === 'unwatched'}
+              onChange={this.handleVideoStatusChange}
+              value="unwatched"
+              color="default"
+              disabled={this.props.modelTab}
+            />
+            Unwatched
+            <Radio
+              checked={videoStatus === 'annotated'}
+              onChange={this.handleVideoStatusChange}
+              value="annotated"
+              color="default"
+              disabled={this.props.modelTab}
+            />
+            Annotated
+            <Radio
+              checked={videoStatus === 'inProgress'}
+              onChange={this.handleVideoStatusChange}
+              value="inProgress"
+              color="default"
+              disabled={this.props.modelTab}
+            />
+            In Progress
           <DialogActions>
             <Button onClick={this.props.handleClose} color="primary">
               Cancel
             </Button>
-            {this.props.model ? 
-              <div></div>
-            :
-              <Button onClick={this.update} color="primary">
-                Update
-              </Button>
-            }
+            <Button
+              onClick={this.update}
+              color="primary"
+              disabled={this.props.modelTab}
+            >
+              Update
+            </Button>
           </DialogActions>
         </div>
       </Dialog>
