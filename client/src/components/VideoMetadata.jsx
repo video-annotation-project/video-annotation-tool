@@ -154,6 +154,7 @@ class VideoMetadata extends Component {
 
     return (
       <Dialog
+        onClose={this.props.handleClose}
         open={this.props.open}
         aria-labelledby="form-dialog-title"
       >
@@ -184,34 +185,43 @@ class VideoMetadata extends Component {
               defaultValue={description}
               placeholder={'Description'}
               multiline
+              disabled={this.props.modelTab}
             />
+
           </DialogContent>
-          <Radio
-            checked={videoStatus === 'unwatched'}
-            onChange={this.handleVideoStatusChange}
-            value="unwatched"
-            color="default"
-          />
-          Unwatched
-          <Radio
-            checked={videoStatus === 'annotated'}
-            onChange={this.handleVideoStatusChange}
-            value="annotated"
-            color="default"
-          />
-          Annotated
-          <Radio
-            checked={videoStatus === 'inProgress'}
-            onChange={this.handleVideoStatusChange}
-            value="inProgress"
-            color="default"
-          />
-          In Progress
+            <Radio
+              checked={videoStatus === 'unwatched'}
+              onChange={this.handleVideoStatusChange}
+              value="unwatched"
+              color="default"
+              disabled={this.props.modelTab}
+            />
+            Unwatched
+            <Radio
+              checked={videoStatus === 'annotated'}
+              onChange={this.handleVideoStatusChange}
+              value="annotated"
+              color="default"
+              disabled={this.props.modelTab}
+            />
+            Annotated
+            <Radio
+              checked={videoStatus === 'inProgress'}
+              onChange={this.handleVideoStatusChange}
+              value="inProgress"
+              color="default"
+              disabled={this.props.modelTab}
+            />
+            In Progress
           <DialogActions>
             <Button onClick={this.props.handleClose} color="primary">
               Cancel
             </Button>
-            <Button onClick={this.update} color="primary">
+            <Button
+              onClick={this.update}
+              color="primary"
+              disabled={this.props.modelTab}
+            >
               Update
             </Button>
           </DialogActions>

@@ -448,8 +448,9 @@ app.get('/api/annotations', passport.authenticate('jwt', { session: false }),
                      annotations.unsure, annotations.timeinvideo, \
                      annotations.imagewithbox, concepts.name, \
                      false as extended \
-                     FROM annotations, concepts\
-                     WHERE annotations.conceptid=concepts.id'
+                     FROM annotations\
+                     LEFT JOIN concepts ON concepts.id=annotations.conceptid\
+                     WHERE annotations.userid!=17';
     if (req.query.unsureOnly === 'true') {
       queryPass = queryPass + ' AND annotations.unsure = true';
     }
@@ -686,6 +687,21 @@ app.post('/api/models', passport.authenticate('jwt', { session: false }),
       let response = await psql.query(queryText, [req.body.name]);
       res.json(response.rows);
     } catch (error) {
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
+);
+
+app.get('/api/users', passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    const queryText = 'SELECT id, username \
+                       FROM users;'
+    try {
+      let response = await psql.query(queryText);
+      res.json(response.rows);
+    } catch (error) {
+      console.log('Error in get api/users');
       console.log(error);
       res.status(500).json(error);
     }
