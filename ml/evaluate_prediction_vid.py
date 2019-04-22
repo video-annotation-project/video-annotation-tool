@@ -27,16 +27,18 @@ def main():
     print("done predicting")
 
     #NEED TO REMOVE BAD USERS
-    annotations = queryDB('select * from annotations where videoid= ' + str(video_num) + ' and userid!=17') #and timeinvideo > 160 and timeinvideo < 190')
-    annotations['frame_num'] = np.rint(annotations['timeinvideo'] * fps)
+    annotations = queryDB('select * from annotations where videoid= ' + str(video_num) 
+        + ' and userid!=17 and timeinvideo > 160 and timeinvideo < 190')
+    annotations['frame_num'] = np.rint(annotations['timeinvideo'] * fps).astype(int)
 
     results = conf_limit_objects(results, 0.30)
     results = propagate_conceptids(results)
     results = length_limit_objects(results, 15)
 
-    metrics = score_predictions(annotations, results, .1, concepts, fps)
+    metrics = score_predictions(annotations, results, .25, concepts, fps)
     concept_counts = get_counts(results)
     metrics = metrics.set_index('conceptid').join(concept_counts)
+    metrics.to_csv('metrics.csv')
     print(metrics)
 
 def score_predictions(validation, predictions, iou_thresh, concepts, fps):
