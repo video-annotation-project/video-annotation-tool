@@ -28,7 +28,7 @@ def main():
 
     #NEED TO REMOVE BAD USERS
     annotations = queryDB('select * from annotations where videoid= ' + str(video_num) 
-        + ' and userid!=17 and timeinvideo > 160 and timeinvideo < 190')
+        + ' and userid!=17') # and timeinvideo > 160 and timeinvideo < 190')
     annotations['frame_num'] = np.rint(annotations['timeinvideo'] * fps).astype(int)
 
     results = conf_limit_objects(results, 0.30)
