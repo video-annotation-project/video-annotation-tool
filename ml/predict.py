@@ -119,9 +119,11 @@ def get_video_frames(video_name):
    print("Successfully opened video.")
    # put frames into frame list
    check = True
-   while True:
-   #vid.set(0, 160000)
-   #for i in range(0, 900): 
+
+   # while True:
+   vid.set(0, 160000)
+   for i in range(0, 900): 
+
       check, frame = vid.read()
       if not check:
          break
