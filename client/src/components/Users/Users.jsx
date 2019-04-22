@@ -13,8 +13,6 @@ import MenuItem from '@material-ui/core/MenuItem';
 import TextField from '@material-ui/core/TextField';
 import FormControl from '@material-ui/core/FormControl';
 import InputLabel from '@material-ui/core/InputLabel';
-
-import './Users.css';
 import { Grid } from '@material-ui/core';
 
 const STATUS_SUCESS_CODE = 200;
