@@ -134,7 +134,11 @@ class custom(CSVGenerator):
     def __getitem__(self, index):
         inputs, targets = CSVGenerator.__getitem__(self, index)
 
-        # put custom augmentation here!!!!
+        for i,x in enumerate(inputs):
+            temp = x
+            temp = sk.util.random_noise(temp, var= random.uniform(0,.0005))
+            temp = sk.exposure.adjust_gamma(temp,gamma=random.uniform(.5,1.5))
+            inputs[i] = np.array(temp)
 
         return inputs, targets
 

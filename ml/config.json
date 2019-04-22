@@ -12,13 +12,7 @@
    "gpus" : 2,
    "epochs" : 100,
    "batch_size" : 8,
-   // When predicting on a video, the number of frames to wait between using the model's predictions
    "frames_between_predictions" : 10,
-   // The minimum IOU threshold at which objects are grouped together while predicting a video
    "prediction_matching_threhold" : 0.25
 }
 
-
-// transform generator/learning rate were suggested by repo
-// video f1: ???? KYYLLLEEE!!
-//FPS IN ALL HARD CODED: loading_data, evaluate_prediction_video
