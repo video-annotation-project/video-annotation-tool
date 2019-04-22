@@ -14,7 +14,7 @@ import CreateUser from './components/CreateUser.jsx';
 import Profile from './components/Profile.jsx';
 import Report from './components/Report.jsx';
 import Models from './components/Models.jsx';
-import Users from './components/Users/Users.jsx';
+import Users from './components/Users.jsx';
 
 require('dotenv').config()
 
