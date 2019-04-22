@@ -36,7 +36,7 @@ def main():
     results = length_limit_objects(results, 15)
 
     metrics = score_predictions(annotations, results, .25, concepts, fps)
-    concept_counts = get_counts(results)
+    concept_counts = get_counts(results, annotations)
     metrics = metrics.set_index('conceptid').join(concept_counts)
     metrics.to_csv('metrics.csv')
     print(metrics)
@@ -135,7 +135,7 @@ def resize(row):
     return row
 
 # test counts
-def get_counts(results):
+def get_counts(results, annotations):
     grouped = results.groupby(['objectid']).label.mean().reset_index()
     counts = grouped.groupby('label').count()
     counts.columns = ['pred_num']
