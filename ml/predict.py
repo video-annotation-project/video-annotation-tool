@@ -162,9 +162,6 @@ def predict_frames(video_frames, fps, model):
          (x, y, w, h) = obj.box
          cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
    results = pd.concat(annotations)
-   temp = list(results.columns)
-   temp[0] = 'id'
-   results.columns = temp
    results.to_csv('results.csv')
    return results, video_frames
    
