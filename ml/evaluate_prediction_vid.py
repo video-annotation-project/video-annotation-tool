@@ -6,14 +6,13 @@ from loading_data import queryDB
 import pandas as pd
 import predict
 
-config_path = 'config.json'
-
-# Note, Still hardcoding the resize video width and height...
 VIDEO_NUM = 86
-OBJECT_CONFIDENCE_THRESH = 0.30
-OBJECT_LENGTH_THRESH = 15 # frames
 IOU_THRESH = 0.25
 FPS = 29.97002997002997
+RESIZED_WIDTH = 640
+RESIZED_HEIGHT = 480
+
+config_path = 'config.json'
 
 with open(config_path) as config_buffer:
    config = json.loads(config_buffer.read())
@@ -34,12 +33,10 @@ def main():
         + ' and userid!=17') # and timeinvideo > 160 and timeinvideo < 190')
     annotations['frame_num'] = np.rint(annotations['timeinvideo'] * FPS).astype(int)
 
-    results = conf_limit_objects(results, OBJECT_CONFIDENCE_THRESH)
-    results = propagate_conceptids(results)
-    results = length_limit_objects(results, OBJECT_LENGTH_THRESH)
     metrics = score_predictions(annotations, results, IOU_THRESH, concepts)
     concept_counts = get_counts(results, annotations)
     metrics = metrics.set_index('conceptid').join(concept_counts)
+
     metrics.to_csv('metrics' + VIDEO_NUM + '.csv')
     print(metrics)
 
@@ -111,25 +108,11 @@ def score_predictions(validation, predictions, iou_thresh, concepts):
     return metrics
 
 
-# Limit Results based on object max frame confidence
-def conf_limit_objects(pred, conf_thresh):
-    max_conf = pd.DataFrame(pred.groupby('objectid').confidence.max())
-    above_thresh = max_conf[max_conf.confidence > conf_thresh].index
-    return pred[[(obj in above_thresh) for obj in pred.objectid]]
-    
-# Limit results based on tracked object length (ex. > 30 frames)
-def length_limit_objects(pred, frame_thresh):
-    obj_len = pred.groupby('objectid').conceptid.value_counts()
-    len_thresh = obj_len[obj_len > frame_thresh]
-    return pred[[(obj in len_thresh) for obj in pred.objectid]] 
-
 def resize(row):
-    new_width = 640
-    new_height = 480
-    x_ratio = (row.videowidth / new_width)
-    y_ratio = (row.videoheight / new_height)
-    row.videowidth = new_width
-    row.videoheight = new_height
+    x_ratio = (row.videowidth / RESIZED_WIDTH)
+    y_ratio = (row.videoheight / RESIZED_HEIGHT)
+    row.videowidth = RESIZED_WIDTH
+    row.videoheight = RESIZED_HEIGHT
     row.x1 = row.x1 / x_ratio
     row.x2 = row.x2 / x_ratio
     row.y1 = row.y1 / y_ratio
@@ -161,19 +144,6 @@ def compute_overlap(A, B):
     iou = area_intersect / (areaA + areaB - area_intersect)
     return iou
 
-# Given a list of annotations(some with or without labels/confidence scores) for multiple objects choose a label for each object
-def propagate_conceptids(annotations):
-    label = None
-    objects = annotations.groupby(['objectid'])
-    for oid, group in objects:
-        scores = {}
-        for k , label in group.groupby(['label']):
-            scores[k] = label.confidence.mean() # Maybe the sum?
-        idmax = max(scores.keys(), key=(lambda k: scores[k]))
-        annotations.loc[annotations.objectid == oid,'label'] = idmax
-    annotations['label'] = annotations['label'].apply(lambda x: concepts[int(x)])
-    annotations['conceptid'] = annotations['label']
-    return annotations
 
 if __name__ == '__main__':
   main()

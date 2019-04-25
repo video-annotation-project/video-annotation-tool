@@ -12,6 +12,9 @@ import keras
 import pandas as pd
 import uuid
 
+OBJECT_CONFIDENCE_THRESH = 0.30
+OBJECT_LENGTH_THRESH = 15 # frames
+
 #Load environment variables
 load_dotenv(dotenv_path="../.env")
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
@@ -103,6 +106,10 @@ def main(video_name):
    results, frames =  predict_frames(frames, fps, model)
    # results.frame_num = results.frame_num+ 160 * 30
    save_video(frames)
+
+   results = conf_limit_objects(results, OBJECT_CONFIDENCE_THRESH)
+   results = propagate_conceptids(results)
+   results = length_limit_objects(results, OBJECT_LENGTH_THRESH)
    return results
 
 def get_video_frames(video_name):
@@ -165,6 +172,32 @@ def predict_frames(video_frames, fps, model):
    results = pd.concat(annotations)
    results.to_csv('results.csv')
    return results, video_frames
+
+# Limit Results based on object max frame confidence
+def conf_limit_objects(pred, conf_thresh):
+    max_conf = pd.DataFrame(pred.groupby('objectid').confidence.max())
+    above_thresh = max_conf[max_conf.confidence > conf_thresh].index
+    return pred[[(obj in above_thresh) for obj in pred.objectid]]
+   
+# Limit results based on tracked object length (ex. > 30 frames)
+def length_limit_objects(pred, frame_thresh):
+    obj_len = pred.groupby('objectid').conceptid.value_counts()
+    len_thresh = obj_len[obj_len > frame_thresh]
+    return pred[[(obj in len_thresh) for obj in pred.objectid]] 
+
+# Given a list of annotations(some with or without labels/confidence scores) for multiple objects choose a label for each object
+def propagate_conceptids(annotations):
+    label = None
+    objects = annotations.groupby(['objectid'])
+    for oid, group in objects:
+        scores = {}
+        for k , label in group.groupby(['label']):
+            scores[k] = label.confidence.mean() # Maybe the sum?
+        idmax = max(scores.keys(), key=(lambda k: scores[k]))
+        annotations.loc[annotations.objectid == oid,'label'] = idmax
+    annotations['label'] = annotations['label'].apply(lambda x: concepts[int(x)])
+    annotations['conceptid'] = annotations['label']
+    return annotations
    
 def get_predictions(frame, model):
    frame = np.expand_dims(frame, axis=0)
