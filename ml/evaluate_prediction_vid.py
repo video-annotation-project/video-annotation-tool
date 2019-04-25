@@ -8,7 +8,12 @@ import predict
 
 config_path = 'config.json'
 
-fps = 29.97002997002997
+# Note, Still hardcoding the resize video width and height...
+VIDEO_NUM = 86
+OBJECT_CONFIDENCE_THRESH = 0.30
+OBJECT_LENGTH_THRESH = 15 # frames
+IOU_THRESH = 0.25
+FPS = 29.97002997002997
 
 with open(config_path) as config_buffer:
    config = json.loads(config_buffer.read())
@@ -20,28 +25,25 @@ concepts = config['conceptids']
 classmap = pd.read_csv(class_map_file, header=None).to_dict()[0]
 
 def main():
-    video_num = 86
-    video_name = queryDB("select * from videos where id = " + str(video_num)).iloc[0].filename
-    
+    video_name = queryDB("select * from videos where id = " + str(VIDEO_NUM)).iloc[0].filename
     results = predict.main(video_name)
     print("done predicting")
 
-    #NEED TO REMOVE BAD USERS
-    annotations = queryDB('select * from annotations where videoid= ' + str(video_num) 
+    # REMOVE BAD USERS ?
+    annotations = queryDB('select * from annotations where videoid= ' + str(VIDEO_NUM) 
         + ' and userid!=17') # and timeinvideo > 160 and timeinvideo < 190')
-    annotations['frame_num'] = np.rint(annotations['timeinvideo'] * fps).astype(int)
+    annotations['frame_num'] = np.rint(annotations['timeinvideo'] * FPS).astype(int)
 
-    results = conf_limit_objects(results, 0.30)
+    results = conf_limit_objects(results, OBJECT_CONFIDENCE_THRESH)
     results = propagate_conceptids(results)
-    results = length_limit_objects(results, 15)
-
-    metrics = score_predictions(annotations, results, .25, concepts, fps)
+    results = length_limit_objects(results, OBJECT_LENGTH_THRESH)
+    metrics = score_predictions(annotations, results, IOU_THRESH, concepts)
     concept_counts = get_counts(results, annotations)
     metrics = metrics.set_index('conceptid').join(concept_counts)
-    metrics.to_csv('metrics.csv')
+    metrics.to_csv('metrics' + VIDEO_NUM + '.csv')
     print(metrics)
 
-def score_predictions(validation, predictions, iou_thresh, concepts, fps):
+def score_predictions(validation, predictions, iou_thresh, concepts):
     # Maintain a set of predicted objects to verify
     detected_objects = []
     obj_map = predictions.groupby('objectid', sort=False).conceptid.max()
@@ -144,17 +146,17 @@ def get_counts(results, annotations):
     return pd.concat((counts, groundtruth_counts), axis=1, join='outer').fillna(0)
 
 # Get the IOU value for two different annotations
-def compute_overlap(annotationA, annotationB):
+def compute_overlap(A, B):
     # if there is no overlap in x dimension
-    if annotationB.x2 - annotationA.x1 < 0 or annotationA.x2 - annotationB.x1 < 0:
+    if B.x2 - A.x1 < 0 or A.x2 - B.x1 < 0:
         return 0
     # if there is no overlap in y dimension
-    if annotationB.y2 - annotationA.y1 < 0 or annotationA.y2 - annotationB.y1 < 0:
+    if B.y2 - A.y1 < 0 or A.y2 - B.y1 < 0:
         return 0
-    areaA = (annotationA.x2-annotationA.x1) * (annotationA.y2-annotationA.y1)
-    areaB = (annotationB.x2-annotationB.x1) * (annotationB.y2-annotationB.y1)
-    width = min(annotationA.x2,annotationB.x2) - min(annotationA.x1,annotationB.x1)
-    height = min(annotationA.y2,annotationB.y2) - min(annotationA.y1,annotationB.y1)
+    areaA = (A.x2 - A.x1) * (A.y2 - A.y1)
+    areaB = (B.x2 - B.x1) * (B.y2 - B.y1)
+    width = min(A.x2, B.x2) - min(A.x1, B.x1)
+    height = min(A.y2, B.y2) - min(A.y1, B.y1)
     area_intersect = height * width
     iou = area_intersect / (areaA + areaB - area_intersect)
     return iou
