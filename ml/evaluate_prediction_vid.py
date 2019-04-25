@@ -36,7 +36,7 @@ def main():
     concept_counts = get_counts(results, annotations)
     metrics = metrics.set_index('conceptid').join(concept_counts)
 
-    metrics.to_csv("metrics" + VIDEO_NUM + ".csv")
+    metrics.to_csv("metrics" + str(VIDEO_NUM) + ".csv")
     print(metrics)
 
 def score_predictions(validation, predictions, iou_thresh, concepts):
