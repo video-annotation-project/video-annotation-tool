@@ -7,7 +7,7 @@ import pandas as pd
 import predict
 
 VIDEO_NUM = 86
-IOU_THRESH = 0.25
+IOU_THRESH = 0.25 # should pull from config
 FPS = 29.97002997002997
 RESIZED_WIDTH = 640
 RESIZED_HEIGHT = 480
@@ -18,7 +18,6 @@ with open(config_path) as config_buffer:
    config = json.loads(config_buffer.read())
 
 model_path = config['model_weights']
-num_concepts = len(config['conceptids'])
 class_map_file = config['class_map']
 concepts = config['conceptids']
 classmap = pd.read_csv(class_map_file, header=None).to_dict()[0]

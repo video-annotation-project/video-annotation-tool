@@ -12,8 +12,6 @@ import keras
 import pandas as pd
 import uuid
 
-OBJECT_CONFIDENCE_THRESH = 0.30
-OBJECT_LENGTH_THRESH = 15 # frames
 
 #Load environment variables
 load_dotenv(dotenv_path="../.env")
@@ -37,10 +35,12 @@ with open(config_path) as config_buffer:
    config = json.loads(config_buffer.read())
 
 model_path = config['model_weights']
-num_concepts = len(config['conceptids'])
+concepts = config['conceptids']
 NUM_FRAMES = config['frames_between_predictions'] # run prediction on every NUM_FRAMES
 THRESHOLDS = config['prediction_confidence_thresholds']
 IOU_THRESH = config['prediction_matching_threhold']
+OBJECT_CONFIDENCE_THRESH = 0.30
+OBJECT_LENGTH_THRESH = 15 # frames
 
 class Tracked_object:
 
@@ -103,7 +103,7 @@ def main(video_name):
    print("Initializing Model")
    model = init_model()
    print("Predicting")
-   results, frames =  predict_frames(frames, fps, model)
+   results, frames = predict_frames(frames, fps, model)
    # results.frame_num = results.frame_num+ 160 * 30
    save_video(frames)
 
