@@ -144,10 +144,18 @@ def download_annotations(min_examples, concepts, concept_map, bad_users, img_fol
 
         for index, row in group.iterrows():
             concept_index = concepts.index(row['conceptid'])
-            x1 = min(max(int(row['x1']),0), int(row['videowidth']))
-            y1 = min(max(int(row['y1']),0), int(row['videoheight']))
-            x2 = min(max(int(row['x2']),0), int(row['videowidth']))
-            y2 = min(max(int(row['y2']),0), int(row['videoheight']))
+            if (int(row['videowidth']) != int(first['videowidth'])):
+               x_ratio = (row['videowidth'] / first['videowidth'])
+               y_ratio = (row['videoheight'] / first['videoheight'])
+               x1 = min(max(int(row['x1'] / x_ratio), 0), int(first['videowidth']))
+               y1 = min(max(int(row['y1'] / y_ratio), 0), int(first['videoheight']))
+               x2 = min(max(int(row['x2'] / x_ratio), 0), int(first['videowidth']))
+               y2 = min(max(int(row['y2'] / y_ratio), 0), int(first['videoheight']))
+            else:
+               x1 = min(max(int(row['x1']),0), int(row['videowidth']))
+               y1 = min(max(int(row['y1']),0), int(row['videoheight']))
+               x2 = min(max(int(row['x2']),0), int(row['videowidth']))
+               y2 = min(max(int(row['y2']),0), int(row['videoheight']))
             if (y1 == y2) or (x1==x2):
                 print("Invalid BBox:" + first['image'])
                 continue

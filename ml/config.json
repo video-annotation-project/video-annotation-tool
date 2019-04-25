@@ -1,5 +1,6 @@
 {
    "conceptids" : [1629, 1210, 236, 383, 1133],
+   "prediction_confidence_thresholds" : [0.3,0.3,0.3,0.3,0.3],
    "min_examples" : 10000,
    "train_annot_file" : "train_annot_file.csv",
    "valid_annot_file": "valid_annot_file.csv",
@@ -9,5 +10,9 @@
    "class_map" : "classmap.csv",
    "annotations" : "annotations.csv",
    "gpus" : 2,
-   "epochs" : 100
+   "epochs" : 100,
+   "batch_size" : 8,
+   "frames_between_predictions" : 10,
+   "prediction_matching_threhold" : 0.25
 }
+

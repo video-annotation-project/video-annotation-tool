@@ -12,8 +12,6 @@ import keras
 import pandas as pd
 import uuid
 
-NUM_FRAMES = 10 # run prediction on every NUM_FRAMES
-
 #Load environment variables
 load_dotenv(dotenv_path="../.env")
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
@@ -37,6 +35,9 @@ with open(config_path) as config_buffer:
 
 model_path = config['model_weights']
 num_concepts = len(config['conceptids'])
+NUM_FRAMES = config['frames_between_predictions'] # run prediction on every NUM_FRAMES
+THRESHOLDS = config['prediction_confidence_thresholds']
+IOU_THRESH = config['prediction_matching_threhold']
 
 class Tracked_object:
 
@@ -169,11 +170,10 @@ def get_predictions(frame, model):
    frame = np.expand_dims(frame, axis=0)
    boxes, scores, labels = model.predict_on_batch(frame)
 
-   thresholds = [.3,.3,.3,.3,.3]
    predictions = zip (boxes[0],scores[0],labels[0])
    filtered_predictions = []
    for box, score,label in predictions:
-      if thresholds[label] > score:
+      if THRESHOLDS[label] > score:
          continue
       filtered_predictions.append((box,score,label))
    return filtered_predictions
@@ -210,7 +210,7 @@ def does_match_existing_tracked_object(detection, currently_tracked_objects):
        if (iou > max_iou):
           max_iou = iou
           match = obj
-   if max_iou >= 0.25:               
+   if max_iou >= IOU_THRESH:               
       return True, match
    return False, None
 

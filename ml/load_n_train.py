@@ -45,6 +45,7 @@ min_examples = config['min_examples']
 gpus = config['gpus']
 test_examples = config['test_examples']
 epochs = config['epochs']
+batch_size = config['batch_size']
 
 
 bad_users = json.loads(os.getenv("BAD_USERS"))
@@ -99,6 +100,7 @@ Trains the model!!!!! WOOOT WOOOT!
 start = time.time()
 print("Starting Training.")
 
+# Suggested to initialize model on cpu before turning into a multi_gpu model to save gpu memory
 with tf.device('/cpu:0'):
     model = models.backbone('resnet50').retinanet(num_classes=len(concepts))#modifier=freeze_model)
     model.load_weights(model_path, by_name=True, skip_mismatch=True)
@@ -132,7 +134,11 @@ class custom(CSVGenerator):
     def __getitem__(self, index):
         inputs, targets = CSVGenerator.__getitem__(self, index)
 
-        # put custom augmentation here!!!!
+        for i,x in enumerate(inputs):
+            temp = x
+            temp = sk.util.random_noise(temp, var= random.uniform(0,.0005))
+            temp = sk.exposure.adjust_gamma(temp,gamma=random.uniform(.5,1.5))
+            inputs[i] = np.array(temp)
 
         return inputs, targets
 
@@ -140,13 +146,13 @@ train_generator = custom(
     train_annot_file,
     class_map_file,
     transform_generator=transform_generator,
-    batch_size = 8
+    batch_size = batch_size
 )
 
 test_generator = CSVGenerator(
     valid_annot_file,
     class_map_file,
-    batch_size = 8,
+    batch_size = batch_size,
     shuffle_groups=False
 )
 
@@ -168,3 +174,5 @@ history = training_model.fit_generator(train_generator,
 
 end = time.time()
 print("Done Training Model: " + str((end - start)/60) + " minutes")
+
+os.system("sudo shutdown -h")
