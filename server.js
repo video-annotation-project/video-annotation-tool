@@ -692,6 +692,63 @@ app.post('/api/models', passport.authenticate('jwt', { session: false }),
   }
 );
 
+app.get('/api/users', passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    const queryText = `
+      SELECT DISTINCT 
+        U.id, 
+        U.username
+      FROM 
+        Users U`;
+    try {
+      let response = await psql.query(queryText);
+      res.json(response.rows);
+    } catch (error) {
+      console.log('Error on GET /api/users: ');
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
+);
+
+app.get('/api/users/annotationCount', passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    const userId = parseInt(req.query.userid);
+    const fromDate = req.query.fromdate;
+    const toDate = req.query.todate;
+    const data = [userId, fromDate, toDate]
+
+    if (!userId) {
+      res.status(500);
+    }
+    const queryText = `
+      SELECT DISTINCT
+        A.conceptid, 
+        C.name, 
+        COUNT(A.conceptid) AS total_count
+      FROM 
+        annotations A
+      LEFT JOIN 
+        concepts C 
+      ON 
+        A.conceptid = C.id
+      WHERE
+        A.userid = $1 
+        AND (A.dateannotated BETWEEN $2 AND $3)
+      GROUP BY 
+        A.conceptid, 
+        C.name`;
+    try {
+      let response = await psql.query(queryText, data);
+      res.json(response.rows);
+    } catch (error) {
+      console.log('Error on GET /api/users/annotationCount');
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
+);
+
 // This websocket sends a list of videos to the client that update in realtime
 io.on('connection', (socket) => {
   console.log('socket connected!');
