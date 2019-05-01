@@ -54,64 +54,42 @@ class Verify extends React.Component {
       activeStep: 0,
       selectedUser: null,
       selectedVideo: null,
-      users: [],
-      videos: [],
       isLoaded: false,
       error: null
     };
   }
 
-  // getAllUsers = async () => {
-  //   return axios
-  //     .get(`/api/users`, {
-  //       headers: { Authorization: "Bearer " + localStorage.getItem("token") }
-  //     })
-  //     .then(res => res.data)
-  //     .catch(error => {
-  //       this.setState({
-  //         isloaded: true,
-  //         error: error
-  //       });
-  //     });
-  // };
-
   getAllUsers = async () => {
-    return [
-      {
-        id: 16,
-        username: "jccho"
-      },
-      {
-        id: 17,
-        username: "jccho1"
-      }
-    ];
+    return axios
+      .get(`/api/users`, {
+        headers: { Authorization: "Bearer " + localStorage.getItem("token") }
+      })
+      .then(res => res.data)
+      .catch(error => {
+        this.setState({
+          isloaded: true,
+          error: error
+        });
+      });
   };
 
-  getAllVideos = async () => {
-    return [
-      {
-        id: 1,
-        filename: "vid1"
-      },
-      {
-        id: 2,
-        filename: "vid2"
-      }
-    ];
+  getVideosByUser = async () => {
+    return axios
+      .get(`/api/videosByUser/` + this.state.selectedUser, {
+        headers: { Authorization: "Bearer " + localStorage.getItem("token") }
+      })
+      .then(res => res.data)
+      .catch(error => {
+        this.setState({
+          isloaded: true,
+          error: error
+        });
+      });
   };
 
-  componentDidMount = async () => {
-    let users = await this.getAllUsers();
-    let videos = await this.getAllVideos();
-
-    if (!users || !videos) {
-      return;
-    }
+  componentDidMount = () => {
     this.setState({
-      isLoaded: true,
-      users: users,
-      videos: videos
+      isLoaded: true
     });
   };
 
@@ -121,6 +99,33 @@ class Verify extends React.Component {
 
   handleChangeVideo = event => {
     this.setState({ selectedVideo: event.target.value });
+  };
+
+  getStepForm = step => {
+    switch (step) {
+      case 0:
+        return (
+          <VerifySelectUser
+            users={this.state.users}
+            value={this.state.selectedUser}
+            getAllUsers={this.getAllUsers}
+            handleChange={this.handleChangeUser}
+          />
+        );
+      case 1:
+        return (
+          <VerifySelectVideo
+            videos={this.state.videos}
+            value={this.state.selectedVideo}
+            getVideosByUser={this.getVideosByUser}
+            handleChange={this.handleChangeVideo}
+          />
+        );
+      case 2:
+        return <h1>Hello</h1>;
+      default:
+        return "Unknown step";
+    }
   };
 
   handleNext = () => {
@@ -141,37 +146,6 @@ class Verify extends React.Component {
       selectedUser: null,
       selectedVideo: null
     });
-  };
-
-  getStepForm = step => {
-    switch (step) {
-      case 0:
-        return (
-          <VerifySelectUser
-            users={this.state.users}
-            value={this.state.selectedUser}
-            handleChange={this.handleChangeUser}
-          />
-        );
-      case 1:
-        return (
-          <VerifySelectVideo
-            videos={this.state.videos}
-            value={this.state.selectedVideo}
-            handleChange={this.handleChangeVideo}
-          />
-        );
-      case 2:
-        return (
-          <VerifySelectUser
-            users={this.state.users}
-            value={this.state.selectedUser}
-            handleChange={this.handleChangeUser}
-          />
-        );
-      default:
-        return "Unknown step";
-    }
   };
 
   render() {
@@ -195,11 +169,6 @@ class Verify extends React.Component {
               <StepContent>
                 <Typography>{getStepContent(index)}</Typography>
                 {this.getStepForm(index)}
-                {/* <VerifySelectUser
-                  users={users}
-                  value={selectedUser}
-                  handleChange={this.handleChange}
-                /> */}
                 <div className={classes.actionsContainer}>
                   <div>
                     <Button

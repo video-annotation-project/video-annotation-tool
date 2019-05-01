@@ -23,9 +23,25 @@ class VerifySelectUser extends React.Component {
     super(props);
     this.state = {
       isLoaded: false,
-      error: null
+      error: null,
+      users: []
     };
   }
+
+  handleGetUsers = async () => {
+    let users = await this.props.getAllUsers();
+
+    if (!users) {
+      return;
+    }
+
+    this.setState({
+      isLoaded: true,
+      users: users
+    });
+  };
+
+  componentDidMount = () => this.handleGetUsers();
 
   render() {
     const { classes, value, handleChange } = this.props;
@@ -40,10 +56,10 @@ class VerifySelectUser extends React.Component {
             value={value}
             onChange={handleChange}
           >
-            {this.props.users.map(user => (
+            {this.state.users.map(user => (
               <FormControlLabel
                 key={user.id}
-                value={user.username}
+                value={user.id.toString()}
                 control={<Radio />}
                 label={user.username}
               />

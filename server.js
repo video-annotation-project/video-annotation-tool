@@ -61,9 +61,27 @@ app.get(
   async (req, res) => {
     const queryText = "SELECT id, username \
                        FROM users";
+
     try {
-      const concepts = await psql.query(queryText);
-      res.json(concepts.rows);
+      const users = await psql.query(queryText);
+      res.json(users.rows);
+    } catch (error) {
+      res.status(500).json(error);
+    }
+  }
+);
+
+app.get(
+  "/api/videosByUser/:id",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    const queryText =
+      "SELECT DISTINCT v.id, v.filename \
+                       FROM annotations a, videos v \
+                       WHERE a.userid=$1 AND v.id=a.videoid";
+    try {
+      const videos = await psql.query(queryText, [req.params.id]);
+      res.json(videos.rows);
     } catch (error) {
       res.status(500).json(error);
     }
