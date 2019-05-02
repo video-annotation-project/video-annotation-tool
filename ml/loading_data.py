@@ -48,7 +48,7 @@ def select_annotations(annotations, min_examples, concepts):
     for concept in concepts:
         concept_count[concept] = 0
 
-    annotation['frame_num'] = np.rint(annotations['timeinvideo'] * FPS)
+    annotations['frame_num'] = np.rint(annotations['timeinvideo'] * FPS)
     groups = annotations.groupby(['videoid','frame_num'], sort=False)
     groups = [df for _, df in groups]
     random.shuffle(groups) # Shuffle BEFORE the sort
