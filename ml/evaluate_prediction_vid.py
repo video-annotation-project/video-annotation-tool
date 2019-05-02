@@ -23,8 +23,7 @@ concepts = config['conceptids']
 classmap = pd.read_csv(class_map_file, header=None).to_dict()[0]
 
 def main():
-    video_name = queryDB("select * from videos where id = " + str(VIDEO_NUM)).iloc[0].filename
-    results = predict.main(video_name)
+    results = predict.main(VIDEO_NUM)
     print("done predicting")
 
     # REMOVE BAD USERS ?
