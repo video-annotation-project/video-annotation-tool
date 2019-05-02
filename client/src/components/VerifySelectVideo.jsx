@@ -28,8 +28,8 @@ class VerifySelectVideo extends React.Component {
     };
   }
 
-  handleGetVideos = async () => {
-    let videos = await this.props.getVideosByUser();
+  componentDidMount = async () => {
+    let videos = await this.props.getVideos();
 
     if (!videos) {
       return;
@@ -40,8 +40,6 @@ class VerifySelectVideo extends React.Component {
       videos: videos
     });
   };
-
-  componentDidMount = () => this.handleGetVideos();
 
   render() {
     const { classes, value, handleChange } = this.props;
@@ -59,7 +57,7 @@ class VerifySelectVideo extends React.Component {
             {this.state.videos.map(video => (
               <FormControlLabel
                 key={video.id}
-                value={video.filename}
+                value={video.id.toString()}
                 control={<Radio />}
                 label={video.filename}
               />

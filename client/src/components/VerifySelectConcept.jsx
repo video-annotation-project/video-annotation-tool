@@ -18,26 +18,26 @@ const styles = theme => ({
   }
 });
 
-class VerifySelectUser extends React.Component {
+class VerifySelectConcept extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
       isLoaded: false,
       error: null,
-      users: []
+      concepts: []
     };
   }
 
   componentDidMount = async () => {
-    let users = await this.props.getUsers();
+    let concepts = await this.props.getConcepts();
 
-    if (!users) {
+    if (!concepts) {
       return;
     }
 
     this.setState({
       isLoaded: true,
-      users: users
+      concepts: concepts
     });
   };
 
@@ -48,24 +48,18 @@ class VerifySelectUser extends React.Component {
       <div className={classes.root}>
         <FormControl component="fieldset" className={classes.formControl}>
           <RadioGroup
-            aria-label="User"
-            name="user"
+            aria-label="Concept"
+            name="concept"
             className={classes.group}
             value={value}
             onChange={handleChange}
           >
-            <FormControlLabel
-              key={0}
-              value={"0"}
-              control={<Radio />}
-              label={"All users"}
-            />
-            {this.state.users.map(user => (
+            {this.state.concepts.map(concept => (
               <FormControlLabel
-                key={user.id}
-                value={user.id.toString()}
+                key={concept.id}
+                value={concept.id.toString()}
                 control={<Radio />}
-                label={user.username}
+                label={concept.name}
               />
             ))}
           </RadioGroup>
@@ -75,8 +69,8 @@ class VerifySelectUser extends React.Component {
   }
 }
 
-VerifySelectUser.propTypes = {
+VerifySelectConcept.propTypes = {
   classes: PropTypes.object.isRequired
 };
 
-export default withStyles(styles)(VerifySelectUser);
+export default withStyles(styles)(VerifySelectConcept);

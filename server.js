@@ -72,16 +72,52 @@ app.get(
 );
 
 app.get(
-  "/api/videosByUser/:id",
+  "/api/unverifiedVideosByUser/:userid",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    const queryText =
+    var queryText = [
       "SELECT DISTINCT v.id, v.filename \
-                       FROM annotations a, videos v \
-                       WHERE a.userid=$1 AND v.id=a.videoid";
+        FROM annotations a, videos v \
+        WHERE a.verifiedby='' AND v.id=a.videoid",
+      "SELECT DISTINCT v.id, v.filename \
+        FROM annotations a, videos v \
+        WHERE a.userid=$1 AND a.verifiedby='' AND v.id=a.videoid"
+    ];
     try {
-      const videos = await psql.query(queryText, [req.params.id]);
+      if (req.params.userid == "0") {
+        var videos = await psql.query(queryText[0]);
+      } else {
+        var videos = await psql.query(queryText[1], [req.params.userid]);
+      }
       res.json(videos.rows);
+    } catch (error) {
+      res.status(500).json(error);
+    }
+  }
+);
+
+app.get(
+  "/api/unverifiedConceptsByUserVideo/:userid/:videoid",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    var queryText = [
+      "SELECT DISTINCT c.id, c.name \
+        FROM annotations a, concepts c  \
+        WHERE a.videoid=$1 AND a.verifiedby='' AND a.conceptid=c.id",
+      "SELECT DISTINCT c.id, c.name \
+        FROM annotations a, concepts c  \
+        WHERE a.userid=$1 AND a.videoid=$2 AND a.verifiedby='' AND a.conceptid=c.id"
+    ];
+    try {
+      if (req.params.userid == "0") {
+        var concepts = await psql.query(queryText[0], [req.params.videoid]);
+      } else {
+        var concepts = await psql.query(queryText[1], [
+          req.params.userid,
+          req.params.videoid
+        ]);
+      }
+      res.json(concepts.rows);
     } catch (error) {
       res.status(500).json(error);
     }

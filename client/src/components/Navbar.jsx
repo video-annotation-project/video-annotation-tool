@@ -52,7 +52,11 @@ class Navbar extends React.Component {
                   <Button color="inherit" component={Link} to="/models">
                     Models
                   </Button>
-                  <Button color="inherit" component={Link} to="/verify">
+                  <Button
+                    color="inherit"
+                    component={Link}
+                    to="/verifySelection"
+                  >
                     Verify
                   </Button>
                 </React.Fragment>
