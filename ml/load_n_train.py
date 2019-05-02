@@ -19,6 +19,9 @@ from keras.callbacks import ModelCheckpoint, EarlyStopping
 from keras_retinanet.models.retinanet import retinanet_bbox
 from keras_retinanet.callbacks import RedirectModel
 import tensorflow as tf
+import skimage as sk
+import random
+import numpy as np
 
 argparser = argparse.ArgumentParser()
 argparser.add_argument(
@@ -45,6 +48,7 @@ min_examples = config['min_examples']
 gpus = config['gpus']
 test_examples = config['test_examples']
 epochs = config['epochs']
+batch_size = config['batch_size']
 
 
 bad_users = json.loads(os.getenv("BAD_USERS"))
@@ -90,7 +94,6 @@ download_annotations(min_examples, concepts, classmap, bad_users, img_folder, tr
 
 end = time.time()
 print("Done Downloading Annotations: " + str((end - start)/60) + " minutes")
-
 '''
 
 '''
@@ -99,6 +102,7 @@ Trains the model!!!!! WOOOT WOOOT!
 start = time.time()
 print("Starting Training.")
 
+# Suggested to initialize model on cpu before turning into a multi_gpu model to save gpu memory
 with tf.device('/cpu:0'):
     model = models.backbone('resnet50').retinanet(num_classes=len(concepts))#modifier=freeze_model)
     model.load_weights(model_path, by_name=True, skip_mismatch=True)
@@ -131,22 +135,27 @@ transform_generator = random_transform_generator(
 class custom(CSVGenerator):
     def __getitem__(self, index):
         inputs, targets = CSVGenerator.__getitem__(self, index)
-
-        # put custom augmentation here!!!!
-
+        '''
+        for i,x in enumerate(inputs):
+            temp = x
+            temp = sk.exposure.rescale_intensity(temp,in_range=(0,255))
+            temp = sk.util.random_noise(temp, var= random.uniform(0,.0005))
+            temp = sk.exposure.adjust_gamma(temp,gamma=random.uniform(.5,1.5))
+            inputs[i] = np.array(temp)
+        '''
         return inputs, targets
 
 train_generator = custom(
     train_annot_file,
     class_map_file,
     transform_generator=transform_generator,
-    batch_size = 8
+    batch_size = batch_size
 )
 
 test_generator = CSVGenerator(
     valid_annot_file,
     class_map_file,
-    batch_size = 8,
+    batch_size = batch_size,
     shuffle_groups=False
 )
 
@@ -157,7 +166,7 @@ checkpoint = ModelCheckpoint(filepath, monitor='val_loss', save_best_only=True)
 checkpoint = RedirectModel(checkpoint, model)
 
 #stopping: stops training if val_loss stops improving
-stopping = EarlyStopping(monitor='val_loss', min_delta=0, patience=5)
+stopping = EarlyStopping(monitor='val_loss', min_delta=0, patience=10)
 
 history = training_model.fit_generator(train_generator, 
     epochs=epochs, 
