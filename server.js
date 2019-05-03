@@ -731,6 +731,59 @@ io.on('connection', (socket) => {
   });
 });
 
+// This route serves the cookies that are used by the client to access the 
+// videos on AWS CloudFront
+app.get('/api/cookies', passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    try {
+      console.log('Making cookie...');
+      const privateKey = process.env.RSA_PRIVATE_KEY;
+      const keyPairId = process.env.KEY_PAIR_ID;
+      let cfUrl = "cdn.deepseaannotations.com";
+      let expiry = Math.floor(Date.now() / 1000) + 60000;
+
+      let signer = new AWS.CloudFront.Signer(keyPairId, privateKey);
+      let policy = {
+        'Statement': [{
+          'Resource': 'http*://' + cfUrl + '/*',
+          'Condition': {
+            'DateLessThan': { 'AWS:EpochTime': expiry }
+          }
+        }]
+      };
+      let policyString = JSON.stringify(policy);
+      var options = { url: "http://" + cfUrl, policy: policyString };
+      cookie = signer.getSignedCookie(options, (error, cookie) => {
+        if (error) {
+          res.send(error);
+          console.log(error);
+          return;
+        }
+        res.cookie('CloudFront-Key-Pair-Id', cookie['CloudFront-Key-Pair-Id'], {
+          domain: '.cdn.deepseaannotations.com',
+          path: '/',
+          httpOnly: true
+        });
+        res.cookie('CloudFront-Policy', cookie['CloudFront-Policy'], {
+          domain: '.cdn.deepseaannotations.com',
+          path: '/',
+          httpOnly: true
+        });
+        res.cookie('CloudFront-Signature', cookie['CloudFront-Signature'], {
+          domain: '.cdn.deepseaannotations.com',
+          path: '/',
+          httpOnly: true
+        });
+        res.send(cookie);
+        console.log(cookie);
+      });
+    } catch (error) {
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
+);
+
 // Express only serves static assets in production
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, 'client', 'build')));
