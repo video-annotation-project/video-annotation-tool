@@ -234,7 +234,7 @@ class TrainModel extends Component {
                 label={video.filename}
               >
               </FormControlLabel>
-              <IconButton style={{float:'right'}}> 
+              <IconButton style={{ float: 'right' }}>
                 <Description
                   onClick={
                     (event) =>
@@ -253,7 +253,7 @@ class TrainModel extends Component {
   }
 
   handleUserSelect = id => event => {
-    let usersSelected = 
+    let usersSelected =
       JSON.parse(JSON.stringify(this.state.usersSelected));
     if (event.target.checked) {
       usersSelected.push(id)
@@ -293,7 +293,7 @@ class TrainModel extends Component {
   }
 
   handleConceptSelect = id => event => {
-    let conceptsSelected = 
+    let conceptsSelected =
       JSON.parse(JSON.stringify(this.state.conceptsSelected));
     if (event.target.checked) {
       conceptsSelected.push(id)
@@ -333,19 +333,19 @@ class TrainModel extends Component {
   }
 
   getSteps = () => {
-    return ['Select videos', 'Select user', 'Select concepts', 'Select model'];
+    return ['Select model', 'Select users', 'Select concepts', 'Select videos'];
   }
 
   getStepContent = (step) => {
     switch (step) {
       case 0:
-        return this.selectVideo();
+        return this.selectModel();
       case 1:
         return this.selectUser();
       case 2:
         return this.selectConcept();
       case 3:
-        return this.selectModel();
+        return this.selectVideo();
       default:
         return 'Unknown step';
     }
@@ -424,10 +424,10 @@ class TrainModel extends Component {
                       onClick={this.handleNext}
                       className={classes.button}
                       disabled={
-                        (activeStep === 0 && videosSelected.length < 1) ||
+                        (activeStep === 0 && modelSelected === '') ||
                         (activeStep === 1 && usersSelected.length < 1) ||
                         (activeStep === 2 && conceptsSelected.length < 1) ||
-                        (activeStep === 3 && modelSelected === '')
+                        (activeStep === 3 && videosSelected.length < 1)
                       }
                     >
                       {activeStep === steps.length - 1 ? 'Train Model' : 'Next'}
