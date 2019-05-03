@@ -12,7 +12,8 @@ import keras
 import pandas as pd
 import uuid
 from loading_data import queryDB
-
+import psycopg2
+import datetime
 
 #Load environment variables
 load_dotenv(dotenv_path="../.env")
@@ -21,6 +22,15 @@ AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 S3_BUCKET = os.getenv('AWS_S3_BUCKET_NAME')
 s3 = boto3.client('s3', aws_access_key_id = AWS_ACCESS_KEY_ID, aws_secret_access_key = AWS_SECRET_ACCESS_KEY)
 S3_VIDEO_FOLDER = os.getenv('AWS_S3_BUCKET_VIDEOS_FOLDER')
+S3_ANNOTATION_FOLDER = os.getenv("AWS_S3_BUCKET_ANNOTATIONS_FOLDER")
+S3_TRACKING_FOLDER = os.getenv("AWS_S3_BUCKET_TRACKING_FOLDER")
+
+
+# connect to db
+DB_NAME = os.getenv("DB_NAME")
+DB_HOST = os.getenv("DB_HOST")
+DB_USER = os.getenv("DB_USER")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
 
 argparser = argparse.ArgumentParser()
 argparser.add_argument(
@@ -117,12 +127,23 @@ def main(videoid):
    results = propagate_conceptids(results)
    results = length_limit_objects(results, OBJECT_LENGTH_THRESH)
 
+
+   con = psycopg2.connect(database = DB_NAME,
+                      user = DB_USER,
+                      password = DB_PASSWORD,
+                      host = DB_HOST,
+                      port = "5432")
+   cursor = con.cursor()
+   
    # filter results down to middles
    middles = the_middler(results)
-   middles.apply(lambda x: handle_annotation(x, original_frames, videoid. videoheight, videowidth, userid))
+   # upload these annotations
+   middles.apply(lambda x: handle_annotation(cursor, x, original_frames, videoid, 640, 480, userid, fps), axis=1)
+   con.commit()
+   con.close()
    return results
 
-def the_middler(results)
+def the_middler(results):
   middle_frames = []
 
   for obj in [df for _, df in results.groupby('objectid')]:
@@ -137,27 +158,24 @@ def the_middler(results)
   middle_frames.columns = results.columns
   return middle_frames
 
-def handle_annotation(x, frames, videoid. videoheight, videowidth, userid):
-  frame = x.frame_num
+def handle_annotation(cursor, x, frames, videoid, videoheight, videowidth, userid, fps):
+  frame = frames[int(x.frame_num)]
   frame_w_box = get_boxed_image(x.x1, x.x2, x.y1, x.y2, copy.deepcopy(frame))
-  upload_annotation(frame, frame_w_box, x.x1, x.x2, x.y1, x.y2, x.frame_num, x.conceptid, videoid, videoheight, videowidth, userid)
+  upload_annotation(cursor, frame, frame_w_box, x.x1, x.x2, x.y1, x.y2, x.frame_num, x.conceptid, videoid, videowidth, videoheight, userid, fps)
 
 
 def get_boxed_image(x1, x2, y1, y2, frame):
-  cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+  cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)
   return frame
 
 #Uploads images and puts annotation in database
-def upload_annotation(frame, frame_w_box, x1, x2, y1, y2, frame_num, conceptid, videoid, videowidth, videoheight, userid):
-  con = psycopg2.connect(database = DB_NAME,
-                      user = DB_USER,
-                      password = DB_PASSWORD,
-                      host = DB_HOST,
-                      port = "5432")
-  cursor = con.cursor()
+def upload_annotation(cursor, frame, frame_w_box, x1, x2, y1, y2, frame_num, conceptid, videoid, videowidth, videoheight, userid, fps):
   
-  no_box = str(annotation.videoid) + "_" + str(timeinvideo) + "_ai.png"
-  box = str(annotation.id) + "_" + str(timeinvideo) + "_box_ai.png"
+  
+  timeinvideo = frame_num / fps
+  
+  no_box = str(videoid) + "_" + str(timeinvideo) + "_ai.png"
+  box = str(uuid.uuid4()) + "_" + str(videoid) +  "_" + str(timeinvideo) + "_box_ai.png"
   temp_file = str(uuid.uuid4()) + ".png"
   cv2.imwrite(temp_file, frame)
   s3.upload_file(temp_file, S3_BUCKET, S3_ANNOTATION_FOLDER + no_box, ExtraArgs={'ContentType':'image/png'}) 
@@ -167,24 +185,19 @@ def upload_annotation(frame, frame_w_box, x1, x2, y1, y2, frame_num, conceptid, 
   s3.upload_file(temp_file, S3_BUCKET, S3_ANNOTATION_FOLDER + box,  ExtraArgs={'ContentType':'image/png'})
   os.system('rm '+ temp_file)
   
-  tieminvideo = frame_num / FPS
   
   cursor.execute(
     """
    INSERT INTO annotations (
-   framenum, videoid, userid, conceptid, timeinvideo, x1, y1, x2, y2, 
+   videoid, userid, conceptid, timeinvideo, x1, y1, x2, y2, 
    videowidth, videoheight, dateannotated, image, imagewithbox) 
-   VALUES (%d, %d, %d, %d, %f, %f, %f, %f, %f, %d, %d, %s, %s, %s, %s, %s, %d)
+   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
     """,
      (
-   frame_num, videoid, userid,conceptid, timeinvideo, x1, y1, 
-   x2, y2, video_width, video_height, datetime.datetime.now().date(), no_box, box
+         int(videoid), int(userid), int(conceptid), timeinvideo, x1, y1, 
+         x2, y2, videowidth, videoheight, datetime.datetime.now().date(), no_box, box
      )
-  )
-  con.commit()
-  con.close()
-
-
+  ) 
 
 def get_video_frames(video_name):
    frames = []
