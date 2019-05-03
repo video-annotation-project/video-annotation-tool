@@ -1,6 +1,4 @@
 import React from "react";
-import axios from "axios";
-import { Link } from "react-router-dom";
 import PropTypes from "prop-types";
 import { withStyles } from "@material-ui/core/styles";
 import Stepper from "@material-ui/core/Stepper";
@@ -54,61 +52,10 @@ class VerifySelection extends React.Component {
     super(props);
     this.state = {
       activeStep: 0,
-      selectedUser: "0",
-      selectedVideo: null,
-      selectedConcept: null,
       isLoaded: false,
       error: null
     };
   }
-
-  getUsers = async () => {
-    return axios
-      .get(`/api/users`, {
-        headers: { Authorization: "Bearer " + localStorage.getItem("token") }
-      })
-      .then(res => res.data)
-      .catch(error => {
-        this.setState({
-          isloaded: true,
-          error: error
-        });
-      });
-  };
-
-  getVideos = async () => {
-    return axios
-      .get(`/api/unverifiedVideosByUser/` + this.state.selectedUser, {
-        headers: { Authorization: "Bearer " + localStorage.getItem("token") }
-      })
-      .then(res => res.data)
-      .catch(error => {
-        this.setState({
-          isloaded: true,
-          error: error
-        });
-      });
-  };
-
-  getConcepts = async () => {
-    return axios
-      .get(
-        `/api/unverifiedConceptsByUserVideo/` +
-          this.state.selectedUser +
-          `/` +
-          this.state.selectedVideo,
-        {
-          headers: { Authorization: "Bearer " + localStorage.getItem("token") }
-        }
-      )
-      .then(res => res.data)
-      .catch(error => {
-        this.setState({
-          isloaded: true,
-          error: error
-        });
-      });
-  };
 
   componentDidMount = () => {
     this.setState({
@@ -116,42 +63,30 @@ class VerifySelection extends React.Component {
     });
   };
 
-  handleChangeUser = event => {
-    this.setState({ selectedUser: event.target.value });
-  };
-
-  handleChangeVideo = event => {
-    this.setState({ selectedVideo: event.target.value });
-  };
-
-  handleChangeConcept = event => {
-    this.setState({ selectedConcept: event.target.value });
-  };
-
   getStepForm = step => {
     switch (step) {
       case 0:
         return (
           <VerifySelectUser
-            value={this.state.selectedUser}
-            getUsers={this.getUsers}
-            handleChange={this.handleChangeUser}
+            value={this.props.selectedUser}
+            getUsers={this.props.getUsers}
+            handleChange={this.props.handleChangeUser}
           />
         );
       case 1:
         return (
           <VerifySelectVideo
-            value={this.state.selectedVideo}
-            getVideos={this.getVideos}
-            handleChange={this.handleChangeVideo}
+            value={this.props.selectedVideo}
+            getVideos={this.props.getVideos}
+            handleChange={this.props.handleChangeVideo}
           />
         );
       case 2:
         return (
           <VerifySelectConcept
-            value={this.state.selectedConcept}
-            getConcepts={this.getConcepts}
-            handleChange={this.handleChangeConcept}
+            value={this.props.selectedConcept}
+            getConcepts={this.props.getConcepts}
+            handleChange={this.props.handleChangeConcept}
           />
         );
       default:
@@ -162,11 +97,11 @@ class VerifySelection extends React.Component {
   didNotSelect = step => {
     switch (step) {
       case 0:
-        return this.state.selectedUser == null;
+        return this.props.selectedUser == null;
       case 1:
-        return this.state.selectedVideo == null;
+        return this.props.selectedVideo == null;
       case 2:
-        return this.state.selectedConcept == null;
+        return this.props.selectedConcept == null;
       default:
         return true;
     }
@@ -185,11 +120,9 @@ class VerifySelection extends React.Component {
   };
 
   handleReset = () => {
+    this.props.handleReset();
     this.setState({
-      activeStep: 0,
-      selectedUser: "0",
-      selectedVideo: null,
-      selectedConcept: null
+      activeStep: 0
     });
   };
 
@@ -224,9 +157,9 @@ class VerifySelection extends React.Component {
                       Back
                     </Button>
                     <Button
-                      disabled={this.didNotSelect(index)}
                       variant="contained"
                       color="primary"
+                      disabled={this.didNotSelect(index)}
                       onClick={this.handleNext}
                       className={classes.button}
                     >
@@ -241,14 +174,14 @@ class VerifySelection extends React.Component {
         {activeStep === steps.length && (
           <Paper square elevation={0} className={classes.resetContainer}>
             <Typography>All steps completed - you&apos;re finished</Typography>
-            <Button onClick={this.handleReset} className={classes.button}>
-              Reset
+            <Button onClick={this.handleBack} className={classes.button}>
+              Back
             </Button>
             <Button
-              onClick={this.handleReset}
+              variant="contained"
+              color="primary"
+              onClick={this.props.unmountSelection}
               className={classes.button}
-              component={Link}
-              to="/verify"
             >
               Verify
             </Button>
