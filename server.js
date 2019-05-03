@@ -753,31 +753,31 @@ app.get('/api/cookies', passport.authenticate('jwt', { session: false }),
       };
       let policyString = JSON.stringify(policy);
       var options = { url: "http://" + cfUrl, policy: policyString };
-      cookie = signer.getSignedCookie(options, (error, cookie) => {
+      signer.getSignedCookie(options, (error, cookie) => {
         if (error) {
-          res.send(error);
-          console.log(error);
-          return;
+          console.log('Error recieved from getSignedCookie function.')
+          console.log('Throwing error.')
+          throw error;
         }
         res.cookie('CloudFront-Key-Pair-Id', cookie['CloudFront-Key-Pair-Id'], {
           domain: '.cdn.deepseaannotations.com',
           path: '/',
-          httpOnly: true
+          // httpOnly: true
         });
         res.cookie('CloudFront-Policy', cookie['CloudFront-Policy'], {
           domain: '.cdn.deepseaannotations.com',
           path: '/',
-          httpOnly: true
+          // httpOnly: true
         });
         res.cookie('CloudFront-Signature', cookie['CloudFront-Signature'], {
           domain: '.cdn.deepseaannotations.com',
           path: '/',
-          httpOnly: true
+          // httpOnly: true
         });
         res.send(cookie);
         console.log(cookie);
       });
-    } catch (error) {
+    } catch(error) {
       console.log(error);
       res.status(500).json(error);
     }
