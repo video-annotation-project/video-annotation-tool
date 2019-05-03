@@ -63,6 +63,10 @@ class VerifySelection extends React.Component {
     });
   };
 
+  componentWillUnmount = () => {
+    this.props.handleGetAnnotations();
+  };
+
   getStepForm = step => {
     switch (step) {
       case 0:

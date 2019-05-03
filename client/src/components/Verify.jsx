@@ -31,7 +31,9 @@ class Verify extends Component {
       selectionMounted: true,
       selectedUser: "0",
       selectedVideo: null,
-      selectedConcept: null
+      selectedConcept: null,
+      annotations: [],
+      error: null
     };
   }
 
@@ -49,7 +51,6 @@ class Verify extends Component {
       .then(res => res.data)
       .catch(error => {
         this.setState({
-          isloaded: true,
           error: error
         });
       });
@@ -63,7 +64,6 @@ class Verify extends Component {
       .then(res => res.data)
       .catch(error => {
         this.setState({
-          isloaded: true,
           error: error
         });
       });
@@ -83,10 +83,44 @@ class Verify extends Component {
       .then(res => res.data)
       .catch(error => {
         this.setState({
-          isloaded: true,
           error: error
         });
       });
+  };
+
+  getAnnotations = async () => {
+    return axios
+      .get(
+        `/api/unverifiedAnnotationsByUserVideoConcept/` +
+          this.state.selectedUser +
+          `/` +
+          this.state.selectedVideo +
+          `/` +
+          this.state.selectedConcept,
+        {
+          headers: { Authorization: "Bearer " + localStorage.getItem("token") }
+        }
+      )
+      .then(res => res.data)
+      .catch(error => {
+        this.setState({
+          error: error
+        });
+      });
+  };
+
+  handleGetAnnotations = async () => {
+    let annotations = await this.getAnnotations();
+
+    if (!annotations) {
+      return;
+    }
+
+    this.setState({
+      annotations: annotations
+    });
+
+    console.log(this.state.annotations);
   };
 
   handleChangeUser = event => {
@@ -124,6 +158,7 @@ class Verify extends Component {
           handleChangeVideo={this.handleChangeVideo}
           handleChangeConcept={this.handleChangeConcept}
           handleReset={this.handleReset}
+          handleGetAnnotations={this.handleGetAnnotations}
           unmountSelection={this.unmountSelection}
         />
       );

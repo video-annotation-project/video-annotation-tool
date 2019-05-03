@@ -124,6 +124,53 @@ app.get(
   }
 );
 
+app.get(
+  "/api/unverifiedAnnotationsByUserVideoConcept/:userid/:videoid/:conceptid",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    var queryText = [
+      "SELECT * \
+        FROM annotations \
+        WHERE videoid=$1 AND conceptid=$2 AND verifiedby=''",
+      "SELECT * \
+        FROM annotations \
+        WHERE userid=$1 AND videoid=$2 AND conceptid=$3 AND verifiedby=''"
+    ];
+    try {
+      if (req.params.userid == "0") {
+        var concepts = await psql.query(queryText[0], [
+          req.params.videoid,
+          req.params.conceptid
+        ]);
+      } else {
+        var concepts = await psql.query(queryText[1], [
+          req.params.userid,
+          req.params.videoid,
+          req.params.conceptid
+        ]);
+      }
+      res.json(concepts.rows);
+    } catch (error) {
+      res.status(500).json(error);
+    }
+  }
+);
+
+app.patch(
+  "/api/annotationsVerifiedBy/:annotationid",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    const queryText = "UPDATE annotations SET verifiedby='foo' WHERE id=$1";
+    try {
+      let update = await psql.query(queryText, [req.params.annotationid]);
+      res.json(update.rows);
+    } catch (error) {
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
+);
+
 app.post("/api/login", async function(req, res) {
   const { username, password } = req.body;
   let queryPass =
