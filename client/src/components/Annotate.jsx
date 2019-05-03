@@ -415,7 +415,7 @@ class Annotate extends Component {
               id="video"
               width="1600"
               height="900"
-              src={'https://d1bnpmj61iqorj.cloudfront.net/videos/' +
+              src={'https://cdn.deepseaannotations.com/videos/' +
                 this.state.currentVideo.filename}
               type='video/mp4'
               crossOrigin='use-credentials'
