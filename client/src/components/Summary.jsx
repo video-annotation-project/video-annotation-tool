@@ -3,10 +3,6 @@ import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Modal from '@material-ui/core/Modal';
 import Button from '@material-ui/core/Button';
-// import List from '@material-ui/core/List';
-// import ListItem from '@material-ui/core/ListItem';
-// import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
-// import ListItemText from '@material-ui/core/ListItemText';
 import Avatar from '@material-ui/core/Avatar';
 import Paper from '@material-ui/core/Paper';
 import geoLib from 'geolib'
@@ -17,17 +13,6 @@ import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import Typography from '@material-ui/core/Typography';
 
-function getModalStyle() {
-  const top = 50;
-  const left = 50;
-
-  return {
-    top: `${top}%`,
-    left: `${left}%`,
-    transform: `translate(-${top}%, -${left}%)`,
-  };
-}
-
 const styles = theme => ({
   paper: {
     position: 'absolute',
@@ -35,7 +20,10 @@ const styles = theme => ({
     backgroundColor: theme.palette.background.paper,
     boxShadow: theme.shadows[5],
     padding: theme.spacing.unit * 4,
-    outline: 'none'
+    outline: 'none',
+    transform: 'translate(-50%, -50%)',
+    top: '50%',
+    left: '50%'
   },
   root: {
     width: '100%',
@@ -100,24 +88,8 @@ class SimpleModal extends React.Component {
           open={this.props.open}
           onClose={this.props.handleClose}
         >
-          <div style={getModalStyle()} className={classes.paper}>
+          <div className={classes.paper}>
             <Paper style={{ maxHeight: 400, overflow: 'auto' }}>
-              {/* {this.props.summary &&
-                <List disablePadding>
-                  {this.props.summary.data.map(concept => (
-                    <React.Fragment key={concept.id}>
-                      <ListItem>
-                        <Avatar src={`/api/conceptImages/${concept.id}`} />
-                        <ListItemText inset primary={concept.name} />
-                        <ListItemText primary={concept.count + ' anno'} />
-                        <ListItemSecondaryAction className={classes.shiftRight}>
-                          {this.setTwoNumberDecimal(concept.count / (dist * 2)) + ' cr/m^2'}
-                        </ListItemSecondaryAction>
-                      </ListItem>
-                    </React.Fragment>
-                  ))}
-                </List>
-              } */}
               <Table className={classes.table}>
                 <TableHead>
                   <TableRow>
