@@ -323,6 +323,30 @@ app.get(
   }
 );
 
+
+// summary getter ~KLS
+app.get(
+  '/api/videos/summary/:videoid',
+  passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    let queryText = `SELECT * 
+                      FROM concepts a 
+                      JOIN 
+                      (SELECT conceptid, videoid, COUNT(*) FROM annotations GROUP BY 
+                      conceptid, videoid) AS counts 
+                      ON counts.conceptid=a.id
+                      WHERE videoid = $1`;
+    try {
+      const summary = await psql.query(queryText, [req.params.videoid]);
+      res.json(summary.rows);
+    } catch (error) {
+      console.log("Error in get /api/videos/summary/:videoid")
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
+);
+
 app.patch('/api/videos/:videoid',
   passport.authenticate('jwt', { session: false }), async (req, res) => {
     let queryText = 'UPDATE videos \
