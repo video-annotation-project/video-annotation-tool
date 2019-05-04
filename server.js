@@ -473,6 +473,29 @@ app.get(
   }
 );
 
+// summary getter ~KLS
+app.get(
+  "/api/videos/summary/:videoid",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    let queryText = `SELECT * 
+                      FROM concepts a 
+                      JOIN 
+                      (SELECT conceptid, videoid, COUNT(*) FROM annotations GROUP BY 
+                      conceptid, videoid) AS counts 
+                      ON counts.conceptid=a.id
+                      WHERE videoid = $1`;
+    try {
+      const summary = await psql.query(queryText, [req.params.videoid]);
+      res.json(summary.rows);
+    } catch (error) {
+      console.log("Error in get /api/videos/summary/:videoid");
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
+);
+
 app.patch(
   "/api/videos/:videoid",
   passport.authenticate("jwt", { session: false }),
@@ -875,6 +898,67 @@ app.post(
       let response = await psql.query(queryText, [req.body.name]);
       res.json(response.rows);
     } catch (error) {
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
+);
+
+app.get(
+  "/api/users",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    const queryText = `
+      SELECT DISTINCT 
+        U.id, 
+        U.username
+      FROM 
+        Users U`;
+    try {
+      let response = await psql.query(queryText);
+      res.json(response.rows);
+    } catch (error) {
+      console.log("Error on GET /api/users: ");
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
+);
+
+app.get(
+  "/api/users/annotationCount",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    const userId = parseInt(req.query.userid);
+    const fromDate = req.query.fromdate;
+    const toDate = req.query.todate;
+    const data = [userId, fromDate, toDate];
+
+    if (!userId) {
+      res.status(500);
+    }
+    const queryText = `
+      SELECT DISTINCT
+        A.conceptid, 
+        C.name, 
+        COUNT(A.conceptid) AS total_count
+      FROM 
+        annotations A
+      LEFT JOIN 
+        concepts C 
+      ON 
+        A.conceptid = C.id
+      WHERE
+        A.userid = $1 
+        AND (A.dateannotated BETWEEN $2 AND $3)
+      GROUP BY 
+        A.conceptid, 
+        C.name`;
+    try {
+      let response = await psql.query(queryText, data);
+      res.json(response.rows);
+    } catch (error) {
+      console.log("Error on GET /api/users/annotationCount");
       console.log(error);
       res.status(500).json(error);
     }
