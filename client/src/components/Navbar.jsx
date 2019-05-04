@@ -35,7 +35,6 @@ class Navbar extends React.Component {
           </Button>
           {localStorage.getItem("isAuthed") ? (
             <React.Fragment>
-<<<<<<< HEAD
               {localStorage.getItem("admin") ? (
                 <React.Fragment>
                   <Button color="inherit" component={Link} to="/concepts">
@@ -56,32 +55,11 @@ class Navbar extends React.Component {
                   <Button color="inherit" component={Link} to="/verify">
                     Verify
                   </Button>
+                  <Button color="inherit" component={Link} to="/users">
+                    Users
+                  </Button>
                 </React.Fragment>
               ) : (
-=======
-              {localStorage.getItem('admin') ? (
-                  <React.Fragment>
-                    <Button color='inherit' component={Link} to='/concepts'>
-                      Select Concepts
-                    </Button>
-                    <Button color='inherit' component={Link} to='/annotate'>
-                      Annotate Videos
-                    </Button>
-                    <Button color='inherit'component={Link} to='/report'>
-                      Report
-                    </Button>
-                    <Button color='inherit' component={Link} to='/createUser'>
-                      Create User
-                    </Button>
-                    <Button color='inherit' component={Link} to='/models'>
-                      Models
-                    </Button>
-                    <Button color='inherit' component={Link} to='/users'>
-                      Users
-                    </Button>
-                  </React.Fragment>
-              ):(
->>>>>>> 92f1a3cb7d8a1c3bbafd7916cd26e1f4c7bdf57a
                 <React.Fragment>
                   <Button color="inherit" component={Link} to="/concepts">
                     Select Concepts
