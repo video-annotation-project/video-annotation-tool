@@ -44,7 +44,7 @@ class Summary extends React.Component {
     km: false
   };
 
-  getTotalSpecies(data) {
+  getTotal = (data) => {
     var count = 0;
     var anno = 0;
     data.forEach(element => {
@@ -63,7 +63,7 @@ class Summary extends React.Component {
       this.setState({km : true});
   }
 
-  setDecimal(data) {
+  setDecimal = (data) => {
     return parseFloat(data).toFixed(5);
   }
 
@@ -116,7 +116,7 @@ class Summary extends React.Component {
             </Paper>
             <div>
               {this.props.summary &&
-                <Button onClick={() => this.getTotalSpecies(this.props.summary.data)} color="primary">
+                <Button onClick={() => this.getTotal(this.props.summary.data)} color="primary">
                   Total
                 </Button>}
               {this.props.summary &&

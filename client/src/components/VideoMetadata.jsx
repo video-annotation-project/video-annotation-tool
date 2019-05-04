@@ -132,12 +132,12 @@ class VideoMetadata extends Component {
   }
 
 
-  openVideoSummary = (event, summary) => {
+  openVideoSummary = async (event) => {
     event.stopPropagation()
-    this.showSummary();
+
     this.setState({
       descriptionOpen: true,
-      summary: summary
+      summary: await this.getSummary()
     })
   }
 
@@ -148,21 +148,20 @@ class VideoMetadata extends Component {
     });
   }
 
-  // ~KLS
-  showSummary = () => {
+  getSummary = () => {
     const config = {
       headers: {
         'Authorization': 'Bearer ' + localStorage.getItem('token')
       }
     }
-    axios.get(
-      '/api/videos/summary/' + this.props.openedVideo.id, config
-    ).then(summary => {
-      this.setState({summary : summary});
-    }).catch(error => {
-      console.log('Error in VideoMetadata.jsx patch /api/videos/summary');
-      console.log(error.response.data);
-    })
+    return axios.get(
+        '/api/videos/summary/' + this.props.openedVideo.id, config
+      ).then(summary => {
+        return summary;
+      }).catch(error => {
+        console.log('Error in VideoMetadata.jsx patch /api/videos/summary');
+        console.log(error.response.data);
+      })
   }
 
   handleVideoStatusChange = (event) => {
@@ -249,8 +248,7 @@ class VideoMetadata extends Component {
               onClick={
                 (event) =>
                   this.openVideoSummary(
-                    event,
-                    this.state.summary,
+                    event
                   )
               }
             color="primary">
@@ -265,12 +263,12 @@ class VideoMetadata extends Component {
           </DialogActions>
           {this.state.descriptionOpen &&
           <Summary
-            open={true /* The VideoMetadata 'openness' is controlled through
+            open={true /* The 'openness' is controlled through
               boolean logic rather than by passing in a variable as an
-              attribute. This is to force VideoMetadata to unmount when it 
+              attribute. This is to force Summary to unmount when it 
               closes so that its state is reset. This also prevents the 
               accidental double submission bug, by implicitly reducing 
-              the transition time of VideoMetadata to zero. */}
+              the transition time of Summary to zero. */}
             handleClose={this.closeVideoSummary}
             gpsstart={gpsstart}
             gpsstop={gpsstop}
