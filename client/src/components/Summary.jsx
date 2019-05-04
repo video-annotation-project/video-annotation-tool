@@ -35,7 +35,7 @@ const styles = theme => ({
   },
 });
 
-class SimpleModal extends React.Component {
+class Summary extends React.Component {
   state = {
     open: false,
     showTotal: false,
@@ -146,11 +146,11 @@ class SimpleModal extends React.Component {
   }
 }
 
-SimpleModal.propTypes = {
+Summary.propTypes = {
   classes: PropTypes.object.isRequired,
 };
 
 // We need an intermediary variable for handling the recursive nesting.
-const SimpleModalWrapped = withStyles(styles)(SimpleModal);
+const SummaryWrapped = withStyles(styles)(Summary);
 
-export default SimpleModalWrapped;
+export default SummaryWrapped;
