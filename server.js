@@ -56,46 +56,38 @@ app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 
 // This function sets the cookies that are used by the client to access the 
 // videos on AWS CloudFront
-const makeCookies = (req, res) => {
-  console.log('Making cookie...');
+const setCookies = (res) => {
   const keyPairId = process.env.KEY_PAIR_ID;
   const privateKey = process.env.RSA_PRIVATE_KEY.split('\\n').join('\n');
-  let cfUrl = "cdn.deepseaannotations.com";
+  let cdnUrl = "cdn.deepseaannotations.com";
   let expiry = Math.floor(Date.now() / 1000) + 60000;
 
-  let signer = new AWS.CloudFront.Signer(keyPairId, privateKey);
   let policy = {
     'Statement': [{
-      'Resource': 'http*://' + cfUrl + '/*',
+      'Resource': 'https://' + cdnUrl + '/*',
       'Condition': {
         'DateLessThan': { 'AWS:EpochTime': expiry }
       }
     }]
   };
   let policyString = JSON.stringify(policy);
-  var options = { url: "http://" + cfUrl, policy: policyString };
-  signer.getSignedCookie(options, (error, cookie) => {
+
+  let signer = new AWS.CloudFront.Signer(keyPairId, privateKey);
+  var options = { url: "https://" + cdnUrl, policy: policyString };
+  signer.getSignedCookie(options, (error, cookies) => {
     if (error) {
       console.log('Error recieved from getSignedCookie function.')
       console.log('Throwing error.')
       throw error;
     }
-    res.cookie('CloudFront-Key-Pair-Id', cookie['CloudFront-Key-Pair-Id'], {
-      domain: '.deepseaannotations.com',
-      path: '/',
-      // httpOnly: true
-    });
-    res.cookie('CloudFront-Policy', cookie['CloudFront-Policy'], {
-      domain: '.deepseaannotations.com',
-      path: '/',
-      // httpOnly: true
-    });
-    res.cookie('CloudFront-Signature', cookie['CloudFront-Signature'], {
-      domain: '.deepseaannotations.com',
-      path: '/',
-      // httpOnly: true
-    });
-    console.log(cookie);
+    for (cookieName in cookies) {
+      res.cookie(cookieName, cookies[cookieName], {
+        domain: '.deepseaannotations.com',
+        httpOnly: true,
+        path: '/',
+        secure: true
+      });
+    }
   });
 }
 
@@ -115,7 +107,7 @@ app.post("/api/login", async function (req, res) {
     }
     const payload = { id: user.rows[0].id };
     const token = jwt.sign(payload, jwtOptions.secretOrKey);
-    makeCookies(req, res);
+    setCookies(res);
     res.json({
       token: token,
       isAdmin: user.rows[0].admin
