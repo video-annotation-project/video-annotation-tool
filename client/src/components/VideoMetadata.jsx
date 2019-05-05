@@ -10,6 +10,7 @@ import DialogActions from '@material-ui/core/DialogActions';
 import Button from '@material-ui/core/Button';
 import Radio from '@material-ui/core/Radio';
 import { withStyles } from '@material-ui/core/styles';
+import Summary from './Summary.jsx';
 
 const styles = theme => ({
   dialogStyle: {
@@ -27,7 +28,9 @@ class VideoMetadata extends Component {
     this.state = {
       videoMetadata: null,
       videoStatus: null,
-      isLoaded: false
+      isLoaded: false,
+      descriptionOpen: false,
+      summary: null
     };
   }
 
@@ -128,6 +131,39 @@ class VideoMetadata extends Component {
     });
   }
 
+
+  openVideoSummary = async (event) => {
+    event.stopPropagation()
+
+    this.setState({
+      descriptionOpen: true,
+      summary: await this.getSummary()
+    })
+  }
+
+  closeVideoSummary = () => {
+    this.setState({
+      descriptionOpen: false,
+      summary: null
+    });
+  }
+
+  getSummary = () => {
+    const config = {
+      headers: {
+        'Authorization': 'Bearer ' + localStorage.getItem('token')
+      }
+    }
+    return axios.get(
+        '/api/videos/summary/' + this.props.openedVideo.id, config
+      ).then(summary => {
+        return summary;
+      }).catch(error => {
+        console.log('Error in VideoMetadata.jsx patch /api/videos/summary');
+        console.log(error.response.data);
+      })
+  }
+
   handleVideoStatusChange = (event) => {
     this.setState({
       videoStatus: event.target.value
@@ -214,6 +250,16 @@ class VideoMetadata extends Component {
             />
             In Progress
           <DialogActions>
+            <Button 
+              onClick={
+                (event) =>
+                  this.openVideoSummary(
+                    event
+                  )
+              }
+            color="primary">
+              Summary
+            </Button>
             <Button onClick={this.props.handleClose} color="primary">
               Cancel
             </Button>
@@ -225,6 +271,22 @@ class VideoMetadata extends Component {
               Update
             </Button>
           </DialogActions>
+          {this.state.descriptionOpen &&
+          <Summary
+            open={true /* The 'openness' is controlled through
+              boolean logic rather than by passing in a variable as an
+              attribute. This is to force Summary to unmount when it 
+              closes so that its state is reset. This also prevents the 
+              accidental double submission bug, by implicitly reducing 
+              the transition time of Summary to zero. */}
+            handleClose={this.closeVideoSummary}
+            gpsstart={gpsstart}
+            gpsstop={gpsstop}
+            startdepth={startdepth}
+            enddepth={enddepth}
+            summary={this.state.summary}
+          />
+        }
         </div>
       </Dialog>
     );
