@@ -21,6 +21,7 @@ model_path = config['model_weights']
 class_map_file = config['class_map']
 concepts = config['conceptids']
 classmap = pd.read_csv(class_map_file, header=None).to_dict()[0]
+bad_users = json.loads(os.getenv("BAD_USERS"))
 
 def main():
     results = predict.main(VIDEO_NUM)
@@ -28,7 +29,7 @@ def main():
 
     # REMOVE BAD USERS ?
     annotations = queryDB('select * from annotations where videoid= ' + str(VIDEO_NUM) 
-        + ' and userid!=17') # and timeinvideo > 160 and timeinvideo < 190')
+        + ' and userid not in ' + str(tuple(bad_users)) +' and userid not in (17, 29)') # 17 is tracking ai, 29 is retinet ai
     annotations['frame_num'] = np.rint(annotations['timeinvideo'] * FPS).astype(int)
 
     metrics = score_predictions(annotations, results, IOU_THRESH, concepts)

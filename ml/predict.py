@@ -126,7 +126,9 @@ def main(videoid):
    results = conf_limit_objects(results, OBJECT_CONFIDENCE_THRESH)
    results = propagate_conceptids(results)
    results = length_limit_objects(results, OBJECT_LENGTH_THRESH)
-
+    
+   # RETURN HERE TO PREVENT UPLOADING ANNOTATIONS TO DB 
+   # return results  
 
    con = psycopg2.connect(database = DB_NAME,
                       user = DB_USER,
@@ -138,7 +140,7 @@ def main(videoid):
    # filter results down to middles
    middles = the_middler(results)
    # upload these annotations
-   middles.apply(lambda x: handle_annotation(cursor, x, original_frames, videoid, 640, 480, userid, fps), axis=1)
+   middles.apply(lambda x: handle_annotation(cursor, x, original_frames, videoid, 480, 640, userid, fps), axis=1)
    con.commit()
    con.close()
    return results
@@ -170,8 +172,7 @@ def get_boxed_image(x1, x2, y1, y2, frame):
 
 #Uploads images and puts annotation in database
 def upload_annotation(cursor, frame, frame_w_box, x1, x2, y1, y2, frame_num, conceptid, videoid, videowidth, videoheight, userid, fps):
-  
-  
+   
   timeinvideo = frame_num / fps
   
   no_box = str(videoid) + "_" + str(timeinvideo) + "_ai.png"
