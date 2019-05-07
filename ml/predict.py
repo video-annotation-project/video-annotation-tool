@@ -49,10 +49,10 @@ MODEL_WEIGHTS = config['model_weights']
 CONCEPTS = config['conceptids']
 NUM_FRAMES = config['frames_between_predictions']
 THRESHOLDS = config['prediction_confidence_thresholds']
-TRACKING_IOU_THRESH = config['prediciton_tracking_iou_threhold']
-MIN_FRAMES_THRESH = config['min_tracked_frames_threshold']
-VIDEO_WIDTH = config['video_width']
-VIDEO_HEIGHT = config['video_height']
+TRACKING_IOU_THRESH = config['prediction_tracking_iou_threshold']
+MIN_FRAMES_THRESH = config['min_frames_threshold']
+VIDEO_WIDTH = config['resized_video_width']
+VIDEO_HEIGHT = config['resized_video_height']
 # OBJECT_MAX_CONFIDENCE_THRESH = 0.30
 
 
@@ -276,7 +276,7 @@ def length_limit_objects(pred, frame_thresh):
     return pred[[(obj in len_thresh) for obj in pred.objectid]] 
 
 # Given a list of annotations(some with or without labels/confidence scores) for multiple objects choose a label for each object
-def propagate_conceptids(annotations):
+def propagate_conceptids(annotations, concepts):
     label = None
     objects = annotations.groupby(['objectid'])
     for oid, group in objects:
@@ -334,7 +334,7 @@ def does_match_existing_tracked_object(detection, currently_tracked_objects):
        if (iou > max_iou):
           max_iou = iou
           match = obj
-   if max_iou >= IOU_THRESH:               
+   if max_iou >= TRACKING_IOU_THRESH:               
       return True, match
    return False, None
 
