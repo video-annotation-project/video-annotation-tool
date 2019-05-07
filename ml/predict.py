@@ -15,7 +15,7 @@ from loading_data import queryDB
 import psycopg2
 import datetime
 
-#Load environment variables
+# Load environment variables
 load_dotenv(dotenv_path="../.env")
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
@@ -26,7 +26,7 @@ S3_ANNOTATION_FOLDER = os.getenv("AWS_S3_BUCKET_ANNOTATIONS_FOLDER")
 S3_TRACKING_FOLDER = os.getenv("AWS_S3_BUCKET_TRACKING_FOLDER")
 
 
-# connect to db
+# Connect to db
 DB_NAME = os.getenv("DB_NAME")
 DB_HOST = os.getenv("DB_HOST")
 DB_USER = os.getenv("DB_USER")
@@ -47,11 +47,14 @@ with open(config_path) as config_buffer:
 
 model_path = config['model_weights']
 concepts = config['conceptids']
-NUM_FRAMES = config['frames_between_predictions'] # run prediction on every NUM_FRAMES
+NUM_FRAMES = config['frames_between_predictions']
 THRESHOLDS = config['prediction_confidence_thresholds']
-IOU_THRESH = config['prediction_matching_threhold']
-OBJECT_CONFIDENCE_THRESH = 0.30
-OBJECT_LENGTH_THRESH = 15 # frames
+TRACKING_IOU_THRESH = config['prediciton_tracking_iou_threhold']
+MIN_FRAMES_THRESH = config['min_tracked_frames_threshold']
+VIDEO_WIDTH = config['video_width']
+VIDEO_HEIGHT = config['video_height']
+FPS = config['video_fps']
+# OBJECT_MAX_CONFIDENCE_THRESH = 0.30
 
 
 class Tracked_object:
@@ -123,9 +126,9 @@ def main(videoid):
    # results.frame_num = results.frame_num+ 160 * 30
    save_video(frames)
 
-   results = conf_limit_objects(results, OBJECT_CONFIDENCE_THRESH)
+   # results = conf_limit_objects(results, OBJECT_MAX_CONFIDENCE_THRESH)
    results = propagate_conceptids(results)
-   results = length_limit_objects(results, OBJECT_LENGTH_THRESH)
+   results = length_limit_objects(results, MIN_FRAMES_THRESH)
     
    # RETURN HERE TO PREVENT UPLOADING ANNOTATIONS TO DB 
    # return results  
@@ -140,7 +143,7 @@ def main(videoid):
    # filter results down to middles
    middles = the_middler(results)
    # upload these annotations
-   middles.apply(lambda x: handle_annotation(cursor, x, original_frames, videoid, 480, 640, userid, fps), axis=1)
+   middles.apply(lambda x: handle_annotation(cursor, x, original_frames, videoid, VIDEO_HEIGHT, VIDEO_WIDTH, userid, fps), axis=1)
    con.commit()
    con.close()
    return results
@@ -222,7 +225,7 @@ def get_video_frames(video_name):
       check, frame = vid.read()
       if not check:
          break
-      frame = cv2.resize(frame,(640,480))
+      frame = cv2.resize(frame, (VIDEO_WIDTH, VIDEO_HEIGHT))
       frames.append(frame)
    vid.release()
    return frames,fps
@@ -301,7 +304,8 @@ def get_predictions(frame, model):
 
 def save_video(frames):
    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-   out = cv2.VideoWriter('output.mp4',fourcc, 30.0, frames[0].shape[::-1][1:3])
+   # SHOULD THIS FPS BE 29.97... or 30.0??
+   out = cv2.VideoWriter('output.mp4',fourcc, FPS, frames[0].shape[::-1][1:3])
    for frame in frames:
       out.write(frame)
    out.release()

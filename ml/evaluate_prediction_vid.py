@@ -6,11 +6,8 @@ from loading_data import queryDB
 import pandas as pd
 import predict
 
+# PARAMETERIZE
 VIDEO_NUM = 86
-IOU_THRESH = 0.25 # should pull from config
-FPS = 29.97002997002997
-RESIZED_WIDTH = 640
-RESIZED_HEIGHT = 480
 
 config_path = 'config.json'
 
@@ -22,6 +19,11 @@ class_map_file = config['class_map']
 concepts = config['conceptids']
 classmap = pd.read_csv(class_map_file, header=None).to_dict()[0]
 bad_users = json.loads(os.getenv("BAD_USERS"))
+EVALUATION_IOU_THRESH = config['evaluation_iou_threshold']
+RESIZED_WIDTH = config['resized_video_width']
+RESIZED_HEIGHT = config['resized_video_height']
+FPS = config['video_fps']
+
 
 def main():
     results = predict.main(VIDEO_NUM)
@@ -32,7 +34,7 @@ def main():
         + ' and userid not in ' + str(tuple(bad_users)) +' and userid not in (17, 29)') # 17 is tracking ai, 29 is retinet ai
     annotations['frame_num'] = np.rint(annotations['timeinvideo'] * FPS).astype(int)
 
-    metrics = score_predictions(annotations, results, IOU_THRESH, concepts)
+    metrics = score_predictions(annotations, results, EVALUATION_IOU_THRESH, concepts)
     concept_counts = get_counts(results, annotations)
     metrics = metrics.set_index('conceptid').join(concept_counts)
 
