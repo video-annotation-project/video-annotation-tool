@@ -14,10 +14,9 @@
    "batch_size" : 8,
    "frames_between_predictions" : 5,
    "prediction_tracking_iou_threhold" : 0.20,
-   "minimum_tracked_frames_threshold" : 30,
    "evaluation_iou_threshold" : 0.25,
+   "minimum_tracked_frames_threshold" : 30,
    "resized_video_width" : 640,
    "resized_video_height" : 480,
-   "video_fps" : 29.97002997002997
 }
 

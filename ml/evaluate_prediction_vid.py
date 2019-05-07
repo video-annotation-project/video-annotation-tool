@@ -14,32 +14,13 @@ config_path = 'config.json'
 with open(config_path) as config_buffer:
    config = json.loads(config_buffer.read())
 
-model_path = config['model_weights']
-class_map_file = config['class_map']
-concepts = config['conceptids']
-classmap = pd.read_csv(class_map_file, header=None).to_dict()[0]
+CONCEPTS = config['conceptids']
 bad_users = json.loads(os.getenv("BAD_USERS"))
 EVALUATION_IOU_THRESH = config['evaluation_iou_threshold']
 RESIZED_WIDTH = config['resized_video_width']
 RESIZED_HEIGHT = config['resized_video_height']
-FPS = config['video_fps']
+MODEL_WEIGHTS = config['model_weights']
 
-
-def main():
-    results = predict.main(VIDEO_NUM)
-    print("done predicting")
-
-    # REMOVE BAD USERS ?
-    annotations = queryDB('select * from annotations where videoid= ' + str(VIDEO_NUM) 
-        + ' and userid not in ' + str(tuple(bad_users)) +' and userid not in (17, 29)') # 17 is tracking ai, 29 is retinet ai
-    annotations['frame_num'] = np.rint(annotations['timeinvideo'] * FPS).astype(int)
-
-    metrics = score_predictions(annotations, results, EVALUATION_IOU_THRESH, concepts)
-    concept_counts = get_counts(results, annotations)
-    metrics = metrics.set_index('conceptid').join(concept_counts)
-
-    metrics.to_csv("metrics" + str(VIDEO_NUM) + ".csv")
-    print(metrics)
 
 def score_predictions(validation, predictions, iou_thresh, concepts):
     # Maintain a set of predicted objects to verify
@@ -146,5 +127,21 @@ def compute_overlap(A, B):
     return iou
 
 
+def evaluate(video_id, user_id, model_path, concepts)
+    results, fps = predict.predict_on_video(video_id, user_id, model_path)
+    print("done predicting")
+
+    # REMOVE BAD USERS ?
+    annotations = queryDB('select * from annotations where videoid= ' + str(video_id) 
+        + ' and userid not in ' + str(tuple(bad_users)) +' and userid not in (17, 29)') # 17 is tracking ai, 29 is retinet ai
+    annotations['frame_num'] = np.rint(annotations['timeinvideo'] * fps).astype(int)
+
+    metrics = score_predictions(annotations, results, EVALUATION_IOU_THRESH, concepts)
+    concept_counts = get_counts(results, annotations)
+    metrics = metrics.set_index('conceptid').join(concept_counts)
+
+    metrics.to_csv("metrics" + str(VIDEO_NUM) + ".csv")
+    print(metrics)
+
 if __name__ == '__main__':
-  main()
+    evaluate(VIDEO_NUM, 29, MODEL_WEIGHTS, CONCEPTS)

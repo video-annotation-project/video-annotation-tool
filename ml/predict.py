@@ -45,17 +45,50 @@ config_path = args.conf
 with open(config_path) as config_buffer:
    config = json.loads(config_buffer.read())
 
-model_path = config['model_weights']
-concepts = config['conceptids']
+MODEL_WEIGHTS = config['model_weights']
+CONCEPTS = config['conceptids']
 NUM_FRAMES = config['frames_between_predictions']
 THRESHOLDS = config['prediction_confidence_thresholds']
 TRACKING_IOU_THRESH = config['prediciton_tracking_iou_threhold']
 MIN_FRAMES_THRESH = config['min_tracked_frames_threshold']
 VIDEO_WIDTH = config['video_width']
 VIDEO_HEIGHT = config['video_height']
-FPS = config['video_fps']
 # OBJECT_MAX_CONFIDENCE_THRESH = 0.30
 
+
+def predict_on_video(videoid, userid, model_weights, concepts, upload_annotations=False):
+   video_name = queryDB("select * from videos where id = " + str(videoid)).iloc[0].filename
+   print("Loading Video")
+   frames, fps = get_video_frames(video_name)
+   original_frames = copy.deepcopy(frames)
+   print("Initializing Model")
+   model = init_model(model_weights)
+   print("Predicting")
+   results, frames = predict_frames(frames, fps, model)
+
+   # results.frame_num = results.frame_num+ 160 * 30
+   save_video(frames, fps)
+
+   # results = conf_limit_objects(results, OBJECT_MAX_CONFIDENCE_THRESH)
+   results = propagate_conceptids(results, concepts)
+   results = length_limit_objects(results, MIN_FRAMES_THRESH)
+    
+   if upload_annotations:
+     con = psycopg2.connect(database = DB_NAME,
+                        user = DB_USER,
+                        password = DB_PASSWORD,
+                        host = DB_HOST,
+                        port = "5432")
+     cursor = con.cursor()
+     
+     # filter results down to middles
+     final = get_final_predictions(results)
+     # upload these annotations
+     final.apply(lambda x: handle_annotation(cursor, x, original_frames, videoid, VIDEO_HEIGHT, VIDEO_WIDTH, userid, fps), axis=1)
+     con.commit()
+     con.close()
+
+   return results, fps
 
 class Tracked_object:
 
@@ -112,43 +145,9 @@ class Tracked_object:
          self.save_annotation(frame_num)
       return success
 
-def main(videoid):
-   userid = 29
-   video_name = queryDB("select * from videos where id = " + str(videoid)).iloc[0].filename
-   print("Loading Video")
-   frames, fps = get_video_frames(video_name)
-   original_frames = copy.deepcopy(frames)
-   print("Initializing Model")
-   model = init_model()
-   print("Predicting")
-   results, frames = predict_frames(frames, fps, model)
 
-   # results.frame_num = results.frame_num+ 160 * 30
-   save_video(frames)
-
-   # results = conf_limit_objects(results, OBJECT_MAX_CONFIDENCE_THRESH)
-   results = propagate_conceptids(results)
-   results = length_limit_objects(results, MIN_FRAMES_THRESH)
-    
-   # RETURN HERE TO PREVENT UPLOADING ANNOTATIONS TO DB 
-   # return results  
-
-   con = psycopg2.connect(database = DB_NAME,
-                      user = DB_USER,
-                      password = DB_PASSWORD,
-                      host = DB_HOST,
-                      port = "5432")
-   cursor = con.cursor()
-   
-   # filter results down to middles
-   middles = the_middler(results)
-   # upload these annotations
-   middles.apply(lambda x: handle_annotation(cursor, x, original_frames, videoid, VIDEO_HEIGHT, VIDEO_WIDTH, userid, fps), axis=1)
-   con.commit()
-   con.close()
-   return results
-
-def the_middler(results):
+# Chooses single prediction for each object (the middle frame)
+def get_final_predictions(results):
   middle_frames = []
 
   for obj in [df for _, df in results.groupby('objectid')]:
@@ -230,7 +229,7 @@ def get_video_frames(video_name):
    vid.release()
    return frames,fps
 
-def init_model():
+def init_model(model_path):
    model = load_model(model_path, backbone_name='resnet50')
    model = convert_model(model)
    return model
@@ -302,10 +301,10 @@ def get_predictions(frame, model):
       filtered_predictions.append((box,score,label))
    return filtered_predictions
 
-def save_video(frames):
+def save_video(frames, fps):
    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
    # SHOULD THIS FPS BE 29.97... or 30.0??
-   out = cv2.VideoWriter('output.mp4',fourcc, FPS, frames[0].shape[::-1][1:3])
+   out = cv2.VideoWriter('output.mp4',fourcc, fps, frames[0].shape[::-1][1:3])
    for frame in frames:
       out.write(frame)
    out.release()
@@ -340,4 +339,4 @@ def does_match_existing_tracked_object(detection, currently_tracked_objects):
    return False, None
 
 if __name__ == '__main__':
-  main()
+  predict_on_video(86, 29, MODEL_WEIGHTS, CONCEPTS, upload_annotations=False)
