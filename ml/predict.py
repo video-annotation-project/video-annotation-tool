@@ -11,7 +11,9 @@ import boto3
 import keras
 import pandas as pd
 import uuid
-
+from loading_data import queryDB
+import psycopg2
+import datetime
 
 #Load environment variables
 load_dotenv(dotenv_path="../.env")
@@ -20,6 +22,15 @@ AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 S3_BUCKET = os.getenv('AWS_S3_BUCKET_NAME')
 s3 = boto3.client('s3', aws_access_key_id = AWS_ACCESS_KEY_ID, aws_secret_access_key = AWS_SECRET_ACCESS_KEY)
 S3_VIDEO_FOLDER = os.getenv('AWS_S3_BUCKET_VIDEOS_FOLDER')
+S3_ANNOTATION_FOLDER = os.getenv("AWS_S3_BUCKET_ANNOTATIONS_FOLDER")
+S3_TRACKING_FOLDER = os.getenv("AWS_S3_BUCKET_TRACKING_FOLDER")
+
+
+# connect to db
+DB_NAME = os.getenv("DB_NAME")
+DB_HOST = os.getenv("DB_HOST")
+DB_USER = os.getenv("DB_USER")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
 
 argparser = argparse.ArgumentParser()
 argparser.add_argument(
@@ -41,6 +52,7 @@ THRESHOLDS = config['prediction_confidence_thresholds']
 IOU_THRESH = config['prediction_matching_threhold']
 OBJECT_CONFIDENCE_THRESH = 0.30
 OBJECT_LENGTH_THRESH = 15 # frames
+
 
 class Tracked_object:
 
@@ -97,20 +109,96 @@ class Tracked_object:
          self.save_annotation(frame_num)
       return success
 
-def main(video_name):
+def main(videoid):
+   userid = 29
+   video_name = queryDB("select * from videos where id = " + str(videoid)).iloc[0].filename
    print("Loading Video")
    frames, fps = get_video_frames(video_name)
+   original_frames = copy.deepcopy(frames)
    print("Initializing Model")
    model = init_model()
    print("Predicting")
    results, frames = predict_frames(frames, fps, model)
+
    # results.frame_num = results.frame_num+ 160 * 30
    save_video(frames)
 
    results = conf_limit_objects(results, OBJECT_CONFIDENCE_THRESH)
    results = propagate_conceptids(results)
    results = length_limit_objects(results, OBJECT_LENGTH_THRESH)
+    
+   # RETURN HERE TO PREVENT UPLOADING ANNOTATIONS TO DB 
+   # return results  
+
+   con = psycopg2.connect(database = DB_NAME,
+                      user = DB_USER,
+                      password = DB_PASSWORD,
+                      host = DB_HOST,
+                      port = "5432")
+   cursor = con.cursor()
+   
+   # filter results down to middles
+   middles = the_middler(results)
+   # upload these annotations
+   middles.apply(lambda x: handle_annotation(cursor, x, original_frames, videoid, 480, 640, userid, fps), axis=1)
+   con.commit()
+   con.close()
    return results
+
+def the_middler(results):
+  middle_frames = []
+
+  for obj in [df for _, df in results.groupby('objectid')]:
+      middle_frame = int(obj.frame_num.median())
+      frame = obj[obj.frame_num == middle_frame]
+      
+      if frame.shape == (0, 10):
+          continue
+      middle_frames.append(frame.values.tolist()[0])
+      
+  middle_frames = pd.DataFrame(middle_frames)
+  middle_frames.columns = results.columns
+  return middle_frames
+
+def handle_annotation(cursor, x, frames, videoid, videoheight, videowidth, userid, fps):
+  frame = frames[int(x.frame_num)]
+  frame_w_box = get_boxed_image(x.x1, x.x2, x.y1, x.y2, copy.deepcopy(frame))
+  upload_annotation(cursor, frame, frame_w_box, x.x1, x.x2, x.y1, x.y2, x.frame_num, x.conceptid, videoid, videowidth, videoheight, userid, fps)
+
+
+def get_boxed_image(x1, x2, y1, y2, frame):
+  cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)
+  return frame
+
+#Uploads images and puts annotation in database
+def upload_annotation(cursor, frame, frame_w_box, x1, x2, y1, y2, frame_num, conceptid, videoid, videowidth, videoheight, userid, fps):
+   
+  timeinvideo = frame_num / fps
+  
+  no_box = str(videoid) + "_" + str(timeinvideo) + "_ai.png"
+  box = str(uuid.uuid4()) + "_" + str(videoid) +  "_" + str(timeinvideo) + "_box_ai.png"
+  temp_file = str(uuid.uuid4()) + ".png"
+  cv2.imwrite(temp_file, frame)
+  s3.upload_file(temp_file, S3_BUCKET, S3_ANNOTATION_FOLDER + no_box, ExtraArgs={'ContentType':'image/png'}) 
+  os.system('rm '+ temp_file)
+  
+  cv2.imwrite(temp_file, frame_w_box)
+  s3.upload_file(temp_file, S3_BUCKET, S3_ANNOTATION_FOLDER + box,  ExtraArgs={'ContentType':'image/png'})
+  os.system('rm '+ temp_file)
+  
+  
+  cursor.execute(
+    """
+   INSERT INTO annotations (
+   videoid, userid, conceptid, timeinvideo, x1, y1, x2, y2, 
+   videowidth, videoheight, dateannotated, image, imagewithbox) 
+   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    """,
+     (
+         int(videoid), int(userid), int(conceptid), timeinvideo, x1, y1, 
+         x2, y2, videowidth, videoheight, datetime.datetime.now().date(), no_box, box
+     )
+  ) 
 
 def get_video_frames(video_name):
    frames = []
@@ -158,7 +246,7 @@ def predict_frames(video_frames, fps, model):
             #Should really check if there is a matching prediction if the tracking fails
       # for every NUM_FRAMES, get new predections, check if any detections match a currently tracked object
       if i % NUM_FRAMES == 0:
-          detections = get_predictions(copy.deepcopy(frame), model)
+          detections = get_predictions(frame, model)
           for detection in detections:
              match, matched_object = does_match_existing_tracked_object(detection, currently_tracked_objects)
              if not match:

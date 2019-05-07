@@ -1,18 +1,18 @@
 {
    "conceptids" : [1629, 1210, 236, 383, 1133],
-   "prediction_confidence_thresholds" : [0.3,0.3,0.3,0.3,0.3],
-   "min_examples" : 10000,
+   "prediction_confidence_thresholds" : [0.2,0.2,0.2,0.2,0.2],
+   "min_examples" : 5000,
    "train_annot_file" : "train_annot_file.csv",
    "valid_annot_file": "valid_annot_file.csv",
    "image_folder": "image_folder",
    "test_examples" : "test_examples",
-   "model_weights" : "weights-26-1.4948.h5",
+   "model_weights" : "BEST_WEIGHTS.h5",
    "class_map" : "classmap.csv",
    "annotations" : "annotations.csv",
-   "gpus" : 2,
+   "gpus" : 4,
    "epochs" : 100,
    "batch_size" : 8,
-   "frames_between_predictions" : 10,
-   "prediction_matching_threhold" : 0.25
+   "frames_between_predictions" : 5,
+   "prediction_matching_threhold" : 0.2
 }
 

@@ -19,6 +19,9 @@ from keras.callbacks import ModelCheckpoint, EarlyStopping
 from keras_retinanet.models.retinanet import retinanet_bbox
 from keras_retinanet.callbacks import RedirectModel
 import tensorflow as tf
+import skimage as sk
+import random
+import numpy as np
 
 argparser = argparse.ArgumentParser()
 argparser.add_argument(
@@ -91,7 +94,6 @@ download_annotations(min_examples, concepts, classmap, bad_users, img_folder, tr
 
 end = time.time()
 print("Done Downloading Annotations: " + str((end - start)/60) + " minutes")
-
 '''
 
 '''
@@ -133,13 +135,14 @@ transform_generator = random_transform_generator(
 class custom(CSVGenerator):
     def __getitem__(self, index):
         inputs, targets = CSVGenerator.__getitem__(self, index)
-
+        '''
         for i,x in enumerate(inputs):
             temp = x
+            temp = sk.exposure.rescale_intensity(temp,in_range=(0,255))
             temp = sk.util.random_noise(temp, var= random.uniform(0,.0005))
             temp = sk.exposure.adjust_gamma(temp,gamma=random.uniform(.5,1.5))
             inputs[i] = np.array(temp)
-
+        '''
         return inputs, targets
 
 train_generator = custom(
@@ -163,7 +166,7 @@ checkpoint = ModelCheckpoint(filepath, monitor='val_loss', save_best_only=True)
 checkpoint = RedirectModel(checkpoint, model)
 
 #stopping: stops training if val_loss stops improving
-stopping = EarlyStopping(monitor='val_loss', min_delta=0, patience=5)
+stopping = EarlyStopping(monitor='val_loss', min_delta=0, patience=10)
 
 history = training_model.fit_generator(train_generator, 
     epochs=epochs, 
