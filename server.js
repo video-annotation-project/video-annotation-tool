@@ -997,6 +997,37 @@ app.get('/api/users/annotationCount', passport.authenticate('jwt', { session: fa
   }
 );
 
+app.put('/api/runModel', passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    let ec2 = new AWS.EC2({region: 'us-west-1'});
+    var params = {
+      InstanceIds: [
+        "i-0627124479fe1ce98"
+      ]
+    };
+    ec2.startInstances(params, function (err, data) {
+      if (err) console.log(err, err.stack); // an error occurred
+      else console.log(data);           // successful response
+    });
+  }
+);
+
+app.delete('/api/runModel', passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    let ec2 = new AWS.EC2({region: 'us-west-1'});
+    var params = {
+      InstanceIds: [
+        "i-0627124479fe1ce98"
+      ]
+    };
+    ec2.stopInstances(params, function (err, data) {
+      if (err) console.log(err, err.stack); // an error occurred
+      else console.log(data);           // successful response
+    });
+  }
+);
+
+
 // This websocket sends a list of videos to the client that update in realtime
 io.on('connection', (socket) => {
   console.log('socket connected!');

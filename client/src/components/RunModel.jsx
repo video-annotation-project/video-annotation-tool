@@ -58,8 +58,7 @@ const styles = theme => ({
     padding: theme.spacing.unit * 3,
   },
   videoSelector: {
-    height: '10%',
-    overflow: 'auto'
+    width: '20%'
   }
 });
 
@@ -71,7 +70,7 @@ class RunModel extends Component {
       models: [],
       modelSelected: '',
       videos: [],
-      videosSelected: [],
+      videoSelected: [],
       users: [],
       userSelected: '',
       activeStep: 0,
@@ -182,53 +181,27 @@ class RunModel extends Component {
     );
   }
 
-  handleVideoSelect = filename => event => {
-    let videosSelected = JSON.parse(JSON.stringify(this.state.videosSelected));
-    if (event.target.checked) {
-      videosSelected.push(filename)
-    } else {
-      videosSelected = videosSelected.filter(video => video !== filename);
-    }
-    this.setState({
-      videosSelected: videosSelected
-    })
-  }
-
   selectVideo = () => {
     return (
       <FormControl
         component="fieldset"
         className={this.props.classes.videoSelector}
       >
-        <FormLabel component="legend">Select Videos to Annotate</FormLabel>
-        <FormGroup>
+        <InputLabel>Select Video</InputLabel>
+        <Select
+          name='videoSelected'
+          value={this.state.videoSelected}
+          onChange={this.handleSelect}
+        >
           {this.state.videos.map(video => (
-            <div key={video.filename}>
-              <FormControlLabel
-
-                control={
-                  <Checkbox
-                    onChange={this.handleVideoSelect(video.filename)}
-                    color='primary'
-                  />
-                }
-                label={video.filename}
-              >
-              </FormControlLabel>
-              <IconButton style={{float:'right'}}> 
-                <Description
-                  onClick={
-                    (event) =>
-                      this.openVideoMetadata(
-                        event,
-                        video,
-                      )
-                  }
-                />
-              </IconButton>
-            </div>
+            <MenuItem
+              key={video.filename}
+              value={video.filename}
+            >
+              {video.filename}
+            </MenuItem>
           ))}
-        </FormGroup>
+        </Select>
       </FormControl>
     );
   }
@@ -275,7 +248,13 @@ class RunModel extends Component {
   handleNext = () => {
     this.setState(state => ({
       activeStep: state.activeStep + 1,
-    }));
+    }), () => {
+      if (this.state.activeStep === 3) {
+        console.log('Last Step Starting Model...');
+        this.startEC2();
+      }
+    });
+
   };
 
   handleBack = () => {
@@ -288,6 +267,7 @@ class RunModel extends Component {
     this.setState({
       activeStep: 0,
     });
+    this.stopEC2();
   };
 
   //Code for closing modal
@@ -295,13 +275,50 @@ class RunModel extends Component {
     this.setState({ errorMsg: false });
   };
 
+  startEC2 = () => {
+    const config = {
+      headers: {
+        'Authorization': 'Bearer ' + localStorage.getItem('token')
+      }
+    };
+    const body = {
+      'modelSelected': this.state.modelSelected,
+      'userSelected': this.state.userSelected,
+      'videoSelected': this.state.videoSelected
+    };
+    axios.put(
+      `/api/runModel`,
+      body,
+      config,
+    ).then(res => {
+      console.log(res);
+    })
+  }
+
+  stopEC2 = () => {
+    const config = {
+      url: '/api/runModel',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + localStorage.getItem('token')
+      },
+      data: {
+        'modelSelected': this.state.modelSelected,
+      },
+      method: 'delete'
+    };
+    axios.request(config).then(res => {
+      console.log(res);
+    })
+  }
+
   render() {
     const { classes } = this.props;
     const steps = this.getSteps();
     const {
       modelSelected,
       videos,
-      videosSelected,
+      videoSelected,
       userSelected,
       activeStep,
       errorMsg,
@@ -345,7 +362,7 @@ class RunModel extends Component {
                       className={classes.button}
                       disabled={
                         (activeStep === 0 && modelSelected === '') ||
-                        (activeStep === 1 && videosSelected.length < 1) ||
+                        (activeStep === 1 && videoSelected.length < 1) ||
                         (activeStep === 2 && userSelected === '')
                       }
                     >
