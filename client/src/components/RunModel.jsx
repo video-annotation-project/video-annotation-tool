@@ -24,11 +24,7 @@ import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
 
 //Select Video
-import FormGroup from '@material-ui/core/FormGroup';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
-import FormLabel from '@material-ui/core/FormLabel';
-import Checkbox from '@material-ui/core/Checkbox';
-
+import Radio from "@material-ui/core/Radio";
 //Video description
 import IconButton from '@material-ui/core/IconButton';
 import Description from '@material-ui/icons/Description';
@@ -58,7 +54,9 @@ const styles = theme => ({
     padding: theme.spacing.unit * 3,
   },
   videoSelector: {
-    width: '20%'
+    width: '50%',
+    height: '500px',
+    overflow: 'auto',
   }
 });
 
@@ -70,7 +68,7 @@ class RunModel extends Component {
       models: [],
       modelSelected: '',
       videos: [],
-      videoSelected: [],
+      videoSelected: '',
       users: [],
       userSelected: '',
       activeStep: 0,
@@ -187,21 +185,31 @@ class RunModel extends Component {
         component="fieldset"
         className={this.props.classes.videoSelector}
       >
-        <InputLabel>Select Video</InputLabel>
-        <Select
-          name='videoSelected'
-          value={this.state.videoSelected}
-          onChange={this.handleSelect}
-        >
-          {this.state.videos.map(video => (
-            <MenuItem
-              key={video.filename}
+        {this.state.videos.map(video => (
+          <div
+            key={video.filename}
+          >
+            <Radio
+              name='videoSelected'
+              color='default'
+              checked={this.state.videoSelected === video.filename}
               value={video.filename}
-            >
-              {video.filename}
-            </MenuItem>
-          ))}
-        </Select>
+              onChange={this.handleSelect}
+            />
+            {video.filename}
+            <IconButton style={{ float: 'right' }}>
+              <Description
+                onClick={
+                  (event) =>
+                    this.openVideoMetadata(
+                      event,
+                      video,
+                    )
+                }
+              />
+            </IconButton>
+          </div>
+        ))}
       </FormControl>
     );
   }
