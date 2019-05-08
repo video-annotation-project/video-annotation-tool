@@ -38,6 +38,8 @@ num_concepts = len(config['conceptids'])
 NUM_FRAMES = config['frames_between_predictions'] # run prediction on every NUM_FRAMES
 THRESHOLDS = config['prediction_confidence_thresholds']
 IOU_THRESH = config['prediction_matching_threhold']
+FPS = config['frames_per_second']
+MAX_TIME_BACK = config['max_seconds_back']
 
 class Tracked_object:
 
@@ -155,7 +157,10 @@ def predict_frames(video_frames, fps, model):
           for detection in detections:
              match, matched_object = does_match_existing_tracked_object(detection, currently_tracked_objects)
              if not match:
-                currently_tracked_objects.append(Tracked_object(detection, frame, frame_num))
+                tracked_object = Tracked_object(detection, frame, frame_num)
+                prev_annotations = track_backwards(video_frames, frame_num, detection, tracked_object.id)       
+                tracked_object.annotations = tracked_object.annotations.append(prev_annotations)
+                currently_tracked_objects.append(tracked_object)
              else:
                  matched_object.reinit(detection, frame, frame_num)
       # draw boxes 
@@ -165,7 +170,46 @@ def predict_frames(video_frames, fps, model):
    results = pd.concat(annotations)
    results.to_csv('results.csv')
    return results, video_frames
-   
+
+# get tracking annotations before first model prediction for object - max_time_back seconds
+# skipping original frame annotation, already saved in object initialization
+def track_backwards(video_frames, frame_num, detection, object_id):
+   annotations = pd.DataFrame(columns=['x1','y1','x2','y2','label', 'confidence', 'objectid','frame_num'])
+   (x1, y1, x2, y2) = detection[0]
+   box = (x1, y1, (x2-x1), (y2-y1))
+   frame = video_frames[frame_num]
+   tracker = cv2.TrackerKCF_create()
+   tracker.init(frame, box)
+   success, box = tracker.update(frame) 
+   frames = 0
+   max_frames = FPS * MAX_TIME_BACK 
+   while success and frames < max_frames and frame_num > 0:
+      frame_num -= 1
+      frame = video_frames[frame_num]
+      success, box = tracker.update(frame)
+      if success:
+         annotation = make_annotation(box, object_id, frame_num)
+	 annotations = annotations.append(annotation, ignore_index=True)
+         frames += 1
+   return annotations  
+
+def make_annotation(box, object_id, frame_num):
+   (x1, y1, w, h) = [int(v) for v in box]
+   x1 = x1
+   x2 = x1 + w
+   y1 = y1
+   y2 = y1 + h
+   annotation = {}
+   annotation['x1'] = x1
+   annotation['y1'] = y1
+   annotation['x2'] = x2
+   annotation['y2'] = y2
+   annotation['label'] = None
+   annotation['confidence'] = None
+   annotation['objectid'] = object_id
+   annotation['frame_num'] = frame_num
+   return annotation
+ 
 def get_predictions(frame, model):
    frame = np.expand_dims(frame, axis=0)
    boxes, scores, labels = model.predict_on_batch(frame)
