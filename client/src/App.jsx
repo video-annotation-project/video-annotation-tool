@@ -33,7 +33,7 @@ class App extends React.Component {
                     <Route exact path='/annotate' component={Annotate} />
                     <Route exact path='/report' component={Report} />
                     <Route exact path='/createUser' component={CreateUser} />
-                    <Route exact path='/Models' component={Models} />
+                    <Route exact path='/models' component={Models} />
                   </React.Fragment>
               ):(
                 <React.Fragment>
