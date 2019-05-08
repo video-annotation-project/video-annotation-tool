@@ -64,6 +64,10 @@ const styles = theme => ({
   userSelector: {
     // height: '50%',
     overflow: 'auto'
+  },
+  conceptSelector: {
+    height: '50%',
+    overflow: 'auto'
   }
 });
 
@@ -309,7 +313,7 @@ class TrainModel extends Component {
     return (
       <FormControl
         component="fieldset"
-        className={this.props.classes.videoSelector}
+        className={this.props.classes.conceptSelector}
       >
         <FormLabel component="legend">Select Concepts to Train With</FormLabel>
         <FormGroup>
@@ -440,7 +444,7 @@ class TrainModel extends Component {
         </Stepper>
         {activeStep === steps.length && (
           <Paper square elevation={0} className={classes.resetContainer}>
-            <Typography>Model is running/generating images...</Typography>
+            <Typography>Model is training...</Typography>
             <CircularProgress />
             <Button onClick={this.handleStop} className={classes.button}>
               Stop

@@ -62,6 +62,43 @@ app.use(passport.initialize());
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 
+// This function sets the cookies that are used by the client to access the 
+// videos on AWS CloudFront
+const setCookies = (res) => {
+  const keyPairId = process.env.KEY_PAIR_ID;
+  const privateKey = process.env.RSA_PRIVATE_KEY.split('\\n').join('\n');
+  let cdnUrl = "cdn.deepseaannotations.com";
+  let expiry = Math.floor(Date.now() / 1000) + 60000;
+
+  let policy = {
+    'Statement': [{
+      'Resource': 'https://' + cdnUrl + '/*',
+      'Condition': {
+        'DateLessThan': { 'AWS:EpochTime': expiry }
+      }
+    }]
+  };
+  let policyString = JSON.stringify(policy);
+
+  let signer = new AWS.CloudFront.Signer(keyPairId, privateKey);
+  var options = { url: "https://" + cdnUrl, policy: policyString };
+  signer.getSignedCookie(options, (error, cookies) => {
+    if (error) {
+      console.log('Error recieved from getSignedCookie function.')
+      console.log('Throwing error.')
+      throw error;
+    }
+    for (cookieName in cookies) {
+      res.cookie(cookieName, cookies[cookieName], {
+        domain: '.deepseaannotations.com',
+        httpOnly: true,
+        path: '/',
+        secure: true
+      });
+    }
+  });
+}
+
 app.post("/api/login", async function (req, res) {
   const { username, password } = req.body;
   let queryPass = `
@@ -86,6 +123,7 @@ app.post("/api/login", async function (req, res) {
     }
     const payload = { id: user.rows[0].id };
     const token = jwt.sign(payload, jwtOptions.secretOrKey);
+    setCookies(res);
     res.json({
       token: token,
       isAdmin: user.rows[0].admin
@@ -508,6 +546,30 @@ app.get(
   }
 );
 
+
+// summary getter ~KLS
+app.get(
+  '/api/videos/summary/:videoid',
+  passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    let queryText = `SELECT * 
+                      FROM concepts a 
+                      JOIN 
+                      (SELECT conceptid, videoid, COUNT(*) FROM annotations GROUP BY 
+                      conceptid, videoid) AS counts 
+                      ON counts.conceptid=a.id
+                      WHERE videoid = $1`;
+    try {
+      const summary = await psql.query(queryText, [req.params.videoid]);
+      res.json(summary.rows);
+    } catch (error) {
+      console.log("Error in get /api/videos/summary/:videoid")
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
+);
+
 app.patch('/api/videos/:videoid',
   passport.authenticate('jwt', { session: false }), async (req, res) => {
     let queryText = 'UPDATE videos \
@@ -880,13 +942,55 @@ app.post('/api/models', passport.authenticate('jwt', { session: false }),
 
 app.get('/api/users', passport.authenticate('jwt', { session: false }),
   async (req, res) => {
-    const queryText = 'SELECT id, username \
-                       FROM users;'
+    const queryText = `
+      SELECT DISTINCT 
+        U.id, 
+        U.username
+      FROM 
+        Users U`;
     try {
       let response = await psql.query(queryText);
       res.json(response.rows);
     } catch (error) {
-      console.log('Error in get api/users');
+      console.log('Error on GET /api/users: ');
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
+);
+
+app.get('/api/users/annotationCount', passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    const userId = parseInt(req.query.userid);
+    const fromDate = req.query.fromdate;
+    const toDate = req.query.todate;
+    const data = [userId, fromDate, toDate]
+
+    if (!userId) {
+      res.status(500);
+    }
+    const queryText = `
+      SELECT DISTINCT
+        A.conceptid, 
+        C.name, 
+        COUNT(A.conceptid) AS total_count
+      FROM 
+        annotations A
+      LEFT JOIN 
+        concepts C 
+      ON 
+        A.conceptid = C.id
+      WHERE
+        A.userid = $1 
+        AND (A.dateannotated BETWEEN $2 AND $3)
+      GROUP BY 
+        A.conceptid, 
+        C.name`;
+    try {
+      let response = await psql.query(queryText, data);
+      res.json(response.rows);
+    } catch (error) {
+      console.log('Error on GET /api/users/annotationCount');
       console.log(error);
       res.status(500).json(error);
     }
