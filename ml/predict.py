@@ -57,7 +57,7 @@ MAX_TIME_BACK = config['max_seconds_back']
 # OBJECT_MAX_CONFIDENCE_THRESH = 0.30
 
 
-def predict_on_video(videoid, userid, model_weights, concepts, upload_annotations=False):
+def predict_on_video(videoid, model_weights, concepts, upload_annotations=False, userid=None):
    video_name = queryDB("select * from videos where id = " + str(videoid)).iloc[0].filename
    print("Loading Video")
    frames, fps = get_video_frames(video_name)
@@ -381,4 +381,4 @@ def does_match_existing_tracked_object(detection, currently_tracked_objects):
    return False, None
 
 if __name__ == '__main__':
-  predict_on_video(86, 29, MODEL_WEIGHTS, CONCEPTS, upload_annotations=False)
+  predict_on_video(86, MODEL_WEIGHTS, CONCEPTS)

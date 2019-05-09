@@ -128,7 +128,7 @@ def compute_overlap(A, B):
 
 
 def evaluate(video_id, user_id, model_path, concepts):
-    results, fps = predict.predict_on_video(video_id, user_id, model_path, concepts)
+    results, fps = predict.predict_on_video(video_id, model_path, concepts)
     print("done predicting")
 
     # REMOVE BAD USERS ?
