@@ -129,7 +129,6 @@ class Verify extends Component {
 
   handleChangeUser = event => {
     this.setState({ selectedUser: event.target.value });
-    console.log(this.state.selectedUser);
   };
 
   handleChangeVideo = event => {
@@ -144,7 +143,6 @@ class Verify extends Component {
         )
       });
     }
-    console.log(this.state.selectedVideos);
   };
 
   handleChangeConcept = event => {
@@ -159,7 +157,6 @@ class Verify extends Component {
         )
       });
     }
-    console.log(this.state.selectedConcepts);
   };
 
   handleReset = () => {

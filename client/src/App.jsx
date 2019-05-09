@@ -32,12 +32,6 @@ class App extends React.Component {
                   <Route exact path="/report" component={Report} />
                   <Route exact path="/createUser" component={CreateUser} />
                   <Route exact path="/models" component={Models} />
-                  <Route
-                    exact
-                    path="/verifySelection"
-                    component={VerifySelection}
-                  />
-                  <Route exact path="/verify" component={Verify} />
                   <Route exact path="/users" component={Users} />
                 </React.Fragment>
               ) : (
@@ -45,6 +39,12 @@ class App extends React.Component {
                   <Route exact path="/concepts" component={Concepts} />
                   <Route exact path="/annotate" component={Annotate} />
                   <Route exact path="/report" component={Report} />
+                  <Route exact path="/verify" component={Verify} />
+                  <Route
+                    exact
+                    path="/verifySelection"
+                    component={VerifySelection}
+                  />
                 </React.Fragment>
               )}
               <Route exact path="/profile" component={Profile} />
