@@ -18,7 +18,6 @@
    "min_frames_threshold" : 30,
    "resized_video_width" : 640,
    "resized_video_height" : 480,
-   "frames_per_second" : 30,
    "max_seconds_back" : 5
 }
 

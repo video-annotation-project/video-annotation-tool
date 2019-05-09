@@ -53,7 +53,6 @@ TRACKING_IOU_THRESH = config['prediction_tracking_iou_threshold']
 MIN_FRAMES_THRESH = config['min_frames_threshold']
 VIDEO_WIDTH = config['resized_video_width']
 VIDEO_HEIGHT = config['resized_video_height']
-FPS = config['frames_per_second']
 MAX_TIME_BACK = config['max_seconds_back']
 # OBJECT_MAX_CONFIDENCE_THRESH = 0.30
 
@@ -220,8 +219,8 @@ def get_video_frames(video_name):
    # put frames into frame list
    check = True
 
-#   while True:
-   for i in range(0, 900): 
+   while True:
+#   for i in range(0, 900): 
       check, frame = vid.read()
       if not check:
          break
@@ -254,11 +253,8 @@ def predict_frames(video_frames, fps, model):
              match, matched_object = does_match_existing_tracked_object(detection, currently_tracked_objects)
              if not match:
                  tracked_object = Tracked_object(detection, frame, frame_num)
-                 prev_annotations = track_backwards(video_frames, frame_num, detection, tracked_object.id)
-                 print(prev_annotations)
-                 print("")
+                 prev_annotations = track_backwards(video_frames, frame_num, detection, tracked_object.id, fps)
                  tracked_object.annotations = tracked_object.annotations.append(prev_annotations)
-                 print(tracked_object.annotations)
                  currently_tracked_objects.append(tracked_object)
              else:
                  matched_object.reinit(detection, frame, frame_num)
@@ -266,14 +262,13 @@ def predict_frames(video_frames, fps, model):
       for obj in currently_tracked_objects:
          (x, y, w, h) = obj.box
          cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-   print(annotations)
    results = pd.concat(annotations)
    results.to_csv('results.csv')
    return results, video_frames
 
 # get tracking annotations before first model prediction for object - max_time_back seconds
 # skipping original frame annotation, already saved in object initialization
-def track_backwards(video_frames, frame_num, detection, object_id):
+def track_backwards(video_frames, frame_num, detection, object_id, fps):
    annotations = pd.DataFrame(columns=['x1','y1','x2','y2','label', 'confidence', 'objectid','frame_num'])
    (x1, y1, x2, y2) = detection[0]
    box = (x1, y1, (x2-x1), (y2-y1))
@@ -282,7 +277,7 @@ def track_backwards(video_frames, frame_num, detection, object_id):
    tracker.init(frame, box)
    success, box = tracker.update(frame)
    frames = 0
-   max_frames = FPS * MAX_TIME_BACK
+   max_frames = fps * MAX_TIME_BACK
    while success and frames < max_frames and frame_num > 0:
       frame_num -= 1
       frame = video_frames[frame_num]
