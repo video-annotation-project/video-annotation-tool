@@ -2,6 +2,7 @@ cra-server-ex.graffle
 node_modules
 npm-debug.log
 client/build
+.vscode
 
 # private info in here
 # includes DB_HOST url, which has a dev and a production version

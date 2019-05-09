@@ -5,6 +5,12 @@ import { withStyles } from "@material-ui/core/styles";
 import { Button } from "@material-ui/core";
 import Paper from "@material-ui/core/Paper";
 import Typography from "@material-ui/core/Typography";
+import List from '@material-ui/core/List';
+import ListItem from '@material-ui/core/ListItem';
+import ListItemText from '@material-ui/core/ListItemText';
+import Collapse from '@material-ui/core/Collapse';
+import ExpandLess from '@material-ui/icons/ExpandLess';
+import ExpandMore from '@material-ui/icons/ExpandMore';
 
 import VerifySelection from "./VerifySelection.jsx";
 
@@ -21,6 +27,21 @@ const styles = theme => ({
   },
   resetContainer: {
     padding: theme.spacing.unit * 3
+  },
+  list: {
+    width: '100%',
+    backgroundColor: theme.palette.background.paper,
+  },  
+  item: {
+    display: 'inline',
+    paddingTop: 0,
+    width: '1300px',
+    height: '730px',
+    paddingLeft: 0
+  },
+  img: {
+    width: '1280px',
+    height: '720px',
   }
 });
 
@@ -33,7 +54,9 @@ class Verify extends Component {
       selectedVideos: [],
       selectedConcepts: [],
       annotations: [],
-      error: null
+      error: null,
+      image: null,
+      isLoaded: false
     };
   }
 
@@ -113,6 +136,48 @@ class Verify extends Component {
       });
   };
 
+
+  encode = (data) => {
+    var str = data.reduce(function(a,b) { return a+String.fromCharCode(b) },'');
+    console.log(btoa(str).replace(/.{76}(?=.)/g,'$&\n'));
+    return btoa(str).replace(/.{76}(?=.)/g,'$&\n');
+  }
+
+  getImage = (id) => {
+    const config = {
+      headers: {
+        'Authorization': 'Bearer ' + localStorage.getItem('token')
+      }
+    };
+    var name;
+    console.log(this.state.annotations[id]);
+    if (this.state.annotations[id].imagewithbox) {
+      name = this.state.annotations[id].imagewithbox;
+    }
+    else {
+      return "no Img"
+    }
+    console.log(name);
+    axios.get(`/api/annotationImages/${name}`, config).then(res => {
+      console.log(res);
+      // this.setState({
+      return 'data:image/png;base64, ' + this.encode(res.data.image.data);
+        // isLoaded: true
+      // });
+    }).catch(error => {
+      console.log(error);
+      console.log(JSON.parse(JSON.stringify(error)));
+      if (!error.response) {
+        return;
+      }
+      let errMsg = error.response.data.detail ||
+        error.response.data.message || 'Error';
+      console.log(errMsg);
+      return errMsg;
+    });
+  };
+
+
   handleGetAnnotations = async () => {
     let annotations = await this.getAnnotations();
 
@@ -123,8 +188,6 @@ class Verify extends Component {
     this.setState({
       annotations: annotations
     });
-
-    console.log(this.state.annotations);
   };
 
   handleChangeUser = event => {
@@ -167,7 +230,20 @@ class Verify extends Component {
     });
   };
 
+  handleListClick = async (name, id) => {
+    let treeData = JSON.parse(JSON.stringify(this.state.annotations));
+    let selected = treeData.find(data => data.name === name);
+    selected.expanded = !selected.expanded;
+    this.setState({
+      image: await this.getImage(id),
+      isLoaded: true
+    });
+    console.log(this.state);
+  }
+
   render() {
+    console.log(this.state);
+    const { classes } = this.props;
     let selection = "";
     if (this.state.selectionMounted) {
       selection = (
@@ -205,11 +281,38 @@ class Verify extends Component {
           <Typography>
             Selected Concepts: {this.state.selectedConcepts}
           </Typography>
+          <List disablePadding className={classes.root}>
+            {this.state.annotations.map((data, index) => (
+              <React.Fragment key={data.id}>
+                <ListItem button onClick={() => this.handleListClick(data.name, index)}>
+                  <ListItemText
+                    primary={data.name + ' date:' + data.dateannotated}
+                  />
+                  <ListItem className={classes.item}>
+                    {this.state.isLoaded ?
+                      <img className={classes.img} src={this.state.image} alt='error' /> 
+                      : "...Loading"}
+                  </ListItem>
+                  {data.expanded ? <ExpandLess /> : <ExpandMore />}
+                </ListItem>
+                <Collapse in={data.expanded} timeout='auto' unmountOnExit>
+                  <ListItem className={classes.item}>
+                    {this.state.isLoaded ?
+                      <img className={classes.img} id='imageId' src={this.state.image} alt='error' /> 
+                      : "...Loading"}
+                  </ListItem>
+                </Collapse>
+              </React.Fragment>
+            ))}
+          </List>
         </Paper>
+
       );
     }
 
-    return <React.Fragment>{selection}</React.Fragment>;
+    return (<React.Fragment>{selection}
+      </React.Fragment>
+      );
   }
 }
 

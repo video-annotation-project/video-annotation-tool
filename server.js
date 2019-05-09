@@ -138,27 +138,27 @@ app.get(
     const selectedVideos = req.query.selectedVideos;
     const selectedConcepts = req.query.selectedConcepts;
 
-    let sqlVideos = " AND (videoid=" + selectedVideos[0];
+    let sqlVideos = " AND (a.videoid=" + selectedVideos[0];
     for (let i = 0; i < selectedVideos.length; i++) {
-      sqlVideos += " OR videoid=" + selectedVideos[i];
+      sqlVideos += " OR a.videoid=" + selectedVideos[i];
     }
     sqlVideos += ")";
 
-    let sqlConcepts = " AND (conceptid=" + selectedVideos[0];
+    let sqlConcepts = " AND (a.conceptid=" + selectedVideos[0];
     for (let i = 0; i < selectedConcepts.length; i++) {
-      sqlConcepts += " OR conceptid=" + selectedConcepts[i];
+      sqlConcepts += " OR a.conceptid=" + selectedConcepts[i];
     }
     sqlConcepts += ")";
 
     var queryText = [
-      `SELECT *
-        FROM annotations
-        WHERE verifiedby=''` +
+      `SELECT distinct a.*, c.name
+        FROM annotations a, concepts c
+        WHERE c.id=a.conceptid AND a.verifiedby=''` +
         sqlVideos +
         sqlConcepts,
-      `SELECT *
-        FROM annotations
-        WHERE userid=$1 AND verifiedby=''` +
+      `SELECT distinct a.*, c.name
+        FROM annotations a, concepts c
+        WHERE c.id=a.conceptid AND a.userid=$1 AND a.verifiedby=''` +
         sqlVideos +
         sqlConcepts
     ];
@@ -170,6 +170,7 @@ app.get(
       }
       res.json(concepts.rows);
     } catch (error) {
+      console.log(error);
       res.status(500).json(error);
     }
   }
