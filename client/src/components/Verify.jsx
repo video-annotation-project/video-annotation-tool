@@ -55,7 +55,6 @@ class Verify extends Component {
       selectedConcepts: [],
       annotations: [],
       error: null,
-      image: null,
       isLoaded: false
     };
   }
@@ -161,7 +160,7 @@ class Verify extends Component {
     axios.get(`/api/annotationImages/${name}`, config).then(res => {
       console.log(res);
       // this.setState({
-      return 'data:image/png;base64, ' + this.encode(res.data.image.data);
+      return ('data:image/png;base64, ' + this.encode(res.data.image.data));
         // isLoaded: true
       // });
     }).catch(error => {
@@ -231,14 +230,16 @@ class Verify extends Component {
   };
 
   handleListClick = async (name, id) => {
-    let treeData = JSON.parse(JSON.stringify(this.state.annotations));
-    let selected = treeData.find(data => data.name === name);
-    selected.expanded = !selected.expanded;
+    let selected = this.state.annotations[id];
+    if (!selected.expanded === undefined) {
+      selected.expanded = true;
+    }
+    else {
+      selected.expanded = !selected.expanded;
+    }
     this.setState({
-      image: await this.getImage(id),
       isLoaded: true
     });
-    console.log(this.state);
   }
 
   render() {
@@ -288,17 +289,12 @@ class Verify extends Component {
                   <ListItemText
                     primary={data.name + ' date:' + data.dateannotated}
                   />
-                  <ListItem className={classes.item}>
-                    {this.state.isLoaded ?
-                      <img className={classes.img} src={this.state.image} alt='error' /> 
-                      : "...Loading"}
-                  </ListItem>
                   {data.expanded ? <ExpandLess /> : <ExpandMore />}
                 </ListItem>
                 <Collapse in={data.expanded} timeout='auto' unmountOnExit>
                   <ListItem className={classes.item}>
                     {this.state.isLoaded ?
-                      <img className={classes.img} id='imageId' src={this.state.image} alt='error' /> 
+                      <img className={classes.img} src={`/api/annoImg/${data.id}`} alt='error' /> 
                       : "...Loading"}
                   </ListItem>
                 </Collapse>
