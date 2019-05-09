@@ -13,6 +13,8 @@
    "epochs" : 50,
    "batch_size" : 8,
    "frames_between_predictions" : 10,
-   "prediction_matching_threhold" : 0.25
+   "prediction_matching_threhold" : 0.25,
+   "frames_per_second" : 30,
+   "max_seconds_back" : 5
 }
 

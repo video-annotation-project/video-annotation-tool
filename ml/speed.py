@@ -1,5 +1,4 @@
 # Initial package imports
-#from pgdb import connect
 import json
 import math
 import pandas as pd
@@ -40,24 +39,36 @@ def get_annotation_speed(bad_users):
     cur = conn.cursor()
     bad_users.append(17) # dont get opencv tracking annotations
     # get human annotations that haven't had speed calculated yet
-    query = "SELECT * FROM annotations WHERE speed IS NULL AND userid NOT IN " + str(tuple(bad_users)) + " LIMIT 500"
+    query = "SELECT * FROM annotations WHERE speed IS NULL AND userid NOT IN " + str(tuple(bad_users))
     df = pd.read_sql_query(query, conn)
     for index, row in df.iterrows():
-#       print(row.id, row.timeinvideo)
-        # get tracking annotations within 1 sec after original annot
-       query = "SELECT * FROM annotations WHERE userid=17 AND originalid=%d AND timeinvideo BETWEEN %f AND %f LIMIT 1" % (row.id, row.timeinvideo, row.timeinvideo + 1)
-       tracking_annot  = pd.read_sql_query(query, conn)
-#       print(tracking_annot.timeinvideo[0])
-       (x1, y1) = get_center(row.x1, row.x2, row.y1, row.y2)
-       (x2, y2) = get_center(tracking_annot.x1[0], tracking_annot.x2[0], tracking_annot.y1[0], tracking_annot.y2[0])
-       # resize tracking bounding box to match original 
+        # get tracking annotations within 1 sec before and after original annot (including original annot)
+       query = "SELECT * FROM annotations WHERE originalid=%d AND timeinvideo BETWEEN %f AND %f" % (row.id, row.timeinvideo - 1, row.timeinvideo + 1)
+       tracking_annots = pd.read_sql_query(query, conn)
+       if tracking_annots.empty: # tracking not done on this annotation
+          continue
+       # get max distance traveled between all consecutive frames between -1/+1 sec
+       max_dist = 0
+       x1_array = tracking_annots.x1.values
+       x2_array = tracking_annots.x2.values
+       y1_array = tracking_annots.y1.values
+       y2_array = tracking_annots.y2.values
+       # resize tracking bounding boxes to match original 
        # annotation dimensions if video is not 1280x720
        # (all tracking annotations are stored as 1280x720 frames)
        if (row.videowidth != 1280 or row.videoheight != 720): 
-          x2 = (x2 / 1280) * row.videowidth
-          y2 = (y2 / 720) * row.videoheight
-       dist = math.sqrt( (x2 - x1)**2 + (y2 - y1)**2 ) 
-       print(dist, row.id)
+          x1_array = (x1_array / 1280) * row.videowidth
+          x2_array = (x2_array / 1280) * row.videowidth
+          y1_array = (y1_array / 720) * row.videoheight
+          y2_array = (y2_array / 720) * row.videoheight
+       for i in range(0, len(x1_array) - 1):
+          (x1, y1) = get_center(x1_array[i], x2_array[i], y1_array[i], y2_array[i])
+          (x2, y2) = get_center(x1_array[i+1], x2_array[i+1], y1_array[i+1], y2_array[i+1])
+          dist = round(math.sqrt( (x2 - x1)**2 + (y2 - y1)**2 ), 2)
+          if dist > max_dist:
+             max_dist = dist
+       statement = "UPDATE annotations SET speed=%f WHERE id=%d" % (max_dist, row.id)
+       cur.execute(statement)
 
 def get_center(x1, x2, y1, y2):
    return (((x2 - x1) / 2) + x1, ((y2 - y1) / 2) + y1)
