@@ -1,8 +1,8 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { withStyles } from "@material-ui/core/styles";
-import Radio from "@material-ui/core/Radio";
-import RadioGroup from "@material-ui/core/RadioGroup";
+import Checkbox from "@material-ui/core/Checkbox";
+import FormGroup from "@material-ui/core/FormGroup";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import FormControl from "@material-ui/core/FormControl";
 
@@ -47,7 +47,7 @@ class VerifySelectVideo extends React.Component {
     return (
       <div className={classes.root}>
         <FormControl component="fieldset" className={classes.formControl}>
-          <RadioGroup
+          <FormGroup
             aria-label="Video"
             name="video"
             className={classes.group}
@@ -58,11 +58,11 @@ class VerifySelectVideo extends React.Component {
               <FormControlLabel
                 key={video.id}
                 value={video.id.toString()}
-                control={<Radio />}
+                control={<Checkbox />}
                 label={video.filename}
               />
             ))}
-          </RadioGroup>
+          </FormGroup>
         </FormControl>
       </div>
     );

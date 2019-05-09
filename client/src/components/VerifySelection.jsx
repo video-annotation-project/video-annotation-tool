@@ -80,7 +80,7 @@ class VerifySelection extends React.Component {
       case 1:
         return (
           <VerifySelectVideo
-            value={this.props.selectedVideo}
+            value={this.props.selectedVideos}
             getVideos={this.props.getVideos}
             handleChange={this.props.handleChangeVideo}
           />
@@ -103,9 +103,9 @@ class VerifySelection extends React.Component {
       case 0:
         return this.props.selectedUser == null;
       case 1:
-        return this.props.selectedVideo == null;
+        return this.props.selectedVideos.length === 0;
       case 2:
-        return this.props.selectedConcept == null;
+        return this.props.selectedConcepts.length === 0;
       default:
         return true;
     }
@@ -114,12 +114,6 @@ class VerifySelection extends React.Component {
   handleNext = () => {
     this.setState(state => ({
       activeStep: state.activeStep + 1
-    }));
-  };
-
-  handleBack = () => {
-    this.setState(state => ({
-      activeStep: state.activeStep - 1
     }));
   };
 
@@ -155,10 +149,10 @@ class VerifySelection extends React.Component {
                   <div>
                     <Button
                       disabled={activeStep === 0}
-                      onClick={this.handleBack}
+                      onClick={this.handleReset}
                       className={classes.button}
                     >
-                      Back
+                      Reset
                     </Button>
                     <Button
                       variant="contained"
@@ -178,8 +172,8 @@ class VerifySelection extends React.Component {
         {activeStep === steps.length && (
           <Paper square elevation={0} className={classes.resetContainer}>
             <Typography>All steps completed - you&apos;re finished</Typography>
-            <Button onClick={this.handleBack} className={classes.button}>
-              Back
+            <Button onClick={this.handleReset} className={classes.button}>
+              Reset
             </Button>
             <Button
               variant="contained"

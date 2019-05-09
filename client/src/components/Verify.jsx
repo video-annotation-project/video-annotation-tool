@@ -30,14 +30,17 @@ class Verify extends Component {
     this.state = {
       selectionMounted: true,
       selectedUser: "0",
-      selectedVideo: null,
-      selectedConcept: null,
+      selectedVideos: [],
+      selectedConcepts: [],
       annotations: [],
       error: null
     };
   }
 
   unmountSelection = () => {
+    if (!this.state.selectionMounted) {
+      this.handleReset();
+    }
     this.setState({
       selectionMounted: !this.state.selectionMounted
     });
@@ -71,15 +74,16 @@ class Verify extends Component {
 
   getConcepts = async () => {
     return axios
-      .get(
-        `/api/unverifiedConceptsByUserVideo/` +
-          this.state.selectedUser +
-          `/` +
-          this.state.selectedVideo,
-        {
-          headers: { Authorization: "Bearer " + localStorage.getItem("token") }
+      .get("/api/unverifiedConceptsByUserVideo/", {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + localStorage.getItem("token")
+        },
+        params: {
+          selectedUser: this.state.selectedUser,
+          selectedVideos: this.state.selectedVideos
         }
-      )
+      })
       .then(res => res.data)
       .catch(error => {
         this.setState({
@@ -90,17 +94,17 @@ class Verify extends Component {
 
   getAnnotations = async () => {
     return axios
-      .get(
-        `/api/unverifiedAnnotationsByUserVideoConcept/` +
-          this.state.selectedUser +
-          `/` +
-          this.state.selectedVideo +
-          `/` +
-          this.state.selectedConcept,
-        {
-          headers: { Authorization: "Bearer " + localStorage.getItem("token") }
+      .get(`/api/unverifiedAnnotationsByUserVideoConcept/`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + localStorage.getItem("token")
+        },
+        params: {
+          selectedUser: this.state.selectedUser,
+          selectedVideos: this.state.selectedVideos,
+          selectedConcepts: this.state.selectedConcepts
         }
-      )
+      })
       .then(res => res.data)
       .catch(error => {
         this.setState({
@@ -125,21 +129,44 @@ class Verify extends Component {
 
   handleChangeUser = event => {
     this.setState({ selectedUser: event.target.value });
+    console.log(this.state.selectedUser);
   };
 
   handleChangeVideo = event => {
-    this.setState({ selectedVideo: event.target.value });
+    if (!this.state.selectedVideos.includes(event.target.value)) {
+      this.setState({
+        selectedVideos: this.state.selectedVideos.concat(event.target.value)
+      });
+    } else {
+      this.setState({
+        selectedVideos: this.state.selectedVideos.filter(
+          videoid => videoid !== event.target.value
+        )
+      });
+    }
+    console.log(this.state.selectedVideos);
   };
 
   handleChangeConcept = event => {
-    this.setState({ selectedConcept: event.target.value });
+    if (!this.state.selectedConcepts.includes(event.target.value)) {
+      this.setState({
+        selectedConcepts: this.state.selectedConcepts.concat(event.target.value)
+      });
+    } else {
+      this.setState({
+        selectedConcepts: this.state.selectedConcepts.filter(
+          conceptid => conceptid !== event.target.value
+        )
+      });
+    }
+    console.log(this.state.selectedConcepts);
   };
 
   handleReset = () => {
     this.setState({
       selectedUser: "0",
-      selectedVideo: null,
-      selectedConcept: null
+      selectedVideos: [],
+      selectedConcepts: []
     });
   };
 
@@ -149,8 +176,8 @@ class Verify extends Component {
       selection = (
         <VerifySelection
           selectedUser={this.state.selectedUser}
-          selectedVideo={this.state.selectedVideo}
-          selectedConcept={this.state.selectedConcept}
+          selectedVideos={this.state.selectedVideos}
+          selectedConcepts={this.state.selectedConcepts}
           getUsers={this.getUsers}
           getVideos={this.getVideos}
           getConcepts={this.getConcepts}
@@ -177,9 +204,9 @@ class Verify extends Component {
             Filter Annotations
           </Button>
           <Typography>Selected User: {this.state.selectedUser}</Typography>
-          <Typography>Selected Video: {this.state.selectedVideo}</Typography>
+          <Typography>Selected Videos: {this.state.selectedVideos}</Typography>
           <Typography>
-            Selected Concept: {this.state.selectedConcept}
+            Selected Concepts: {this.state.selectedConcepts}
           </Typography>
         </Paper>
       );

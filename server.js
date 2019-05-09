@@ -97,25 +97,30 @@ app.get(
 );
 
 app.get(
-  "/api/unverifiedConceptsByUserVideo/:userid/:videoid",
+  "/api/unverifiedConceptsByUserVideo",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
+    const selectedVideos = req.query.selectedVideos;
+
+    let sqlVideos = " AND (a.videoid=" + selectedVideos[0];
+    for (let i = 0; i < selectedVideos.length; i++) {
+      sqlVideos += " OR a.videoid=" + selectedVideos[i];
+    }
+    sqlVideos += ")";
+
     var queryText = [
-      "SELECT DISTINCT c.id, c.name \
-        FROM annotations a, concepts c  \
-        WHERE a.videoid=$1 AND a.verifiedby='' AND a.conceptid=c.id",
-      "SELECT DISTINCT c.id, c.name \
-        FROM annotations a, concepts c  \
-        WHERE a.userid=$1 AND a.videoid=$2 AND a.verifiedby='' AND a.conceptid=c.id"
+      `SELECT DISTINCT c.id, c.name
+        FROM annotations a, concepts c
+        WHERE a.verifiedby='' AND a.conceptid=c.id` + sqlVideos,
+      `SELECT DISTINCT c.id, c.name
+        FROM annotations a, concepts c
+        WHERE a.userid=$1 AND a.verifiedby='' AND a.conceptid=c.id` + sqlVideos
     ];
     try {
-      if (req.params.userid == "0") {
-        var concepts = await psql.query(queryText[0], [req.params.videoid]);
+      if (req.query.selectedUser == "0") {
+        var concepts = await psql.query(queryText[0]);
       } else {
-        var concepts = await psql.query(queryText[1], [
-          req.params.userid,
-          req.params.videoid
-        ]);
+        var concepts = await psql.query(queryText[1], [req.query.selectedUser]);
       }
       res.json(concepts.rows);
     } catch (error) {
@@ -125,29 +130,43 @@ app.get(
 );
 
 app.get(
-  "/api/unverifiedAnnotationsByUserVideoConcept/:userid/:videoid/:conceptid",
+  "/api/unverifiedAnnotationsByUserVideoConcept",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
+    console.log(req.query);
+
+    const selectedVideos = req.query.selectedVideos;
+    const selectedConcepts = req.query.selectedConcepts;
+
+    let sqlVideos = " AND (videoid=" + selectedVideos[0];
+    for (let i = 0; i < selectedVideos.length; i++) {
+      sqlVideos += " OR videoid=" + selectedVideos[i];
+    }
+    sqlVideos += ")";
+
+    let sqlConcepts = " AND (conceptid=" + selectedVideos[0];
+    for (let i = 0; i < selectedConcepts.length; i++) {
+      sqlConcepts += " OR conceptid=" + selectedConcepts[i];
+    }
+    sqlConcepts += ")";
+
     var queryText = [
-      "SELECT * \
-        FROM annotations \
-        WHERE videoid=$1 AND conceptid=$2 AND verifiedby=''",
-      "SELECT * \
-        FROM annotations \
-        WHERE userid=$1 AND videoid=$2 AND conceptid=$3 AND verifiedby=''"
+      `SELECT *
+        FROM annotations
+        WHERE verifiedby=''` +
+        sqlVideos +
+        sqlConcepts,
+      `SELECT *
+        FROM annotations
+        WHERE userid=$1 AND verifiedby=''` +
+        sqlVideos +
+        sqlConcepts
     ];
     try {
-      if (req.params.userid == "0") {
-        var concepts = await psql.query(queryText[0], [
-          req.params.videoid,
-          req.params.conceptid
-        ]);
+      if (req.query.selectedUser == "0") {
+        var concepts = await psql.query(queryText[0]);
       } else {
-        var concepts = await psql.query(queryText[1], [
-          req.params.userid,
-          req.params.videoid,
-          req.params.conceptid
-        ]);
+        var concepts = await psql.query(queryText[1], [req.query.selectedUser]);
       }
       res.json(concepts.rows);
     } catch (error) {
