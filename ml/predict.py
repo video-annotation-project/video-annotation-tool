@@ -72,6 +72,7 @@ def predict_on_video(videoid, userid, model_weights, concepts, upload_annotation
    # results = conf_limit_objects(results, OBJECT_MAX_CONFIDENCE_THRESH)
    results = propagate_conceptids(results, concepts)
    results = length_limit_objects(results, MIN_FRAMES_THRESH)
+   save_filtered_video(copy.deepcopy(original_frames), fps, results)
     
    if upload_annotations:
      con = psycopg2.connect(database = DB_NAME,
@@ -309,6 +310,15 @@ def save_video(frames, fps):
       out.write(frame)
    out.release()
    cv2.destroyAllWindows()
+
+
+def save_filtered_video(frames, fps, results):
+  for frame in frames:
+     # draw boxes 
+     for annotation in results:
+        cv2.rectangle(frame, (annotation.x1, annotation.y1), (annotation.x2, annotation.y2), (0, 255, 0), 2)
+  save_video(frames, fps)
+
 
 def does_match_existing_tracked_object(detection, currently_tracked_objects):
     # calculate IOU for each
