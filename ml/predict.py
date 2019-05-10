@@ -313,7 +313,8 @@ def save_video(filename, frames, fps):
 def generate_filtered_video(filename, frames, fps, results):
   for frame in frames:
      for res in results.itertuples(): # draw boxes 
-        cv2.rectangle(frame, (res.x1, res.y1), (res.x2, res.y2), (0, 255, 0), 2)
+        x1, y1, x2, y2 = int(res.x1), int(res.xy1), int(res.x2), int(res.y2)
+        cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
   save_video(filename, frames, fps)
 
 def does_match_existing_tracked_object(detection, currently_tracked_objects):
