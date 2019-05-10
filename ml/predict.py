@@ -313,7 +313,7 @@ def save_video(filename, frames, fps):
 def generate_filtered_video(filename, frames, fps, results):
   for frame in frames:
      for res in results.itertuples(): # draw boxes 
-        x1, y1, x2, y2 = int(res.x1), int(res.xy1), int(res.x2), int(res.y2)
+        x1, y1, x2, y2 = int(res.x1), int(res.y1), int(res.x2), int(res.y2)
         cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
   save_video(filename, frames, fps)
 
