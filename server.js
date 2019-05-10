@@ -327,7 +327,7 @@ app.get("/api/conceptImages/:id", async (req, res) => {
 });
 
 
-app.get("/api/annoImg/:id", async (req, res) => {
+app.get("/api/annotationImageWithoutBox/:id", async (req, res) => {
   let s3 = new AWS.S3();
   queryText = "select image from annotations where id=$1";
   try {

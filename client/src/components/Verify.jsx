@@ -2,7 +2,6 @@ import React, { Component } from "react";
 import axios from "axios";
 import PropTypes from "prop-types";
 import { withStyles } from "@material-ui/core/styles";
-import { Button } from "@material-ui/core";
 import Paper from "@material-ui/core/Paper";
 import Typography from "@material-ui/core/Typography";
 import List from '@material-ui/core/List';
@@ -11,6 +10,7 @@ import ListItemText from '@material-ui/core/ListItemText';
 import Collapse from '@material-ui/core/Collapse';
 import ExpandLess from '@material-ui/icons/ExpandLess';
 import ExpandMore from '@material-ui/icons/ExpandMore';
+import Button from '@material-ui/core/Button';
 
 import VerifySelection from "./VerifySelection.jsx";
 
@@ -19,8 +19,7 @@ const styles = theme => ({
     width: "90%"
   },
   button: {
-    marginTop: theme.spacing.unit,
-    marginRight: theme.spacing.unit
+    margin: theme.spacing.unit,
   },
   actionsContainer: {
     marginBottom: theme.spacing.unit * 2
@@ -42,7 +41,19 @@ const styles = theme => ({
   img: {
     width: '1280px',
     height: '720px',
-  }
+  },
+  container: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(12, 1fr)',
+    gridGap: `${theme.spacing.unit * 3}px`,
+  },
+  paper: {
+    padding: theme.spacing.unit,
+    textAlign: 'center',
+    color: theme.palette.text.secondary,
+    whiteSpace: 'nowrap',
+    marginBottom: theme.spacing.unit,
+  },
 });
 
 class Verify extends Component {
@@ -243,7 +254,6 @@ class Verify extends Component {
   }
 
   render() {
-    console.log(this.state);
     const { classes } = this.props;
     let selection = "";
     if (this.state.selectionMounted) {
@@ -282,20 +292,27 @@ class Verify extends Component {
           <Typography>
             Selected Concepts: {this.state.selectedConcepts}
           </Typography>
+          <Typography>
+            Logged in User: {localStorage.getItem('username')}
+          </Typography>
+          {/* list of annotations with a dropdown image */}
           <List disablePadding className={classes.root}>
             {this.state.annotations.map((data, index) => (
               <React.Fragment key={data.id}>
                 <ListItem button onClick={() => this.handleListClick(data.name, index)}>
                   <ListItemText
-                    primary={data.name + ' date:' + data.dateannotated}
+                    primary={data.name + ' date: ' + data.dateannotated}
                   />
                   {data.expanded ? <ExpandLess /> : <ExpandMore />}
                 </ListItem>
                 <Collapse in={data.expanded} timeout='auto' unmountOnExit>
                   <ListItem className={classes.item}>
                     {this.state.isLoaded ?
-                      <img className={classes.img} src={`/api/annoImg/${data.id}`} alt='error' /> 
+                      <img className={classes.img} src={`/api/annotationImageWithoutBox/${data.id}`} alt='error' />
                       : "...Loading"}
+                  </ListItem>
+                  <ListItem>
+                    <Button color="primary" className={classes.button}>Verify</Button>
                   </ListItem>
                 </Collapse>
               </React.Fragment>
