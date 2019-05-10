@@ -127,6 +127,29 @@ def compute_overlap(A, B):
     return iou
 
 
+def insert_annotations_to_video(annotations, filename):
+    vid = cv2.VideoCapture(filename)
+    fps = vid.get(cv2.CAP_PROP_FPS)
+    while not vid.isOpened():
+       continue
+
+    check = True
+    while True:
+       check, frame = vid.read()
+       if not check:
+          break
+       frame = cv2.resize(frame, (RESIZED_WIDTH, RESIZED_HEIGHT))
+       frames.append(frame)
+    vid.release()
+
+    for frame_num, frame in enumerate(frames):
+        for annot in annotations[annotations.frame_num == frame_num].itertuples():
+            x1, y1, x2, y2 = int(annot.x1), int(annot.y1), int(annot.x2), int(annot.y2)
+            cv2.rectangle(frame, (x1, y1), (x2, y2), (255, 0, 0), 2)
+    predict.save_video(filename, frames, fps)
+
+
+
 def evaluate(video_id, user_id, model_path, concepts):
     results, fps = predict.predict_on_video(video_id, user_id, model_path, concepts)
     print("done predicting")
