@@ -180,8 +180,8 @@ app.patch(
   "/api/annotationsVerify",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    const id = req.query.id;
-    const verifiedby = req.user.id;
+    const id = req.body.id;
+    const verifiedby = req.user.username;
     const queryText =
       "UPDATE annotations SET verifiedby=$2, verifieddate=current_timestamp WHERE id=$1";
     try {

@@ -4,13 +4,13 @@ import PropTypes from "prop-types";
 import { withStyles } from "@material-ui/core/styles";
 import Paper from "@material-ui/core/Paper";
 import Typography from "@material-ui/core/Typography";
-import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemText from '@material-ui/core/ListItemText';
-import Collapse from '@material-ui/core/Collapse';
-import ExpandLess from '@material-ui/icons/ExpandLess';
-import ExpandMore from '@material-ui/icons/ExpandMore';
-import Button from '@material-ui/core/Button';
+import List from "@material-ui/core/List";
+import ListItem from "@material-ui/core/ListItem";
+import ListItemText from "@material-ui/core/ListItemText";
+import Collapse from "@material-ui/core/Collapse";
+import ExpandLess from "@material-ui/icons/ExpandLess";
+import ExpandMore from "@material-ui/icons/ExpandMore";
+import Button from "@material-ui/core/Button";
 
 import VerifySelection from "./VerifySelection.jsx";
 
@@ -19,7 +19,7 @@ const styles = theme => ({
     width: "90%"
   },
   button: {
-    margin: theme.spacing.unit,
+    margin: theme.spacing.unit
   },
   actionsContainer: {
     marginBottom: theme.spacing.unit * 2
@@ -28,32 +28,32 @@ const styles = theme => ({
     padding: theme.spacing.unit * 3
   },
   list: {
-    width: '100%',
-    backgroundColor: theme.palette.background.paper,
-  },  
+    width: "100%",
+    backgroundColor: theme.palette.background.paper
+  },
   item: {
-    display: 'inline',
+    display: "inline",
     paddingTop: 0,
-    width: '1300px',
-    height: '730px',
+    width: "1300px",
+    height: "730px",
     paddingLeft: 0
   },
   img: {
-    width: '1280px',
-    height: '720px',
+    width: "1280px",
+    height: "720px"
   },
   container: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(12, 1fr)',
-    gridGap: `${theme.spacing.unit * 3}px`,
+    display: "grid",
+    gridTemplateColumns: "repeat(12, 1fr)",
+    gridGap: `${theme.spacing.unit * 3}px`
   },
   paper: {
     padding: theme.spacing.unit,
-    textAlign: 'center',
+    textAlign: "center",
     color: theme.palette.text.secondary,
-    whiteSpace: 'nowrap',
-    marginBottom: theme.spacing.unit,
-  },
+    whiteSpace: "nowrap",
+    marginBottom: theme.spacing.unit
+  }
 });
 
 class Verify extends Component {
@@ -146,47 +146,70 @@ class Verify extends Component {
       });
   };
 
-
-  encode = (data) => {
-    var str = data.reduce(function(a,b) { return a+String.fromCharCode(b) },'');
-    console.log(btoa(str).replace(/.{76}(?=.)/g,'$&\n'));
-    return btoa(str).replace(/.{76}(?=.)/g,'$&\n');
-  }
-
-  getImage = (id) => {
+  verifyAnnotations = async id => {
+    console.log("Verify called");
+    const body = {
+      id: id
+    };
     const config = {
       headers: {
-        'Authorization': 'Bearer ' + localStorage.getItem('token')
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + localStorage.getItem("token")
+      }
+    };
+    return axios
+      .patch(`/api/annotationsVerify/`, body, config)
+      .then(res => res.data)
+      .catch(error => {
+        this.setState({
+          error: error
+        });
+      });
+  };
+
+  encode = data => {
+    var str = data.reduce(function(a, b) {
+      return a + String.fromCharCode(b);
+    }, "");
+    console.log(btoa(str).replace(/.{76}(?=.)/g, "$&\n"));
+    return btoa(str).replace(/.{76}(?=.)/g, "$&\n");
+  };
+
+  getImage = id => {
+    const config = {
+      headers: {
+        Authorization: "Bearer " + localStorage.getItem("token")
       }
     };
     var name;
     console.log(this.state.annotations[id]);
     if (this.state.annotations[id].imagewithbox) {
       name = this.state.annotations[id].imagewithbox;
-    }
-    else {
-      return "no Img"
+    } else {
+      return "no Img";
     }
     console.log(name);
-    axios.get(`/api/annotationImages/${name}`, config).then(res => {
-      console.log(res);
-      // this.setState({
-      return ('data:image/png;base64, ' + this.encode(res.data.image.data));
+    axios
+      .get(`/api/annotationImages/${name}`, config)
+      .then(res => {
+        console.log(res);
+        // this.setState({
+        return "data:image/png;base64, " + this.encode(res.data.image.data);
         // isLoaded: true
-      // });
-    }).catch(error => {
-      console.log(error);
-      console.log(JSON.parse(JSON.stringify(error)));
-      if (!error.response) {
-        return;
-      }
-      let errMsg = error.response.data.detail ||
-        error.response.data.message || 'Error';
-      console.log(errMsg);
-      return errMsg;
-    });
+        // });
+      })
+      .catch(error => {
+        console.log(error);
+        console.log(JSON.parse(JSON.stringify(error)));
+        if (!error.response) {
+          return;
+        }
+        let errMsg =
+          error.response.data.detail || error.response.data.message || "Error";
+        console.log(errMsg);
+        return errMsg;
+      });
   };
-
 
   handleGetAnnotations = async () => {
     let annotations = await this.getAnnotations();
@@ -244,14 +267,13 @@ class Verify extends Component {
     let selected = this.state.annotations[id];
     if (!selected.expanded === undefined) {
       selected.expanded = true;
-    }
-    else {
+    } else {
       selected.expanded = !selected.expanded;
     }
     this.setState({
       isLoaded: true
     });
-  }
+  };
 
   render() {
     const { classes } = this.props;
@@ -293,39 +315,51 @@ class Verify extends Component {
             Selected Concepts: {this.state.selectedConcepts}
           </Typography>
           <Typography>
-            Logged in User: {localStorage.getItem('username')}
+            Logged in User: {localStorage.getItem("username")}
           </Typography>
           {/* list of annotations with a dropdown image */}
           <List disablePadding className={classes.root}>
             {this.state.annotations.map((data, index) => (
               <React.Fragment key={data.id}>
-                <ListItem button onClick={() => this.handleListClick(data.name, index)}>
+                <ListItem
+                  button
+                  onClick={() => this.handleListClick(data.name, index)}
+                >
                   <ListItemText
-                    primary={data.name + ' date: ' + data.dateannotated}
+                    primary={data.name + " date: " + data.dateannotated}
                   />
                   {data.expanded ? <ExpandLess /> : <ExpandMore />}
                 </ListItem>
-                <Collapse in={data.expanded} timeout='auto' unmountOnExit>
+                <Collapse in={data.expanded} timeout="auto" unmountOnExit>
                   <ListItem className={classes.item}>
-                    {this.state.isLoaded ?
-                      <img className={classes.img} src={`/api/annotationImageWithoutBox/${data.id}`} alt='error' />
-                      : "...Loading"}
+                    {this.state.isLoaded ? (
+                      <img
+                        className={classes.img}
+                        src={`/api/annotationImageWithoutBox/${data.id}`}
+                        alt="error"
+                      />
+                    ) : (
+                      "...Loading"
+                    )}
                   </ListItem>
                   <ListItem>
-                    <Button color="primary" className={classes.button}>Verify</Button>
+                    <Button
+                      onClick={() => this.verifyAnnotations(data.id)}
+                      color="primary"
+                      className={classes.button}
+                    >
+                      Verify
+                    </Button>
                   </ListItem>
                 </Collapse>
               </React.Fragment>
             ))}
           </List>
         </Paper>
-
       );
     }
 
-    return (<React.Fragment>{selection}
-      </React.Fragment>
-      );
+    return <React.Fragment>{selection}</React.Fragment>;
   }
 }
 
