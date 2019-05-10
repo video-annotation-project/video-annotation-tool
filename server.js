@@ -192,7 +192,7 @@ app.patch(
     try {
       let update = await psql.query(queryText, [
         id,
-        verifiedby,
+        req.user.id,
         conceptid,
         x1,
         y1,
@@ -325,7 +325,6 @@ app.get("/api/conceptImages/:id", async (req, res) => {
     res.status(400).json(error);
   }
 });
-
 
 app.get("/api/annoImg/:id", async (req, res) => {
   let s3 = new AWS.S3();
