@@ -145,10 +145,14 @@ def insert_annotations_to_video(annotations, filename):
     vid.release()
 
     validation = annotations.apply(resize, axis=1)
-    for frame_num, frame in enumerate(frames):
-        for val in validation[validation.frame_num == frame_num].itertuples():
-            x1, y1, x2, y2 = int(val.x1), int(val.y1), int(val.x2), int(val.y2)
-            cv2.rectangle(frame, (x1, y1), (x2, y2), (255, 0, 0), 3)
+    # for frame_num, frame in enumerate(frames):
+    #     for val in validation[validation.frame_num == frame_num].itertuples():
+    #         x1, y1, x2, y2 = int(val.x1), int(val.y1), int(val.x2), int(val.y2)
+    #         cv2.rectangle(frame, (x1, y1), (x2, y2), (255, 0, 0), 3)
+    for val in validation.itertuples():
+        x1, y1, x2, y2 = int(val.x1), int(val.y1), int(val.x2), int(val.y2)
+        cv2.rectangle(frames[val.frame_num], (x1, y1), (x2, y2), (255, 0, 0), 3)
+        
     predict.save_video("interlaced_" + filename, frames, fps)
 
 
@@ -163,7 +167,7 @@ def evaluate(video_id, user_id, model_path, concepts):
     annotations['frame_num'] = np.rint(annotations['timeinvideo'] * fps).astype(int)
 
     metrics = score_predictions(annotations, results, EVALUATION_IOU_THRESH, concepts)
-    insert_annotations_to_video(annotations, 'filtered.mp4')
+    insert_annotations_to_video(copy.deepcopy(annotations), 'filtered.mp4')
 
     concept_counts = get_counts(results, annotations)
     metrics = metrics.set_index('conceptid').join(concept_counts)
