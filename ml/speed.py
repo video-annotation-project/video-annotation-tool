@@ -20,8 +20,6 @@ DB_HOST = os.getenv("DB_HOST")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 
-FPS = 29.97002997002997
-
 
 client = boto3.client('s3',
     aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
@@ -67,8 +65,14 @@ def get_annotation_speed(bad_users):
           dist = round(math.sqrt( (x2 - x1)**2 + (y2 - y1)**2 ), 2)
           if dist > max_dist:
              max_dist = dist
-       statement = "UPDATE annotations SET speed=%f WHERE id=%d" % (max_dist, row.id)
-       cur.execute(statement)
+       statement = "UPDATE annotations SET speed=%f WHERE id=%d;" % (max_dist, row.id)
+       try:
+          cur = conn.cursor()
+          cur.execute(statement)
+          conn.commit()
+       except psycopg2.Error:
+          print("Error - Couldn't update speed for annotation id=" + str(row.id))
+       print(row.id, max_dist)
 
 def get_center(x1, x2, y1, y2):
    return (((x2 - x1) / 2) + x1, ((y2 - y1) / 2) + y1)
