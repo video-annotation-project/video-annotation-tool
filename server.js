@@ -181,18 +181,36 @@ app.patch(
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const id = req.query.id;
-    const verifiedby = req.query.verifiedby;
+    const verifiedby = req.user.id;
+    const queryText =
+      "UPDATE annotations SET verifiedby=$2, verifieddate=current_timestamp WHERE id=$1";
+    try {
+      let update = await psql.query(queryText, [id, verifiedby]);
+      res.json(update.rows);
+    } catch (error) {
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
+);
+
+app.patch(
+  "/api/annotationsVerifyWithChanges",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    const id = req.query.id;
+    const verifiedby = req.user.id;
     const conceptid = req.query.conceptid;
     const x1 = req.query.x1;
     const y1 = req.query.y1;
     const x2 = req.query.x2;
     const y2 = req.query.y2;
     const queryText =
-      "UPDATE annotations SET verifiedby=$2, conceptid=$3, x1=$4, y1=$5, x2=$6, y2=$7 WHERE id=$1";
+      "UPDATE annotations SET verifiedby=$2, verifieddate=current_timestamp, conceptid=$3, x1=$4, y1=$5, x2=$6, y2=$7 WHERE id=$1";
     try {
       let update = await psql.query(queryText, [
         id,
-        req.user.id,
+        verifiedby,
         conceptid,
         x1,
         y1,
@@ -326,7 +344,7 @@ app.get("/api/conceptImages/:id", async (req, res) => {
   }
 });
 
-app.get("/api/annoImg/:id", async (req, res) => {
+app.get("/api/annotationImageWithoutBox/:id", async (req, res) => {
   let s3 = new AWS.S3();
   queryText = "select image from annotations where id=$1";
   try {
