@@ -21,9 +21,6 @@ const styles = theme => ({
   button: {
     margin: theme.spacing.unit,
   },
-  actionsContainer: {
-    marginBottom: theme.spacing.unit * 2
-  },
   resetContainer: {
     padding: theme.spacing.unit * 3
   },
@@ -39,6 +36,7 @@ const styles = theme => ({
     paddingLeft: 0
   },
   img: {
+    padding: theme.spacing.unit * 3,
     width: '1280px',
     height: '720px',
   },
@@ -48,11 +46,7 @@ const styles = theme => ({
     gridGap: `${theme.spacing.unit * 3}px`,
   },
   paper: {
-    padding: theme.spacing.unit,
-    textAlign: 'center',
-    color: theme.palette.text.secondary,
-    whiteSpace: 'nowrap',
-    marginBottom: theme.spacing.unit,
+    padding: theme.spacing.unit * 5,
   },
 });
 
@@ -66,7 +60,8 @@ class Verify extends Component {
       selectedConcepts: [],
       annotations: [],
       error: null,
-      isLoaded: false
+      isLoaded: false,
+      noImg: false
     };
   }
 
@@ -146,48 +141,6 @@ class Verify extends Component {
       });
   };
 
-
-  encode = (data) => {
-    var str = data.reduce(function(a,b) { return a+String.fromCharCode(b) },'');
-    console.log(btoa(str).replace(/.{76}(?=.)/g,'$&\n'));
-    return btoa(str).replace(/.{76}(?=.)/g,'$&\n');
-  }
-
-  getImage = (id) => {
-    const config = {
-      headers: {
-        'Authorization': 'Bearer ' + localStorage.getItem('token')
-      }
-    };
-    var name;
-    console.log(this.state.annotations[id]);
-    if (this.state.annotations[id].imagewithbox) {
-      name = this.state.annotations[id].imagewithbox;
-    }
-    else {
-      return "no Img"
-    }
-    console.log(name);
-    axios.get(`/api/annotationImages/${name}`, config).then(res => {
-      console.log(res);
-      // this.setState({
-      return ('data:image/png;base64, ' + this.encode(res.data.image.data));
-        // isLoaded: true
-      // });
-    }).catch(error => {
-      console.log(error);
-      console.log(JSON.parse(JSON.stringify(error)));
-      if (!error.response) {
-        return;
-      }
-      let errMsg = error.response.data.detail ||
-        error.response.data.message || 'Error';
-      console.log(errMsg);
-      return errMsg;
-    });
-  };
-
-
   handleGetAnnotations = async () => {
     let annotations = await this.getAnnotations();
 
@@ -242,6 +195,12 @@ class Verify extends Component {
 
   handleListClick = async (name, id) => {
     let selected = this.state.annotations[id];
+    if (selected.image === null) {
+      this.setState({
+        noImg: true
+      })
+    }
+
     if (!selected.expanded === undefined) {
       selected.expanded = true;
     }
@@ -287,27 +246,41 @@ class Verify extends Component {
           >
             Filter Annotations
           </Button>
-          <Typography>Selected User: {this.state.selectedUser}</Typography>
+          {/* <Typography>Selected User: {this.state.selectedUser}</Typography>
           <Typography>Selected Videos: {this.state.selectedVideos}</Typography>
           <Typography>
             Selected Concepts: {this.state.selectedConcepts}
           </Typography>
           <Typography>
             Logged in User: {localStorage.getItem('username')}
-          </Typography>
+          </Typography> */}
           {/* list of annotations with a dropdown image */}
           <List disablePadding className={classes.root}>
             {this.state.annotations.map((data, index) => (
               <React.Fragment key={data.id}>
                 <ListItem button onClick={() => this.handleListClick(data.name, index)}>
                   <ListItemText
-                    primary={data.name + ' date: ' + data.dateannotated}
+                    primary={
+                      'At '+ Math.floor(data.timeinvideo/60) +
+                      ' minutes '+ data.timeinvideo%60 +
+                      ' seconds Annotated: ' +
+                      data.name
+                    }
+                    secondary={
+                      data.comment ? (
+                        "Annotation Comment: " + data.comment
+                      ):(
+                        ""
+                      )
+                    }
                   />
+
                   {data.expanded ? <ExpandLess /> : <ExpandMore />}
                 </ListItem>
                 <Collapse in={data.expanded} timeout='auto' unmountOnExit>
                   <ListItem className={classes.item}>
-                    {this.state.isLoaded ?
+                    {this.state.noImg ? <Typography className={classes.paper}>No Image</Typography> :
+                    this.state.isLoaded ? 
                       <img className={classes.img} src={`/api/annotationImageWithoutBox/${data.id}`} alt='error' />
                       : "...Loading"}
                   </ListItem>
