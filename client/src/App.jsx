@@ -5,12 +5,12 @@ import {
   Switch,
 } from "react-router-dom";
 
-import Navbar from './components/Navbar.jsx';
-import Home from './components/Home.jsx';
-import Concepts from './components/Concepts.jsx';
 import Annotate from './components/Annotate.jsx';
-import Login from './components/Login.jsx';
+import Concepts from './components/Concepts.jsx';
 import CreateUser from './components/CreateUser.jsx';
+import Home from './components/Home.jsx';
+import Login from './components/Login.jsx';
+import Navbar from './components/Navbar.jsx';
 import Profile from './components/Profile.jsx';
 import Report from './components/Report.jsx';
 import Models from './components/Models.jsx';
@@ -34,8 +34,8 @@ class App extends React.Component {
                     <Route exact path='/annotate' component={Annotate} />
                     <Route exact path='/report' component={Report} />
                     <Route exact path='/createUser' component={CreateUser} />
-                    <Route exact path='/models' component={Models} />
                     <Route exact path='/users' component={Users} />
+                    <Route exact path='/models' component={Models} />
                   </React.Fragment>
               ):(
                 <React.Fragment>

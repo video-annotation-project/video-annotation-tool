@@ -55,6 +55,7 @@ class DialogModal extends Component {
   render() {
     return (
       <Dialog
+        onClose={this.props.handleClose}
         open={this.props.open}
         aria-labelledby="form-dialog-title"
       >
