@@ -326,7 +326,7 @@ class RunModel extends Component {
       body,
       config).then(res => {
         console.log(this.state.socket);
-        
+
         this.state.socket.emit('reload run model');
       }).catch(error => {
         console.log(error);
@@ -357,8 +357,10 @@ class RunModel extends Component {
   handleStop = () => {
     this.setState({
       activeStep: 0,
+    }, () => {
+      this.updateBackendInfo();
+      this.stopEC2();
     });
-    this.stopEC2();
   };
 
   //Code for closing modal
