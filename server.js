@@ -133,7 +133,7 @@ app.get(
   "/api/unverifiedAnnotationsByUserVideoConcept",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    console.log(req.query);
+    // console.log(req.query);
 
     const selectedVideos = req.query.selectedVideos;
     const selectedConcepts = req.query.selectedConcepts;
@@ -180,8 +180,8 @@ app.patch(
   "/api/annotationsVerify",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    const id = req.body.id;
-    const verifiedby = req.user.username;
+    const id = req.query.id;
+    const verifiedby = req.user.id;
     const queryText =
       "UPDATE annotations SET verifiedby=$2, verifieddate=current_timestamp WHERE id=$1";
     try {
@@ -344,23 +344,6 @@ app.get("/api/conceptImages/:id", async (req, res) => {
   }
 });
 
-app.get("/api/annotationImageWithoutBox/:id", async (req, res) => {
-  let s3 = new AWS.S3();
-  queryText = "select image from annotations where id=$1";
-  try {
-    const response = await psql.query(queryText, [req.params.id]);
-    const picture = response.rows[0].image;
-    const params = {
-      Bucket: process.env.AWS_S3_BUCKET_NAME,
-      Key: process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + `${picture}`
-    };
-    s3.getObject(params)
-      .createReadStream()
-      .pipe(res);
-  } catch (error) {
-    res.status(400).json(error);
-  }
-});
 
 app.get(
   "/api/conceptsSelected",
@@ -828,25 +811,70 @@ app.delete(
 
 // in the future, this route as well as the /api/conceptImages route can
 // be circumvented by using cloudfront
-app.get(
-  "/api/annotationImages/:name",
-  passport.authenticate("jwt", { session: false }),
-  (req, res) => {
-    let s3 = new AWS.S3();
-    let key = process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + req.params.name;
-    var params = {
-      Key: key,
-      Bucket: process.env.AWS_S3_BUCKET_NAME
+// app.get(
+//   "/api/annotationImages/:name",
+//   passport.authenticate("jwt", { session: false }),
+//   (req, res) => {
+//     let s3 = new AWS.S3();
+//     let key = process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + req.params.name;
+//     var params = {
+//       Key: key,
+//       Bucket: process.env.AWS_S3_BUCKET_NAME
+//     };
+//     s3.getObject(params, (err, data) => {
+//       if (err) {
+//         res.status(500).json(err);
+//         return;
+//       }
+//       res.json({ image: data.Body });
+//     });
+//   }
+// );
+
+app.get("/api/annotationImages/:id", async (req, res) => {
+  let s3 = new AWS.S3();
+  queryText = "select image, imagewithbox from annotations where id=$1";
+  try {
+    const response = await psql.query(queryText, [req.params.id]);
+    var picture = null;
+    if (req.query.withBox === 'true') {
+      // console.log("withbox");
+      picture = response.rows[0].imagewithbox;
+    }
+    else {
+      // console.log("withoutbox");
+      picture = response.rows[0].image;
+    }
+    const params = {
+      Bucket: process.env.AWS_S3_BUCKET_NAME,
+      Key: process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + `${picture}`
     };
-    s3.getObject(params, (err, data) => {
-      if (err) {
-        res.status(500).json(err);
-        return;
-      }
-      res.json({ image: data.Body });
-    });
+    s3.getObject(params)
+      .createReadStream()
+      .pipe(res);
+  } catch (error) {
+    res.status(400).json(error);
   }
-);
+});
+
+
+// app.get("/api/annotationImageWithoutBox/:id", async (req, res) => {
+//   let s3 = new AWS.S3();
+//   queryText = "select image from annotations where id=$1";
+//   try {
+//     const response = await psql.query(queryText, [req.params.id]);
+//     const picture = response.rows[0].image;
+//     const params = {
+//       Bucket: process.env.AWS_S3_BUCKET_NAME,
+//       Key: process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + `${picture}`
+//     };
+//     s3.getObject(params)
+//       .createReadStream()
+//       .pipe(res);
+//   } catch (error) {
+//     res.status(400).json(error);
+//   }
+// });
 
 app.post(
   "/api/annotationImages",
