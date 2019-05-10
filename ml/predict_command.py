@@ -1,9 +1,9 @@
-from pgdb import connect
+from psycopg2 import connect
 import os
 from dotenv import load_dotenv
-import aiAnnotate
 from predict import predict_on_video
 import boto3
+import json
 
 load_dotenv(dotenv_path="../.env")
 
@@ -25,15 +25,21 @@ DB_PASSWORD = os.getenv("DB_PASSWORD")
 con = connect(database=DB_NAME, host=DB_HOST, user=DB_USER, password=DB_PASSWORD)
 cursor = con.cursor()
 # get annotations from test
-cursor.execute("SELECT * FROM MODELS WHERE video IS NOT NULL")
-rows = cursor.fetchall()
+cursor.execute("SELECT * FROM MODELTAB")
+row = cursor.fetchone()
+info = row[1]
+
+if info['activeStep'] != 3:
+    exit()
+
+s3.download_file(S3_BUCKET, 'models/' + str(info['modelSelected']) + '.h5', 'current_weights.h5')
+
+cursor.execute("SELECT * FROM MODELS WHERE name='" + str(info['modelSelected']) + "'")
+model = cursor.fetchone()
+
+predict_on_video(int(info['videoSelected']), 'current_weights.h5', model[2], upload_annotations=True, userid=int(info['userSelected']))
+
+cursor.execute("Update modeltab SET info =  '{\"activeStep\": 0, \"modelSelected\":\"\",\"videoSelected\":\"\",\"userSelected\":\"\"}' WHERE option = 'runmodel'")
+con.commit()
 con.close()    
-
-for row in rows:
-    weights = s3.get_object(Bucket=S3_BUCKET, Key= SRC_IMG_FOLDER +first['image'])
-    download_file(S3_BUCKET, 'weights/' + row.name + '.h5', 'current_weights.h5')
-    predict_on_video(row.video, 'current_weights.h5', row.concepts, upload_annotations=True, userid=row.userid)
-
-
-
-
+os.system("sudo shutdown -h")
