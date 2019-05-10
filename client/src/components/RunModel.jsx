@@ -30,6 +30,9 @@ import IconButton from '@material-ui/core/IconButton';
 import Description from '@material-ui/icons/Description';
 import VideoMetadata from './VideoMetadata.jsx';
 
+//Websockets
+import io from 'socket.io-client';
+
 const styles = theme => ({
   root: {
     width: '90%'
@@ -64,6 +67,25 @@ const styles = theme => ({
 class RunModel extends Component {
   constructor(props) {
     super(props);
+    // here we do a manual conditional proxy because React won't do it for us
+    let socket;
+    if (window.location.origin === 'http://localhost:3000') {
+      console.log('manually proxying socket')
+      socket = io('http://localhost:3001');
+    } else {
+      socket = io();
+    }
+    socket.on('connect', () => {
+      console.log('socket connected!');
+    });
+    socket.on('reconnect_attempt', (attemptNumber) => {
+      console.log('reconnect attempt', attemptNumber);
+    });
+    socket.on('disconnect', reason => {
+      console.log(reason);
+    });
+    socket.on('reload run model', this.loadOptionInfo);
+
     this.state = {
       models: [],
       modelSelected: '',
@@ -73,7 +95,8 @@ class RunModel extends Component {
       userSelected: '',
       activeStep: 0,
       errorMsg: null,
-      openedVideo: null
+      openedVideo: null,
+      socket: socket
     };
   }
 
@@ -93,9 +116,38 @@ class RunModel extends Component {
 
 
   componentDidMount = () => {
+    this.loadOptionInfo();
     this.loadExistingModels();
     this.loadVideoList();
     this.loadUserList();
+  }
+
+  componentWillUnmount = () => {
+    this.state.socket.disconnect();
+  }
+
+  loadOptionInfo = () => {
+    const config = {
+      headers: {
+        'Authorization': 'Bearer ' + localStorage.getItem('token')
+      }
+    }
+    let option = 'runmodel';
+    axios.get(`/api/modelTab/${option}`, config).then(res => {
+      const info = res.data[0].info;
+      this.setState({
+        activeStep: info.activeStep,
+        userSelected: info.userSelected,
+        videoSelected: info.videoSelected,
+        modelSelected: info.modelSelected
+      });
+    }).catch(error => {
+      console.log('Error in get /api/modelTab');
+      console.log(error);
+      if (error.response) {
+        console.log(error.response.data.detail);
+      }
+    })
   }
 
   loadExistingModels = () => {
@@ -253,6 +305,35 @@ class RunModel extends Component {
     }
   }
 
+  updateBackendInfo = (step) => {
+    const config = {
+      headers: {
+        'Authorization': 'Bearer ' + localStorage.getItem('token')
+      }
+    };
+    let info = {
+      activeStep: this.state.activeStep,
+      modelSelected: this.state.modelSelected,
+      userSelected: this.state.userSelected,
+      videoSelected: this.state.videoSelected
+    };
+    const body = {
+      'info': JSON.stringify(info)
+    };
+    // update SQL database
+    axios.put(
+      '/api/modelTab/runmodel',
+      body,
+      config).then(res => {
+        console.log(this.state.socket);
+        
+        this.state.socket.emit('reload run model');
+      }).catch(error => {
+        console.log(error);
+        console.log(JSON.parse(JSON.stringify(error)));
+      });
+  }
+
   handleNext = () => {
     this.setState(state => ({
       activeStep: state.activeStep + 1,
@@ -261,14 +342,16 @@ class RunModel extends Component {
         console.log('Last Step Starting Model...');
         this.startEC2();
       }
+      this.updateBackendInfo();
     });
-
   };
 
   handleBack = () => {
     this.setState(state => ({
       activeStep: state.activeStep - 1,
-    }));
+    }), () => {
+      this.updateBackendInfo();
+    });
   };
 
   handleStop = () => {
@@ -401,7 +484,6 @@ class RunModel extends Component {
               the transition time of VideoMetadata to zero. */}
             handleClose={this.closeVideoMetadata}
             openedVideo={openedVideo}
-            socket={this.props.socket}
             loadVideos={this.props.loadVideos}
             modelTab={true}
           />
