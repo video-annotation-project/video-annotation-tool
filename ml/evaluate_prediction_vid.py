@@ -134,6 +134,7 @@ def insert_annotations_to_video(annotations, filename):
     while not vid.isOpened():
        continue
 
+    frames = []
     check = True
     while True:
        check, frame = vid.read()
