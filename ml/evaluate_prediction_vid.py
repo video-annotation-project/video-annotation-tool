@@ -144,10 +144,11 @@ def insert_annotations_to_video(annotations, filename):
        frames.append(frame)
     vid.release()
 
+    validation = annotations.apply(resize, axis=1)
     for frame_num, frame in enumerate(frames):
-        for annot in annotations[annotations.frame_num == frame_num].itertuples():
-            x1, y1, x2, y2 = int(annot.x1), int(annot.y1), int(annot.x2), int(annot.y2)
-            cv2.rectangle(frame, (x1, y1), (x2, y2), (255, 0, 0), 2)
+        for val in validation[validation.frame_num == frame_num].itertuples():
+            x1, y1, x2, y2 = int(val.x1), int(val.y1), int(val.x2), int(val.y2)
+            cv2.rectangle(frame, (x1, y1), (x2, y2), (255, 0, 0), 3)
     predict.save_video("interlaced_" + filename, frames, fps)
 
 
