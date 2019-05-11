@@ -13,6 +13,7 @@ import ExpandMore from "@material-ui/icons/ExpandMore";
 import Button from "@material-ui/core/Button";
 
 import VerifySelection from "./VerifySelection.jsx";
+import VerifyAnnotations from "./VerifyAnnotations.jsx";
 
 const styles = theme => ({
   root: {
