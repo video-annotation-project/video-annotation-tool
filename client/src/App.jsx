@@ -1,17 +1,16 @@
 import React from "react";
 import { Redirect, Route, Switch } from "react-router-dom";
 
-import Navbar from "./components/Navbar.jsx";
-import Home from "./components/Home.jsx";
-import Concepts from "./components/Concepts.jsx";
 import Annotate from "./components/Annotate.jsx";
-import Login from "./components/Login.jsx";
+import Concepts from "./components/Concepts.jsx";
 import CreateUser from "./components/CreateUser.jsx";
+import Home from "./components/Home.jsx";
+import Login from "./components/Login.jsx";
+import Navbar from "./components/Navbar.jsx";
 import Profile from "./components/Profile.jsx";
 import Report from "./components/Report.jsx";
-import Models from "./components/Models.jsx";
-import VerifySelection from "./components/VerifySelection.jsx";
 import Verify from "./components/Verify.jsx";
+import Models from "./components/Models.jsx";
 import Users from "./components/Users.jsx";
 
 require("dotenv").config();
@@ -41,11 +40,6 @@ class App extends React.Component {
                   <Route exact path="/annotate" component={Annotate} />
                   <Route exact path="/report" component={Report} />
                   <Route exact path="/verify" component={Verify} />
-                  <Route
-                    exact
-                    path="/verifySelection"
-                    component={VerifySelection}
-                  />
                 </React.Fragment>
               )}
               <Route exact path="/profile" component={Profile} />

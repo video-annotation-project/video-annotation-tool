@@ -61,7 +61,7 @@ class Verify extends Component {
       selectedConcepts: [],
       annotations: [],
       error: null,
-      isLoaded: false,
+      isLoaded: false
     };
   }
 
@@ -141,36 +141,6 @@ class Verify extends Component {
       });
   };
 
-  verifyAnnotations = async (id, index) => {
-    console.log("Verify called");
-    const body = {
-      id: id
-    };
-    const config = {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + localStorage.getItem("token")
-      }
-    };
-    return axios
-      .patch(`/api/annotationsVerify/`, body, config)
-      .then(res => {
-        if(this.state.annotations[index].disabled === undefined) {
-          console.log("undefined");
-          this.state.annotations[index].disabled = true;
-        }
-        this.setState({
-            annotations: this.state.annotations
-        });
-        return res.data;
-      })
-      .catch(error => {
-        this.setState({
-          error: error
-        });
-      });
-  };
-
   handleGetAnnotations = async () => {
     let annotations = await this.getAnnotations();
 
@@ -234,6 +204,36 @@ class Verify extends Component {
     this.setState({
       isLoaded: true
     });
+  };
+
+  verifyAnnotations = async (id, index) => {
+    console.log("Verify called");
+    const body = {
+      id: id
+    };
+    const config = {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + localStorage.getItem("token")
+      }
+    };
+    return axios
+      .patch(`/api/annotationsVerify/`, body, config)
+      .then(res => {
+        if (this.state.annotations[index].disabled === undefined) {
+          console.log("undefined");
+          this.state.annotations[index].disabled = true;
+        }
+        this.setState({
+          annotations: this.state.annotations
+        });
+        return res.data;
+      })
+      .catch(error => {
+        this.setState({
+          error: error
+        });
+      });
   };
 
   render() {
@@ -320,19 +320,23 @@ class Verify extends Component {
                     )}
                   </ListItem>
                   <ListItem>
-                    {data.disabled ? <Button disabled>Verified</Button> :
-                    <Button
-                      onClick={() => this.verifyAnnotations(data.id, index)}
-                      color="primary"
-                      className={classes.button}
-                    >
-                      Verify
-                    </Button>}
+                    {data.disabled ? (
+                      <Button disabled>Verified</Button>
+                    ) : (
+                      <Button
+                        onClick={() => this.verifyAnnotations(data.id, index)}
+                        color="primary"
+                        className={classes.button}
+                      >
+                        Verify
+                      </Button>
+                    )}
                   </ListItem>
                 </Collapse>
               </React.Fragment>
             ))}
           </List>
+          <VerifyAnnotations />
         </Paper>
       );
     }

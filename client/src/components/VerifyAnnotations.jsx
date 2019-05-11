@@ -42,7 +42,11 @@ class VerifyAnnotations extends Component {
   state = {};
 
   render() {
-    return <React.Fragment>Hello</React.Fragment>;
+    return (
+      <React.Fragment>
+        <h1 style={{ color: "red" }}>This page is still in progress</h1>
+      </React.Fragment>
+    );
   }
 }
 
