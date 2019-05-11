@@ -6,7 +6,6 @@ import Step from "@material-ui/core/Step";
 import StepLabel from "@material-ui/core/StepLabel";
 import StepContent from "@material-ui/core/StepContent";
 import Button from "@material-ui/core/Button";
-import Paper from "@material-ui/core/Paper";
 import Typography from "@material-ui/core/Typography";
 import List from "@material-ui/core/List";
 
@@ -148,20 +147,24 @@ class VerifySelection extends React.Component {
                 <div className={classes.actionsContainer}>
                   <div>
                     <Button
+                      variant="contained"
+                      color="primary"
+                      disabled={this.didNotSelect(index)}
+                      onClick={
+                        activeStep === steps.length - 1
+                          ? this.props.unmountSelection
+                          : this.handleNext
+                      }
+                      className={classes.button}
+                    >
+                      {activeStep === steps.length - 1 ? "Finish" : "Next"}
+                    </Button>
+                    <Button
                       disabled={activeStep === 0}
                       onClick={this.handleReset}
                       className={classes.button}
                     >
                       Reset
-                    </Button>
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      disabled={this.didNotSelect(index)}
-                      onClick={this.handleNext}
-                      className={classes.button}
-                    >
-                      {activeStep === steps.length - 1 ? "Finish" : "Next"}
                     </Button>
                   </div>
                 </div>
@@ -169,22 +172,6 @@ class VerifySelection extends React.Component {
             </Step>
           ))}
         </Stepper>
-        {activeStep === steps.length && (
-          <Paper square elevation={0} className={classes.resetContainer}>
-            <Typography>All steps completed - you&apos;re finished</Typography>
-            <Button onClick={this.handleReset} className={classes.button}>
-              Reset
-            </Button>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={this.props.unmountSelection}
-              className={classes.button}
-            >
-              Verify
-            </Button>
-          </Paper>
-        )}
       </div>
     );
   }

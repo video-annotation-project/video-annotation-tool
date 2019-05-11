@@ -264,13 +264,6 @@ class Verify extends Component {
           elevation={0}
           className={this.props.classes.resetContainer}
         >
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={this.unmountSelection}
-          >
-            Filter Annotations
-          </Button>
           {/* <Typography>Selected User: {this.state.selectedUser}</Typography>
           <Typography>Selected Videos: {this.state.selectedVideos}</Typography>
           <Typography>
@@ -336,7 +329,10 @@ class Verify extends Component {
               </React.Fragment>
             ))}
           </List>
-          <VerifyAnnotations />
+          <VerifyAnnotations
+            annotations={this.state.annotations}
+            unmountSelection={this.unmountSelection}
+          />
         </Paper>
       );
     }

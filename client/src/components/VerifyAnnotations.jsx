@@ -1,6 +1,8 @@
 import React, { Component } from "react";
 import PropTypes from "prop-types";
 import { withStyles } from "@material-ui/core/styles";
+import { Paper, Typography } from "@material-ui/core";
+import Button from "@material-ui/core/Button";
 
 const styles = theme => ({
   root: {
@@ -8,13 +10,6 @@ const styles = theme => ({
   },
   button: {
     margin: theme.spacing.unit
-  },
-  resetContainer: {
-    padding: theme.spacing.unit * 3
-  },
-  list: {
-    width: "100%",
-    backgroundColor: theme.palette.background.paper
   },
   item: {
     display: "inline",
@@ -39,13 +34,57 @@ const styles = theme => ({
 });
 
 class VerifyAnnotations extends Component {
-  state = {};
+  constructor(props) {
+    super(props);
+    this.state = {
+      currentIndex: 0
+    };
+  }
+
+  nextAnnotation = () => {
+    this.setState({
+      currentIndex: this.state.currentIndex + 1
+    });
+  };
 
   render() {
+    const { classes } = this.props;
+    var annotation = this.props.annotations[this.state.currentIndex];
     return (
-      <React.Fragment>
-        <h1 style={{ color: "red" }}>This page is still in progress</h1>
-      </React.Fragment>
+      <Paper>
+        {this.state.currentIndex < this.props.annotations.length ? (
+          <React.Fragment>
+            <Typography className={classes.paper}>{annotation.id}</Typography>
+            <Button
+              className={classes.button}
+              variant="contained"
+              color="primary"
+              onClick={this.nextAnnotation}
+            >
+              Verify
+            </Button>
+            <Button
+              className={classes.button}
+              variant="contained"
+              onClick={this.nextAnnotation}
+            >
+              Ignore
+            </Button>
+          </React.Fragment>
+        ) : (
+          <React.Fragment>
+            <Typography className={classes.paper}>Finished</Typography>
+            <Button
+              className={classes.button}
+              variant="contained"
+              color="primary"
+              onClick={this.props.unmountSelection}
+            >
+              Filter Annotations
+            </Button>
+          </React.Fragment>
+        )}
+      </Paper>
     );
   }
 }
