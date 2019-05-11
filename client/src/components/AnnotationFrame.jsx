@@ -36,39 +36,6 @@ class AnnotationFrame extends Component {
     };
   }
 
-  encode = (data) => {
-    var str = data.reduce(function(a,b) { return a+String.fromCharCode(b) },'');
-    return btoa(str).replace(/.{76}(?=.)/g,'$&\n');
-  }
-
-  componentDidMount = async () => {
-    const config = {
-      headers: {
-        'Authorization': 'Bearer ' + localStorage.getItem('token')
-      }
-    };
-    const name = this.props.annotation.imagewithbox;
-    axios.get(`/api/annotationImages/${name}`, config).then(res => {
-      this.setState({
-        image: 'data:image/png;base64, ' + this.encode(res.data.image.data),
-        isLoaded: true
-      });
-    }).catch(error => {
-      console.log(error);
-      console.log(JSON.parse(JSON.stringify(error)));
-      if (!error.response) {
-        return;
-      }
-      let errMsg = error.response.data.detail ||
-        error.response.data.message || 'Error';
-      console.log(errMsg);
-      this.setState({
-        isLoaded: true,
-        error: errMsg
-      });
-    });
-  };
-
   editAnnotation = (comment, unsure) => {
     if (comment === "") {
       comment = this.props.annotation.comment;
@@ -117,11 +84,9 @@ class AnnotationFrame extends Component {
   }
 
   render () {
-    const { error, isLoaded, image } = this.state;
+    // console.log(this.props)
+    const { error} = this.state;
     const { classes } = this.props;
-    if (!isLoaded) {
-      return <div>Loading...</div>;
-    }
     if (error)  {
       return <div>Error: {error}</div>;
     }
@@ -139,7 +104,7 @@ class AnnotationFrame extends Component {
           handleConceptClick={this.handleConceptClick}
         />
         <ListItem className={classes.item}>
-          <img className={classes.img} id='imageId' src={image} alt='error' />
+          <img className={classes.img} id='imageId' src={`/api/annotationImages/${this.props.annotation.id}?withBox=true`} alt='error' />
         </ListItem>
       </React.Fragment>
     );

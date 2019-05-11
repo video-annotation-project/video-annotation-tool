@@ -62,7 +62,6 @@ class Verify extends Component {
       annotations: [],
       error: null,
       isLoaded: false,
-      noImg: false
     };
   }
 
@@ -142,7 +141,7 @@ class Verify extends Component {
       });
   };
 
-  verifyAnnotations = async id => {
+  verifyAnnotations = async (id, index) => {
     console.log("Verify called");
     const body = {
       id: id
@@ -155,7 +154,16 @@ class Verify extends Component {
     };
     return axios
       .patch(`/api/annotationsVerify/`, body, config)
-      .then(res => res.data)
+      .then(res => {
+        if(this.state.annotations[index].disabled === undefined) {
+          console.log("undefined");
+          this.state.annotations[index].disabled = true;
+        }
+        this.setState({
+            annotations: this.state.annotations
+        });
+        return res.data;
+      })
       .catch(error => {
         this.setState({
           error: error
@@ -217,13 +225,8 @@ class Verify extends Component {
 
   handleListClick = async (name, id) => {
     let selected = this.state.annotations[id];
-    if (selected.image === null) {
-      this.setState({
-        noImg: true
-      });
-    }
 
-    if (!selected.expanded === undefined) {
+    if (selected.expanded === undefined) {
       selected.expanded = true;
     } else {
       selected.expanded = !selected.expanded;
@@ -234,6 +237,7 @@ class Verify extends Component {
   };
 
   render() {
+    // console.log(this.state);
     const { classes } = this.props;
     let selection = "";
     if (this.state.selectionMounted) {
@@ -301,14 +305,14 @@ class Verify extends Component {
                 </ListItem>
                 <Collapse in={data.expanded} timeout="auto" unmountOnExit>
                   <ListItem className={classes.item}>
-                    {this.state.noImg ? (
+                    {!data.image ? (
                       <Typography className={classes.paper}>
                         No Image
                       </Typography>
                     ) : this.state.isLoaded ? (
                       <img
                         className={classes.img}
-                        src={`/api/annotationImageWithoutBox/${data.id}`}
+                        src={`/api/annotationImages/${data.id}?withBox=true`}
                         alt="error"
                       />
                     ) : (
@@ -316,13 +320,14 @@ class Verify extends Component {
                     )}
                   </ListItem>
                   <ListItem>
+                    {data.disabled ? <Button disabled>Verified</Button> :
                     <Button
-                      onClick={() => this.verifyAnnotations(data.id)}
+                      onClick={() => this.verifyAnnotations(data.id, index)}
                       color="primary"
                       className={classes.button}
                     >
                       Verify
-                    </Button>
+                    </Button>}
                   </ListItem>
                 </Collapse>
               </React.Fragment>
