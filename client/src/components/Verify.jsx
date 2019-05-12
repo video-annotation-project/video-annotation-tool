@@ -3,14 +3,6 @@ import axios from "axios";
 import PropTypes from "prop-types";
 import { withStyles } from "@material-ui/core/styles";
 import Paper from "@material-ui/core/Paper";
-import Typography from "@material-ui/core/Typography";
-import List from "@material-ui/core/List";
-import ListItem from "@material-ui/core/ListItem";
-import ListItemText from "@material-ui/core/ListItemText";
-import Collapse from "@material-ui/core/Collapse";
-import ExpandLess from "@material-ui/icons/ExpandLess";
-import ExpandMore from "@material-ui/icons/ExpandMore";
-import Button from "@material-ui/core/Button";
 
 import VerifySelection from "./VerifySelection.jsx";
 import VerifyAnnotations from "./VerifyAnnotations.jsx";
@@ -237,8 +229,6 @@ class Verify extends Component {
   };
 
   render() {
-    // console.log(this.state);
-    const { classes } = this.props;
     let selection = "";
     if (this.state.selectionMounted) {
       selection = (
@@ -264,71 +254,6 @@ class Verify extends Component {
           elevation={0}
           className={this.props.classes.resetContainer}
         >
-          {/* <Typography>Selected User: {this.state.selectedUser}</Typography>
-          <Typography>Selected Videos: {this.state.selectedVideos}</Typography>
-          <Typography>
-            Selected Concepts: {this.state.selectedConcepts}
-          </Typography>
-          <Typography>
-            Logged in User: {localStorage.getItem('username')}
-          </Typography> */}
-          {/* list of annotations with a dropdown image */}
-          <List disablePadding className={classes.root}>
-            {this.state.annotations.map((data, index) => (
-              <React.Fragment key={data.id}>
-                <ListItem
-                  button
-                  onClick={() => this.handleListClick(data.name, index)}
-                >
-                  <ListItemText
-                    primary={
-                      "At " +
-                      Math.floor(data.timeinvideo / 60) +
-                      " minutes " +
-                      (data.timeinvideo % 60) +
-                      " seconds Annotated: " +
-                      data.name
-                    }
-                    secondary={
-                      data.comment ? "Annotation Comment: " + data.comment : ""
-                    }
-                  />
-
-                  {data.expanded ? <ExpandLess /> : <ExpandMore />}
-                </ListItem>
-                <Collapse in={data.expanded} timeout="auto" unmountOnExit>
-                  <ListItem className={classes.item}>
-                    {!data.image ? (
-                      <Typography className={classes.paper}>
-                        No Image
-                      </Typography>
-                    ) : this.state.isLoaded ? (
-                      <img
-                        className={classes.img}
-                        src={`/api/annotationImages/${data.id}?withBox=true`}
-                        alt="error"
-                      />
-                    ) : (
-                      "...Loading"
-                    )}
-                  </ListItem>
-                  <ListItem>
-                    {data.disabled ? (
-                      <Button disabled>Verified</Button>
-                    ) : (
-                      <Button
-                        onClick={() => this.verifyAnnotations(data.id, index)}
-                        color="primary"
-                        className={classes.button}
-                      >
-                        Verify
-                      </Button>
-                    )}
-                  </ListItem>
-                </Collapse>
-              </React.Fragment>
-            ))}
-          </List>
           <VerifyAnnotations
             annotations={this.state.annotations}
             unmountSelection={this.unmountSelection}
