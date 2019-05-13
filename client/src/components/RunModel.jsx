@@ -244,8 +244,8 @@ class RunModel extends Component {
             <Radio
               name='videoSelected'
               color='default'
-              checked={this.state.videoSelected === video.filename}
-              value={video.filename}
+              checked={this.state.videoSelected === video.id.toString()}
+              value={video.id.toString()}
               onChange={this.handleSelect}
             />
             {video.filename}
@@ -278,7 +278,7 @@ class RunModel extends Component {
           {this.state.users.map(user => (
             <MenuItem
               key={user.id}
-              value={user.username}
+              value={user.id}
             >
               {user.username}
             </MenuItem>

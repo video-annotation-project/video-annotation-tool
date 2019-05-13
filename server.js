@@ -1006,7 +1006,7 @@ app.put('/api/runModel', passport.authenticate('jwt', { session: false }),
     let ec2 = new AWS.EC2({ region: 'us-west-1' });
     var params = {
       InstanceIds: [
-        "i-0627124479fe1ce98"
+        "i-0453aa70079c1be03"
       ]
     };
     ec2.startInstances(params, function (err, data) {
@@ -1021,7 +1021,7 @@ app.delete('/api/runModel', passport.authenticate('jwt', { session: false }),
     let ec2 = new AWS.EC2({ region: 'us-west-1' });
     var params = {
       InstanceIds: [
-        "i-0627124479fe1ce98"
+        "i-0453aa70079c1be03"
       ]
     };
     ec2.stopInstances(params, function (err, data) {
