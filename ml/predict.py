@@ -135,8 +135,12 @@ class Tracked_object:
 
    def update(self, frame, frame_num):
       success, box = self.tracker.update(frame)
+      (x1, y1, w, h) = [int(v) for v in box]
+      cx = x1 + w/2
+      cy = y1 + h/2
+      if not ((0 < cx < VIDEO_WIDTH) and (0 < cy < VIDEO_HEIGHT)):
+        return False
       if success:
-         (x1, y1, w, h) = [int(v) for v in box]
          self.x1 = x1
          self.x2 = x1 + w
          self.y1 = y1
