@@ -150,8 +150,9 @@ def insert_annotations_to_video(annotations, filename):
     #         x1, y1, x2, y2 = int(val.x1), int(val.y1), int(val.x2), int(val.y2)
     #         cv2.rectangle(frame, (x1, y1), (x2, y2), (255, 0, 0), 3)
     for val in validation.itertuples():
-        x1, y1, x2, y2 = int(val.x1), int(val.y1), int(val.x2), int(val.y2)
-        cv2.rectangle(frames[val.frame_num], (x1, y1), (x2, y2), (255, 0, 0), 3)
+        if val.conceptid in CONCEPTS:
+            x1, y1, x2, y2 = int(val.x1), int(val.y1), int(val.x2), int(val.y2)
+            cv2.rectangle(frames[val.frame_num], (x1, y1), (x2, y2), (0, 0, 255), 3)
         
     predict.save_video("interlaced_" + filename, frames, fps)
 
