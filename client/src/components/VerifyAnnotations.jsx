@@ -4,6 +4,8 @@ import PropTypes from "prop-types";
 import { withStyles } from "@material-ui/core/styles";
 import { Typography } from "@material-ui/core";
 import Button from "@material-ui/core/Button";
+import Rnd from 'react-rnd';
+import { red } from "@material-ui/core/colors";
 
 const styles = theme => ({
   root: {
@@ -31,7 +33,13 @@ const styles = theme => ({
   },
   paper: {
     padding: theme.spacing.unit
-  }
+  },
+  dragBox: {
+    margin: '0px',
+    backgroundColor: 'transparent',
+    border: '2px coral solid',
+    borderStyle: 'ridge'
+  },
 });
 
 class VerifyAnnotations extends Component {
@@ -71,6 +79,19 @@ class VerifyAnnotations extends Component {
     });
   };
 
+  redrawAnnotation = () => {
+    var redraw;
+    if (this.state.redraw) {
+      redraw = false
+    }
+    else {
+      redraw = true
+    }
+    this.setState({
+      redraw: redraw
+    });
+  };
+
   render() {
     const { classes } = this.props;
     var annotation = this.props.annotations[this.state.currentIndex];
@@ -94,15 +115,62 @@ class VerifyAnnotations extends Component {
             {!annotation.image ? (
               <Typography className={classes.paper}>No Image</Typography>
             ) : (
-              <img
-                className={classes.img}
-                src={`/api/annotationImages/${annotation.id}?withBox=true`}
-                alt="error"
-              />
+              <div>
+                {this.state.redraw ?   
+                  <div>              
+                    <Rnd 
+                      id="dragBox"
+                      className={classes.dragBox}
+                      default={{
+                        x: 30,
+                        y: 30,
+                        width: 60,
+                        height: 60,
+                      }}
+                      minWidth={25}
+                      minHeight={25}
+                      maxWidth={900}
+                      maxHeight={650}
+                      bounds="parent"
+                    >
+                    </Rnd> 
+                    <img
+                    className={classes.img}
+                    src={`/api/annotationImages/${annotation.id}?withBox=false`}
+                    alt="error"
+                    />
+                  </div> :
+                  <img
+                    className={classes.img}
+                    src={`/api/annotationImages/${annotation.id}?withBox=true`}
+                    alt="error"
+                  />}
+              </div>
             )}
             <Typography className={classes.paper}>
               {this.state.currentIndex + 1} of {this.props.annotations.length}
             </Typography>
+            {this.state.redraw ? 
+              <Button
+                className={classes.button}
+                variant="contained"
+                onClick={() => {
+                  this.redrawAnnotation();
+                }}
+              >
+                Cancel
+              </Button> :
+              <Button
+              className={classes.button}
+              variant="contained"
+              color="primary"
+              onClick={() => {
+                this.redrawAnnotation();
+              }}
+              >
+                Redraw Box
+              </Button>
+            }
             <Button
               className={classes.button}
               variant="contained"
