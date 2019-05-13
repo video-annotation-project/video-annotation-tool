@@ -68,11 +68,12 @@ def predict_on_video(videoid, model_weights, concepts, upload_annotations=False,
    results, frames = predict_frames(frames, fps, model)
 
    # results.frame_num = results.frame_num+ 160 * 30
-   save_video(frames, fps)
+   save_video('output.mp4', frames, fps)
 
    # results = conf_limit_objects(results, OBJECT_MAX_CONFIDENCE_THRESH)
    results = propagate_conceptids(results, concepts)
    results = length_limit_objects(results, MIN_FRAMES_THRESH)
+   generate_filtered_video('filtered.mp4', copy.deepcopy(original_frames), fps, results)
     
    if upload_annotations:
      con = psycopg2.connect(database = DB_NAME,
@@ -343,14 +344,20 @@ def get_predictions(frame, model):
       filtered_predictions.append((box,score,label))
    return filtered_predictions
 
-def save_video(frames, fps):
+def save_video(filename, frames, fps):
    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-   # SHOULD THIS FPS BE 29.97... or 30.0??
-   out = cv2.VideoWriter('output.mp4',fourcc, fps, frames[0].shape[::-1][1:3])
+   out = cv2.VideoWriter(filename, fourcc, fps, frames[0].shape[::-1][1:3])
    for frame in frames:
       out.write(frame)
    out.release()
    cv2.destroyAllWindows()
+
+def generate_filtered_video(filename, frames, fps, results):
+  for frame_num, frame in enumerate(frames):
+     for res in results[results.frame_num == frame_num].itertuples(): # draw boxes 
+        x1, y1, x2, y2 = int(res.x1), int(res.y1), int(res.x2), int(res.y2)
+        cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+  save_video(filename, frames, fps)
 
 def does_match_existing_tracked_object(detection, currently_tracked_objects):
     # calculate IOU for each
