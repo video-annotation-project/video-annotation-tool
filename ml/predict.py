@@ -68,12 +68,12 @@ def predict_on_video(videoid, model_weights, concepts, upload_annotations=False,
    results, frames = predict_frames(frames, fps, model)
 
    # results.frame_num = results.frame_num+ 160 * 30
-   save_video('output.mp4', frames, fps)
+   # save_video('output.mp4', frames, fps)
 
    # results = conf_limit_objects(results, OBJECT_MAX_CONFIDENCE_THRESH)
    results = propagate_conceptids(results, concepts)
    results = length_limit_objects(results, MIN_FRAMES_THRESH)
-   generate_filtered_video('filtered.mp4', copy.deepcopy(original_frames), fps, results)
+   generate_video('output.mp4', copy.deepcopy(original_frames), fps, results)
     
    if upload_annotations:
      con = psycopg2.connect(database = DB_NAME,
@@ -138,9 +138,11 @@ class Tracked_object:
    def update(self, frame, frame_num):
       success, box = self.tracker.update(frame)
       (x1, y1, w, h) = [int(v) for v in box]
-      cx = x1 + w/2
-      cy = y1 + h/2
-      if not ((0 < cx < VIDEO_WIDTH) and (0 < cy < VIDEO_HEIGHT)):
+      # cx = x1 + w/2
+      # cy = y1 + h/2
+      # if not ((0 < cx < VIDEO_WIDTH) and (0 < cy < VIDEO_HEIGHT)):
+      #   return False
+      if ((x1 < 0) or (x1+w > VIDEO_WIDTH) or (y1 < 0) or (y2+h > VIDEO_HEIGHT)):
         return False
       if success:
          self.x1 = x1
@@ -263,10 +265,14 @@ def predict_frames(video_frames, fps, model):
                  currently_tracked_objects.append(tracked_object)
              else:
                  matched_object.reinit(detection, frame, frame_num)
+
+
+
       # draw boxes 
       for obj in currently_tracked_objects:
          (x, y, w, h) = obj.box
          cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+
    results = pd.concat(annotations)
    results.to_csv('results.csv')
    return results, video_frames
@@ -348,6 +354,12 @@ def get_predictions(frame, model):
       filtered_predictions.append((box,score,label))
    return filtered_predictions
 
+def generate_video(filename, frames, fps, results):
+  for res in results.itertuples():
+    x1, y1, x2, y2 = int(res.x1), int(res.y1), int(res.x2), int(res.y2)
+        cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+  save_video(filename, frames, fps)
+
 def save_video(filename, frames, fps):
    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
    out = cv2.VideoWriter(filename, fourcc, fps, frames[0].shape[::-1][1:3])
@@ -355,13 +367,6 @@ def save_video(filename, frames, fps):
       out.write(frame)
    out.release()
    cv2.destroyAllWindows()
-
-def generate_filtered_video(filename, frames, fps, results):
-  for frame_num, frame in enumerate(frames):
-     for res in results[results.frame_num == frame_num].itertuples(): # draw boxes 
-        x1, y1, x2, y2 = int(res.x1), int(res.y1), int(res.x2), int(res.y2)
-        cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-  save_video(filename, frames, fps)
 
 def does_match_existing_tracked_object(detection, currently_tracked_objects):
     # calculate IOU for each
