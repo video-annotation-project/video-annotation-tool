@@ -142,8 +142,8 @@ class Tracked_object:
       # cy = y1 + h/2
       # if not ((0 < cx < VIDEO_WIDTH) and (0 < cy < VIDEO_HEIGHT)):
       #   return False
-      if ((x1 < 0) or (x1+w > VIDEO_WIDTH) or (y1 < 0) or (y1+h > VIDEO_HEIGHT)):
-        return False
+      # if ((x1 < 0) or (x1+w > VIDEO_WIDTH) or (y1 < 0) or (y1+h > VIDEO_HEIGHT)):
+      #   return False
       if success:
          self.x1 = x1
          self.x2 = x1 + w
@@ -357,7 +357,8 @@ def get_predictions(frame, model):
 def generate_video(filename, frames, fps, results):
    for res in results.itertuples():
      x1, y1, x2, y2 = int(res.x1), int(res.y1), int(res.x2), int(res.y2)
-     cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+     cv2.rectangle(frames[res.frame_num], (x1, y1), (x2, y2), (0, 255, 0), 2)
+     cv2.putText(frames[res._frame_num], res.conceptid, (x1, y1), 'FONT_HERSHEY_SIMPLEX', (0, 255, 0))
    save_video(filename, frames, fps)
 
 def save_video(filename, frames, fps):
