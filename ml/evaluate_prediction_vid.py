@@ -1,13 +1,14 @@
 import json
 import numpy as np
+import pandas as pd
+import cv2
 import copy
 import os
 from loading_data import queryDB
-import pandas as pd
 import predict
 
 # PARAMETERIZE
-VIDEO_NUM = 86
+VIDEO_NUM = 12
 
 config_path = 'config.json'
 
@@ -127,6 +128,33 @@ def compute_overlap(A, B):
     return iou
 
 
+def interlace_annotations_to_video(annotations, filename):
+    vid = cv2.VideoCapture(filename)
+    fps = vid.get(cv2.CAP_PROP_FPS)
+    while not vid.isOpened():
+       continue
+
+    frames = []
+    check = True
+    while True:
+       check, frame = vid.read()
+       if not check:
+          break
+       frame = cv2.resize(frame, (RESIZED_WIDTH, RESIZED_HEIGHT))
+       frames.append(frame)
+    vid.release()
+
+    validation = annotations.apply(resize, axis=1)
+    for val in validation.itertuples():
+        if val.conceptid in CONCEPTS and val.frame_num < len(frames):
+            x1, y1, x2, y2 = int(val.x1), int(val.y1), int(val.x2), int(val.y2)
+            cv2.rectangle(frames[val.frame_num], (x1, y1), (x2, y2), (0, 0, 255), 3)
+            cv2.putText(frames[val.frame_num], str(val.conceptid), (x1, y1+15),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+    predict.save_video("interlaced_" + filename, frames, fps)
+
+
+
 def evaluate(video_id, user_id, model_path, concepts):
     results, fps = predict.predict_on_video(video_id, model_path, concepts)
     print("done predicting")
@@ -137,9 +165,10 @@ def evaluate(video_id, user_id, model_path, concepts):
     annotations['frame_num'] = np.rint(annotations['timeinvideo'] * fps).astype(int)
 
     metrics = score_predictions(annotations, results, EVALUATION_IOU_THRESH, concepts)
+    interlace_annotations_to_video(copy.deepcopy(annotations), 'output.mp4')
+
     concept_counts = get_counts(results, annotations)
     metrics = metrics.set_index('conceptid').join(concept_counts)
-
     metrics.to_csv("metrics" + str(VIDEO_NUM) + ".csv")
     print(metrics)
 
