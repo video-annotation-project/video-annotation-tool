@@ -8,7 +8,7 @@ from loading_data import queryDB
 import predict
 
 # PARAMETERIZE
-VIDEO_NUM = 86
+VIDEO_NUM = 12
 
 config_path = 'config.json'
 
@@ -146,10 +146,11 @@ def interlace_annotations_to_video(annotations, filename):
 
     validation = annotations.apply(resize, axis=1)
     for val in validation.itertuples():
-        if val.conceptid in CONCEPTS:
+        if val.conceptid in CONCEPTS and val.frame_num < len(frames):
             x1, y1, x2, y2 = int(val.x1), int(val.y1), int(val.x2), int(val.y2)
             cv2.rectangle(frames[val.frame_num], (x1, y1), (x2, y2), (0, 0, 255), 3)
-
+            cv2.putText(frames[val.frame_num], str(val.conceptid), (x1, y1+15),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
     predict.save_video("interlaced_" + filename, frames, fps)
 
 
