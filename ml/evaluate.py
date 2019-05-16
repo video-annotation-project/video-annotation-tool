@@ -3,7 +3,7 @@ import os
 from dotenv import load_dotenv
 import json
 import shutil
-from loading_data import queryDB
+from loading_data import queryDB, get_classmap
 from loading_data import download_annotations
 import pandas as pd
 from keras_retinanet import models
@@ -37,7 +37,6 @@ train_annot_file = config['train_annot_file']
 valid_annot_file = config['valid_annot_file']
 img_folder = config['image_folder']
 
-class_map_file = config['class_map']
 min_examples = config['min_examples']
 model_path = config['model_weights']
 test_examples = config['test_examples']
@@ -47,18 +46,11 @@ bad_users = json.loads(os.getenv("BAD_USERS"))
 '''
 Just load classmap without loading new data
 '''
-classmap = pd.read_csv(class_map_file, header=None).to_dict()[0]
+classmap = get_classmap(concepts)
 '''
 Loading new data for evaluation
 '''
 '''
-classmap = []
-for concept in concepts:
-    name = queryDB("select name from concepts where id=" + str(concept)).iloc[0]["name"]
-    classmap.append([name,concepts.index(concept)])
-classmap = pd.DataFrame(classmap)
-classmap.to_csv(class_map_file,index=False, header=False)
-classmap = classmap.to_dict()[0]
 
 folders = []
 folders.append(test_examples)

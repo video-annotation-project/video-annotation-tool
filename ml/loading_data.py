@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-
-# Initial package imports
 import json
 import math
 import pandas as pd
@@ -28,6 +25,18 @@ client = boto3.client('s3',
     aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
     aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'))
 
+'''
+Initializes the classmap of concept names to training id's.
+(these id's don't represent the conceptid's from our database)
+'''
+def get_classmap(concepts)
+    classmap = []
+    for concept in concepts:
+        name = queryDB("select name from concepts where id=" + str(concept)).iloc[0]["name"]
+        classmap.append([name,concepts.index(concept)])
+    classmap = pd.DataFrame(classmap)
+    classmap = classmap.to_dict()[0]
+    return classmap
 
 # SQL queries to the database
 def queryDB(query):
@@ -83,12 +92,12 @@ def select_annotations(annotations, min_examples, concepts):
 #   min_examples: minimum number of annotation examples for each concept
 #   concepts: list of concepts that will be used
 #   concept_map: a dict mapping index of concept to concept name
-#   bad_users: users whose annotations will be ignored
+#   good_users: users whose annotations will be used
 #   img_folder: name of the folder to hold the images
 #   train_annot_file: name of training annotation csv
 #   valid_annot_file: name of validation annotations csv
 #   split: fraction of annotation images that willbe used for training (rest used in validation)
-def download_annotations(min_examples, concepts, concept_map, bad_users, img_folder, train_annot_file, valid_annot_file, split=.8):
+def download_annotations(min_examples, concepts, concept_map, good_users, img_folder, train_annot_file, valid_annot_file, split=.8):
     # creates an expanded concept list with all child concepts, mapping these new concepts to their original parent
     parent_map = {}
     expanded_concepts = []
@@ -114,7 +123,7 @@ def download_annotations(min_examples, concepts, concept_map, bad_users, img_fol
                 ''' SELECT id, userid 
                     FROM annotations 
                     WHERE id=A.originalid 
-                        AND userid NOT IN ''' + str(tuple(bad_users)) + ")")
+                        AND userid IN ''' + str(tuple(good_users)) + ")")
     '''
     # Rename child concepts to their parent concepts
     for val,key in parent_map.items():
