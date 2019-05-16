@@ -33,7 +33,7 @@ con = connect(database=DB_NAME, host=DB_HOST, user=DB_USER, password=DB_PASSWORD
 cursor = con.cursor()
 
 # get video name
-cursor.execute("SELECT filename FROM videos")
+cursor.execute("SELECT filename FROM videos where fps is NULL")
 for video in  cursor.fetchall():
 	# grab video stream
 	url = s3.generate_presigned_url(

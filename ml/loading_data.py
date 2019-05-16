@@ -18,9 +18,6 @@ DB_HOST = os.getenv("DB_HOST")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 
-FPS = 29.97002997002997
-
-
 client = boto3.client('s3',
     aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
     aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'))
@@ -29,7 +26,7 @@ client = boto3.client('s3',
 Initializes the classmap of concept names to training id's.
 (these id's don't represent the conceptid's from our database)
 '''
-def get_classmap(concepts)
+def get_classmap(concepts):
     classmap = []
     for concept in concepts:
         name = queryDB("select name from concepts where id=" + str(concept)).iloc[0]["name"]
@@ -57,7 +54,13 @@ def select_annotations(annotations, min_examples, concepts):
     for concept in concepts:
         concept_count[concept] = 0
 
-    annotations['frame_num'] = np.rint(annotations['timeinvideo'] * FPS)
+    # Get's fps for each video in order to calculate frame_num from timeinvideo
+    videos = pd.DataFrame(a['videoid'].unique(),columns = ['videoid'])
+    videos['fps'] = videos['videoid'].apply(lambda x: queryDB('select * from videos where id = ' +str(x)).iloc[0].fps)
+    annotations = annotations.merge(videos, left_on='videoid', right_on='videoid')
+
+    annotations['frame_num'] = np.rint(annotations['timeinvideo'] * annotations['fps'])
+
     groups = annotations.groupby(['videoid','frame_num'], sort=False)
     groups = [df for _, df in groups]
     random.shuffle(groups) # Shuffle BEFORE the sort

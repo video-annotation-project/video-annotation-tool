@@ -32,64 +32,71 @@ load_dotenv(dotenv_path="../.env")
 with open(config_path) as config_buffer:    
     config = json.loads(config_buffer.read())
 
-concepts = config['conceptids']
 train_annot_file = config['train_annot_file']
 valid_annot_file = config['valid_annot_file']
 img_folder = config['image_folder']
-
-min_examples = config['min_examples']
-model_path = config['model_weights']
 test_examples = config['test_examples']
+batch_size = config['batch_size']
 
-bad_users = json.loads(os.getenv("BAD_USERS"))
+
 
 '''
-Just load classmap without loading new data
+    Evaluates the model using testing data, printing out an F1 score as well as optimal confidence thresholds for each concept
 '''
-classmap = get_classmap(concepts)
-'''
-Loading new data for evaluation
-'''
-'''
+def evaluate_model(concepts, model_path,  min_examples, download_data=False):
 
-folders = []
-folders.append(test_examples)
-folders.append(img_folder)
-for dir in folders:
-    if os.path.exists(dir):
-        shutil.rmtree(dir)
-    os.makedirs(dir)
-download_annotations(min_examples, concepts, classmap, bad_users, img_folder, train_annot_file, valid_annot_file, split=0)
-'''
-'''
-Initializing model for eval
-'''
-model = load_model(model_path, backbone_name='resnet50')
-model = convert_model(model)
+    classmap = get_classmap(concepts)
 
-test_generator = CSVGenerator(
-    valid_annot_file,
-    class_map_file,
-    shuffle_groups=False,
-    batch_size=16
-)
+    if download_data:
+        folders = []
+        folders.append(test_examples)
+        folders.append(img_folder)
+        for dir in folders:
+            if os.path.exists(dir):
+                shutil.rmtree(dir)
+            os.makedirs(dir)
+        download_annotations(min_examples, concepts, classmap, bad_users, img_folder, train_annot_file, valid_annot_file, split=0)
 
-best_f1, best_thresh = f1_evaluation(test_generator, model, save_path=test_examples)
+    '''
+    Initializing model for eval
+    '''
+    model = load_model(model_path, backbone_name='resnet50')
+    model = convert_model(model)
 
-total_f1 = 0
-for concept, f1 in best_f1.items():
-    print("Concept: " + classmap[concept])
-    print("F1 Score: " + str(f1))
-    print("Confidence Threshold: " + str(best_thresh[concept]))
-    print("")
-    total_f1 += f1
+    test_generator = CSVGenerator(
+        valid_annot_file,
+        class_map_file,
+        shuffle_groups=False,
+        batch_size=batch_size
+    )
 
-print("Average F1: " + str(total_f1/len(best_f1)))
-'''
-average_precisions = evaluate(test_generator, model, save_path=test_examples)
+    best_f1, best_thresh = f1_evaluation(test_generator, model, save_path=test_examples)
 
-for concept, (ap, instances) in average_precisions.items():
-    print(classmap[concept] +": " + str(ap) + " with " + str(instances) + " instances")
-    
-print("Find evaluation examples in: " + test_examples)
-'''
+    total_f1 = 0
+    for concept, f1 in best_f1.items():
+        print("Concept: " + classmap[concept])
+        print("F1 Score: " + str(f1))
+        print("Confidence Threshold: " + str(best_thresh[concept]))
+        print("")
+        total_f1 += f1
+
+    print("Average F1: " + str(total_f1/len(best_f1)))
+    print("Find evaluation examples in: " + test_examples)
+    '''
+    average_precisions = evaluate(test_generator, model, save_path=test_examples)
+
+    for concept, (ap, instances) in average_precisions.items():
+        print(classmap[concept] +": " + str(ap) + " with " + str(instances) + " instances")
+        
+    print("Find evaluation examples in: " + test_examples)
+    '''
+
+if __name__ == '__main__':
+    epochs = config['epochs']
+    min_examples = config['min_examples']
+    concepts = config['conceptids']
+    min_examples = config['min_examples']
+    model_path = config['model_weights']
+
+    evaluate_model(concepts, model_path,  min_examples, download_data=False):
+

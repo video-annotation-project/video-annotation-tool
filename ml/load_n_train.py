@@ -42,6 +42,8 @@ train_annot_file = config['train_annot_file']
 valid_annot_file = config['valid_annot_file']
 img_folder = config['image_folder']
 model_path = config['model_weights']
+batch_size = config['batch_size']
+
 
 # Wrapper for csv generator to allow for further data augmentation
 class custom(CSVGenerator):
@@ -58,7 +60,7 @@ class custom(CSVGenerator):
         return inputs, targets
 
 
-def train_model(concepts, users, min_examples, epochs, batch_size, download_data=True)
+def train_model(concepts, users, min_examples, epochs, download_data=True)
 
     classmap = get_classmap(concepts)
     '''
@@ -163,9 +165,8 @@ def train_model(concepts, users, min_examples, epochs, batch_size, download_data
 
 if __name__ == '__main__':
     epochs = config['epochs']
-    batch_size = config['batch_size']
     users = [15, 12, 11, 6, 17]
     min_examples = config['min_examples']
     concepts = config['conceptids']
 
-    train_model(concepts, users, min_examples, epochs, batch_size)
+    train_model(concepts, users, min_examples, epochs)
