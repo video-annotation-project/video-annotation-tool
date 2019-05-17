@@ -46,7 +46,7 @@ class VerifyAnnotations extends Component {
     super(props);
     this.state = {
       currentIndex: this.props.index,
-      conceptid: null,
+      concept: null,
       comment: null,
       unsure: null,
       error: null,
@@ -60,6 +60,10 @@ class VerifyAnnotations extends Component {
       width: this.props.annotation.x2 - this.props.annotation.x1,
       height: this.props.annotation.y2 - this.props.annotation.y1
     };
+  }
+
+  componentDidMount() {
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   componentDidUpdate(prevProps, prevState, snapshot) {
@@ -76,13 +80,13 @@ class VerifyAnnotations extends Component {
   verifyAnnotation = async () => {
     const body = {
       id: this.props.annotation.id,
-      conceptid: this.state.conceptid,
+      conceptid: this.state.concept === null ? null : this.state.concept.id,
       comment: this.state.comment,
       unsure: this.state.unsure
     };
 
     this.setState({
-      conceptid: null,
+      concept: null,
       comment: null,
       unsure: null,
       clickedConcept: null
@@ -109,6 +113,9 @@ class VerifyAnnotations extends Component {
 
   reset = () => {
     this.setState({
+      concept: null,
+      comment: null,
+      unsure: null,
       x: this.props.annotation.x1,
       y: this.props.annotation.y1,
       width: this.props.annotation.x2 - this.props.annotation.x1,
@@ -141,8 +148,7 @@ class VerifyAnnotations extends Component {
   handleDialogClose = () => {
     this.setState({
       dialogOpen: false,
-      dialogMsg: null,
-      clickedConcept: null
+      dialogMsg: null
     });
   };
 
@@ -157,11 +163,8 @@ class VerifyAnnotations extends Component {
   };
 
   editAnnotation = (comment, unsure) => {
-    if (comment === "") {
-      comment = this.props.annotation.comment;
-    }
     this.setState({
-      conceptid: this.state.clickedConcept.id,
+      concept: this.state.clickedConcept,
       comment: comment,
       unsure: unsure
     });
@@ -297,7 +300,10 @@ class VerifyAnnotations extends Component {
               {Math.floor(annotation.timeinvideo % 60)} seconds
             </Typography>
             <Typography className={classes.paper} variant="body2">
-              Concept: {annotation.name}
+              Concept:{" "}
+              {this.state.concept === null
+                ? annotation.name
+                : this.state.concept.name}
             </Typography>
             {!annotation.image ? (
               <Typography className={classes.paper}>No Image</Typography>

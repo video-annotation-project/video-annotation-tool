@@ -2,9 +2,10 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="4172dae0-c67e-44ff-8a5e-a7ca44c610eb" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/client/src/components/Annotate.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/components/Annotate.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/client/src/components/Navbar.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/components/Navbar.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/src/components/Verify.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/components/Verify.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/src/components/VerifyAnnotations.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/components/VerifyAnnotations.jsx" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/.tmp/" />
     <ignored path="$PROJECT_DIR$/temp/" />
@@ -20,8 +21,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/client/src/components/Verify.jsx">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="93">
-              <caret line="171" column="5" lean-forward="true" selection-start-line="171" selection-start-column="5" selection-end-line="171" selection-end-column="5" />
+            <state relative-caret-position="345">
+              <caret line="58" column="3" lean-forward="true" selection-start-line="58" selection-start-column="3" selection-end-line="58" selection-end-column="3" />
               <folding>
                 <element signature="e#0#41#0" expanded="true" />
               </folding>
@@ -44,11 +45,20 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/client/src/components/VerifyAnnotations.jsx">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="234">
-              <caret line="82" lean-forward="true" selection-start-line="82" selection-end-line="82" />
+            <state relative-caret-position="238">
+              <caret line="168" column="20" lean-forward="true" selection-start-line="168" selection-start-column="20" selection-end-line="168" selection-end-column="20" />
               <folding>
                 <element signature="e#0#41#0" expanded="true" />
               </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/.gitignore">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="54">
+              <caret line="3" column="12" lean-forward="true" selection-start-line="3" selection-start-column="12" selection-end-line="3" selection-end-column="12" />
             </state>
           </provider>
         </entry>
@@ -92,8 +102,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/server.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="198">
-              <caret line="170" column="19" lean-forward="true" selection-start-line="170" selection-start-column="19" selection-end-line="170" selection-end-column="19" />
+            <state relative-caret-position="-2088">
+              <caret line="24" column="15" selection-start-line="24" selection-start-column="14" selection-end-line="24" selection-end-column="15" />
             </state>
           </provider>
         </entry>
@@ -123,16 +133,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>drawerContent</find>
-      <find>toggleSe</find>
-      <find>isloaded</find>
-      <find>handleConceptCli</find>
-      <find>handleCon</find>
-      <find>getConceptsSe</find>
-      <find>loading</find>
-      <find>loaded</find>
-      <find>&lt;ConceptsSelected</find>
-      <find>annotationfram</find>
       <find>handleDialog</find>
       <find>&lt;annotationfram</find>
       <find>props</find>
@@ -141,18 +141,28 @@
       <find>clickedCon</find>
       <find>onDra</find>
       <find>dialog</find>
-      <find>clicked</find>
       <find>inputHandler</find>
       <find>inputHandler={</find>
       <find>inputHand</find>
       <find>edit</find>
       <find>selectCon</find>
-      <find>editAnn</find>
-      <find>verifiedby</find>
       <find>redrawAnn</find>
       <find>closeHand</find>
       <find>window</find>
       <find>console.lo</find>
+      <find>clickedConcep</find>
+      <find>image</find>
+      <find>verifiedby</find>
+      <find>clicked</find>
+      <find>conceptid</find>
+      <find>clickedconcept</find>
+      <find>concept</find>
+      <find>editAnn</find>
+      <find>handleCon</find>
+      <find>close</find>
+      <find>reset</find>
+      <find>setState</find>
+      <find>comment</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -163,8 +173,9 @@
       <list>
         <option value="$PROJECT_DIR$/client/src/components/AnnotationFrame.jsx" />
         <option value="$PROJECT_DIR$/client/src/components/VerifySelection.jsx" />
-        <option value="$PROJECT_DIR$/client/src/components/Verify.jsx" />
         <option value="$PROJECT_DIR$/server.js" />
+        <option value="$PROJECT_DIR$/.gitignore" />
+        <option value="$PROJECT_DIR$/client/src/components/Verify.jsx" />
         <option value="$PROJECT_DIR$/client/src/components/VerifyAnnotations.jsx" />
       </list>
     </option>
@@ -309,7 +320,7 @@
       <workItem from="1557776796714" duration="2761000" />
       <workItem from="1557790187932" duration="2133000" />
       <workItem from="1557795330865" duration="1131000" />
-      <workItem from="1557820277517" duration="37106000" />
+      <workItem from="1557820277517" duration="41392000" />
     </task>
     <task id="LOCAL-00001" summary="Concept selection works now">
       <created>1558064452701</created>
@@ -339,22 +350,29 @@
       <option name="project" value="LOCAL" />
       <updated>1558086642635</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="Fixed merge issues">
+      <created>1558087218269</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1558087218269</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="44636000" />
+    <option name="totallyTimeSpent" value="48922000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="-6" y="-6" width="1719" height="932" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.20237389" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.20237389" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="npm" order="2" side_tool="true" />
       <window_info id="Favorites" order="3" side_tool="true" />
       <window_info anchor="bottom" id="Messages" weight="0.32876712" />
-      <window_info active="true" anchor="bottom" id="Run Dashboard" order="0" sideWeight="0.49970326" visible="true" weight="0.32129514" />
+      <window_info anchor="bottom" id="Run Dashboard" order="0" sideWeight="0.49970326" visible="true" weight="0.2789539" />
       <window_info anchor="bottom" id="Docker" order="1" show_stripe_button="false" />
       <window_info anchor="bottom" id="Version Control" order="2" />
       <window_info anchor="bottom" id="Terminal" order="3" sideWeight="0.49518073" weight="0.32503113" />
@@ -507,10 +525,17 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/.gitignore">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="54">
+          <caret line="3" column="12" lean-forward="true" selection-start-line="3" selection-start-column="12" selection-end-line="3" selection-end-column="12" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/server.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="198">
-          <caret line="170" column="19" lean-forward="true" selection-start-line="170" selection-start-column="19" selection-end-line="170" selection-end-column="19" />
+        <state relative-caret-position="-2088">
+          <caret line="24" column="15" selection-start-line="24" selection-start-column="14" selection-end-line="24" selection-end-column="15" />
         </state>
       </provider>
     </entry>
@@ -526,8 +551,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/client/src/components/Verify.jsx">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="93">
-          <caret line="171" column="5" lean-forward="true" selection-start-line="171" selection-start-column="5" selection-end-line="171" selection-end-column="5" />
+        <state relative-caret-position="345">
+          <caret line="58" column="3" lean-forward="true" selection-start-line="58" selection-start-column="3" selection-end-line="58" selection-end-column="3" />
           <folding>
             <element signature="e#0#41#0" expanded="true" />
           </folding>
@@ -536,8 +561,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/client/src/components/VerifyAnnotations.jsx">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="234">
-          <caret line="82" lean-forward="true" selection-start-line="82" selection-end-line="82" />
+        <state relative-caret-position="238">
+          <caret line="168" column="20" lean-forward="true" selection-start-line="168" selection-start-column="20" selection-end-line="168" selection-end-column="20" />
           <folding>
             <element signature="e#0#41#0" expanded="true" />
           </folding>
