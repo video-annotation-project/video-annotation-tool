@@ -56,6 +56,12 @@ class VerifyAnnotations extends Component {
     };
   }
 
+  componentDidUpdate(prevProps, prevState, snapshot) {
+    if (this.state.currentIndex !== prevState.currentIndex) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }
+
   verifyAnnotation = async () => {
     const body = {
       id: this.props.annotations[this.state.currentIndex].id,
