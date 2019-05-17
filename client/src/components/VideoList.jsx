@@ -5,13 +5,14 @@ import Drawer from '@material-ui/core/Drawer';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
-import IconButton from '@material-ui/core/IconButton';
-import Description from '@material-ui/icons/Description';
 import { withStyles } from '@material-ui/core/styles';
 import Collapse from '@material-ui/core/Collapse';
 import ExpandLess from '@material-ui/icons/ExpandLess';
 import ExpandMore from '@material-ui/icons/ExpandMore';
+
 import VideoMetadata from './VideoMetadata.jsx';
+import IconButton from '@material-ui/core/IconButton';
+import Description from '@material-ui/icons/Description';
 
 const styles = theme => ({
   root: {
@@ -38,7 +39,6 @@ class VideoList extends Component {
       unwatchedListOpen: false,
       watchedListOpen: false,
       inProgressListOpen: false,
-      descriptionOpen: false,
       openedVideo: null
     };
   }
@@ -53,18 +53,12 @@ class VideoList extends Component {
   openVideoMetadata = (event, video) => {
     event.stopPropagation()
     this.setState({
-      descriptionOpen: true,
       openedVideo: video
     })
   }
 
-  inputHandler = () => {
-    console.log('Input');
-  }
-
   closeVideoMetadata = () => {
     this.setState({
-      descriptionOpen: false,
       openedVideo: null
     });
   }
@@ -218,7 +212,7 @@ class VideoList extends Component {
             </Collapse>
           </div>
         </Drawer>
-        {this.state.descriptionOpen &&
+        {this.state.openedVideo &&
           <VideoMetadata
             open={true /* The VideoMetadata 'openness' is controlled through
               boolean logic rather than by passing in a variable as an
@@ -230,6 +224,7 @@ class VideoList extends Component {
             openedVideo={openedVideo}
             socket={this.props.socket}
             loadVideos={this.props.loadVideos}
+            model={false}
           />
         }
       </div>

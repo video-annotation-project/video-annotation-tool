@@ -22,8 +22,17 @@ jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
 jwtOptions.secretOrKey = process.env.JWT_KEY;
 
 async function findUser(userId) {
-  queryPass = 'select id, username, password, admin \
-               from users where users.id=$1';
+  queryPass = `
+    SELECT 
+      id,
+      username,
+      password,
+      admin
+    FROM
+      users
+    WHERE
+      users.id=$1
+  `;
   const user = await psql.query(queryPass, [userId]);
   if (user.rows.length == 1) {
     return user.rows[0];
@@ -34,7 +43,6 @@ async function findUser(userId) {
 
 var strategy = new JwtStrategy(jwtOptions, async function (jwt_payload, next) {
   // console.log('payload received', jwt_payload);
-
   var user = await findUser(jwt_payload.id);
   if (user) {
     next(null, user);
@@ -54,10 +62,55 @@ app.use(passport.initialize());
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 
+// This function sets the cookies that are used by the client to access the 
+// videos on AWS CloudFront
+const setCookies = (res) => {
+  const keyPairId = process.env.KEY_PAIR_ID;
+  const privateKey = process.env.RSA_PRIVATE_KEY.split('\\n').join('\n');
+  let cdnUrl = "cdn.deepseaannotations.com";
+  let expiry = Math.floor(Date.now() / 1000) + 60000;
+
+  let policy = {
+    'Statement': [{
+      'Resource': 'https://' + cdnUrl + '/*',
+      'Condition': {
+        'DateLessThan': { 'AWS:EpochTime': expiry }
+      }
+    }]
+  };
+  let policyString = JSON.stringify(policy);
+
+  let signer = new AWS.CloudFront.Signer(keyPairId, privateKey);
+  var options = { url: "https://" + cdnUrl, policy: policyString };
+  signer.getSignedCookie(options, (error, cookies) => {
+    if (error) {
+      console.log('Error recieved from getSignedCookie function.')
+      console.log('Throwing error.')
+      throw error;
+    }
+    for (cookieName in cookies) {
+      res.cookie(cookieName, cookies[cookieName], {
+        domain: '.deepseaannotations.com',
+        httpOnly: true,
+        path: '/',
+        secure: true
+      });
+    }
+  });
+}
+
 app.post("/api/login", async function (req, res) {
   const { username, password } = req.body;
-  let queryPass = 'select id, password, admin \
-                   from users where users.username=$1';
+  let queryPass = `
+    SELECT 
+      id,
+      password, 
+      admin
+    FROM 
+      users 
+    WHERE
+      users.username=$1
+  `;
   try {
     const user = await psql.query(queryPass, [username]);
     if (user.rowCount === 0) {
@@ -70,6 +123,7 @@ app.post("/api/login", async function (req, res) {
     }
     const payload = { id: user.rows[0].id };
     const token = jwt.sign(payload, jwtOptions.secretOrKey);
+    setCookies(res);
     res.json({
       token: token,
       isAdmin: user.rows[0].admin
@@ -83,7 +137,14 @@ app.post('/api/changePassword', passport.authenticate('jwt', { session: false })
   async (req, res) => {
     const { password, newPassword1, newPassword2 } = req.body;
     const username = req.user.username;
-    const queryPass = 'select password from users where users.username=$1';
+    const queryPass = `
+      SELECT
+        password 
+      FROM
+        users
+      WHERE 
+        users.username=$1
+    `;
     try {
       const currentPass = await psql.query(queryPass, [username]);
       if (!await bcrypt.compare(password, currentPass.rows[0].password)) {
@@ -102,8 +163,19 @@ app.post('/api/changePassword', passport.authenticate('jwt', { session: false })
 
 app.post('/api/createUser', passport.authenticate('jwt', { session: false }),
   async (req, res) => {
-    const queryText = "INSERT INTO users(username, password, admin) \
-                       VALUES($1, $2, $3) RETURNING *";
+    const queryText = `
+      INSERT INTO users(
+        username, 
+        password, 
+        admin
+      )
+      VALUES(
+        $1,
+        $2, 
+        $3
+      ) 
+      RETURNING *
+    `;
     const saltRounds = 10;
     try {
       const hash = await bcrypt.hash(req.body.password, saltRounds);
@@ -117,7 +189,15 @@ app.post('/api/createUser', passport.authenticate('jwt', { session: false }),
 
 app.get('/api/concepts/:id', passport.authenticate('jwt', { session: false }),
   async (req, res) => {
-    queryText = 'select id, name from concepts where concepts.parent=$1';
+    queryText = `
+      SELECT
+        id, 
+        name 
+      FROM 
+        concepts 
+      WHERE
+        concepts.parent=$1
+    `;
     try {
       const concepts = await psql.query(queryText, [req.params.id]);
       res.json(concepts.rows);
@@ -130,8 +210,26 @@ app.get('/api/concepts/:id', passport.authenticate('jwt', { session: false }),
 // returns a list of concept names
 app.get('/api/concepts', passport.authenticate('jwt', { session: false }),
   async (req, res) => {
-    const queryText = 'SELECT id, name \
-                       FROM concepts';
+    const queryText = `
+      SELECT 
+        concepts.id,
+        concepts.name
+      FROM (
+        SELECT
+          conceptid, 
+          count(*)
+        FROM
+          annotations
+        GROUP BY
+          annotations.conceptid
+      ) AS a
+      LEFT JOIN
+        concepts
+      ON 
+        a.conceptid=concepts.id
+      ORDER BY 
+        a.count DESC
+    `;
     try {
       const concepts = await psql.query(queryText);
       res.json(concepts.rows);
@@ -146,7 +244,14 @@ app.get('/api/concepts', passport.authenticate('jwt', { session: false }),
 app.get('/api/conceptImages/:id',
   async (req, res) => {
     let s3 = new AWS.S3();
-    queryText = 'select picture from concepts where concepts.id=$1';
+    queryText = `
+      SELECT
+        picture 
+      FROM
+        concepts 
+      WHERE
+        concepts.id=$1
+    `;
     try {
       const response = await psql.query(queryText, [req.params.id]);
       const picture = response.rows[0].picture;
@@ -161,13 +266,22 @@ app.get('/api/conceptImages/:id',
   }
 );
 
-app.get('/api/conceptsSelected', passport.authenticate('jwt', { session: false }),
+app.get('/api/conceptsSelected',
+  passport.authenticate('jwt', { session: false }),
   async (req, res) => {
-    queryText = 'select * \
-                 from profile, concepts \
-                 where profile.userid=$1 \
-                 AND concepts.id=profile.conceptId \
-                 ORDER BY profile.conceptidx, concepts.name';
+    queryText = `
+      SELECT 
+        *
+      FROM
+        profile, 
+        concepts
+      WHERE 
+        profile.userid=$1
+        AND concepts.id=profile.conceptId
+      ORDER BY
+        profile.conceptidx,
+        concepts.name
+    `;
     try {
       let concepts = await psql.query(queryText, [req.user.id]);
       res.json(concepts.rows);
@@ -178,10 +292,20 @@ app.get('/api/conceptsSelected', passport.authenticate('jwt', { session: false }
   }
 );
 
-app.post('/api/conceptsSelected', passport.authenticate('jwt', { session: false }),
+app.post('/api/conceptsSelected',
+  passport.authenticate('jwt', { session: false }),
   async (req, res) => {
-    queryText = 'INSERT INTO profile(userid, conceptid) \
-                 VALUES($1, $2) RETURNING *';
+    queryText = `
+      INSERT INTO profile(
+        userid, 
+        conceptid
+      )
+      VALUES(
+         $1,
+         $2
+      )
+      RETURNING *
+    `;
     try {
       let insert = await psql.query(queryText, [req.user.id, req.body.id]);
       res.json({ value: JSON.stringify(insert.rows) });
@@ -193,9 +317,14 @@ app.post('/api/conceptsSelected', passport.authenticate('jwt', { session: false 
 
 app.delete('/api/conceptsSelected', passport.authenticate('jwt', { session: false }),
   async (req, res) => {
-    let queryText = 'DELETE FROM profile \
-                     WHERE profile.userid=$1 AND \
-                     profile.conceptid=$2 RETURNING *';
+    let queryText = `
+      DELETE FROM
+        profile
+      WHERE
+        profile.userid=$1 
+        AND profile.conceptid=$2
+      RETURNING *
+    `;
     try {
       let del = await psql.query(queryText, [req.user.id, req.body.id]);
       res.json({ value: JSON.stringify(del.rows) });
@@ -207,15 +336,25 @@ app.delete('/api/conceptsSelected', passport.authenticate('jwt', { session: fals
 );
 
 // updates conceptsSelected when they are reordered
-app.patch('/api/conceptsSelected', passport.authenticate('jwt', { session: false }),
+app.patch('/api/conceptsSelected',
+  passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     const conceptsSelected = JSON.stringify(req.body.conceptsSelected);
-    const queryText = `UPDATE profile AS p \
-                       SET conceptidx=c.conceptidx \
-                       FROM json_populate_recordset(null::profile, \
-                       '${conceptsSelected}') AS c \
-                       WHERE c.userid=p.userid AND \
-                       c.conceptid=p.conceptid`;
+    const queryText = `
+      UPDATE 
+        profile
+      AS
+        p
+      SET
+        conceptidx=c.conceptidx
+      FROM 
+        json_populate_recordset(null::profile,'${conceptsSelected}')
+      AS
+        c
+      WHERE
+        c.userid=p.userid 
+        AND c.conceptid=p.conceptid
+    `;
     try {
       let update = await psql.query(queryText);
       res.json({ value: JSON.stringify(update.rows) });
@@ -230,48 +369,132 @@ app.get('/api/videos', passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     let userId = req.user.id;
     //These need to be updated using joins to become optimal
-    let queryUserStartedVideos = 'SELECT videos.id, videos.filename, \
-                                  checkpoints.finished, checkpoints.timeinvideo, \
-                                  count.count \
-                                  FROM videos, checkpoints \
-                                  LEFT JOIN (select videoid, count(*) \
-                                  from checkpoints group by videoid) as count \
-                                  ON count.videoid=checkpoints.videoid \
-                                  WHERE checkpoints.userid=$1 \
-                                  AND videos.id=checkpoints.videoid \
-                                  AND checkpoints.finished=false \
-                                  ORDER BY videos.id';
-    let queryGlobalUnwatched = 'SELECT videos.id, videos.filename, \
-                                false as finished, 0 as timeinvideo \
-                                FROM videos \
-                                WHERE id NOT IN (SELECT videoid FROM checkpoints) \
-                                ORDER BY videos.id';
-    let queryGlobalWatched = 'SELECT DISTINCT videos.id, videos.filename, \
-                              checkpoints.finished, \
-                              CASE WHEN c.timeinvideo IS null \
-                              THEN 0 ELSE c.timeinvideo END AS timeinvideo \
-                              FROM checkpoints, videos \
-                              LEFT JOIN (SELECT videoid, timeinvideo \
-                                FROM checkpoints \
-                                WHERE userid=$1)\
-                              AS c \
-                              ON c.videoid=videos.id \
-                              WHERE videos.id=checkpoints.videoid \
-                              AND checkpoints.finished=true \
-                              ORDER BY videos.id';
-    let queryGlobalInProgress = 'SELECT DISTINCT ON (videos.id) \
-                                videos.id, videos.filename, checkpoints.finished, \
-                                 CASE WHEN c.timeinvideo IS null THEN 0 \
-                                 ELSE c.timeinvideo END AS timeinvideo \
-                                 FROM checkpoints, videos \
-                                 LEFT JOIN (SELECT videoid, timeinvideo \
-                                   FROM checkpoints WHERE userid=$1) AS c \
-                                 ON c.videoid=videos.id \
-                                 WHERE videos.id=checkpoints.videoid \
-                                 AND videos.id NOT IN (SELECT videoid \
-                                   FROM checkpoints \
-                                   WHERE finished=true) \
-                                 ORDER BY videos.id';
+    let queryUserStartedVideos = `
+      SELECT 
+        videos.id,
+        videos.filename,
+        checkpoints.finished,
+        checkpoints.timeinvideo,
+        count.count
+      FROM
+        checkpoints
+      LEFT JOIN (
+        SELECT 
+          videoid,
+          count(*)
+        FROM
+          checkpoints 
+        GROUP BY 
+          videoid
+      ) as count
+      ON 
+        count.videoid=checkpoints.videoid
+      LEFT JOIN
+        videos 
+      ON 
+        videos.id=checkpoints.videoid
+      WHERE
+        checkpoints.userid=$1
+        AND checkpoints.finished=false
+      ORDER BY
+        videos.id
+    `;
+    let queryGlobalUnwatched = `
+      SELECT 
+        videos.id, 
+        videos.filename,
+        false as finished,
+        0 as timeinvideo
+      FROM 
+        videos
+      WHERE 
+        id NOT IN (
+          SELECT 
+            videoid
+          FROM
+            checkpoints
+        )
+      ORDER BY
+        videos.id
+    `;
+    let queryGlobalWatched = `
+      SELECT DISTINCT
+        videos.id, 
+        videos.filename,
+        checkpoints.finished,
+      CASE WHEN 
+        c.timeinvideo IS null
+        THEN 
+          0 
+        ELSE 
+          c.timeinvideo 
+      END AS timeinvideo
+      FROM
+        checkpoints
+      LEFT JOIN (
+        SELECT
+          videoid, 
+          timeinvideo
+        FROM
+          checkpoints
+        WHERE 
+          userid=$1
+      ) AS c
+      ON 
+        c.videoid=checkpoints.videoid
+      LEFT JOIN
+        videos
+      ON
+        videos.id=checkpoints.videoid
+      WHERE 
+        checkpoints.finished=true
+      ORDER BY 
+        videos.id
+    `;
+    let queryGlobalInProgress = `
+      SELECT 
+        DISTINCT ON (
+          videos.id
+        )
+        videos.id,
+        videos.filename,
+        checkpoints.finished,
+        CASE WHEN 
+          c.timeinvideo IS null 
+          THEN 
+            0
+          ELSE
+            c.timeinvideo 
+        END AS timeinvideo
+      FROM
+        checkpoints
+      LEFT JOIN (
+        SELECT
+          videoid,
+          timeinvideo
+        FROM 
+          checkpoints 
+        WHERE 
+          userid=$1
+      ) AS c
+      ON
+        c.videoid=checkpoints.videoid
+      LEFT JOIN
+        videos
+      ON
+        videos.id=checkpoints.videoid
+      WHERE 
+        videos.id NOT IN (
+          SELECT 
+            videoid
+          FROM
+            checkpoints
+          WHERE
+            finished=true
+        )
+      ORDER BY
+        videos.id
+    `;
     try {
       const startedVideos = await psql.query(queryUserStartedVideos, [userId]);
       const unwatchedVideos = await psql.query(queryGlobalUnwatched);
@@ -317,6 +540,30 @@ app.get(
       const videoMetadata = await psql.query(queryText, [req.params.videoid]);
       res.json(videoMetadata.rows);
     } catch (error) {
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
+);
+
+
+// summary getter ~KLS
+app.get(
+  '/api/videos/summary/:videoid',
+  passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    let queryText = `SELECT * 
+                      FROM concepts a 
+                      JOIN 
+                      (SELECT conceptid, videoid, COUNT(*) FROM annotations GROUP BY 
+                      conceptid, videoid) AS counts 
+                      ON counts.conceptid=a.id
+                      WHERE videoid = $1`;
+    try {
+      const summary = await psql.query(queryText, [req.params.videoid]);
+      res.json(summary.rows);
+    } catch (error) {
+      console.log("Error in get /api/videos/summary/:videoid")
       console.log(error);
       res.status(500).json(error);
     }
@@ -448,8 +695,9 @@ app.get('/api/annotations', passport.authenticate('jwt', { session: false }),
                      annotations.unsure, annotations.timeinvideo, \
                      annotations.imagewithbox, concepts.name, \
                      false as extended \
-                     FROM annotations, concepts\
-                     WHERE annotations.conceptid=concepts.id'
+                     FROM annotations\
+                     LEFT JOIN concepts ON concepts.id=annotations.conceptid\
+                     WHERE annotations.userid!=17';
     if (req.query.unsureOnly === 'true') {
       queryPass = queryPass + ' AND annotations.unsure = true';
     }
@@ -691,6 +939,94 @@ app.post('/api/models', passport.authenticate('jwt', { session: false }),
     }
   }
 );
+
+app.get('/api/users', passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    const queryText = `
+      SELECT DISTINCT 
+        U.id, 
+        U.username
+      FROM 
+        Users U`;
+    try {
+      let response = await psql.query(queryText);
+      res.json(response.rows);
+    } catch (error) {
+      console.log('Error on GET /api/users: ');
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
+);
+
+app.get('/api/users/annotationCount', passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    const userId = parseInt(req.query.userid);
+    const fromDate = req.query.fromdate;
+    const toDate = req.query.todate;
+    const data = [userId, fromDate, toDate]
+
+    if (!userId) {
+      res.status(500);
+    }
+    const queryText = `
+      SELECT DISTINCT
+        A.conceptid, 
+        C.name, 
+        COUNT(A.conceptid) AS total_count
+      FROM 
+        annotations A
+      LEFT JOIN 
+        concepts C 
+      ON 
+        A.conceptid = C.id
+      WHERE
+        A.userid = $1 
+        AND (A.dateannotated BETWEEN $2 AND $3)
+      GROUP BY 
+        A.conceptid, 
+        C.name`;
+    try {
+      let response = await psql.query(queryText, data);
+      res.json(response.rows);
+    } catch (error) {
+      console.log('Error on GET /api/users/annotationCount');
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
+);
+
+app.put('/api/runModel', passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    let ec2 = new AWS.EC2({region: 'us-west-1'});
+    var params = {
+      InstanceIds: [
+        "i-0627124479fe1ce98"
+      ]
+    };
+    ec2.startInstances(params, function (err, data) {
+      if (err) console.log(err, err.stack); // an error occurred
+      else console.log(data);           // successful response
+    });
+  }
+);
+
+app.delete('/api/runModel', passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    let ec2 = new AWS.EC2({region: 'us-west-1'});
+    var params = {
+      InstanceIds: [
+        "i-0627124479fe1ce98"
+      ]
+    };
+    ec2.stopInstances(params, function (err, data) {
+      if (err) console.log(err, err.stack); // an error occurred
+      else console.log(data);           // successful response
+    });
+  }
+);
+
 
 // This websocket sends a list of videos to the client that update in realtime
 io.on('connection', (socket) => {
