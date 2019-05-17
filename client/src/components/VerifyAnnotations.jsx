@@ -258,17 +258,18 @@ class VerifyAnnotations extends Component {
         {this.state.currentIndex < this.props.annotations.length ? (
           <React.Fragment>
             <Typography className={classes.paper} variant="title">
-              {" "}
-              Annotation {annotation.id}
+              Annotation #{annotation.id}
             </Typography>
             <Typography className={classes.paper} variant="body2">
-              {" "}
-              Annotated by: {annotation.userid}, Video: {annotation.videoid},
-              Concept: {annotation.name}
+              Annotated by: {annotation.username}
             </Typography>
             <Typography className={classes.paper} variant="body2">
-              At {Math.floor(annotation.timeinvideo / 60)} minutes{" "}
+              Video: {annotation.filename} at{" "}
+              {Math.floor(annotation.timeinvideo / 60)} minutes{" "}
               {Math.floor(annotation.timeinvideo % 60)} seconds
+            </Typography>
+            <Typography className={classes.paper} variant="body2">
+              Concept: {annotation.name}
             </Typography>
             <ConceptsSelected handleConceptClick={this.handleConceptClick} />
             {!annotation.image ? (

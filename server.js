@@ -159,22 +159,23 @@ app.get(
     sqlConcepts += ")";
 
     var queryText = [
-      `SELECT distinct a.*, c.name
-        FROM annotations a, concepts c
-        WHERE c.id=a.conceptid AND a.verifiedby IS NULL` +
+      `SELECT distinct a.*, c.name, u.username, v.filename
+        FROM annotations a, concepts c, users u, videos v
+        WHERE c.id=a.conceptid AND u.id=a.userid AND v.id=a.videoid AND a.verifiedby IS NULL` +
         sqlVideos +
         sqlConcepts,
-      `SELECT distinct a.*, c.name
-        FROM annotations a, concepts c
-        WHERE c.id=a.conceptid AND a.userid=$1 AND a.verifiedby IS NULL` +
+      `SELECT distinct a.*, c.name, u.username, v.filename
+        FROM annotations a, concepts c, users u, videos v
+        WHERE c.id=a.conceptid AND u.id=a.userid AND v.id=a.videoid AND a.userid=$1 AND a.verifiedby IS NULL` +
         sqlVideos +
         sqlConcepts
     ];
     try {
-      if (req.query.selectedUser == "0") {
-        var concepts = await psql.query(queryText[0]);
+      let concepts;
+      if (req.query.selectedUser === "0") {
+        concepts = await psql.query(queryText[0]);
       } else {
-        var concepts = await psql.query(queryText[1], [req.query.selectedUser]);
+        concepts = await psql.query(queryText[1], [req.query.selectedUser]);
       }
       res.json(concepts.rows);
     } catch (error) {
