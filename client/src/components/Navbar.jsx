@@ -20,7 +20,7 @@ class Navbar extends React.Component {
 
   handleLogout = () => {
     /* Annotate.jsx tries to PUT to /api/checkpoints when unmounted, so we redirect the web page before clearing authentication */
-    window.location.replace('/');
+    window.location.replace("/");
     localStorage.clear();
   };
 
