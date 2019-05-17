@@ -10,7 +10,7 @@
    "class_map" : "classmap.csv",
    "annotations" : "annotations.csv",
    "gpus" : 4,
-   "epochs" : 100,
+   "epochs" : 50,
    "batch_size" : 8,
    "frames_between_predictions" : 10,
    "prediction_tracking_iou_threshold" : 0.20,
