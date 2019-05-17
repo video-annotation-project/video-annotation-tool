@@ -695,13 +695,13 @@ app.get('/api/annotations', passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     let params = [];
     //Build query string
-    let queryPass = 'SELECT annotations.id, annotations.comment,\
-                     annotations.unsure, annotations.timeinvideo, \
-                     annotations.imagewithbox, concepts.name, \
-                     false as extended \
-                     FROM annotations\
-                     LEFT JOIN concepts ON concepts.id=annotations.conceptid\
-                     WHERE annotations.userid!=17';
+    let queryPass = `SELECT annotations.id, annotations.comment,
+                     annotations.unsure, annotations.timeinvideo, 
+                     annotations.imagewithbox, concepts.name, 
+                     false as extended 
+                     FROM annotations
+                     LEFT JOIN concepts ON concepts.id=annotations.conceptid
+                     WHERE annotations.userid!=17`;
     if (req.query.unsureOnly === 'true') {
       queryPass = queryPass + ' AND annotations.unsure = true';
     }
