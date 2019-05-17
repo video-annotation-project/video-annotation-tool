@@ -53,7 +53,8 @@ class Verify extends Component {
       selectedConcepts: [],
       annotations: [],
       error: null,
-      isLoaded: false
+      isLoaded: false,
+      index: 0
     };
   }
 
@@ -61,11 +62,13 @@ class Verify extends Component {
     console.log(this.state);
   }
 
-  unmountSelection = () => {
+  unmountSelection = async () => {
     if (!this.state.selectionMounted) {
       this.handleReset();
     }
+    let annotations = await this.getAnnotations();
     this.setState({
+      annotations: annotations,
       selectionMounted: !this.state.selectionMounted
     });
   };
@@ -137,18 +140,6 @@ class Verify extends Component {
       });
   };
 
-  handleGetAnnotations = async () => {
-    let annotations = await this.getAnnotations();
-
-    if (!annotations) {
-      return;
-    }
-
-    this.setState({
-      annotations: annotations
-    });
-  };
-
   handleChangeUser = event => {
     this.setState({ selectedUser: event.target.value });
   };
@@ -185,7 +176,14 @@ class Verify extends Component {
     this.setState({
       selectedUser: "0",
       selectedVideos: [],
-      selectedConcepts: []
+      selectedConcepts: [],
+      index: 0
+    });
+  };
+
+  handleNext = () => {
+    this.setState({
+      index: this.state.index + 1
     });
   };
 
@@ -217,7 +215,6 @@ class Verify extends Component {
           handleChangeVideo={this.handleChangeVideo}
           handleChangeConcept={this.handleChangeConcept}
           handleReset={this.handleReset}
-          handleGetAnnotations={this.handleGetAnnotations}
           unmountSelection={this.unmountSelection}
         />
       );
@@ -229,8 +226,11 @@ class Verify extends Component {
           className={this.props.classes.resetContainer}
         >
           <VerifyAnnotations
-            annotations={this.state.annotations}
+            annotation={this.state.annotations[this.state.index]}
+            index={this.state.index}
+            handleNext={this.handleNext}
             unmountSelection={this.unmountSelection}
+            size={this.state.annotations.length}
           />
         </Paper>
       );

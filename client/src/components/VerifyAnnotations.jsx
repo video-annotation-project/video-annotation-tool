@@ -20,9 +20,10 @@ const styles = theme => ({
     paddingLeft: 0
   },
   img: {
-    padding: theme.spacing.unit * 3,
-    width: "1280px",
-    height: "720px"
+    postion: 'absolute',
+    top: '50px',
+    width: '1600px',
+    height: '900px'
   },
   container: {
     display: "grid",
@@ -44,18 +45,33 @@ class VerifyAnnotations extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      currentIndex: 0,
+      currentIndex: this.props.index,
       error: null,
       dialogMsg: null,
       dialogOpen: false,
       clickedConcept: null,
-      closeHandler: null
+      closeHandler: null,
+      x: this.props.annotation.x1,
+      y: this.props.annotation.y1,
+      width: this.props.annotation.x2-this.props.annotation.x1,
+      height: this.props.annotation.y2-this.props.annotation.y1,
     };
+  }
+
+  componentDidUpdate(prevProps) {
+    if (prevProps.annotation !== this.props.annotation) {
+      this.setState({
+        x: this.props.annotation.x1,
+        y: this.props.annotation.y1,
+        width: this.props.annotation.x2-this.props.annotation.x1,
+        height: this.props.annotation.y2-this.props.annotation.y1,
+      })
+    }
   }
 
   verifyAnnotation = async () => {
     const body = {
-      id: this.props.annotations[this.state.currentIndex].id
+      id: this.props.annotation.id
     };
     const config = {
       headers: {
@@ -76,12 +92,18 @@ class VerifyAnnotations extends Component {
   };
 
   nextAnnotation = () => {
-    let nextIndex = this.state.currentIndex + 1;
-    this.setState({
-      currentIndex: nextIndex,
-      redraw: false,
-      redrawn: false
-    });
+    // let nextIndex = this.state.currentIndex + 1;
+    // this.setState({
+    //   currentIndex: nextIndex,
+    //   loaded: false
+    // });
+    if (this.props.size === this.props.index + 1){
+      this.setState({
+        end: true
+      })
+      return
+    }
+    this.props.handleNext();
   };
 
   // Concepts Selected
@@ -97,7 +119,7 @@ class VerifyAnnotations extends Component {
     this.setState({
       dialogMsg:
         "Switch " +
-        this.props.annotations[this.state.currentIndex] +
+        this.props.annotation +
         " to " +
         concept.name +
         "?",
@@ -126,15 +148,15 @@ class VerifyAnnotations extends Component {
       .getBoundingClientRect();
     var imageElement = document.getElementById("image");
     var imageCord = imageElement.getBoundingClientRect("dragBox");
-    var x1_video = imageCord.left;
-    var y1_video = imageCord.top;
+    var x1_image = imageCord.left;
+    var y1_image = imageCord.top;
     var x1_box = dragBoxCord.left;
     var y1_box = dragBoxCord.top;
     var height = dragBoxCord.height;
     var width = dragBoxCord.width;
 
-    var x1 = Math.max(x1_box - x1_video, 0);
-    var y1 = Math.max(y1_box - y1_video, 0);
+    var x1 = Math.max(x1_box - x1_image, 0);
+    var y1 = Math.max(y1_box - y1_image, 0);
     var x2 = Math.min(x1 + width, 1599);
     var y2 = Math.min(y1 + height, 899);
 
@@ -177,7 +199,7 @@ class VerifyAnnotations extends Component {
     };
     const body = {
       buf: buf,
-      name: this.props.annotations[this.state.currentIndex].imagewithbox
+      name: this.props.annotation.imagewithbox
     };
     return axios.post("/api/updateImageBox", body, config);
   };
@@ -185,7 +207,7 @@ class VerifyAnnotations extends Component {
   updateBox = (x1, y1, x2, y2, imageCord, dragBoxCord, imageElement) => {
     // console.log("Before Update", this.props.annotations[this.state.currentIndex]);
     const body = {
-      id: this.props.annotations[this.state.currentIndex].id,
+      id: this.props.annotation.id,
       x1: x1,
       y1: y1,
       x2: x2,
@@ -224,8 +246,14 @@ class VerifyAnnotations extends Component {
 
   render() {
     const { classes } = this.props;
-    const annotation = this.props.annotations[this.state.currentIndex];
-
+    var annotation = this.props.annotation;
+    console.log(annotation);
+    console.log(this.state.x, this.state.y);
+    if (!this.state.x) {
+      return (
+        <div>Loading...</div>
+      )
+    }
     return (
       <React.Fragment>
         <DialogModal
@@ -236,7 +264,7 @@ class VerifyAnnotations extends Component {
           open={this.state.dialogOpen}
           handleClose={this.state.closeHandler}
         />
-        {this.state.currentIndex < this.props.annotations.length ? (
+        {!this.state.end ? (
           <React.Fragment>
             <Typography className={classes.paper} variant="title">
               {" "}
@@ -256,16 +284,28 @@ class VerifyAnnotations extends Component {
               <Typography className={classes.paper}>No Image</Typography>
             ) : (
               <div>
-                {this.state.redraw || this.state.redrawn ? (
-                  <div>
+                {/* {this.state.redraw || this.state.redrawn ? ( */}
+                  <div> 
                     <Rnd
                       id="dragBox"
                       className={classes.dragBox}
-                      default={{
-                        x: 30,
-                        y: 30,
-                        width: 60,
-                        height: 60
+                      // default={{
+                      //   x: annotation.x1,
+                      //   y: annotation.y1,
+                      //   width: annotation.x2-annotation.x1,
+                      //   height: annotation.y2-annotation.y1
+                      // }}
+                      size={{ width: this.state.width, height: this.state.height }}
+                      position={{ x: this.state.x, y: this.state.y }}
+                      onDragStop={(e, d) => {
+                        this.setState({ x: d.x, y: d.y });
+                      }}
+                      onResize={(e, direction, ref, delta, position) => {
+                        this.setState({
+                          width: ref.style.width,
+                          height: ref.style.height,
+                          ...position
+                        });
                       }}
                       minWidth={25}
                       minHeight={25}
@@ -276,27 +316,25 @@ class VerifyAnnotations extends Component {
                     <img
                       id="image"
                       className={classes.img}
-                      src={`/api/annotationImages/${
-                        annotation.id
-                      }?withBox=false`}
+                      src={`/api/annotationImages/${this.props.annotation.id}?withBox=false`}
                       alt="error"
                       crossOrigin="use-credentials"
                     />
                   </div>
-                ) : (
+                {/* ) : (
                   <img
                     className={classes.img}
                     src={`/api/annotationImages/${annotation.id}?withBox=true`}
                     alt="error"
                   />
-                )}
+                )} */}
               </div>
             )}
             <Typography className={classes.paper}>
-              {this.state.currentIndex + 1} of {this.props.annotations.length}
+              {this.props.index + 1} of {this.props.size}
             </Typography>
-            {this.state.redraw ? (
-              <div>
+            {/* {this.state.redraw ? ( */}
+              {/* <div>
                 <Button
                   className={classes.button}
                   variant="contained"
@@ -316,18 +354,17 @@ class VerifyAnnotations extends Component {
                 >
                   Cancel
                 </Button>
-              </div>
-            ) : (
+              </div> */}
+            {/* ) : ( */}
               <div>
                 <Button
                   className={classes.button}
                   variant="contained"
-                  color="primary"
                   onClick={() => {
-                    this.redrawAnnotation();
+                    this.reset(annotation);
                   }}
                 >
-                  Redraw Box
+                  Reset
                 </Button>
                 <Button
                   className={classes.button}
@@ -335,6 +372,7 @@ class VerifyAnnotations extends Component {
                   color="primary"
                   onClick={() => {
                     this.nextAnnotation();
+                    this.postBoxImage();
                     this.verifyAnnotation();
                   }}
                 >
@@ -348,7 +386,7 @@ class VerifyAnnotations extends Component {
                   Ignore
                 </Button>
               </div>
-            )}
+            {/* )} */}
           </React.Fragment>
         ) : (
           <React.Fragment>
