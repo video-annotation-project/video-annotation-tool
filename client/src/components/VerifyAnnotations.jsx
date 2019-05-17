@@ -320,13 +320,12 @@ class VerifyAnnotations extends Component {
             <Typography className={classes.paper} variant="body2">
               Concept: {annotation.name}
             </Typography>
-            <ConceptsSelected handleConceptClick={this.handleConceptClick} />
             {!annotation.image ? (
               <Typography className={classes.paper}>No Image</Typography>
             ) : (
               <div>
                 {/* {this.state.redraw || this.state.redrawn ? ( */}
-                  <div> 
+                  <div className={classes.img}> 
                     <Rnd
                       id="dragBox"
                       className={classes.dragBox}
@@ -399,6 +398,7 @@ class VerifyAnnotations extends Component {
               </div> */}
             {/* ) : ( */}
               <div>
+                <ConceptsSelected handleConceptClick={this.handleConceptClick} />
                 <Button
                   className={classes.button}
                   variant="contained"
