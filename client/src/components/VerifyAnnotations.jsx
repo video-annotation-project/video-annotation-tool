@@ -45,6 +45,9 @@ class VerifyAnnotations extends Component {
     super(props);
     this.state = {
       currentIndex: 0,
+      conceptid: null,
+      comment: null,
+      unsure: false,
       error: null,
       dialogMsg: null,
       dialogOpen: false,
@@ -55,14 +58,19 @@ class VerifyAnnotations extends Component {
 
   verifyAnnotation = async () => {
     const body = {
-      id: this.props.annotations[this.state.currentIndex].id
+      id: this.props.annotations[this.state.currentIndex].id,
+      conceptid: this.state.conceptid,
+      comment: this.state.comment,
+      unsure: this.state.unsure
     };
+
     const config = {
       headers: {
         "Content-Type": "application/json",
         Authorization: "Bearer " + localStorage.getItem("token")
       }
     };
+
     return axios
       .patch(`/api/annotationsVerify/`, body, config)
       .then(res => {
@@ -104,6 +112,17 @@ class VerifyAnnotations extends Component {
       dialogOpen: true,
       clickedConcept: concept,
       closeHandler: this.handleDialogClose
+    });
+  };
+
+  editAnnotation = (comment, unsure) => {
+    if (comment === "") {
+      comment = this.props.annotations[this.state.currentIndex].comment;
+    }
+    this.setState({
+      conceptid: this.state.clickedConcept.id,
+      comment: comment,
+      unsure: unsure
     });
   };
 

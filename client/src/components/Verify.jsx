@@ -57,10 +57,6 @@ class Verify extends Component {
     };
   }
 
-  componentDidMount() {
-    console.log(this.state);
-  }
-
   unmountSelection = () => {
     if (!this.state.selectionMounted) {
       this.handleReset();

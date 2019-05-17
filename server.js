@@ -189,9 +189,18 @@ app.patch(
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const id = req.body.id;
+    const conceptid =
+      req.body.conceptid != null ? ", conceptid=" + req.body.conceptid : "";
+    const comment =
+      req.body.comment != null ? ", comment='" + req.body.comment + "'" : "";
+    const unsure = req.body.unsure != null ? ", unsure=" + req.body.unsure : "";
     const verifiedby = req.user.id;
     const queryText =
-      "UPDATE annotations SET verifiedby=$2, verifieddate=current_timestamp WHERE id=$1";
+      "UPDATE annotations SET verifiedby=$2, verifieddate=current_timestamp" +
+      conceptid +
+      comment +
+      unsure +
+      " WHERE id=$1";
     try {
       let update = await psql.query(queryText, [id, verifiedby]);
       res.json(update.rows);
@@ -220,36 +229,6 @@ app.patch(
     try {
       let update = await psql.query(queryText, [x1, x2, y1, y2, id]);
       res.json(update.rows);
-    } catch (error) {
-      console.log(error);
-      res.status(500).json(error);
-    }
-  }
-);
-
-app.patch(
-  "/api/annotationsVerifyWithChanges",
-  passport.authenticate("jwt", { session: false }),
-  async (req, res) => {
-    const id = req.query.id;
-    const verifiedby = req.user.id;
-    const conceptid = req.query.conceptid;
-    const x1 = req.query.x1;
-    const y1 = req.query.y1;
-    const x2 = req.query.x2;
-    const y2 = req.query.y2;
-    const queryText =
-      "UPDATE annotations SET verifiedby=$2, verifieddate=current_timestamp, conceptid=$3, x1=$4, y1=$5, x2=$6, y2=$7 WHERE id=$1";
-    try {
-      let update = await psql.query(queryText, [
-        id,
-        verifiedby,
-        conceptid,
-        x1,
-        y1,
-        x2,
-        y2
-      ]);
     } catch (error) {
       console.log(error);
       res.status(500).json(error);
