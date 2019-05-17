@@ -85,10 +85,10 @@ app.get(
     var queryText = [
       "SELECT DISTINCT v.id, v.filename \
         FROM annotations a, videos v \
-        WHERE a.verifiedby is null AND v.id=a.videoid",
+        WHERE a.verifiedby IS NULL AND v.id=a.videoid",
       "SELECT DISTINCT v.id, v.filename \
         FROM annotations a, videos v \
-        WHERE a.userid=$1 AND a.verifiedby is null AND v.id=a.videoid"
+        WHERE a.userid=$1 AND a.verifiedby IS NULL AND v.id=a.videoid"
     ];
     try {
       if (req.params.userid == "0") {
@@ -118,10 +118,11 @@ app.get(
     var queryText = [
       `SELECT DISTINCT c.id, c.name
         FROM annotations a, concepts c
-        WHERE a.verifiedby is null AND a.conceptid=c.id` + sqlVideos,
+        WHERE a.verifiedby IS NULL AND a.conceptid=c.id` + sqlVideos,
       `SELECT DISTINCT c.id, c.name
         FROM annotations a, concepts c
-        WHERE a.userid=$1 AND a.verifiedby is null AND a.conceptid=c.id` + sqlVideos
+        WHERE a.userid=$1 AND a.verifiedby IS NULL AND a.conceptid=c.id` +
+        sqlVideos
     ];
     try {
       if (req.query.selectedUser == "0") {
@@ -160,12 +161,12 @@ app.get(
     var queryText = [
       `SELECT distinct a.*, c.name
         FROM annotations a, concepts c
-        WHERE c.id=a.conceptid AND a.verifiedby is null` +
+        WHERE c.id=a.conceptid AND a.verifiedby IS NULL` +
         sqlVideos +
         sqlConcepts,
       `SELECT distinct a.*, c.name
         FROM annotations a, concepts c
-        WHERE c.id=a.conceptid AND a.userid=$1 AND a.verifiedby is null` +
+        WHERE c.id=a.conceptid AND a.userid=$1 AND a.verifiedby IS NULL` +
         sqlVideos +
         sqlConcepts
     ];
@@ -201,6 +202,31 @@ app.patch(
   }
 );
 
+// update box coordinates
+app.patch(
+  "/api/annotationsUpdateBox",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    // console.log(req.body)
+    const id = req.body.id;
+
+    var x1 = req.body.x1;
+    var x2 = req.body.x2;
+    var y1 = req.body.y1;
+    var y2 = req.body.y2;
+
+    const queryText =
+      "UPDATE annotations SET x1=$1, x2=$2, y1=$3, y2=$4 WHERE id=$5";
+    try {
+      let update = await psql.query(queryText, [x1, x2, y1, y2, id]);
+      res.json(update.rows);
+    } catch (error) {
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
+);
+
 app.patch(
   "/api/annotationsVerifyWithChanges",
   passport.authenticate("jwt", { session: false }),
@@ -224,7 +250,6 @@ app.patch(
         x2,
         y2
       ]);
-      res.json(update.rows);
     } catch (error) {
       console.log(error);
       res.status(500).json(error);
@@ -1049,10 +1074,8 @@ app.get("/api/annotationImages/:id", async (req, res) => {
     const response = await psql.query(queryText, [req.params.id]);
     var picture = null;
     if (req.query.withBox === "true") {
-      // console.log("withbox");
       picture = response.rows[0].imagewithbox;
     } else {
-      // console.log("withoutbox");
       picture = response.rows[0].image;
     }
     const params = {
@@ -1096,6 +1119,30 @@ app.post(
     }
     var params = {
       Key: key + ".png",
+      Bucket: process.env.AWS_S3_BUCKET_NAME,
+      ContentEncoding: "base64",
+      ContentType: "image/png",
+      Body: Buffer(req.body.buf) //the base64 string is now the body
+    };
+    s3.putObject(params, (err, data) => {
+      if (err) {
+        console.log(err);
+        res.status(400).json(error);
+      } else {
+        res.json({ message: "successfully uploaded image to S3" });
+      }
+    });
+  }
+);
+
+app.post(
+  "/api/updateImageBox",
+  passport.authenticate("jwt", { session: false }),
+  (req, res) => {
+    let s3 = new AWS.S3();
+    var key = process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + req.body.name;
+    var params = {
+      Key: key,
       Bucket: process.env.AWS_S3_BUCKET_NAME,
       ContentEncoding: "base64",
       ContentType: "image/png",
