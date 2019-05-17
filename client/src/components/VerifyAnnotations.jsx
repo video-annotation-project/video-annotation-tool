@@ -78,7 +78,9 @@ class VerifyAnnotations extends Component {
   nextAnnotation = () => {
     let nextIndex = this.state.currentIndex + 1;
     this.setState({
-      currentIndex: nextIndex
+      currentIndex: nextIndex,
+      redraw: false,
+      redrawn: false
     });
   };
 
