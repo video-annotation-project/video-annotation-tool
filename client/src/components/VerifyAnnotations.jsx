@@ -103,6 +103,15 @@ class VerifyAnnotations extends Component {
       });
   };
 
+  reset = () => {
+    this.setState({
+      x: this.props.annotation.x1,
+      y: this.props.annotation.y1,
+      width: this.props.annotation.x2-this.props.annotation.x1,
+      height: this.props.annotation.y2-this.props.annotation.y1,
+    })
+  }
+
   nextAnnotation = () => {
     // let nextIndex = this.state.currentIndex + 1;
     // this.setState({
@@ -394,7 +403,7 @@ class VerifyAnnotations extends Component {
                   className={classes.button}
                   variant="contained"
                   onClick={() => {
-                    this.reset(annotation);
+                    this.reset();
                   }}
                 >
                   Reset
