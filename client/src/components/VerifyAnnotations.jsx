@@ -4,11 +4,10 @@ import PropTypes from "prop-types";
 import { withStyles } from "@material-ui/core/styles";
 import { Typography } from "@material-ui/core";
 import Button from "@material-ui/core/Button";
+import ConceptsSelected from "./ConceptsSelected.jsx";
+import DialogModal from "./DialogModal";
 
 const styles = theme => ({
-  root: {
-    width: "90%"
-  },
   button: {
     margin: theme.spacing.unit
   },
@@ -39,7 +38,11 @@ class VerifyAnnotations extends Component {
     super(props);
     this.state = {
       currentIndex: 0,
-      error: null
+      error: null,
+      dialogMsg: null,
+      dialogOpen: false,
+      clickedConcept: null,
+      closeHandler: null
     };
   }
 
@@ -66,16 +69,49 @@ class VerifyAnnotations extends Component {
   };
 
   nextAnnotation = () => {
+    let nextIndex = this.state.currentIndex + 1;
     this.setState({
-      currentIndex: this.state.currentIndex + 1
+      currentIndex: nextIndex
+    });
+  };
+
+  // Concepts Selected
+  handleDialogClose = () => {
+    this.setState({
+      dialogOpen: false,
+      dialogMsg: null,
+      clickedConcept: null
+    });
+  };
+
+  handleConceptClick = concept => {
+    this.setState({
+      dialogMsg:
+        "Switch " +
+        this.props.annotations[this.state.currentIndex] +
+        " to " +
+        concept.name +
+        "?",
+      dialogOpen: true,
+      clickedConcept: concept,
+      closeHandler: this.handleDialogClose
     });
   };
 
   render() {
     const { classes } = this.props;
-    var annotation = this.props.annotations[this.state.currentIndex];
+    const annotation = this.props.annotations[this.state.currentIndex];
+
     return (
       <React.Fragment>
+        <DialogModal
+          title={"Confirm Annotation Edit"}
+          message={this.state.dialogMsg}
+          placeholder={"Comments"}
+          inputHandler={this.editAnnotation}
+          open={this.state.dialogOpen}
+          handleClose={this.state.closeHandler}
+        />
         {this.state.currentIndex < this.props.annotations.length ? (
           <React.Fragment>
             <Typography className={classes.paper} variant="title">
@@ -91,6 +127,7 @@ class VerifyAnnotations extends Component {
               At {Math.floor(annotation.timeinvideo / 60)} minutes{" "}
               {Math.floor(annotation.timeinvideo % 60)} seconds
             </Typography>
+            <ConceptsSelected handleConceptClick={this.handleConceptClick} />
             {!annotation.image ? (
               <Typography className={classes.paper}>No Image</Typography>
             ) : (

@@ -57,6 +57,10 @@ class Verify extends Component {
     };
   }
 
+  componentDidMount() {
+    console.log(this.state);
+  }
+
   unmountSelection = () => {
     if (!this.state.selectionMounted) {
       this.handleReset();
@@ -196,36 +200,6 @@ class Verify extends Component {
     this.setState({
       isLoaded: true
     });
-  };
-
-  verifyAnnotations = async (id, index) => {
-    console.log("Verify called");
-    const body = {
-      id: id
-    };
-    const config = {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + localStorage.getItem("token")
-      }
-    };
-    return axios
-      .patch(`/api/annotationsVerify/`, body, config)
-      .then(res => {
-        if (this.state.annotations[index].disabled === undefined) {
-          console.log("undefined");
-          this.state.annotations[index].disabled = true;
-        }
-        this.setState({
-          annotations: this.state.annotations
-        });
-        return res.data;
-      })
-      .catch(error => {
-        this.setState({
-          error: error
-        });
-      });
   };
 
   render() {

@@ -14,9 +14,6 @@ import VerifySelectVideo from "./VerifySelectVideo.jsx";
 import VerifySelectConcept from "./VerifySelectConcept.jsx";
 
 const styles = theme => ({
-  root: {
-    width: "90%"
-  },
   button: {
     marginTop: theme.spacing.unit,
     marginRight: theme.spacing.unit

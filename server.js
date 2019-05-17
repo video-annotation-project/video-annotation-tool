@@ -85,10 +85,10 @@ app.get(
     var queryText = [
       "SELECT DISTINCT v.id, v.filename \
         FROM annotations a, videos v \
-        WHERE a.verifiedby='' AND v.id=a.videoid",
+        WHERE a.verifiedby is null AND v.id=a.videoid",
       "SELECT DISTINCT v.id, v.filename \
         FROM annotations a, videos v \
-        WHERE a.userid=$1 AND a.verifiedby='' AND v.id=a.videoid"
+        WHERE a.userid=$1 AND a.verifiedby is null AND v.id=a.videoid"
     ];
     try {
       if (req.params.userid == "0") {
@@ -118,10 +118,10 @@ app.get(
     var queryText = [
       `SELECT DISTINCT c.id, c.name
         FROM annotations a, concepts c
-        WHERE a.verifiedby='' AND a.conceptid=c.id` + sqlVideos,
+        WHERE a.verifiedby is null AND a.conceptid=c.id` + sqlVideos,
       `SELECT DISTINCT c.id, c.name
         FROM annotations a, concepts c
-        WHERE a.userid=$1 AND a.verifiedby='' AND a.conceptid=c.id` + sqlVideos
+        WHERE a.userid=$1 AND a.verifiedby is null AND a.conceptid=c.id` + sqlVideos
     ];
     try {
       if (req.query.selectedUser == "0") {
@@ -160,12 +160,12 @@ app.get(
     var queryText = [
       `SELECT distinct a.*, c.name
         FROM annotations a, concepts c
-        WHERE c.id=a.conceptid AND a.verifiedby=''` +
+        WHERE c.id=a.conceptid AND a.verifiedby is null` +
         sqlVideos +
         sqlConcepts,
       `SELECT distinct a.*, c.name
         FROM annotations a, concepts c
-        WHERE c.id=a.conceptid AND a.userid=$1 AND a.verifiedby=''` +
+        WHERE c.id=a.conceptid AND a.userid=$1 AND a.verifiedby is null` +
         sqlVideos +
         sqlConcepts
     ];
