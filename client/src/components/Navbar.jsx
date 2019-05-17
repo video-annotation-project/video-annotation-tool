@@ -19,6 +19,8 @@ class Navbar extends React.Component {
   }
 
   handleLogout = () => {
+    /* Annotate.jsx tries to PUT to /api/checkpoints when unmounted, so we redirect the web page before clearing authentication */
+    window.location.replace('/');
     localStorage.clear();
   };
 
@@ -78,8 +80,8 @@ class Navbar extends React.Component {
               </Button>
               <Button
                 color="inherit"
-                component={Link}
-                to="/"
+                // component={Link}
+                // to="/"
                 onClick={this.handleLogout}
               >
                 Logout
