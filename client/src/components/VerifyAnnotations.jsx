@@ -54,6 +54,7 @@ class VerifyAnnotations extends Component {
       dialogOpen: false,
       clickedConcept: null,
       closeHandler: null,
+      loaded: true,
       x: this.props.annotation.x1,
       y: this.props.annotation.y1,
       width: this.props.annotation.x2-this.props.annotation.x1,
@@ -77,7 +78,7 @@ class VerifyAnnotations extends Component {
 
   verifyAnnotation = async () => {
     const body = {
-      id: this.props.annotations[this.state.currentIndex].id,
+      id: this.props.annotation.id,
       conceptid: this.state.conceptid,
       comment: this.state.comment,
       unsure: this.state.unsure
@@ -114,6 +115,14 @@ class VerifyAnnotations extends Component {
       })
       return
     }
+    this.setState({
+      loaded: false
+    }, () => {
+      this.setState({
+        loaded: true
+      })
+    })
+
     this.props.handleNext();
   };
 
@@ -142,7 +151,7 @@ class VerifyAnnotations extends Component {
 
   editAnnotation = (comment, unsure) => {
     if (comment === "") {
-      comment = this.props.annotations[this.state.currentIndex].comment;
+      comment = this.props.annotation.comment;
     }
     this.setState({
       conceptid: this.state.clickedConcept.id,
@@ -336,10 +345,11 @@ class VerifyAnnotations extends Component {
                       maxHeight={650}
                       bounds="parent"
                     />
-                    <img
+                    <img 
                       id="image"
                       className={classes.img}
-                      src={`/api/annotationImages/${this.props.annotation.id}?withBox=false`}
+                      src={this.state.loaded ? `/api/annotationImages/${this.props.annotation.id}?withBox=false`
+                            : ''}
                       alt="error"
                       crossOrigin="use-credentials"
                     />
