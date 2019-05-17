@@ -46,6 +46,9 @@ class VerifyAnnotations extends Component {
     super(props);
     this.state = {
       currentIndex: this.props.index,
+      conceptid: null,
+      comment: null,
+      unsure: false,
       error: null,
       dialogMsg: null,
       dialogOpen: false,
@@ -58,7 +61,7 @@ class VerifyAnnotations extends Component {
     };
   }
 
-  componentDidUpdate(prevProps) {
+  componentDidUpdate(prevProps, prevState) {
     if (prevProps.annotation !== this.props.annotation) {
       this.setState({
         x: this.props.annotation.x1,
@@ -67,18 +70,26 @@ class VerifyAnnotations extends Component {
         height: this.props.annotation.y2-this.props.annotation.y1,
       })
     }
+    if (this.state.currentIndex !== prevState.currentIndex) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
   }
 
   verifyAnnotation = async () => {
     const body = {
-      id: this.props.annotation.id
+      id: this.props.annotations[this.state.currentIndex].id,
+      conceptid: this.state.conceptid,
+      comment: this.state.comment,
+      unsure: this.state.unsure
     };
+
     const config = {
       headers: {
         "Content-Type": "application/json",
         Authorization: "Bearer " + localStorage.getItem("token")
       }
     };
+
     return axios
       .patch(`/api/annotationsVerify/`, body, config)
       .then(res => {
@@ -126,6 +137,17 @@ class VerifyAnnotations extends Component {
       dialogOpen: true,
       clickedConcept: concept,
       closeHandler: this.handleDialogClose
+    });
+  };
+
+  editAnnotation = (comment, unsure) => {
+    if (comment === "") {
+      comment = this.props.annotations[this.state.currentIndex].comment;
+    }
+    this.setState({
+      conceptid: this.state.clickedConcept.id,
+      comment: comment,
+      unsure: unsure
     });
   };
 
@@ -267,17 +289,18 @@ class VerifyAnnotations extends Component {
         {!this.state.end ? (
           <React.Fragment>
             <Typography className={classes.paper} variant="title">
-              {" "}
-              Annotation {annotation.id}
+              Annotation #{annotation.id}
             </Typography>
             <Typography className={classes.paper} variant="body2">
-              {" "}
-              Annotated by: {annotation.userid}, Video: {annotation.videoid},
-              Concept: {annotation.name}
+              Annotated by: {annotation.username}
             </Typography>
             <Typography className={classes.paper} variant="body2">
-              At {Math.floor(annotation.timeinvideo / 60)} minutes{" "}
+              Video: {annotation.filename} at{" "}
+              {Math.floor(annotation.timeinvideo / 60)} minutes{" "}
               {Math.floor(annotation.timeinvideo % 60)} seconds
+            </Typography>
+            <Typography className={classes.paper} variant="body2">
+              Concept: {annotation.name}
             </Typography>
             <ConceptsSelected handleConceptClick={this.handleConceptClick} />
             {!annotation.image ? (
