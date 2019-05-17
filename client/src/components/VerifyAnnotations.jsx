@@ -83,7 +83,6 @@ class VerifyAnnotations extends Component {
       comment: this.state.comment,
       unsure: this.state.unsure
     };
-
     const config = {
       headers: {
         "Content-Type": "application/json",
@@ -113,11 +112,6 @@ class VerifyAnnotations extends Component {
   }
 
   nextAnnotation = () => {
-    // let nextIndex = this.state.currentIndex + 1;
-    // this.setState({
-    //   currentIndex: nextIndex,
-    //   loaded: false
-    // });
     if (this.props.size === this.props.index + 1){
       this.setState({
         end: true
@@ -200,7 +194,6 @@ class VerifyAnnotations extends Component {
     var x2 = Math.min(x1 + width, 1599);
     var y2 = Math.min(y1 + height, 899);
 
-    console.log(x1, y1, x2, y2);
     await this.updateBox(x1, y1, x2, y2, imageCord, dragBoxCord, imageElement);
   };
 
@@ -245,7 +238,6 @@ class VerifyAnnotations extends Component {
   };
 
   updateBox = (x1, y1, x2, y2, imageCord, dragBoxCord, imageElement) => {
-    // console.log("Before Update", this.props.annotations[this.state.currentIndex]);
     const body = {
       id: this.props.annotation.id,
       x1: x1,
@@ -287,8 +279,6 @@ class VerifyAnnotations extends Component {
   render() {
     const { classes } = this.props;
     var annotation = this.props.annotation;
-    console.log(annotation);
-    console.log(this.state.x, this.state.y);
     if (!this.state.x) {
       return (
         <div>Loading...</div>
@@ -324,17 +314,10 @@ class VerifyAnnotations extends Component {
               <Typography className={classes.paper}>No Image</Typography>
             ) : (
               <div>
-                {/* {this.state.redraw || this.state.redrawn ? ( */}
                   <div className={classes.img}> 
                     <Rnd
                       id="dragBox"
                       className={classes.dragBox}
-                      // default={{
-                      //   x: annotation.x1,
-                      //   y: annotation.y1,
-                      //   width: annotation.x2-annotation.x1,
-                      //   height: annotation.y2-annotation.y1
-                      // }}
                       size={{ width: this.state.width, height: this.state.height }}
                       position={{ x: this.state.x, y: this.state.y }}
                       onDragStop={(e, d) => {
@@ -362,41 +345,11 @@ class VerifyAnnotations extends Component {
                       crossOrigin="use-credentials"
                     />
                   </div>
-                {/* ) : (
-                  <img
-                    className={classes.img}
-                    src={`/api/annotationImages/${annotation.id}?withBox=true`}
-                    alt="error"
-                  />
-                )} */}
               </div>
             )}
             <Typography className={classes.paper}>
               {this.props.index + 1} of {this.props.size}
             </Typography>
-            {/* {this.state.redraw ? ( */}
-              {/* <div>
-                <Button
-                  className={classes.button}
-                  variant="contained"
-                  color="primary"
-                  onClick={() => {
-                    this.postBoxImage();
-                  }}
-                >
-                  Redraw
-                </Button>
-                <Button
-                  className={classes.button}
-                  variant="contained"
-                  onClick={() => {
-                    this.redrawAnnotation();
-                  }}
-                >
-                  Cancel
-                </Button>
-              </div> */}
-            {/* ) : ( */}
               <div>
                 <ConceptsSelected handleConceptClick={this.handleConceptClick} />
                 <Button
