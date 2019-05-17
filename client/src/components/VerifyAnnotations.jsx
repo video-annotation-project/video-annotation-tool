@@ -20,10 +20,10 @@ const styles = theme => ({
     paddingLeft: 0
   },
   img: {
-    postion: 'absolute',
-    top: '50px',
-    width: '1600px',
-    height: '900px'
+    postion: "absolute",
+    top: "50px",
+    width: "1600px",
+    height: "900px"
   },
   container: {
     display: "grid",
@@ -48,7 +48,7 @@ class VerifyAnnotations extends Component {
       currentIndex: this.props.index,
       conceptid: null,
       comment: null,
-      unsure: false,
+      unsure: null,
       error: null,
       dialogMsg: null,
       dialogOpen: false,
@@ -57,22 +57,19 @@ class VerifyAnnotations extends Component {
       loaded: true,
       x: this.props.annotation.x1,
       y: this.props.annotation.y1,
-      width: this.props.annotation.x2-this.props.annotation.x1,
-      height: this.props.annotation.y2-this.props.annotation.y1,
+      width: this.props.annotation.x2 - this.props.annotation.x1,
+      height: this.props.annotation.y2 - this.props.annotation.y1
     };
   }
 
-  componentDidUpdate(prevProps, prevState) {
+  componentDidUpdate(prevProps, prevState, snapshot) {
     if (prevProps.annotation !== this.props.annotation) {
       this.setState({
         x: this.props.annotation.x1,
         y: this.props.annotation.y1,
-        width: this.props.annotation.x2-this.props.annotation.x1,
-        height: this.props.annotation.y2-this.props.annotation.y1,
-      })
-    }
-    if (this.state.currentIndex !== prevState.currentIndex) {
-      window.scrollTo({ top: 0, behavior: "smooth" });
+        width: this.props.annotation.x2 - this.props.annotation.x1,
+        height: this.props.annotation.y2 - this.props.annotation.y1
+      });
     }
   }
 
@@ -83,6 +80,13 @@ class VerifyAnnotations extends Component {
       comment: this.state.comment,
       unsure: this.state.unsure
     };
+
+    this.setState({
+      conceptid: null,
+      comment: null,
+      unsure: null,
+      clickedConcept: null
+    });
 
     const config = {
       headers: {
@@ -107,31 +111,29 @@ class VerifyAnnotations extends Component {
     this.setState({
       x: this.props.annotation.x1,
       y: this.props.annotation.y1,
-      width: this.props.annotation.x2-this.props.annotation.x1,
-      height: this.props.annotation.y2-this.props.annotation.y1,
-    })
-  }
+      width: this.props.annotation.x2 - this.props.annotation.x1,
+      height: this.props.annotation.y2 - this.props.annotation.y1
+    });
+  };
 
   nextAnnotation = () => {
-    // let nextIndex = this.state.currentIndex + 1;
-    // this.setState({
-    //   currentIndex: nextIndex,
-    //   loaded: false
-    // });
-    if (this.props.size === this.props.index + 1){
+    if (this.props.size === this.props.index + 1) {
       this.setState({
         end: true
-      })
-      return
+      });
+      return;
     }
-    this.setState({
-      loaded: false
-    }, () => {
-      this.setState({
-        loaded: true
-      })
-    })
-
+    this.setState(
+      {
+        loaded: false
+      },
+      () => {
+        this.setState({
+          loaded: true
+        });
+      }
+    );
+    window.scrollTo({ top: 0, behavior: "smooth" });
     this.props.handleNext();
   };
 
@@ -147,11 +149,7 @@ class VerifyAnnotations extends Component {
   handleConceptClick = concept => {
     this.setState({
       dialogMsg:
-        "Switch " +
-        this.props.annotation +
-        " to " +
-        concept.name +
-        "?",
+        "Switch " + this.props.annotation + " to " + concept.name + "?",
       dialogOpen: true,
       clickedConcept: concept,
       closeHandler: this.handleDialogClose
@@ -166,18 +164,6 @@ class VerifyAnnotations extends Component {
       conceptid: this.state.clickedConcept.id,
       comment: comment,
       unsure: unsure
-    });
-  };
-
-  redrawAnnotation = () => {
-    var redraw;
-    if (this.state.redraw) {
-      redraw = false;
-    } else {
-      redraw = true;
-    }
-    this.setState({
-      redraw: redraw
     });
   };
 
@@ -200,7 +186,6 @@ class VerifyAnnotations extends Component {
     var x2 = Math.min(x1 + width, 1599);
     var y2 = Math.min(y1 + height, 899);
 
-    console.log(x1, y1, x2, y2);
     await this.updateBox(x1, y1, x2, y2, imageCord, dragBoxCord, imageElement);
   };
 
@@ -245,7 +230,6 @@ class VerifyAnnotations extends Component {
   };
 
   updateBox = (x1, y1, x2, y2, imageCord, dragBoxCord, imageElement) => {
-    // console.log("Before Update", this.props.annotations[this.state.currentIndex]);
     const body = {
       id: this.props.annotation.id,
       x1: x1,
@@ -262,7 +246,6 @@ class VerifyAnnotations extends Component {
     return axios
       .patch(`/api/annotationsUpdateBox/`, body, config)
       .then(res => {
-        // console.log(res)
         this.createAndUploadImages(
           imageCord,
           dragBoxCord,
@@ -287,12 +270,8 @@ class VerifyAnnotations extends Component {
   render() {
     const { classes } = this.props;
     var annotation = this.props.annotation;
-    console.log(annotation);
-    console.log(this.state.x, this.state.y);
-    if (!this.state.x) {
-      return (
-        <div>Loading...</div>
-      )
+    if (this.state.x === null) {
+      return <div>Loading...</div>;
     }
     return (
       <React.Fragment>
@@ -324,111 +303,83 @@ class VerifyAnnotations extends Component {
               <Typography className={classes.paper}>No Image</Typography>
             ) : (
               <div>
-                {/* {this.state.redraw || this.state.redrawn ? ( */}
-                  <div className={classes.img}> 
-                    <Rnd
-                      id="dragBox"
-                      className={classes.dragBox}
-                      // default={{
-                      //   x: annotation.x1,
-                      //   y: annotation.y1,
-                      //   width: annotation.x2-annotation.x1,
-                      //   height: annotation.y2-annotation.y1
-                      // }}
-                      size={{ width: this.state.width, height: this.state.height }}
-                      position={{ x: this.state.x, y: this.state.y }}
-                      onDragStop={(e, d) => {
-                        this.setState({ x: d.x, y: d.y });
-                      }}
-                      onResize={(e, direction, ref, delta, position) => {
-                        this.setState({
-                          width: ref.style.width,
-                          height: ref.style.height,
-                          ...position
-                        });
-                      }}
-                      minWidth={25}
-                      minHeight={25}
-                      maxWidth={900}
-                      maxHeight={650}
-                      bounds="parent"
-                    />
-                    <img 
-                      id="image"
-                      className={classes.img}
-                      src={this.state.loaded ? `/api/annotationImages/${this.props.annotation.id}?withBox=false`
-                            : ''}
-                      alt="error"
-                      crossOrigin="use-credentials"
-                    />
-                  </div>
-                {/* ) : (
-                  <img
-                    className={classes.img}
-                    src={`/api/annotationImages/${annotation.id}?withBox=true`}
-                    alt="error"
+                <div className={classes.img}>
+                  <Rnd
+                    id="dragBox"
+                    className={classes.dragBox}
+                    size={{
+                      width: this.state.width,
+                      height: this.state.height
+                    }}
+                    position={{ x: this.state.x, y: this.state.y }}
+                    onDragStop={(e, d) => {
+                      this.setState({ x: d.x, y: d.y });
+                    }}
+                    onResize={(e, direction, ref, delta, position) => {
+                      this.setState({
+                        width: ref.style.width,
+                        height: ref.style.height,
+                        ...position
+                      });
+                    }}
+                    minWidth={25}
+                    minHeight={25}
+                    maxWidth={900}
+                    maxHeight={650}
+                    bounds="parent"
                   />
-                )} */}
+                  <img
+                    id="image"
+                    className={classes.img}
+                    src={
+                      this.state.loaded
+                        ? `/api/annotationImages/${
+                            this.props.annotation.id
+                          }?withBox=false`
+                        : ""
+                    }
+                    alt="error"
+                    crossOrigin="use-credentials"
+                  />
+                </div>
               </div>
             )}
             <Typography className={classes.paper}>
               {this.props.index + 1} of {this.props.size}
             </Typography>
-            {/* {this.state.redraw ? ( */}
-              {/* <div>
-                <Button
-                  className={classes.button}
-                  variant="contained"
-                  color="primary"
-                  onClick={() => {
+            <div>
+              <ConceptsSelected handleConceptClick={this.handleConceptClick} />
+              <Button
+                className={classes.button}
+                variant="contained"
+                onClick={() => {
+                  this.reset();
+                }}
+              >
+                Reset
+              </Button>
+              <Button
+                className={classes.button}
+                variant="contained"
+                color="primary"
+                onClick={() => {
+                  this.nextAnnotation();
+                  if (annotation.image) {
                     this.postBoxImage();
-                  }}
-                >
-                  Redraw
-                </Button>
-                <Button
-                  className={classes.button}
-                  variant="contained"
-                  onClick={() => {
-                    this.redrawAnnotation();
-                  }}
-                >
-                  Cancel
-                </Button>
-              </div> */}
-            {/* ) : ( */}
-              <div>
-                <ConceptsSelected handleConceptClick={this.handleConceptClick} />
-                <Button
-                  className={classes.button}
-                  variant="contained"
-                  onClick={() => {
-                    this.reset();
-                  }}
-                >
-                  Reset
-                </Button>
-                <Button
-                  className={classes.button}
-                  variant="contained"
-                  color="primary"
-                  onClick={() => {
-                    this.nextAnnotation();
-                    this.postBoxImage();
-                    this.verifyAnnotation();
-                  }}
-                >
-                  Verify
-                </Button>
-                <Button
-                  className={classes.button}
-                  variant="contained"
-                  onClick={this.nextAnnotation}
-                >
-                  Ignore
-                </Button>
-              </div>
-            {/* )} */}
+                  }
+                  this.verifyAnnotation();
+                }}
+              >
+                Verify
+              </Button>
+              <Button
+                className={classes.button}
+                variant="contained"
+                onClick={this.nextAnnotation}
+              >
+                Ignore
+              </Button>
+            </div>
           </React.Fragment>
         ) : (
           <React.Fragment>
