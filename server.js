@@ -68,7 +68,7 @@ const setCookies = (res) => {
   const keyPairId = process.env.KEY_PAIR_ID;
   const privateKey = process.env.RSA_PRIVATE_KEY.split('\\n').join('\n');
   let cdnUrl = "cdn.deepseaannotations.com";
-  let expiry = Math.floor(Date.now() / 1000) + 60000;
+  let expiry = Math.floor(Date.now() / 1000) + 99960000;
 
   let policy = {
     'Statement': [{
