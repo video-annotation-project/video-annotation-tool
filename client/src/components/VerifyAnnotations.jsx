@@ -170,6 +170,28 @@ class VerifyAnnotations extends Component {
     });
   };
 
+  handleDelete = () => {
+    const config = {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + localStorage.getItem("token")
+      },
+      data: {
+        id: this.props.annotation.id
+      }
+    };
+    axios
+      .delete("/api/annotations", config)
+      .then(res => {
+        return res.data;
+      })
+      .catch(error => {
+        this.setState({
+          error: error
+        });
+      });
+  };
+
   /* ALL BOX UPDATE FUNCTIONS */
   postBoxImage = async () => {
     var dragBoxCord = document
@@ -358,11 +380,27 @@ class VerifyAnnotations extends Component {
               <Button
                 className={classes.button}
                 variant="contained"
+                color="secondary"
                 onClick={() => {
-                  this.reset();
+                  this.nextAnnotation();
+                  this.handleDelete();
                 }}
               >
+                Delete
+              </Button>
+              <Button
+                className={classes.button}
+                variant="contained"
+                onClick={this.reset}
+              >
                 Reset
+              </Button>
+              <Button
+                className={classes.button}
+                variant="contained"
+                onClick={this.nextAnnotation}
+              >
+                Ignore
               </Button>
               <Button
                 className={classes.button}
@@ -377,13 +415,6 @@ class VerifyAnnotations extends Component {
                 }}
               >
                 Verify
-              </Button>
-              <Button
-                className={classes.button}
-                variant="contained"
-                onClick={this.nextAnnotation}
-              >
-                Ignore
               </Button>
             </div>
           </React.Fragment>

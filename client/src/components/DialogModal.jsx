@@ -1,14 +1,14 @@
-import React, { Component } from 'react';
-import Input from '@material-ui/core/Input';
-import Dialog from '@material-ui/core/Dialog';
-import DialogContent from '@material-ui/core/DialogContent';
-import DialogContentText from '@material-ui/core/DialogContentText';
-import DialogTitle from '@material-ui/core/DialogTitle';
-import DialogActions from '@material-ui/core/DialogActions';
-import Button from '@material-ui/core/Button';
-import { withStyles } from '@material-ui/core/styles';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
-import Checkbox from '@material-ui/core/Checkbox';
+import React, { Component } from "react";
+import Input from "@material-ui/core/Input";
+import Dialog from "@material-ui/core/Dialog";
+import DialogContent from "@material-ui/core/DialogContent";
+import DialogContentText from "@material-ui/core/DialogContentText";
+import DialogTitle from "@material-ui/core/DialogTitle";
+import DialogActions from "@material-ui/core/DialogActions";
+import Button from "@material-ui/core/Button";
+import { withStyles } from "@material-ui/core/styles";
+import FormControlLabel from "@material-ui/core/FormControlLabel";
+import Checkbox from "@material-ui/core/Checkbox";
 
 const styles = theme => ({
   paper: {
@@ -16,30 +16,28 @@ const styles = theme => ({
     backgroundColor: theme.palette.background.paper,
     boxShadow: theme.shadows[5],
     padding: theme.spacing.unit * 4,
-    display: 'block',
-    margin: 'auto',
-    overflow: 'auto',
-  },
+    display: "block",
+    margin: "auto",
+    overflow: "auto"
+  }
 });
 
 class DialogModal extends Component {
-
   constructor(props) {
     super(props);
     this.state = {
       unsure: false,
-      comment: '',
+      comment: ""
     };
   }
 
-  handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
+  handleKeyPress = e => {
+    if (e.key === "Enter") {
       this.handleSubmit();
-    }
-    else {
+    } else {
       this.setState({
         comment: e.target.value + e.key
-      })
+      });
     }
   };
 
@@ -53,6 +51,7 @@ class DialogModal extends Component {
   };
 
   render() {
+    const { classes } = this.props;
     return (
       <Dialog
         onClose={this.props.handleClose}
@@ -61,10 +60,8 @@ class DialogModal extends Component {
       >
         <DialogTitle id="form-dialog-title">{this.props.title}</DialogTitle>
         <DialogContent>
-          <DialogContentText>
-            {this.props.message}
-          </DialogContentText>
-          <br/>
+          <DialogContentText>{this.props.message}</DialogContentText>
+          <br />
           <Input
             onKeyPress={this.handleKeyPress}
             autoFocus
@@ -87,10 +84,19 @@ class DialogModal extends Component {
             }
             label="Unsure"
           />
-          <Button onClick={this.props.handleClose} color="primary">
+          <Button
+            className={classes.button}
+            onClick={this.props.handleClose}
+            color="primary"
+          >
             Cancel
           </Button>
-          <Button onClick={this.handleSubmit} color="primary">
+          <Button
+            className={classes.button}
+            onClick={this.handleSubmit}
+            color="primary"
+            variant="contained"
+          >
             Submit
           </Button>
         </DialogActions>

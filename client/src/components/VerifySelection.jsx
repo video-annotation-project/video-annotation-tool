@@ -140,6 +140,13 @@ class VerifySelection extends React.Component {
                 <div className={classes.actionsContainer}>
                   <div>
                     <Button
+                      disabled={activeStep === 0}
+                      onClick={this.handleReset}
+                      className={classes.button}
+                    >
+                      Reset
+                    </Button>
+                    <Button
                       variant="contained"
                       color="primary"
                       disabled={this.didNotSelect(index)}
@@ -151,13 +158,6 @@ class VerifySelection extends React.Component {
                       className={classes.button}
                     >
                       {activeStep === steps.length - 1 ? "Finish" : "Next"}
-                    </Button>
-                    <Button
-                      disabled={activeStep === 0}
-                      onClick={this.handleReset}
-                      className={classes.button}
-                    >
-                      Reset
                     </Button>
                   </div>
                 </div>
