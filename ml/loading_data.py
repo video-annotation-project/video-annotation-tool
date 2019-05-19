@@ -120,7 +120,7 @@ def download_annotations(min_examples, concepts, concept_map, good_users, img_fo
     # Get all annotations for given concepts (and child concepts) making sure that any tracking annotations originated from good users
     annotations = queryDB(
         ''' SELECT *
-            FROM annotations as A
+            FROM annotations as A:
             WHERE conceptid in ''' + str(tuple(expanded_concepts)) + 
             ''' AND EXISTS (''' +
                 ''' SELECT id, userid 
@@ -149,6 +149,10 @@ def download_annotations(min_examples, concepts, concept_map, good_users, img_fo
             # try to download image. 
             obj = client.get_object(Bucket=S3_BUCKET, Key= SRC_IMG_FOLDER +first['image'])
             img = Image.open(obj['Body'])
+            img = np.asarray(img)
+            img = img[:,:,:3]
+            img = img[:,:,::-1]
+            img = Image.fromArray(img)
             img.save(img_location)
         except:
             print("Failed to load image:" + first['image'])
