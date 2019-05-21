@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="4172dae0-c67e-44ff-8a5e-a7ca44c610eb" name="Default Changelist" comment="Delete button and minor ui changes">
+    <list default="true" id="4172dae0-c67e-44ff-8a5e-a7ca44c610eb" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/client/src/components/VerifyAnnotations.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/components/VerifyAnnotations.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/src/components/VerifySelectConcept.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/components/VerifySelectConcept.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/src/components/VerifySelectUser.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/components/VerifySelectUser.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/src/components/VerifySelectVideo.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/components/VerifySelectVideo.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/src/components/VerifySelection.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/components/VerifySelection.jsx" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/.tmp/" />
     <ignored path="$PROJECT_DIR$/temp/" />
@@ -19,8 +22,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/client/src/components/Verify.jsx">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="375">
-              <caret line="50" column="24" lean-forward="true" selection-start-line="50" selection-start-column="24" selection-end-line="50" selection-end-column="24" />
+            <state relative-caret-position="316">
+              <caret line="205" column="26" selection-start-line="205" selection-start-column="10" selection-end-line="205" selection-end-column="26" />
               <folding>
                 <element signature="e#0#41#0" expanded="true" />
               </folding>
@@ -28,11 +31,35 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/client/src/components/VerifySelection.jsx">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="134">
-              <caret line="131" column="36" lean-forward="true" selection-start-line="131" selection-start-column="36" selection-end-line="131" selection-end-column="36" />
+            <state relative-caret-position="234">
+              <caret line="71" column="13" lean-forward="true" selection-start-line="71" selection-start-column="13" selection-end-line="71" selection-end-column="13" />
+              <folding>
+                <element signature="e#0#26#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/client/src/components/VerifySelectConcept.jsx">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="360">
+              <caret line="60" column="50" selection-start-line="60" selection-start-column="50" selection-end-line="60" selection-end-column="50" />
+              <folding>
+                <element signature="e#0#26#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/client/src/components/VerifySelectVideo.jsx">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="396">
+              <caret line="56" column="45" lean-forward="true" selection-start-line="56" selection-start-column="45" selection-end-line="56" selection-end-column="45" />
               <folding>
                 <element signature="e#0#26#0" expanded="true" />
               </folding>
@@ -64,11 +91,11 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/client/src/components/VerifyAnnotations.jsx">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="180">
-              <caret line="399" column="25" lean-forward="true" selection-start-line="399" selection-start-column="25" selection-end-line="399" selection-end-column="25" />
+            <state relative-caret-position="108">
+              <caret line="310" column="22" lean-forward="true" selection-start-line="310" selection-start-column="22" selection-end-line="310" selection-end-column="22" />
               <folding>
                 <element signature="e#0#41#0" expanded="true" />
               </folding>
@@ -77,12 +104,12 @@
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/client/src/components/DialogModal.jsx">
+        <entry file="file://$PROJECT_DIR$/client/src/components/VerifySelectUser.jsx">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="666">
-              <caret line="47" selection-start-line="47" selection-end-line="47" />
+            <state relative-caret-position="231">
+              <caret line="59" column="30" lean-forward="true" selection-start-line="59" selection-start-column="30" selection-end-line="59" selection-end-column="45" />
               <folding>
-                <element signature="e#0#41#0" expanded="true" />
+                <element signature="e#0#26#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -156,8 +183,11 @@
         <option value="$PROJECT_DIR$/.gitignore" />
         <option value="$PROJECT_DIR$/client/src/components/Verify.jsx" />
         <option value="$PROJECT_DIR$/client/src/components/DialogModal.jsx" />
-        <option value="$PROJECT_DIR$/client/src/components/VerifySelection.jsx" />
         <option value="$PROJECT_DIR$/client/src/components/VerifyAnnotations.jsx" />
+        <option value="$PROJECT_DIR$/client/src/components/VerifySelectUser.jsx" />
+        <option value="$PROJECT_DIR$/client/src/components/VerifySelectConcept.jsx" />
+        <option value="$PROJECT_DIR$/client/src/components/VerifySelectVideo.jsx" />
+        <option value="$PROJECT_DIR$/client/src/components/VerifySelection.jsx" />
       </list>
     </option>
   </component>
@@ -304,7 +334,7 @@
       <workItem from="1557820277517" duration="44107000" />
       <workItem from="1558236329341" duration="390000" />
       <workItem from="1558256383972" duration="1246000" />
-      <workItem from="1558411884747" duration="2147000" />
+      <workItem from="1558411884747" duration="3551000" />
     </task>
     <task id="LOCAL-00001" summary="Concept selection works now">
       <created>1558064452701</created>
@@ -355,11 +385,18 @@
       <option name="project" value="LOCAL" />
       <updated>1558153322426</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="Changed delete button color">
+      <created>1558414057583</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1558414057583</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="55420000" />
+    <option name="totallyTimeSpent" value="56824000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="-6" y="-6" width="1719" height="932" extended-state="6" />
@@ -397,7 +434,8 @@
     <MESSAGE value="Fixed merge issues" />
     <MESSAGE value="Selected concept now changes annotation info header and reset button also now reverts concept change" />
     <MESSAGE value="Delete button and minor ui changes" />
-    <option name="LAST_COMMIT_MESSAGE" value="Delete button and minor ui changes" />
+    <MESSAGE value="Changed delete button color" />
+    <option name="LAST_COMMIT_MESSAGE" value="Changed delete button color" />
   </component>
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/client/src/components/CreateModel.jsx">
@@ -440,16 +478,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="594">
           <caret line="42" column="57" selection-start-line="42" selection-start-column="53" selection-end-line="42" selection-end-column="57" />
-          <folding>
-            <element signature="e#0#26#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/client/src/components/VerifySelectUser.jsx">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1296">
-          <caret line="72" column="12" lean-forward="true" selection-start-line="72" selection-start-column="12" selection-end-line="72" selection-end-column="12" />
           <folding>
             <element signature="e#0#26#0" expanded="true" />
           </folding>
@@ -532,36 +560,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/client/src/components/VerifySelection.jsx">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="134">
-          <caret line="131" column="36" lean-forward="true" selection-start-line="131" selection-start-column="36" selection-end-line="131" selection-end-column="36" />
-          <folding>
-            <element signature="e#0#26#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/client/src/components/VerifySelectConcept.jsx">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-118">
-          <caret line="36" lean-forward="true" selection-start-line="36" selection-end-line="36" />
-          <folding>
-            <element signature="e#0#26#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/client/src/components/Verify.jsx">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="375">
-          <caret line="50" column="24" lean-forward="true" selection-start-line="50" selection-start-column="24" selection-end-line="50" selection-end-column="24" />
-          <folding>
-            <element signature="e#0#41#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/client/src/components/Annotations.jsx">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="108">
@@ -574,10 +572,60 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/client/src/components/VerifyAnnotations.jsx">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="180">
-          <caret line="399" column="25" lean-forward="true" selection-start-line="399" selection-start-column="25" selection-end-line="399" selection-end-column="25" />
+        <state relative-caret-position="108">
+          <caret line="310" column="22" lean-forward="true" selection-start-line="310" selection-start-column="22" selection-end-line="310" selection-end-column="22" />
           <folding>
             <element signature="e#0#41#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/client/src/components/VerifySelectUser.jsx">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="231">
+          <caret line="59" column="30" lean-forward="true" selection-start-line="59" selection-start-column="30" selection-end-line="59" selection-end-column="45" />
+          <folding>
+            <element signature="e#0#26#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/client/src/components/VerifySelectConcept.jsx">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="360">
+          <caret line="60" column="50" selection-start-line="60" selection-start-column="50" selection-end-line="60" selection-end-column="50" />
+          <folding>
+            <element signature="e#0#26#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/client/src/components/VerifySelectVideo.jsx">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="396">
+          <caret line="56" column="45" lean-forward="true" selection-start-line="56" selection-start-column="45" selection-end-line="56" selection-end-column="45" />
+          <folding>
+            <element signature="e#0#26#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/client/src/components/Verify.jsx">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="316">
+          <caret line="205" column="26" selection-start-line="205" selection-start-column="10" selection-end-line="205" selection-end-column="26" />
+          <folding>
+            <element signature="e#0#41#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/client/src/components/VerifySelection.jsx">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="234">
+          <caret line="71" column="13" lean-forward="true" selection-start-line="71" selection-start-column="13" selection-end-line="71" selection-end-column="13" />
+          <folding>
+            <element signature="e#0#26#0" expanded="true" />
           </folding>
         </state>
       </provider>

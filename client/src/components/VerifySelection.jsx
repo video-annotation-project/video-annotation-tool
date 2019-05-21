@@ -35,9 +35,9 @@ function getStepContent(step) {
     case 0:
       return "Select a user";
     case 1:
-      return "Select a video";
+      return "Select videos";
     case 2:
-      return "Select a concept";
+      return "Select concepts";
     default:
       return "Unknown step";
   }
@@ -80,7 +80,7 @@ class VerifySelection extends React.Component {
       case 2:
         return (
           <VerifySelectConcept
-            value={this.props.selectedConcept}
+            value={this.props.selectedConcepts}
             getConcepts={this.props.getConcepts}
             handleChange={this.props.handleChangeConcept}
           />

@@ -58,7 +58,7 @@ class VerifySelectConcept extends React.Component {
               <FormControlLabel
                 key={concept.id}
                 value={concept.id.toString()}
-                control={<Checkbox />}
+                control={<Checkbox color="primary" />}
                 label={concept.name}
               />
             ))}

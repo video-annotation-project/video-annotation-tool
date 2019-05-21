@@ -57,14 +57,14 @@ class VerifySelectUser extends React.Component {
             <FormControlLabel
               key={0}
               value={"0"}
-              control={<Radio />}
+              control={<Radio color="primary" />}
               label={"All users"}
             />
             {this.state.users.map(user => (
               <FormControlLabel
                 key={user.id}
                 value={user.id.toString()}
-                control={<Radio />}
+                control={<Radio color="primary" />}
                 label={user.username}
               />
             ))}
