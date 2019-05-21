@@ -7,6 +7,7 @@ import Button from "@material-ui/core/Button";
 import ConceptsSelected from "./ConceptsSelected.jsx";
 import DialogModal from "./DialogModal";
 import Rnd from "react-rnd";
+import { MuiThemeProvider, createMuiTheme } from "@material-ui/core/styles";
 
 const styles = theme => ({
   button: {
@@ -38,6 +39,14 @@ const styles = theme => ({
     backgroundColor: "transparent",
     border: "2px coral solid",
     borderStyle: "ridge"
+  }
+});
+
+const theme = createMuiTheme({
+  palette: {
+    secondary: {
+      main: "#565656"
+    }
   }
 });
 
@@ -377,17 +386,19 @@ class VerifyAnnotations extends Component {
             </Typography>
             <div>
               <ConceptsSelected handleConceptClick={this.handleConceptClick} />
-              <Button
-                className={classes.button}
-                variant="contained"
-                color="secondary"
-                onClick={() => {
-                  this.nextAnnotation();
-                  this.handleDelete();
-                }}
-              >
-                Delete
-              </Button>
+              <MuiThemeProvider theme={theme}>
+                <Button
+                  className={classes.button}
+                  variant="contained"
+                  color="secondary"
+                  onClick={() => {
+                    this.nextAnnotation();
+                    this.handleDelete();
+                  }}
+                >
+                  Delete
+                </Button>
+              </MuiThemeProvider>
               <Button
                 className={classes.button}
                 variant="contained"
