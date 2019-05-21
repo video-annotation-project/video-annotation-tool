@@ -4,9 +4,14 @@ import PropTypes from "prop-types";
 import { withStyles } from "@material-ui/core/styles";
 import { Typography } from "@material-ui/core";
 import Button from "@material-ui/core/Button";
-import ConceptsSelected from "./ConceptsSelected.jsx";
 import DialogModal from "./DialogModal";
 import Rnd from "react-rnd";
+import OndemandVideo from '@material-ui/icons/OndemandVideo';
+import IconButton from '@material-ui/core/IconButton';
+import DialogTitle from '@material-ui/core/DialogTitle';
+import Dialog from '@material-ui/core/Dialog';
+import blue from '@material-ui/core/colors/blue';
+
 
 const styles = theme => ({
   button: {
@@ -38,6 +43,10 @@ const styles = theme => ({
     backgroundColor: "transparent",
     border: "2px coral solid",
     borderStyle: "ridge"
+  },
+  avatar: {
+    backgroundColor: blue[100],
+    color: blue[600],
   }
 });
 
@@ -58,7 +67,8 @@ class VerifyAnnotations extends Component {
       x: this.props.annotation.x1,
       y: this.props.annotation.y1,
       width: this.props.annotation.x2 - this.props.annotation.x1,
-      height: this.props.annotation.y2 - this.props.annotation.y1
+      height: this.props.annotation.y2 - this.props.annotation.y1,
+      open: false
     };
   }
 
@@ -292,6 +302,17 @@ class VerifyAnnotations extends Component {
       });
   };
 
+  // DIALOG functions
+  handleVideoDialogOpen = () => {
+    this.setState({
+      open: true,
+    });
+  };
+
+  handleVideoDialogClose = () => {
+    this.setState({ open: false });
+  };
+
   render() {
     const { classes } = this.props;
     var annotation = this.props.annotation;
@@ -306,7 +327,7 @@ class VerifyAnnotations extends Component {
           placeholder={"Comments"}
           inputHandler={this.editAnnotation}
           open={this.state.dialogOpen}
-          handleClose={this.state.closeHandler}
+          handleDialogClose={this.state.closeHandler}
         />
         {!this.state.end ? (
           <React.Fragment>
@@ -376,7 +397,9 @@ class VerifyAnnotations extends Component {
               {this.props.index + 1} of {this.props.size}
             </Typography>
             <div>
-              <ConceptsSelected handleConceptClick={this.handleConceptClick} />
+              <IconButton className={classes.icons} aria-label="OndemandVideo">
+                <OndemandVideo onClick={this.handleVideoDialogOpen} />
+              </IconButton>
               <Button
                 className={classes.button}
                 variant="contained"
@@ -416,6 +439,11 @@ class VerifyAnnotations extends Component {
               >
                 Verify
               </Button>
+              <VideoDialogWrapped
+                annotation={this.props.annotation}
+                open={this.state.open}
+                onClose={this.handleVideoDialogClose}
+              />
             </div>
           </React.Fragment>
         ) : (
@@ -441,3 +469,36 @@ VerifyAnnotations.propTypes = {
 };
 
 export default withStyles(styles)(VerifyAnnotations);
+
+
+class VideoDialog extends React.Component {
+  handleVideoDialogClose = () => {
+    this.props.onClose();
+  };
+
+  render() {
+    const { classes, onClose, selectedValue, ...other } = this.props;
+    return (
+      <Dialog maxWidth={false}
+      onClose={this.handleVideoDialogClose} aria-labelledby="simple-dialog-title" {...other}>
+        <DialogTitle id="simple-dialog-title">Annotation Video</DialogTitle>
+        <div>
+          <video
+            id="video"  width="800" height="450"
+            src={'https://cdn.deepseaannotations.com/videos/' + this.props.annotation.id + '_ai.mp4'}
+            type='video/mp4' controls>
+            Your browser does not support the video tag.
+          </video>
+        </div>
+      </Dialog>
+    );
+  }
+}
+
+VideoDialog.propTypes = {
+  classes: PropTypes.object.isRequired,
+  onClose: PropTypes.func,
+  selectedValue: PropTypes.string,
+};
+
+const VideoDialogWrapped = withStyles(styles)(VideoDialog);
