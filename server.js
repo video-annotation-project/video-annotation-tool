@@ -1006,12 +1006,11 @@ app.put('/api/runModel', passport.authenticate('jwt', { session: false }),
     let ec2 = new AWS.EC2({ region: 'us-west-1' });
     var params = {
       InstanceIds: [
-        "i-0453aa70079c1be03"
+        process.env.AWS_EC2_RUNMODEL
       ]
     };
     ec2.startInstances(params, function (err, data) {
       if (err) console.log(err, err.stack); // an error occurred
-      else console.log(data);           // successful response
     });
   }
 );
@@ -1021,12 +1020,11 @@ app.delete('/api/runModel', passport.authenticate('jwt', { session: false }),
     let ec2 = new AWS.EC2({ region: 'us-west-1' });
     var params = {
       InstanceIds: [
-        "i-0453aa70079c1be03"
+        process.env.AWS_EC2_RUNMODEL
       ]
     };
     ec2.stopInstances(params, function (err, data) {
       if (err) console.log(err, err.stack); // an error occurred
-      else console.log(data);           // successful response
     });
   }
 );
@@ -1085,7 +1083,6 @@ io.on('connection', (socket) => {
     socket.broadcast.emit('refresh videos');
   });
   socket.on('reload run model', () => {
-    console.log('reload run model');
     socket.broadcast.emit('reload run model');
   });
 });
