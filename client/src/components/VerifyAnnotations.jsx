@@ -11,7 +11,8 @@ import IconButton from '@material-ui/core/IconButton';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import Dialog from '@material-ui/core/Dialog';
 import blue from '@material-ui/core/colors/blue';
-
+import { MuiThemeProvider, createMuiTheme } from "@material-ui/core/styles";
+import ConceptsSelected from './ConceptsSelected';
 
 const styles = theme => ({
   button: {
@@ -47,6 +48,17 @@ const styles = theme => ({
   avatar: {
     backgroundColor: blue[100],
     color: blue[600],
+  },
+  icons: {
+    float: 'right',
+  }
+});
+
+const theme = createMuiTheme({
+  palette: {
+    secondary: {
+      main: "#565656"
+    }
   }
 });
 
@@ -397,20 +409,23 @@ class VerifyAnnotations extends Component {
               {this.props.index + 1} of {this.props.size}
             </Typography>
             <div>
+              <ConceptsSelected handleConceptClick={this.handleConceptClick} />
               <IconButton className={classes.icons} aria-label="OndemandVideo">
                 <OndemandVideo onClick={this.handleVideoDialogOpen} />
               </IconButton>
-              <Button
-                className={classes.button}
-                variant="contained"
-                color="secondary"
-                onClick={() => {
-                  this.nextAnnotation();
-                  this.handleDelete();
-                }}
-              >
-                Delete
-              </Button>
+              <MuiThemeProvider theme={theme}>
+                <Button
+                  className={classes.button}
+                  variant="contained"
+                  color="secondary"
+                  onClick={() => {
+                    this.nextAnnotation();
+                    this.handleDelete();
+                  }}
+                >
+                  Delete
+                </Button>
+              </MuiThemeProvider>
               <Button
                 className={classes.button}
                 variant="contained"

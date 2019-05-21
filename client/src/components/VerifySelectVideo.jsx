@@ -58,7 +58,7 @@ class VerifySelectVideo extends React.Component {
               <FormControlLabel
                 key={video.id}
                 value={video.id.toString()}
-                control={<Checkbox />}
+                control={<Checkbox color="primary" />}
                 label={video.filename}
               />
             ))}
