@@ -22,8 +22,6 @@ class VerifySelectConcept extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      isLoaded: false,
-      error: null,
       concepts: []
     };
   }
@@ -31,12 +29,7 @@ class VerifySelectConcept extends React.Component {
   componentDidMount = async () => {
     let concepts = await this.props.getConcepts();
 
-    if (!concepts) {
-      return;
-    }
-
     this.setState({
-      isLoaded: true,
       concepts: concepts
     });
   };

@@ -23,8 +23,6 @@ class VerifySelectVideo extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      isLoaded: false,
-      error: null,
       videos: []
     };
   }
@@ -32,12 +30,7 @@ class VerifySelectVideo extends React.Component {
   componentDidMount = async () => {
     let videos = await this.props.getVideos();
 
-    if (!videos) {
-      return;
-    }
-
     this.setState({
-      isLoaded: true,
       videos: videos
     });
   };

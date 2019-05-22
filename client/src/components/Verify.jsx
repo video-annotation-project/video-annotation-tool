@@ -53,7 +53,6 @@ class Verify extends Component {
       selectedConcepts: [],
       annotations: [],
       error: null,
-      isLoaded: false,
       index: 0
     };
   }
@@ -191,9 +190,6 @@ class Verify extends Component {
     } else {
       selected.expanded = !selected.expanded;
     }
-    this.setState({
-      isLoaded: true
-    });
   };
 
   render() {

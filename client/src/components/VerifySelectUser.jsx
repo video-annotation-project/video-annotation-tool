@@ -22,8 +22,6 @@ class VerifySelectUser extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      isLoaded: false,
-      error: null,
       users: []
     };
   }
@@ -31,12 +29,7 @@ class VerifySelectUser extends React.Component {
   componentDidMount = async () => {
     let users = await this.props.getUsers();
 
-    if (!users) {
-      return;
-    }
-
     this.setState({
-      isLoaded: true,
       users: users
     });
   };

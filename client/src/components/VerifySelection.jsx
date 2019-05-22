@@ -7,7 +7,6 @@ import StepLabel from "@material-ui/core/StepLabel";
 import StepContent from "@material-ui/core/StepContent";
 import Button from "@material-ui/core/Button";
 import Typography from "@material-ui/core/Typography";
-import List from "@material-ui/core/List";
 
 import VerifySelectUser from "./VerifySelectUser.jsx";
 import VerifySelectVideo from "./VerifySelectVideo.jsx";
@@ -47,17 +46,9 @@ class VerifySelection extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      activeStep: 0,
-      isLoaded: false,
-      error: null
+      activeStep: 0
     };
   }
-
-  componentDidMount = () => {
-    this.setState({
-      isLoaded: true
-    });
-  };
 
   getStepForm = step => {
     switch (step) {
@@ -117,16 +108,9 @@ class VerifySelection extends React.Component {
   };
 
   render() {
-    const { activeStep, error, isLoaded } = this.state;
+    const { activeStep } = this.state;
     const { classes } = this.props;
     const steps = getSteps();
-
-    if (!isLoaded) {
-      return <List>Loading...</List>;
-    }
-    if (error) {
-      return <List>Error: {error.message}</List>;
-    }
 
     return (
       <div className={classes.root}>
