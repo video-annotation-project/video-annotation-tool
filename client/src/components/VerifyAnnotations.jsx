@@ -6,13 +6,13 @@ import { Typography } from "@material-ui/core";
 import Button from "@material-ui/core/Button";
 import DialogModal from "./DialogModal";
 import Rnd from "react-rnd";
-import OndemandVideo from '@material-ui/icons/OndemandVideo';
-import IconButton from '@material-ui/core/IconButton';
-import DialogTitle from '@material-ui/core/DialogTitle';
-import Dialog from '@material-ui/core/Dialog';
-import blue from '@material-ui/core/colors/blue';
+import OndemandVideo from "@material-ui/icons/OndemandVideo";
+import IconButton from "@material-ui/core/IconButton";
+import DialogTitle from "@material-ui/core/DialogTitle";
+import Dialog from "@material-ui/core/Dialog";
+import blue from "@material-ui/core/colors/blue";
 import { MuiThemeProvider, createMuiTheme } from "@material-ui/core/styles";
-import ConceptsSelected from './ConceptsSelected';
+import ConceptsSelected from "./ConceptsSelected";
 
 const styles = theme => ({
   button: {
@@ -47,10 +47,10 @@ const styles = theme => ({
   },
   avatar: {
     backgroundColor: blue[100],
-    color: blue[600],
+    color: blue[600]
   },
   icons: {
-    float: 'right',
+    float: "right"
   }
 });
 
@@ -317,7 +317,7 @@ class VerifyAnnotations extends Component {
   // DIALOG functions
   handleVideoDialogOpen = () => {
     this.setState({
-      open: true,
+      open: true
     });
   };
 
@@ -485,7 +485,6 @@ VerifyAnnotations.propTypes = {
 
 export default withStyles(styles)(VerifyAnnotations);
 
-
 class VideoDialog extends React.Component {
   handleVideoDialogClose = () => {
     this.props.onClose();
@@ -494,14 +493,26 @@ class VideoDialog extends React.Component {
   render() {
     const { classes, onClose, selectedValue, ...other } = this.props;
     return (
-      <Dialog maxWidth={false}
-      onClose={this.handleVideoDialogClose} aria-labelledby="simple-dialog-title" {...other}>
+      <Dialog
+        maxWidth={false}
+        onClose={this.handleVideoDialogClose}
+        aria-labelledby="simple-dialog-title"
+        {...other}
+      >
         <DialogTitle id="simple-dialog-title">Annotation Video</DialogTitle>
         <div>
           <video
-            id="video"  width="800" height="450"
-            src={'https://cdn.deepseaannotations.com/videos/' + this.props.annotation.id + '_ai.mp4'}
-            type='video/mp4' controls>
+            id="video"
+            width="800"
+            height="450"
+            src={
+              "https://cdn.deepseaannotations.com/videos/" +
+              this.props.annotation.id +
+              "_ai.mp4"
+            }
+            type="video/mp4"
+            controls
+          >
             Your browser does not support the video tag.
           </video>
         </div>
@@ -513,7 +524,7 @@ class VideoDialog extends React.Component {
 VideoDialog.propTypes = {
   classes: PropTypes.object.isRequired,
   onClose: PropTypes.func,
-  selectedValue: PropTypes.string,
+  selectedValue: PropTypes.string
 };
 
 const VideoDialogWrapped = withStyles(styles)(VideoDialog);

@@ -5,6 +5,7 @@ import Checkbox from "@material-ui/core/Checkbox";
 import FormGroup from "@material-ui/core/FormGroup";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import FormControl from "@material-ui/core/FormControl";
+import { Typography } from "@material-ui/core";
 
 const styles = theme => ({
   root: {
@@ -54,14 +55,18 @@ class VerifySelectVideo extends React.Component {
             value={value}
             onChange={handleChange}
           >
-            {this.state.videos.map(video => (
-              <FormControlLabel
-                key={video.id}
-                value={video.id.toString()}
-                control={<Checkbox color="primary" />}
-                label={video.filename}
-              />
-            ))}
+            {this.state.videos.length === 0 ? (
+              <Typography>No videos for current selection</Typography>
+            ) : (
+              this.state.videos.map(video => (
+                <FormControlLabel
+                  key={video.id}
+                  value={video.id.toString()}
+                  control={<Checkbox color="primary" />}
+                  label={video.filename}
+                />
+              ))
+            )}
           </FormGroup>
         </FormControl>
       </div>
