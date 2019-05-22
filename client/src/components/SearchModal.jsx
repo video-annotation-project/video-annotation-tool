@@ -68,24 +68,16 @@ class SearchModal extends Component {
     this.props.handleClose();
   };
 
-  handleKeyPress = (e) => {
+  handleKeyUp = (e) => {
     if (e.key === 'Enter') {
       if (this.getId(e.target.value)) {
         this.props.inputHandler(this.getId(e.target.value));
       } else {
         this.handleClose();
       }
-    } else {
-      this.searchConcepts(e.target.value + e.key);
+      return;
     }
-  }
-
-  handleKeyDown = (e) => {
-    //Backspace does not trigger handleKeyPress
-    //So this will search when backspace
-    if (e.keyCode === 8 || e.keyCode === 46) {
-      this.searchConcepts(e.target.value.slice(0,-1));
-    }
+    this.searchConcepts(e.target.value);
   }
 
   searchConcepts = (search) => {
@@ -123,8 +115,7 @@ class SearchModal extends Component {
               {this.ok}
             </DialogContentText>
             <input
-              onKeyPress={this.handleKeyPress}
-              onKeyDown={this.handleKeyDown}
+              onKeyUp={this.handleKeyUp}
               autoFocus
               margin="dense"
               id="concept"
