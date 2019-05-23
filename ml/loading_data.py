@@ -55,7 +55,7 @@ def select_annotations(annotations, min_examples, concepts):
         concept_count[concept] = 0
 
     # Get's fps for each video in order to calculate frame_num from timeinvideo
-    videos = pd.DataFrame(a['videoid'].unique(),columns = ['videoid'])
+    videos = pd.DataFrame(annotations['videoid'].unique(),columns = ['videoid'])
     videos['fps'] = videos['videoid'].apply(lambda x: queryDB('select * from videos where id = ' +str(x)).iloc[0].fps)
     annotations = annotations.merge(videos, left_on='videoid', right_on='videoid')
 
@@ -67,7 +67,7 @@ def select_annotations(annotations, min_examples, concepts):
 
     # Sort the grouped annotations by whether or not it contains a human annotation, prioritizing them
     ai_id = queryDB("SELECT id FROM users WHERE username='ai'").id[0]
-    groups.sort(key=(lambda df : len(df.loc[df['userid'] != ai_id, 'userid'])))
+    groups.sort(key=(lambda df : len(df.loc[df['userid'] != ai_id, 'userid'])), reverse=True)
 
     #selects images that we'll use (each group has annotations for an image)
     for group in groups:
@@ -120,7 +120,7 @@ def download_annotations(min_examples, concepts, concept_map, good_users, img_fo
     # Get all annotations for given concepts (and child concepts) making sure that any tracking annotations originated from good users
     annotations = queryDB(
         ''' SELECT *
-            FROM annotations as A:
+            FROM annotations as A
             WHERE conceptid in ''' + str(tuple(expanded_concepts)) + 
             ''' AND EXISTS (''' +
                 ''' SELECT id, userid 
@@ -141,21 +141,17 @@ def download_annotations(min_examples, concepts, concept_map, good_users, img_fo
     count = 0
     for group in selected:
         first = group.iloc[0]
-        img_location = img_folder + "/" + first['image']
+        img_location = img_folder + "/" + str(first['image'])
         if ".png" not in img_location:
            img_location += ".png"
         
         try:
             # try to download image. 
-            obj = client.get_object(Bucket=S3_BUCKET, Key= SRC_IMG_FOLDER +first['image'])
+            obj = client.get_object(Bucket=S3_BUCKET, Key= SRC_IMG_FOLDER + str(first['image']))
             img = Image.open(obj['Body'])
-            img = np.asarray(img)
-            img = img[:,:,:3]
-            img = img[:,:,::-1]
-            img = Image.fromArray(img)
             img.save(img_location)
         except:
-            print("Failed to load image:" + first['image'])
+            print("Failed to load image:" + str(first['image']))
             continue
 
         for index, row in group.iterrows():
