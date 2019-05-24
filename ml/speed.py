@@ -19,16 +19,17 @@ DB_NAME = os.getenv("DB_NAME")
 DB_HOST = os.getenv("DB_HOST")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
-
+FRAME_WIDTH = 1280
+FRAME_HEIGHT = 720
 
 client = boto3.client('s3',
     aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
     aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'))
 
 def main():
-   get_annotation_speed([7,8,9,10,14,4,5,19])
+   update_annotation_speed([7,8,9,10,14,4,5,19])
 
-def get_annotation_speed(bad_users):
+def update_annotation_speed(bad_users):
     conn = psycopg2.connect(database = DB_NAME,
                         user = DB_USER,
                         password = DB_PASSWORD,
@@ -54,11 +55,11 @@ def get_annotation_speed(bad_users):
        # resize tracking bounding boxes to match original 
        # annotation dimensions if video is not 1280x720
        # (all tracking annotations are stored as 1280x720 frames)
-       if (row.videowidth != 1280 or row.videoheight != 720): 
-          x1_array = (x1_array / 1280) * row.videowidth
-          x2_array = (x2_array / 1280) * row.videowidth
-          y1_array = (y1_array / 720) * row.videoheight
-          y2_array = (y2_array / 720) * row.videoheight
+       if (row.videowidth != FRAME_WIDTH or row.videoheight != FRAME_HEIGHT): 
+          x1_array = (x1_array * row.videowidth) / FRAME_WIDTH
+          x2_array = (x2_array * row.videowidth) / FRAME_WIDTH
+          y1_array = (y1_array * row.videoheight) / FRAME_HEIGHT
+          y2_array = (y2_array * row.videoheight) / FRAME_HEIGHT
        for i in range(0, len(x1_array) - 1):
           (x1, y1) = get_center(x1_array[i], x2_array[i], y1_array[i], y2_array[i])
           (x2, y2) = get_center(x1_array[i+1], x2_array[i+1], y1_array[i+1], y2_array[i+1])

@@ -89,7 +89,7 @@ def score_predictions(validation, predictions, iou_thresh, concepts):
         # False Negatives (Missed ground truth predicitions)
         counts = group.conceptid.value_counts()
         for concept in concepts:
-            count = counts[concept] if (concept in counts.index) else 0
+e           count = counts[concept] if (concept in counts.index) else 0
             false_negatives[concept] += count - detected_truths[concept]
     
     # False Positives (No ground truth prediction at any frame for that object)
@@ -126,14 +126,12 @@ def length_limit_objects(pred, frame_thresh):
 def resize(row):
     new_width = 640
     new_height = 480
-    x_ratio = (row.videowidth / new_width)
-    y_ratio = (row.videoheight / new_height)
+    row.x1 = (row.x1 * new_width) / row.videowidth
+    row.x2 = (row.x2 * new_width) / row.videowidth
+    row.y1 = (row.y1 * new_height) / row.videoheight
+    row.y2 = (row.y2 * new_height) / row.videoheight
     row.videowidth = new_width
     row.videoheight = new_height
-    row.x1 = row.x1 / x_ratio
-    row.x2 = row.x2 / x_ratio
-    row.y1 = row.y1 / y_ratio
-    row.y2 = row.y2 / y_ratio
     return row
 
 # test counts
