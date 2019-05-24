@@ -314,6 +314,14 @@ class VerifyAnnotations extends Component {
       });
   };
 
+  handleVerifyClick = annotation => {
+    this.verifyAnnotation();
+    if (annotation.image) {
+      this.postBoxImage();
+    }
+    this.nextAnnotation();
+  };
+
   // DIALOG functions
   handleVideoDialogOpen = () => {
     this.setState({
@@ -441,11 +449,7 @@ class VerifyAnnotations extends Component {
                 variant="contained"
                 color="primary"
                 onClick={() => {
-                  this.nextAnnotation();
-                  if (annotation.image) {
-                    this.postBoxImage();
-                  }
-                  this.verifyAnnotation();
+                  this.handleVerifyClick(annotation);
                 }}
               >
                 Verify
