@@ -1,16 +1,16 @@
-import React from 'react';
+import React from "react";
 
-import { withStyles } from '@material-ui/core/styles';
-import PropTypes from 'prop-types';
-import Button from '@material-ui/core/Button';
+import { withStyles } from "@material-ui/core/styles";
+import PropTypes from "prop-types";
+import Button from "@material-ui/core/Button";
 
-import ReportModal from './ReportModal.jsx';
-import ReportTree from './ReportTree.jsx';
+import ReportModal from "./ReportModal.jsx";
+import ReportTree from "./ReportTree.jsx";
 
 const styles = theme => ({
   root: {
-    width: '100%',
-    backgroundColor: theme.palette.background.paper,
+    width: "100%",
+    backgroundColor: theme.palette.background.paper
   }
 });
 
@@ -19,25 +19,25 @@ class Report extends React.Component {
     super(props);
     this.state = {
       openReportModal: false,
-      level1: '',
-      level2: '',
-      level3: '',
+      level1: "",
+      level2: "",
+      level3: "",
       renderTree: false,
-      unsureOnly: false,
+      unsureOnly: false
     };
   }
 
   setLevel = (level, value) => {
     this.setState({
       [level]: value
-    })
-  }
+    });
+  };
 
-  setUnsureOnly = (value) => {
+  setUnsureOnly = value => {
     this.setState({
       unsureOnly: value
-    })
-  }
+    });
+  };
 
   handleReportModalOpen = () => {
     this.setState({
@@ -48,29 +48,31 @@ class Report extends React.Component {
 
   handleReportModalCancel = () => {
     this.setState({
-       openReportModal: false,
-     });
+      openReportModal: false
+    });
   };
 
   handleReportModalOk = () => {
-      if (this.state.level1 === '') {
-        return;
-      }
-      if (this.state.level2 === '' && this.state.level3 !== '') {
-        return;
-      }
-      this.setState({
-        renderTree: true,
-        openReportModal: false
-      });
-  }
+    if (this.state.level1 === "") {
+      return;
+    }
+    if (this.state.level2 === "" && this.state.level3 !== "") {
+      return;
+    }
+    this.setState({
+      renderTree: true,
+      openReportModal: false
+    });
+  };
 
   render() {
     const { classes } = this.props;
     const { unsureOnly, level1, level2, level3, openReportModal } = this.state;
     return (
       <div className={classes.root}>
-        <Button onClick={this.handleReportModalOpen}>Open Report Selector</Button>
+        <Button onClick={this.handleReportModalOpen}>
+          Open Report Selector
+        </Button>
         <ReportModal
           unsureOnly={unsureOnly}
           setUnsureOnly={this.setUnsureOnly}
@@ -82,22 +84,23 @@ class Report extends React.Component {
           handleReportModalCancel={this.handleReportModalCancel}
           handleReportModalOk={this.handleReportModalOk}
         />
-        {this.state.renderTree ?
-          (<ReportTree
+        {this.state.renderTree ? (
+          <ReportTree
             treeDepth={0}
-            queryConditions={''}
+            queryConditions={""}
             levels={[level1, level2, level3]}
             unsureOnly={this.state.unsureOnly}
-          />)
-          :
-          (<div></div>)}
+          />
+        ) : (
+          <div />
+        )}
       </div>
     );
   }
 }
 
 Report.propTypes = {
-  classes: PropTypes.object.isRequired,
+  classes: PropTypes.object.isRequired
 };
 
 export default withStyles(styles)(Report);

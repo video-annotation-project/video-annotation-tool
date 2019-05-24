@@ -1,11 +1,11 @@
-import React, { Component } from 'react';
-import axios from 'axios';
+import React, { Component } from "react";
+import axios from "axios";
 
-import Dialog from '@material-ui/core/Dialog';
-import DialogContent from '@material-ui/core/DialogContent';
-import DialogContentText from '@material-ui/core/DialogContentText';
-import DialogTitle from '@material-ui/core/DialogTitle';
-import { withStyles } from '@material-ui/core/styles';
+import Dialog from "@material-ui/core/Dialog";
+import DialogContent from "@material-ui/core/DialogContent";
+import DialogContentText from "@material-ui/core/DialogContentText";
+import DialogTitle from "@material-ui/core/DialogTitle";
+import { withStyles } from "@material-ui/core/styles";
 
 const styles = theme => ({
   paper: {
@@ -13,12 +13,11 @@ const styles = theme => ({
     backgroundColor: theme.palette.background.paper,
     boxShadow: theme.shadows[5],
     padding: theme.spacing.unit * 4,
-    display: 'block',
-    margin: 'auto',
-    overflow: 'auto',
-  },
+    display: "block",
+    margin: "auto",
+    overflow: "auto"
+  }
 });
-
 
 /*
   A pop up dialog box that prompts the user for input.
@@ -41,23 +40,26 @@ class SearchModal extends Component {
   componentDidMount = () => {
     const config = {
       headers: {
-        'Authorization': 'Bearer ' + localStorage.getItem('token')
+        Authorization: "Bearer " + localStorage.getItem("token")
       }
-    }
-    axios.get(`/api/concepts`, config).then(res => {
-      this.setState({
-        concepts: res.data
+    };
+    axios
+      .get(`/api/concepts`, config)
+      .then(res => {
+        this.setState({
+          concepts: res.data
+        });
       })
-    }).catch(error => {
-      console.log('Error in get /api/concepts');
-      console.log(error);
-      if (error.response) {
-        console.log(error.response.data.detail);
-      }
-    })
-  }
+      .catch(error => {
+        console.log("Error in get /api/concepts");
+        console.log(error);
+        if (error.response) {
+          console.log(error.response.data.detail);
+        }
+      });
+  };
 
-  getId = (concept) => {
+  getId = concept => {
     const match = this.state.concepts.find(item => {
       return item.name === concept;
     });
@@ -68,8 +70,8 @@ class SearchModal extends Component {
     this.props.handleClose();
   };
 
-  handleKeyUp = (e) => {
-    if (e.key === 'Enter') {
+  handleKeyUp = e => {
+    if (e.key === "Enter") {
       if (this.getId(e.target.value)) {
         this.props.inputHandler(this.getId(e.target.value));
       } else {
@@ -78,29 +80,26 @@ class SearchModal extends Component {
       return;
     }
     this.searchConcepts(e.target.value);
-  }
+  };
 
-  searchConcepts = (search) => {
+  searchConcepts = search => {
     const conceptsLikeSearch = this.state.concepts.filter(concept => {
-      return concept.name.match(new RegExp(search, 'i'))
+      return concept.name.match(new RegExp(search, "i"));
     });
 
     this.setState({
       conceptsLikeSearch: conceptsLikeSearch.slice(0, 10)
-    })
+    });
   };
 
   render() {
     let { concepts, conceptsLikeSearch } = this.state;
     if (!concepts) {
       return (
-        <Dialog
-          open={this.props.open}
-          onClose={this.handleClose}
-        >
+        <Dialog open={this.props.open} onClose={this.handleClose}>
           <div>Loading...</div>
         </Dialog>
-      )
+      );
     }
     return (
       <React.Fragment>
@@ -111,9 +110,7 @@ class SearchModal extends Component {
         >
           <DialogTitle id="form-dialog-title">Add New Concept</DialogTitle>
           <DialogContent>
-            <DialogContentText>
-              {this.ok}
-            </DialogContentText>
+            <DialogContentText>{this.ok}</DialogContentText>
             <input
               onKeyUp={this.handleKeyUp}
               autoFocus
@@ -125,9 +122,9 @@ class SearchModal extends Component {
               autoComplete="off"
             />
             <datalist id="data">
-              {conceptsLikeSearch.map((item) =>
+              {conceptsLikeSearch.map(item => (
                 <option key={item.id} value={item.name} />
-              )}
+              ))}
             </datalist>
           </DialogContent>
         </Dialog>

@@ -282,20 +282,22 @@ class Annotate extends Component {
   postAnnotation = (comment, unsure) => {
     var videoElement = document.getElementById("video");
     var cTime = videoElement.currentTime;
-    
-    var dragBoxCord = document.getElementById("dragBox").getBoundingClientRect();
+
+    var dragBoxCord = document
+      .getElementById("dragBox")
+      .getBoundingClientRect();
     var vidCord = videoElement.getBoundingClientRect();
     var video_x1 = vidCord.left;
     var video_y1 = vidCord.top;
 
     //Make video image
-    var canvas = document.createElement('canvas');
+    var canvas = document.createElement("canvas");
     canvas.height = vidCord.height;
     canvas.width = vidCord.width;
-    var ctx = canvas.getContext('2d');
+    var ctx = canvas.getContext("2d");
     ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
     var videoImage = new Image();
-    videoImage.setAttribute('crossOrigin', 'use-credentials');
+    videoImage.setAttribute("crossOrigin", "use-credentials");
     videoImage.src = canvas.toDataURL(1.0);
 
     var box_x1 = dragBoxCord.left;
@@ -304,57 +306,74 @@ class Annotate extends Component {
     var width = dragBoxCord.width;
 
     // Bouding box coordinates
-    var x1 = Math.max((box_x1 - video_x1), 0);
-    var y1 = Math.max((box_y1 - video_y1), 0);
-    var x2 = Math.min((x1 + width), 1599);
-    var y2 = Math.min((y1 + height), 899);
+    var x1 = Math.max(box_x1 - video_x1, 0);
+    var y1 = Math.max(box_y1 - video_y1, 0);
+    var x2 = Math.min(x1 + width, 1599);
+    var y2 = Math.min(y1 + height, 899);
 
     //draw video with and without bounding box to canvas and save as img
     var date = Date.now().toString();
 
     const body = {
-      'conceptId': this.state.clickedConcept.id,
-      'videoId': this.state.currentVideo.id,
-      'timeinvideo': cTime,
-      'x1': x1,
-      'y1': y1,
-      'x2': x2,
-      'y2': y2,
-      'videoWidth': 1600,
-      'videoHeight': 900,
-      'image': date,
-      'imagewithbox': date + "_box",
-      'comment': comment,
-      'unsure': unsure
+      conceptId: this.state.clickedConcept.id,
+      videoId: this.state.currentVideo.id,
+      timeinvideo: cTime,
+      x1: x1,
+      y1: y1,
+      x2: x2,
+      y2: y2,
+      videoWidth: 1600,
+      videoHeight: 900,
+      image: date,
+      imagewithbox: date + "_box",
+      comment: comment,
+      unsure: unsure
     };
     const config = {
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + localStorage.getItem('token')
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + localStorage.getItem("token")
       }
     };
-    axios.post('/api/annotations', body, config).then(async res => {
-      console.log(res.data.message);
-      this.handleDialogClose();
-      this.createAndUploadImages(
-        videoImage, ctx, canvas, dragBoxCord, date, x1, y1);
-    }).catch(error => {
-      console.log(error);
-      console.log(JSON.parse(JSON.stringify(error)));
-      if (!error.response) {
-        return;
-      }
-      let errMsg = error.response.data.detail ||
-        error.response.data.message || 'Error';
-      console.log(errMsg);
-      this.setState({
-        error: errMsg
+    axios
+      .post("/api/annotations", body, config)
+      .then(async res => {
+        console.log(res.data.message);
+        this.handleDialogClose();
+        this.createAndUploadImages(
+          videoImage,
+          ctx,
+          canvas,
+          dragBoxCord,
+          date,
+          x1,
+          y1
+        );
+      })
+      .catch(error => {
+        console.log(error);
+        console.log(JSON.parse(JSON.stringify(error)));
+        if (!error.response) {
+          return;
+        }
+        let errMsg =
+          error.response.data.detail || error.response.data.message || "Error";
+        console.log(errMsg);
+        this.setState({
+          error: errMsg
+        });
       });
-    });
-  }
+  };
 
-  createAndUploadImages = (videoImage, ctx, canvas, dragBoxCord, date,
-    x1, y1) => {
+  createAndUploadImages = (
+    videoImage,
+    ctx,
+    canvas,
+    dragBoxCord,
+    date,
+    x1,
+    y1
+  ) => {
     this.uploadImage(videoImage, date, false);
     ctx.lineWidth = "2";
     ctx.strokeStyle = "coral";
@@ -362,7 +381,7 @@ class Annotate extends Component {
     ctx.stroke();
     videoImage.src = canvas.toDataURL(1.0);
     this.uploadImage(videoImage, date, true);
-  }
+  };
 
   uploadImage = (img, date, box) => {
     let buf = new Buffer(
@@ -380,11 +399,10 @@ class Annotate extends Component {
       date: date,
       box: box
     };
-    return axios.post('/api/annotationImages', body, config).catch(
-      error => {
-        console.log(error);
-      });
-  }
+    return axios.post("/api/annotationImages", body, config).catch(error => {
+      console.log(error);
+    });
+  };
 
   handleConceptClick = concept => {
     var videoElement = document.getElementById("video");

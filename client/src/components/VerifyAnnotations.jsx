@@ -394,9 +394,7 @@ class VerifyAnnotations extends Component {
                     className={classes.img}
                     src={
                       this.state.loaded
-                        ? `/api/annotationImages/${
-                            annotation.id
-                          }?withBox=false`
+                        ? `/api/annotationImages/${annotation.id}?withBox=false`
                         : ""
                     }
                     alt="error"

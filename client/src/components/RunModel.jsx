@@ -26,12 +26,12 @@ import MenuItem from "@material-ui/core/MenuItem";
 //Select Video
 import Radio from "@material-ui/core/Radio";
 //Video description
-import IconButton from '@material-ui/core/IconButton';
-import Description from '@material-ui/icons/Description';
+import IconButton from "@material-ui/core/IconButton";
+import Description from "@material-ui/icons/Description";
 import VideoMetadata from "./VideoMetadata.jsx";
 
 //Websockets
-import io from 'socket.io-client';
+import io from "socket.io-client";
 
 const styles = theme => ({
   root: {
@@ -57,9 +57,9 @@ const styles = theme => ({
     padding: theme.spacing.unit * 3
   },
   videoSelector: {
-    width: '50%',
-    height: '500px',
-    overflow: 'auto',
+    width: "50%",
+    height: "500px",
+    overflow: "auto"
   }
 });
 
@@ -68,28 +68,28 @@ class RunModel extends Component {
     super(props);
     // here we do a manual conditional proxy because React won't do it for us
     let socket;
-    if (window.location.origin === 'http://localhost:3000') {
-      console.log('manually proxying socket')
-      socket = io('http://localhost:3001');
+    if (window.location.origin === "http://localhost:3000") {
+      console.log("manually proxying socket");
+      socket = io("http://localhost:3001");
     } else {
       socket = io();
     }
-    socket.on('connect', () => {
-      console.log('socket connected!');
+    socket.on("connect", () => {
+      console.log("socket connected!");
     });
-    socket.on('reconnect_attempt', (attemptNumber) => {
-      console.log('reconnect attempt', attemptNumber);
+    socket.on("reconnect_attempt", attemptNumber => {
+      console.log("reconnect attempt", attemptNumber);
     });
-    socket.on('disconnect', reason => {
+    socket.on("disconnect", reason => {
       console.log(reason);
     });
-    socket.on('reload run model', this.loadOptionInfo);
+    socket.on("reload run model", this.loadOptionInfo);
 
     this.state = {
       models: [],
       modelSelected: "",
       videos: [],
-      videoSelected: '',
+      videoSelected: "",
       users: [],
       userSelected: "",
       activeStep: 0,
@@ -122,31 +122,34 @@ class RunModel extends Component {
 
   componentWillUnmount = () => {
     this.state.socket.disconnect();
-  }
+  };
 
   loadOptionInfo = () => {
     const config = {
       headers: {
-        'Authorization': 'Bearer ' + localStorage.getItem('token')
+        Authorization: "Bearer " + localStorage.getItem("token")
       }
-    }
-    let option = 'runmodel';
-    axios.get(`/api/modelTab/${option}`, config).then(res => {
-      const info = res.data[0].info;
-      this.setState({
-        activeStep: info.activeStep,
-        userSelected: info.userSelected,
-        videoSelected: info.videoSelected,
-        modelSelected: info.modelSelected
+    };
+    let option = "runmodel";
+    axios
+      .get(`/api/modelTab/${option}`, config)
+      .then(res => {
+        const info = res.data[0].info;
+        this.setState({
+          activeStep: info.activeStep,
+          userSelected: info.userSelected,
+          videoSelected: info.videoSelected,
+          modelSelected: info.modelSelected
+        });
+      })
+      .catch(error => {
+        console.log("Error in get /api/modelTab");
+        console.log(error);
+        if (error.response) {
+          console.log(error.response.data.detail);
+        }
       });
-    }).catch(error => {
-      console.log('Error in get /api/modelTab');
-      console.log(error);
-      if (error.response) {
-        console.log(error.response.data.detail);
-      }
-    })
-  }
+  };
 
   loadExistingModels = () => {
     const config = {
@@ -233,26 +236,18 @@ class RunModel extends Component {
         className={this.props.classes.videoSelector}
       >
         {this.state.videos.map(video => (
-          <div
-            key={video.filename}
-          >
+          <div key={video.filename}>
             <Radio
-              name='videoSelected'
-              color='default'
+              name="videoSelected"
+              color="default"
               checked={this.state.videoSelected === video.id.toString()}
               value={video.id.toString()}
               onChange={this.handleSelect}
             />
             {video.filename}
-            <IconButton style={{ float: 'right' }}>
+            <IconButton style={{ float: "right" }}>
               <Description
-                onClick={
-                  (event) =>
-                    this.openVideoMetadata(
-                      event,
-                      video,
-                    )
-                }
+                onClick={event => this.openVideoMetadata(event, video)}
               />
             </IconButton>
           </div>
@@ -271,10 +266,7 @@ class RunModel extends Component {
           onChange={this.handleSelect}
         >
           {this.state.users.map(user => (
-            <MenuItem
-              key={user.id}
-              value={user.id}
-            >
+            <MenuItem key={user.id} value={user.id}>
               {user.username}
             </MenuItem>
           ))}
@@ -300,10 +292,10 @@ class RunModel extends Component {
     }
   };
 
-  updateBackendInfo = (step) => {
+  updateBackendInfo = step => {
     const config = {
       headers: {
-        'Authorization': 'Bearer ' + localStorage.getItem('token')
+        Authorization: "Bearer " + localStorage.getItem("token")
       }
     };
     let info = {
@@ -313,49 +305,58 @@ class RunModel extends Component {
       videoSelected: this.state.videoSelected
     };
     const body = {
-      'info': JSON.stringify(info)
+      info: JSON.stringify(info)
     };
     // update SQL database
-    axios.put(
-      '/api/modelTab/runmodel',
-      body,
-      config).then(res => {
+    axios
+      .put("/api/modelTab/runmodel", body, config)
+      .then(res => {
         console.log(this.state.socket);
 
-        this.state.socket.emit('reload run model');
-      }).catch(error => {
+        this.state.socket.emit("reload run model");
+      })
+      .catch(error => {
         console.log(error);
         console.log(JSON.parse(JSON.stringify(error)));
       });
-  }
+  };
 
   handleNext = () => {
-    this.setState(state => ({
-      activeStep: state.activeStep + 1,
-    }), () => {
-      if (this.state.activeStep === 3) {
-        console.log('Last Step Starting Model...');
-        this.startEC2();
+    this.setState(
+      state => ({
+        activeStep: state.activeStep + 1
+      }),
+      () => {
+        if (this.state.activeStep === 3) {
+          console.log("Last Step Starting Model...");
+          this.startEC2();
+        }
+        this.updateBackendInfo();
       }
-      this.updateBackendInfo();
-    });
+    );
   };
 
   handleBack = () => {
-    this.setState(state => ({
-      activeStep: state.activeStep - 1,
-    }), () => {
-      this.updateBackendInfo();
-    });
+    this.setState(
+      state => ({
+        activeStep: state.activeStep - 1
+      }),
+      () => {
+        this.updateBackendInfo();
+      }
+    );
   };
 
   handleStop = () => {
-    this.setState({
-      activeStep: 0,
-    }, () => {
-      this.updateBackendInfo();
-      this.stopEC2();
-    });
+    this.setState(
+      {
+        activeStep: 0
+      },
+      () => {
+        this.updateBackendInfo();
+        this.stopEC2();
+      }
+    );
   };
 
   //Code for closing modal

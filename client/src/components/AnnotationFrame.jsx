@@ -1,22 +1,22 @@
-import React, { Component } from 'react';
-import PropTypes from 'prop-types';
-import { withStyles } from '@material-ui/core/styles';
-import ListItem from '@material-ui/core/ListItem';
-import ConceptsSelected from './ConceptsSelected.jsx';
-import DialogModal from './DialogModal.jsx';
-import axios from 'axios';
+import React, { Component } from "react";
+import PropTypes from "prop-types";
+import { withStyles } from "@material-ui/core/styles";
+import ListItem from "@material-ui/core/ListItem";
+import ConceptsSelected from "./ConceptsSelected.jsx";
+import DialogModal from "./DialogModal.jsx";
+import axios from "axios";
 
 const styles = theme => ({
   item: {
-    display: 'inline',
+    display: "inline",
     paddingTop: 0,
-    width: '1300px',
-    height: '730px',
+    width: "1300px",
+    height: "730px",
     paddingLeft: 0
   },
   img: {
-    width: '1280px',
-    height: '720px',
+    width: "1280px",
+    height: "720px"
   }
 });
 
@@ -32,7 +32,7 @@ class AnnotationFrame extends Component {
       dialogMsg: null,
       dialogOpen: false,
       clickedConcept: null,
-      closeHandler: null,
+      closeHandler: null
     };
   }
 
@@ -41,53 +41,61 @@ class AnnotationFrame extends Component {
       comment = this.props.annotation.comment;
     }
     const body = {
-      'conceptId': this.state.clickedConcept.id,
-      'comment': comment,
-      'unsure': unsure,
-      'id': this.props.annotation.id
-    }
+      conceptId: this.state.clickedConcept.id,
+      comment: comment,
+      unsure: unsure,
+      id: this.props.annotation.id
+    };
     const config = {
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + localStorage.getItem('token')
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + localStorage.getItem("token")
       }
-    }
-    axios.patch('/api/annotations', body, config).then(res => {
-      this.handleDialogClose();
-      let updatedAnnotation = res.data;
-      this.props.updateAnnotations(updatedAnnotation.id, updatedAnnotation.name, updatedAnnotation.comment, updatedAnnotation.unsure);
-    }).catch(error => {
-      this.handleDialogClose();
-      console.log(error);
-      if (error.response) {
-        console.log(error.response.data.detail);
-      }
-    })
-  }
+    };
+    axios
+      .patch("/api/annotations", body, config)
+      .then(res => {
+        this.handleDialogClose();
+        let updatedAnnotation = res.data;
+        this.props.updateAnnotations(
+          updatedAnnotation.id,
+          updatedAnnotation.name,
+          updatedAnnotation.comment,
+          updatedAnnotation.unsure
+        );
+      })
+      .catch(error => {
+        this.handleDialogClose();
+        console.log(error);
+        if (error.response) {
+          console.log(error.response.data.detail);
+        }
+      });
+  };
 
   handleDialogClose = () => {
     this.setState({
       dialogOpen: false,
       dialogMsg: null,
-      clickedConcept: null,
+      clickedConcept: null
     });
-  }
+  };
 
-  handleConceptClick = (concept) => {
+  handleConceptClick = concept => {
     this.setState({
-      dialogMsg:  "Switch " + this.props.annotation.name +
-                   " to " + concept.name + "?",
+      dialogMsg:
+        "Switch " + this.props.annotation.name + " to " + concept.name + "?",
       dialogOpen: true,
       clickedConcept: concept,
       closeHandler: this.handleDialogClose
-    })
-  }
+    });
+  };
 
-  render () {
+  render() {
     // console.log(this.props)
-    const { error} = this.state;
+    const { error } = this.state;
     const { classes } = this.props;
-    if (error)  {
+    if (error) {
       return <div>Error: {error}</div>;
     }
     return (
@@ -100,11 +108,16 @@ class AnnotationFrame extends Component {
           open={this.state.dialogOpen}
           handleClose={this.state.closeHandler}
         />
-        <ConceptsSelected
-          handleConceptClick={this.handleConceptClick}
-        />
+        <ConceptsSelected handleConceptClick={this.handleConceptClick} />
         <ListItem className={classes.item}>
-          <img className={classes.img} id='imageId' src={`/api/annotationImages/${this.props.annotation.id}?withBox=true`} alt='error' />
+          <img
+            className={classes.img}
+            id="imageId"
+            src={`/api/annotationImages/${
+              this.props.annotation.id
+            }?withBox=true`}
+            alt="error"
+          />
         </ListItem>
       </React.Fragment>
     );
@@ -112,7 +125,7 @@ class AnnotationFrame extends Component {
 }
 
 AnnotationFrame.propTypes = {
-  classes: PropTypes.object.isRequired,
+  classes: PropTypes.object.isRequired
 };
 
 export default withStyles(styles)(AnnotationFrame);
