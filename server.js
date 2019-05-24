@@ -62,22 +62,6 @@ app.use(passport.initialize());
 app.use(bodyParser.json({ limit: "50mb" }));
 app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
 
-app.get(
-  "/api/users",
-  passport.authenticate("jwt", { session: false }),
-  async (req, res) => {
-    const queryText = "SELECT id, username \
-                       FROM users";
-
-    try {
-      const users = await psql.query(queryText);
-      res.json(users.rows);
-    } catch (error) {
-      res.status(500).json(error);
-    }
-  }
-);
-
 // This function sets the cookies that are used by the client to access the
 // videos on AWS CloudFront
 const setCookies = res => {
@@ -213,6 +197,22 @@ app.post(
       res.status(400).json(error);
     }
   }
+);
+
+app.get(
+    "/api/users",
+    passport.authenticate("jwt", { session: false }),
+    async (req, res) => {
+        const queryText = "SELECT id, username \
+                       FROM users";
+
+        try {
+            const users = await psql.query(queryText);
+            res.json(users.rows);
+        } catch (error) {
+            res.status(500).json(error);
+        }
+    }
 );
 
 app.get(

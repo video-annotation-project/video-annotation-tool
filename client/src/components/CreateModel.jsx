@@ -20,7 +20,7 @@ class CreateModel extends Component {
     super(props);
     this.state = {
       modelsLikeSearch: [],
-      models: null,
+      models: null
     };
   }
 
