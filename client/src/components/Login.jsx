@@ -1,5 +1,4 @@
 import React, { Component } from "react";
-import ErrorModal from "./ErrorModal.jsx";
 import Typography from "@material-ui/core/Typography";
 import { withStyles } from "@material-ui/core/styles";
 import axios from "axios";
@@ -78,11 +77,6 @@ class Login extends Component {
       <div className={classes.root}>
         <Typography variant="display1">Login</Typography>
         <br />
-        <ErrorModal
-          errorMsg={this.state.errorMsg}
-          open={this.state.open}
-          handleClose={this.handleClose}
-        />
         <form onSubmit={this.handleSubmit}>
           <TextField
             name="username"
@@ -101,6 +95,7 @@ class Login extends Component {
             onChange={this.handleChange}
             margin="normal"
           />
+          <br />
           <br />
           <Button type="submit" variant="contained" color="primary">
             Login
