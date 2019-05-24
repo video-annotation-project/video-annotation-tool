@@ -178,10 +178,13 @@ class Verify extends Component {
     });
   };
 
-  handleNext = (callback) => {
-    this.setState({
-      index: this.state.index + 1
-    }, callback);
+  handleNext = callback => {
+    this.setState(
+      {
+        index: this.state.index + 1
+      },
+      callback
+    );
   };
 
   render() {
