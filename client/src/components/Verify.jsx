@@ -164,7 +164,7 @@ class Verify extends Component {
     }
   };
 
-  handleReset = () => {
+  resetState = () => {
     this.setState({
       selectedUser: "0",
       selectedVideos: [],
@@ -203,7 +203,7 @@ class Verify extends Component {
           handleChangeUser={this.handleChangeUser}
           handleChangeVideo={this.handleChangeVideo}
           handleChangeConcept={this.handleChangeConcept}
-          handleReset={this.handleReset}
+          resetState={this.resetState}
           toggleSelection={this.toggleSelection}
         />
       );
