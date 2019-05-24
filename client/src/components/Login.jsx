@@ -3,6 +3,8 @@ import ErrorModal from './ErrorModal.jsx';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
 import axios from 'axios';
+import TextField from '@material-ui/core/TextField';
+import Button from '@material-ui/core/Button';
 
 const styles= {
   root: {
@@ -11,7 +13,7 @@ const styles= {
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center'
-  }
+  },
 };
 
 class Login extends Component {
@@ -30,6 +32,10 @@ class Login extends Component {
       [event.target.name]: event.target.value
     });
   };
+
+  // handleChange = name => event => {
+  //   this.setState({ [name]: event.target.value });
+  // };
 
   handleSubmit = event => {
     event.preventDefault();
@@ -76,13 +82,27 @@ class Login extends Component {
         <Typography variant="display1">Login</Typography><br />
         <ErrorModal errorMsg={this.state.errorMsg} open={this.state.open} handleClose={this.handleClose}/>
         <form onSubmit={this.handleSubmit}>
-          <div>username</div>
-          <input type='text' name='username' value={this.state.username} onChange= {this.handleChange}/>
-          <br /><br />
-          <div>password</div>
-          <input type='password' name='password' value={this.state.password} onChange= {this.handleChange}/>
-          <br /><br />
-          <input type='submit' value='Login'/>
+          <TextField
+          name='username'
+          label='User Name'
+          type='text'
+          value={this.state.username}
+          onChange={this.handleChange}
+          margin="normal"
+          />
+          <br />
+          <TextField
+          name='password'
+          label='Password'
+          type='password'
+          value={this.state.password}
+          onChange={this.handleChange}
+          margin="normal"
+          />
+          <br />
+          <Button type='submit' variant="contained" color="primary">
+            Login
+          </Button>
         </form>
       </div>
     );
