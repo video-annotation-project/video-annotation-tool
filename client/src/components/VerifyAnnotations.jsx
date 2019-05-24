@@ -74,7 +74,6 @@ class VerifyAnnotations extends Component {
       dialogMsg: null,
       dialogOpen: false,
       clickedConcept: null,
-      closeHandler: null,
       loaded: true,
       x: this.props.annotation.x1,
       y: this.props.annotation.y1,
@@ -164,8 +163,7 @@ class VerifyAnnotations extends Component {
       dialogMsg:
         "Switch " + this.props.annotation + " to " + concept.name + "?",
       dialogOpen: true,
-      clickedConcept: concept,
-      closeHandler: this.handleDialogClose
+      clickedConcept: concept
     });
   };
 
@@ -327,7 +325,7 @@ class VerifyAnnotations extends Component {
           placeholder={"Comments"}
           inputHandler={this.changeConcept}
           open={this.state.dialogOpen}
-          handleClose={this.state.closeHandler}
+          handleClose={this.handleDialogClose}
         />
         {!this.state.end ? (
           <React.Fragment>
