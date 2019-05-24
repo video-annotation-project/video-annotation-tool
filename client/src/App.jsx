@@ -13,7 +13,7 @@ import Verify from "./components/Verify.jsx";
 import Models from "./components/Models.jsx";
 import Users from "./components/Users.jsx";
 
-require(`dotenv`).config();
+require('dotenv').config();
 
 class App extends React.Component {
   render() {
