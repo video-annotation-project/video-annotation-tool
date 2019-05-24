@@ -4,6 +4,8 @@ import axios from "axios";
 import ErrorModal from "./ErrorModal.jsx";
 import Typography from "@material-ui/core/Typography";
 import { withStyles } from "@material-ui/core/styles";
+import TextField from "@material-ui/core/TextField";
+import Button from "@material-ui/core/Button";
 
 const styles = {
   root: {
@@ -94,26 +96,24 @@ class Profile extends Component {
           handleClose={this.handleClose}
         />
         <form onSubmit={this.handleSubmit}>
-          <div>Current Password: </div>
-          <input
+          <TextField
+            label="Current Password"
             type="password"
             name="password"
             value={this.state.password}
             onChange={this.handleChange}
           />
           <br />
-          <br />
-          <div>New Password: </div>
-          <input
+          <TextField
+            label="New Password"
             type="password"
             name="newPassword1"
             value={this.state.newPassword1}
             onChange={this.handleChange}
           />
           <br />
-          <br />
-          <div>Confirm Password: </div>
-          <input
+          <TextField
+            label="Confirm New Password"
             type="password"
             name="newPassword2"
             value={this.state.newPassword2}
@@ -121,8 +121,9 @@ class Profile extends Component {
           />
           <br />
           <br />
-          <br />
-          <input type="submit" value="Submit" />
+          <Button type="submit" variant="contained" color="primary">
+            Submit
+          </Button>
         </form>
       </div>
     );
