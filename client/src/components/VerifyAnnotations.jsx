@@ -102,7 +102,7 @@ class VerifyAnnotations extends Component {
   verifyAnnotation = async () => {
     const body = {
       id: this.props.annotation.id,
-      conceptid: this.state.concept === null ? null : this.state.concept.id,
+      conceptid: !this.state.concept ? null : this.state.concept.id,
       comment: this.state.comment,
       unsure: this.state.unsure
     };
@@ -339,7 +339,7 @@ class VerifyAnnotations extends Component {
           placeholder={"Comments"}
           inputHandler={this.editAnnotation}
           open={this.state.dialogOpen}
-          handleDialogClose={this.state.closeHandler}
+          handleClose={this.state.closeHandler}
         />
         {!this.state.end ? (
           <React.Fragment>
@@ -356,9 +356,7 @@ class VerifyAnnotations extends Component {
             </Typography>
             <Typography className={classes.paper} variant="body2">
               Concept:{" "}
-              {this.state.concept === null
-                ? annotation.name
-                : this.state.concept.name}
+              {!this.state.concept ? annotation.name : this.state.concept.name}
             </Typography>
             {!annotation.image ? (
               <Typography className={classes.paper}>No Image</Typography>
