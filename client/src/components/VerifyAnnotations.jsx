@@ -71,10 +71,9 @@ class VerifyAnnotations extends Component {
       comment: null,
       unsure: null,
       error: null,
-      dialogMsg: null,
-      dialogOpen: false,
+      conceptDialogMsg: null,
+      conceptDialogOpen: false,
       clickedConcept: null,
-      closeHandler: null,
       loaded: true,
       x: this.props.annotation.x1,
       y: this.props.annotation.y1,
@@ -152,20 +151,19 @@ class VerifyAnnotations extends Component {
   };
 
   // SELECT CONCEPT DIALOG FUNCTIONS
-  handleDialogClose = () => {
+  handleConceptDialogClose = () => {
     this.setState({
-      dialogOpen: false,
-      dialogMsg: null
+      conceptDialogOpen: false,
+      conceptDialogMsg: null
     });
   };
 
   handleConceptClick = concept => {
     this.setState({
-      dialogMsg:
+      conceptDialogMsg:
         "Switch " + this.props.annotation + " to " + concept.name + "?",
-      dialogOpen: true,
-      clickedConcept: concept,
-      closeHandler: this.handleDialogClose
+      conceptDialogOpen: true,
+      clickedConcept: concept
     });
   };
 
@@ -323,11 +321,11 @@ class VerifyAnnotations extends Component {
       <React.Fragment>
         <DialogModal
           title={"Confirm Annotation Edit"}
-          message={this.state.dialogMsg}
+          message={this.state.conceptDialogMsg}
           placeholder={"Comments"}
           inputHandler={this.changeConcept}
-          open={this.state.dialogOpen}
-          handleClose={this.state.closeHandler}
+          open={this.state.conceptDialogOpen}
+          handleClose={this.handleConceptDialogClose}
         />
         {!this.state.end ? (
           <React.Fragment>
