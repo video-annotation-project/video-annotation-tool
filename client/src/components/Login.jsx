@@ -33,9 +33,6 @@ class Login extends Component {
     });
   };
 
-  // handleChange = name => event => {
-  //   this.setState({ [name]: event.target.value });
-  // };
 
   handleSubmit = event => {
     event.preventDefault();
