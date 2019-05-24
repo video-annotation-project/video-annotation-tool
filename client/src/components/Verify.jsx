@@ -178,10 +178,10 @@ class Verify extends Component {
     });
   };
 
-  handleNext = () => {
+  handleNext = (callback) => {
     this.setState({
       index: this.state.index + 1
-    });
+    }, callback);
   };
 
   handleListClick = async (name, id) => {

@@ -80,23 +80,12 @@ class VerifyAnnotations extends Component {
       y: this.props.annotation.y1,
       width: this.props.annotation.x2 - this.props.annotation.x1,
       height: this.props.annotation.y2 - this.props.annotation.y1,
-      open: false /* needed for dialog component */
+      videoDialogOpen: false /* needed for dialog component */
     };
   }
 
   componentDidMount() {
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-
-  componentDidUpdate(prevProps, prevState, snapshot) {
-    if (prevProps.annotation !== this.props.annotation) {
-      this.setState({
-        x: this.props.annotation.x1,
-        y: this.props.annotation.y1,
-        width: this.props.annotation.x2 - this.props.annotation.x1,
-        height: this.props.annotation.y2 - this.props.annotation.y1
-      });
-    }
   }
 
   verifyAnnotation = async () => {
@@ -152,6 +141,8 @@ class VerifyAnnotations extends Component {
       });
       return;
     }
+    /* we refresh the state to immediately blank out the image being shown to user
+      so that it is clear that a new image is being loaded. */
     this.setState(
       {
         loaded: false
@@ -163,7 +154,14 @@ class VerifyAnnotations extends Component {
       }
     );
     window.scrollTo({ top: 0, behavior: "smooth" });
-    this.props.handleNext();
+    this.props.handleNext(() => {
+      this.setState({
+        x: this.props.annotation.x1,
+        y: this.props.annotation.y1,
+        width: this.props.annotation.x2 - this.props.annotation.x1,
+        height: this.props.annotation.y2 - this.props.annotation.y1
+      });
+    });
   };
 
   // Concepts Selected
@@ -317,12 +315,12 @@ class VerifyAnnotations extends Component {
   // DIALOG functions
   handleVideoDialogOpen = () => {
     this.setState({
-      open: true
+      videoDialogOpen: true
     });
   };
 
   handleVideoDialogClose = () => {
-    this.setState({ open: false });
+    this.setState({ videoDialogOpen: false });
   };
 
   render() {
@@ -454,7 +452,7 @@ class VerifyAnnotations extends Component {
               </Button>
               <VideoDialogWrapped
                 annotation={annotation}
-                open={this.state.open}
+                open={this.state.videoDialogOpen}
                 onClose={this.handleVideoDialogClose}
               />
             </div>
@@ -489,12 +487,13 @@ class VideoDialog extends React.Component {
   };
 
   render() {
-    const { classes, onClose, selectedValue, ...other } = this.props;
+    const { classes, onClose, selectedValue, open, ...other } = this.props;
     return (
       <Dialog
         maxWidth={false}
         onClose={this.handleVideoDialogClose}
         aria-labelledby="video-dialog-title"
+        open={open}
         {...other}
       >
         <DialogTitle id="video-dialog-title">Annotation Video</DialogTitle>
