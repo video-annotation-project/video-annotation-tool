@@ -151,7 +151,7 @@ class VerifyAnnotations extends Component {
     this.props.handleNext(this.resetState);
   };
 
-  // Concepts Selected
+  // SELECT CONCEPT DIALOG FUNCTIONS
   handleDialogClose = () => {
     this.setState({
       dialogOpen: false,
@@ -169,7 +169,7 @@ class VerifyAnnotations extends Component {
     });
   };
 
-  editAnnotation = (comment, unsure) => {
+  changeConcept = (comment, unsure) => {
     this.setState({
       concept: this.state.clickedConcept,
       comment: comment,
@@ -199,7 +199,7 @@ class VerifyAnnotations extends Component {
       });
   };
 
-  /* ALL BOX UPDATE FUNCTIONS */
+  // ALL BOX UPDATE FUNCTIONS
   postBoxImage = async () => {
     var dragBoxCord = document
       .getElementById("dragBox")
@@ -306,15 +306,11 @@ class VerifyAnnotations extends Component {
     this.verifyAnnotation();
   };
 
-  // DIALOG functions
-  handleVideoDialogOpen = () => {
+  // VIDEO DIALOG FUNCTIONS
+  videoDialogToggle = () => {
     this.setState({
-      videoDialogOpen: true
+      videoDialogOpen: !this.state.videoDialogOpen
     });
-  };
-
-  handleVideoDialogClose = () => {
-    this.setState({ videoDialogOpen: false });
   };
 
   render() {
@@ -329,7 +325,7 @@ class VerifyAnnotations extends Component {
           title={"Confirm Annotation Edit"}
           message={this.state.dialogMsg}
           placeholder={"Comments"}
-          inputHandler={this.editAnnotation}
+          inputHandler={this.changeConcept}
           open={this.state.dialogOpen}
           handleClose={this.state.closeHandler}
         />
@@ -398,8 +394,8 @@ class VerifyAnnotations extends Component {
             </Typography>
             <div>
               <ConceptsSelected handleConceptClick={this.handleConceptClick} />
-              <IconButton className={classes.icons} aria-label="OndemandVideo">
-                <OndemandVideo onClick={this.handleVideoDialogOpen} />
+              <IconButton className={classes.icons} aria-label="OnDemandVideo">
+                <OndemandVideo onClick={this.videoDialogToggle} />
               </IconButton>
               <MuiThemeProvider theme={theme}>
                 <Button
@@ -441,7 +437,7 @@ class VerifyAnnotations extends Component {
               <VideoDialogWrapped
                 annotation={annotation}
                 open={this.state.videoDialogOpen}
-                onClose={this.handleVideoDialogClose}
+                onClose={this.videoDialogToggle}
               />
             </div>
           </React.Fragment>
