@@ -282,22 +282,32 @@ class Annotate extends Component {
   postAnnotation = (comment, unsure) => {
     var videoElement = document.getElementById("video");
     var cTime = videoElement.currentTime;
-    var dragBoxCord = document
-      .getElementById("dragBox")
-      .getBoundingClientRect();
-    var vidCord = videoElement.getBoundingClientRect("dragBox");
-    var x1_video = vidCord.left;
-    var y1_video = vidCord.top;
+    
+    var dragBoxCord = document.getElementById("dragBox").getBoundingClientRect();
+    var vidCord = videoElement.getBoundingClientRect();
+    var video_x1 = vidCord.left;
+    var video_y1 = vidCord.top;
 
-    var x1_box = dragBoxCord.left;
-    var y1_box = dragBoxCord.top;
+    //Make video image
+    var canvas = document.createElement('canvas');
+    canvas.height = vidCord.height;
+    canvas.width = vidCord.width;
+    var ctx = canvas.getContext('2d');
+    ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+    var videoImage = new Image();
+    videoImage.setAttribute('crossOrigin', 'use-credentials');
+    videoImage.src = canvas.toDataURL(1.0);
+
+    var box_x1 = dragBoxCord.left;
+    var box_y1 = dragBoxCord.top;
     var height = dragBoxCord.height;
     var width = dragBoxCord.width;
 
-    var x1 = Math.max(x1_box - x1_video, 0);
-    var y1 = Math.max(y1_box - y1_video, 0);
-    var x2 = Math.min(x1 + width, 1599);
-    var y2 = Math.min(y1 + height, 899);
+    // Bouding box coordinates
+    var x1 = Math.max((box_x1 - video_x1), 0);
+    var y1 = Math.max((box_y1 - video_y1), 0);
+    var x2 = Math.min((x1 + width), 1599);
+    var y2 = Math.min((y1 + height), 899);
 
     //draw video with and without bounding box to canvas and save as img
     var date = Date.now().toString();
@@ -323,59 +333,35 @@ class Annotate extends Component {
         Authorization: "Bearer " + localStorage.getItem("token")
       }
     };
-    axios
-      .post("/api/annotations", body, config)
-      .then(async res => {
-        console.log(res.data.message);
-        this.handleDialogClose();
-        this.createAndUploadImages(
-          vidCord,
-          dragBoxCord,
-          videoElement,
-          date,
-          x1,
-          y1
-        );
-      })
-      .catch(error => {
-        console.log(error);
-        console.log(JSON.parse(JSON.stringify(error)));
-        if (!error.response) {
-          return;
-        }
-        let errMsg =
-          error.response.data.detail || error.response.data.message || "Error";
-        console.log(errMsg);
-        this.setState({
-          error: errMsg
-        });
+    axios.post('/api/annotations', body, config).then(async res => {
+      console.log(res.data.message);
+      this.handleDialogClose();
+      this.createAndUploadImages(
+        videoImage, ctx, canvas, dragBoxCord, date, x1, y1);
+    }).catch(error => {
+      console.log(error);
+      console.log(JSON.parse(JSON.stringify(error)));
+      if (!error.response) {
+        return;
+      }
+      let errMsg = error.response.data.detail ||
+        error.response.data.message || 'Error';
+      console.log(errMsg);
+      this.setState({
+        error: errMsg
       });
   };
 
-  createAndUploadImages = async (
-    vidCord,
-    dragBoxCord,
-    videoElement,
-    date,
-    x1,
-    y1
-  ) => {
-    var canvas = document.createElement("canvas");
-    canvas.height = vidCord.height;
-    canvas.width = vidCord.width;
-    var ctx = canvas.getContext("2d");
-    ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-    var img = new Image();
-    img.setAttribute("crossOrigin", "use-credentials");
-    img.src = canvas.toDataURL(1.0);
-    await this.uploadImage(img, date, false);
+  createAndUploadImages = (videoImage, ctx, canvas, dragBoxCord, date,
+    x1, y1) => {
+    this.uploadImage(videoImage, date, false);
     ctx.lineWidth = "2";
     ctx.strokeStyle = "coral";
     ctx.rect(x1, y1, dragBoxCord.width, dragBoxCord.height);
     ctx.stroke();
-    img.src = canvas.toDataURL(1.0);
-    await this.uploadImage(img, date, true);
-  };
+    videoImage.src = canvas.toDataURL(1.0);
+    this.uploadImage(videoImage, date, true);
+  }
 
   uploadImage = (img, date, box) => {
     let buf = new Buffer(
@@ -393,8 +379,11 @@ class Annotate extends Component {
       date: date,
       box: box
     };
-    return axios.post("/api/annotationImages", body, config);
-  };
+    return axios.post('/api/annotationImages', body, config).catch(
+      error => {
+        console.log(error);
+      });
+  }
 
   handleConceptClick = concept => {
     var videoElement = document.getElementById("video");

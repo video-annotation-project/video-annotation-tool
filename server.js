@@ -243,7 +243,7 @@ const setCookies = res => {
   const keyPairId = process.env.KEY_PAIR_ID;
   const privateKey = process.env.RSA_PRIVATE_KEY.split("\\n").join("\n");
   let cdnUrl = "cdn.deepseaannotations.com";
-  let expiry = Math.floor(Date.now() / 1000) + 60000;
+  let expiry = Math.floor(Date.now() / 1000) + 99960000;
 
   let policy = {
     Statement: [
@@ -306,6 +306,10 @@ app.post("/api/login", async function(req, res) {
       isAdmin: user.rows[0].admin
     });
   } catch (error) {
+    console.log('Error in post /api/login');
+    
+    console.log(error);
+    
     res.status(500).json(error);
   }
 });
@@ -900,15 +904,15 @@ app.get(
   async (req, res) => {
     let params = [];
     //Build query string
-    let queryPass = `SELECT annotations.id, annotations.comment,\
-                     annotations.unsure, annotations.timeinvideo, \
-                     annotations.imagewithbox, concepts.name, \
-                     false as extended \
-                     FROM annotations\
-                     LEFT JOIN concepts ON concepts.id=annotations.conceptid\
+    let queryPass = `SELECT annotations.id, annotations.comment,
+                     annotations.unsure, annotations.timeinvideo, 
+                     annotations.imagewithbox, concepts.name, 
+                     false as extended 
+                     FROM annotations
+                     LEFT JOIN concepts ON concepts.id=annotations.conceptid
                      WHERE annotations.userid!=17`;
-    if (req.query.unsureOnly === "true") {
-      queryPass = queryPass + " AND annotations.unsure = true";
+    if (req.query.unsureOnly === 'true') {
+      queryPass = queryPass + ' AND annotations.unsure = true';
     }
     if (req.query.admin !== "true") {
       queryPass = queryPass + " AND annotations.userid = $1";
@@ -1305,14 +1309,14 @@ app.put(
   "/api/runModel",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    let ec2 = new AWS.EC2({ region: "us-west-1" });
+    let ec2 = new AWS.EC2({ region: 'us-west-1' });
     var params = {
-      InstanceIds: ["i-0627124479fe1ce98"]
+      InstanceIds: [
+        process.env.AWS_EC2_RUNMODEL
+      ]
     };
-    ec2.startInstances(params, function(err, data) {
-      if (err) console.log(err, err.stack);
-      // an error occurred
-      else console.log(data); // successful response
+    ec2.startInstances(params, function (err, data) {
+      if (err) console.log(err, err.stack); // an error occurred
     });
   }
 );
@@ -1321,18 +1325,59 @@ app.delete(
   "/api/runModel",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    let ec2 = new AWS.EC2({ region: "us-west-1" });
+    let ec2 = new AWS.EC2({ region: 'us-west-1' });
     var params = {
-      InstanceIds: ["i-0627124479fe1ce98"]
+      InstanceIds: [
+        process.env.AWS_EC2_RUNMODEL
+      ]
     };
-    ec2.stopInstances(params, function(err, data) {
-      if (err) console.log(err, err.stack);
-      // an error occurred
-      else console.log(data); // successful response
+    ec2.stopInstances(params, function (err, data) {
+      if (err) console.log(err, err.stack); // an error occurred
     });
   }
 );
 
+app.get('/api/modelTab/:option',
+  passport.authenticate('jwt', { session: false }), async (req, res) => {
+    const queryText = `
+      SELECT 
+        *
+      FROM 
+        modeltab
+      WHERE
+        option = $1`;
+    try {
+      let response = await psql.query(queryText, [req.params.option]);
+      res.json(response.rows);
+    } catch (error) {
+      console.log('Error on GET /api/modelTab');
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
+);
+
+
+app.put('/api/modelTab/:option',
+  passport.authenticate('jwt', { session: false }), async (req, res) => {
+    const queryText = `
+      UPDATE
+        modeltab
+      SET
+        info = $1
+      WHERE
+        option = $2
+      `;
+    try {
+      let response = await psql.query(queryText, [req.body.info, req.params.option]);
+      res.json(response.rows);
+    } catch (error) {
+      console.log('Error on put /api/modelTab');
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
+);
 // This websocket sends a list of videos to the client that update in realtime
 io.on("connection", socket => {
   console.log("socket connected!");
@@ -1344,6 +1389,9 @@ io.on("connection", socket => {
   });
   socket.on("refresh videos", () => {
     socket.broadcast.emit("refresh videos");
+  });
+  socket.on('reload run model', () => {
+    socket.broadcast.emit('reload run model');
   });
 });
 

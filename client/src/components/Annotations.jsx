@@ -75,7 +75,7 @@ class Annotations extends Component {
     }
   };
 
-  handleClick = (time, filename, id) => {
+  handleClick = (id) => {
     let annotations = JSON.parse(JSON.stringify(this.state.annotations));
     let annotation = annotations.find(annotation => annotation.id === id);
     annotation.expanded = !annotation.expanded;
@@ -156,8 +156,6 @@ class Annotations extends Component {
             <React.Fragment key={annotation.id}>
               <ListItem button
                 onClick={() => this.handleClick(
-                  annotation.timeinvideo,
-                  annotation.filename,
                   annotation.id
                 )}
               >
