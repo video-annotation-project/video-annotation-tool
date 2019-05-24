@@ -73,13 +73,13 @@ def train_model(concepts, users, min_examples, epochs, model_name, download_data
     Downloads the annotation data and saves it into training and validation csv's.
     Also downloads corresponding images.
     '''
-    folders = ["weights"]
     if download_data:
+        folders = ["weights"]
         folders.append(img_folder)
-    for dir in folders:
-        if os.path.exists(dir):
-            shutil.rmtree(dir)
-        os.makedirs(dir)
+        for dir in folders:
+            if os.path.exists(dir):
+                shutil.rmtree(dir)
+            os.makedirs(dir)
 
         start = time.time()
 
