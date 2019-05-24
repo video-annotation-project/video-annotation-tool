@@ -1,11 +1,11 @@
 import React, { Component } from "react";
 import axios from "axios";
 
-import ErrorModal from "./ErrorModal.jsx";
 import Typography from "@material-ui/core/Typography";
 import { withStyles } from "@material-ui/core/styles";
 import TextField from "@material-ui/core/TextField";
 import Button from "@material-ui/core/Button";
+import swal from '@sweetalert/with-react'
 
 const styles = {
   root: {
@@ -17,15 +17,14 @@ const styles = {
   }
 };
 
+
 class Profile extends Component {
   constructor(props) {
     super(props);
     this.state = {
       password: "",
       newPassword1: "",
-      newPassword2: "",
-      errorMsg: null,
-      open: false
+      newPassword2: ""
     };
   }
 
@@ -39,17 +38,17 @@ class Profile extends Component {
     event.preventDefault();
     const { password, newPassword1, newPassword2 } = this.state;
     if (newPassword1 !== newPassword2) {
-      this.setState({
-        errorMsg: "New passwords do not match!",
-        open: true
-      });
+      swal(
+        "New passwords do not match!", '',
+        "error"
+      );
       return;
     }
     if (newPassword1 === "") {
-      this.setState({
-        errorMsg: "Please enter a new password",
-        open: true
-      });
+      swal(
+        "Please enter a new password", '',
+        "error"
+      );
       return;
     }
     const config = {
@@ -66,22 +65,22 @@ class Profile extends Component {
     axios
       .post("/api/changePassword", body, config)
       .then(res => {
-        alert(res.data.message);
+        this.showAlert();
         this.props.history.push("/");
       })
       .catch(error => {
         console.log(error);
         if (error.response) {
-          this.setState({
-            errorMsg: error.response.data.detail,
-            open: true
-          });
+          swal(
+            error.response.data.detail, '',
+            "error"
+          );
         }
       });
   };
 
-  handleClose = () => {
-    this.setState({ open: false });
+  showAlert = () => {
+    swal("Password Changed!", "", "success");
   };
 
   render() {
@@ -90,11 +89,6 @@ class Profile extends Component {
       <div className={classes.root}>
         <Typography variant="display1">Change Password</Typography>
         <br />
-        <ErrorModal
-          errorMsg={this.state.errorMsg}
-          open={this.state.open}
-          handleClose={this.handleClose}
-        />
         <form onSubmit={this.handleSubmit}>
           <TextField
             label="Current Password"
