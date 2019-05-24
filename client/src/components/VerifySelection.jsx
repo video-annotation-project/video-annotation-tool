@@ -50,6 +50,10 @@ class VerifySelection extends React.Component {
     };
   }
 
+  componentDidMount() {
+    this.props.resetState();
+  }
+
   getStepForm = step => {
     switch (step) {
       case 0:
