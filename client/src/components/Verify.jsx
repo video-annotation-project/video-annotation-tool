@@ -184,16 +184,6 @@ class Verify extends Component {
     }, callback);
   };
 
-  handleListClick = async (name, id) => {
-    let selected = this.state.annotations[id];
-
-    if (selected.expanded === undefined) {
-      selected.expanded = true;
-    } else {
-      selected.expanded = !selected.expanded;
-    }
-  };
-
   render() {
     let selection = "";
     if (this.state.selectionMounted) {
