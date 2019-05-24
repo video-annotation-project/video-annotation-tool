@@ -1,6 +1,6 @@
-import React, { Component } from 'react';
-import Modal from '@material-ui/core/Modal';
-import { withStyles } from '@material-ui/core/styles';
+import React, { Component } from "react";
+import Modal from "@material-ui/core/Modal";
+import { withStyles } from "@material-ui/core/styles";
 
 const styles = theme => ({
   paper: {
@@ -8,14 +8,13 @@ const styles = theme => ({
     backgroundColor: theme.palette.background.paper,
     boxShadow: theme.shadows[5],
     padding: theme.spacing.unit * 4,
-    display: 'block',
-    margin: 'auto',
-    overflow: 'auto',
-  },
+    display: "block",
+    margin: "auto",
+    overflow: "auto"
+  }
 });
 
 class ErrorModal extends Component {
-
   handleClose = () => {
     this.props.handleClose();
   };
