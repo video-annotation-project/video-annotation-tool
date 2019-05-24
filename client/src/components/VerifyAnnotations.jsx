@@ -494,10 +494,10 @@ class VideoDialog extends React.Component {
       <Dialog
         maxWidth={false}
         onClose={this.handleVideoDialogClose}
-        aria-labelledby="simple-dialog-title"
+        aria-labelledby="video-dialog-title"
         {...other}
       >
-        <DialogTitle id="simple-dialog-title">Annotation Video</DialogTitle>
+        <DialogTitle id="video-dialog-title">Annotation Video</DialogTitle>
         <div>
           <video
             id="video"
