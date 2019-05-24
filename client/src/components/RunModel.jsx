@@ -1,7 +1,6 @@
 import React, { Component } from "react";
 import axios from "axios";
 
-import ErrorModal from "./ErrorModal.jsx";
 import Typography from "@material-ui/core/Typography";
 import { withStyles } from "@material-ui/core/styles";
 
@@ -93,7 +92,6 @@ class RunModel extends Component {
       users: [],
       userSelected: "",
       activeStep: 0,
-      errorMsg: null,
       openedVideo: null,
       socket: socket
     };
@@ -359,11 +357,6 @@ class RunModel extends Component {
     );
   };
 
-  //Code for closing modal
-  closeErrorModal = () => {
-    this.setState({ errorMsg: false });
-  };
-
   startEC2 = () => {
     const config = {
       headers: {
@@ -406,7 +399,6 @@ class RunModel extends Component {
       videoSelected,
       userSelected,
       activeStep,
-      errorMsg,
       openedVideo
     } = this.state;
     if (!videos) {
@@ -420,11 +412,6 @@ class RunModel extends Component {
             Run a trained model on video(s)
           </Typography>
           <br />
-          <ErrorModal
-            errorMsg={errorMsg}
-            open={!!errorMsg}
-            handleClose={this.closeErrorModal}
-          />
         </div>
         <Stepper activeStep={activeStep} orientation="vertical">
           {steps.map((label, index) => (

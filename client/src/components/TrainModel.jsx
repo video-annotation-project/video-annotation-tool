@@ -1,7 +1,6 @@
 import React, { Component } from "react";
 import axios from "axios";
 
-import ErrorModal from "./ErrorModal.jsx";
 import Typography from "@material-ui/core/Typography";
 import { withStyles } from "@material-ui/core/styles";
 
@@ -84,7 +83,6 @@ class TrainModel extends Component {
       models: [],
       modelSelected: "",
       activeStep: 0,
-      errorMsg: null,
       openedVideo: null
     };
   }
@@ -361,11 +359,6 @@ class TrainModel extends Component {
     });
   };
 
-  //Code for closing modal
-  closeErrorModal = () => {
-    this.setState({ errorMsg: false });
-  };
-
   render() {
     const { classes } = this.props;
     const steps = this.getSteps();
@@ -376,7 +369,6 @@ class TrainModel extends Component {
       conceptsSelected,
       modelSelected,
       activeStep,
-      errorMsg,
       openedVideo
     } = this.state;
     if (!videos) {
@@ -388,11 +380,6 @@ class TrainModel extends Component {
           <h1 style={{ color: "red" }}>This page is still in progress</h1>
           <Typography variant="display1">Train a model on video(s)</Typography>
           <br />
-          <ErrorModal
-            errorMsg={errorMsg}
-            open={!!errorMsg}
-            handleClose={this.closeErrorModal}
-          />
         </div>
         <Stepper activeStep={activeStep} orientation="vertical">
           {steps.map((label, index) => (

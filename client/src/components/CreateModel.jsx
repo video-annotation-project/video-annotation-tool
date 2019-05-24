@@ -1,9 +1,9 @@
 import React, { Component } from "react";
 import axios from "axios";
 
-import ErrorModal from "./ErrorModal.jsx";
 import Typography from "@material-ui/core/Typography";
 import { withStyles } from "@material-ui/core/styles";
+import swal from "@sweetalert/with-react";
 
 const styles = {
   root: {
@@ -21,8 +21,6 @@ class CreateModel extends Component {
     this.state = {
       modelsLikeSearch: [],
       models: null,
-      errorMsg: null,
-      errorOpen: false //modal code
     };
   }
 
@@ -109,22 +107,14 @@ class CreateModel extends Component {
     } catch (error) {
       console.log("Error in post /api/models");
       if (error.response) {
-        this.setState({
-          errorMsg: error.response.data.detail,
-          errorOpen: true
-        });
+        swal(error.response.data.detail, "", "error");
       }
     }
   };
 
-  //Code for closing modal
-  handleClose = () => {
-    this.setState({ errorOpen: false });
-  };
-
   render() {
     const { classes } = this.props;
-    const { models, modelsLikeSearch, errorMsg, errorOpen } = this.state;
+    const { models, modelsLikeSearch } = this.state;
     if (!models) {
       return <div>Loading...</div>;
     }
@@ -133,11 +123,6 @@ class CreateModel extends Component {
         <h1 style={{ color: "red" }}>This page is still in progress</h1>
         <Typography variant="display1">Create Model:</Typography>
         <br />
-        <ErrorModal
-          errorMsg={errorMsg}
-          open={errorOpen}
-          handleClose={this.handleClose}
-        />
         <input
           type="text"
           name="model"

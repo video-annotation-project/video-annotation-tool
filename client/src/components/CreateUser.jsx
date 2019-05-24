@@ -1,9 +1,8 @@
 import React, { Component } from "react";
 import axios from "axios";
-
-import ErrorModal from "./ErrorModal.jsx";
 import Typography from "@material-ui/core/Typography";
 import { withStyles } from "@material-ui/core/styles";
+import swal from "@sweetalert/with-react";
 
 const styles = {
   root: {
@@ -21,9 +20,7 @@ class CreateUser extends Component {
     this.state = {
       username: "",
       password: "",
-      admin: false,
-      errorMsg: null,
-      open: false //modal code
+      admin: false
     };
   }
 
@@ -59,10 +56,7 @@ class CreateUser extends Component {
     } catch (error) {
       console.log(error);
       if (error.response) {
-        this.setState({
-          errorMsg: error.response.data.detail,
-          open: true
-        });
+        swal(error.response.data.detail, "", "error");
       }
     }
   };
@@ -78,11 +72,6 @@ class CreateUser extends Component {
       <div className={classes.root}>
         <Typography variant="display1">Create New User</Typography>
         <br />
-        <ErrorModal
-          errorMsg={this.state.errorMsg}
-          open={this.state.open}
-          handleClose={this.handleClose}
-        />
         <form onSubmit={this.handleSubmit}>
           <div>username</div>
           <input
