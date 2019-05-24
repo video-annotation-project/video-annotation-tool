@@ -338,8 +338,10 @@ class VerifyAnnotations extends Component {
               Annotated by: {annotation.username}
             </Typography>
             <Typography className={classes.paper} variant="body2">
-              Video: {annotation.filename} at{" "}
-              {Math.floor(annotation.timeinvideo / 60)} minutes{" "}
+              Video: {annotation.filename}
+            </Typography>
+            <Typography className={classes.paper} variant="body2">
+              Time: {Math.floor(annotation.timeinvideo / 60)} minutes{" "}
               {Math.floor(annotation.timeinvideo % 60)} seconds
             </Typography>
             <Typography className={classes.paper} variant="body2">
