@@ -313,24 +313,24 @@ class Annotate extends Component {
     var date = Date.now().toString();
 
     const body = {
-      conceptId: this.state.clickedConcept.id,
-      videoId: this.state.currentVideo.id,
-      timeinvideo: cTime,
-      x1: x1,
-      y1: y1,
-      x2: x2,
-      y2: y2,
-      videoWidth: 1600,
-      videoHeight: 900,
-      image: date,
-      imagewithbox: date + "_box",
-      comment: comment,
-      unsure: unsure
+      'conceptId': this.state.clickedConcept.id,
+      'videoId': this.state.currentVideo.id,
+      'timeinvideo': cTime,
+      'x1': x1,
+      'y1': y1,
+      'x2': x2,
+      'y2': y2,
+      'videoWidth': 1600,
+      'videoHeight': 900,
+      'image': date,
+      'imagewithbox': date + "_box",
+      'comment': comment,
+      'unsure': unsure
     };
     const config = {
       headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + localStorage.getItem("token")
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + localStorage.getItem('token')
       }
     };
     axios.post('/api/annotations', body, config).then(async res => {
@@ -350,7 +350,8 @@ class Annotate extends Component {
       this.setState({
         error: errMsg
       });
-  };
+    });
+  }
 
   createAndUploadImages = (videoImage, ctx, canvas, dragBoxCord, date,
     x1, y1) => {

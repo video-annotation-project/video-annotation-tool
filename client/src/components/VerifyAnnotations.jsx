@@ -80,7 +80,7 @@ class VerifyAnnotations extends Component {
       y: this.props.annotation.y1,
       width: this.props.annotation.x2 - this.props.annotation.x1,
       height: this.props.annotation.y2 - this.props.annotation.y1,
-      open: false
+      open: false /* needed for dialog component */
     };
   }
 
@@ -395,7 +395,7 @@ class VerifyAnnotations extends Component {
                     src={
                       this.state.loaded
                         ? `/api/annotationImages/${
-                            this.props.annotation.id
+                            annotation.id
                           }?withBox=false`
                         : ""
                     }
@@ -455,7 +455,7 @@ class VerifyAnnotations extends Component {
                 Verify
               </Button>
               <VideoDialogWrapped
-                annotation={this.props.annotation}
+                annotation={annotation}
                 open={this.state.open}
                 onClose={this.handleVideoDialogClose}
               />

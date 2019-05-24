@@ -26,8 +26,8 @@ import MenuItem from "@material-ui/core/MenuItem";
 //Select Video
 import Radio from "@material-ui/core/Radio";
 //Video description
-// import IconButton from '@material-ui/core/IconButton';
-// import Description from '@material-ui/icons/Description';
+import IconButton from '@material-ui/core/IconButton';
+import Description from '@material-ui/icons/Description';
 import VideoMetadata from "./VideoMetadata.jsx";
 
 //Websockets
@@ -330,15 +330,12 @@ class RunModel extends Component {
   }
 
   handleNext = () => {
-    this.setState(
-      state => ({
-        activeStep: state.activeStep + 1
-      }),
-      () => {
-        if (this.state.activeStep === 3) {
-          console.log("Last Step Starting Model...");
-          this.startEC2();
-        }
+    this.setState(state => ({
+      activeStep: state.activeStep + 1,
+    }), () => {
+      if (this.state.activeStep === 3) {
+        console.log('Last Step Starting Model...');
+        this.startEC2();
       }
       this.updateBackendInfo();
     });
