@@ -57,10 +57,7 @@ class Verify extends Component {
     };
   }
 
-  unmountSelection = async () => {
-    if (!this.state.selectionMounted) {
-      this.handleReset();
-    }
+  toggleSelection = async () => {
     let annotations = await this.getAnnotations();
     this.setState({
       annotations: annotations,
@@ -207,7 +204,7 @@ class Verify extends Component {
           handleChangeVideo={this.handleChangeVideo}
           handleChangeConcept={this.handleChangeConcept}
           handleReset={this.handleReset}
-          unmountSelection={this.unmountSelection}
+          toggleSelection={this.toggleSelection}
         />
       );
     } else {
@@ -221,7 +218,7 @@ class Verify extends Component {
             annotation={this.state.annotations[this.state.index]}
             index={this.state.index}
             handleNext={this.handleNext}
-            unmountSelection={this.unmountSelection}
+            toggleSelection={this.toggleSelection}
             size={this.state.annotations.length}
           />
         </Paper>

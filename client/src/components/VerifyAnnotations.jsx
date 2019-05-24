@@ -466,7 +466,7 @@ class VerifyAnnotations extends Component {
               className={classes.button}
               variant="contained"
               color="primary"
-              onClick={this.props.unmountSelection}
+              onClick={this.props.toggleSelection}
             >
               Filter Annotations
             </Button>

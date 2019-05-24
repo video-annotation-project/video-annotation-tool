@@ -100,8 +100,8 @@ class VerifySelection extends React.Component {
     }));
   };
 
-  handleReset = () => {
-    this.props.handleReset();
+  resetState = () => {
+    this.props.resetState();
     this.setState({
       activeStep: 0
     });
@@ -125,7 +125,7 @@ class VerifySelection extends React.Component {
                   <div>
                     <Button
                       disabled={activeStep === 0}
-                      onClick={this.handleReset}
+                      onClick={this.resetState}
                       className={classes.button}
                     >
                       Reset
@@ -136,7 +136,7 @@ class VerifySelection extends React.Component {
                       disabled={this.didNotSelect(index)}
                       onClick={
                         activeStep === steps.length - 1
-                          ? this.props.unmountSelection
+                          ? this.props.toggleSelection
                           : this.handleNext
                       }
                       className={classes.button}
