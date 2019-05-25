@@ -129,17 +129,17 @@ def download_annotations(min_examples, concepts, concept_map, bad_users, img_fol
     count = 0
     for group in selected:
         first = group.iloc[0]
-        img_location = img_folder + "/" + first['image']
+        img_location = img_folder + "/" + str(first['image'])
         if ".png" not in img_location:
            img_location += ".png"
         
         try:
             # try to download image. 
-            obj = client.get_object(Bucket=S3_BUCKET, Key= SRC_IMG_FOLDER +first['image'])
+            obj = client.get_object(Bucket=S3_BUCKET, Key= SRC_IMG_FOLDER + str(first['image']))
             img = Image.open(obj['Body'])
             img.save(img_location)
         except:
-            print("Failed to load image:" + first['image'])
+            print("Failed to load image:" + str(first['image']))
             continue
 
         for index, row in group.iterrows():
