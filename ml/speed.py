@@ -26,9 +26,6 @@ client = boto3.client('s3',
     aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
     aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'))
 
-def main():
-   update_annotation_speed([7,8,9,10,14,4,5,19])
-
 def update_annotation_speed(bad_users):
     conn = psycopg2.connect(database = DB_NAME,
                         user = DB_USER,
@@ -40,6 +37,7 @@ def update_annotation_speed(bad_users):
     # get human annotations that haven't had speed calculated yet
     query = "SELECT * FROM annotations WHERE speed IS NULL AND userid NOT IN " + str(tuple(bad_users))
     df = pd.read_sql_query(query, conn)
+    print("Updating speeds of tracking annotations..")
     for index, row in df.iterrows():
         # get tracking annotations within 1 sec before and after original annot (including original annot)
        query = "SELECT * FROM annotations WHERE originalid=%d AND timeinvideo BETWEEN %f AND %f" % (row.id, row.timeinvideo - 1, row.timeinvideo + 1)
@@ -66,7 +64,7 @@ def update_annotation_speed(bad_users):
           dist = round(math.sqrt( (x2 - x1)**2 + (y2 - y1)**2 ), 2)
           if dist > max_dist:
              max_dist = dist
-       statement = "UPDATE annotations SET speed=%f WHERE id=%d;" % (max_dist, row.id)
+       statement = "UPDATE annotations SET speed=%f WHERE id=%d or originalid=%d;" % (max_dist, row.id, row.id)
        try:
           cur = conn.cursor()
           cur.execute(statement)
@@ -78,6 +76,3 @@ def update_annotation_speed(bad_users):
 def get_center(x1, x2, y1, y2):
    return (((x2 - x1) / 2) + x1, ((y2 - y1) / 2) + y1)
 
-
-if __name__ == '__main__':
-   main()
