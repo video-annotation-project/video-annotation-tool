@@ -101,37 +101,17 @@ def select_annotations(annotations, min_examples, concepts):
 #   valid_annot_file: name of validation annotations csv
 #   split: fraction of annotation images that willbe used for training (rest used in validation)
 def download_annotations(min_examples, concepts, concept_map, good_users, img_folder, train_annot_file, valid_annot_file, split=.8):
-    # creates an expanded concept list with all child concepts, mapping these new concepts to their original parent
-    parent_map = {}
-    expanded_concepts = []
-    '''
-    for concept in concepts:
-        # grab all children from concept tree for with breadth first traversal
-        sub = queryDB('select id,parent from concepts')
-        parents = [concept]
-        while len(parents) > 0:
-            expanded_concepts += parents
-            for parent in parents:
-                parent_map[parent] = concept
-            c = sub.loc[sub['parent'].isin(parents)]
-            parents = c['id'].tolist()
-    '''
-    expanded_concepts = concepts
     # Get all annotations for given concepts (and child concepts) making sure that any tracking annotations originated from good users
     annotations = queryDB(
         ''' SELECT *
             FROM annotations as A
-            WHERE conceptid in ''' + str(tuple(expanded_concepts)) + 
+            WHERE conceptid in ''' + str(tuple(concepts)) + 
             ''' AND EXISTS (''' +
                 ''' SELECT id, userid 
                     FROM annotations 
                     WHERE id=A.originalid 
                         AND userid IN ''' + str(tuple(good_users)) + ")")
-    '''
-    # Rename child concepts to their parent concepts
-    for val,key in parent_map.items():
-        annotations.loc[annotations['conceptid'] == val, 'conceptid'] = key
-    '''
+
     selected, concept_count = select_annotations(annotations, min_examples, concepts)
     print("Concept counts: " + str(concept_count))
     print("Number of images: " + str(len(selected)))

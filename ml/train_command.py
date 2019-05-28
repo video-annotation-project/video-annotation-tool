@@ -1,7 +1,7 @@
 from psycopg2 import connect
 import os
 from dotenv import load_dotenv
-from predict import predict_on_video
+from load_n_train import train_model
 import boto3
 import json
 
@@ -25,21 +25,19 @@ DB_PASSWORD = os.getenv("DB_PASSWORD")
 con = connect(database=DB_NAME, host=DB_HOST, user=DB_USER, password=DB_PASSWORD)
 cursor = con.cursor()
 # get annotations from test
-cursor.execute("SELECT * FROM MODELTAB WHERE option='runmodel'")
+cursor.execute("SELECT * FROM MODELTAB WHERE option='trainmodel'")
 row = cursor.fetchone()
 info = row[1]
 
-if info['activeStep'] != 3:
+if info['activeStep'] != 4:
     exit()
-
-s3.download_file(S3_BUCKET, S3_WEIGHTS_FOLDER + str(info['modelSelected']) + '.h5', 'current_weights.h5')
 
 cursor.execute("SELECT * FROM MODELS WHERE name='" + str(info['modelSelected']) + "'")
 model = cursor.fetchone()
 
-predict_on_video(int(info['videoSelected']), 'current_weights.h5', model[2], upload_annotations=True, userid=int(info['userSelected']))
+train_model(model[2], info['usersSelected'], info['minImages'], info['epochs'], info['modelSelected'], download_data=True)
 
-cursor.execute("Update modeltab SET info =  '{\"activeStep\": 0, \"modelSelected\":\"\",\"videoSelected\":\"\",\"userSelected\":\"\"}' WHERE option = 'runmodel'")
+cursor.execute("Update modeltab SET info =  '{\"activeStep\": 0, \"epochs\":0, \"minImages\":0, \"modelSelected\":\"\",\"videosSelected\":[],\"usersSelected\":[]}' WHERE option = 'trainmodel'")
 con.commit()
 con.close()    
 os.system("sudo shutdown -h")
