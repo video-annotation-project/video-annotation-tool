@@ -429,7 +429,7 @@ class RunModel extends Component {
           <Typography variant="display1">Run a trained model on video(s)</Typography><br />
           <ErrorModal
             errorMsg={errorMsg}
-            open={!!errorMsg}
+            open={errorMsg}
             handleClose={this.closeErrorModal}
           />
         </div>

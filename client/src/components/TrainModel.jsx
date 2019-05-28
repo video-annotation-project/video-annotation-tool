@@ -62,11 +62,6 @@ const styles = theme => ({
     overflow: 'auto'
   },
   userSelector: {
-    // height: '50%',
-    overflow: 'auto'
-  },
-  conceptSelector: {
-    height: '50%',
     overflow: 'auto'
   }
 });
@@ -80,8 +75,6 @@ class TrainModel extends Component {
       videosSelected: [],
       users: [],
       usersSelected: [],
-      concepts: [],
-      conceptsSelected: [],
       models: [],
       modelSelected: '',
       activeStep: 0,
@@ -109,7 +102,6 @@ class TrainModel extends Component {
     this.loadExistingModels();
     this.loadVideoList();
     this.loadUserList();
-    this.loadConceptList();
   }
 
   loadExistingModels = () => {
@@ -131,6 +123,19 @@ class TrainModel extends Component {
     })
   }
 
+  loadUserList = () => {
+    const config = {
+      headers: {
+        'Authorization': 'Bearer ' + localStorage.getItem('token')
+      }
+    }
+    axios.get(`/api/users`, config).then(res => {
+      this.setState({
+        users: res.data
+      });
+    })
+  }
+
   loadVideoList = () => {
     const config = {
       headers: {
@@ -148,32 +153,6 @@ class TrainModel extends Component {
         inProgressVideos.rows);
       this.setState({
         videos: videos
-      });
-    })
-  }
-
-  loadConceptList = () => {
-    const config = {
-      headers: {
-        'Authorization': 'Bearer ' + localStorage.getItem('token')
-      }
-    }
-    axios.get(`/api/concepts`, config).then(res => {
-      this.setState({
-        concepts: res.data
-      });
-    })
-  }
-
-  loadUserList = () => {
-    const config = {
-      headers: {
-        'Authorization': 'Bearer ' + localStorage.getItem('token')
-      }
-    }
-    axios.get(`/api/users`, config).then(res => {
-      this.setState({
-        users: res.data
       });
     })
   }
@@ -202,56 +181,6 @@ class TrainModel extends Component {
             </MenuItem>
           ))}
         </Select>
-      </FormControl>
-    );
-  }
-
-  handleVideoSelect = filename => event => {
-    let videosSelected = JSON.parse(JSON.stringify(this.state.videosSelected));
-    if (event.target.checked) {
-      videosSelected.push(filename)
-    } else {
-      videosSelected = videosSelected.filter(video => video !== filename);
-    }
-    this.setState({
-      videosSelected: videosSelected
-    })
-  }
-
-  selectVideo = () => {
-    return (
-      <FormControl
-        component="fieldset"
-        className={this.props.classes.videoSelector}
-      >
-        <FormLabel component="legend">Select Videos to Train With</FormLabel>
-        <FormGroup>
-          {this.state.videos.map(video => (
-            <div key={video.filename}>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    onChange={this.handleVideoSelect(video.filename)}
-                    color='primary'
-                  />
-                }
-                label={video.filename}
-              >
-              </FormControlLabel>
-              <IconButton style={{ float: 'right' }}>
-                <Description
-                  onClick={
-                    (event) =>
-                      this.openVideoMetadata(
-                        event,
-                        video,
-                      )
-                  }
-                />
-              </IconButton>
-            </div>
-          ))}
-        </FormGroup>
       </FormControl>
     );
   }
@@ -296,39 +225,49 @@ class TrainModel extends Component {
     );
   }
 
-  handleConceptSelect = id => event => {
-    let conceptsSelected =
-      JSON.parse(JSON.stringify(this.state.conceptsSelected));
+  handleVideoSelect = videoid => event => {
+    let videosSelected = JSON.parse(JSON.stringify(this.state.videosSelected));
     if (event.target.checked) {
-      conceptsSelected.push(id)
+      videosSelected.push(videoid)
     } else {
-      conceptsSelected = conceptsSelected.filter(concept => concept !== id);
+      videosSelected = videosSelected.filter(id => id !== videoid);
     }
     this.setState({
-      conceptsSelected: conceptsSelected
+      videosSelected: videosSelected
     })
   }
 
-  selectConcept = () => {
+  selectVideo = () => {
     return (
       <FormControl
         component="fieldset"
-        className={this.props.classes.conceptSelector}
+        className={this.props.classes.videoSelector}
       >
-        <FormLabel component="legend">Select Concepts to Train With</FormLabel>
+        <FormLabel component="legend">Select Videos to Train With</FormLabel>
         <FormGroup>
-          {this.state.concepts.slice(0, 100).map(concept => (
-            <div key={concept.id}>
+          {this.state.videos.map(video => (
+            <div key={video.filename}>
               <FormControlLabel
                 control={
                   <Checkbox
-                    onChange={this.handleConceptSelect(concept.id)}
+                    onChange={this.handleVideoSelect(video.id)}
                     color='primary'
                   />
                 }
-                label={concept.name}
+                label={video.filename}
               >
               </FormControlLabel>
+              <IconButton style={{ float: 'right' }}>
+                <Description
+                  onClick={
+                    (event) =>
+                      this.openVideoMetadata(
+                        event,
+                        video,
+                      )
+                  }
+                />
+              </IconButton>
             </div>
           ))}
         </FormGroup>
@@ -337,7 +276,7 @@ class TrainModel extends Component {
   }
 
   getSteps = () => {
-    return ['Select model', 'Select users', 'Select concepts', 'Select videos'];
+    return ['Select model', 'Select users', 'Select videos'];
   }
 
   getStepContent = (step) => {
@@ -347,8 +286,6 @@ class TrainModel extends Component {
       case 1:
         return this.selectUser();
       case 2:
-        return this.selectConcept();
-      case 3:
         return this.selectVideo();
       default:
         return 'Unknown step';
@@ -385,7 +322,6 @@ class TrainModel extends Component {
       videos,
       videosSelected,
       usersSelected,
-      conceptsSelected,
       modelSelected,
       activeStep,
       errorMsg,
@@ -403,7 +339,7 @@ class TrainModel extends Component {
           <Typography variant="display1">Train a model on video(s)</Typography><br />
           <ErrorModal
             errorMsg={errorMsg}
-            open={!!errorMsg}
+            open={errorMsg}
             handleClose={this.closeErrorModal}
           />
         </div>
@@ -430,8 +366,7 @@ class TrainModel extends Component {
                       disabled={
                         (activeStep === 0 && modelSelected === '') ||
                         (activeStep === 1 && usersSelected.length < 1) ||
-                        (activeStep === 2 && conceptsSelected.length < 1) ||
-                        (activeStep === 3 && videosSelected.length < 1)
+                        (activeStep === 2 && videosSelected.length < 1)
                       }
                     >
                       {activeStep === steps.length - 1 ? 'Train Model' : 'Next'}
