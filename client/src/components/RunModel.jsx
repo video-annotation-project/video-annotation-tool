@@ -82,7 +82,7 @@ class RunModel extends Component {
     socket.on("disconnect", reason => {
       console.log(reason);
     });
-    socket.on("reload run model", this.loadOptionInfo);
+    socket.on("refresh runmodel", this.loadOptionInfo);
 
     this.state = {
       models: [],
@@ -290,7 +290,7 @@ class RunModel extends Component {
     }
   };
 
-  updateBackendInfo = step => {
+  updateBackendInfo = () => {
     const config = {
       headers: {
         Authorization: "Bearer " + localStorage.getItem("token")
@@ -309,9 +309,7 @@ class RunModel extends Component {
     axios
       .put("/api/modelTab/runmodel", body, config)
       .then(res => {
-        console.log(this.state.socket);
-
-        this.state.socket.emit("reload run model");
+        this.state.socket.emit("refresh runmodel");
       })
       .catch(error => {
         console.log(error);

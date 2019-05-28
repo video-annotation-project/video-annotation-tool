@@ -589,6 +589,36 @@ app.get(
   }
 );
 
+// Get videos that users have viewed
+app.get(
+  "/api/videos/usersViewed/:userIDs",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    let queryText = `
+    SELECT v.id, v.filename 
+    FROM
+      checkpoints c
+    LEFT JOIN
+      videos v
+    ON
+      v.id=c.videoid
+    WHERE
+      c.userid::text = ANY(string_to_array($1, ','))
+    `;
+    try {
+      const videos = await psql.query(
+        queryText,
+        [req.params.userIDs]
+      );
+      res.json(videos.rows);
+    } catch (error) {
+      console.log("Error in get /api/videos/usersViewed/:userIDs");
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
+);
+
 // summary getter ~KLS
 app.get(
   "/api/videos/summary/:videoid",
@@ -1394,8 +1424,12 @@ io.on("connection", socket => {
   socket.on("refresh videos", () => {
     socket.broadcast.emit("refresh videos");
   });
-  socket.on("reload run model", () => {
-    socket.broadcast.emit("reload run model");
+  socket.on("refresh runmodel", () => {
+    socket.broadcast.emit("refresh runmodel");
+  });
+  socket.on("refresh trainmodel", () => {
+    //Model Tab: Train info needs to be updated
+    socket.broadcast.emit("refresh trainmodel");
   });
 });
 
