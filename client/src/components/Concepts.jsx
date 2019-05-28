@@ -1,15 +1,15 @@
-import React from 'react';
-import axios from 'axios';
+import React from "react";
+import axios from "axios";
 
 // import Typography from '@material-ui/core/Typography';
-import { withStyles } from '@material-ui/core/styles';
-import List from '@material-ui/core/List';
-import ConceptsList from './ConceptsList.jsx';
+import { withStyles } from "@material-ui/core/styles";
+import List from "@material-ui/core/List";
+import ConceptsList from "./ConceptsList.jsx";
 
 const styles = theme => ({
   root: {
-    width: '100%',
-    backgroundColor: theme.palette.background.paper,
+    width: "100%",
+    backgroundColor: theme.palette.background.paper
   }
 });
 
@@ -24,28 +24,32 @@ class Concepts extends React.Component {
   }
 
   getConceptsSelected = async () => {
-    return axios.get('/api/conceptsSelected', {
-        headers: {'Authorization': 'Bearer ' + localStorage.getItem('token')}
-      }).then(res => res.data).then(conceptsSelectedList => {
-      let conceptsSelectedObj = {};
-      conceptsSelectedList.forEach(concept => {
-        conceptsSelectedObj[concept.conceptid] = true;
+    return axios
+      .get("/api/conceptsSelected", {
+        headers: { Authorization: "Bearer " + localStorage.getItem("token") }
       })
-      return conceptsSelectedObj;
-    }).catch(error => {
-      console.log(error);
-      console.log(JSON.parse(JSON.stringify(error)));
-      if (!error.response) {
-        return;
-      }
-      let errMsg = error.response.data.detail ||
-        error.response.data.message || 'Error';
-      console.log(errMsg);
-      this.setState({
-        isLoaded: true,
-        error: errMsg
+      .then(res => res.data)
+      .then(conceptsSelectedList => {
+        let conceptsSelectedObj = {};
+        conceptsSelectedList.forEach(concept => {
+          conceptsSelectedObj[concept.conceptid] = true;
+        });
+        return conceptsSelectedObj;
+      })
+      .catch(error => {
+        console.log(error);
+        console.log(JSON.parse(JSON.stringify(error)));
+        if (!error.response) {
+          return;
+        }
+        let errMsg =
+          error.response.data.detail || error.response.data.message || "Error";
+        console.log(errMsg);
+        this.setState({
+          isLoaded: true,
+          error: errMsg
+        });
       });
-    });
   };
 
   componentDidMount = async () => {
@@ -54,42 +58,45 @@ class Concepts extends React.Component {
       isLoaded: true,
       conceptsSelected: conceptsSelected
     });
-  }
+  };
 
-  changeConceptsSelected = async (id) => {
+  changeConceptsSelected = async id => {
     const config = {
-      url: '/api/conceptsSelected',
+      url: "/api/conceptsSelected",
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + localStorage.getItem('token')
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + localStorage.getItem("token")
       },
       data: {
-        'id': id
+        id: id
       }
-    }
+    };
     let conceptsSelected = this.state.conceptsSelected;
     conceptsSelected[id] = !conceptsSelected[id];
-    config.method = conceptsSelected[id] ? 'post':'delete';
-    axios.request(config).then(res => {
-      alert("Changed: " + res.data.value);
-      this.setState({
-        conceptsSelected: JSON.parse(JSON.stringify(conceptsSelected))
+    config.method = conceptsSelected[id] ? "post" : "delete";
+    axios
+      .request(config)
+      .then(res => {
+        alert("Changed: " + res.data.value);
+        this.setState({
+          conceptsSelected: JSON.parse(JSON.stringify(conceptsSelected))
+        });
       })
-    }).catch(error => {
-      console.log(error);
-      console.log(JSON.parse(JSON.stringify(error)));
-      if (!error.response) {
-        return;
-      }
-      let errMsg = error.response.data.detail ||
-        error.response.data.message || 'Error';
-      console.log(errMsg);
-      this.setState({
-        isLoaded: true,
-        error: errMsg
+      .catch(error => {
+        console.log(error);
+        console.log(JSON.parse(JSON.stringify(error)));
+        if (!error.response) {
+          return;
+        }
+        let errMsg =
+          error.response.data.detail || error.response.data.message || "Error";
+        console.log(errMsg);
+        this.setState({
+          isLoaded: true,
+          error: errMsg
+        });
       });
-    });
-  }
+  };
 
   render() {
     const { error, isLoaded } = this.state;
@@ -97,7 +104,7 @@ class Concepts extends React.Component {
     if (!isLoaded) {
       return <List>Loading...</List>;
     }
-    if (error)  {
+    if (error) {
       return <List>Error: {error.message}</List>;
     }
     return (
