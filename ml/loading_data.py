@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-
-# Initial package imports
 import json
 import math
 import pandas as pd
@@ -21,13 +18,22 @@ DB_HOST = os.getenv("DB_HOST")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 
-FPS = 29.97002997002997
-
-
 client = boto3.client('s3',
     aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
     aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'))
 
+'''
+Initializes the classmap of concept names to training id's.
+(these id's don't represent the conceptid's from our database)
+'''
+def get_classmap(concepts):
+    classmap = []
+    for concept in concepts:
+        name = queryDB("select name from concepts where id=" + str(concept)).iloc[0]["name"]
+        classmap.append([name,concepts.index(concept)])
+    classmap = pd.DataFrame(classmap)
+    classmap = classmap.to_dict()[0]
+    return classmap
 
 # SQL queries to the database
 def queryDB(query):
@@ -48,14 +54,20 @@ def select_annotations(annotations, min_examples, concepts):
     for concept in concepts:
         concept_count[concept] = 0
 
-    annotations['frame_num'] = np.rint(annotations['timeinvideo'] * FPS)
+    # Get's fps for each video in order to calculate frame_num from timeinvideo
+    videos = pd.DataFrame(annotations['videoid'].unique(),columns = ['videoid'])
+    videos['fps'] = videos['videoid'].apply(lambda x: queryDB('select * from videos where id = ' +str(x)).iloc[0].fps)
+    annotations = annotations.merge(videos, left_on='videoid', right_on='videoid')
+
+    annotations['frame_num'] = np.rint(annotations['timeinvideo'] * annotations['fps'])
+
     groups = annotations.groupby(['videoid','frame_num'], sort=False)
     groups = [df for _, df in groups]
     random.shuffle(groups) # Shuffle BEFORE the sort
 
     # Sort the grouped annotations by whether or not it contains a human annotation, prioritizing them
     ai_id = queryDB("SELECT id FROM users WHERE username='ai'").id[0]
-    groups.sort(key=(lambda df : len(df.loc[df['userid'] != ai_id, 'userid'])))
+    groups.sort(key=(lambda df : len(df.loc[df['userid'] != ai_id, 'userid'])), reverse=True)
 
     #selects images that we'll use (each group has annotations for an image)
     for group in groups:
@@ -83,43 +95,27 @@ def select_annotations(annotations, min_examples, concepts):
 #   min_examples: minimum number of annotation examples for each concept
 #   concepts: list of concepts that will be used
 #   concept_map: a dict mapping index of concept to concept name
-#   bad_users: users whose annotations will be ignored
+#   good_users: users whose annotations will be used
 #   img_folder: name of the folder to hold the images
 #   train_annot_file: name of training annotation csv
 #   valid_annot_file: name of validation annotations csv
 #   split: fraction of annotation images that willbe used for training (rest used in validation)
-def download_annotations(min_examples, concepts, concept_map, bad_users, img_folder, train_annot_file, valid_annot_file, split=.8):
-    # creates an expanded concept list with all child concepts, mapping these new concepts to their original parent
-    parent_map = {}
-    expanded_concepts = []
-    '''
-    for concept in concepts:
-        # grab all children from concept tree for with breadth first traversal
-        sub = queryDB('select id,parent from concepts')
-        parents = [concept]
-        while len(parents) > 0:
-            expanded_concepts += parents
-            for parent in parents:
-                parent_map[parent] = concept
-            c = sub.loc[sub['parent'].isin(parents)]
-            parents = c['id'].tolist()
-    '''
-    expanded_concepts = concepts
+def download_annotations(min_examples, concepts, concept_map, users, videos, img_folder, train_annot_file, valid_annot_file, split=.8):
     # Get all annotations for given concepts (and child concepts) making sure that any tracking annotations originated from good users
+    users = ','.join('\''+str(e)+'\'' for e in users)
+    videos = ','.join('\''+str(e)+'\'' for e in videos)
+    concepts = ','.join('\''+str(e)+'\'' for e in concepts)
     annotations = queryDB(
         ''' SELECT *
             FROM annotations as A
-            WHERE conceptid in ''' + str(tuple(expanded_concepts)) + 
-            ''' AND EXISTS (''' +
-                ''' SELECT id, userid 
-                    FROM annotations 
-                    WHERE id=A.originalid 
-                        AND userid NOT IN ''' + str(tuple(bad_users)) + ")")
-    '''
-    # Rename child concepts to their parent concepts
-    for val,key in parent_map.items():
-        annotations.loc[annotations['conceptid'] == val, 'conceptid'] = key
-    '''
+            WHERE conceptid::text = ANY(string_to_array(''' + concepts + ''',','))
+            AND videoid::text = ANY(string_to_array(''' + videos + ''',','))
+            AND EXISTS ( 
+                SELECT id, userid 
+                FROM annotations 
+                WHERE id=A.originalid 
+                AND userid::text = ANY(string_to_array(''' + users + ",',')))")
+
     selected, concept_count = select_annotations(annotations, min_examples, concepts)
     print("Concept counts: " + str(concept_count))
     print("Number of images: " + str(len(selected)))
