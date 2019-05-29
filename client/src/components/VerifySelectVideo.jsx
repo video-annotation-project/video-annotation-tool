@@ -23,7 +23,8 @@ class VerifySelectVideo extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      videos: []
+      videos: [],
+      loaded: false
     };
   }
 
@@ -31,7 +32,8 @@ class VerifySelectVideo extends React.Component {
     let videos = await this.props.getVideos();
 
     this.setState({
-      videos: videos
+      videos: videos,
+      loaded: true
     });
   };
 
@@ -48,18 +50,20 @@ class VerifySelectVideo extends React.Component {
             value={value}
             onChange={handleChange}
           >
-            {this.state.videos.length === 0 ? (
-              <Typography>No videos for current selection</Typography>
-            ) : (
-              this.state.videos.map(video => (
-                <FormControlLabel
-                  key={video.id}
-                  value={video.id.toString()}
-                  control={<Checkbox color="primary" />}
-                  label={video.filename}
-                />
-              ))
-            )}
+            {!this.state.loaded ? "Loading..." :
+              this.state.videos.length === 0 ? (
+                <Typography>No videos for current selection</Typography>
+              ) : (
+                this.state.videos.map(video => (
+                  <FormControlLabel
+                    key={video.id}
+                    value={video.id.toString()}
+                    control={<Checkbox color="primary" />}
+                    label={video.filename}
+                  />
+                ))
+              )
+            }
           </FormGroup>
         </FormControl>
       </div>
