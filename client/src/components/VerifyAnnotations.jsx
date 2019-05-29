@@ -51,6 +51,16 @@ const styles = theme => ({
   },
   icons: {
     float: "right"
+  },
+  button1: {
+    float: "left",
+    margin: "0 auto",
+    width: "600px",
+  },
+  button2: {
+    float: "left",
+    width: "1000px",
+    margin: "0 auto",
   }
 });
 
@@ -329,23 +339,6 @@ class VerifyAnnotations extends Component {
         />
         {!this.state.end ? (
           <React.Fragment>
-            <Typography className={classes.paper} variant="title">
-              Annotation #{annotation.id}
-            </Typography>
-            <Typography className={classes.paper} variant="body2">
-              Annotated by: {annotation.username}
-            </Typography>
-            <Typography className={classes.paper} variant="body2">
-              Video: {annotation.filename}
-            </Typography>
-            <Typography className={classes.paper} variant="body2">
-              Time: {Math.floor(annotation.timeinvideo / 60)} minutes{" "}
-              {Math.floor(annotation.timeinvideo % 60)} seconds
-            </Typography>
-            <Typography className={classes.paper} variant="body2">
-              Concept:{" "}
-              {!this.state.concept ? annotation.name : this.state.concept.name}
-            </Typography>
             {!annotation.image ? (
               <Typography className={classes.paper}>No Image</Typography>
             ) : (
@@ -392,11 +385,7 @@ class VerifyAnnotations extends Component {
             <Typography className={classes.paper}>
               {this.props.index + 1} of {this.props.size}
             </Typography>
-            <div>
-              <ConceptsSelected handleConceptClick={this.handleConceptClick} />
-              <IconButton className={classes.icons} aria-label="OnDemandVideo">
-                <OndemandVideo onClick={this.videoDialogToggle} />
-              </IconButton>
+            <div className={classes.button1}>
               <MuiThemeProvider theme={theme}>
                 <Button
                   className={classes.button}
@@ -434,11 +423,47 @@ class VerifyAnnotations extends Component {
               >
                 Verify
               </Button>
+            </div>
+            <div className={classes.button2}>
+              <ConceptsSelected handleConceptClick={this.handleConceptClick} />
+              <IconButton className={classes.icons} aria-label="OnDemandVideo">
+                <OndemandVideo onClick={this.videoDialogToggle} />
+              </IconButton>
               <VideoDialogWrapped
                 annotation={annotation}
                 open={this.state.videoDialogOpen}
                 onClose={this.videoDialogToggle}
               />
+              <h3>
+                Concept:{" "}
+                {!this.state.concept
+                  ? annotation.name
+                  : this.state.concept.name}
+              </h3>
+            </div>
+            <br></br>
+            <br></br>
+            <br></br>
+            <div>
+              <Typography className={classes.paper} variant="title">
+                Annotation #{annotation.id}
+              </Typography>
+              <Typography className={classes.paper} variant="body2">
+                Annotated by: {annotation.username}
+              </Typography>
+              <Typography className={classes.paper} variant="body2">
+                Video: {annotation.filename}
+              </Typography>
+              <Typography className={classes.paper} variant="body2">
+                Time: {Math.floor(annotation.timeinvideo / 60)} minutes{" "}
+                {Math.floor(annotation.timeinvideo % 60)} seconds
+              </Typography>
+              <Typography className={classes.paper} variant="body2">
+                Concept:{" "}
+                {!this.state.concept
+                  ? annotation.name
+                  : this.state.concept.name}
+              </Typography>
             </div>
           </React.Fragment>
         ) : (
