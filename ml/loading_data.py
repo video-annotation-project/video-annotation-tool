@@ -102,7 +102,7 @@ def select_annotations(annotations, min_examples, concepts):
 #   split: fraction of annotation images that willbe used for training (rest used in validation)
 def download_annotations(min_examples, concepts, concept_map, good_users, img_folder, train_annot_file, valid_annot_file, split=.8):
     # Get all annotations for given concepts (and child concepts) making sure that any tracking annotations originated from good users
-    users = ','.join(str(e) for e in good_users)
+    users = ','.join('\''+str(e)+'\'' for e in good_users)
     annotations = queryDB(
         ''' SELECT *
             FROM annotations as A
@@ -111,7 +111,7 @@ def download_annotations(min_examples, concepts, concept_map, good_users, img_fo
                 ''' SELECT id, userid 
                     FROM annotations 
                     WHERE id=A.originalid 
-                        AND userid::text = ANY(string_to_array(''' + users + "',')))")
+                        AND userid::text = ANY(string_to_array(''' + users + ",',')))")
 
     selected, concept_count = select_annotations(annotations, min_examples, concepts)
     print("Concept counts: " + str(concept_count))
