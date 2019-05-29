@@ -35,7 +35,7 @@ if info['activeStep'] != 4:
 cursor.execute("SELECT * FROM MODELS WHERE name='" + str(info['modelSelected']) + "'")
 model = cursor.fetchone()
 
-train_model(model[2], info['usersSelected'], info['minImages'], info['epochs'], info['modelSelected'], download_data=True)
+train_model(model[2], info['usersSelected'], info['minImages'], info['epochs'], info['modelSelected'], info['videosSelected'], download_data=True)
 
 cursor.execute("Update modeltab SET info =  '{\"activeStep\": 0, \"epochs\":0, \"minImages\":0, \"modelSelected\":\"\",\"videosSelected\":[],\"usersSelected\":[]}' WHERE option = 'trainmodel'")
 con.commit()

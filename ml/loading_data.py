@@ -100,18 +100,21 @@ def select_annotations(annotations, min_examples, concepts):
 #   train_annot_file: name of training annotation csv
 #   valid_annot_file: name of validation annotations csv
 #   split: fraction of annotation images that willbe used for training (rest used in validation)
-def download_annotations(min_examples, concepts, concept_map, good_users, img_folder, train_annot_file, valid_annot_file, split=.8):
+def download_annotations(min_examples, concepts, concept_map, users, videos, img_folder, train_annot_file, valid_annot_file, split=.8):
     # Get all annotations for given concepts (and child concepts) making sure that any tracking annotations originated from good users
-    users = ','.join('\''+str(e)+'\'' for e in good_users)
+    users = ','.join('\''+str(e)+'\'' for e in users)
+    videos = ','.join('\''+str(e)+'\'' for e in videos)
+    concepts = ','.join('\''+str(e)+'\'' for e in concepts)
     annotations = queryDB(
         ''' SELECT *
             FROM annotations as A
-            WHERE conceptid in ''' + str(tuple(concepts)) + 
-            ''' AND EXISTS (''' +
-                ''' SELECT id, userid 
-                    FROM annotations 
-                    WHERE id=A.originalid 
-                        AND userid::text = ANY(string_to_array(''' + users + ",',')))")
+            WHERE conceptid::text = ANY(string_to_array(''' + concepts + ''',','))
+            AND videoid::text = ANY(string_to_array(''' + videos + ''',','))
+            AND EXISTS ( 
+                SELECT id, userid 
+                FROM annotations 
+                WHERE id=A.originalid 
+                AND userid::text = ANY(string_to_array(''' + users + ",',')))")
 
     selected, concept_count = select_annotations(annotations, min_examples, concepts)
     print("Concept counts: " + str(concept_count))
