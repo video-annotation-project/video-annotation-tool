@@ -9,6 +9,7 @@ import os
 from dotenv import load_dotenv
 from pascal_voc_writer import Writer
 import random
+import speed
 
 load_dotenv(dotenv_path="../.env")
 S3_BUCKET = os.getenv('AWS_S3_BUCKET_NAME')
@@ -49,6 +50,7 @@ def queryDB(query):
 
 
 def select_annotations(annotations, min_examples, concepts):
+    speed.update_annotation_speed()
     selected = []
     concept_count = {}
     for concept in concepts:
@@ -65,9 +67,13 @@ def select_annotations(annotations, min_examples, concepts):
     groups = [df for _, df in groups]
     random.shuffle(groups) # Shuffle BEFORE the sort
 
-    # Sort the grouped annotations by whether or not it contains a human annotation, prioritizing them
+    # sorts into two 'groups' - those without ai annotations from low to high speed (0, speed) 
+    # (note: the speed is irrelevant here since they are the original human annotations) and 
+    # those with ai annotations from low to high speed (1, speed) - prioritizing frames with no tracking
+    # annotations and then those with tracking but low average speeds (more accurate tracking?)
     ai_id = queryDB("SELECT id FROM users WHERE username='ai'").id[0]
-    groups.sort(key=(lambda df : len(df.loc[df['userid'] != ai_id, 'userid'])), reverse=True)
+    sort_lambda = lambda df : (set(df[‘userid’]) == set([ai_id]), df.speed.mean())
+    groups.sort(key=sort_lambda)
 
     #selects images that we'll use (each group has annotations for an image)
     for group in groups:
