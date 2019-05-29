@@ -26,7 +26,7 @@ class HomePage extends Component {
     const { classes } = this.props;
     return (
       <div className={classes.root}>
-        <Typography variant="display2">Welcome</Typography>
+        <Typography variant="display2">Welcome {localStorage.username}</Typography>
       </div>
     );
   }
