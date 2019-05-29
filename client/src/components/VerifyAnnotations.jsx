@@ -324,7 +324,6 @@ class VerifyAnnotations extends Component {
     });
   };
 
-
   //Methods for video meta data
   openVideoMetadata = (event, video) => {
     event.stopPropagation();
@@ -473,7 +472,9 @@ class VerifyAnnotations extends Component {
                 Video: {annotation.filename}
                 <IconButton>
                   <Description
-                    onClick={event => this.openVideoMetadata(event, {id : annotation.videoid})}
+                    onClick={event =>
+                      this.openVideoMetadata(event, { id: annotation.videoid })
+                    }
                   />
                 </IconButton>
               </Typography>

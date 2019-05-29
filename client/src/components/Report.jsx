@@ -81,7 +81,15 @@ class Report extends React.Component {
 
   render() {
     const { classes } = this.props;
-    const { unsureOnly, verifiedOnly, unverifiedOnly, level1, level2, level3, openReportModal } = this.state;
+    const {
+      unsureOnly,
+      verifiedOnly,
+      unverifiedOnly,
+      level1,
+      level2,
+      level3,
+      openReportModal
+    } = this.state;
     return (
       <div className={classes.root}>
         <Button onClick={this.handleReportModalOpen}>

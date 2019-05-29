@@ -51,7 +51,7 @@ class ReportModal extends Component {
   handleVerifiedCheckbox = event => {
     this.props.setVerifiedOnly(event.target.checked);
   };
-  
+
   handleUnVerifiedCheckbox = event => {
     this.props.setUnVerifiedOnly(event.target.checked);
   };
@@ -158,28 +158,28 @@ class ReportModal extends Component {
                 label="Unsure Only"
               />
               <div>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={verifiedOnly}
-                    onChange={event => this.handleVerifiedCheckbox(event)}
-                    value="verifiedOnly"
-                    color="primary"
-                  />
-                }
-                label="Verified Only"
-              />
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={unverifiedOnly}
-                    onChange={event => this.handleUnVerifiedCheckbox(event)}
-                    value="unverifiedOnly"
-                    color="primary"
-                  />
-                }
-                label="Unverified Only"
-              />
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={verifiedOnly}
+                      onChange={event => this.handleVerifiedCheckbox(event)}
+                      value="verifiedOnly"
+                      color="primary"
+                    />
+                  }
+                  label="Verified Only"
+                />
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={unverifiedOnly}
+                      onChange={event => this.handleUnVerifiedCheckbox(event)}
+                      value="unverifiedOnly"
+                      color="primary"
+                    />
+                  }
+                  label="Unverified Only"
+                />
               </div>
             </form>
           </DialogContent>

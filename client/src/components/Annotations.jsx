@@ -162,7 +162,7 @@ class Annotations extends Component {
           {annotations.map(annotation => (
             <React.Fragment key={annotation.id}>
               <ListItem button onClick={() => this.handleClick(annotation.id)}>
-                {annotation.verifiedby ? <DoneAll color="primary"/> : "" }
+                {annotation.verifiedby ? <DoneAll color="primary" /> : ""}
                 <ListItemText
                   primary={
                     "At " +
@@ -200,7 +200,7 @@ class Annotations extends Component {
                       onClick={e => this.handleDelete(e, annotation.id)}
                     />
                   </IconButton>
-                
+
                   {annotation.expanded ? <ExpandLess /> : <ExpandMore />}
                 </ListItemSecondaryAction>
               </ListItem>
