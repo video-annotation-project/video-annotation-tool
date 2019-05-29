@@ -93,6 +93,7 @@ const setCookies = res => {
     for (cookieName in cookies) {
       res.cookie(cookieName, cookies[cookieName], {
         domain: ".deepseaannotations.com",
+        expires: expiry,
         httpOnly: true,
         path: "/",
         secure: true
