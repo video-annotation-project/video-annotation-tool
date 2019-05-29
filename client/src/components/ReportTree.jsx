@@ -45,6 +45,8 @@ class ReportTree extends Component {
           `levelName=${this.state.levelName}&` +
           `queryConditions=${this.props.queryConditions}&` +
           `unsureOnly=${this.props.unsureOnly}&` +
+          `verifiedOnly=${this.props.verifiedOnly}&` +
+          `unverifiedOnly=${this.props.unverifiedOnly}&` +
           `admin=${localStorage.getItem("admin")}`,
         config
       );

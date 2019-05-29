@@ -15,6 +15,7 @@ import Photo from "@material-ui/icons/Photo";
 import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
 import IconButton from "@material-ui/core/IconButton";
 import Icon from "@material-ui/core/Icon";
+import DoneAll from "@material-ui/icons/DoneAll";
 
 import AnnotationFrame from "./AnnotationFrame.jsx";
 
@@ -161,6 +162,7 @@ class Annotations extends Component {
           {annotations.map(annotation => (
             <React.Fragment key={annotation.id}>
               <ListItem button onClick={() => this.handleClick(annotation.id)}>
+                {annotation.verifiedby ? <DoneAll color="primary"/> : "" }
                 <ListItemText
                   primary={
                     "At " +
@@ -198,6 +200,7 @@ class Annotations extends Component {
                       onClick={e => this.handleDelete(e, annotation.id)}
                     />
                   </IconButton>
+                
                   {annotation.expanded ? <ExpandLess /> : <ExpandMore />}
                 </ListItemSecondaryAction>
               </ListItem>
