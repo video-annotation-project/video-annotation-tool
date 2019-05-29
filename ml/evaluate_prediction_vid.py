@@ -60,7 +60,7 @@ def score_predictions(validation, predictions, iou_thresh, concepts):
         for index, truth in group.iterrows():
             for index, prediction in predicted.iterrows():
                 if (prediction.conceptid == truth.conceptid
-                        and compute_overlap(truth, prediction) > iou_thresh
+                        and predict.compute_IOU(truth, prediction) > iou_thresh
                         and prediction.objectid not in detected_objects):
                     detected_objects.append(prediction.objectid)
                     true_positives[prediction.conceptid] += 1
@@ -111,21 +111,7 @@ def get_counts(results, annotations):
     groundtruth_counts.columns = ['true_num']
     return pd.concat((counts, groundtruth_counts), axis=1, join='outer').fillna(0)
 
-# Get the IOU value for two different annotations
-def compute_overlap(A, B):
-    # if there is no overlap in x dimension
-    if B.x2 - A.x1 < 0 or A.x2 - B.x1 < 0:
-        return 0
-    # if there is no overlap in y dimension
-    if B.y2 - A.y1 < 0 or A.y2 - B.y1 < 0:
-        return 0
-    areaA = (A.x2 - A.x1) * (A.y2 - A.y1)
-    areaB = (B.x2 - B.x1) * (B.y2 - B.y1)
-    width = min(A.x2, B.x2) - min(A.x1, B.x1)
-    height = min(A.y2, B.y2) - min(A.y1, B.y1)
-    area_intersect = height * width
-    iou = area_intersect / (areaA + areaB - area_intersect)
-    return iou
+
 
 
 def interlace_annotations_to_video(annotations, filename):

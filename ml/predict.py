@@ -211,26 +211,29 @@ def get_predictions(frame, model):
     return filtered_predictions
 
 def does_match_existing_tracked_object(detection, currently_tracked_objects):
-    # Compute IOU for each
+    (x1, y1, x2, y2) = detection[0]
+    detection = pd.Series({'x1' : x1, 'y1' : y1, 'x2' : x2, 'y2' : y2})
+    # Compute IOU with each currently tracked object
     max_iou = 0 
     match = None
     for obj in currently_tracked_objects:
-        (x1, y1, x2, y2) = detection[0]
-        # determine the coords of the intersection
-        xA = max(x1, obj.x1)
-        yA = max(y1, obj.y1)
-        xB = min(x2, obj.x2)
-        yB = min(y2, obj.y2)
-        interArea = max(0, xB - xA + 1) * max(0, yB - yA + 1)
-        boxAArea = (x2 - x1 + 1) * (y2 - y1 + 1)
-        boxBArea = (obj.x2 - obj.x1 + 1) * (obj.y2 - obj.y1 + 1)
-        iou = interArea / float(boxAArea + boxBArea - interArea)
+        iou = compute_IOU(obj, detection)
         if (iou > max_iou):
             max_iou = iou
             match = obj
-    if max_iou >= TRACKING_IOU_THRESH:               
-        return True, match
-    return False, None
+    return (max_iou >= TRACKING_IOU_THRESH), match
+
+def compute_IOU(A, B):
+    # +1 in computations are to account for pixel indexing
+    area_A = (A.x2 - A.x1) * (A.y2 - A.y1) + 1
+    area_B = (B.x2 - B.x1) * (B.y2 - B.y1) + 1
+    intersect_width = min(A.x2, B.x2) - max(A.x1, B.x1) + 1
+    intersect_height = min(A.y2, B.y2) - max(A.y1, B.y1) + 1
+    # check for zero overlap
+    intersect_width = max(0, intersect_width)
+    intersect_height = max(0, intersect_height)
+    intersection = intersect_width * intersect_height
+    return intersection / (area_A + area_B - intersection)
 
 # get tracking annotations before first model prediction for object - max_time_back seconds
 # skipping original frame annotation, already saved in object initialization
@@ -281,8 +284,7 @@ def propagate_conceptids(annotations, concepts):
             scores[k] = label.confidence.mean() # Maybe the sum?
         idmax = max(scores.keys(), key=(lambda k: scores[k]))
         annotations.loc[annotations.objectid == oid,'label'] = idmax
-    annotations['label'] = annotations['label'].apply(lambda x: concepts[int(x)])
-    annotations['conceptid'] = annotations['label']
+    annotations['conceptid'] = annotations['label'].apply(lambda x: concepts[int(x)])
     return annotations
 
 # Limit results based on tracked object length (ex. > 30 frames)
@@ -291,6 +293,7 @@ def length_limit_objects(pred, frame_thresh):
     len_thresh = obj_len[obj_len > frame_thresh]
     return pred[[(obj in len_thresh) for obj in pred.objectid]] 
 
+# Generates the video with the ground truth frames interlaced
 def generate_video(filename, frames, fps, results):
    for res in results.itertuples():
         x1, y1, x2, y2 = int(res.x1), int(res.y1), int(res.x2), int(res.y2)
@@ -313,6 +316,7 @@ def get_final_predictions(results):
     for obj in [df for _, df in results.groupby('objectid')]:
         middle_frame = int(obj.frame_num.median())
         frame = obj[obj.frame_num == middle_frame]
+        # Skip erroneous frames without data
         if frame.shape == (0, 10):
             continue
         middle_frames.append(frame.values.tolist()[0])
