@@ -111,7 +111,7 @@ def download_annotations(min_examples, concepts, concept_map, good_users, img_fo
                 ''' SELECT id, userid 
                     FROM annotations 
                     WHERE id=A.originalid 
-                        AND userid::text IN string_to_array(''' + users + "','))")
+                        AND userid::text = ANY(string_to_array(''' + users + "',')))")
 
     selected, concept_count = select_annotations(annotations, min_examples, concepts)
     print("Concept counts: " + str(concept_count))
