@@ -430,7 +430,7 @@ class TrainModel extends Component {
     }), () => {
       if (this.state.activeStep === 4) {
         //Start Model EC2
-        //this.startEC2();
+        this.startEC2();
       }
       this.updateBackendInfo();
     });
@@ -450,7 +450,39 @@ class TrainModel extends Component {
     }, () => {
       this.updateBackendInfo();
       //Stop Model EC2
-      //this.stopEC2();
+      this.stopEC2();
+    });
+  };
+
+
+  startEC2 = () => {
+    const config = {
+      headers: {
+        Authorization: "Bearer " + localStorage.getItem("token")
+      }
+    };
+    const body = {
+      modelSelected: this.state.modelSelected
+    };
+    axios.put(`/api/trainModel`, body, config).then(res => {
+      console.log(res);
+    });
+  };
+
+  stopEC2 = () => {
+    const config = {
+      url: "/api/trainModel",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + localStorage.getItem("token")
+      },
+      data: {
+        modelSelected: this.state.modelSelected
+      },
+      method: "delete"
+    };
+    axios.request(config).then(res => {
+      console.log(res);
     });
   };
 

@@ -362,9 +362,7 @@ class RunModel extends Component {
       }
     };
     const body = {
-      modelSelected: this.state.modelSelected,
-      userSelected: this.state.userSelected,
-      videoSelected: this.state.videoSelected
+      modelSelected: this.state.modelSelected
     };
     axios.put(`/api/runModel`, body, config).then(res => {
       console.log(res);
