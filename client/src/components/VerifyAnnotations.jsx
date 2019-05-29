@@ -14,6 +14,9 @@ import blue from "@material-ui/core/colors/blue";
 import { MuiThemeProvider, createMuiTheme } from "@material-ui/core/styles";
 import ConceptsSelected from "./ConceptsSelected";
 
+import VideoMetadata from "./VideoMetadata.jsx";
+import Description from "@material-ui/icons/Description";
+
 const styles = theme => ({
   button: {
     margin: theme.spacing.unit
@@ -321,6 +324,21 @@ class VerifyAnnotations extends Component {
     });
   };
 
+
+  //Methods for video meta data
+  openVideoMetadata = (event, video) => {
+    event.stopPropagation();
+    this.setState({
+      openedVideo: video
+    });
+  };
+
+  closeVideoMetadata = () => {
+    this.setState({
+      openedVideo: null
+    });
+  };
+
   render() {
     const { classes } = this.props;
     var annotation = this.props.annotation;
@@ -453,6 +471,11 @@ class VerifyAnnotations extends Component {
               </Typography>
               <Typography className={classes.paper} variant="body2">
                 Video: {annotation.filename}
+                <IconButton>
+                  <Description
+                    onClick={event => this.openVideoMetadata(event, {id : annotation.videoid})}
+                  />
+                </IconButton>
               </Typography>
               <Typography className={classes.paper} variant="body2">
                 Time: {Math.floor(annotation.timeinvideo / 60)} minutes{" "}
@@ -478,6 +501,23 @@ class VerifyAnnotations extends Component {
               Filter Annotations
             </Button>
           </React.Fragment>
+        )}
+        {this.state.openedVideo && (
+          <VideoMetadata
+            open={
+              true /* The VideoMetadata 'openness' is controlled through
+              boolean logic rather than by passing in a variable as an
+              attribute. This is to force VideoMetadata to unmount when it 
+              closes so that its state is reset. This also prevents the 
+              accidental double submission bug, by implicitly reducing 
+              the transition time of VideoMetadata to zero. */
+            }
+            handleClose={this.closeVideoMetadata}
+            openedVideo={this.state.openedVideo}
+            socket={this.props.socket}
+            loadVideos={this.props.loadVideos}
+            model={false}
+          />
         )}
       </React.Fragment>
     );

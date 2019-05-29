@@ -42,6 +42,8 @@ class VerifySelectVideo extends React.Component {
       <div className={classes.root}>
         <FormControl component="fieldset" className={classes.formControl}>
           <FormGroup
+            aria-label="Video"
+            name="video"
             className={classes.group}
             value={value}
             onChange={handleChange}

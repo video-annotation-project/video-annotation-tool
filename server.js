@@ -745,7 +745,7 @@ app.get(
   async (req, res) => {
     let params = [];
     //Build query string
-    let queryPass = `SELECT annotations.id, annotations.comment,
+    let queryPass = `SELECT annotations.id, annotations.comment, annotations.verifiedby,
                      annotations.unsure, annotations.timeinvideo, 
                      annotations.imagewithbox, concepts.name, 
                      false as extended 
@@ -1030,6 +1030,14 @@ app.get(
     }
     if (req.query.unsureOnly === "true") {
       queryPass = queryPass + " AND annotations.unsure = true";
+    }
+    if (!(req.query.verifiedOnly === "true" && req.query.unverifiedOnly === "true")) {
+      if (req.query.verifiedOnly === "true") {
+        queryPass = queryPass + " AND annotations.verifiedby IS NOT NULL";
+      }
+      if (req.query.unverifiedOnly === "true") {
+        queryPass = queryPass + " AND annotations.verifiedby IS NULL";
+      }
     }
     if (req.query.admin !== "true") {
       queryPass = queryPass + " AND annotations.userid = $1";
