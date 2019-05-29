@@ -100,11 +100,11 @@ class VerifyAnnotations extends Component {
     window.scrollTo({ top: 0, behavior: "smooth" });
     // add event listener for different key presses
     document.addEventListener("keydown", this.handleKeyDown);
-  }
-  
+  };
+
   componentWillUnmount = () => {
     document.removeEventListener("keydown", this.handleKeyDown);
-  }
+  };
 
   // keyboard shortcuts for verifying annotations
   handleKeyDown = e => {
@@ -112,13 +112,17 @@ class VerifyAnnotations extends Component {
     if (e.target !== document.body) {
       return;
     }
-    if (e.code === "KeyD") { // delete shortcut
+    if (e.code === "KeyD") {
+      // delete shortcut
       this.handleDelete();
-    } else if (e.code === "KeyR") { // reset shortcut
+    } else if (e.code === "KeyR") {
+      // reset shortcut
       this.resetState();
-    } else if (e.code === "KeyI") { // ignore shortcut
+    } else if (e.code === "KeyI") {
+      // ignore shortcut
       this.nextAnnotation();
-    } else if (e.code === "KeyV") { // verify shortcut
+    } else if (e.code === "KeyV") {
+      // verify shortcut
       this.handleVerifyClick();
     }
   };
