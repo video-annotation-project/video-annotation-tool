@@ -102,17 +102,15 @@ def resize(row):
     row.y2 = row.y2 / y_ratio
     return row
 
-# test counts
 def get_counts(results, annotations):
     grouped = results.groupby(['objectid']).label.mean().reset_index()
     counts = grouped.groupby('label').count()
     counts.columns = ['pred_num']
     groundtruth_counts = pd.DataFrame(annotations.groupby('conceptid').id.count())
     groundtruth_counts.columns = ['true_num']
-    return pd.concat((counts, groundtruth_counts), axis=1, join='outer').fillna(0)
-
-
-
+    counts = pd.concat((counts, groundtruth_counts), axis=1, join='outer').fillna(0)
+    counts['count_accuracy'] = 1 - abs(counts.true_num - counts.pred_num) / counts.true_num
+    return counts
 
 def interlace_annotations_to_video(annotations, filename):
     vid = cv2.VideoCapture(filename)
