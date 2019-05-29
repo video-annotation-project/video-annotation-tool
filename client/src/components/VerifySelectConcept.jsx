@@ -41,18 +41,24 @@ class VerifySelectConcept extends React.Component {
       <div className={classes.root}>
         <FormControl component="fieldset" className={classes.formControl}>
           <FormGroup
-            aria-label="Concept"
-            name="concept"
             className={classes.group}
             value={value}
             onChange={handleChange}
           >
+            <FormControlLabel
+              key={-2}
+              value={"-2"}
+              control={<Checkbox color="primary" />}
+              label="All concepts"
+              checked={this.props.value.includes("-2")}
+            />
             {this.state.concepts.map(concept => (
               <FormControlLabel
                 key={concept.id}
                 value={concept.id.toString()}
                 control={<Checkbox color="primary" />}
                 label={concept.name}
+                checked={this.props.value.includes(concept.id.toString())}
               />
             ))}
           </FormGroup>

@@ -42,8 +42,6 @@ class VerifySelectVideo extends React.Component {
       <div className={classes.root}>
         <FormControl component="fieldset" className={classes.formControl}>
           <FormGroup
-            aria-label="Video"
-            name="video"
             className={classes.group}
             value={value}
             onChange={handleChange}
@@ -51,14 +49,24 @@ class VerifySelectVideo extends React.Component {
             {this.state.videos.length === 0 ? (
               <Typography>No videos for current selection</Typography>
             ) : (
-              this.state.videos.map(video => (
+              <React.Fragment>
                 <FormControlLabel
-                  key={video.id}
-                  value={video.id.toString()}
+                  key={-2}
+                  value={"-2"}
                   control={<Checkbox color="primary" />}
-                  label={video.filename}
+                  label="All videos"
+                  checked={this.props.value.includes("-2")}
                 />
-              ))
+                {this.state.videos.map(video => (
+                  <FormControlLabel
+                    key={video.id}
+                    value={video.id.toString()}
+                    control={<Checkbox color="primary" />}
+                    label={video.filename}
+                    checked={this.props.value.includes(video.id.toString())}
+                  />
+                ))}
+              </React.Fragment>
             )}
           </FormGroup>
         </FormControl>

@@ -55,12 +55,12 @@ const styles = theme => ({
   button1: {
     float: "left",
     margin: "0 auto",
-    width: "600px",
+    width: "600px"
   },
   button2: {
     float: "left",
     width: "1000px",
-    margin: "0 auto",
+    margin: "0 auto"
   }
 });
 
@@ -441,9 +441,9 @@ class VerifyAnnotations extends Component {
                   : this.state.concept.name}
               </h3>
             </div>
-            <br></br>
-            <br></br>
-            <br></br>
+            <br />
+            <br />
+            <br />
             <div>
               <Typography className={classes.paper} variant="title">
                 Annotation #{annotation.id}
