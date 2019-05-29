@@ -44,8 +44,7 @@ def queryDB(query):
 
 
 def select_annotations(annotations, min_examples, concepts):
-    bad_users = [7,8,9,10,14,4,5,19]
-    speed.update_annotation_speed(bad_users)
+    speed.update_annotation_speed()
     selected = []
     concept_count = {}
     for concept in concepts:
