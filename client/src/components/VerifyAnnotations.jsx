@@ -83,9 +83,32 @@ class VerifyAnnotations extends Component {
     };
   }
 
-  componentDidMount() {
+  componentDidMount = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
+    // add event listener for different key presses
+    document.addEventListener("keydown", this.handleKeyDown);
   }
+  
+  componentWillUnmount = () => {
+    document.removeEventListener("keydown", this.handleKeyDown);
+  }
+
+  // keyboard shortcuts for verifying annotations
+  handleKeyDown = e => {
+    // if the user is actually trying to type something, then don't interpret it as a keyboard shorcut
+    if (e.target !== document.body) {
+      return;
+    }
+    if (e.code === "KeyD") { // delete shortcut
+      this.handleDelete();
+    } else if (e.code === "KeyR") { // reset shortcut
+      this.resetState();
+    } else if (e.code === "KeyI") { // ignore shortcut
+      this.nextAnnotation();
+    } else if (e.code === "KeyV") { // verify shortcut
+      this.handleVerifyClick();
+    }
+  };
 
   verifyAnnotation = async () => {
     const body = {
@@ -195,6 +218,7 @@ class VerifyAnnotations extends Component {
           error: error
         });
       });
+    this.nextAnnotation();
   };
 
   // ALL BOX UPDATE FUNCTIONS
@@ -297,8 +321,8 @@ class VerifyAnnotations extends Component {
       });
   };
 
-  handleVerifyClick = annotation => {
-    if (annotation.image) {
+  handleVerifyClick = () => {
+    if (this.props.annotation.image) {
       this.postBoxImage();
     }
     this.verifyAnnotation();
@@ -402,10 +426,7 @@ class VerifyAnnotations extends Component {
                   className={classes.button}
                   variant="contained"
                   color="secondary"
-                  onClick={() => {
-                    this.nextAnnotation();
-                    this.handleDelete();
-                  }}
+                  onClick={this.handleDelete}
                 >
                   Delete
                 </Button>
@@ -428,9 +449,7 @@ class VerifyAnnotations extends Component {
                 className={classes.button}
                 variant="contained"
                 color="primary"
-                onClick={() => {
-                  this.handleVerifyClick(annotation);
-                }}
+                onClick={this.handleVerifyClick}
               >
                 Verify
               </Button>
