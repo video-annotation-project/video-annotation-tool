@@ -1,173 +1,103 @@
-import React, { Component } from 'react';
-import axios from 'axios';
+import React from "react";
 
-import ErrorModal from './ErrorModal.jsx';
-import Typography from '@material-ui/core/Typography';
-import { withStyles } from '@material-ui/core/styles';
+import { withStyles } from "@material-ui/core/styles";
+import PropTypes from "prop-types";
+import Button from "@material-ui/core/Button";
+import Menu from "@material-ui/core/Menu";
+import MenuItem from "@material-ui/core/MenuItem";
 
+//Model components
+import CreateModel from "./CreateModel.jsx";
+import ViewModels from "./ViewModels.jsx";
+import RunModel from "./RunModel.jsx";
+import TrainModel from "./TrainModel.jsx";
 
-const styles= {
-  root: {
-    height: '70vh',
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center'
-  }
-};
+const styles = theme => ({
+  root: {}
+});
 
-class CreateUser extends Component {
+class Models extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      modelsLikeSearch: [],
-      models: null,
-      errorMsg: null,
-      errorOpen: false //modal code
+      modelMenuOpen: false,
+      modelSelection: null
     };
   }
 
-  componentDidMount = () => {
-    this.loadExistingModels();
-  }
-
-  loadExistingModels = () => {
-    const config = {
-      headers: {
-        'Authorization': 'Bearer ' + localStorage.getItem('token')
-      }
-    }
-    axios.get(`/api/models`, config).then(res => {
-      this.setState({
-        models: res.data
-      })
-    }).catch(error => {
-      console.log('Error in get /api/models');
-      console.log(error);
-      if (error.response) {
-        console.log(error.response.data.detail);
-      }
-    })
-  }
-  
-  handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
-      const model = this.findModel(e.target.value);
-      if (model) {
-        //Model exists
-        //Load model
-        this.loadModel(model);
-      } else {
-        //Model doesn't exist
-        //Create new model
-        this.createModel(e.target.value);
-      }
-    } else {
-      this.searchModels(e.target.value + e.key);
-    }
-  }
-
-  handleKeyDown = (e) => {
-    //Backspace does not trigger handleKeyPress
-    //So this will search when backspace
-    if (e.keyCode === 8 || e.keyCode === 46) {
-      this.searchModels(e.target.value.slice(0,-1));
-    }
-  }
-
-  searchModels = (search) => {
-    const modelsLikeSearch = this.state.models.filter(model => {
-      return model.name.match(new RegExp(search, 'i'))
-    });
-
-    this.setState({
-      modelsLikeSearch: modelsLikeSearch.slice(0, 10)
-    })
+  handleClick = event => {
+    this.setState({ modelMenuOpen: event.currentTarget });
   };
 
-  findModel = (modelName) => {
-    const match = this.state.models.find(model => {
-      return model.name === modelName;
-    });
-    return match ? match.name : null;
-  };
-
-  createModel = async (modelName) => {
-    const config = {
-      headers: {
-        'Authorization': 'Bearer ' + localStorage.getItem('token')
-      }
-    };
-    const body = {
-      'name': modelName,
-    };
-    try {
-      axios.post(`/api/models`, body, config).then(res => {
-        alert('Created new model ' + modelName);
-        this.loadExistingModels();
-        this.loadModel(res.data[0].name)
-      })
-    } catch (error) {
-      console.log("Error in post /api/models");
-      if (error.response) {
-        this.setState({
-          errorMsg: error.response.data.detail,
-          errorOpen: true
-        });
-      }
-    }
-  };
-
-  loadModel = (model) => {
-    alert('Loaded ' + model);
-    console.log(model);
-  }
-
-  //Code for closing modal
   handleClose = () => {
-    this.setState({ errorOpen: false });
+    this.setState({ modelMenuOpen: false });
+  };
+
+  handleSelection = targetName => {
+    this.handleClose();
+    this.setState({
+      modelSelection: targetName
+    });
   };
 
   render() {
     const { classes } = this.props;
-    const {
-      models,
-      modelsLikeSearch, 
-      errorMsg, 
-      errorOpen
-    } = this.state;
-    if (!models) {
-      return (
-        <div>Loading...</div>
-      )
+    const { modelMenuOpen, modelSelection } = this.state;
+    let modelElement = <div />;
+    //Switch statement to set modelElement
+    switch (modelSelection) {
+      case "create":
+        //set modelElement to create model component
+        modelElement = <CreateModel />;
+        break;
+      case "view":
+        //set modelElement to view models component
+        modelElement = <ViewModels />;
+        break;
+      case "train":
+        //set modelElement to train model component
+        modelElement = <TrainModel />;
+        break;
+      case "run":
+        //set modelElement to run model component
+        modelElement = <RunModel />;
+        break;
+      default:
+        //set modelElement to empty div (nothing)
+        modelElement = <div />;
     }
     return (
       <div className={classes.root}>
-        <h1 style={{color: 'red'}}>This page is still in progress</h1>
-        <Typography variant="display1">Models</Typography><br />
-        <ErrorModal 
-          errorMsg={errorMsg} 
-          open={errorOpen} 
-          handleClose={this.handleClose}
-        />
-        <input 
-          type='text' 
-          name='model' 
-          onKeyPress={this.handleKeyPress}
-          onKeyDown={this.handleKeyDown}
-          autoFocus
-          placeholder="Model Name"
-          autoComplete="off"
-          list="data"
-        />
-        <datalist id="data">
-          {modelsLikeSearch.map((model) =>
-            <option key={model.name} value={model.name} />
-          )}
-        </datalist>
+        <Button id="modelButton" onClick={this.handleClick}>
+          Model Menu
+        </Button>
+        <Menu
+          id="modelMenu"
+          anchorEl={() => document.getElementById("modelButton")}
+          open={Boolean(modelMenuOpen)}
+          onClose={this.handleClose}
+        >
+          <MenuItem onClick={() => this.handleSelection("create")}>
+            Create New Model
+          </MenuItem>
+          <MenuItem onClick={() => this.handleSelection("view")}>
+            View Models
+          </MenuItem>
+          <MenuItem onClick={() => this.handleSelection("train")}>
+            Train Model
+          </MenuItem>
+          <MenuItem onClick={() => this.handleSelection("run")}>
+            Run Model
+          </MenuItem>
+        </Menu>
+        {modelElement}
       </div>
     );
   }
 }
 
-export default withStyles(styles)(CreateUser);
+Models.propTypes = {
+  classes: PropTypes.object.isRequired
+};
+
+export default withStyles(styles)(Models);

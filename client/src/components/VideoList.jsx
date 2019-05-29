@@ -1,17 +1,18 @@
-import React, { Component } from 'react';
-import PropTypes from 'prop-types';
-import Button from '@material-ui/core/Button';
-import Drawer from '@material-ui/core/Drawer';
-import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemText from '@material-ui/core/ListItemText';
-import IconButton from '@material-ui/core/IconButton';
-import Description from '@material-ui/icons/Description';
-import { withStyles } from '@material-ui/core/styles';
-import Collapse from '@material-ui/core/Collapse';
-import ExpandLess from '@material-ui/icons/ExpandLess';
-import ExpandMore from '@material-ui/icons/ExpandMore';
-import VideoMetadata from './VideoMetadata.jsx';
+import React, { Component } from "react";
+import PropTypes from "prop-types";
+import Button from "@material-ui/core/Button";
+import Drawer from "@material-ui/core/Drawer";
+import List from "@material-ui/core/List";
+import ListItem from "@material-ui/core/ListItem";
+import ListItemText from "@material-ui/core/ListItemText";
+import { withStyles } from "@material-ui/core/styles";
+import Collapse from "@material-ui/core/Collapse";
+import ExpandLess from "@material-ui/icons/ExpandLess";
+import ExpandMore from "@material-ui/icons/ExpandMore";
+
+import VideoMetadata from "./VideoMetadata.jsx";
+import IconButton from "@material-ui/core/IconButton";
+import Description from "@material-ui/icons/Description";
 
 const styles = theme => ({
   root: {
@@ -21,11 +22,11 @@ const styles = theme => ({
   drawer: {
     // height: '1000px',
     // padding: '15px',
-    width: '550px',
-    overflow: 'auto'
+    width: "550px",
+    overflow: "auto"
   },
   toggleButton: {
-    marginTop: '5px'
+    marginTop: "5px"
   }
 });
 
@@ -38,36 +39,29 @@ class VideoList extends Component {
       unwatchedListOpen: false,
       watchedListOpen: false,
       inProgressListOpen: false,
-      descriptionOpen: false,
       openedVideo: null
     };
   }
 
-  toggle = (list) => {
+  toggle = list => {
     this.setState({
       [list]: !this.state[list]
     });
-  }
+  };
 
   //Methods for video meta data
   openVideoMetadata = (event, video) => {
-    event.stopPropagation()
+    event.stopPropagation();
     this.setState({
-      descriptionOpen: true,
       openedVideo: video
-    })
-  }
-
-  inputHandler = () => {
-    console.log('Input');
-  }
+    });
+  };
 
   closeVideoMetadata = () => {
     this.setState({
-      descriptionOpen: false,
       openedVideo: null
     });
-  }
+  };
 
   render() {
     const {
@@ -100,10 +94,9 @@ class VideoList extends Component {
         <Drawer
           anchor="left"
           open={this.state.videoListOpen}
-          onClose={() => this.toggle('videoListOpen')}
+          onClose={() => this.toggle("videoListOpen")}
         >
           <div className={classes.drawer}>
-
             <ListItem button onClick={() => this.toggle("startedListOpen")}>
               <ListItemText inset primary="My In Progress Videos" />
               {startedListOpen ? <ExpandLess /> : <ExpandMore />}
@@ -112,20 +105,15 @@ class VideoList extends Component {
               <List component="div" disablePadding>
                 {startedVideos.map(video => (
                   <ListItem
-                    button key={video.id}
-                    style={video.count > 1 ? { backgroundColor: 'red' } : {}}
-                    onClick={() => handleVideoClick(video, 'startedVideos')}
+                    button
+                    key={video.id}
+                    style={video.count > 1 ? { backgroundColor: "red" } : {}}
+                    onClick={() => handleVideoClick(video, "startedVideos")}
                   >
-                    <ListItemText primary={video.id + '. ' + video.filename} />
+                    <ListItemText primary={video.id + ". " + video.filename} />
                     <IconButton>
                       <Description
-                        onClick={
-                          (event) =>
-                            this.openVideoMetadata(
-                              event,
-                              video,
-                            )
-                        }
+                        onClick={event => this.openVideoMetadata(event, video)}
                       />
                     </IconButton>
                   </ListItem>
@@ -141,19 +129,14 @@ class VideoList extends Component {
               <List component="div" disablePadding>
                 {unwatchedVideos.map(video => (
                   <ListItem
-                    button key={video.id}
-                    onClick={() => handleVideoClick(video, 'unwatchedVideos')}
+                    button
+                    key={video.id}
+                    onClick={() => handleVideoClick(video, "unwatchedVideos")}
                   >
-                    <ListItemText primary={video.id + '. ' + video.filename} />
+                    <ListItemText primary={video.id + ". " + video.filename} />
                     <IconButton>
                       <Description
-                        onClick={
-                          (event) =>
-                            this.openVideoMetadata(
-                              event,
-                              video,
-                            )
-                        }
+                        onClick={event => this.openVideoMetadata(event, video)}
                       />
                     </IconButton>
                   </ListItem>
@@ -169,19 +152,14 @@ class VideoList extends Component {
               <List component="div" disablePadding>
                 {watchedVideos.map(video => (
                   <ListItem
-                    button key={video.id}
-                    onClick={() => handleVideoClick(video, 'watchedVideos')}
+                    button
+                    key={video.id}
+                    onClick={() => handleVideoClick(video, "watchedVideos")}
                   >
-                    <ListItemText primary={video.id + '. ' + video.filename} />
+                    <ListItemText primary={video.id + ". " + video.filename} />
                     <IconButton>
                       <Description
-                        onClick={
-                          (event) =>
-                            this.openVideoMetadata(
-                              event,
-                              video,
-                            )
-                        }
+                        onClick={event => this.openVideoMetadata(event, video)}
                       />
                     </IconButton>
                   </ListItem>
@@ -197,19 +175,14 @@ class VideoList extends Component {
               <List component="div" disablePadding>
                 {inProgressVideos.map(video => (
                   <ListItem
-                    button key={video.id}
-                    onClick={() => handleVideoClick(video, 'inProgressVideos')}
+                    button
+                    key={video.id}
+                    onClick={() => handleVideoClick(video, "inProgressVideos")}
                   >
-                    <ListItemText primary={video.id + '. ' + video.filename} />
+                    <ListItemText primary={video.id + ". " + video.filename} />
                     <IconButton>
                       <Description
-                        onClick={
-                          (event) =>
-                            this.openVideoMetadata(
-                              event,
-                              video,
-                            )
-                        }
+                        onClick={event => this.openVideoMetadata(event, video)}
                       />
                     </IconButton>
                   </ListItem>
@@ -218,27 +191,30 @@ class VideoList extends Component {
             </Collapse>
           </div>
         </Drawer>
-        {this.state.descriptionOpen &&
+        {this.state.openedVideo && (
           <VideoMetadata
-            open={true /* The VideoMetadata 'openness' is controlled through
+            open={
+              true /* The VideoMetadata 'openness' is controlled through
               boolean logic rather than by passing in a variable as an
               attribute. This is to force VideoMetadata to unmount when it 
               closes so that its state is reset. This also prevents the 
               accidental double submission bug, by implicitly reducing 
-              the transition time of VideoMetadata to zero. */}
+              the transition time of VideoMetadata to zero. */
+            }
             handleClose={this.closeVideoMetadata}
             openedVideo={openedVideo}
             socket={this.props.socket}
             loadVideos={this.props.loadVideos}
+            model={false}
           />
-        }
+        )}
       </div>
     );
   }
 }
 
 VideoList.propTypes = {
-  classes: PropTypes.object.isRequired,
+  classes: PropTypes.object.isRequired
 };
 
 export default withStyles(styles)(VideoList);
