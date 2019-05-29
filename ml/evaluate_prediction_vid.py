@@ -137,7 +137,7 @@ def interlace_annotations_to_video(annotations, filename):
             cv2.rectangle(frames[val.frame_num], (x1, y1), (x2, y2), (0, 0, 255), 3)
             cv2.putText(frames[val.frame_num], str(val.conceptid), (x1, y1+15),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
-    predict.save_video("interlaced_" + filename, frames, fps)
+    predict.save_video("interlaced_" + str(VIDEO_NUM) + "_" + filename, frames, fps)
 
 
 
