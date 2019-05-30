@@ -4,8 +4,10 @@ import pandas as pd
 import cv2
 import copy
 import os
+import boto3
 from dotenv import load_dotenv
 from loading_data import queryDB
+from psycopg2 import connect
 import predict
 
 config_path = 'config.json'
@@ -21,7 +23,7 @@ AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 S3_BUCKET = os.getenv('AWS_S3_BUCKET_NAME')
 s3 = boto3.client('s3', aws_access_key_id = AWS_ACCESS_KEY_ID, aws_secret_access_key = AWS_SECRET_ACCESS_KEY)
-S3_WEIGHTS_FOLDER = os.getenv("ASW_S3_BUCKET_WEIGHTS_FOLDER")
+S3_WEIGHTS_FOLDER = os.getenv("AWS_S3_BUCKET_WEIGHTS_FOLDER")
 
 
 def score_predictions(validation, predictions, iou_thresh, concepts):
@@ -113,7 +115,7 @@ def get_counts(results, annotations):
     counts['count_accuracy'] = 1 - abs(counts.true_num - counts.pred_num) / counts.true_num
     return counts
 
-def interlace_annotations_to_video(annotations, filename):
+def interlace_annotations_to_video(annotations, filename, concepts, video_id):
     vid = cv2.VideoCapture(filename)
     fps = vid.get(cv2.CAP_PROP_FPS)
     while not vid.isOpened():
@@ -131,12 +133,12 @@ def interlace_annotations_to_video(annotations, filename):
 
     validation = annotations.apply(resize, axis=1)
     for val in validation.itertuples():
-        if val.conceptid in CONCEPTS and val.frame_num < len(frames):
+        if val.conceptid in concepts and val.frame_num < len(frames):
             x1, y1, x2, y2 = int(val.x1), int(val.y1), int(val.x2), int(val.y2)
             cv2.rectangle(frames[val.frame_num], (x1, y1), (x2, y2), (0, 0, 255), 3)
             cv2.putText(frames[val.frame_num], str(val.conceptid), (x1, y1+15),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
-    predict.save_video("interlaced_" + str(VIDEO_NUM) + "_" + filename, frames, fps)
+    predict.save_video("interlaced_" + str(video_id) + "_" + filename, frames, fps)
 
 
 
@@ -150,11 +152,11 @@ def evaluate(video_id, user_id, model_path, concepts):
     annotations['frame_num'] = np.rint(annotations['timeinvideo'] * fps).astype(int)
 
     metrics = score_predictions(annotations, results, EVALUATION_IOU_THRESH, concepts)
-    interlace_annotations_to_video(copy.deepcopy(annotations), 'output.mp4')
+    interlace_annotations_to_video(copy.deepcopy(annotations), 'output.mp4', concepts, video_id)
 
     concept_counts = get_counts(results, annotations)
     metrics = metrics.set_index('conceptid').join(concept_counts)
-    metrics.to_csv("metrics" + str(VIDEO_NUM) + ".csv")
+    metrics.to_csv("metrics" + str(video_id) + ".csv")
     print(metrics)
 
 if __name__ == '__main__':
@@ -165,23 +167,17 @@ if __name__ == '__main__':
         password=os.getenv("DB_PASSWORD"))
     cursor = con.cursor()
 
-    # get annotations from test
-    cursor.execute("SELECT * FROM MODELTAB WHERE option='runmodel'")
-    info = cursor.fetchone()[1]
-    if info['activeStep'] != 3:
-        exit()
-
-    model_name = 'test' #str(info['modelSelected'])
+    model_name = 'test' 
 
     s3.download_file(S3_BUCKET, S3_WEIGHTS_FOLDER + model_name + '.h5', 'current_weights.h5')
     cursor.execute("SELECT * FROM MODELS WHERE name='" + model_name + "'")
     model = cursor.fetchone()
 
-    videoid = 86 # int(info['videoSelected'])
+    video_id = 86 
     concepts = model[2]
     userid = 29
 
-    evaluate(videoid, userid, 'current_weights.h5', concepts)
+    evaluate(video_id, userid, 'current_weights.h5', concepts)
 
 
 

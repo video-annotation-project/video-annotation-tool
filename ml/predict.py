@@ -11,6 +11,8 @@ import boto3
 import keras
 import pandas as pd
 import uuid
+import boto3
+from psycopg2 import connect
 from loading_data import queryDB
 import psycopg2
 import datetime
@@ -364,19 +366,13 @@ if __name__ == '__main__':
         password=os.getenv("DB_PASSWORD"))
     cursor = con.cursor()
 
-    # get annotations from test
-    cursor.execute("SELECT * FROM MODELTAB WHERE option='runmodel'")
-    info = cursor.fetchone()[1]
-    if info['activeStep'] != 3:
-        exit()
-
-    model_name = 'test' #str(info['modelSelected'])
+    model_name = 'test'
 
     s3.download_file(S3_BUCKET, S3_WEIGHTS_FOLDER + model_name + '.h5', 'current_weights.h5')
     cursor.execute("SELECT * FROM MODELS WHERE name='" + model_name + "'")
     model = cursor.fetchone()
 
-    videoid = 86 # int(info['videoSelected'])
+    videoid = 86 
     concepts = model[2]
 
     predict_on_video(videoid, 'current_weights', concepts)
