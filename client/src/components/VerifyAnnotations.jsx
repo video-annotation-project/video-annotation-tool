@@ -481,19 +481,16 @@ class VerifyAnnotations extends Component {
                 <Button
                   className={classes.button}
                   disabled={true}
-                  variant="contained"
-                  color="primary"
-                  onClick={this.handleVerifyClick}
                 >
                   Verify
                 </Button> 
               }
+              <IconButton aria-label="OnDemandVideo">
+                  <OndemandVideo onClick={this.videoDialogToggle} />
+              </IconButton>
             </div>
             <div className={classes.button2}>
               <ConceptsSelected handleConceptClick={this.handleConceptClick} />
-              <IconButton className={classes.icons} aria-label="OnDemandVideo">
-                <OndemandVideo onClick={this.videoDialogToggle} />
-              </IconButton>
               <VideoDialogWrapped
                 annotation={annotation}
                 open={this.state.videoDialogOpen}
@@ -506,9 +503,9 @@ class VerifyAnnotations extends Component {
                   : this.state.concept.name}
               </h3>
             </div>
-            <br />
-            <br />
-            <br />
+            <br /><br />
+            <br /><br />
+            <br /><br />
             <div>
               <Typography className={classes.paper} variant="title">
                 Annotation #{annotation.id}
@@ -519,7 +516,7 @@ class VerifyAnnotations extends Component {
               <Typography className={classes.paper} variant="body2">
                 Video: {annotation.filename}
                 <IconButton>
-                  <Description
+                  <Description style={{ fontSize: 20 }}
                     onClick={event =>
                       this.openVideoMetadata(event, { id: annotation.videoid })
                     }
