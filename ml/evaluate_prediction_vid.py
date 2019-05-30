@@ -4,23 +4,24 @@ import pandas as pd
 import cv2
 import copy
 import os
+from dotenv import load_dotenv
 from loading_data import queryDB
 import predict
 
-# PARAMETERIZE
-VIDEO_NUM = 12
-
 config_path = 'config.json'
-
 with open(config_path) as config_buffer:
    config = json.loads(config_buffer.read())
 
-CONCEPTS = config['conceptids']
 bad_users = json.loads(os.getenv("BAD_USERS"))
 EVALUATION_IOU_THRESH = config['evaluation_iou_threshold']
 RESIZED_WIDTH = config['resized_video_width']
 RESIZED_HEIGHT = config['resized_video_height']
-MODEL_WEIGHTS = config['model_weights']
+
+AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+S3_BUCKET = os.getenv('AWS_S3_BUCKET_NAME')
+s3 = boto3.client('s3', aws_access_key_id = AWS_ACCESS_KEY_ID, aws_secret_access_key = AWS_SECRET_ACCESS_KEY)
+S3_WEIGHTS_FOLDER = os.getenv("ASW_S3_BUCKET_WEIGHTS_FOLDER")
 
 
 def score_predictions(validation, predictions, iou_thresh, concepts):
@@ -157,4 +158,31 @@ def evaluate(video_id, user_id, model_path, concepts):
     print(metrics)
 
 if __name__ == '__main__':
-    evaluate(VIDEO_NUM, 29, MODEL_WEIGHTS, CONCEPTS)
+    # connect to db
+    con = connect(database=os.getenv("DB_NAME"), 
+        host=os.getenv("DB_HOST"), 
+        user=os.getenv("DB_USER"), 
+        password=os.getenv("DB_PASSWORD"))
+    cursor = con.cursor()
+
+    # get annotations from test
+    cursor.execute("SELECT * FROM MODELTAB WHERE option='runmodel'")
+    info = cursor.fetchone()[1]
+    if info['activeStep'] != 3:
+        exit()
+
+    model_name = 'test' #str(info['modelSelected'])
+
+    s3.download_file(S3_BUCKET, S3_WEIGHTS_FOLDER + model_name + '.h5', 'current_weights.h5')
+    cursor.execute("SELECT * FROM MODELS WHERE name='" + model_name + "'")
+    model = cursor.fetchone()
+
+    videoid = 86 # int(info['videoSelected'])
+    concepts = model[2]
+    userid = 29
+
+    evaluate(videoid, userid, 'current_weights.h5', concepts)
+
+
+
+
