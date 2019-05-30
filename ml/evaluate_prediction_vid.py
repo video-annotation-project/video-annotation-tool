@@ -153,7 +153,6 @@ def evaluate(video_id, user_id, model_path, concepts):
 
     metrics = score_predictions(annotations, results, EVALUATION_IOU_THRESH, concepts)
     interlace_annotations_to_video(copy.deepcopy(annotations), 'output.mp4', concepts, video_id)
-
     concept_counts = get_counts(results, annotations)
     metrics = metrics.set_index('conceptid').join(concept_counts)
     metrics.to_csv("metrics" + str(video_id) + ".csv")
