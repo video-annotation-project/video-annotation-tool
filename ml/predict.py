@@ -284,7 +284,8 @@ def propagate_conceptids(annotations, concepts):
             scores[k] = label.confidence.mean() # Maybe the sum?
         idmax = max(scores.keys(), key=(lambda k: scores[k]))
         annotations.loc[annotations.objectid == oid,'label'] = idmax
-    annotations['conceptid'] = annotations['label'].apply(lambda x: concepts[int(x)])
+    annotations['label'] = annotations['label'].apply(lambda x: concepts[int(x)])
+    annotations['conceptid'] = annotations['label'] # need both label and conceptid for later
     return annotations
 
 # Limit results based on tracked object length (ex. > 30 frames)
