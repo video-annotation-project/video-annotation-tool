@@ -69,7 +69,7 @@ def score_predictions(validation, predictions, iou_thresh, concepts):
         # False Negatives (Missed ground truth predicitions)
         counts = group.conceptid.value_counts()
         for concept in concepts:
-e           count = counts[concept] if (concept in counts.index) else 0
+            count = counts[concept] if (concept in counts.index) else 0
             false_negatives[concept] += count - detected_truths[concept]
     
     # False Positives (No ground truth prediction at any frame for that object)

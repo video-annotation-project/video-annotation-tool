@@ -295,7 +295,7 @@ def length_limit_objects(pred, frame_thresh):
 
 # Generates the video with the ground truth frames interlaced
 def generate_video(filename, frames, fps, results):
-   for res in results.itertuples():
+    for res in results.itertuples():
         x1, y1, x2, y2 = int(res.x1), int(res.y1), int(res.x2), int(res.y2)
         cv2.rectangle(frames[res.frame_num], (x1, y1), (x2, y2), (0, 255, 0), 2)
         cv2.putText(frames[res.frame_num], str(res.conceptid), (x1, y1+15), 
