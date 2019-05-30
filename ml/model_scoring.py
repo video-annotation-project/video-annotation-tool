@@ -40,7 +40,7 @@ def f1_evaluation(generator,model,iou_threshold=0.5,score_threshold=0.05,max_det
             num_annotations     += annotations.shape[0]
             detected_annotations = []
 
-            for d in detections:
+            for d in detections.sorted(key=(lambda d : d[4]), reverse=True):
                 scores = np.append(scores, d[4])
 
                 if annotations.shape[0] == 0:

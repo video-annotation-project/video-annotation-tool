@@ -92,11 +92,9 @@ def evaluate_model(concepts, model_path,  min_examples, download_data=False):
     '''
 
 if __name__ == '__main__':
-    epochs = config['epochs']
-    min_examples = config['min_examples']
-    concepts = config['conceptids']
-    min_examples = config['min_examples']
-    model_path = config['model_weights']
+    min_examples = 5000
+    concepts = [1629, 1210, 236, 383, 1133]
+    model_path = 'current_weights.h5'
 
     evaluate_model(concepts, model_path,  min_examples, download_data=False):
 
