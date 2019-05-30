@@ -50,30 +50,22 @@ def main():
       FROM \
         annotations \
       WHERE \
-        userid!=17 and DATE(dateannotated) between DATE(\'01/01/2019\') and DATE(\'05/18/2019\') \
+        userid!=17 \
       ORDER BY \
         random() \
-      LIMIT 2'
+      LIMIT 1'
     )
-    
+
     rows = cursor.fetchall()
     con.close()
 
+    for i in rows:
+      print(i)
+
     with Pool() as p:
       offsets = list(p.map(get_offset, rows))
-    '''
-    for row in rows:
-      try:
-        offset = get_offset(row)
-        print(offset)
-        offsets.append(offset)
-      except Exception as e:
-        print(e)
-    '''
-    mean = np.mean(offsets)
-    std = np.std(offsets)
+
     print(offsets)
-    print("Mean offset: {}   Standard Deviation: {}".format(mean, std))
 
 def get_offset(annotation):
    con = connect(database=DB_NAME, host=DB_HOST, user=DB_USER, password=DB_PASSWORD)
@@ -82,7 +74,6 @@ def get_offset(annotation):
    # get video name
    cursor.execute("SELECT filename FROM videos WHERE id=%s", (str(annotation[0]),))
    video_name = cursor.fetchone()[0]
-   con.close()
 
    # grab video stream
    url = s3.generate_presigned_url('get_object',
@@ -92,19 +83,23 @@ def get_offset(annotation):
    cap = cv2.VideoCapture(url)
    fps = cap.get(cv2.CAP_PROP_FPS)
 
-   #search within +- search range seconds of original
-   search_range = 3/4
+   #search within +- search range seconds of original, +- frames from original annotation
+   frames = 5
+   search_range = 1/fps * frames
 
    # initialize video for grabbing frames before annotation
    cap.set(0, (annotation[1]-search_range)*1000) # tell video to start at 'start'-1 time
    
    imgs = []
+   times = []
    for i in range(math.ceil(fps*search_range * 2)):
     check, vid = cap.read()
     if not check:
       print("end of video reached")
       break
     img = imutils.resize(vid, width=VIDEO_WIDTH, height=VIDEO_HEIGHT)
+    time = cap.get(cv2.CAP_PROP_POS_MSEC)
+    times.append(time)
     imgs.append(img)
    cap.release()
 
@@ -116,7 +111,8 @@ def get_offset(annotation):
         Key= S3_ANNOTATION_FOLDER + annotation[2]
      )
    except:
-     return -999
+    print("Annotation missing image.")
+    return None
    img = Image.open(obj['Body'])
    img = np.asarray(img)
    img = img[:,:,:3]
@@ -135,8 +131,12 @@ def get_offset(annotation):
         best_score = score
 
       if best_score > .95:
-        return abs(best - math.ceil(fps*search_range))
-   return  math.ceil(fps*search_range) + 1
+        #cursor.execute("UPDATE annotations SET timeinvideo=%d WHERE id=%d;",(times[best]/1000, annotation[]))
+        #con.commit()
+        #con.close()
+        #return
+        return times[best]/1000 #best - math.ceil(fps*search_range)
+   return  None
 
 if __name__ == "__main__":
    main()
