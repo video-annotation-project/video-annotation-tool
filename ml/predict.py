@@ -44,8 +44,6 @@ config_path = args.conf
 with open(config_path) as config_buffer:
     config = json.loads(config_buffer.read())
 
-MODEL_WEIGHTS = config['model_weights']
-CONCEPTS = config['conceptids']
 NUM_FRAMES = config['frames_between_predictions']
 THRESHOLDS = config['prediction_confidence_thresholds']
 TRACKING_IOU_THRESH = config['prediction_tracking_iou_threshold']
@@ -359,4 +357,26 @@ def upload_annotation(cursor, frame, frame_w_box, x1, x2, y1, y2, frame_num, con
     ) 
 
 if __name__ == '__main__':
-    predict_on_video(86, MODEL_WEIGHTS, CONCEPTS)
+    # connect to db
+    con = connect(database=os.getenv("DB_NAME"), 
+        host=os.getenv("DB_HOST"), 
+        user=os.getenv("DB_USER"), 
+        password=os.getenv("DB_PASSWORD"))
+    cursor = con.cursor()
+
+    # get annotations from test
+    cursor.execute("SELECT * FROM MODELTAB WHERE option='runmodel'")
+    info = cursor.fetchone()[1]
+    if info['activeStep'] != 3:
+        exit()
+
+    model_name = 'test' #str(info['modelSelected'])
+
+    s3.download_file(S3_BUCKET, S3_WEIGHTS_FOLDER + model_name + '.h5', 'current_weights.h5')
+    cursor.execute("SELECT * FROM MODELS WHERE name='" + model_name + "'")
+    model = cursor.fetchone()
+
+    videoid = 86 # int(info['videoSelected'])
+    concepts = model[2]
+
+    predict_on_video(videoid, 'current_weights', concepts)
