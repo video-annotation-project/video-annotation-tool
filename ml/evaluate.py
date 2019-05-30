@@ -63,9 +63,11 @@ def evaluate_model(concepts, model_path,  min_examples, download_data=False):
     model = load_model(model_path, backbone_name='resnet50')
     model = convert_model(model)
 
+    temp = pd.DataFrame(list(zip(classmap.values(), classmap.keys())))
+    temp.to_csv('classmap.csv',index=False, header=False)
     test_generator = CSVGenerator(
         valid_annot_file,
-        class_map_file,
+        'classmap.csv',
         shuffle_groups=False,
         batch_size=batch_size
     )
@@ -96,5 +98,5 @@ if __name__ == '__main__':
     concepts = [1629, 1210, 236, 383, 1133]
     model_path = 'current_weights.h5'
 
-    evaluate_model(concepts, model_path,  min_examples, download_data=False):
+    evaluate_model(concepts, model_path,  min_examples, download_data=False)
 
