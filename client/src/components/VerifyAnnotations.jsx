@@ -92,7 +92,8 @@ class VerifyAnnotations extends Component {
       y: this.props.annotation.y1,
       width: this.props.annotation.x2 - this.props.annotation.x1,
       height: this.props.annotation.y2 - this.props.annotation.y1,
-      videoDialogOpen: false /* needed for dialog component */
+      videoDialogOpen: false, /* needed for dialog component */
+      imageStatus: "loading"
     };
   }
 
@@ -178,7 +179,8 @@ class VerifyAnnotations extends Component {
       so that it is clear that a new image is being loaded. */
     this.setState(
       {
-        loaded: false
+        loaded: false,
+        imageStatus: "loading"
       },
       () => {
         this.setState({
@@ -366,6 +368,15 @@ class VerifyAnnotations extends Component {
     });
   };
 
+  //image load option
+  handleImageLoaded = () => {
+    this.setState({ imageStatus: "loaded" });
+  }
+
+  handleImageErrored() {
+    this.setState({ imageStatus: "failed to load" });
+  }
+
   render() {
     const { classes } = this.props;
     var annotation = this.props.annotation;
@@ -415,6 +426,8 @@ class VerifyAnnotations extends Component {
                   />
                   <img
                     id="image"
+                    onLoad={this.handleImageLoaded.bind(this)}
+                    onError={this.handleImageErrored.bind(this)}
                     className={classes.img}
                     src={
                       this.state.loaded
@@ -455,14 +468,26 @@ class VerifyAnnotations extends Component {
               >
                 Ignore
               </Button>
-              <Button
-                className={classes.button}
-                variant="contained"
-                color="primary"
-                onClick={this.handleVerifyClick}
-              >
-                Verify
-              </Button>
+              {this.state.imageStatus === "loaded" ?
+                <Button
+                  className={classes.button}
+                  variant="contained"
+                  color="primary"
+                  onClick={this.handleVerifyClick}
+                >
+                  Verify
+                </Button> 
+                :
+                <Button
+                  className={classes.button}
+                  disabled={true}
+                  variant="contained"
+                  color="primary"
+                  onClick={this.handleVerifyClick}
+                >
+                  Verify
+                </Button> 
+              }
             </div>
             <div className={classes.button2}>
               <ConceptsSelected handleConceptClick={this.handleConceptClick} />
