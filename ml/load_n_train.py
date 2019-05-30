@@ -23,6 +23,7 @@ import skimage as sk
 import random
 import numpy as np
 from tensorflow.python.client import device_lib
+import boto3
 
 argparser = argparse.ArgumentParser()
 argparser.add_argument(
@@ -44,6 +45,11 @@ img_folder = config['image_folder']
 model_path = config['model_weights']
 batch_size = config['batch_size']
 
+AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+S3_BUCKET = os.getenv('AWS_S3_BUCKET_NAME')
+S3_BUCKET_WEIGHTS_FOLDER = os.getenv('AWS_S3_BUCKET_WEIGHTS_FOLDER')
+s3 = boto3.client('s3', aws_access_key_id = AWS_ACCESS_KEY_ID, aws_secret_access_key = AWS_SECRET_ACCESS_KEY)
 
 # Wrapper for csv generator to allow for further data augmentation
 class custom(CSVGenerator):
@@ -60,7 +66,7 @@ class custom(CSVGenerator):
         return inputs, targets
 
 
-def train_model(concepts, users, min_examples, epochs, download_data=True)
+def train_model(concepts, users, min_examples, epochs, model_name, videos, download_data=True):
 
     classmap = get_classmap(concepts)
     '''
@@ -68,7 +74,7 @@ def train_model(concepts, users, min_examples, epochs, download_data=True)
     Also downloads corresponding images.
     '''
     if download_data:
-        folders = []
+        folders = ["weights"]
         folders.append(img_folder)
         for dir in folders:
             if os.path.exists(dir):
@@ -83,7 +89,7 @@ def train_model(concepts, users, min_examples, epochs, download_data=True)
         start = time.time()
         print("Starting Download.")
 
-        download_annotations(min_examples, concepts, classmap, users, img_folder, train_annot_file, valid_annot_file)
+        download_annotations(min_examples, concepts, classmap, users, videos, img_folder, train_annot_file, valid_annot_file)
 
         end = time.time()
         print("Done Downloading Annotations: " + str((end - start)/60) + " minutes")
@@ -127,24 +133,26 @@ def train_model(concepts, users, min_examples, epochs, download_data=True)
         flip_x_chance=0.5,
         flip_y_chance=0.5,
     )
-
+    
+    temp = pd.DataFrame(list(zip(classmap.values(), classmap.keys())))
+    temp.to_csv('classmap.csv',index=False, header=False)
     train_generator = custom(
         train_annot_file,
-        class_map_file,
+        'classmap.csv',
         transform_generator=transform_generator,
         batch_size = batch_size
     )
 
     test_generator = CSVGenerator(
         valid_annot_file,
-        class_map_file,
+        'classmap.csv',
         batch_size = batch_size,
         shuffle_groups=False
     )
 
 
     # Checkpoint: save models that are improvements
-    filepath = "weights/weights-{epoch:02d}-{val_loss:.4f}.h5"
+    filepath =  "weights/" + model_name + ".h5"
     checkpoint = ModelCheckpoint(filepath, monitor='val_loss', save_best_only=True)
     checkpoint = RedirectModel(checkpoint, model)
 
@@ -158,15 +166,18 @@ def train_model(concepts, users, min_examples, epochs, download_data=True)
         verbose=2
     ).history
 
+    s3.upload_file("weights/"+model_name+".h5", S3_BUCKET, S3_BUCKET_WEIGHTS_FOLDER + model_name+".h5") 
+
     end = time.time()
     print("Done Training Model: " + str((end - start)/60) + " minutes")
 
     os.system("sudo shutdown -h")
 
 if __name__ == '__main__':
-    epochs = config['epochs']
+    epochs = 100
     users = [15, 12, 11, 6, 17]
-    min_examples = config['min_examples']
-    concepts = config['conceptids']
-
-    train_model(concepts, users, min_examples, epochs)
+    min_examples = 1000
+    concepts = [1,2,3]
+    model_name = "jake_test"
+    videos = [81,32]
+    train_model(concepts, users, min_examples, epochs, model_name, videos, download_data=False)

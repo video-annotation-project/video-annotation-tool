@@ -4,23 +4,26 @@ import pandas as pd
 import cv2
 import copy
 import os
+import boto3
+from dotenv import load_dotenv
 from loading_data import queryDB
+from psycopg2 import connect
 import predict
 
-# PARAMETERIZE
-VIDEO_NUM = 12
-
 config_path = 'config.json'
-
 with open(config_path) as config_buffer:
    config = json.loads(config_buffer.read())
 
-CONCEPTS = config['conceptids']
 bad_users = json.loads(os.getenv("BAD_USERS"))
 EVALUATION_IOU_THRESH = config['evaluation_iou_threshold']
 RESIZED_WIDTH = config['resized_video_width']
 RESIZED_HEIGHT = config['resized_video_height']
-MODEL_WEIGHTS = config['model_weights']
+
+AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+S3_BUCKET = os.getenv('AWS_S3_BUCKET_NAME')
+s3 = boto3.client('s3', aws_access_key_id = AWS_ACCESS_KEY_ID, aws_secret_access_key = AWS_SECRET_ACCESS_KEY)
+S3_WEIGHTS_FOLDER = os.getenv("AWS_S3_BUCKET_WEIGHTS_FOLDER")
 
 
 def score_predictions(validation, predictions, iou_thresh, concepts):
@@ -60,7 +63,7 @@ def score_predictions(validation, predictions, iou_thresh, concepts):
         for index, truth in group.iterrows():
             for index, prediction in predicted.iterrows():
                 if (prediction.conceptid == truth.conceptid
-                        and compute_overlap(truth, prediction) > iou_thresh
+                        and predict.compute_IOU(truth, prediction) > iou_thresh
                         and prediction.objectid not in detected_objects):
                     detected_objects.append(prediction.objectid)
                     true_positives[prediction.conceptid] += 1
@@ -92,43 +95,27 @@ def score_predictions(validation, predictions, iou_thresh, concepts):
 
 
 def resize(row):
-    x_ratio = (row.videowidth / RESIZED_WIDTH)
-    y_ratio = (row.videoheight / RESIZED_HEIGHT)
-    row.videowidth = RESIZED_WIDTH
-    row.videoheight = RESIZED_HEIGHT
-    row.x1 = row.x1 / x_ratio
-    row.x2 = row.x2 / x_ratio
-    row.y1 = row.y1 / y_ratio
-    row.y2 = row.y2 / y_ratio
+    new_width = 640
+    new_height = 480
+    row.x1 = (row.x1 * new_width) / row.videowidth
+    row.x2 = (row.x2 * new_width) / row.videowidth
+    row.y1 = (row.y1 * new_height) / row.videoheight
+    row.y2 = (row.y2 * new_height) / row.videoheight
+    row.videowidth = new_width
+    row.videoheight = new_height
     return row
 
-# test counts
 def get_counts(results, annotations):
     grouped = results.groupby(['objectid']).label.mean().reset_index()
     counts = grouped.groupby('label').count()
     counts.columns = ['pred_num']
     groundtruth_counts = pd.DataFrame(annotations.groupby('conceptid').id.count())
     groundtruth_counts.columns = ['true_num']
-    return pd.concat((counts, groundtruth_counts), axis=1, join='outer').fillna(0)
+    counts = pd.concat((counts, groundtruth_counts), axis=1, join='outer').fillna(0)
+    counts['count_accuracy'] = 1 - abs(counts.true_num - counts.pred_num) / counts.true_num
+    return counts
 
-# Get the IOU value for two different annotations
-def compute_overlap(A, B):
-    # if there is no overlap in x dimension
-    if B.x2 - A.x1 < 0 or A.x2 - B.x1 < 0:
-        return 0
-    # if there is no overlap in y dimension
-    if B.y2 - A.y1 < 0 or A.y2 - B.y1 < 0:
-        return 0
-    areaA = (A.x2 - A.x1) * (A.y2 - A.y1)
-    areaB = (B.x2 - B.x1) * (B.y2 - B.y1)
-    width = min(A.x2, B.x2) - min(A.x1, B.x1)
-    height = min(A.y2, B.y2) - min(A.y1, B.y1)
-    area_intersect = height * width
-    iou = area_intersect / (areaA + areaB - area_intersect)
-    return iou
-
-
-def interlace_annotations_to_video(annotations, filename):
+def interlace_annotations_to_video(annotations, filename, concepts, video_id):
     vid = cv2.VideoCapture(filename)
     fps = vid.get(cv2.CAP_PROP_FPS)
     while not vid.isOpened():
@@ -146,12 +133,12 @@ def interlace_annotations_to_video(annotations, filename):
 
     validation = annotations.apply(resize, axis=1)
     for val in validation.itertuples():
-        if val.conceptid in CONCEPTS and val.frame_num < len(frames):
+        if val.conceptid in concepts and val.frame_num < len(frames):
             x1, y1, x2, y2 = int(val.x1), int(val.y1), int(val.x2), int(val.y2)
             cv2.rectangle(frames[val.frame_num], (x1, y1), (x2, y2), (0, 0, 255), 3)
             cv2.putText(frames[val.frame_num], str(val.conceptid), (x1, y1+15),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
-    predict.save_video("interlaced_" + filename, frames, fps)
+    predict.save_video("interlaced_" + str(video_id) + "_" + filename, frames, fps)
 
 
 
@@ -165,12 +152,32 @@ def evaluate(video_id, user_id, model_path, concepts):
     annotations['frame_num'] = np.rint(annotations['timeinvideo'] * fps).astype(int)
 
     metrics = score_predictions(annotations, results, EVALUATION_IOU_THRESH, concepts)
-    interlace_annotations_to_video(copy.deepcopy(annotations), 'output.mp4')
-
+    interlace_annotations_to_video(copy.deepcopy(annotations), 'output.mp4', concepts, video_id)
     concept_counts = get_counts(results, annotations)
     metrics = metrics.set_index('conceptid').join(concept_counts)
-    metrics.to_csv("metrics" + str(VIDEO_NUM) + ".csv")
+    metrics.to_csv("metrics" + str(video_id) + ".csv")
     print(metrics)
 
 if __name__ == '__main__':
-    evaluate(VIDEO_NUM, 29, MODEL_WEIGHTS, CONCEPTS)
+    # connect to db
+    con = connect(database=os.getenv("DB_NAME"), 
+        host=os.getenv("DB_HOST"), 
+        user=os.getenv("DB_USER"), 
+        password=os.getenv("DB_PASSWORD"))
+    cursor = con.cursor()
+
+    model_name = 'test' 
+
+    s3.download_file(S3_BUCKET, S3_WEIGHTS_FOLDER + model_name + '.h5', 'current_weights.h5')
+    cursor.execute("SELECT * FROM MODELS WHERE name='" + model_name + "'")
+    model = cursor.fetchone()
+
+    video_id = 86 
+    concepts = model[2]
+    userid = 29
+
+    evaluate(video_id, userid, 'current_weights.h5', concepts)
+
+
+
+

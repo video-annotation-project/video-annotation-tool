@@ -9,6 +9,7 @@ import os
 from dotenv import load_dotenv
 from pascal_voc_writer import Writer
 import random
+import speed
 
 load_dotenv(dotenv_path="../.env")
 S3_BUCKET = os.getenv('AWS_S3_BUCKET_NAME')
@@ -49,13 +50,14 @@ def queryDB(query):
 
 
 def select_annotations(annotations, min_examples, concepts):
+    speed.update_annotation_speed()
     selected = []
     concept_count = {}
     for concept in concepts:
         concept_count[concept] = 0
 
     # Get's fps for each video in order to calculate frame_num from timeinvideo
-    videos = pd.DataFrame(a['videoid'].unique(),columns = ['videoid'])
+    videos = pd.DataFrame(annotations['videoid'].unique(),columns = ['videoid'])
     videos['fps'] = videos['videoid'].apply(lambda x: queryDB('select * from videos where id = ' +str(x)).iloc[0].fps)
     annotations = annotations.merge(videos, left_on='videoid', right_on='videoid')
 
@@ -65,9 +67,13 @@ def select_annotations(annotations, min_examples, concepts):
     groups = [df for _, df in groups]
     random.shuffle(groups) # Shuffle BEFORE the sort
 
-    # Sort the grouped annotations by whether or not it contains a human annotation, prioritizing them
+    # sorts into two 'groups' - those without ai annotations from low to high speed (0, speed) 
+    # (note: the speed is irrelevant here since they are the original human annotations) and 
+    # those with ai annotations from low to high speed (1, speed) - prioritizing frames with no tracking
+    # annotations and then those with tracking but low average speeds (more accurate tracking?)
     ai_id = queryDB("SELECT id FROM users WHERE username='ai'").id[0]
-    groups.sort(key=(lambda df : len(df.loc[df['userid'] != ai_id, 'userid'])))
+    sort_lambda = lambda df : (set(df['userid']) == set([ai_id]), df.speed.mean())
+    groups.sort(key=sort_lambda)
 
     #selects images that we'll use (each group has annotations for an image)
     for group in groups:
@@ -100,38 +106,22 @@ def select_annotations(annotations, min_examples, concepts):
 #   train_annot_file: name of training annotation csv
 #   valid_annot_file: name of validation annotations csv
 #   split: fraction of annotation images that willbe used for training (rest used in validation)
-def download_annotations(min_examples, concepts, concept_map, good_users, img_folder, train_annot_file, valid_annot_file, split=.8):
-    # creates an expanded concept list with all child concepts, mapping these new concepts to their original parent
-    parent_map = {}
-    expanded_concepts = []
-    '''
-    for concept in concepts:
-        # grab all children from concept tree for with breadth first traversal
-        sub = queryDB('select id,parent from concepts')
-        parents = [concept]
-        while len(parents) > 0:
-            expanded_concepts += parents
-            for parent in parents:
-                parent_map[parent] = concept
-            c = sub.loc[sub['parent'].isin(parents)]
-            parents = c['id'].tolist()
-    '''
-    expanded_concepts = concepts
+def download_annotations(min_examples, concepts, concept_map, users, videos, img_folder, train_annot_file, valid_annot_file, split=.8):
     # Get all annotations for given concepts (and child concepts) making sure that any tracking annotations originated from good users
+    users = ','.join('\''+str(e)+'\'' for e in users)
+    videos = ','.join('\''+str(e)+'\'' for e in videos)
+    concepts = ','.join('\''+str(e)+'\'' for e in concepts)
     annotations = queryDB(
         ''' SELECT *
-            FROM annotations as A:
-            WHERE conceptid in ''' + str(tuple(expanded_concepts)) + 
-            ''' AND EXISTS (''' +
-                ''' SELECT id, userid 
-                    FROM annotations 
-                    WHERE id=A.originalid 
-                        AND userid IN ''' + str(tuple(good_users)) + ")")
-    '''
-    # Rename child concepts to their parent concepts
-    for val,key in parent_map.items():
-        annotations.loc[annotations['conceptid'] == val, 'conceptid'] = key
-    '''
+            FROM annotations as A
+            WHERE conceptid::text = ANY(string_to_array(''' + concepts + ''',','))
+            AND videoid::text = ANY(string_to_array(''' + videos + ''',','))
+            AND EXISTS ( 
+                SELECT id, userid 
+                FROM annotations 
+                WHERE id=A.originalid 
+                AND userid::text = ANY(string_to_array(''' + users + ",',')))")
+
     selected, concept_count = select_annotations(annotations, min_examples, concepts)
     print("Concept counts: " + str(concept_count))
     print("Number of images: " + str(len(selected)))
@@ -141,21 +131,17 @@ def download_annotations(min_examples, concepts, concept_map, good_users, img_fo
     count = 0
     for group in selected:
         first = group.iloc[0]
-        img_location = img_folder + "/" + first['image']
+        img_location = img_folder + "/" + str(first['image'])
         if ".png" not in img_location:
            img_location += ".png"
         
         try:
             # try to download image. 
-            obj = client.get_object(Bucket=S3_BUCKET, Key= SRC_IMG_FOLDER +first['image'])
+            obj = client.get_object(Bucket=S3_BUCKET, Key= SRC_IMG_FOLDER + str(first['image']))
             img = Image.open(obj['Body'])
-            img = np.asarray(img)
-            img = img[:,:,:3]
-            img = img[:,:,::-1]
-            img = Image.fromArray(img)
             img.save(img_location)
         except:
-            print("Failed to load image:" + first['image'])
+            print("Failed to load image:" + str(first['image']))
             continue
 
         for index, row in group.iterrows():
