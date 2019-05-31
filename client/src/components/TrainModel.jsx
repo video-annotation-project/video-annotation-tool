@@ -514,7 +514,7 @@ class TrainModel extends Component {
     };
     const body = {
       command: command,
-      modelInstanceId: 'AWS_EC2_TRAIN_MODEL'
+      modelInstanceId: 'i-011660b3e976035d8'
     };
     axios.post(`/api/modelInstance`, body, config).then(res => {
       console.log(res);

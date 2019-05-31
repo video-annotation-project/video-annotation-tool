@@ -363,7 +363,7 @@ class PredictModel extends Component {
     };
     const body = {
       command: command,
-      modelInstanceId: 'AWS_EC2_PREDICT_MODEL'
+      modelInstanceId: 'i-0f2287cb0fc621b6d'
     };
     axios.post(`/api/modelInstance`, body, config).then(res => {
       console.log(res);
