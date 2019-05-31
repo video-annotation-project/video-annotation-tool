@@ -53,11 +53,11 @@ class VerifySelectVideo extends React.Component {
             ) : (
               <React.Fragment>
                 <FormControlLabel
-                  key={-2}
-                  value={"-2"}
+                  key={-1}
+                  value={"-1"}
                   control={<Checkbox color="primary" />}
                   label="All videos"
-                  checked={this.props.value.includes("-2")}
+                  checked={this.props.value.includes("-1")}
                 />
                 {this.state.videos.map(video => (
                   <FormControlLabel

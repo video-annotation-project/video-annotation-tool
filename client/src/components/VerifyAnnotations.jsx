@@ -492,13 +492,6 @@ class VerifyAnnotations extends Component {
             <div className={classes.button2}>
               <Grid container direction="row" alignItems="center">
                 <Grid item>
-                  <h3>
-                    {!this.state.concept
-                      ? annotation.name
-                      : this.state.concept.name}
-                  </h3>
-                </Grid>
-                <Grid item>
                   <Avatar
                     src={`/api/conceptImages/${
                       !this.state.concept
@@ -506,6 +499,13 @@ class VerifyAnnotations extends Component {
                         : this.state.concept.id
                     }`}
                   />
+                </Grid>
+                <Grid item>
+                  <h3>
+                    {!this.state.concept
+                      ? annotation.name
+                      : this.state.concept.name}
+                  </h3>
                 </Grid>
                 <Grid item xs>
                   <ConceptsSelected

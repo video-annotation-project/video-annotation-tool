@@ -48,11 +48,11 @@ class VerifySelectUser extends React.Component {
             onChange={handleChange}
           >
             <FormControlLabel
-              key={-2}
-              value={"-2"}
+              key={-1}
+              value={"-1"}
               control={<Checkbox color="primary" />}
               label="All users"
-              checked={this.props.value.includes("-2")}
+              checked={this.props.value.includes("-1")}
             />
             {this.state.users.map(user => (
               <FormControlLabel
