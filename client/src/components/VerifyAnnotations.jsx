@@ -516,7 +516,7 @@ class VerifyAnnotations extends Component {
               <Typography className={classes.paper} variant="body2">
                 Video: {annotation.filename}
                 <IconButton>
-                  <Description style={{ fontSize: 20 }}
+                  <Description style={{ fontSize: 17 }}
                     onClick={event =>
                       this.openVideoMetadata(event, { id: annotation.videoid })
                     }
