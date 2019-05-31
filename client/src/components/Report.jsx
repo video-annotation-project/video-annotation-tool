@@ -41,15 +41,15 @@ class Report extends React.Component {
     });
   };
 
-  setVerifiedOnly = value => {
+  setVerifiedOnly = bool => {
     this.setState({
-      verifiedOnly: value
+      verifiedOnly: bool
     });
   };
 
-  setUnverifiedOnly = value => {
+  setUnverifiedOnly = bool => {
     this.setState({
-      unverifiedOnly: value
+      unverifiedOnly: bool
     });
   };
 
