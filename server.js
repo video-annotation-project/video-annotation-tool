@@ -93,6 +93,7 @@ const setCookies = res => {
     for (cookieName in cookies) {
       res.cookie(cookieName, cookies[cookieName], {
         domain: ".deepseaannotations.com",
+        expires: new Date(expiry * 1000),
         httpOnly: true,
         path: "/",
         secure: true
@@ -775,7 +776,7 @@ app.get(
   async (req, res) => {
     let params = [];
     //Build query string
-    let queryPass = `SELECT annotations.id, annotations.comment,
+    let queryPass = `SELECT annotations.id, annotations.comment, annotations.verifiedby,
                      annotations.unsure, annotations.timeinvideo, 
                      annotations.imagewithbox, concepts.name, 
                      false as extended 
@@ -1061,6 +1062,14 @@ app.get(
     if (req.query.unsureOnly === "true") {
       queryPass = queryPass + " AND annotations.unsure = true";
     }
+    if (!(req.query.verifiedOnly === "true" && req.query.unverifiedOnly === "true")) {
+      if (req.query.verifiedOnly === "true") {
+        queryPass = queryPass + " AND annotations.verifiedby IS NOT NULL";
+      }
+      if (req.query.unverifiedOnly === "true") {
+        queryPass = queryPass + " AND annotations.verifiedby IS NULL";
+      }
+    }
     if (req.query.admin !== "true") {
       queryPass = queryPass + " AND annotations.userid = $1";
       params.push(req.user.id);
@@ -1288,24 +1297,28 @@ app.put(
 );
 
 // Verify Annotations
+
 app.get(
-  "/api/unverifiedVideosByUser/:userid",
+  "/api/unverifiedVideosByUser",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    var queryText = [
-      "SELECT DISTINCT v.id, v.filename \
-              FROM annotations a, videos v \
-              WHERE a.verifiedby IS NULL AND v.id=a.videoid",
-      "SELECT DISTINCT v.id, v.filename \
-              FROM annotations a, videos v \
-              WHERE a.userid=$1 AND a.verifiedby IS NULL AND v.id=a.videoid"
-    ];
-    try {
-      if (req.params.userid == "0") {
-        var videos = await psql.query(queryText[0]);
-      } else {
-        var videos = await psql.query(queryText[1], [req.params.userid]);
+    const selectedUsers = req.query.selectedUsers;
+
+    let sqlUsers = "";
+    if (!(selectedUsers.length === 1 && selectedUsers[0] === "-1")) {
+      sqlUsers = " AND (a.userid=" + selectedUsers[0];
+      for (let i = 0; i < selectedUsers.length; i++) {
+        sqlUsers += " OR a.userid=" + selectedUsers[i];
       }
+      sqlUsers += ")";
+    }
+
+    let queryText =
+      `SELECT DISTINCT v.id, v.filename
+              FROM annotations a, videos v
+              WHERE a.verifiedby IS NULL AND v.id=a.videoid` + sqlUsers;
+    try {
+      let videos = await psql.query(queryText);
       res.json(videos.rows);
     } catch (error) {
       res.status(500).json(error);
@@ -1317,29 +1330,36 @@ app.get(
   "/api/unverifiedConceptsByUserVideo",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
+    const selectedUsers = req.query.selectedUsers;
     const selectedVideos = req.query.selectedVideos;
 
-    let sqlVideos = " AND (a.videoid=" + selectedVideos[0];
-    for (let i = 0; i < selectedVideos.length; i++) {
-      sqlVideos += " OR a.videoid=" + selectedVideos[i];
-    }
-    sqlVideos += ")";
-
-    var queryText = [
-      `SELECT DISTINCT c.id, c.name
-        FROM annotations a, concepts c
-        WHERE a.verifiedby IS NULL AND a.conceptid=c.id` + sqlVideos,
-      `SELECT DISTINCT c.id, c.name
-        FROM annotations a, concepts c
-        WHERE a.userid=$1 AND a.verifiedby IS NULL AND a.conceptid=c.id` +
-      sqlVideos
-    ];
-    try {
-      if (req.query.selectedUser == "0") {
-        var concepts = await psql.query(queryText[0]);
-      } else {
-        var concepts = await psql.query(queryText[1], [req.query.selectedUser]);
+    let sqlUsers = "";
+    if (!(selectedUsers.length === 1 && selectedUsers[0] === "-1")) {
+      sqlUsers = " AND (a.userid=" + selectedUsers[0];
+      for (let i = 0; i < selectedUsers.length; i++) {
+        sqlUsers += " OR a.userid=" + selectedUsers[i];
       }
+      sqlUsers += ")";
+    }
+
+    let sqlVideos = "";
+    if (!(selectedVideos.length === 1 && selectedVideos[0] === "-1")) {
+      sqlVideos = " AND (a.videoid=" + selectedVideos[0];
+      for (let i = 0; i < selectedVideos.length; i++) {
+        sqlVideos += " OR a.videoid=" + selectedVideos[i];
+      }
+      sqlVideos += ")";
+    }
+
+    let queryText =
+      `SELECT DISTINCT c.id, c.name
+        FROM annotations a, concepts c
+        WHERE a.verifiedby IS NULL AND a.conceptid=c.id` +
+      sqlUsers +
+      sqlVideos;
+
+    try {
+      let concepts = await psql.query(queryText);
       res.json(concepts.rows);
     } catch (error) {
       res.status(500).json(error);
@@ -1351,42 +1371,47 @@ app.get(
   "/api/unverifiedAnnotationsByUserVideoConcept",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    // console.log(req.query);
-
+    const selectedUsers = req.query.selectedUsers;
     const selectedVideos = req.query.selectedVideos;
     const selectedConcepts = req.query.selectedConcepts;
 
-    let sqlVideos = " AND (a.videoid=" + selectedVideos[0];
-    for (let i = 0; i < selectedVideos.length; i++) {
-      sqlVideos += " OR a.videoid=" + selectedVideos[i];
+    let sqlUsers = "";
+    if (!(selectedUsers.length === 1 && selectedUsers[0] === "-1")) {
+      sqlUsers = " AND (a.userid=" + selectedUsers[0];
+      for (let i = 0; i < selectedUsers.length; i++) {
+        sqlUsers += " OR a.userid=" + selectedUsers[i];
+      }
+      sqlUsers += ")";
     }
-    sqlVideos += ")";
 
-    let sqlConcepts = " AND (a.conceptid=" + selectedVideos[0];
-    for (let i = 0; i < selectedConcepts.length; i++) {
-      sqlConcepts += " OR a.conceptid=" + selectedConcepts[i];
+    let sqlVideos = "";
+    if (!(selectedVideos.length === 1 && selectedVideos[0] === "-1")) {
+      sqlVideos = " AND (a.videoid=" + selectedVideos[0];
+      for (let i = 0; i < selectedVideos.length; i++) {
+        sqlVideos += " OR a.videoid=" + selectedVideos[i];
+      }
+      sqlVideos += ")";
     }
-    sqlConcepts += ")";
 
-    var queryText = [
+    let sqlConcepts = "";
+    if (!(selectedConcepts.length === 1 && selectedConcepts[0] === "-1")) {
+      sqlConcepts = " AND (a.conceptid=" + selectedConcepts[0];
+      for (let i = 0; i < selectedConcepts.length; i++) {
+        sqlConcepts += " OR a.conceptid=" + selectedConcepts[i];
+      }
+      sqlConcepts += ")";
+    }
+
+    var queryText =
       `SELECT distinct a.*, c.name, u.username, v.filename
         FROM annotations a, concepts c, users u, videos v
         WHERE c.id=a.conceptid AND u.id=a.userid AND v.id=a.videoid AND a.verifiedby IS NULL` +
+      sqlUsers +
       sqlVideos +
-      sqlConcepts,
-      `SELECT distinct a.*, c.name, u.username, v.filename
-        FROM annotations a, concepts c, users u, videos v
-        WHERE c.id=a.conceptid AND u.id=a.userid AND v.id=a.videoid AND a.userid=$1 AND a.verifiedby IS NULL` +
-      sqlVideos +
-      sqlConcepts
-    ];
+      sqlConcepts;
+
     try {
-      let concepts;
-      if (req.query.selectedUser === "0") {
-        concepts = await psql.query(queryText[0]);
-      } else {
-        concepts = await psql.query(queryText[1], [req.query.selectedUser]);
-      }
+      let concepts = await psql.query(queryText);
       res.json(concepts.rows);
     } catch (error) {
       console.log(error);
@@ -1444,15 +1469,6 @@ app.patch(
       console.log(error);
       res.status(500).json(error);
     }
-  }
-);
-
-//This will be used to send info from the ec2 training the model
-app.put(
-  "/api/model/update",
-  passport.authenticate("jwt", { session: false }),
-  async (req, res) => {
-    console.log(req);
   }
 );
 
