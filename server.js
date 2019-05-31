@@ -201,19 +201,19 @@ app.post(
 );
 
 app.get(
-    "/api/users",
-    passport.authenticate("jwt", { session: false }),
-    async (req, res) => {
-        const queryText = "SELECT id, username \
+  "/api/users",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    const queryText = "SELECT id, username \
                        FROM users";
 
-        try {
-            const users = await psql.query(queryText);
-            res.json(users.rows);
-        } catch (error) {
-            res.status(500).json(error);
-        }
+    try {
+      const users = await psql.query(queryText);
+      res.json(users.rows);
+    } catch (error) {
+      res.status(500).json(error);
     }
+  }
 );
 
 app.get(
@@ -746,7 +746,7 @@ app.get(
   async (req, res) => {
     let params = [];
     //Build query string
-    let queryPass = `SELECT annotations.id, annotations.comment,
+    let queryPass = `SELECT annotations.id, annotations.comment, annotations.verifiedby,
                      annotations.unsure, annotations.timeinvideo, 
                      annotations.imagewithbox, concepts.name, 
                      false as extended 
@@ -1032,6 +1032,14 @@ app.get(
     if (req.query.unsureOnly === "true") {
       queryPass = queryPass + " AND annotations.unsure = true";
     }
+    if (!(req.query.verifiedOnly === "true" && req.query.unverifiedOnly === "true")) {
+      if (req.query.verifiedOnly === "true") {
+        queryPass = queryPass + " AND annotations.verifiedby IS NOT NULL";
+      }
+      if (req.query.unverifiedOnly === "true") {
+        queryPass = queryPass + " AND annotations.verifiedby IS NULL";
+      }
+    }
     if (req.query.admin !== "true") {
       queryPass = queryPass + " AND annotations.userid = $1";
       params.push(req.user.id);
@@ -1224,163 +1232,179 @@ app.put(
 );
 
 // Verify Annotations
+
 app.get(
-    "/api/unverifiedVideosByUser/:userid",
-    passport.authenticate("jwt", { session: false }),
-    async (req, res) => {
-        var queryText = [
-            "SELECT DISTINCT v.id, v.filename \
-              FROM annotations a, videos v \
-              WHERE a.verifiedby IS NULL AND v.id=a.videoid",
-            "SELECT DISTINCT v.id, v.filename \
-              FROM annotations a, videos v \
-              WHERE a.userid=$1 AND a.verifiedby IS NULL AND v.id=a.videoid"
-        ];
-        try {
-            if (req.params.userid == "0") {
-                var videos = await psql.query(queryText[0]);
-            } else {
-                var videos = await psql.query(queryText[1], [req.params.userid]);
-            }
-            res.json(videos.rows);
-        } catch (error) {
-            res.status(500).json(error);
-        }
+  "/api/unverifiedVideosByUser",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    const selectedUsers = req.query.selectedUsers;
+
+    let sqlUsers = "";
+    if (!(selectedUsers.length === 1 && selectedUsers[0] === "-1")) {
+      sqlUsers = " AND (a.userid=" + selectedUsers[0];
+      for (let i = 0; i < selectedUsers.length; i++) {
+        sqlUsers += " OR a.userid=" + selectedUsers[i];
+      }
+      sqlUsers += ")";
     }
+
+    let queryText =
+      `SELECT DISTINCT v.id, v.filename
+              FROM annotations a, videos v
+              WHERE a.verifiedby IS NULL AND v.id=a.videoid` + sqlUsers;
+    try {
+      let videos = await psql.query(queryText);
+      res.json(videos.rows);
+    } catch (error) {
+      res.status(500).json(error);
+    }
+  }
 );
 
 app.get(
-    "/api/unverifiedConceptsByUserVideo",
-    passport.authenticate("jwt", { session: false }),
-    async (req, res) => {
-        const selectedVideos = req.query.selectedVideos;
+  "/api/unverifiedConceptsByUserVideo",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    const selectedUsers = req.query.selectedUsers;
+    const selectedVideos = req.query.selectedVideos;
 
-        let sqlVideos = " AND (a.videoid=" + selectedVideos[0];
-        for (let i = 0; i < selectedVideos.length; i++) {
-            sqlVideos += " OR a.videoid=" + selectedVideos[i];
-        }
-        sqlVideos += ")";
-
-        var queryText = [
-            `SELECT DISTINCT c.id, c.name
-        FROM annotations a, concepts c
-        WHERE a.verifiedby IS NULL AND a.conceptid=c.id` + sqlVideos,
-            `SELECT DISTINCT c.id, c.name
-        FROM annotations a, concepts c
-        WHERE a.userid=$1 AND a.verifiedby IS NULL AND a.conceptid=c.id` +
-            sqlVideos
-        ];
-        try {
-            if (req.query.selectedUser == "0") {
-                var concepts = await psql.query(queryText[0]);
-            } else {
-                var concepts = await psql.query(queryText[1], [req.query.selectedUser]);
-            }
-            res.json(concepts.rows);
-        } catch (error) {
-            res.status(500).json(error);
-        }
+    let sqlUsers = "";
+    if (!(selectedUsers.length === 1 && selectedUsers[0] === "-1")) {
+      sqlUsers = " AND (a.userid=" + selectedUsers[0];
+      for (let i = 0; i < selectedUsers.length; i++) {
+        sqlUsers += " OR a.userid=" + selectedUsers[i];
+      }
+      sqlUsers += ")";
     }
+
+    let sqlVideos = "";
+    if (!(selectedVideos.length === 1 && selectedVideos[0] === "-1")) {
+      sqlVideos = " AND (a.videoid=" + selectedVideos[0];
+      for (let i = 0; i < selectedVideos.length; i++) {
+        sqlVideos += " OR a.videoid=" + selectedVideos[i];
+      }
+      sqlVideos += ")";
+    }
+
+    let queryText =
+      `SELECT DISTINCT c.id, c.name
+        FROM annotations a, concepts c
+        WHERE a.verifiedby IS NULL AND a.conceptid=c.id` +
+      sqlUsers +
+      sqlVideos;
+
+    try {
+      let concepts = await psql.query(queryText);
+      res.json(concepts.rows);
+    } catch (error) {
+      res.status(500).json(error);
+    }
+  }
 );
 
 app.get(
-    "/api/unverifiedAnnotationsByUserVideoConcept",
-    passport.authenticate("jwt", { session: false }),
-    async (req, res) => {
-        // console.log(req.query);
+  "/api/unverifiedAnnotationsByUserVideoConcept",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    const selectedUsers = req.query.selectedUsers;
+    const selectedVideos = req.query.selectedVideos;
+    const selectedConcepts = req.query.selectedConcepts;
 
-        const selectedVideos = req.query.selectedVideos;
-        const selectedConcepts = req.query.selectedConcepts;
+    let sqlUsers = "";
+    if (!(selectedUsers.length === 1 && selectedUsers[0] === "-1")) {
+      sqlUsers = " AND (a.userid=" + selectedUsers[0];
+      for (let i = 0; i < selectedUsers.length; i++) {
+        sqlUsers += " OR a.userid=" + selectedUsers[i];
+      }
+      sqlUsers += ")";
+    }
 
-        let sqlVideos = " AND (a.videoid=" + selectedVideos[0];
-        for (let i = 0; i < selectedVideos.length; i++) {
-            sqlVideos += " OR a.videoid=" + selectedVideos[i];
-        }
-        sqlVideos += ")";
+    let sqlVideos = "";
+    if (!(selectedVideos.length === 1 && selectedVideos[0] === "-1")) {
+      sqlVideos = " AND (a.videoid=" + selectedVideos[0];
+      for (let i = 0; i < selectedVideos.length; i++) {
+        sqlVideos += " OR a.videoid=" + selectedVideos[i];
+      }
+      sqlVideos += ")";
+    }
 
-        let sqlConcepts = " AND (a.conceptid=" + selectedVideos[0];
-        for (let i = 0; i < selectedConcepts.length; i++) {
-            sqlConcepts += " OR a.conceptid=" + selectedConcepts[i];
-        }
-        sqlConcepts += ")";
+    let sqlConcepts = "";
+    if (!(selectedConcepts.length === 1 && selectedConcepts[0] === "-1")) {
+      sqlConcepts = " AND (a.conceptid=" + selectedConcepts[0];
+      for (let i = 0; i < selectedConcepts.length; i++) {
+        sqlConcepts += " OR a.conceptid=" + selectedConcepts[i];
+      }
+      sqlConcepts += ")";
+    }
 
-        var queryText = [
-            `SELECT distinct a.*, c.name, u.username, v.filename
+    var queryText =
+      `SELECT distinct a.*, c.name, u.username, v.filename
         FROM annotations a, concepts c, users u, videos v
         WHERE c.id=a.conceptid AND u.id=a.userid AND v.id=a.videoid AND a.verifiedby IS NULL` +
-            sqlVideos +
-            sqlConcepts,
-            `SELECT distinct a.*, c.name, u.username, v.filename
-        FROM annotations a, concepts c, users u, videos v
-        WHERE c.id=a.conceptid AND u.id=a.userid AND v.id=a.videoid AND a.userid=$1 AND a.verifiedby IS NULL` +
-            sqlVideos +
-            sqlConcepts
-        ];
-        try {
-            let concepts;
-            if (req.query.selectedUser === "0") {
-                concepts = await psql.query(queryText[0]);
-            } else {
-                concepts = await psql.query(queryText[1], [req.query.selectedUser]);
-            }
-            res.json(concepts.rows);
-        } catch (error) {
-            console.log(error);
-            res.status(500).json(error);
-        }
+      sqlUsers +
+      sqlVideos +
+      sqlConcepts;
+
+    try {
+      let concepts = await psql.query(queryText);
+      res.json(concepts.rows);
+    } catch (error) {
+      console.log(error);
+      res.status(500).json(error);
     }
+  }
 );
 
 app.patch(
-    "/api/annotationsVerify",
-    passport.authenticate("jwt", { session: false }),
-    async (req, res) => {
-        const id = req.body.id;
-        const conceptid =
-            req.body.conceptid != null ? ", conceptid=" + req.body.conceptid : "";
-        const comment =
-            req.body.comment != null ? ", comment='" + req.body.comment + "'" : "";
-        const unsure = req.body.unsure != null ? ", unsure=" + req.body.unsure : "";
-        const verifiedby = req.user.id;
-        const queryText =
-            "UPDATE annotations SET verifiedby=$2, verifieddate=current_timestamp" +
-            conceptid +
-            comment +
-            unsure +
-            " WHERE id=$1";
-        try {
-            let update = await psql.query(queryText, [id, verifiedby]);
-            res.json(update.rows);
-        } catch (error) {
-            console.log(error);
-            res.status(500).json(error);
-        }
+  "/api/annotationsVerify",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    const id = req.body.id;
+    const conceptid =
+      req.body.conceptid != null ? ", conceptid=" + req.body.conceptid : "";
+    const comment =
+      req.body.comment != null ? ", comment='" + req.body.comment + "'" : "";
+    const unsure = req.body.unsure != null ? ", unsure=" + req.body.unsure : "";
+    const verifiedby = req.user.id;
+    const queryText =
+      "UPDATE annotations SET verifiedby=$2, verifieddate=current_timestamp" +
+      conceptid +
+      comment +
+      unsure +
+      " WHERE id=$1";
+    try {
+      let update = await psql.query(queryText, [id, verifiedby]);
+      res.json(update.rows);
+    } catch (error) {
+      console.log(error);
+      res.status(500).json(error);
     }
+  }
 );
 
 // update box coordinates
 app.patch(
-    "/api/annotationsUpdateBox",
-    passport.authenticate("jwt", { session: false }),
-    async (req, res) => {
-        // console.log(req.body)
-        const id = req.body.id;
+  "/api/annotationsUpdateBox",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    // console.log(req.body)
+    const id = req.body.id;
 
-        var x1 = req.body.x1;
-        var x2 = req.body.x2;
-        var y1 = req.body.y1;
-        var y2 = req.body.y2;
+    var x1 = req.body.x1;
+    var x2 = req.body.x2;
+    var y1 = req.body.y1;
+    var y2 = req.body.y2;
 
-        const queryText =
-            "UPDATE annotations SET x1=$1, x2=$2, y1=$3, y2=$4 WHERE id=$5";
-        try {
-            let update = await psql.query(queryText, [x1, x2, y1, y2, id]);
-            res.json(update.rows);
-        } catch (error) {
-            console.log(error);
-            res.status(500).json(error);
-        }
+    const queryText =
+      "UPDATE annotations SET x1=$1, x2=$2, y1=$3, y2=$4 WHERE id=$5";
+    try {
+      let update = await psql.query(queryText, [x1, x2, y1, y2, id]);
+      res.json(update.rows);
+    } catch (error) {
+      console.log(error);
+      res.status(500).json(error);
     }
+  }
 );
 
 // This websocket sends a list of videos to the client that update in realtime

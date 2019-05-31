@@ -14,6 +14,11 @@ import blue from "@material-ui/core/colors/blue";
 import { MuiThemeProvider, createMuiTheme } from "@material-ui/core/styles";
 import ConceptsSelected from "./ConceptsSelected";
 
+import VideoMetadata from "./VideoMetadata.jsx";
+import Description from "@material-ui/icons/Description";
+import Avatar from "@material-ui/core/Avatar";
+import Grid from "@material-ui/core/Grid";
+
 const styles = theme => ({
   button: {
     margin: theme.spacing.unit
@@ -51,6 +56,17 @@ const styles = theme => ({
   },
   icons: {
     float: "right"
+  },
+  button1: {
+    marginTop: "10px",
+    float: "left",
+    margin: "0 auto",
+    width: "800px"
+  },
+  button2: {
+    float: "left",
+    width: "800px",
+    margin: "0 auto"
   }
 });
 
@@ -79,7 +95,8 @@ class VerifyAnnotations extends Component {
       y: this.props.annotation.y1,
       width: this.props.annotation.x2 - this.props.annotation.x1,
       height: this.props.annotation.y2 - this.props.annotation.y1,
-      videoDialogOpen: false /* needed for dialog component */
+      videoDialogOpen: false /* needed for dialog component */,
+      imageStatus: "loading"
     };
   }
 
@@ -87,11 +104,11 @@ class VerifyAnnotations extends Component {
     window.scrollTo({ top: 0, behavior: "smooth" });
     // add event listener for different key presses
     document.addEventListener("keydown", this.handleKeyDown);
-  }
-  
+  };
+
   componentWillUnmount = () => {
     document.removeEventListener("keydown", this.handleKeyDown);
-  }
+  };
 
   // keyboard shortcuts for verifying annotations
   handleKeyDown = e => {
@@ -99,13 +116,17 @@ class VerifyAnnotations extends Component {
     if (e.target !== document.body) {
       return;
     }
-    if (e.code === "KeyD") { // delete shortcut
+    if (e.code === "KeyD") {
+      // delete shortcut
       this.handleDelete();
-    } else if (e.code === "KeyR") { // reset shortcut
+    } else if (e.code === "KeyR") {
+      // reset shortcut
       this.resetState();
-    } else if (e.code === "KeyI") { // ignore shortcut
+    } else if (e.code === "KeyI") {
+      // ignore shortcut
       this.nextAnnotation();
-    } else if (e.code === "KeyV") { // verify shortcut
+    } else if (e.code === "KeyV") {
+      // verify shortcut
       this.handleVerifyClick();
     }
   };
@@ -161,7 +182,8 @@ class VerifyAnnotations extends Component {
       so that it is clear that a new image is being loaded. */
     this.setState(
       {
-        loaded: false
+        loaded: false,
+        imageStatus: "loading"
       },
       () => {
         this.setState({
@@ -335,6 +357,29 @@ class VerifyAnnotations extends Component {
     });
   };
 
+  //Methods for video meta data
+  openVideoMetadata = (event, video) => {
+    event.stopPropagation();
+    this.setState({
+      openedVideo: video
+    });
+  };
+
+  closeVideoMetadata = () => {
+    this.setState({
+      openedVideo: null
+    });
+  };
+
+  //image load option
+  handleImageLoaded = () => {
+    this.setState({ imageStatus: "loaded" });
+  };
+
+  handleImageErrored() {
+    this.setState({ imageStatus: "failed to load" });
+  }
+
   render() {
     const { classes } = this.props;
     var annotation = this.props.annotation;
@@ -353,23 +398,6 @@ class VerifyAnnotations extends Component {
         />
         {!this.state.end ? (
           <React.Fragment>
-            <Typography className={classes.paper} variant="title">
-              Annotation #{annotation.id}
-            </Typography>
-            <Typography className={classes.paper} variant="body2">
-              Annotated by: {annotation.username}
-            </Typography>
-            <Typography className={classes.paper} variant="body2">
-              Video: {annotation.filename}
-            </Typography>
-            <Typography className={classes.paper} variant="body2">
-              Time: {Math.floor(annotation.timeinvideo / 60)} minutes{" "}
-              {Math.floor(annotation.timeinvideo % 60)} seconds
-            </Typography>
-            <Typography className={classes.paper} variant="body2">
-              Concept:{" "}
-              {!this.state.concept ? annotation.name : this.state.concept.name}
-            </Typography>
             {!annotation.image ? (
               <Typography className={classes.paper}>No Image</Typography>
             ) : (
@@ -401,6 +429,8 @@ class VerifyAnnotations extends Component {
                   />
                   <img
                     id="image"
+                    onLoad={this.handleImageLoaded.bind(this)}
+                    onError={this.handleImageErrored.bind(this)}
                     className={classes.img}
                     src={
                       this.state.loaded
@@ -416,11 +446,7 @@ class VerifyAnnotations extends Component {
             <Typography className={classes.paper}>
               {this.props.index + 1} of {this.props.size}
             </Typography>
-            <div>
-              <ConceptsSelected handleConceptClick={this.handleConceptClick} />
-              <IconButton className={classes.icons} aria-label="OnDemandVideo">
-                <OndemandVideo onClick={this.videoDialogToggle} />
-              </IconButton>
+            <div className={classes.button1}>
               <MuiThemeProvider theme={theme}>
                 <Button
                   className={classes.button}
@@ -445,19 +471,88 @@ class VerifyAnnotations extends Component {
               >
                 Ignore
               </Button>
-              <Button
-                className={classes.button}
-                variant="contained"
-                color="primary"
-                onClick={this.handleVerifyClick}
-              >
-                Verify
-              </Button>
-              <VideoDialogWrapped
-                annotation={annotation}
-                open={this.state.videoDialogOpen}
-                onClose={this.videoDialogToggle}
-              />
+              {this.state.imageStatus === "loaded" ? (
+                <Button
+                  className={classes.button}
+                  variant="contained"
+                  color="primary"
+                  onClick={this.handleVerifyClick}
+                >
+                  Verify
+                </Button>
+              ) : (
+                <Button className={classes.button} disabled={true}>
+                  Verify
+                </Button>
+              )}
+              <IconButton aria-label="OnDemandVideo">
+                <OndemandVideo onClick={this.videoDialogToggle} />
+              </IconButton>
+            </div>
+            <div className={classes.button2}>
+              <Grid container direction="row" alignItems="center">
+                <Grid item>
+                  <Avatar
+                    src={`/api/conceptImages/${
+                      !this.state.concept
+                        ? annotation.conceptid
+                        : this.state.concept.id
+                    }`}
+                  />
+                </Grid>
+                <Grid item>
+                  <h3>
+                    {!this.state.concept
+                      ? annotation.name
+                      : this.state.concept.name}
+                  </h3>
+                </Grid>
+                <Grid item xs>
+                  <ConceptsSelected
+                    handleConceptClick={this.handleConceptClick}
+                  />
+                  <VideoDialogWrapped
+                    annotation={annotation}
+                    open={this.state.videoDialogOpen}
+                    onClose={this.videoDialogToggle}
+                  />
+                </Grid>
+              </Grid>
+            </div>
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <div>
+              <Typography className={classes.paper} variant="title">
+                Annotation #{annotation.id}
+              </Typography>
+              <Typography className={classes.paper} variant="body2">
+                Annotated by: {annotation.username}
+              </Typography>
+              <Typography className={classes.paper} variant="body2">
+                Video: {annotation.filename}
+                <IconButton>
+                  <Description
+                    style={{ fontSize: 20 }}
+                    onClick={event =>
+                      this.openVideoMetadata(event, { id: annotation.videoid })
+                    }
+                  />
+                </IconButton>
+              </Typography>
+              <Typography className={classes.paper} variant="body2">
+                Time: {Math.floor(annotation.timeinvideo / 60)} minutes{" "}
+                {Math.floor(annotation.timeinvideo % 60)} seconds
+              </Typography>
+              <Typography className={classes.paper} variant="body2">
+                Concept:{" "}
+                {!this.state.concept
+                  ? annotation.name
+                  : this.state.concept.name}
+              </Typography>
             </div>
           </React.Fragment>
         ) : (
@@ -472,6 +567,23 @@ class VerifyAnnotations extends Component {
               Filter Annotations
             </Button>
           </React.Fragment>
+        )}
+        {this.state.openedVideo && (
+          <VideoMetadata
+            open={
+              true /* The VideoMetadata 'openness' is controlled through
+              boolean logic rather than by passing in a variable as an
+              attribute. This is to force VideoMetadata to unmount when it 
+              closes so that its state is reset. This also prevents the 
+              accidental double submission bug, by implicitly reducing 
+              the transition time of VideoMetadata to zero. */
+            }
+            handleClose={this.closeVideoMetadata}
+            openedVideo={this.state.openedVideo}
+            socket={this.props.socket}
+            loadVideos={this.props.loadVideos}
+            model={false}
+          />
         )}
       </React.Fragment>
     );
