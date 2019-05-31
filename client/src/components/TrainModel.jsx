@@ -62,12 +62,9 @@ const styles = theme => ({
   resetContainer: {
     padding: theme.spacing.unit * 3
   },
-  videoSelector: {
+  checkSelector: {
     maxHeight: "150px",
     overflow: "auto"
-  },
-  userSelector: {
-    overflow: 'auto'
   },
   hyperparametersForm: {
     display: 'flex',
@@ -109,6 +106,8 @@ class TrainModel extends Component {
       usersSelected: [],
       models: [],
       modelSelected: "",
+      concepts: [],
+      conceptsSelected: [],
       minImages: 5000,
       epochs: 0,
       activeStep: 0,
@@ -152,12 +151,16 @@ class TrainModel extends Component {
           activeStep: info.activeStep,
           usersSelected: info.usersSelected,
           videosSelected: info.videosSelected,
+          conceptsSelected: info.conceptsSelected,
           modelSelected: info.modelSelected,
           minImages: info.minImages,
           epochs: info.epochs
         });
         if (info.usersSelected) {
           this.loadVideoList();
+        }
+        if (info.videosSelected) {
+          this.loadConceptList();
         }
       })
       .catch(error => {
@@ -204,7 +207,7 @@ class TrainModel extends Component {
     })
   }
 
-  loadVideoList = async () => {
+  loadVideoList = () => {
     const config = {
       headers: {
         Authorization: "Bearer " + localStorage.getItem("token")
@@ -220,6 +223,25 @@ class TrainModel extends Component {
     });
   };
 
+  loadConceptList = () => {
+    const config = {
+      headers: {
+        Authorization: "Bearer " + localStorage.getItem("token")
+      }
+    };
+    axios.get(
+      `/api/trainModel/concepts/` +
+      this.state.videosSelected + '/' + this.state.modelSelected,
+      config
+    ).then(res => {
+      this.setState({
+        concepts: res.data
+      });
+    });
+  }
+
+  //Used to handle changes in the hyperparameters
+  //and in the select model
   handleChange = event => {
     this.setState({
       [event.target.name]: event.target.value
@@ -245,15 +267,16 @@ class TrainModel extends Component {
     );
   };
 
-  handleUserSelect = id => event => {
-    let usersSelected = JSON.parse(JSON.stringify(this.state.usersSelected));
+  //Handle user, video, and concept checkbox selections
+  checkboxSelect = (stateName, id) => event => {
+    let deepCopy = JSON.parse(JSON.stringify(this.state[stateName]));
     if (event.target.checked) {
-      usersSelected.push(id);
+      deepCopy.push(id);
     } else {
-      usersSelected = usersSelected.filter(user => user !== id);
+      deepCopy = deepCopy.filter(user => user !== id);
     }
     this.setState({
-      usersSelected: usersSelected
+      [stateName]: deepCopy
     });
   };
 
@@ -261,7 +284,7 @@ class TrainModel extends Component {
     return (
       <FormControl
         component="fieldset"
-        className={this.props.classes.userSelector}
+        className={this.props.classes.checkSelector}
       >
         <FormLabel component="legend">
           Select Users Whose Annotations to Use
@@ -272,7 +295,7 @@ class TrainModel extends Component {
               <FormControlLabel
                 control={
                   <Checkbox
-                    onChange={this.handleUserSelect(user.id)}
+                    onChange={this.checkboxSelect('usersSelected', user.id)}
                     color="primary"
                     checked={this.state.usersSelected.includes(user.id)}
                   />
@@ -286,18 +309,6 @@ class TrainModel extends Component {
     );
   };
 
-  handleVideoSelect = videoid => event => {
-    let videosSelected = JSON.parse(JSON.stringify(this.state.videosSelected));
-    if (event.target.checked) {
-      videosSelected.push(videoid)
-    } else {
-      videosSelected = videosSelected.filter(id => id !== videoid);
-    }
-    this.setState({
-      videosSelected: videosSelected
-    })
-  }
-
   selectVideo = () => {
     if (!this.state.videosSelected) {
       return (
@@ -307,7 +318,7 @@ class TrainModel extends Component {
     return (
       <FormControl
         component="fieldset"
-        className={this.props.classes.videoSelector}
+        className={this.props.classes.checkSelector}
       >
         <FormLabel component="legend">Select Videos to Train With</FormLabel>
         <FormGroup>
@@ -316,7 +327,7 @@ class TrainModel extends Component {
               <FormControlLabel
                 control={
                   <Checkbox
-                    onChange={this.handleVideoSelect(video.id)}
+                    onChange={this.checkboxSelect('videosSelected', video.id)}
                     color='primary'
                     checked={
                       this.state.videosSelected.includes(video.id)
@@ -343,6 +354,41 @@ class TrainModel extends Component {
       </FormControl>
     );
   };
+
+  selectConcepts = () => {
+    const classes = this.props.classes;
+    if (!this.state.concepts) {
+      return (<div>Loading...</div>)
+    }
+
+    return (
+      <FormControl
+        component="fieldset"
+        className={classes.checkSelector}
+      >
+        <FormLabel component="legend">Select Species to Train With</FormLabel>
+        <FormGroup>
+          {this.state.concepts.map(concept => (
+            <div key={concept.name}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    onChange={this.checkboxSelect('conceptsSelected', concept.id)}
+                    color='primary'
+                    checked={
+                      this.state.conceptsSelected.includes(concept.id)
+                    }
+                  />
+                }
+                label={concept.name}
+              >
+              </FormControlLabel>
+            </div>
+          ))}
+        </FormGroup>
+      </FormControl>
+    )
+  }
 
   selectHyperparameters = () => {
     const classes = this.props.classes;
@@ -371,6 +417,7 @@ class TrainModel extends Component {
       'Select model',
       'Select users',
       'Select videos',
+      'Select species',
       'Select hyperparameters'
     ];
   }
@@ -384,6 +431,8 @@ class TrainModel extends Component {
       case 2:
         return this.selectVideo();
       case 3:
+        return this.selectConcepts();
+      case 4:
         return this.selectHyperparameters();
       default:
         return "Unknown step";
@@ -401,6 +450,7 @@ class TrainModel extends Component {
       modelSelected: this.state.modelSelected,
       usersSelected: this.state.usersSelected,
       videosSelected: this.state.videosSelected,
+      conceptsSelected: this.state.conceptsSelected,
       epochs: this.state.epochs,
       minImages: this.state.minImages
     };
@@ -425,12 +475,15 @@ class TrainModel extends Component {
     if (this.state.activeStep === 1) {
       this.loadVideoList();
     }
+    // After Model and videos have been selected load avalible concepts
+    if (this.state.activeStep === 2) {
+      this.loadConceptList();
+    }
     this.setState(state => ({
       activeStep: state.activeStep + 1
     }), () => {
-      if (this.state.activeStep === 4) {
-        //Start Model EC2
-        this.startEC2();
+      if (this.state.activeStep === 5) {
+        this.postModelInstance('start');
       }
       this.updateBackendInfo();
     });
@@ -449,42 +502,24 @@ class TrainModel extends Component {
       activeStep: 0
     }, () => {
       this.updateBackendInfo();
-      //Stop Model EC2
-      this.stopEC2();
+      this.postModelInstance('stop');
     });
   };
 
-
-  startEC2 = () => {
+  postModelInstance = (command) => {
     const config = {
       headers: {
         Authorization: "Bearer " + localStorage.getItem("token")
       }
     };
     const body = {
-      modelSelected: this.state.modelSelected
+      command: command,
+      modelInstanceId: 'AWS_EC2_TRAIN_MODEL'
     };
-    axios.put(`/api/trainModel`, body, config).then(res => {
+    axios.post(`/api/modelInstance`, body, config).then(res => {
       console.log(res);
     });
-  };
-
-  stopEC2 = () => {
-    const config = {
-      url: "/api/trainModel",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + localStorage.getItem("token")
-      },
-      data: {
-        modelSelected: this.state.modelSelected
-      },
-      method: "delete"
-    };
-    axios.request(config).then(res => {
-      console.log(res);
-    });
-  };
+  }
 
   render() {
     const { classes } = this.props;

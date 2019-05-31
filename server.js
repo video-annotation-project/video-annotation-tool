@@ -1176,59 +1176,66 @@ app.get(
   }
 );
 
-app.put(
-  "/api/runModel",
+app.post(
+  "/api/modelInstance",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     let ec2 = new AWS.EC2({ region: "us-west-1" });
+    
     var params = {
-      InstanceIds: [process.env.AWS_EC2_RUNMODEL]
+      InstanceIds: [process.env[req.body.modelInstanceId]]
     };
-    ec2.startInstances(params, function (err, data) {
-      if (err) console.log(err, err.stack); // an error occurred
-    });
+    if (req.body.command === "stop") {
+      ec2.stopInstances(params, (err, data) => {
+        if (err) console.log(err, err.stack);
+      });
+    } else {
+      ec2.startInstances(params, (err, data) => {
+        if (err) console.log(err, err.stack);
+      });
+    }
   }
 );
 
-app.delete(
-  "/api/runModel",
+app.get(
+  "/api/trainModel/concepts/:videoIDs/:modelName",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    let ec2 = new AWS.EC2({ region: "us-west-1" });
-    var params = {
-      InstanceIds: [process.env.AWS_EC2_RUNMODEL]
-    };
-    ec2.stopInstances(params, function (err, data) {
-      if (err) console.log(err, err.stack); // an error occurred
-    });
-  }
-);
-
-app.put(
-  "/api/trainModel",
-  passport.authenticate("jwt", { session: false }),
-  async (req, res) => {
-    let ec2 = new AWS.EC2({ region: "us-west-1" });
-    var params = {
-      InstanceIds: [process.env.AWS_EC2_TRAINMODEL]
-    };
-    ec2.startInstances(params, function (err, data) {
-      if (err) console.log(err, err.stack); // an error occurred
-    });
-  }
-);
-
-app.delete(
-  "/api/trainModel",
-  passport.authenticate("jwt", { session: false }),
-  async (req, res) => {
-    let ec2 = new AWS.EC2({ region: "us-west-1" });
-    var params = {
-      InstanceIds: [process.env.AWS_EC2_TRAINMODEL]
-    };
-    ec2.stopInstances(params, function (err, data) {
-      if (err) console.log(err, err.stack); // an error occurred
-    });
+    const queryText = `
+      SELECT
+        *
+      FROM 
+        concepts
+      WHERE
+        concepts.id in (
+          SELECT
+            unnest(concepts)
+          FROM
+            models
+          WHERE
+            name=$1
+        )
+      AND
+        concepts.id in (
+          SELECT
+            DISTINCT conceptid
+          FROM
+            annotations
+          WHERE
+            videoid::text = any(string_to_array($2, ','))
+        )
+    `;
+    try {
+      let response = await psql.query(
+        queryText,
+        [req.params.modelName, req.params.videoIDs]
+      );
+      res.json(response.rows);
+    } catch (error) {
+      console.log("Error on GET /api/trainModel/concepts");
+      console.log(error);
+      res.status(500).json(error);
+    }
   }
 );
 
@@ -1440,7 +1447,7 @@ app.patch(
   }
 );
 
-
+//This will be used to send info from the ec2 training the model
 app.put(
   "/api/model/update",
   passport.authenticate("jwt", { session: false }),
@@ -1461,8 +1468,8 @@ io.on("connection", socket => {
   socket.on("refresh videos", () => {
     socket.broadcast.emit("refresh videos");
   });
-  socket.on("refresh runmodel", () => {
-    socket.broadcast.emit("refresh runmodel");
+  socket.on("refresh predictmodel", () => {
+    socket.broadcast.emit("refresh predictmodel");
   });
   socket.on("refresh trainmodel", () => {
     //Model Tab: Train info needs to be updated
