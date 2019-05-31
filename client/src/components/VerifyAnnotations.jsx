@@ -16,6 +16,8 @@ import ConceptsSelected from "./ConceptsSelected";
 
 import VideoMetadata from "./VideoMetadata.jsx";
 import Description from "@material-ui/icons/Description";
+import Avatar from "@material-ui/core/Avatar";
+import Grid from "@material-ui/core/Grid";
 
 const styles = theme => ({
   button: {
@@ -58,11 +60,11 @@ const styles = theme => ({
   button1: {
     float: "left",
     margin: "0 auto",
-    width: "600px"
+    width: "800px"
   },
   button2: {
     float: "left",
-    width: "1000px",
+    width: "800px",
     margin: "0 auto"
   }
 });
@@ -92,7 +94,7 @@ class VerifyAnnotations extends Component {
       y: this.props.annotation.y1,
       width: this.props.annotation.x2 - this.props.annotation.x1,
       height: this.props.annotation.y2 - this.props.annotation.y1,
-      videoDialogOpen: false, /* needed for dialog component */
+      videoDialogOpen: false /* needed for dialog component */,
       imageStatus: "loading"
     };
   }
@@ -371,7 +373,7 @@ class VerifyAnnotations extends Component {
   //image load option
   handleImageLoaded = () => {
     this.setState({ imageStatus: "loaded" });
-  }
+  };
 
   handleImageErrored() {
     this.setState({ imageStatus: "failed to load" });
@@ -468,7 +470,7 @@ class VerifyAnnotations extends Component {
               >
                 Ignore
               </Button>
-              {this.state.imageStatus === "loaded" ?
+              {this.state.imageStatus === "loaded" ? (
                 <Button
                   className={classes.button}
                   variant="contained"
@@ -476,36 +478,52 @@ class VerifyAnnotations extends Component {
                   onClick={this.handleVerifyClick}
                 >
                   Verify
-                </Button> 
-                :
-                <Button
-                  className={classes.button}
-                  disabled={true}
-                >
+                </Button>
+              ) : (
+                <Button className={classes.button} disabled={true}>
                   Verify
-                </Button> 
-              }
+                </Button>
+              )}
               <IconButton aria-label="OnDemandVideo">
-                  <OndemandVideo onClick={this.videoDialogToggle} />
+                <OndemandVideo onClick={this.videoDialogToggle} />
               </IconButton>
             </div>
             <div className={classes.button2}>
-              <ConceptsSelected handleConceptClick={this.handleConceptClick} />
-              <VideoDialogWrapped
-                annotation={annotation}
-                open={this.state.videoDialogOpen}
-                onClose={this.videoDialogToggle}
-              />
-              <h3>
-                Concept:{" "}
-                {!this.state.concept
-                  ? annotation.name
-                  : this.state.concept.name}
-              </h3>
+              <Grid container direction="row" alignItems="center">
+                <Grid item>
+                  <h3>
+                    {!this.state.concept
+                      ? annotation.name
+                      : this.state.concept.name}
+                  </h3>
+                </Grid>
+                <Grid item>
+                  <Avatar
+                    src={`/api/conceptImages/${
+                      !this.state.concept
+                        ? annotation.conceptid
+                        : this.state.concept.id
+                    }`}
+                  />
+                </Grid>
+                <Grid item xs>
+                  <ConceptsSelected
+                    handleConceptClick={this.handleConceptClick}
+                  />
+                  <VideoDialogWrapped
+                    annotation={annotation}
+                    open={this.state.videoDialogOpen}
+                    onClose={this.videoDialogToggle}
+                  />
+                </Grid>
+              </Grid>
             </div>
-            <br /><br />
-            <br /><br />
-            <br /><br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
             <div>
               <Typography className={classes.paper} variant="title">
                 Annotation #{annotation.id}
@@ -516,7 +534,8 @@ class VerifyAnnotations extends Component {
               <Typography className={classes.paper} variant="body2">
                 Video: {annotation.filename}
                 <IconButton>
-                  <Description style={{ fontSize: 20 }}
+                  <Description
+                    style={{ fontSize: 20 }}
                     onClick={event =>
                       this.openVideoMetadata(event, { id: annotation.videoid })
                     }
