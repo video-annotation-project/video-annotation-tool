@@ -9,7 +9,7 @@ import MenuItem from "@material-ui/core/MenuItem";
 //Model components
 import CreateModel from "./CreateModel.jsx";
 import ViewModels from "./ViewModels.jsx";
-import RunModel from "./RunModel.jsx";
+import PredictModel from "./PredictModel.jsx";
 import TrainModel from "./TrainModel.jsx";
 
 const styles = theme => ({
@@ -60,7 +60,7 @@ class Models extends React.Component {
         break;
       case "run":
         //set modelElement to run model component
-        modelElement = <RunModel />;
+        modelElement = <PredictModel />;
         break;
       default:
         //set modelElement to empty div (nothing)
@@ -87,7 +87,7 @@ class Models extends React.Component {
             Train Model
           </MenuItem>
           <MenuItem onClick={() => this.handleSelection("run")}>
-            Run Model
+            Predict Model
           </MenuItem>
         </Menu>
         {modelElement}

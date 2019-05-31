@@ -41,7 +41,7 @@ async function findUser(userId) {
   }
 }
 
-var strategy = new JwtStrategy(jwtOptions, async function(jwt_payload, next) {
+var strategy = new JwtStrategy(jwtOptions, async function (jwt_payload, next) {
   // console.log('payload received', jwt_payload);
   var user = await findUser(jwt_payload.id);
   if (user) {
@@ -102,7 +102,7 @@ const setCookies = res => {
   });
 };
 
-app.post("/api/login", async function(req, res) {
+app.post("/api/login", async function (req, res) {
   const { username, password } = req.body;
   let queryPass = `
     SELECT 
@@ -584,6 +584,36 @@ app.get(
       const videoMetadata = await psql.query(queryText, [req.params.videoid]);
       res.json(videoMetadata.rows);
     } catch (error) {
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
+);
+
+// Get videos that users have viewed
+app.get(
+  "/api/videos/usersViewed/:userIDs",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    let queryText = `
+    SELECT v.id, v.filename 
+    FROM
+      checkpoints c
+    LEFT JOIN
+      videos v
+    ON
+      v.id=c.videoid
+    WHERE
+      c.userid::text = ANY(string_to_array($1, ','))
+    `;
+    try {
+      const videos = await psql.query(
+        queryText,
+        [req.params.userIDs]
+      );
+      res.json(videos.rows);
+    } catch (error) {
+      console.log("Error in get /api/videos/usersViewed/:userIDs");
       console.log(error);
       res.status(500).json(error);
     }
@@ -1155,31 +1185,66 @@ app.get(
   }
 );
 
-app.put(
-  "/api/runModel",
+app.post(
+  "/api/modelInstance",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     let ec2 = new AWS.EC2({ region: "us-west-1" });
+    
     var params = {
-      InstanceIds: [process.env.AWS_EC2_RUNMODEL]
+      InstanceIds: [process.env[req.body.modelInstanceId]]
     };
-    ec2.startInstances(params, function(err, data) {
-      if (err) console.log(err, err.stack); // an error occurred
-    });
+    if (req.body.command === "stop") {
+      ec2.stopInstances(params, (err, data) => {
+        if (err) console.log(err, err.stack);
+      });
+    } else {
+      ec2.startInstances(params, (err, data) => {
+        if (err) console.log(err, err.stack);
+      });
+    }
   }
 );
 
-app.delete(
-  "/api/runModel",
+app.get(
+  "/api/trainModel/concepts/:videoIDs/:modelName",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    let ec2 = new AWS.EC2({ region: "us-west-1" });
-    var params = {
-      InstanceIds: [process.env.AWS_EC2_RUNMODEL]
-    };
-    ec2.stopInstances(params, function(err, data) {
-      if (err) console.log(err, err.stack); // an error occurred
-    });
+    const queryText = `
+      SELECT
+        *
+      FROM 
+        concepts
+      WHERE
+        concepts.id in (
+          SELECT
+            unnest(concepts)
+          FROM
+            models
+          WHERE
+            name=$1
+        )
+      AND
+        concepts.id in (
+          SELECT
+            DISTINCT conceptid
+          FROM
+            annotations
+          WHERE
+            videoid::text = any(string_to_array($2, ','))
+        )
+    `;
+    try {
+      let response = await psql.query(
+        queryText,
+        [req.params.modelName, req.params.videoIDs]
+      );
+      res.json(response.rows);
+    } catch (error) {
+      console.log("Error on GET /api/trainModel/concepts");
+      console.log(error);
+      res.status(500).json(error);
+    }
   }
 );
 
@@ -1419,8 +1484,12 @@ io.on("connection", socket => {
   socket.on("refresh videos", () => {
     socket.broadcast.emit("refresh videos");
   });
-  socket.on("reload run model", () => {
-    socket.broadcast.emit("reload run model");
+  socket.on("refresh predictmodel", () => {
+    socket.broadcast.emit("refresh predictmodel");
+  });
+  socket.on("refresh trainmodel", () => {
+    //Model Tab: Train info needs to be updated
+    socket.broadcast.emit("refresh trainmodel");
   });
 });
 
