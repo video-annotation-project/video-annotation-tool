@@ -82,9 +82,9 @@ class ConceptsSelected extends React.Component {
     this.getConceptsSelected();
   };
 
-  toggleDrawer = boolean => {
+  toggleDrawer = () => {
     this.setState({
-      drawerOpen: boolean
+      drawerOpen: !this.state.drawerOpen
     });
   };
 
@@ -222,7 +222,7 @@ class ConceptsSelected extends React.Component {
         <div className={classes.drawerContent}>
           <IconButton
             className={classes.retractDrawerButton}
-            onClick={() => this.toggleDrawer(false)}
+            onClick={() => this.toggleDrawer()}
           >
             <ChevronRight />
           </IconButton>
@@ -275,7 +275,7 @@ class ConceptsSelected extends React.Component {
           className={classes.extendDrawerButton}
           variant="contained"
           color="primary"
-          onClick={() => this.toggleDrawer(true)}
+          onClick={() => this.toggleDrawer()}
         >
           Toggle Concepts Selected
         </Button>
