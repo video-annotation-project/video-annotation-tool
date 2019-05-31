@@ -94,7 +94,7 @@ def evaluate_model(concepts, model_path,  min_examples, download_data=False):
     '''
 
 if __name__ == '__main__':
-    min_examples = 5000
+    min_examples = 1000
     concepts = [1629, 1210, 236, 383, 1133]
     model_path = 'current_weights.h5'
 
