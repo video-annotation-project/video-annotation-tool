@@ -58,6 +58,7 @@ const styles = theme => ({
     float: "right"
   },
   button1: {
+    marginTop: "10px",
     float: "left",
     margin: "0 auto",
     width: "800px"

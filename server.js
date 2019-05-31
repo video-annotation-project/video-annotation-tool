@@ -1240,7 +1240,7 @@ app.get(
     const selectedUsers = req.query.selectedUsers;
 
     let sqlUsers = "";
-    if (!(selectedUsers.length === 1 && selectedUsers[0] === "-2")) {
+    if (!(selectedUsers.length === 1 && selectedUsers[0] === "-1")) {
       sqlUsers = " AND (a.userid=" + selectedUsers[0];
       for (let i = 0; i < selectedUsers.length; i++) {
         sqlUsers += " OR a.userid=" + selectedUsers[i];
@@ -1269,7 +1269,7 @@ app.get(
     const selectedVideos = req.query.selectedVideos;
 
     let sqlUsers = "";
-    if (!(selectedUsers.length === 1 && selectedUsers[0] === "-2")) {
+    if (!(selectedUsers.length === 1 && selectedUsers[0] === "-1")) {
       sqlUsers = " AND (a.userid=" + selectedUsers[0];
       for (let i = 0; i < selectedUsers.length; i++) {
         sqlUsers += " OR a.userid=" + selectedUsers[i];
@@ -1278,7 +1278,7 @@ app.get(
     }
 
     let sqlVideos = "";
-    if (!(selectedVideos.length === 1 && selectedVideos[0] === "-2")) {
+    if (!(selectedVideos.length === 1 && selectedVideos[0] === "-1")) {
       sqlVideos = " AND (a.videoid=" + selectedVideos[0];
       for (let i = 0; i < selectedVideos.length; i++) {
         sqlVideos += " OR a.videoid=" + selectedVideos[i];
@@ -1311,7 +1311,7 @@ app.get(
     const selectedConcepts = req.query.selectedConcepts;
 
     let sqlUsers = "";
-    if (!(selectedUsers.length === 1 && selectedUsers[0] === "-2")) {
+    if (!(selectedUsers.length === 1 && selectedUsers[0] === "-1")) {
       sqlUsers = " AND (a.userid=" + selectedUsers[0];
       for (let i = 0; i < selectedUsers.length; i++) {
         sqlUsers += " OR a.userid=" + selectedUsers[i];
@@ -1320,7 +1320,7 @@ app.get(
     }
 
     let sqlVideos = "";
-    if (!(selectedVideos.length === 1 && selectedVideos[0] === "-2")) {
+    if (!(selectedVideos.length === 1 && selectedVideos[0] === "-1")) {
       sqlVideos = " AND (a.videoid=" + selectedVideos[0];
       for (let i = 0; i < selectedVideos.length; i++) {
         sqlVideos += " OR a.videoid=" + selectedVideos[i];
@@ -1329,7 +1329,7 @@ app.get(
     }
 
     let sqlConcepts = "";
-    if (!(selectedConcepts.length === 1 && selectedConcepts[0] === "-2")) {
+    if (!(selectedConcepts.length === 1 && selectedConcepts[0] === "-1")) {
       sqlConcepts = " AND (a.conceptid=" + selectedConcepts[0];
       for (let i = 0; i < selectedConcepts.length; i++) {
         sqlConcepts += " OR a.conceptid=" + selectedConcepts[i];

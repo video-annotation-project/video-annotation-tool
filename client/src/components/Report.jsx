@@ -47,7 +47,7 @@ class Report extends React.Component {
     });
   };
 
-  setUnVerifiedOnly = value => {
+  setUnverifiedOnly = value => {
     this.setState({
       unverifiedOnly: value
     });
@@ -101,7 +101,7 @@ class Report extends React.Component {
           verifiedOnly={verifiedOnly}
           setVerifiedOnly={this.setVerifiedOnly}
           unverifiedOnly={unverifiedOnly}
-          setUnVerifiedOnly={this.setUnVerifiedOnly}
+          setUnverifiedOnly={this.setUnverifiedOnly}
           level1={level1}
           level2={level2}
           level3={level3}

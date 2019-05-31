@@ -52,8 +52,8 @@ class ReportModal extends Component {
     this.props.setVerifiedOnly(event.target.checked);
   };
 
-  handleUnVerifiedCheckbox = event => {
-    this.props.setUnVerifiedOnly(event.target.checked);
+  handleUnverifiedCheckbox = event => {
+    this.props.setUnverifiedOnly(event.target.checked);
   };
 
   handleOptionAvailableToggle = (level, optionSelected) => {
@@ -173,7 +173,7 @@ class ReportModal extends Component {
                   control={
                     <Checkbox
                       checked={unverifiedOnly}
-                      onChange={event => this.handleUnVerifiedCheckbox(event)}
+                      onChange={event => this.handleUnverifiedCheckbox(event)}
                       value="unverifiedOnly"
                       color="primary"
                     />

@@ -48,9 +48,10 @@ class Verify extends Component {
     super(props);
     this.state = {
       selectionMounted: true,
-      selectedUsers: ["-2"],
-      selectedVideos: ["-2"],
-      selectedConcepts: ["-2"],
+      /* -1 represents select all */
+      selectedUsers: ["-1"],
+      selectedVideos: ["-1"],
+      selectedConcepts: ["-1"],
       annotations: [],
       error: null,
       index: 0
@@ -142,12 +143,12 @@ class Verify extends Component {
 
   handleChange = type => event => {
     if (!this.state[type].includes(event.target.value)) {
-      if (event.target.value === "-2") {
+      if (event.target.value === "-1") {
         this.setState({
-          [type]: ["-2"]
+          [type]: ["-1"]
         });
       } else {
-        if (this.state[type].length === 1 && this.state[type][0] === "-2") {
+        if (this.state[type].length === 1 && this.state[type][0] === "-1") {
           this.setState({
             [type]: [event.target.value]
           });
@@ -166,9 +167,9 @@ class Verify extends Component {
 
   resetState = () => {
     this.setState({
-      selectedUsers: ["-2"],
-      selectedVideos: ["-2"],
-      selectedConcepts: ["-2"],
+      selectedUsers: ["-1"],
+      selectedVideos: ["-1"],
+      selectedConcepts: ["-1"],
       index: 0
     });
   };
