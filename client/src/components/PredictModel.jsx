@@ -325,7 +325,7 @@ class PredictModel extends Component {
       () => {
         if (this.state.activeStep === 3) {
           console.log("Last Step Starting Model...");
-          this.postModelInstance('start');
+          this.postModelInstance("start");
         }
         this.updateBackendInfo();
       }
@@ -350,12 +350,12 @@ class PredictModel extends Component {
       },
       () => {
         this.updateBackendInfo();
-        this.postModelInstance('stop');
+        this.postModelInstance("stop");
       }
     );
   };
 
-  postModelInstance = (command) => {
+  postModelInstance = command => {
     const config = {
       headers: {
         Authorization: "Bearer " + localStorage.getItem("token")
@@ -363,7 +363,7 @@ class PredictModel extends Component {
     };
     const body = {
       command: command,
-      modelInstanceId: 'i-0f2287cb0fc621b6d'
+      modelInstanceId: "i-0f2287cb0fc621b6d"
     };
     axios.post(`/api/modelInstance`, body, config).then(res => {
       console.log(res);
