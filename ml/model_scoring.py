@@ -27,7 +27,8 @@ def f1_evaluation(generator,model,iou_threshold=0.5,score_threshold=0.05,max_det
         if not generator.has_label(label):
             continue
 
-        true_positives, false_positives, scores, num_annotations = compute_measures(generator, label)
+        true_positives, false_positives, scores, num_annotations = 
+            compute_measures(generator, label, all_detections, all_annotations)
         if num_annotations == 0:
             continue
 
@@ -40,7 +41,7 @@ def f1_evaluation(generator,model,iou_threshold=0.5,score_threshold=0.05,max_det
     return best_f1, best_thresh
 
 
-def compute_measures(generator, label):
+def compute_measures(generator, label all_detections, all_annotations):
     false_positives = np.zeros((0,))
     true_positives  = np.zeros((0,))
     scores          = np.zeros((0,))
