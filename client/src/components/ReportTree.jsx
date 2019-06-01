@@ -118,6 +118,8 @@ class ReportTree extends Component {
                   levels={levels}
                   unsureOnly={unsureOnly}
                   classes={classes}
+                  verifiedOnly={this.props.verifiedOnly}
+                  unverifiedOnly={this.props.unverifiedOnly}
                 />
               ) : data.count > 100 ? (
                 <AnnotationsGroup
@@ -141,6 +143,8 @@ class ReportTree extends Component {
                     data.key
                   }
                   unsureOnly={unsureOnly}
+                  verifiedOnly={this.props.verifiedOnly}
+                  unverifiedOnly={this.props.unverifiedOnly}
                 />
               )}
             </Collapse>

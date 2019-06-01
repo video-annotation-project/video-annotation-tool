@@ -786,6 +786,14 @@ app.get(
     if (req.query.unsureOnly === "true") {
       queryPass = queryPass + " AND annotations.unsure = true";
     }
+    if (!(req.query.verifiedOnly === "true" && req.query.unverifiedOnly === "true")) {
+      if (req.query.verifiedOnly === "true") {
+        queryPass = queryPass + " AND annotations.verifiedby IS NOT NULL";
+      }
+      if (req.query.unverifiedOnly === "true") {
+        queryPass = queryPass + " AND annotations.verifiedby IS NULL";
+      }
+    }
     if (req.query.admin !== "true") {
       queryPass = queryPass + " AND annotations.userid = $1";
       params.push(req.user.id);
