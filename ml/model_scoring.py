@@ -41,22 +41,22 @@ def f1_evaluation(generator,model,iou_threshold=0.5,score_threshold=0.05,max_det
 
 
 def compute_measures(generator, label):
-    num_annotations = 0.0
     false_positives = np.zeros((0,))
     true_positives  = np.zeros((0,))
     scores          = np.zeros((0,))
+    num_annotations = 0.0
     
     for i in range(generator.size()):
-        num_annotations     += annotations.shape[0]
         detections           = all_detections[i][label]
         annotations          = all_annotations[i][label]
+        num_annotations     += annotations.shape[0]
         detected_annotations = []
 
         index_sort_by_score = detections[:,4].argsort()[::-1]
         for d in detections[index_sort_by_score]:
             scores = np.append(scores, d[4])
 
-            if annotations.shape[0] == 0:
+            if num_annotations == 0:
                 false_positives = np.append(false_positives, 1)
                 true_positives  = np.append(true_positives, 0)
                 continue
@@ -76,7 +76,7 @@ def compute_measures(generator, label):
     return true_positives, false_positives, scores, num_annotations
 
 
-def compute_f1(true_positives, false_positives scores, num_annotations):
+def compute_f1(true_positives, false_positives, scores, num_annotations):
     # sort by score
     indices = np.argsort(-scores)
     scores = scores[indices]
