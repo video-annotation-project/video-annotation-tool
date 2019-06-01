@@ -56,12 +56,12 @@ const styles = theme => ({
   icons: {
     float: "right"
   },
-  buttonContainer1: {
+  buttonsContainer1: {
     marginTop: "10px",
     float: "left",
     margin: "0 auto"
   },
-  buttonContainer2: {
+  buttonsContainer2: {
     float: "left",
     margin: "0 auto"
   }
@@ -110,8 +110,6 @@ class VerifyAnnotations extends Component {
 
   componentDidMount = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
-    // add event listener for different key presses
-    document.addEventListener("keydown", this.handleKeyDown);
     this.displayLoading();
   };
 
@@ -452,7 +450,7 @@ class VerifyAnnotations extends Component {
             <Typography className={classes.paper}>
               {this.props.index + 1} of {this.props.size}
             </Typography>
-            <div className={classes.buttonContainer1}
+            <div className={classes.buttonsContainer1}
               style={{width: annotation.videowidth/2}}>
               <MuiThemeProvider theme={theme}>
                 <Button
@@ -491,7 +489,7 @@ class VerifyAnnotations extends Component {
                 <OndemandVideo onClick={this.videoDialogToggle} />
               </IconButton>
             </div>
-            <div className={classes.buttonContainer2}
+            <div className={classes.buttonsContainer2}
               style={{width: annotation.videowidth/2}}>
               <Grid container direction="row" alignItems="center">
                 <Grid item>

@@ -204,8 +204,12 @@ app.get(
   "/api/users",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    const queryText = "SELECT id, username \
+    var queryText = "SELECT id, username \
                        FROM users";
+
+    if (req.query.noAi === "true") {
+      queryText += " WHERE id <> 17";
+    }
 
     try {
       const users = await psql.query(queryText);
@@ -1320,6 +1324,9 @@ app.get(
       }
       sqlUsers += ")";
     }
+    else {
+      sqlUsers = " AND a.userid <> 17";
+    }
 
     let queryText =
       `SELECT DISTINCT v.id, v.filename
@@ -1348,6 +1355,9 @@ app.get(
         sqlUsers += " OR a.userid=" + selectedUsers[i];
       }
       sqlUsers += ")";
+    }
+    else {
+      sqlUsers = " AND a.userid <> 17";
     }
 
     let sqlVideos = "";
@@ -1390,6 +1400,9 @@ app.get(
         sqlUsers += " OR a.userid=" + selectedUsers[i];
       }
       sqlUsers += ")";
+    }
+    else {
+      sqlUsers = " AND a.userid <> 17";
     }
 
     let sqlVideos = "";

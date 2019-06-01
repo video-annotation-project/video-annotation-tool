@@ -73,7 +73,7 @@ class Verify extends Component {
 
   getUsers = async () => {
     return axios
-      .get(`/api/users`, {
+      .get(`/api/users?noAi=true`, {
         headers: { Authorization: "Bearer " + localStorage.getItem("token") }
       })
       .then(res => res.data)
