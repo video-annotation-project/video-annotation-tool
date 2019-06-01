@@ -97,7 +97,7 @@ class VerifyAnnotations extends Component {
 
   displayLoading = () => {
     Swal.fire({
-      title: 'Loading...',
+      title: "Loading...",
       showConfirmButton: false,
       onBeforeOpen: () => {
         Swal.showLoading();
@@ -108,7 +108,7 @@ class VerifyAnnotations extends Component {
         document.addEventListener("keydown", this.handleKeyDown);
       }
     });
-  }
+  };
 
   componentDidMount = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -133,11 +133,14 @@ class VerifyAnnotations extends Component {
     // we remove the event listener to prevent double submissions
     // we will add it back once the next annotation has loaded
     document.removeEventListener("keydown", this.handleKeyDown);
-    if (e.code === "KeyD") { // delete shortcut
+    if (e.code === "KeyD") {
+      // delete shortcut
       this.handleDelete();
-    } else if (e.code === "KeyI") { // ignore shortcut
+    } else if (e.code === "KeyI") {
+      // ignore shortcut
       this.nextAnnotation();
-    } else if (e.code === "KeyV") { // verify shortcut
+    } else if (e.code === "KeyV") {
+      // verify shortcut
       this.handleVerifyClick();
     }
   };
@@ -256,8 +259,8 @@ class VerifyAnnotations extends Component {
 
     var x1 = Math.max(x1_box - x1_image, 0);
     var y1 = Math.max(y1_box - y1_image, 0);
-    var x2 = Math.min(x1 + width, this.props.annotation.videowidth-1);
-    var y2 = Math.min(y1 + height, this.props.annotation.videoheight-1);
+    var x2 = Math.min(x1 + width, this.props.annotation.videowidth - 1);
+    var y2 = Math.min(y1 + height, this.props.annotation.videoheight - 1);
 
     await this.updateBox(x1, y1, x2, y2, imageCord, dragBoxCord, imageElement);
   };
@@ -366,10 +369,6 @@ class VerifyAnnotations extends Component {
     });
   };
 
-  handleImageLoaded = () => {
-    Swal.close();
-  };
-
   render() {
     const { classes } = this.props;
     var annotation = this.props.annotation;
@@ -420,11 +419,9 @@ class VerifyAnnotations extends Component {
                   />
                   <img
                     id="image"
-                    onLoad={this.handleImageLoaded.bind(this)}
+                    onLoad={Swal.close}
                     className={classes.img}
-                    src={
-                        `/api/annotationImages/${annotation.id}?withBox=false`
-                    }
+                    src={`/api/annotationImages/${annotation.id}?withBox=false`}
                     alt="error"
                     crossOrigin="use-credentials"
                     style={{
@@ -438,8 +435,10 @@ class VerifyAnnotations extends Component {
             <Typography className={classes.paper}>
               {this.props.index + 1} of {this.props.size}
             </Typography>
-            <div className={classes.buttonsContainer1}
-              style={{width: annotation.videowidth/2}}>
+            <div
+              className={classes.buttonsContainer1}
+              style={{ width: annotation.videowidth / 2 }}
+            >
               <MuiThemeProvider theme={theme}>
                 <Button
                   className={classes.button}
@@ -472,13 +471,15 @@ class VerifyAnnotations extends Component {
               >
                 Verify
               </Button>
-            
+
               <IconButton aria-label="OnDemandVideo">
                 <OndemandVideo onClick={this.videoDialogToggle} />
               </IconButton>
             </div>
-            <div className={classes.buttonsContainer2}
-              style={{width: annotation.videowidth/2}}>
+            <div
+              className={classes.buttonsContainer2}
+              style={{ width: annotation.videowidth / 2 }}
+            >
               <Grid container direction="row" alignItems="center">
                 <Grid item>
                   <Avatar
