@@ -103,6 +103,8 @@ class VerifyAnnotations extends Component {
         Swal.showLoading();
       },
       onClose: () => {
+        /* we removed the eventListener before displaying the loading modal to prevent double submissions 
+          Once the loading modal closes, we add it back. */
         document.addEventListener("keydown", this.handleKeyDown);
       }
     });
@@ -123,20 +125,19 @@ class VerifyAnnotations extends Component {
     if (e.target !== document.body) {
       return;
     }
-    if (e.code === "KeyD") {
-      // delete shortcut
-      document.removeEventListener("keydown", this.handleKeyDown);
-      this.handleDelete();
-    } else if (e.code === "KeyR") {
+    if (e.code === "KeyR") {
       // reset shortcut
       this.resetState();
-    } else if (e.code === "KeyI") {
-      // ignore shortcut
-      document.removeEventListener("keydown", this.handleKeyDown);
+      return;
+    }
+    // we remove the event listener to prevent double submissions
+    // we will add it back once the next annotation has loaded
+    document.removeEventListener("keydown", this.handleKeyDown);
+    if (e.code === "KeyD") { // delete shortcut
+      this.handleDelete();
+    } else if (e.code === "KeyI") { // ignore shortcut
       this.nextAnnotation();
-    } else if (e.code === "KeyV") {
-      // verify shortcut
-      document.removeEventListener("keydown", this.handleKeyDown);  
+    } else if (e.code === "KeyV") { // verify shortcut
       this.handleVerifyClick();
     }
   };
@@ -431,19 +432,6 @@ class VerifyAnnotations extends Component {
                       height: annotation.videoheight
                     }}
                   />
-                  {/* <img
-                    id="image"
-                    className={classes.img}
-                    src={
-                        `/api/annotationImages/${annotation.id}?withBox=true`
-                    }
-                    alt="error"
-                    crossOrigin="use-credentials"
-                    style={{
-                      width: annotation.videowidth,
-                      height: annotation.videoheight
-                    }}
-                  /> */}
                 </div>
               </div>
             )}
