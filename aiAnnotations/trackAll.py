@@ -27,7 +27,7 @@ while True:
     con = connect(database=DB_NAME, host=DB_HOST, user=DB_USER, password=DB_PASSWORD)
     cursor = con.cursor()
     # get annotations from test
-    cursor.execute("SELECT * FROM annotations WHERE originalid IS NULL")
+    cursor.execute("SELECT * FROM annotations WHERE originalid is NULL")
     rows = cursor.fetchall()
 
     processes = []
@@ -58,4 +58,5 @@ while True:
             print("Failed on video for annotation: " + str(i.id))
         cursor.execute("UPDATE annotations SET originalid=%d WHERE id=%d;",(i.id, i.id,))
     con.commit()
-    con.close()    
+    con.close()
+    break

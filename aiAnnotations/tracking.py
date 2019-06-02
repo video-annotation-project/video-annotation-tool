@@ -11,6 +11,7 @@ import time
 import uuid
 import sys
 import math
+from fix_offset import fix_offset
 
 #Load environment variables
 load_dotenv(dotenv_path="../.env")
@@ -156,9 +157,15 @@ def track_object(frame_num, frames, box, video_object, end, original, cursor, co
 
 #original must be pgdb row
 def track_annotation(original):
+
+   # Weird javascript time errors are fixed here
+   fix_offset(original)
+
    con = connect(database=DB_NAME, host=DB_HOST, user=DB_USER, password=DB_PASSWORD)
    cursor = con.cursor()
 
+   original = cursor.execute("SELECT * from annotations where id=%d",(original.id,)).fetchone()
+   
    #get TRACKING userid
    cursor.execute("SELECT id FROM users WHERE username=%s", ("tracking",))
    TRACKING_ID = cursor.fetchone().id
