@@ -20,15 +20,15 @@ con = connect(database=DB_NAME, host=DB_HOST, user=DB_USER, password=DB_PASSWORD
 cursor = con.cursor()
 
 #Get ai userid
-cursor.execute("SELECT id FROM users WHERE username=%s", ("ai",))
-AI_id = cursor.fetchone().id
+cursor.execute("SELECT id FROM users WHERE username=%s", ("ai",)) # change to tracking!
+TRACKING_ID = cursor.fetchone().id
 
-#removes all ai annotations from psql table
-cursor.execute("DELETE FROM annotations WHERE userid=%d RETURNING *",(AI_id,))
+#removes all tracking annotations from psql table
+cursor.execute("DELETE FROM annotations WHERE userid=%d RETURNING *",(TRACKING_ID,))
 for i in cursor.fetchall():
         s3.delete_object(Bucket=S3_BUCKET, Key=os.getenv("AWS_S3_BUCKET_ANNOTATIONS_FOLDER") + i.image)
         s3.delete_object(Bucket=S3_BUCKET, Key=os.getenv("AWS_S3_BUCKET_ANNOTATIONS_FOLDER") + i.imagewithbox)
-        s3.delete_object(Bucket=S3_BUCKET, Key=os.getenv('AWS_S3_BUCKET_VIDEOS_FOLDER') + str(i.originalid) + "_ai.mp4")
+        s3.delete_object(Bucket=S3_BUCKET, Key=os.getenv('AWS_S3_BUCKET_VIDEOS_FOLDER') + str(i.originalid) + "_ai.mp4")  # change to trackingg!!!
         cursor.execute("UPDATE annotations SET originalid=null WHERE id=%d;",(i.originalid,))
         print(i)
 con.commit()

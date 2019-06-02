@@ -6,20 +6,16 @@ data using opencv tracking methods.
 First have to set up the ec2 instance, choose an ubutuntu server AMI, and make 
 sure to add extra storage space(NOT MEMORY, 32Gigs on an ssd should be enough).
 
-1. SETTING UP OPENCV
+1. SETTING UP OPENCV AND OTHER PACKAGES
 	SSH into the ec2 instance and follow
 	https://www.pyimagesearch.com/opencv-tutorials-resources-guides/
-	to set up opencv, make sure to add '-DWITH_FFMPEG=ON' to the cmake command. You'll have to download
-	a couple of extra packages along the way, and make sure to update paths to point to the correct places.
-
-	*** Make sure to be doing everything on python 3.6 and in a virtual env (usually named 'cv')***
+	to set up opencv 4, make sure to add '-DWITH_FFMPEG=ON' to the cmake command. 
+	You'll probably have to downloada a couple of extra packages along the way.
 	Confirm that it is working with 'python -c 'import cv2; print(cv2.__version__);'
-	(Hopefully we can have a test script at some point)
-	You'll have to pip install a bunch of packages (WHILE IN VENV)
-	pip install python-dotenv
-	pip install keras
-	pip install boto3
-	pip install tensorflow
+
+	*** Make sure to be doing everything on python 3.6 and in a virtual env (we named ours 'cv')***
+	You'll have to pip install a bunch of packages (WHILE IN VENV) to get the script working.
+        (Hopefully we can make a requirements.txt)
 
 	As well as 
 	sudo apt install ffmpeg
@@ -29,7 +25,6 @@ sure to add extra storage space(NOT MEMORY, 32Gigs on an ssd should be enough).
 	Just run 'nohup python annotateAll.py &' to begin automatic annotations.
 	Can view status with 'tail nohup.out'.
 	This script runs constantly, looking up unprocessed annotations and tracking for any it finds.
-
 
 
 HELPFUL SQL QUERIES:
@@ -47,5 +42,3 @@ DELETE FROM annotations T1
 USING   annotations T2
 WHERE   T1.id < T2.id
 AND T1.image  = T2.image;
-
-

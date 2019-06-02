@@ -52,7 +52,7 @@ OPENCV_OBJECT_TRACKERS = {
 #    cursor = con.cursor()
 #    cursor.execute("SELECT * FROM annotations WHERE id=9006")
 #    row = cursor.fetchone()
-#    ai_annotation(row)
+#    track_annotation(row)
 
 def get_next_frame(frames, video_object, num):
    if video_object:
@@ -64,9 +64,9 @@ def get_next_frame(frames, video_object, num):
    return frame
 
 #Uploads images and puts annotation in database
-def upload_image(frame_num, timeinvideo, frame, frame_w_box, annotation, x1, y1, x2, y2, cursor, con, AI_ID):
-   no_box = str(annotation.videoid) + "_" + str(timeinvideo) + "_ai.png"
-   box = str(annotation.id) + "_" + str(timeinvideo) + "_box_ai.png"
+def upload_image(frame_num, timeinvideo, frame, frame_w_box, annotation, x1, y1, x2, y2, cursor, con, TRACKING_ID):
+   no_box = str(annotation.videoid) + "_" + str(timeinvideo) + "_tracking.png"
+   box = str(annotation.id) + "_" + str(timeinvideo) + "_box_tracking.png"
    temp_file = str(uuid.uuid4()) + ".png"
    cv2.imwrite(temp_file, frame)
    s3.upload_file(temp_file, S3_BUCKET, S3_ANNOTATION_FOLDER + no_box, ExtraArgs={'ContentType':'image/png'}) 
@@ -82,7 +82,7 @@ def upload_image(frame_num, timeinvideo, frame, frame_w_box, annotation, x1, y1,
 	 VALUES (%d, %d, %d, %d, %f, %f, %f, %f, %f, %d, %d, %s, %s, %s, %s, %s, %d)
       """,
        (
-	 frame_num, annotation.videoid, AI_ID, annotation.conceptid, timeinvideo, x1, y1, 
+	 frame_num, annotation.videoid, TRACKING_ID, annotation.conceptid, timeinvideo, x1, y1, 
 	 x2, y2, VIDEO_WIDTH, VIDEO_HEIGHT, datetime.datetime.now().date(), no_box, box, 
 	 annotation.comment, annotation.unsure, annotation.id
        )
@@ -97,7 +97,7 @@ def increment_frame_num(video_object, frame_num):
    return frame_num
 
 #Tracks the object forwards and backwards in a video
-def track_object(frame_num, frames, box, video_object, end, original, cursor, con, AI_ID, fps):
+def track_object(frame_num, frames, box, video_object, end, original, cursor, con, TRACKING_ID, fps):
    frame_list = []
    trackers = cv2.MultiTracker_create()
 
@@ -139,7 +139,7 @@ def track_object(frame_num, frames, box, video_object, end, original, cursor, co
          else:
             timeinvideo = original.timeinvideo - timeinvideo
          timeinvideo = round(timeinvideo, 2)
-         upload_image(frame_num, timeinvideo, frame_no_box, frame, original, x, y, (x+w), (y+h), cursor, con, AI_ID)
+         upload_image(frame_num, timeinvideo, frame_no_box, frame, original, x, y, (x+w), (y+h), cursor, con, TRACKING_ID)
          counter += 1
          time_elapsed += (1/fps)
       # make video at least 4 seconds long (2 before and 2 after annotation) even if object isn't tracked
@@ -155,13 +155,13 @@ def track_object(frame_num, frames, box, video_object, end, original, cursor, co
    return frame_list
 
 #original must be pgdb row
-def ai_annotation(original):
+def track_annotation(original):
    con = connect(database=DB_NAME, host=DB_HOST, user=DB_USER, password=DB_PASSWORD)
    cursor = con.cursor()
 
-   #get AI userid
-   cursor.execute("SELECT id FROM users WHERE username=%s", ("ai",))
-   AI_ID = cursor.fetchone().id
+   #get TRACKING userid
+   cursor.execute("SELECT id FROM users WHERE username=%s", ("tracking",))
+   TRACKING_ID = cursor.fetchone().id
 
    # get video name
    cursor.execute("SELECT filename FROM videos WHERE id=%s", (str(original.videoid),))
@@ -207,13 +207,13 @@ def ai_annotation(original):
    frames = vs
    frame_num = (int(frames.get(1)))
    print("tracking forwards..")
-   forward_frames = track_object(frame_num, frames, box, True, start + (LENGTH / 2), original, cursor, con, AI_ID, fps)
+   forward_frames = track_object(frame_num, frames, box, True, start + (LENGTH / 2), original, cursor, con, TRACKING_ID, fps)
    vs.release()
 
    # get object tracking frames prior to annotation
    frames = frame_list
    print("tracking backwards..")
-   reverse_frames = track_object(frame_num, frames, box, False, 0, original, cursor, con, AI_ID, fps)
+   reverse_frames = track_object(frame_num, frames, box, False, 0, original, cursor, con, TRACKING_ID, fps)
    reverse_frames.reverse()
 
    output_file = str(uuid.uuid4()) + ".mp4"
@@ -232,7 +232,7 @@ def ai_annotation(original):
       s3.upload_file(
 	  converted_file, 
 	  S3_BUCKET, 
-	  S3_VIDEO_FOLDER + str(original.id) + "_ai.mp4", 
+	  S3_VIDEO_FOLDER + str(original.id) + "_tracking.mp4", 
 	  ExtraArgs={'ContentType':'video/mp4'}
       )
       os.system('rm '+ converted_file)
