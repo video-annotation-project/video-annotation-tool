@@ -1,7 +1,7 @@
 from skimage.measure import compare_ssim
 import imutils
 import cv2
-from pgdb import Connection as connect
+from pgdb import connect
 import boto3
 import os
 from dotenv import load_dotenv
@@ -25,7 +25,6 @@ S3_BUCKET = os.getenv('AWS_S3_BUCKET_NAME')
 s3 = boto3.client('s3', aws_access_key_id = AWS_ACCESS_KEY_ID, aws_secret_access_key = AWS_SECRET_ACCESS_KEY)
 S3_ANNOTATION_FOLDER = os.getenv("AWS_S3_BUCKET_ANNOTATIONS_FOLDER")
 S3_VIDEO_FOLDER = os.getenv('AWS_S3_BUCKET_VIDEOS_FOLDER')
-S3_TRACKING_FOLDER = os.getenv("AWS_S3_BUCKET_TRACKING_FOLDER")
 
 # connect to db
 DB_NAME = os.getenv("DB_NAME")
@@ -34,11 +33,10 @@ DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 
 # video/image properties
-LENGTH = 2000 # length of video in milliseconds
 VIDEO_WIDTH = 1600
 VIDEO_HEIGHT = 900
 
-def main():
+def testing():
     offsets = []
 
     con = connect(database=DB_NAME, host=DB_HOST, user=DB_USER, password=DB_PASSWORD)
@@ -50,6 +48,7 @@ def main():
       FROM \
         annotations \
       WHERE \
+        id=5001259 AND \
         userid!=17 \
       ORDER BY \
         random() \
@@ -60,19 +59,14 @@ def main():
     con.close()
 
     for i in rows:
-      print(i)
+      fix_offset(i)
 
-    with Pool() as p:
-      offsets = list(p.map(get_offset, rows))
-
-    print(offsets)
-
-def get_offset(annotation):
+def fix_offset(annotation):
    con = connect(database=DB_NAME, host=DB_HOST, user=DB_USER, password=DB_PASSWORD)
    cursor = con.cursor()
 
    # get video name
-   cursor.execute("SELECT filename FROM videos WHERE id=%s", (str(annotation[0]),))
+   cursor.execute("SELECT filename FROM videos WHERE id=%s", (str(annotation.videoid),))
    video_name = cursor.fetchone()[0]
 
    # grab video stream
@@ -88,7 +82,7 @@ def get_offset(annotation):
    search_range = 1/fps * frames
 
    # initialize video for grabbing frames before annotation
-   cap.set(0, (annotation[1]-search_range)*1000) # tell video to start at 'start'-1 time
+   cap.set(0, (annotation.timeinvideo-search_range)*1000) # tell video to start at 'start'-1 time
    
    imgs = []
    times = []
@@ -108,11 +102,12 @@ def get_offset(annotation):
    try:
      obj = s3.get_object(
         Bucket=S3_BUCKET,
-        Key= S3_ANNOTATION_FOLDER + annotation[2]
+        Key= S3_ANNOTATION_FOLDER + annotation.image
      )
    except:
     print("Annotation missing image.")
-    return None
+    con.close()
+    return
    img = Image.open(obj['Body'])
    img = np.asarray(img)
    img = img[:,:,:3]
@@ -125,19 +120,24 @@ def get_offset(annotation):
     # +1 or -1
     for s in range(-1,2,2):
       index = math.ceil(fps*search_range) + i * s
+      if index == len(imgs):
+          continue
       (score, diff) = compare_ssim(img, imgs[index], full=True, multichannel=True)
       if best_score < score:
         best = index
         best_score = score
 
       if best_score > .95:
-        #cursor.execute("UPDATE annotations SET timeinvideo=%d WHERE id=%d;",(times[best]/1000, annotation[]))
-        #con.commit()
-        #con.close()
-        #return
-        return times[best]/1000 #best - math.ceil(fps*search_range)
-   return  None
+        cursor.execute("UPDATE annotations SET timeinvideo=%f WHERE id=%d;",(times[best]/1000, annotation.id))
+        print(annotation.id)
+        print(times[best]/1000)
+        con.commit()
+        con.close()
+        return
+   cursor.execute("UPDATE annotations SET unsure=TRUE WHERE id=%d;",(annotation.id))
+   con.commit()
+   con.close()
 
 if __name__ == "__main__":
-   main()
+   testing()
 
