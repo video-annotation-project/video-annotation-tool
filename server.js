@@ -1,21 +1,21 @@
-const express = require('express');
+const express = require("express");
 const app = express();
-const server = require('http').createServer(app);
-const io = require('socket.io')(server);
+const server = require("http").createServer(app);
+const io = require("socket.io")(server);
 
-const bodyParser = require('body-parser');
-const path = require('path');
+const bodyParser = require("body-parser");
+const path = require("path");
 
-const _ = require('lodash');
-const passport = require('passport');
-const jwt = require('jsonwebtoken');
-const passportJWT = require('passport-jwt');
+const _ = require("lodash");
+const passport = require("passport");
+const jwt = require("jsonwebtoken");
+const passportJWT = require("passport-jwt");
 const ExtractJwt = passportJWT.ExtractJwt;
 const JwtStrategy = passportJWT.Strategy;
-const bcrypt = require('bcrypt');
+const bcrypt = require("bcrypt");
 
-const psql = require('./db/simpleConnect');
-const AWS = require('aws-sdk');
+const psql = require("./db/simpleConnect");
+const AWS = require("aws-sdk");
 
 var jwtOptions = {};
 jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
@@ -59,24 +59,26 @@ app.use(passport.initialize());
 // for easier testing with Postman or plain HTML forms
 // parse application/json - needs higher limit for passing img for annotation
 
-app.use(bodyParser.json({ limit: '50mb' }));
-app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
+app.use(bodyParser.json({ limit: "50mb" }));
+app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
 
-// This function sets the cookies that are used by the client to access the 
+// This function sets the cookies that are used by the client to access the
 // videos on AWS CloudFront
-const setCookies = (res) => {
+const setCookies = res => {
   const keyPairId = process.env.KEY_PAIR_ID;
-  const privateKey = process.env.RSA_PRIVATE_KEY.split('\\n').join('\n');
+  const privateKey = process.env.RSA_PRIVATE_KEY.split("\\n").join("\n");
   let cdnUrl = "cdn.deepseaannotations.com";
-  let expiry = Math.floor(Date.now() / 1000) + 60000;
+  let expiry = Math.floor(Date.now() / 1000) + 99960000;
 
   let policy = {
-    'Statement': [{
-      'Resource': 'https://' + cdnUrl + '/*',
-      'Condition': {
-        'DateLessThan': { 'AWS:EpochTime': expiry }
+    Statement: [
+      {
+        Resource: "https://" + cdnUrl + "/*",
+        Condition: {
+          DateLessThan: { "AWS:EpochTime": expiry }
+        }
       }
-    }]
+    ]
   };
   let policyString = JSON.stringify(policy);
 
@@ -84,20 +86,21 @@ const setCookies = (res) => {
   var options = { url: "https://" + cdnUrl, policy: policyString };
   signer.getSignedCookie(options, (error, cookies) => {
     if (error) {
-      console.log('Error recieved from getSignedCookie function.')
-      console.log('Throwing error.')
+      console.log("Error recieved from getSignedCookie function.");
+      console.log("Throwing error.");
       throw error;
     }
     for (cookieName in cookies) {
       res.cookie(cookieName, cookies[cookieName], {
-        domain: '.deepseaannotations.com',
+        domain: ".deepseaannotations.com",
+        expires: new Date(expiry * 1000),
         httpOnly: true,
-        path: '/',
+        path: "/",
         secure: true
       });
     }
   });
-}
+};
 
 app.post("/api/login", async function (req, res) {
   const { username, password } = req.body;
@@ -117,7 +120,7 @@ app.post("/api/login", async function (req, res) {
       res.status(400).json({ detail: "No username found" });
       return;
     }
-    if (!await bcrypt.compare(password, user.rows[0].password)) {
+    if (!(await bcrypt.compare(password, user.rows[0].password))) {
       res.status(400).json({ detail: "wrong password" });
       return;
     }
@@ -129,11 +132,17 @@ app.post("/api/login", async function (req, res) {
       isAdmin: user.rows[0].admin
     });
   } catch (error) {
+    console.log("Error in post /api/login");
+
+    console.log(error);
+
     res.status(500).json(error);
   }
 });
 
-app.post('/api/changePassword', passport.authenticate('jwt', { session: false }),
+app.post(
+  "/api/changePassword",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const { password, newPassword1, newPassword2 } = req.body;
     const username = req.user.username;
@@ -147,21 +156,24 @@ app.post('/api/changePassword', passport.authenticate('jwt', { session: false })
     `;
     try {
       const currentPass = await psql.query(queryPass, [username]);
-      if (!await bcrypt.compare(password, currentPass.rows[0].password)) {
+      if (!(await bcrypt.compare(password, currentPass.rows[0].password))) {
         res.status(400).json({ detail: "Wrong Password!" });
         return;
       }
       const saltRounds = 10;
       const hash = await bcrypt.hash(newPassword1, saltRounds);
-      queryUpdate = 'UPDATE users SET password=$1 WHERE username=$2';
+      queryUpdate = "UPDATE users SET password=$1 WHERE username=$2";
       const update = await psql.query(queryUpdate, [hash, username]);
-      res.json({ message: 'Changed' });
+      res.json({ message: "Changed" });
     } catch (error) {
       res.status(500).json(error);
     }
-  })
+  }
+);
 
-app.post('/api/createUser', passport.authenticate('jwt', { session: false }),
+app.post(
+  "/api/createUser",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const queryText = `
       INSERT INTO users(
@@ -185,9 +197,32 @@ app.post('/api/createUser', passport.authenticate('jwt', { session: false }),
     } catch (error) {
       res.status(400).json(error);
     }
-  });
+  }
+);
 
-app.get('/api/concepts/:id', passport.authenticate('jwt', { session: false }),
+app.get(
+  "/api/users",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    var queryText = "SELECT id, username \
+                       FROM users";
+
+    if (req.query.noAi === "true") {
+      queryText += " WHERE id <> 17";
+    }
+
+    try {
+      const users = await psql.query(queryText);
+      res.json(users.rows);
+    } catch (error) {
+      res.status(500).json(error);
+    }
+  }
+);
+
+app.get(
+  "/api/concepts/:id",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     queryText = `
       SELECT
@@ -208,7 +243,9 @@ app.get('/api/concepts/:id', passport.authenticate('jwt', { session: false }),
 );
 
 // returns a list of concept names
-app.get('/api/concepts', passport.authenticate('jwt', { session: false }),
+app.get(
+  "/api/concepts",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const queryText = `
       SELECT 
@@ -241,10 +278,9 @@ app.get('/api/concepts', passport.authenticate('jwt', { session: false }),
 
 // in the future, this route as well as the /api/annotationImages route can
 // be circumvented by using cloudfront
-app.get('/api/conceptImages/:id',
-  async (req, res) => {
-    let s3 = new AWS.S3();
-    queryText = `
+app.get("/api/conceptImages/:id", async (req, res) => {
+  let s3 = new AWS.S3();
+  queryText = `
       SELECT
         picture 
       FROM
@@ -252,22 +288,24 @@ app.get('/api/conceptImages/:id',
       WHERE
         concepts.id=$1
     `;
-    try {
-      const response = await psql.query(queryText, [req.params.id]);
-      const picture = response.rows[0].picture;
-      const params = {
-        Bucket: process.env.AWS_S3_BUCKET_NAME,
-        Key: process.env.AWS_S3_BUCKET_CONCEPTS_FOLDER + `${picture}`
-      }
-      s3.getObject(params).createReadStream().pipe(res);
-    } catch (error) {
-      res.status(400).json(error);
-    }
+  try {
+    const response = await psql.query(queryText, [req.params.id]);
+    const picture = response.rows[0].picture;
+    const params = {
+      Bucket: process.env.AWS_S3_BUCKET_NAME,
+      Key: process.env.AWS_S3_BUCKET_CONCEPTS_FOLDER + `${picture}`
+    };
+    s3.getObject(params)
+      .createReadStream()
+      .pipe(res);
+  } catch (error) {
+    res.status(400).json(error);
   }
-);
+});
 
-app.get('/api/conceptsSelected',
-  passport.authenticate('jwt', { session: false }),
+app.get(
+  "/api/conceptsSelected",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     queryText = `
       SELECT 
@@ -292,8 +330,9 @@ app.get('/api/conceptsSelected',
   }
 );
 
-app.post('/api/conceptsSelected',
-  passport.authenticate('jwt', { session: false }),
+app.post(
+  "/api/conceptsSelected",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     queryText = `
       INSERT INTO profile(
@@ -315,7 +354,9 @@ app.post('/api/conceptsSelected',
   }
 );
 
-app.delete('/api/conceptsSelected', passport.authenticate('jwt', { session: false }),
+app.delete(
+  "/api/conceptsSelected",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     let queryText = `
       DELETE FROM
@@ -336,8 +377,9 @@ app.delete('/api/conceptsSelected', passport.authenticate('jwt', { session: fals
 );
 
 // updates conceptsSelected when they are reordered
-app.patch('/api/conceptsSelected',
-  passport.authenticate('jwt', { session: false }),
+app.patch(
+  "/api/conceptsSelected",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const conceptsSelected = JSON.stringify(req.body.conceptsSelected);
     const queryText = `
@@ -365,7 +407,9 @@ app.patch('/api/conceptsSelected',
   }
 );
 
-app.get('/api/videos', passport.authenticate('jwt', { session: false }),
+app.get(
+  "/api/videos",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     let userId = req.user.id;
     //These need to be updated using joins to become optimal
@@ -499,12 +543,15 @@ app.get('/api/videos', passport.authenticate('jwt', { session: false }),
       const startedVideos = await psql.query(queryUserStartedVideos, [userId]);
       const unwatchedVideos = await psql.query(queryGlobalUnwatched);
       const watchedVideos = await psql.query(queryGlobalWatched, [userId]);
-      const inProgressVideos = await psql.query(queryGlobalInProgress, [userId]);
+      const inProgressVideos = await psql.query(queryGlobalInProgress, [
+        userId
+      ]);
       const videoData = [
         startedVideos,
         unwatchedVideos,
         watchedVideos,
-        inProgressVideos];
+        inProgressVideos
+      ];
       res.json(videoData);
     } catch (error) {
       console.log(error);
@@ -514,10 +561,11 @@ app.get('/api/videos', passport.authenticate('jwt', { session: false }),
 );
 
 app.get(
-  '/api/videos/:videoid',
-  passport.authenticate('jwt', { session: false }),
+  "/api/videos/:videoid",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    let queryText = 'SELECT \
+    let queryText =
+      "SELECT \
                        usernames.userswatching, \
                        usernames.usersfinished, \
                        videos.* \
@@ -535,7 +583,7 @@ app.get(
                          GROUP BY videos.id) \
                        AS usernames \
                      LEFT JOIN videos \
-                     ON videos.id=usernames.id';
+                     ON videos.id=usernames.id";
     try {
       const videoMetadata = await psql.query(queryText, [req.params.videoid]);
       res.json(videoMetadata.rows);
@@ -546,11 +594,40 @@ app.get(
   }
 );
 
+// Get videos that users have viewed
+app.get(
+  "/api/videos/usersViewed/:userIDs",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    let queryText = `
+    SELECT v.id, v.filename 
+    FROM
+      checkpoints c
+    LEFT JOIN
+      videos v
+    ON
+      v.id=c.videoid
+    WHERE
+      c.userid::text = ANY(string_to_array($1, ','))
+    `;
+    try {
+      const videos = await psql.query(
+        queryText,
+        [req.params.userIDs]
+      );
+      res.json(videos.rows);
+    } catch (error) {
+      console.log("Error in get /api/videos/usersViewed/:userIDs");
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
+);
 
 // summary getter ~KLS
 app.get(
-  '/api/videos/summary/:videoid',
-  passport.authenticate('jwt', { session: false }),
+  "/api/videos/summary/:videoid",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     let queryText = `SELECT * 
                       FROM concepts a 
@@ -563,23 +640,26 @@ app.get(
       const summary = await psql.query(queryText, [req.params.videoid]);
       res.json(summary.rows);
     } catch (error) {
-      console.log("Error in get /api/videos/summary/:videoid")
+      console.log("Error in get /api/videos/summary/:videoid");
       console.log(error);
       res.status(500).json(error);
     }
   }
 );
 
-app.patch('/api/videos/:videoid',
-  passport.authenticate('jwt', { session: false }), async (req, res) => {
-    let queryText = 'UPDATE videos \
+app.patch(
+  "/api/videos/:videoid",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    let queryText =
+      "UPDATE videos \
                    SET description=$1 \
-                   WHERE id=$2 RETURNING *';
+                   WHERE id=$2 RETURNING *";
     try {
-      const updateRes = await psql.query(
-        queryText,
-        [req.body.description, req.params.videoid]
-      );
+      const updateRes = await psql.query(queryText, [
+        req.body.description,
+        req.params.videoid
+      ]);
       res.json(updateRes.rows);
     } catch (error) {
       res.status(500).json(error);
@@ -587,17 +667,20 @@ app.patch('/api/videos/:videoid',
   }
 );
 
-app.delete('/api/checkpoints/:videoid',
-  passport.authenticate('jwt', { session: false }), async (req, res) => {
+app.delete(
+  "/api/checkpoints/:videoid",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
     const userid = req.user.id;
     const videoid = req.params.videoid;
-    const queryText = 'DELETE FROM checkpoints \
+    const queryText =
+      "DELETE FROM checkpoints \
                        WHERE userid=$1 \
                        AND videoid=$2\
-                       RETURNING *';
+                       RETURNING *";
     try {
       let deleteRes = await psql.query(queryText, [userid, videoid]);
-      res.json({ message: 'unwatched' });
+      res.json({ message: "unwatched" });
     } catch (error) {
       console.log(error);
       res.status(500).json(error);
@@ -605,17 +688,20 @@ app.delete('/api/checkpoints/:videoid',
   }
 );
 
-app.put("/api/checkpoints/:videoid", passport.authenticate('jwt', { session: false }),
+app.put(
+  "/api/checkpoints/:videoid",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const videoid = req.params.videoid;
     const { timeinvideo, finished } = req.body;
     const userId = req.user.id;
     const data = [timeinvideo, finished, userId, videoid];
-    let queryText = 'UPDATE checkpoints \
+    let queryText =
+      "UPDATE checkpoints \
                      SET timeinvideo=$1,\
                      timestamp=current_timestamp,\
                      finished=$2 \
-                     WHERE userid=$3 AND videoid=$4';
+                     WHERE userid=$3 AND videoid=$4";
     try {
       const updateRes = await psql.query(queryText, data);
       if (updateRes.rowCount > 0) {
@@ -623,9 +709,10 @@ app.put("/api/checkpoints/:videoid", passport.authenticate('jwt', { session: fal
         return;
       }
       // User has no checkpoint for this video
-      queryText = 'INSERT INTO checkpoints \
+      queryText =
+        "INSERT INTO checkpoints \
                  (timeinvideo, finished, userid, videoid, timestamp) \
-                 VALUES($1, $2, $3, $4, current_timestamp)';
+                 VALUES($1, $2, $3, $4, current_timestamp)";
       let insertRes = await psql.query(queryText, data);
       res.json({ message: "updated" });
     } catch (error) {
@@ -641,7 +728,7 @@ app.put("/api/checkpoints/:videoid", passport.authenticate('jwt', { session: fal
 //   const file = process.env.AWS_S3_BUCKET_VIDEOS_FOLDER + req.params.name;
 //   const cache = 0;
 //   s3.listObjectsV2({
-//     Bucket: process.env.AWS_S3_BUCKET_NAME, 
+//     Bucket: process.env.AWS_S3_BUCKET_NAME,
 //     MaxKeys: 1, Prefix: file
 //   }, (err, data) => {
 //     if (err) {
@@ -666,7 +753,7 @@ app.put("/api/checkpoints/:videoid", passport.authenticate('jwt', { session: fal
 //         'Content-Type'   : mimetype
 //       });
 //       s3.getObject({
-//         Bucket: process.env.AWS_S3_BUCKET_NAME, 
+//         Bucket: process.env.AWS_S3_BUCKET_NAME,
 //         Key: file, Range: range
 //       }).createReadStream().pipe(res);
 //     }
@@ -680,37 +767,48 @@ app.put("/api/checkpoints/:videoid", passport.authenticate('jwt', { session: fal
 //         'Content-Type'  : mimetype
 //       });
 //       s3.getObject({
-//         Bucket: process.env.AWS_S3_BUCKET_NAME, 
+//         Bucket: process.env.AWS_S3_BUCKET_NAME,
 //         Key: file
 //       }).createReadStream().pipe(res);
 //     }
 //   });
 // });
 
-app.get('/api/annotations', passport.authenticate('jwt', { session: false }),
+app.get(
+  "/api/annotations",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     let params = [];
     //Build query string
-    let queryPass = 'SELECT annotations.id, annotations.comment,\
-                     annotations.unsure, annotations.timeinvideo, \
-                     annotations.imagewithbox, concepts.name, \
-                     false as extended \
-                     FROM annotations\
-                     LEFT JOIN concepts ON concepts.id=annotations.conceptid\
-                     WHERE annotations.userid!=17';
-    if (req.query.unsureOnly === 'true') {
-      queryPass = queryPass + ' AND annotations.unsure = true';
+    let queryPass = `SELECT annotations.id, annotations.comment, annotations.verifiedby,
+                     annotations.unsure, annotations.timeinvideo, 
+                     annotations.imagewithbox, concepts.name, 
+                     false as extended 
+                     FROM annotations
+                     LEFT JOIN concepts ON concepts.id=annotations.conceptid
+                     WHERE annotations.userid NOT IN (17, 32)`;
+    if (req.query.unsureOnly === "true") {
+      queryPass = queryPass + " AND annotations.unsure = true";
     }
-    if (req.query.admin !== 'true') {
-      queryPass = queryPass + ' AND annotations.userid = $1';
+    if (!(req.query.verifiedOnly === "true" && req.query.unverifiedOnly === "true")) {
+      if (req.query.verifiedOnly === "true") {
+        queryPass = queryPass + " AND annotations.verifiedby IS NOT NULL";
+      }
+      if (req.query.unverifiedOnly === "true") {
+        queryPass = queryPass + " AND annotations.verifiedby IS NULL";
+      }
+    }
+    if (req.query.admin !== "true") {
+      queryPass = queryPass + " AND annotations.userid = $1";
       params.push(req.user.id);
     }
     // Adds query conditions from report tree
-    queryPass = queryPass +
+    queryPass =
+      queryPass +
       req.query.queryConditions +
-      ' ORDER BY annotations.timeinvideo';
+      " ORDER BY annotations.timeinvideo";
     // Retrieves only selected 100 if queryLimit exists
-    if (req.query.queryLimit !== 'undefined') {
+    if (req.query.queryLimit !== "undefined") {
       queryPass = queryPass + req.query.queryLimit;
     }
     try {
@@ -723,7 +821,9 @@ app.get('/api/annotations', passport.authenticate('jwt', { session: false }),
   }
 );
 
-app.post('/api/annotations', passport.authenticate('jwt', { session: false }),
+app.post(
+  "/api/annotations",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     data = [
       req.user.id,
@@ -736,52 +836,57 @@ app.post('/api/annotations', passport.authenticate('jwt', { session: false }),
       req.body.y2,
       req.body.videoWidth,
       req.body.videoHeight,
-      req.body.image + '.png',
-      req.body.imagewithbox + '.png',
+      req.body.image + ".png",
+      req.body.imagewithbox + ".png",
       req.body.comment,
       req.body.unsure
     ];
-    const queryText = 'INSERT INTO annotations(userid, videoid,\
+    const queryText =
+      "INSERT INTO annotations(userid, videoid,\
                        conceptid, timeinvideo, \
                        x1, y1, x2, y2, \
                        videoWidth, videoHeight, \
                        image, imagewithbox, \
                        comment, unsure, dateannotated) \
                        VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10,\
-                       $11, $12, $13, $14, current_timestamp) RETURNING *';
+                       $11, $12, $13, $14, current_timestamp) RETURNING *";
     try {
       let insertRes = await psql.query(queryText, data);
-      res.json({ message: "Annotated", value: JSON.stringify(insertRes.rows[0]) });
+      res.json({
+        message: "Annotated",
+        value: JSON.stringify(insertRes.rows[0])
+      });
     } catch (error) {
-      console.log(error)
+      console.log(error);
       res.status(400).json(error);
     }
-  });
+  }
+);
 
-app.patch('/api/annotations', passport.authenticate('jwt', { session: false }),
+app.patch(
+  "/api/annotations",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    queryText = 'UPDATE annotations \
+    queryText =
+      "UPDATE annotations \
                  SET conceptid = $1, comment = $2, unsure = $3 \
-                 WHERE annotations.id=$4 OR annotations.originalid=$4 RETURNING *';
-    queryUpdate = 'SELECT annotations.id, annotations.comment,\
+                 WHERE annotations.id=$4 OR annotations.originalid=$4 RETURNING *";
+    queryUpdate =
+      "SELECT annotations.id, annotations.comment,\
                    annotations.unsure, annotations.timeinvideo, \
                    annotations.videoWidth, annotations.videoHeight, \
                    annotations.imagewithbox, concepts.name \
                    FROM annotations, concepts \
                    WHERE annotations.id = $1 \
-                   AND annotations.conceptid=concepts.id';
+                   AND annotations.conceptid=concepts.id";
     try {
-      var editRes = await psql.query(
-        queryText,
-        [req.body.conceptId,
+      var editRes = await psql.query(queryText, [
+        req.body.conceptId,
         req.body.comment,
         req.body.unsure,
-        req.body.id]
-      );
-      var updatedRow = await psql.query(
-        queryUpdate,
-        [req.body.id]
-      );
+        req.body.id
+      ]);
+      var updatedRow = await psql.query(queryUpdate, [req.body.id]);
       res.json(updatedRow.rows[0]);
     } catch (error) {
       console.log(error);
@@ -790,11 +895,14 @@ app.patch('/api/annotations', passport.authenticate('jwt', { session: false }),
   }
 );
 
-app.delete('/api/annotations', passport.authenticate('jwt', { session: false }),
+app.delete(
+  "/api/annotations",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    queryText = 'DELETE FROM annotations \
+    queryText =
+      "DELETE FROM annotations \
                  WHERE annotations.id=$1 OR \
-                 annotations.originalid=$1 RETURNING *';
+                 annotations.originalid=$1 RETURNING *";
     try {
       var deleteRes = await psql.query(queryText, [req.body.id]);
       res.json(deleteRes.rows);
@@ -807,95 +915,178 @@ app.delete('/api/annotations', passport.authenticate('jwt', { session: false }),
 
 // in the future, this route as well as the /api/conceptImages route can
 // be circumvented by using cloudfront
-app.get('/api/annotationImages/:name',
-  passport.authenticate('jwt', { session: false }), (req, res) => {
-    let s3 = new AWS.S3();
-    let key = process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + req.params.name;
-    var params = {
-      Key: key,
+// app.get(
+//   "/api/annotationImages/:name",
+//   passport.authenticate("jwt", { session: false }),
+//   (req, res) => {
+//     let s3 = new AWS.S3();
+//     let key = process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + req.params.name;
+//     var params = {
+//       Key: key,
+//       Bucket: process.env.AWS_S3_BUCKET_NAME
+//     };
+//     s3.getObject(params, (err, data) => {
+//       if (err) {
+//         res.status(500).json(err);
+//         return;
+//       }
+//       res.json({ image: data.Body });
+//     });
+//   }
+// );
+
+app.get("/api/annotationImages/:id", async (req, res) => {
+  let s3 = new AWS.S3();
+  queryText = "select image, imagewithbox from annotations where id=$1";
+  try {
+    const response = await psql.query(queryText, [req.params.id]);
+    var picture = null;
+    if (req.query.withBox === "true") {
+      picture = response.rows[0].imagewithbox;
+    } else {
+      picture = response.rows[0].image;
+    }
+    const params = {
       Bucket: process.env.AWS_S3_BUCKET_NAME,
+      Key: process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + `${picture}`
     };
-    s3.getObject(params, (err, data) => {
-      if (err) {
-        res.status(500).json(err);
-        return;
-      }
-      res.json({ image: data.Body });
-    });
-  });
+    s3.getObject(params)
+      .createReadStream()
+      .pipe(res);
+  } catch (error) {
+    res.status(400).json(error);
+  }
+});
 
-app.post('/api/annotationImages', passport.authenticate('jwt', { session: false }),
+// app.get("/api/annotationImageWithoutBox/:id", async (req, res) => {
+//   let s3 = new AWS.S3();
+//   queryText = "select image from annotations where id=$1";
+//   try {
+//     const response = await psql.query(queryText, [req.params.id]);
+//     const picture = response.rows[0].image;
+//     const params = {
+//       Bucket: process.env.AWS_S3_BUCKET_NAME,
+//       Key: process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + `${picture}`
+//     };
+//     s3.getObject(params)
+//       .createReadStream()
+//       .pipe(res);
+//   } catch (error) {
+//     res.status(400).json(error);
+//   }
+// });
+
+app.post(
+  "/api/annotationImages",
+  passport.authenticate("jwt", { session: false }),
   (req, res) => {
-
     let s3 = new AWS.S3();
     var key = process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + req.body.date;
     if (req.body.box) {
-      key += '_box';
+      key += "_box";
     }
     var params = {
-      Key: key + '.png',
+      Key: key + ".png",
       Bucket: process.env.AWS_S3_BUCKET_NAME,
-      ContentEncoding: 'base64',
-      ContentType: 'image/png',
+      ContentEncoding: "base64",
+      ContentType: "image/png",
       Body: Buffer(req.body.buf) //the base64 string is now the body
     };
     s3.putObject(params, (err, data) => {
       if (err) {
-        console.log(err)
+        console.log(err);
         res.status(400).json(error);
       } else {
         res.json({ message: "successfully uploaded image to S3" });
       }
     });
-  });
+  }
+);
 
-let selectLevelQuery = (level) => {
-  let queryPass = '';
+app.post(
+  "/api/updateImageBox",
+  passport.authenticate("jwt", { session: false }),
+  (req, res) => {
+    let s3 = new AWS.S3();
+    var key = process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + req.body.name;
+    var params = {
+      Key: key,
+      Bucket: process.env.AWS_S3_BUCKET_NAME,
+      ContentEncoding: "base64",
+      ContentType: "image/png",
+      Body: Buffer(req.body.buf) //the base64 string is now the body
+    };
+    s3.putObject(params, (err, data) => {
+      if (err) {
+        console.log(err);
+        res.status(400).json(error);
+      } else {
+        res.json({ message: "successfully uploaded image to S3" });
+      }
+    });
+  }
+);
+
+let selectLevelQuery = level => {
+  let queryPass = "";
   if (level === "Video") {
-    queryPass = 'SELECT videos.filename as name,\
+    queryPass =
+      "SELECT videos.filename as name,\
                  videos.id as key,\
                  COUNT(*) as count, \
                  false as expanded\
                  FROM annotations, videos \
                  WHERE videos.id=annotations.videoid \
-                 AND annotations.userid!=17';
+                 AND annotations.userid NOT IN (17, 32)";
   }
   if (level === "Concept") {
-    queryPass = 'SELECT concepts.name as name,\
+    queryPass =
+      "SELECT concepts.name as name,\
                  concepts.id as key,\
                  COUNT(*) as count,\
                  false as expanded\
                  FROM annotations, concepts \
                  WHERE annotations.conceptid=concepts.id \
-                 AND annotations.userid!=17';
+                 AND annotations.userid NOT IN (17, 32)";
   }
   if (level === "User") {
-    queryPass = 'SELECT users.username as name,\
+    queryPass =
+      "SELECT users.username as name,\
                  users.id as key,\
                  COUNT(*) as count, \
                  false as expanded \
                  FROM annotations, users \
                  WHERE annotations.userid=users.id \
-                 AND annotations.userid!=17';
+                 AND annotations.userid NOT IN (17, 32)";
   }
   return queryPass;
-}
+};
 
-app.get('/api/reportTreeData', passport.authenticate('jwt', { session: false }),
+app.get(
+  "/api/reportTreeData",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     let params = [];
     let queryPass = selectLevelQuery(req.query.levelName);
     if (req.query.queryConditions) {
       queryPass = queryPass + req.query.queryConditions;
     }
-    if (req.query.unsureOnly === 'true') {
-      queryPass = queryPass + ' AND annotations.unsure = true';
+    if (req.query.unsureOnly === "true") {
+      queryPass = queryPass + " AND annotations.unsure = true";
     }
-    if (req.query.admin !== 'true') {
-      queryPass = queryPass + ' AND annotations.userid = $1';
+    if (!(req.query.verifiedOnly === "true" && req.query.unverifiedOnly === "true")) {
+      if (req.query.verifiedOnly === "true") {
+        queryPass = queryPass + " AND annotations.verifiedby IS NOT NULL";
+      }
+      if (req.query.unverifiedOnly === "true") {
+        queryPass = queryPass + " AND annotations.verifiedby IS NULL";
+      }
+    }
+    if (req.query.admin !== "true") {
+      queryPass = queryPass + " AND annotations.userid = $1";
       params.push(req.user.id);
     }
-    queryPass = queryPass + ' GROUP BY (name, key) ORDER BY count DESC'
+    queryPass = queryPass + " GROUP BY (name, key) ORDER BY count DESC";
     try {
       const data = await psql.query(queryPass, params);
       res.json(data.rows);
@@ -904,12 +1095,14 @@ app.get('/api/reportTreeData', passport.authenticate('jwt', { session: false }),
       res.status(400).json(error);
     }
   }
-)
+);
 
-app.get('/api/models', passport.authenticate('jwt', { session: false }),
+app.get(
+  "/api/models",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    const queryText = 'select * \
-                       from models';
+    const queryText = "select * \
+                       from models";
     try {
       let response = await psql.query(queryText);
       res.json(response.rows);
@@ -920,15 +1113,18 @@ app.get('/api/models', passport.authenticate('jwt', { session: false }),
   }
 );
 
-app.post('/api/models', passport.authenticate('jwt', { session: false }),
+app.post(
+  "/api/models",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    const queryText = 'INSERT INTO models( \
+    const queryText =
+      "INSERT INTO models( \
                          name, \
                          timestamp) \
                        VALUES( \
                          $1, \
                          current_timestamp) \
-                       RETURNING *';
+                       RETURNING *";
 
     try {
       let response = await psql.query(queryText, [req.body.name]);
@@ -940,7 +1136,9 @@ app.post('/api/models', passport.authenticate('jwt', { session: false }),
   }
 );
 
-app.get('/api/users', passport.authenticate('jwt', { session: false }),
+app.get(
+  "/api/users",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const queryText = `
       SELECT DISTINCT 
@@ -952,19 +1150,21 @@ app.get('/api/users', passport.authenticate('jwt', { session: false }),
       let response = await psql.query(queryText);
       res.json(response.rows);
     } catch (error) {
-      console.log('Error on GET /api/users: ');
+      console.log("Error on GET /api/users: ");
       console.log(error);
       res.status(500).json(error);
     }
   }
 );
 
-app.get('/api/users/annotationCount', passport.authenticate('jwt', { session: false }),
+app.get(
+  "/api/users/annotationCount",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const userId = parseInt(req.query.userid);
     const fromDate = req.query.fromdate;
     const toDate = req.query.todate;
-    const data = [userId, fromDate, toDate]
+    const data = [userId, fromDate, toDate];
 
     if (!userId) {
       res.status(500);
@@ -990,68 +1190,340 @@ app.get('/api/users/annotationCount', passport.authenticate('jwt', { session: fa
       let response = await psql.query(queryText, data);
       res.json(response.rows);
     } catch (error) {
-      console.log('Error on GET /api/users/annotationCount');
+      console.log("Error on GET /api/users/annotationCount");
       console.log(error);
       res.status(500).json(error);
     }
   }
 );
 
-app.put('/api/runModel', passport.authenticate('jwt', { session: false }),
+app.post(
+  "/api/modelInstance",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    let ec2 = new AWS.EC2({region: 'us-west-1'});
+    let ec2 = new AWS.EC2({ region: "us-west-1" });
+    
     var params = {
-      InstanceIds: [
-        "i-0627124479fe1ce98"
-      ]
+      InstanceIds: [req.body.modelInstanceId]
     };
-    ec2.startInstances(params, function (err, data) {
-      if (err) console.log(err, err.stack); // an error occurred
-      else console.log(data);           // successful response
-    });
+    if (req.body.command === "stop") {
+      ec2.stopInstances(params, (err, data) => {
+        if (err) console.log(err, err.stack);
+      });
+    } else {
+      ec2.startInstances(params, (err, data) => {
+        if (err) console.log(err, err.stack);
+      });
+    }
   }
 );
 
-app.delete('/api/runModel', passport.authenticate('jwt', { session: false }),
+app.get(
+  "/api/trainModel/concepts/:videoIDs/:modelName",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    let ec2 = new AWS.EC2({region: 'us-west-1'});
-    var params = {
-      InstanceIds: [
-        "i-0627124479fe1ce98"
-      ]
-    };
-    ec2.stopInstances(params, function (err, data) {
-      if (err) console.log(err, err.stack); // an error occurred
-      else console.log(data);           // successful response
-    });
+    const queryText = `
+      SELECT
+        *
+      FROM 
+        concepts
+      WHERE
+        concepts.id in (
+          SELECT
+            unnest(concepts)
+          FROM
+            models
+          WHERE
+            name=$1
+        )
+      AND
+        concepts.id in (
+          SELECT
+            DISTINCT conceptid
+          FROM
+            annotations
+          WHERE
+            videoid::text = any(string_to_array($2, ','))
+        )
+    `;
+    try {
+      let response = await psql.query(
+        queryText,
+        [req.params.modelName, req.params.videoIDs]
+      );
+      res.json(response.rows);
+    } catch (error) {
+      console.log("Error on GET /api/trainModel/concepts");
+      console.log(error);
+      res.status(500).json(error);
+    }
   }
 );
 
+app.get(
+  "/api/modelTab/:option",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    const queryText = `
+      SELECT 
+        *
+      FROM 
+        modeltab
+      WHERE
+        option = $1`;
+    try {
+      let response = await psql.query(queryText, [req.params.option]);
+      res.json(response.rows);
+    } catch (error) {
+      console.log("Error on GET /api/modelTab");
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
+);
+
+app.put(
+  "/api/modelTab/:option",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    const queryText = `
+      UPDATE
+        modeltab
+      SET
+        info = $1
+      WHERE
+        option = $2
+      `;
+    try {
+      let response = await psql.query(queryText, [
+        req.body.info,
+        req.params.option
+      ]);
+      res.json(response.rows);
+    } catch (error) {
+      console.log("Error on put /api/modelTab");
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
+);
+
+// Verify Annotations
+
+app.get(
+  "/api/unverifiedVideosByUser",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    const selectedUsers = req.query.selectedUsers;
+
+    let sqlUsers = "";
+    if (!(selectedUsers.length === 1 && selectedUsers[0] === "-1")) {
+      sqlUsers = " AND (a.userid=" + selectedUsers[0];
+      for (let i = 0; i < selectedUsers.length; i++) {
+        sqlUsers += " OR a.userid=" + selectedUsers[i];
+      }
+      sqlUsers += ")";
+    }
+    else {
+      sqlUsers = " AND a.userid <> 17";
+    }
+
+    let queryText =
+      `SELECT DISTINCT v.id, v.filename
+              FROM annotations a, videos v
+              WHERE a.verifiedby IS NULL AND v.id=a.videoid` + sqlUsers;
+    try {
+      let videos = await psql.query(queryText);
+      res.json(videos.rows);
+    } catch (error) {
+      res.status(500).json(error);
+    }
+  }
+);
+
+app.get(
+  "/api/unverifiedConceptsByUserVideo",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    const selectedUsers = req.query.selectedUsers;
+    const selectedVideos = req.query.selectedVideos;
+
+    let sqlUsers = "";
+    if (!(selectedUsers.length === 1 && selectedUsers[0] === "-1")) {
+      sqlUsers = " AND (a.userid=" + selectedUsers[0];
+      for (let i = 0; i < selectedUsers.length; i++) {
+        sqlUsers += " OR a.userid=" + selectedUsers[i];
+      }
+      sqlUsers += ")";
+    }
+    else {
+      sqlUsers = " AND a.userid <> 17";
+    }
+
+    let sqlVideos = "";
+    if (!(selectedVideos.length === 1 && selectedVideos[0] === "-1")) {
+      sqlVideos = " AND (a.videoid=" + selectedVideos[0];
+      for (let i = 0; i < selectedVideos.length; i++) {
+        sqlVideos += " OR a.videoid=" + selectedVideos[i];
+      }
+      sqlVideos += ")";
+    }
+
+    let queryText =
+      `SELECT DISTINCT c.id, c.name
+        FROM annotations a, concepts c
+        WHERE a.verifiedby IS NULL AND a.conceptid=c.id` +
+      sqlUsers +
+      sqlVideos;
+
+    try {
+      let concepts = await psql.query(queryText);
+      res.json(concepts.rows);
+    } catch (error) {
+      res.status(500).json(error);
+    }
+  }
+);
+
+app.get(
+  "/api/unverifiedAnnotationsByUserVideoConcept",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    const selectedUsers = req.query.selectedUsers;
+    const selectedVideos = req.query.selectedVideos;
+    const selectedConcepts = req.query.selectedConcepts;
+
+    let sqlUsers = "";
+    if (!(selectedUsers.length === 1 && selectedUsers[0] === "-1")) {
+      sqlUsers = " AND (a.userid=" + selectedUsers[0];
+      for (let i = 0; i < selectedUsers.length; i++) {
+        sqlUsers += " OR a.userid=" + selectedUsers[i];
+      }
+      sqlUsers += ")";
+    }
+    else {
+      sqlUsers = " AND a.userid <> 17";
+    }
+
+    let sqlVideos = "";
+    if (!(selectedVideos.length === 1 && selectedVideos[0] === "-1")) {
+      sqlVideos = " AND (a.videoid=" + selectedVideos[0];
+      for (let i = 0; i < selectedVideos.length; i++) {
+        sqlVideos += " OR a.videoid=" + selectedVideos[i];
+      }
+      sqlVideos += ")";
+    }
+
+    let sqlConcepts = "";
+    if (!(selectedConcepts.length === 1 && selectedConcepts[0] === "-1")) {
+      sqlConcepts = " AND (a.conceptid=" + selectedConcepts[0];
+      for (let i = 0; i < selectedConcepts.length; i++) {
+        sqlConcepts += " OR a.conceptid=" + selectedConcepts[i];
+      }
+      sqlConcepts += ")";
+    }
+
+    var queryText =
+      `SELECT distinct a.*, c.name, u.username, v.filename
+        FROM annotations a, concepts c, users u, videos v
+        WHERE c.id=a.conceptid AND u.id=a.userid AND v.id=a.videoid AND a.verifiedby IS NULL` +
+      sqlUsers +
+      sqlVideos +
+      sqlConcepts;
+
+    try {
+      let concepts = await psql.query(queryText);
+      res.json(concepts.rows);
+    } catch (error) {
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
+);
+
+app.patch(
+  "/api/annotationsVerify",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    const id = req.body.id;
+    const conceptid =
+      req.body.conceptid != null ? ", conceptid=" + req.body.conceptid : "";
+    const comment =
+      req.body.comment != null ? ", comment='" + req.body.comment + "'" : "";
+    const unsure = req.body.unsure != null ? ", unsure=" + req.body.unsure : "";
+    const verifiedby = req.user.id;
+    const queryText =
+      "UPDATE annotations SET verifiedby=$2, verifieddate=current_timestamp" +
+      conceptid +
+      comment +
+      unsure +
+      " WHERE id=$1";
+    try {
+      let update = await psql.query(queryText, [id, verifiedby]);
+      res.json(update.rows);
+    } catch (error) {
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
+);
+
+// update box coordinates
+app.patch(
+  "/api/annotationsUpdateBox",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    // console.log(req.body)
+    const id = req.body.id;
+
+    var x1 = req.body.x1;
+    var x2 = req.body.x2;
+    var y1 = req.body.y1;
+    var y2 = req.body.y2;
+
+    const queryText =
+      "UPDATE annotations SET x1=$1, x2=$2, y1=$3, y2=$4 WHERE id=$5";
+    try {
+      let update = await psql.query(queryText, [x1, x2, y1, y2, id]);
+      res.json(update.rows);
+    } catch (error) {
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
+);
 
 // This websocket sends a list of videos to the client that update in realtime
-io.on('connection', (socket) => {
-  console.log('socket connected!');
-  socket.on('connect_failed', () => {
-    console.log('socket connection failed');
+io.on("connection", socket => {
+  console.log("socket connected!");
+  socket.on("connect_failed", () => {
+    console.log("socket connection failed");
   });
-  socket.on('disconnect', () => {
-    console.log('socket disconnected');
+  socket.on("disconnect", () => {
+    console.log("socket disconnected");
   });
-  socket.on('refresh videos', () => {
-    socket.broadcast.emit('refresh videos');
+  socket.on("refresh videos", () => {
+    socket.broadcast.emit("refresh videos");
+  });
+  socket.on("refresh predictmodel", () => {
+    socket.broadcast.emit("refresh predictmodel");
+  });
+  socket.on("refresh trainmodel", () => {
+    //Model Tab: Train info needs to be updated
+    socket.broadcast.emit("refresh trainmodel");
   });
 });
 
 // Express only serves static assets in production
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, 'client', 'build')));
-  app.get('/*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'client', 'build', 'index.html'));
+if (process.env.NODE_ENV === "production") {
+  app.use(express.static(path.join(__dirname, "client", "build")));
+  app.get("/*", (req, res) => {
+    res.sendFile(path.join(__dirname, "client", "build", "index.html"));
   });
 }
 
-app.set('port', process.env.PORT || 3001);
+app.set("port", process.env.PORT || 3001);
 
-server.listen(app.get('port'), () => {
-  console.log(`Find the server at: http://localhost:${app.get('port')}/`);
+server.listen(app.get("port"), () => {
+  console.log(`Find the server at: http://localhost:${app.get("port")}/`);
 });
