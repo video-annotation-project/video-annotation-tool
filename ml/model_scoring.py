@@ -27,8 +27,8 @@ def f1_evaluation(generator,model,iou_threshold=0.5,score_threshold=0.05,max_det
         if not generator.has_label(label):
             continue
 
-        true_positives, false_positives, scores, num_annotations = 
-            compute_measures(generator, label, all_detections, all_annotations)
+        true_positives, false_positives, scores, num_annotations = compute_measures(
+                generator, label, iou_threshold, all_detections, all_annotations)
         if num_annotations == 0:
             continue
 
@@ -41,7 +41,7 @@ def f1_evaluation(generator,model,iou_threshold=0.5,score_threshold=0.05,max_det
     return best_f1, best_thresh
 
 
-def compute_measures(generator, label all_detections, all_annotations):
+def compute_measures(generator, label, iou_threshold, all_detections, all_annotations):
     false_positives = np.zeros((0,))
     true_positives  = np.zeros((0,))
     scores          = np.zeros((0,))
@@ -53,8 +53,8 @@ def compute_measures(generator, label all_detections, all_annotations):
         num_annotations     += annotations.shape[0]
         detected_annotations = []
 
-        index_sort_by_score = detections[:,4].argsort()[::-1]
-        for d in detections[index_sort_by_score]:
+        sort_by_score_index = detections[:,4].argsort()[::-1]
+        for d in detections[sort_by_score_index]:
             scores = np.append(scores, d[4])
 
             if num_annotations == 0:
@@ -63,8 +63,8 @@ def compute_measures(generator, label all_detections, all_annotations):
                 continue
 
             overlaps            = compute_overlap(np.expand_dims(d, axis=0), annotations)
-            assigned_annotation = np.argmax(overlaps, axis=1)
-            max_overlap         = overlaps[0, assigned_annotation]
+            assigned_annotation = np.argmax(overlaps, axis=1) if overlaps.size else 0
+            max_overlap         = overlaps[0, assigned_annotation] if overlaps.size else 0
 
             if max_overlap >= iou_threshold and assigned_annotation not in detected_annotations:
                 false_positives = np.append(false_positives, 0)
