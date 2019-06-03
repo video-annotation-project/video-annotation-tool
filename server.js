@@ -41,7 +41,7 @@ async function findUser(userId) {
   }
 }
 
-var strategy = new JwtStrategy(jwtOptions, async function (jwt_payload, next) {
+var strategy = new JwtStrategy(jwtOptions, async function(jwt_payload, next) {
   // console.log('payload received', jwt_payload);
   var user = await findUser(jwt_payload.id);
   if (user) {
@@ -102,7 +102,7 @@ const setCookies = res => {
   });
 };
 
-app.post("/api/login", async function (req, res) {
+app.post("/api/login", async function(req, res) {
   const { username, password } = req.body;
   let queryPass = `
     SELECT 
@@ -204,11 +204,11 @@ app.get(
   "/api/users",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    var queryText = "SELECT id, username \
+    let queryText = "SELECT id, username \
                        FROM users";
 
     if (req.query.noAi === "true") {
-      queryText += " WHERE id <> 17";
+      queryText += " WHERE username != 'ai'";
     }
 
     try {
@@ -611,10 +611,7 @@ app.get(
       c.userid::text = ANY(string_to_array($1, ','))
     `;
     try {
-      const videos = await psql.query(
-        queryText,
-        [req.params.userIDs]
-      );
+      const videos = await psql.query(queryText, [req.params.userIDs]);
       res.json(videos.rows);
     } catch (error) {
       console.log("Error in get /api/videos/usersViewed/:userIDs");
@@ -790,7 +787,11 @@ app.get(
     if (req.query.unsureOnly === "true") {
       queryPass = queryPass + " AND annotations.unsure = true";
     }
-    if (!(req.query.verifiedOnly === "true" && req.query.unverifiedOnly === "true")) {
+    if (
+      !(
+        req.query.verifiedOnly === "true" && req.query.unverifiedOnly === "true"
+      )
+    ) {
       if (req.query.verifiedOnly === "true") {
         queryPass = queryPass + " AND annotations.verifiedby IS NOT NULL";
       }
@@ -1074,7 +1075,11 @@ app.get(
     if (req.query.unsureOnly === "true") {
       queryPass = queryPass + " AND annotations.unsure = true";
     }
-    if (!(req.query.verifiedOnly === "true" && req.query.unverifiedOnly === "true")) {
+    if (
+      !(
+        req.query.verifiedOnly === "true" && req.query.unverifiedOnly === "true"
+      )
+    ) {
       if (req.query.verifiedOnly === "true") {
         queryPass = queryPass + " AND annotations.verifiedby IS NOT NULL";
       }
@@ -1202,7 +1207,7 @@ app.post(
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     let ec2 = new AWS.EC2({ region: "us-west-1" });
-    
+
     var params = {
       InstanceIds: [process.env[req.body.modelInstanceId]]
     };
@@ -1247,10 +1252,10 @@ app.get(
         )
     `;
     try {
-      let response = await psql.query(
-        queryText,
-        [req.params.modelName, req.params.videoIDs]
-      );
+      let response = await psql.query(queryText, [
+        req.params.modelName,
+        req.params.videoIDs
+      ]);
       res.json(response.rows);
     } catch (error) {
       console.log("Error on GET /api/trainModel/concepts");
@@ -1316,19 +1321,28 @@ app.get(
   async (req, res) => {
     const selectedUsers = req.query.selectedUsers;
 
-    let sqlUsers = "";
+    let queryText = ``;
+    let sqlUsers = ``;
+
     if (!(selectedUsers.length === 1 && selectedUsers[0] === "-1")) {
-      sqlUsers = " AND (a.userid=" + selectedUsers[0];
+      sqlUsers = ` AND (a.userid=` + selectedUsers[0];
       for (let i = 0; i < selectedUsers.length; i++) {
-        sqlUsers += " OR a.userid=" + selectedUsers[i];
+        sqlUsers += ` OR a.userid=` + selectedUsers[i];
       }
-      sqlUsers += ")";
-    }
-    else {
-      sqlUsers = " AND a.userid <> 17";
+      sqlUsers += `)`;
+    } else {
+      let aiId = null;
+      queryText = `SELECT * FROM users u WHERE u.username='ai'`;
+      try {
+        let users = await psql.query(queryText);
+        aiId = users.rows[0].id;
+      } catch (error) {
+        res.status(500).json(error);
+      }
+      sqlUsers += ` AND a.userid!=` + aiId;
     }
 
-    let queryText =
+    queryText =
       `SELECT DISTINCT v.id, v.filename
               FROM annotations a, videos v
               WHERE a.verifiedby IS NULL AND v.id=a.videoid` + sqlUsers;
@@ -1348,16 +1362,25 @@ app.get(
     const selectedUsers = req.query.selectedUsers;
     const selectedVideos = req.query.selectedVideos;
 
-    let sqlUsers = "";
+    let queryText = ``;
+    let sqlUsers = ``;
+
     if (!(selectedUsers.length === 1 && selectedUsers[0] === "-1")) {
       sqlUsers = " AND (a.userid=" + selectedUsers[0];
       for (let i = 0; i < selectedUsers.length; i++) {
         sqlUsers += " OR a.userid=" + selectedUsers[i];
       }
       sqlUsers += ")";
-    }
-    else {
-      sqlUsers = " AND a.userid <> 17";
+    } else {
+      let aiId = null;
+      queryText = `SELECT * FROM users u WHERE u.username='ai'`;
+      try {
+        let users = await psql.query(queryText);
+        aiId = users.rows[0].id;
+      } catch (error) {
+        res.status(500).json(error);
+      }
+      sqlUsers += ` AND a.userid!=` + aiId;
     }
 
     let sqlVideos = "";
@@ -1369,7 +1392,7 @@ app.get(
       sqlVideos += ")";
     }
 
-    let queryText =
+    queryText =
       `SELECT DISTINCT c.id, c.name
         FROM annotations a, concepts c
         WHERE a.verifiedby IS NULL AND a.conceptid=c.id` +
@@ -1393,16 +1416,25 @@ app.get(
     const selectedVideos = req.query.selectedVideos;
     const selectedConcepts = req.query.selectedConcepts;
 
-    let sqlUsers = "";
+    let queryText = ``;
+    let sqlUsers = ``;
+
     if (!(selectedUsers.length === 1 && selectedUsers[0] === "-1")) {
       sqlUsers = " AND (a.userid=" + selectedUsers[0];
       for (let i = 0; i < selectedUsers.length; i++) {
         sqlUsers += " OR a.userid=" + selectedUsers[i];
       }
       sqlUsers += ")";
-    }
-    else {
-      sqlUsers = " AND a.userid <> 17";
+    } else {
+      let aiId = null;
+      queryText = `SELECT * FROM users u WHERE u.username='ai'`;
+      try {
+        let users = await psql.query(queryText);
+        aiId = users.rows[0].id;
+      } catch (error) {
+        res.status(500).json(error);
+      }
+      sqlUsers += ` AND a.userid!=` + aiId;
     }
 
     let sqlVideos = "";
@@ -1423,7 +1455,7 @@ app.get(
       sqlConcepts += ")";
     }
 
-    var queryText =
+    queryText =
       `SELECT distinct a.*, c.name, u.username, v.filename
         FROM annotations a, concepts c, users u, videos v
         WHERE c.id=a.conceptid AND u.id=a.userid AND v.id=a.videoid AND a.verifiedby IS NULL` +
