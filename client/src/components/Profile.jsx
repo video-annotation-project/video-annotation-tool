@@ -5,7 +5,7 @@ import Typography from "@material-ui/core/Typography";
 import { withStyles } from "@material-ui/core/styles";
 import TextField from "@material-ui/core/TextField";
 import Button from "@material-ui/core/Button";
-import swal from "@sweetalert/with-react";
+import Swal from "sweetalert2";
 
 const styles = {
   root: {
@@ -37,11 +37,11 @@ class Profile extends Component {
     event.preventDefault();
     const { password, newPassword1, newPassword2 } = this.state;
     if (newPassword1 !== newPassword2) {
-      swal("New passwords do not match!", "", "error");
+      Swal.fire("New passwords do not match!", "", "error");
       return;
     }
     if (newPassword1 === "") {
-      swal("Please enter a new password", "", "error");
+      Swal.fire("Please enter a new password", "", "error");
       return;
     }
     const config = {
@@ -64,13 +64,13 @@ class Profile extends Component {
       .catch(error => {
         console.log(error);
         if (error.response) {
-          swal(error.response.data.detail, "", "error");
+          Swal(error.response.data.detail, "", "error");
         }
       });
   };
 
   showAlert = () => {
-    swal("Password Changed!", "", "success");
+    Swal.fire("Password Changed!", "", "success");
   };
 
   render() {

@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import axios from "axios";
 import Typography from "@material-ui/core/Typography";
 import { withStyles } from "@material-ui/core/styles";
-import swal from "@sweetalert/with-react";
+import Swal from "sweetalert2";
 
 const styles = {
   root: {
@@ -56,7 +56,7 @@ class CreateUser extends Component {
     } catch (error) {
       console.log(error);
       if (error.response) {
-        swal(error.response.data.detail, "", "error");
+        Swal.fire(error.response.data.detail, "", "error");
       }
     }
   };

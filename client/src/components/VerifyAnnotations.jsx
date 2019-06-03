@@ -18,6 +18,7 @@ import VideoMetadata from "./VideoMetadata.jsx";
 import Description from "@material-ui/icons/Description";
 import Avatar from "@material-ui/core/Avatar";
 import Grid from "@material-ui/core/Grid";
+import Swal from "sweetalert2";
 
 const styles = theme => ({
   button: {
@@ -32,9 +33,7 @@ const styles = theme => ({
   },
   img: {
     postion: "absolute",
-    top: "50px",
-    width: "1600px",
-    height: "900px"
+    top: "50px"
   },
   container: {
     display: "grid",
@@ -57,15 +56,13 @@ const styles = theme => ({
   icons: {
     float: "right"
   },
-  button1: {
+  buttonsContainer1: {
     marginTop: "10px",
     float: "left",
-    margin: "0 auto",
-    width: "800px"
+    margin: "0 auto"
   },
-  button2: {
+  buttonsContainer2: {
     float: "left",
-    width: "800px",
     margin: "0 auto"
   }
 });
@@ -90,20 +87,32 @@ class VerifyAnnotations extends Component {
       conceptDialogMsg: null,
       conceptDialogOpen: false,
       clickedConcept: null,
-      loaded: true,
       x: this.props.annotation.x1,
       y: this.props.annotation.y1,
       width: this.props.annotation.x2 - this.props.annotation.x1,
       height: this.props.annotation.y2 - this.props.annotation.y1,
-      videoDialogOpen: false /* needed for dialog component */,
-      imageStatus: "loading"
+      videoDialogOpen: false /* needed for dialog component */
     };
   }
 
+  displayLoading = () => {
+    Swal.fire({
+      title: "Loading...",
+      showConfirmButton: false,
+      onBeforeOpen: () => {
+        Swal.showLoading();
+      },
+      onClose: () => {
+        /* we removed the eventListener before displaying the loading modal to prevent double submissions 
+          Once the loading modal closes, we add it back. */
+        document.addEventListener("keydown", this.handleKeyDown);
+      }
+    });
+  };
+
   componentDidMount = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
-    // add event listener for different key presses
-    document.addEventListener("keydown", this.handleKeyDown);
+    this.displayLoading();
   };
 
   componentWillUnmount = () => {
@@ -116,12 +125,17 @@ class VerifyAnnotations extends Component {
     if (e.target !== document.body) {
       return;
     }
+    if (e.code === "KeyR") {
+      // reset shortcut
+      this.resetState();
+      return;
+    }
+    // we remove the event listener to prevent double submissions
+    // we will add it back once the next annotation has loaded
+    document.removeEventListener("keydown", this.handleKeyDown);
     if (e.code === "KeyD") {
       // delete shortcut
       this.handleDelete();
-    } else if (e.code === "KeyR") {
-      // reset shortcut
-      this.resetState();
     } else if (e.code === "KeyI") {
       // ignore shortcut
       this.nextAnnotation();
@@ -178,24 +192,11 @@ class VerifyAnnotations extends Component {
       });
       return;
     }
-    /* we refresh the state to immediately blank out the image being shown to user
-      so that it is clear that a new image is being loaded. */
-    this.setState(
-      {
-        loaded: false,
-        imageStatus: "loading"
-      },
-      () => {
-        this.setState({
-          loaded: true
-        });
-      }
-    );
+    this.displayLoading();
     window.scrollTo({ top: 0, behavior: "smooth" });
     this.props.handleNext(this.resetState);
   };
 
-  // SELECT CONCEPT DIALOG FUNCTIONS
   handleConceptDialogClose = () => {
     this.setState({
       conceptDialogOpen: false,
@@ -243,7 +244,6 @@ class VerifyAnnotations extends Component {
     this.nextAnnotation();
   };
 
-  // ALL BOX UPDATE FUNCTIONS
   postBoxImage = async () => {
     var dragBoxCord = document
       .getElementById("dragBox")
@@ -259,8 +259,8 @@ class VerifyAnnotations extends Component {
 
     var x1 = Math.max(x1_box - x1_image, 0);
     var y1 = Math.max(y1_box - y1_image, 0);
-    var x2 = Math.min(x1 + width, 1599);
-    var y2 = Math.min(y1 + height, 899);
+    var x2 = Math.min(x1 + width, this.props.annotation.videowidth - 1);
+    var y2 = Math.min(y1 + height, this.props.annotation.videoheight - 1);
 
     await this.updateBox(x1, y1, x2, y2, imageCord, dragBoxCord, imageElement);
   };
@@ -350,14 +350,12 @@ class VerifyAnnotations extends Component {
     this.verifyAnnotation();
   };
 
-  // VIDEO DIALOG FUNCTIONS
   videoDialogToggle = () => {
     this.setState({
       videoDialogOpen: !this.state.videoDialogOpen
     });
   };
 
-  //Methods for video meta data
   openVideoMetadata = (event, video) => {
     event.stopPropagation();
     this.setState({
@@ -371,21 +369,13 @@ class VerifyAnnotations extends Component {
     });
   };
 
-  //image load option
-  handleImageLoaded = () => {
-    this.setState({ imageStatus: "loaded" });
-  };
-
-  handleImageErrored() {
-    this.setState({ imageStatus: "failed to load" });
-  }
-
   render() {
     const { classes } = this.props;
     var annotation = this.props.annotation;
     if (this.state.x === null) {
       return <div>Loading...</div>;
     }
+
     return (
       <React.Fragment>
         <DialogModal
@@ -429,16 +419,15 @@ class VerifyAnnotations extends Component {
                   />
                   <img
                     id="image"
-                    onLoad={this.handleImageLoaded.bind(this)}
-                    onError={this.handleImageErrored.bind(this)}
+                    onLoad={Swal.close}
                     className={classes.img}
-                    src={
-                      this.state.loaded
-                        ? `/api/annotationImages/${annotation.id}?withBox=false`
-                        : ""
-                    }
+                    src={`/api/annotationImages/${annotation.id}?withBox=false`}
                     alt="error"
                     crossOrigin="use-credentials"
+                    style={{
+                      width: annotation.videowidth,
+                      height: annotation.videoheight
+                    }}
                   />
                 </div>
               </div>
@@ -446,7 +435,10 @@ class VerifyAnnotations extends Component {
             <Typography className={classes.paper}>
               {this.props.index + 1} of {this.props.size}
             </Typography>
-            <div className={classes.button1}>
+            <div
+              className={classes.buttonsContainer1}
+              style={{ width: annotation.videowidth / 2 }}
+            >
               <MuiThemeProvider theme={theme}>
                 <Button
                   className={classes.button}
@@ -471,25 +463,23 @@ class VerifyAnnotations extends Component {
               >
                 Ignore
               </Button>
-              {this.state.imageStatus === "loaded" ? (
-                <Button
-                  className={classes.button}
-                  variant="contained"
-                  color="primary"
-                  onClick={this.handleVerifyClick}
-                >
-                  Verify
-                </Button>
-              ) : (
-                <Button className={classes.button} disabled={true}>
-                  Verify
-                </Button>
-              )}
+              <Button
+                className={classes.button}
+                variant="contained"
+                color="primary"
+                onClick={this.handleVerifyClick}
+              >
+                Verify
+              </Button>
+
               <IconButton aria-label="OnDemandVideo">
                 <OndemandVideo onClick={this.videoDialogToggle} />
               </IconButton>
             </div>
-            <div className={classes.button2}>
+            <div
+              className={classes.buttonsContainer2}
+              style={{ width: annotation.videowidth / 2 }}
+            >
               <Grid container direction="row" alignItems="center">
                 <Grid item>
                   <Avatar
