@@ -22,8 +22,8 @@ sure to add extra storage space(NOT MEMORY, 32Gigs on an ssd should be enough).
 	sudo apt-get install libpq-dev
 
 2. GETTING ANNOTATIONS
-	Just run 'nohup python annotateAll.py &' to begin automatic annotations.
-	Can view status with 'tail nohup.out'.
+	Just run 'python annotateAll.py >status.txt 2>error.txt &' to begin automatic annotations.
+	Can view status with 'tail status.txt'.
 	This script runs constantly, looking up unprocessed annotations and tracking for any it finds.
 
 
