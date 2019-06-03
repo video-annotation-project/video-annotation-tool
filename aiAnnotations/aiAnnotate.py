@@ -232,7 +232,7 @@ def ai_annotation(original):
       s3.upload_file(
 	  converted_file, 
 	  S3_BUCKET, 
-	  S3_VIDEO_FOLDER + str(original.id) + "_ai.mp4", 
+	  S3_VIDEO_FOLDER + str(original.id) + "_tracking.mp4", 
 	  ExtraArgs={'ContentType':'video/mp4'}
       )
       os.system('rm '+ converted_file)

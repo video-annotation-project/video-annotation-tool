@@ -36,7 +36,7 @@ while True:
     print("Annotating " + str(len(rows)) + " videos.")
     for count, i in enumerate(rows):
         print("Working annotation: " + str(count))
-        results = s3.list_objects(Bucket=S3_BUCKET, Prefix=S3_VIDEO_FOLDER + str(i.id) + "_ai.mp4")
+        results = s3.list_objects(Bucket=S3_BUCKET, Prefix=S3_VIDEO_FOLDER + str(i.id) + "_tracking.mp4")
         if 'Contents' in results:
             continue
         process = Process(target=aiAnnotate.ai_annotation, args=(i,))
@@ -55,7 +55,7 @@ while True:
         p.join()
 
     for i in rows:
-        results = s3.list_objects(Bucket=S3_BUCKET, Prefix=S3_VIDEO_FOLDER + str(i.id) + "_ai.mp4")
+        results = s3.list_objects(Bucket=S3_BUCKET, Prefix=S3_VIDEO_FOLDER + str(i.id) + "_tracking.mp4")
         if 'Contents' not in results:
             print("Failed on video for annotation: " + str(i.id))
         cursor.execute("UPDATE annotations SET originalid=%d WHERE id=%d;",(i.id, i.id,))
