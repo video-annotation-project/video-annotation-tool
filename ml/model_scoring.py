@@ -15,7 +15,8 @@ from keras_retinanet.utils.anchors import compute_overlap
         max_detections  : The maximum number of detections to use per image.
         save_path       : The path to save images with visualized detections to.
     # Returns
-        A dict mapping class names to mAP scores.
+        best_f1 are the best possible f1 score for each class
+        best_thresh are the corresponding threshold values to achieve these maximum f1 scores.
 """
 def f1_evaluation(generator,model,iou_threshold=0.5,score_threshold=0.05,max_detections=100,save_path=None):
     all_detections     = _get_detections(generator, model, score_threshold=score_threshold, max_detections=max_detections, save_path=save_path)
@@ -32,12 +33,10 @@ def f1_evaluation(generator,model,iou_threshold=0.5,score_threshold=0.05,max_det
         if num_annotations == 0:
             continue
 
-        f1_points = compute_f1(true_positives, false_positives, scores, num_annotations)
+        f1_points, scores = compute_f1(true_positives, false_positives, scores, num_annotations)
         best_f1[label] = np.max(f1_points) if f1_points.size else 0
         best_thresh[label] = scores[np.argmax(f1_points)] if f1_points.size else 0
 
-    # These are the best possible f1 score for each class
-    # These are the corresponding threshold values to achieve these maximum f1 scores.
     return best_f1, best_thresh
 
 
@@ -89,16 +88,10 @@ def compute_f1(true_positives, false_positives, scores, num_annotations):
     false_positives = np.cumsum(false_positives)
     
     # compute recall and precision curves
-    # recall, precision, and scores(confidence level) are arrays for a given class with values for each image
     recall    = true_positives / num_annotations
     precision = true_positives / np.maximum(true_positives + false_positives, np.finfo(np.float64).eps)
 
     # Compute f1 scores
-    f1_points = []
-    for r, p in zip(recall, precision):
-        # If precision and recall are 0, f1 becomes 0
-        f1 = (2 * r * p) / (r + p) if (r + p) else 0
-        f1_points.append(f1)
-
-    return np.array(f1_points)
+    f1_points = [(2*r*p) / (r+p) if (r + p) else 0 for r,p in zip(recall, precision)]
+    return np.array(f1_points), scores
 
