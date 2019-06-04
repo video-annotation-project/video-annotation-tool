@@ -1474,22 +1474,22 @@ app.get(
 );
 
 app.patch(
-  "/api/annotationsVerify",
+  `/api/annotationsVerify`,
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const id = req.body.id;
     const conceptid =
-      req.body.conceptid != null ? ", conceptid=" + req.body.conceptid : "";
+      req.body.conceptid != null ? `, conceptid=` + req.body.conceptid : ``;
     const comment =
-      req.body.comment != null ? ", comment='" + req.body.comment + "'" : "";
-    const unsure = req.body.unsure != null ? ", unsure=" + req.body.unsure : "";
+      req.body.comment != null ? `, comment='` + req.body.comment + `'` : ``;
+    const unsure = req.body.unsure != null ? `, unsure=` + req.body.unsure : ``;
     const verifiedby = req.user.id;
     const queryText =
-      "UPDATE annotations SET verifiedby=$2, verifieddate=current_timestamp" +
+      `UPDATE annotations SET verifiedby=$2, verifieddate=current_timestamp, originalid=null` +
       conceptid +
       comment +
       unsure +
-      " WHERE id=$1";
+      ` WHERE id=$1`;
     try {
       let update = await psql.query(queryText, [id, verifiedby]);
       res.json(update.rows);
