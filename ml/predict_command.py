@@ -39,7 +39,7 @@ model = cursor.fetchone()
 
 predict_on_video(int(info['videoSelected']), 'current_weights.h5', model[2], upload_annotations=True, userid=int(info['userSelected']))
 
-cursor.execute("Update modeltab SET info =  '{\"activeStep\": 0, \"modelSelected\":\"\",\"videoSelected\":\"\",\"userSelected\":\"\"}' WHERE option = 'runmodel'")
+cursor.execute("Update modeltab SET info =  '{\"activeStep\": 0, \"modelSelected\":\"\",\"videoSelected\":\"\",\"userSelected\":\"\"}' WHERE option = 'predictmodel'")
 con.commit()
 con.close()    
 os.system("sudo shutdown -h")

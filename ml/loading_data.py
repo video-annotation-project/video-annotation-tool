@@ -51,6 +51,7 @@ def queryDB(query):
 def select_annotations(annotations, min_examples, concepts):
     selected = []
     concept_count = {}
+
     for concept in concepts:
         concept_count[concept] = 0
 
@@ -104,11 +105,12 @@ def download_annotations(min_examples, concepts, concept_map, users, videos, img
     # Get all annotations for given concepts (and child concepts) making sure that any tracking annotations originated from good users
     users = ','.join('\''+str(e)+'\'' for e in users)
     videos = ','.join('\''+str(e)+'\'' for e in videos)
-    concepts = ','.join('\''+str(e)+'\'' for e in concepts)
+    str_concepts = ','.join('\''+str(e)+'\'' for e in concepts)
+
     annotations = queryDB(
         ''' SELECT *
             FROM annotations as A
-            WHERE conceptid::text = ANY(string_to_array(''' + concepts + ''',','))
+            WHERE conceptid::text = ANY(string_to_array(''' + str_concepts + ''',','))
             AND videoid::text = ANY(string_to_array(''' + videos + ''',','))
             AND EXISTS ( 
                 SELECT id, userid 
