@@ -1,50 +1,49 @@
-import React from 'react';
-import axios from 'axios';
+import React from "react";
+import axios from "axios";
 
-import SearchModal from './SearchModal.jsx';
+import SearchModal from "./SearchModal.jsx";
 
-import Button from '@material-ui/core/Button';
+import Button from "@material-ui/core/Button";
 // import Drawer from '@material-ui/core/Drawer';
-import IconButton from '@material-ui/core/IconButton';
-import { withStyles } from '@material-ui/core/styles';
-import AddIcon from '@material-ui/icons/Add';
-import { ChevronRight, Close } from '@material-ui/icons';
+import IconButton from "@material-ui/core/IconButton";
+import { withStyles } from "@material-ui/core/styles";
+import AddIcon from "@material-ui/icons/Add";
+import { ChevronRight, Close } from "@material-ui/icons";
 
 const styles = theme => ({
-  root: {
-  },
+  root: {},
   extendDrawerButton: {
-    float: 'right',
-    marginTop: '5px'
+    float: "right",
+    marginTop: "5px"
   },
   drawerContent: {
-    position: 'relative',
-    textAlign: 'center'
+    position: "relative",
+    textAlign: "center"
   },
   retractDrawerButton: {
-    position: 'absolute',
+    position: "absolute",
     left: 0,
-    margin: '10px',
+    margin: "10px"
   },
   addConceptButton: {
-    margin: '15px 0px 15px 0px'
+    margin: "15px 0px 15px 0px"
   },
   conceptsList: {
-    fontSize: '130%',
-    display: 'flex',
-    flexFlow: 'row wrap',
+    fontSize: "130%",
+    display: "flex",
+    flexFlow: "row wrap"
   },
   concept: {
-    width: '50%',
-    cursor: 'pointer',
+    width: "50%",
+    cursor: "pointer"
   },
   deleteConceptButton: {
-    float: 'right',
-    height: '25px',
-    width: '25px',
+    float: "right",
+    height: "25px",
+    width: "25px"
   },
   deleteConceptIcon: {
-    fontSize: '15px'
+    fontSize: "15px"
   }
 });
 
@@ -56,85 +55,94 @@ class ConceptsSelected extends React.Component {
       drawerOpen: false,
       conceptsSelected: [],
       draggedConcept: null,
-      searchModalOpen: false,
+      searchModalOpen: false
     };
   }
 
   getConceptsSelected = () => {
-    axios.get('/api/conceptsSelected', {
-      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') },
-    }).then(res => {
-      this.setState({
-        isLoaded: true,
-        conceptsSelected: res.data
+    axios
+      .get("/api/conceptsSelected", {
+        headers: { Authorization: "Bearer " + localStorage.getItem("token") }
       })
-    }).catch(error => {
-      this.setState({
-        isLoaded: true,
-        error: error
+      .then(res => {
+        this.setState({
+          isLoaded: true,
+          conceptsSelected: res.data
+        });
+      })
+      .catch(error => {
+        this.setState({
+          isLoaded: true,
+          error: error
+        });
       });
-    });
-  }
+  };
 
   componentDidMount = () => {
     this.getConceptsSelected();
-  }
+  };
 
-  toggleDrawer = (boolean) => {
+  toggleDrawer = boolean => {
     this.setState({
       drawerOpen: boolean
     });
-  }
+  };
 
-  toggleSearchModal = (boolean) => {
+  toggleSearchModal = boolean => {
     this.setState({
       searchModalOpen: boolean
     });
-  }
+  };
 
   // adds a concept to conceptsSelected
-  selectConcept = (conceptId) => {
+  selectConcept = conceptId => {
     const body = {
-      'id': conceptId,
-    }
+      id: conceptId
+    };
     const config = {
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + localStorage.getItem('token')
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + localStorage.getItem("token")
       }
-    }
-    axios.post('/api/conceptsSelected', body, config).then(async res => {
-      this.toggleSearchModal(false);
-      this.getConceptsSelected();
-    }).catch(error => {
-      this.toggleSearchModal(false);
-      console.log(error);
-      if (error.response) {
-        console.log(error.response.data.detail);
-      }
-    });
-  }
+    };
+    axios
+      .post("/api/conceptsSelected", body, config)
+      .then(async res => {
+        this.toggleSearchModal(false);
+        this.getConceptsSelected();
+      })
+      .catch(error => {
+        this.toggleSearchModal(false);
+        console.log(error);
+        if (error.response) {
+          console.log(error.response.data.detail);
+        }
+      });
+  };
 
   deleteConcept = (event, index) => {
     event.stopPropagation();
     const config = {
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + localStorage.getItem('token')
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + localStorage.getItem("token")
       },
       data: {
-        'id': this.state.conceptsSelected[index].id,
+        id: this.state.conceptsSelected[index].id
       }
-    }
-    axios.delete('/api/conceptsSelected', config).then(async res => {
-      this.getConceptsSelected();
-    }).catch(error => {
-      console.log(error);
-      if (error.response) {
-        console.log(error.response.data.detail);
-      }
-    });
-  }
+    };
+    axios
+      .delete("/api/conceptsSelected", config)
+      .then(async res => {
+        this.getConceptsSelected();
+      })
+      .catch(error => {
+        console.log(error);
+        if (error.response) {
+          console.log(error.response.data.detail);
+        }
+      });
+  };
 
   onDragStart = (event, index) => {
     this.setState({
@@ -143,16 +151,16 @@ class ConceptsSelected extends React.Component {
     event.dataTransfer.effectAllowed = "move";
     event.dataTransfer.setData("text/html", event.currentTarget);
     event.dataTransfer.setDragImage(event.currentTarget, 20, 20);
-  }
+  };
 
-  onDragOver = (index) => {
+  onDragOver = index => {
     // if the concept is dragged over itself, ignore
     if (this.state.draggedConcept === this.state.conceptsSelected[index]) {
       return;
     }
     // filter out the dragged concept
-    let conceptsSelected = this.state.conceptsSelected.filter(concept =>
-      concept !== this.state.draggedConcept
+    let conceptsSelected = this.state.conceptsSelected.filter(
+      concept => concept !== this.state.draggedConcept
     );
     // insert the dragged concept after the dragged over concept
     conceptsSelected.splice(index, 0, this.state.draggedConcept);
@@ -170,41 +178,43 @@ class ConceptsSelected extends React.Component {
       concept.conceptidx = idx;
     });
     const body = {
-      'conceptsSelected': conceptsSelected
-    }
+      conceptsSelected: conceptsSelected
+    };
     const config = {
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + localStorage.getItem('token')
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + localStorage.getItem("token")
       }
-    }
-    axios.patch('/api/conceptsSelected', body, config).then(async res => {
-    }).catch(error => {
-      console.log(error);
-      if (error.response) {
-        console.log(error.response.data.detail);
-      }
-    });
+    };
+    axios
+      .patch("/api/conceptsSelected", body, config)
+      .then(async res => {})
+      .catch(error => {
+        console.log(error);
+        if (error.response) {
+          console.log(error.response.data.detail);
+        }
+      });
   };
 
-  onMouseEnter = (event) => {
+  onMouseEnter = event => {
     if (this.state.draggedConcept) {
       return;
     }
-    event.currentTarget.style.backgroundColor = 'lightgrey';
-  }
+    event.currentTarget.style.backgroundColor = "lightgrey";
+  };
 
-  onMouseLeave = (event) => {
+  onMouseLeave = event => {
     if (this.state.draggedConcept) {
       return;
     }
-    event.currentTarget.style.backgroundColor = 'white';
-  }
+    event.currentTarget.style.backgroundColor = "white";
+  };
 
   render() {
     const { classes } = this.props;
 
-    let drawerContent = <div></div>;
+    let drawerContent = <div />;
     if (!this.state.isLoaded) {
       drawerContent = <div>Loading...</div>;
     } else {
@@ -212,7 +222,8 @@ class ConceptsSelected extends React.Component {
         <div className={classes.drawerContent}>
           <IconButton
             className={classes.retractDrawerButton}
-            onClick={() => this.toggleDrawer(false)} >
+            onClick={() => this.toggleDrawer(false)}
+          >
             <ChevronRight />
           </IconButton>
           <Button
@@ -239,7 +250,8 @@ class ConceptsSelected extends React.Component {
               >
                 <IconButton
                   className={classes.deleteConceptButton}
-                  onClick={event => this.deleteConcept(event, index)} >
+                  onClick={event => this.deleteConcept(event, index)}
+                >
                   <Close className={classes.deleteConceptIcon} />
                 </IconButton>
                 {concept.name}
@@ -267,17 +279,19 @@ class ConceptsSelected extends React.Component {
         >
           Toggle Concepts Selected
         </Button>
-        <div style={{
-          height: '100%',
-          width: this.state.drawerOpen ? '440px' : '0px',
-          position: 'fixed',
-          zIndex: 1,
-          top: 0,
-          right: 0,
-          backgroundColor: 'white',
-          overflowX: 'hidden',
-          transition: '0.3s',
-        }}>
+        <div
+          style={{
+            height: "100%",
+            width: this.state.drawerOpen ? "440px" : "0px",
+            position: "fixed",
+            zIndex: 1,
+            top: 0,
+            right: 0,
+            backgroundColor: "white",
+            overflowX: "hidden",
+            transition: "0.3s"
+          }}
+        >
           {drawerContent}
         </div>
         <SearchModal

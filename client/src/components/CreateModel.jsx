@@ -1,18 +1,17 @@
-import React, { Component } from 'react';
-import axios from 'axios';
+import React, { Component } from "react";
+import axios from "axios";
 
-import ErrorModal from './ErrorModal.jsx';
-import Typography from '@material-ui/core/Typography';
-import { withStyles } from '@material-ui/core/styles';
+import Typography from "@material-ui/core/Typography";
+import { withStyles } from "@material-ui/core/styles";
+import swal from "@sweetalert/with-react";
 
-
-const styles= {
+const styles = {
   root: {
-    height: '70vh',
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center'
+    height: "70vh",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    alignItems: "center"
   }
 };
 
@@ -21,37 +20,38 @@ class CreateModel extends Component {
     super(props);
     this.state = {
       modelsLikeSearch: [],
-      models: null,
-      errorMsg: null,
-      errorOpen: false //modal code
+      models: null
     };
   }
 
   componentDidMount = () => {
     this.loadExistingModels();
-  }
+  };
 
   loadExistingModels = () => {
     const config = {
       headers: {
-        'Authorization': 'Bearer ' + localStorage.getItem('token')
+        Authorization: "Bearer " + localStorage.getItem("token")
       }
-    }
-    axios.get(`/api/models`, config).then(res => {
-      this.setState({
-        models: res.data
+    };
+    axios
+      .get(`/api/models`, config)
+      .then(res => {
+        this.setState({
+          models: res.data
+        });
       })
-    }).catch(error => {
-      console.log('Error in get /api/models');
-      console.log(error);
-      if (error.response) {
-        console.log(error.response.data.detail);
-      }
-    })
-  }
-  
-  handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
+      .catch(error => {
+        console.log("Error in get /api/models");
+        console.log(error);
+        if (error.response) {
+          console.log(error.response.data.detail);
+        }
+      });
+  };
+
+  handleKeyPress = e => {
+    if (e.key === "Enter") {
       const model = this.findModel(e.target.value);
       if (model) {
         alert("Model exists");
@@ -63,88 +63,69 @@ class CreateModel extends Component {
     } else {
       this.searchModels(e.target.value + e.key);
     }
-  }
+  };
 
-  handleKeyDown = (e) => {
+  handleKeyDown = e => {
     //Backspace does not trigger handleKeyPress
     //So this will search when backspace
     if (e.keyCode === 8 || e.keyCode === 46) {
-      this.searchModels(e.target.value.slice(0,-1));
+      this.searchModels(e.target.value.slice(0, -1));
     }
-  }
+  };
 
-  searchModels = (search) => {
+  searchModels = search => {
     const modelsLikeSearch = this.state.models.filter(model => {
-      return model.name.match(new RegExp(search, 'i'))
+      return model.name.match(new RegExp(search, "i"));
     });
 
     this.setState({
       modelsLikeSearch: modelsLikeSearch.slice(0, 10)
-    })
+    });
   };
 
-  findModel = (modelName) => {
+  findModel = modelName => {
     const match = this.state.models.find(model => {
       return model.name === modelName;
     });
     return match ? match.name : null;
   };
 
-  createModel = async (modelName) => {
+  createModel = async modelName => {
     const config = {
       headers: {
-        'Authorization': 'Bearer ' + localStorage.getItem('token')
+        Authorization: "Bearer " + localStorage.getItem("token")
       }
     };
     const body = {
-      'name': modelName,
+      name: modelName
     };
     try {
       axios.post(`/api/models`, body, config).then(res => {
-        alert('Created new model ' + modelName);
+        alert("Created new model " + modelName);
         this.loadExistingModels();
-      })
+      });
     } catch (error) {
       console.log("Error in post /api/models");
       if (error.response) {
-        this.setState({
-          errorMsg: error.response.data.detail,
-          errorOpen: true
-        });
+        swal(error.response.data.detail, "", "error");
       }
     }
-  };
-
-  //Code for closing modal
-  handleClose = () => {
-    this.setState({ errorOpen: false });
   };
 
   render() {
     const { classes } = this.props;
-    const {
-      models,
-      modelsLikeSearch, 
-      errorMsg, 
-      errorOpen
-    } = this.state;
+    const { models, modelsLikeSearch } = this.state;
     if (!models) {
-      return (
-        <div>Loading...</div>
-      )
+      return <div>Loading...</div>;
     }
     return (
       <div className={classes.root}>
-        <h1 style={{color: 'red'}}>This page is still in progress</h1>
-        <Typography variant="display1">Create Model:</Typography><br />
-        <ErrorModal 
-          errorMsg={errorMsg} 
-          open={errorOpen} 
-          handleClose={this.handleClose}
-        />
-        <input 
-          type='text' 
-          name='model' 
+        <h1 style={{ color: "red" }}>This page is still in progress</h1>
+        <Typography variant="display1">Create Model:</Typography>
+        <br />
+        <input
+          type="text"
+          name="model"
           onKeyPress={this.handleKeyPress}
           onKeyDown={this.handleKeyDown}
           autoFocus
@@ -153,9 +134,9 @@ class CreateModel extends Component {
           list="data"
         />
         <datalist id="data">
-          {modelsLikeSearch.map((model) =>
+          {modelsLikeSearch.map(model => (
             <option key={model.name} value={model.name} />
-          )}
+          ))}
         </datalist>
       </div>
     );

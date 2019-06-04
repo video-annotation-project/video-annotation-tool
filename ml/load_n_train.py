@@ -66,7 +66,7 @@ class custom(CSVGenerator):
         return inputs, targets
 
 
-def train_model(concepts, users, min_examples, epochs, model_name, videos, download_data=True):
+def train_model(concepts, users, min_examples, epochs, model_name, videos, selected_concepts, download_data=True):
 
     classmap = get_classmap(concepts)
     '''
@@ -82,14 +82,9 @@ def train_model(concepts, users, min_examples, epochs, model_name, videos, downl
             os.makedirs(dir)
 
         start = time.time()
-
-        end = time.time()
-        print("Done Initializing Classmap: " + str((end - start)/60) + " minutes")
-
-        start = time.time()
         print("Starting Download.")
 
-        download_annotations(min_examples, concepts, classmap, users, videos, img_folder, train_annot_file, valid_annot_file)
+        download_annotations(min_examples, selected_concepts, classmap, users, videos, img_folder, train_annot_file, valid_annot_file)
 
         end = time.time()
         print("Done Downloading Annotations: " + str((end - start)/60) + " minutes")
@@ -180,4 +175,4 @@ if __name__ == '__main__':
     concepts = [1,2,3]
     model_name = "jake_test"
     videos = [81,32]
-    train_model(concepts, users, min_examples, epochs, model_name, videos, download_data=False)
+    train_model(concepts, users, min_examples, epochs, model_name, videos, selected_concepts, download_data=False)
