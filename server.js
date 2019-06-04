@@ -1485,7 +1485,7 @@ app.patch(
     const unsure = req.body.unsure != null ? `, unsure=` + req.body.unsure : ``;
     const verifiedby = req.user.id;
     const queryText =
-      `UPDATE annotations SET verifiedby=$2, verifieddate=current_timestamp, originalid=null` +
+      `UPDATE annotations SET verifiedby=$2, verifieddate=current_timestamp` +
       conceptid +
       comment +
       unsure +
@@ -1500,7 +1500,7 @@ app.patch(
   }
 );
 
-// update box coordinates
+// Update box coordinates
 app.patch(
   "/api/annotationsUpdateBox",
   passport.authenticate("jwt", { session: false }),
@@ -1514,7 +1514,7 @@ app.patch(
     var y2 = req.body.y2;
 
     const queryText =
-      "UPDATE annotations SET x1=$1, x2=$2, y1=$3, y2=$4 WHERE id=$5";
+      `UPDATE annotations SET x1=$1, x2=$2, y1=$3, y2=$4 WHERE id=$5`;
     try {
       let update = await psql.query(queryText, [x1, x2, y1, y2, id]);
       res.json(update.rows);
