@@ -103,9 +103,9 @@ def select_annotations(annotations, min_examples, concepts):
 #   split: fraction of annotation images that willbe used for training (rest used in validation)
 def download_annotations(min_examples, concepts, concept_map, users, videos, img_folder, train_annot_file, valid_annot_file, split=.8):
     # Get all annotations for given concepts (and child concepts) making sure that any tracking annotations originated from good users
-    users = ','.join('\''+str(e)+'\'' for e in users)
-    videos = ','.join('\''+str(e)+'\'' for e in videos)
-    str_concepts = ','.join('\''+str(e)+'\'' for e in concepts)
+    users = "\'" +  ','.join(str(e) for e in users) + "\'"
+    videos = "\'" + ','.join(str(e) for e in videos) + "\'"
+    str_concepts = "\'" + ','.join(str(e) for e in concepts) + "\'"
 
     annotations = queryDB(
         ''' SELECT *
