@@ -15,6 +15,7 @@ import Photo from "@material-ui/icons/Photo";
 import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
 import IconButton from "@material-ui/core/IconButton";
 import Icon from "@material-ui/core/Icon";
+import DoneAll from "@material-ui/icons/DoneAll";
 
 import AnnotationFrame from "./AnnotationFrame.jsx";
 
@@ -55,6 +56,8 @@ class Annotations extends Component {
           `queryConditions=${this.props.queryConditions}&` +
           `unsureOnly=${this.props.unsureOnly}&` +
           `admin=${localStorage.getItem("admin")}&` +
+          `verifiedOnly=${this.props.verifiedOnly}&` +
+          `unverifiedOnly=${this.props.unverifiedOnly}&` +
           `queryLimit=${this.props.queryLimit}`,
         config
       );
@@ -161,6 +164,7 @@ class Annotations extends Component {
           {annotations.map(annotation => (
             <React.Fragment key={annotation.id}>
               <ListItem button onClick={() => this.handleClick(annotation.id)}>
+                {annotation.verifiedby ? <DoneAll color="primary" /> : ""}
                 <ListItemText
                   primary={
                     "At " +
@@ -198,6 +202,7 @@ class Annotations extends Component {
                       onClick={e => this.handleDelete(e, annotation.id)}
                     />
                   </IconButton>
+
                   {annotation.expanded ? <ExpandLess /> : <ExpandMore />}
                 </ListItemSecondaryAction>
               </ListItem>
@@ -211,7 +216,7 @@ class Annotations extends Component {
                     src={
                       "https://cdn.deepseaannotations.com/videos/" +
                       annotation.id +
-                      "_ai.mp4"
+                      "_tracking.mp4"
                     }
                     type="video/mp4"
                     controls

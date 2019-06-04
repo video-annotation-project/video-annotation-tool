@@ -17,7 +17,7 @@
     "react-router-dom": "^4.3.1",
     "react-scripts": "^2.1.8",
     "socket.io-client": "^2.2.0",
-    "sweetalert": "^2.1.2"
+    "sweetalert2": "^8.11.7"
   },
   "scripts": {
     "start": "react-scripts start",

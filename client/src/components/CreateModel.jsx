@@ -3,7 +3,7 @@ import axios from "axios";
 
 import Typography from "@material-ui/core/Typography";
 import { withStyles } from "@material-ui/core/styles";
-import swal from "@sweetalert/with-react";
+import Swal from 'sweetalert2';
 
 const styles = {
   root: {
@@ -107,7 +107,7 @@ class CreateModel extends Component {
     } catch (error) {
       console.log("Error in post /api/models");
       if (error.response) {
-        swal(error.response.data.detail, "", "error");
+        Swal.fire(error.response.data.detail, "", "error");
       }
     }
   };

@@ -72,7 +72,7 @@ def select_annotations(annotations, min_examples, concepts):
     # (note: the speed is irrelevant here since they are the original human annotations) and 
     # those with ai annotations from low to high speed (1, speed) - prioritizing frames with no tracking
     # annotations and then those with tracking but low average speeds (more accurate tracking?)
-    ai_id = queryDB("SELECT id FROM users WHERE username='ai'").id[0]
+    ai_id = queryDB("SELECT id FROM users WHERE username='tracking'").id[0]
     sort_lambda = lambda df : (set(df['userid']) == set([ai_id]), df.speed.mean())
     groups.sort(key=sort_lambda)
 

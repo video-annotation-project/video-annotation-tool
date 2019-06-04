@@ -48,9 +48,10 @@ class Verify extends Component {
     super(props);
     this.state = {
       selectionMounted: true,
-      selectedUser: "0",
-      selectedVideos: [],
-      selectedConcepts: [],
+      /* -1 represents select all */
+      selectedUsers: ["-1"],
+      selectedVideos: ["-1"],
+      selectedConcepts: ["-1"],
       annotations: [],
       error: null,
       index: 0
@@ -72,7 +73,7 @@ class Verify extends Component {
 
   getUsers = async () => {
     return axios
-      .get(`/api/users`, {
+      .get(`/api/users?noAi=true`, {
         headers: { Authorization: "Bearer " + localStorage.getItem("token") }
       })
       .then(res => res.data)
@@ -85,8 +86,11 @@ class Verify extends Component {
 
   getVideos = async () => {
     return axios
-      .get(`/api/unverifiedVideosByUser/` + this.state.selectedUser, {
-        headers: { Authorization: "Bearer " + localStorage.getItem("token") }
+      .get(`/api/unverifiedVideosByUser/`, {
+        headers: { Authorization: "Bearer " + localStorage.getItem("token") },
+        params: {
+          selectedUsers: this.state.selectedUsers
+        }
       })
       .then(res => res.data)
       .catch(error => {
@@ -98,13 +102,13 @@ class Verify extends Component {
 
   getConcepts = async () => {
     return axios
-      .get("/api/unverifiedConceptsByUserVideo/", {
+      .get(`/api/unverifiedConceptsByUserVideo/`, {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + localStorage.getItem("token")
         },
         params: {
-          selectedUser: this.state.selectedUser,
+          selectedUsers: this.state.selectedUsers,
           selectedVideos: this.state.selectedVideos
         }
       })
@@ -124,7 +128,7 @@ class Verify extends Component {
           Authorization: "Bearer " + localStorage.getItem("token")
         },
         params: {
-          selectedUser: this.state.selectedUser,
+          selectedUsers: this.state.selectedUsers,
           selectedVideos: this.state.selectedVideos,
           selectedConcepts: this.state.selectedConcepts
         }
@@ -137,43 +141,35 @@ class Verify extends Component {
       });
   };
 
-  handleChangeUser = event => {
-    this.setState({ selectedUser: event.target.value });
-  };
-
-  handleChangeVideo = event => {
-    if (!this.state.selectedVideos.includes(event.target.value)) {
-      this.setState({
-        selectedVideos: this.state.selectedVideos.concat(event.target.value)
-      });
+  handleChange = type => event => {
+    if (!this.state[type].includes(event.target.value)) {
+      if (event.target.value === "-1") {
+        this.setState({
+          [type]: ["-1"]
+        });
+      } else {
+        if (this.state[type].length === 1 && this.state[type][0] === "-1") {
+          this.setState({
+            [type]: [event.target.value]
+          });
+        } else {
+          this.setState({
+            [type]: this.state[type].concat(event.target.value)
+          });
+        }
+      }
     } else {
       this.setState({
-        selectedVideos: this.state.selectedVideos.filter(
-          videoid => videoid !== event.target.value
-        )
-      });
-    }
-  };
-
-  handleChangeConcept = event => {
-    if (!this.state.selectedConcepts.includes(event.target.value)) {
-      this.setState({
-        selectedConcepts: this.state.selectedConcepts.concat(event.target.value)
-      });
-    } else {
-      this.setState({
-        selectedConcepts: this.state.selectedConcepts.filter(
-          conceptid => conceptid !== event.target.value
-        )
+        [type]: this.state[type].filter(typeid => typeid !== event.target.value)
       });
     }
   };
 
   resetState = () => {
     this.setState({
-      selectedUser: "0",
-      selectedVideos: [],
-      selectedConcepts: [],
+      selectedUsers: ["-1"],
+      selectedVideos: ["-1"],
+      selectedConcepts: ["-1"],
       index: 0
     });
   };
@@ -192,15 +188,13 @@ class Verify extends Component {
     if (this.state.selectionMounted) {
       selection = (
         <VerifySelection
-          selectedUser={this.state.selectedUser}
+          selectedUsers={this.state.selectedUsers}
           selectedVideos={this.state.selectedVideos}
           selectedConcepts={this.state.selectedConcepts}
           getUsers={this.getUsers}
           getVideos={this.getVideos}
           getConcepts={this.getConcepts}
-          handleChangeUser={this.handleChangeUser}
-          handleChangeVideo={this.handleChangeVideo}
-          handleChangeConcept={this.handleChangeConcept}
+          handleChange={this.handleChange}
           resetState={this.resetState}
           toggleSelection={this.toggleSelection}
         />

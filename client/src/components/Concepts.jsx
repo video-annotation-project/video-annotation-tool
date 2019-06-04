@@ -111,7 +111,7 @@ class Concepts extends React.Component {
       <div className={classes.root}>
         <br />
         <ConceptsList
-          id={-1}
+          id={0}
           conceptsSelected={this.state.conceptsSelected}
           changeConceptsSelected={this.changeConceptsSelected}
         />

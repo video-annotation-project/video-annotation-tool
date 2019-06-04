@@ -32,7 +32,7 @@ function getSteps() {
 function getStepContent(step) {
   switch (step) {
     case 0:
-      return "Select a user";
+      return "Select users";
     case 1:
       return "Select videos";
     case 2:
@@ -55,9 +55,9 @@ class VerifySelection extends React.Component {
       case 0:
         return (
           <VerifySelectUser
-            value={this.props.selectedUser}
+            value={this.props.selectedUsers}
             getUsers={this.props.getUsers}
-            handleChange={this.props.handleChangeUser}
+            handleChange={this.props.handleChange("selectedUsers")}
           />
         );
       case 1:
@@ -65,7 +65,7 @@ class VerifySelection extends React.Component {
           <VerifySelectVideo
             value={this.props.selectedVideos}
             getVideos={this.props.getVideos}
-            handleChange={this.props.handleChangeVideo}
+            handleChange={this.props.handleChange("selectedVideos")}
           />
         );
       case 2:
@@ -73,7 +73,7 @@ class VerifySelection extends React.Component {
           <VerifySelectConcept
             value={this.props.selectedConcepts}
             getConcepts={this.props.getConcepts}
-            handleChange={this.props.handleChangeConcept}
+            handleChange={this.props.handleChange("selectedConcepts")}
           />
         );
       default:
@@ -84,7 +84,7 @@ class VerifySelection extends React.Component {
   didNotSelect = step => {
     switch (step) {
       case 0:
-        return this.props.selectedUser == null;
+        return this.props.selectedUsers.length === 0;
       case 1:
         return this.props.selectedVideos.length === 0;
       case 2:
@@ -124,7 +124,6 @@ class VerifySelection extends React.Component {
                 <div className={classes.actionsContainer}>
                   <div>
                     <Button
-                      disabled={activeStep === 0}
                       onClick={this.resetState}
                       className={classes.button}
                     >

@@ -62,7 +62,7 @@ const styles = theme => ({
   }
 });
 
-class RunModel extends Component {
+class PredictModel extends Component {
   constructor(props) {
     super(props);
     // here we do a manual conditional proxy because React won't do it for us
@@ -82,7 +82,7 @@ class RunModel extends Component {
     socket.on("disconnect", reason => {
       console.log(reason);
     });
-    socket.on("reload run model", this.loadOptionInfo);
+    socket.on("refresh predictmodel", this.loadOptionInfo);
 
     this.state = {
       models: [],
@@ -128,7 +128,7 @@ class RunModel extends Component {
         Authorization: "Bearer " + localStorage.getItem("token")
       }
     };
-    let option = "runmodel";
+    let option = "predictmodel";
     axios
       .get(`/api/modelTab/${option}`, config)
       .then(res => {
@@ -290,7 +290,7 @@ class RunModel extends Component {
     }
   };
 
-  updateBackendInfo = step => {
+  updateBackendInfo = () => {
     const config = {
       headers: {
         Authorization: "Bearer " + localStorage.getItem("token")
@@ -307,11 +307,9 @@ class RunModel extends Component {
     };
     // update SQL database
     axios
-      .put("/api/modelTab/runmodel", body, config)
+      .put("/api/modelTab/predictmodel", body, config)
       .then(res => {
-        console.log(this.state.socket);
-
-        this.state.socket.emit("reload run model");
+        this.state.socket.emit("refresh predictmodel");
       })
       .catch(error => {
         console.log(error);
@@ -327,7 +325,7 @@ class RunModel extends Component {
       () => {
         if (this.state.activeStep === 3) {
           console.log("Last Step Starting Model...");
-          this.startEC2();
+          this.postModelInstance('start');
         }
         this.updateBackendInfo();
       }
@@ -352,40 +350,22 @@ class RunModel extends Component {
       },
       () => {
         this.updateBackendInfo();
-        this.stopEC2();
+        this.postModelInstance('stop');
       }
     );
   };
 
-  startEC2 = () => {
+  postModelInstance = (command) => {
     const config = {
       headers: {
         Authorization: "Bearer " + localStorage.getItem("token")
       }
     };
     const body = {
-      modelSelected: this.state.modelSelected,
-      userSelected: this.state.userSelected,
-      videoSelected: this.state.videoSelected
+      command: command,
+      modelInstanceId: 'i-0f2287cb0fc621b6d'
     };
-    axios.put(`/api/runModel`, body, config).then(res => {
-      console.log(res);
-    });
-  };
-
-  stopEC2 = () => {
-    const config = {
-      url: "/api/runModel",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + localStorage.getItem("token")
-      },
-      data: {
-        modelSelected: this.state.modelSelected
-      },
-      method: "delete"
-    };
-    axios.request(config).then(res => {
+    axios.post(`/api/modelInstance`, body, config).then(res => {
       console.log(res);
     });
   };
@@ -407,7 +387,6 @@ class RunModel extends Component {
     return (
       <div className={classes.root}>
         <div className={classes.center}>
-          <h1 style={{ color: "red" }}>This page is still in progress</h1>
           <Typography variant="display1">
             Run a trained model on video(s)
           </Typography>
@@ -439,7 +418,7 @@ class RunModel extends Component {
                         (activeStep === 2 && userSelected === "")
                       }
                     >
-                      {activeStep === steps.length - 1 ? "Run Model" : "Next"}
+                      {activeStep === steps.length - 1 ? "Predict" : "Next"}
                     </Button>
                   </div>
                 </div>
@@ -477,8 +456,8 @@ class RunModel extends Component {
   }
 }
 
-RunModel.propTypes = {
+PredictModel.propTypes = {
   classes: PropTypes.object
 };
 
-export default withStyles(styles)(RunModel);
+export default withStyles(styles)(PredictModel);

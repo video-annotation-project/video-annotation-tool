@@ -1,10 +1,10 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { withStyles } from "@material-ui/core/styles";
-import Radio from "@material-ui/core/Radio";
-import RadioGroup from "@material-ui/core/RadioGroup";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import FormControl from "@material-ui/core/FormControl";
+import FormGroup from "@material-ui/core/FormGroup";
+import { Checkbox } from "@material-ui/core";
 
 const styles = theme => ({
   root: {
@@ -40,7 +40,7 @@ class VerifySelectUser extends React.Component {
     return (
       <div className={classes.root}>
         <FormControl component="fieldset" className={classes.formControl}>
-          <RadioGroup
+          <FormGroup
             aria-label="User"
             name="user"
             className={classes.group}
@@ -48,20 +48,22 @@ class VerifySelectUser extends React.Component {
             onChange={handleChange}
           >
             <FormControlLabel
-              key={0}
-              value={"0"}
-              control={<Radio color="primary" />}
-              label={"All users"}
+              key={-1}
+              value={"-1"}
+              control={<Checkbox color="primary" />}
+              label="All users"
+              checked={this.props.value.includes("-1")}
             />
             {this.state.users.map(user => (
               <FormControlLabel
                 key={user.id}
                 value={user.id.toString()}
-                control={<Radio color="primary" />}
+                control={<Checkbox color="primary" />}
                 label={user.username}
+                checked={this.props.value.includes(user.id.toString())}
               />
             ))}
-          </RadioGroup>
+          </FormGroup>
         </FormControl>
       </div>
     );

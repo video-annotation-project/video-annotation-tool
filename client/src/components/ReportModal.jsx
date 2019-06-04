@@ -48,6 +48,14 @@ class ReportModal extends Component {
     this.props.setUnsureOnly(event.target.checked);
   };
 
+  handleVerifiedCheckbox = event => {
+    this.props.setVerifiedOnly(event.target.checked);
+  };
+
+  handleUnverifiedCheckbox = event => {
+    this.props.setUnverifiedOnly(event.target.checked);
+  };
+
   handleOptionAvailableToggle = (level, optionSelected) => {
     let tempOptions = JSON.parse(JSON.stringify(this.state.options));
     tempOptions
@@ -82,6 +90,8 @@ class ReportModal extends Component {
   render() {
     const {
       unsureOnly,
+      verifiedOnly,
+      unverifiedOnly,
       level1,
       level2,
       level3,
@@ -147,6 +157,30 @@ class ReportModal extends Component {
                 }
                 label="Unsure Only"
               />
+              <div>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={verifiedOnly}
+                      onChange={event => this.handleVerifiedCheckbox(event)}
+                      value="verifiedOnly"
+                      color="primary"
+                    />
+                  }
+                  label="Verified Only"
+                />
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={unverifiedOnly}
+                      onChange={event => this.handleUnverifiedCheckbox(event)}
+                      value="unverifiedOnly"
+                      color="primary"
+                    />
+                  }
+                  label="Unverified Only"
+                />
+              </div>
             </form>
           </DialogContent>
           <DialogActions>
