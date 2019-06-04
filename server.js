@@ -786,7 +786,7 @@ app.get(
                      false as extended 
                      FROM annotations
                      LEFT JOIN concepts ON concepts.id=annotations.conceptid
-                     WHERE annotations.userid!=17`;
+                     WHERE annotations.userid NOT IN (17, 32)`;
     if (req.query.unsureOnly === "true") {
       queryPass = queryPass + " AND annotations.unsure = true";
     }
@@ -1037,7 +1037,7 @@ let selectLevelQuery = level => {
                  false as expanded\
                  FROM annotations, videos \
                  WHERE videos.id=annotations.videoid \
-                 AND annotations.userid!=17";
+                 AND annotations.userid NOT IN (17, 32)";
   }
   if (level === "Concept") {
     queryPass =
@@ -1047,7 +1047,7 @@ let selectLevelQuery = level => {
                  false as expanded\
                  FROM annotations, concepts \
                  WHERE annotations.conceptid=concepts.id \
-                 AND annotations.userid!=17";
+                 AND annotations.userid NOT IN (17, 32)";
   }
   if (level === "User") {
     queryPass =
@@ -1057,7 +1057,7 @@ let selectLevelQuery = level => {
                  false as expanded \
                  FROM annotations, users \
                  WHERE annotations.userid=users.id \
-                 AND annotations.userid!=17";
+                 AND annotations.userid NOT IN (17, 32)";
   }
   return queryPass;
 };
@@ -1204,7 +1204,7 @@ app.post(
     let ec2 = new AWS.EC2({ region: "us-west-1" });
     
     var params = {
-      InstanceIds: [process.env[req.body.modelInstanceId]]
+      InstanceIds: [req.body.modelInstanceId]
     };
     if (req.body.command === "stop") {
       ec2.stopInstances(params, (err, data) => {
