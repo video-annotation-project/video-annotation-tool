@@ -53,6 +53,7 @@ def select_annotations(annotations, min_examples, concepts):
     speed.update_annotation_speed()
     selected = []
     concept_count = {}
+
     for concept in concepts:
         concept_count[concept] = 0
 
@@ -108,18 +109,20 @@ def select_annotations(annotations, min_examples, concepts):
 #   split: fraction of annotation images that willbe used for training (rest used in validation)
 def download_annotations(min_examples, concepts, concept_map, users, videos, img_folder, train_annot_file, valid_annot_file, split=.8):
     # Get all annotations for given concepts (and child concepts) making sure that any tracking annotations originated from good users
-    users = ','.join('\''+str(e)+'\'' for e in users)
-    videos = ','.join('\''+str(e)+'\'' for e in videos)
-    concepts = ','.join('\''+str(e)+'\'' for e in concepts)
+    users = "\'" +  ','.join(str(e) for e in users) + "\'"
+    videos = "\'" + ','.join(str(e) for e in videos) + "\'"
+    str_concepts = "\'" + ','.join(str(e) for e in concepts) + "\'"
+
     annotations = queryDB(
         ''' SELECT *
             FROM annotations as A
-            WHERE conceptid::text = ANY(string_to_array(''' + concepts + ''',','))
+            WHERE conceptid::text = ANY(string_to_array(''' + str_concepts + ''',','))
             AND videoid::text = ANY(string_to_array(''' + videos + ''',','))
             AND EXISTS ( 
                 SELECT id, userid 
                 FROM annotations 
                 WHERE id=A.originalid 
+                AND unsure = False
                 AND userid::text = ANY(string_to_array(''' + users + ",',')))")
 
     selected, concept_count = select_annotations(annotations, min_examples, concepts)

@@ -29,15 +29,15 @@ cursor.execute("SELECT * FROM MODELTAB WHERE option='trainmodel'")
 row = cursor.fetchone()
 info = row[1]
 
-if info['activeStep'] != 4:
+if info['activeStep'] != 5:
     exit()
 
 cursor.execute("SELECT * FROM MODELS WHERE name='" + str(info['modelSelected']) + "'")
 model = cursor.fetchone()
+concepts = model[2]
+train_model(concepts, info['usersSelected'], int(info['minImages']), int(info['epochs']), info['modelSelected'], info['videosSelected'], info['conceptsSelected'], download_data=True)
 
-train_model(model[2], info['usersSelected'], info['minImages'], info['epochs'], info['modelSelected'], info['videosSelected'], download_data=True)
-
-cursor.execute("Update modeltab SET info =  '{\"activeStep\": 0, \"epochs\":0, \"minImages\":0, \"modelSelected\":\"\",\"videosSelected\":[],\"usersSelected\":[]}' WHERE option = 'trainmodel'")
+cursor.execute("Update modeltab SET info =  '{\"activeStep\": 0, \"conceptsSelected\":[], \"epochs\":0, \"minImages\":0, \"modelSelected\":\"\",\"videosSelected\":[],\"usersSelected\":[]}' WHERE option = 'trainmodel'")
 con.commit()
 con.close()    
 os.system("sudo shutdown -h")
