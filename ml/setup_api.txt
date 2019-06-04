@@ -1,0 +1,4 @@
+sudo crontab -e
+
+@reboot sudo runuser -l ubuntu -c '/home/ubuntu/video-annotation-tool/ml/run_training.sh'
+

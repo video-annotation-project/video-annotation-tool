@@ -169,10 +169,10 @@ def train_model(concepts, users, min_examples, epochs, model_name, videos, selec
     os.system("sudo shutdown -h")
 
 if __name__ == '__main__':
-    epochs = config['epochs']
+    epochs = 100
     users = [15, 12, 11, 6, 17]
-    min_examples = config['min_examples']
-    concepts = config['conceptids']
+    min_examples = 1000
+    concepts = [1,2,3]
     model_name = "jake_test"
     videos = [81,32]
     train_model(concepts, users, min_examples, epochs, model_name, videos, selected_concepts, download_data=False)
