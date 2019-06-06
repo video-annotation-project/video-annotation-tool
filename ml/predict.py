@@ -170,7 +170,7 @@ def init_model(model_path):
 
 def predict_frames(video_frames, fps, model):
     currently_tracked_objects = []
-    annotations = []
+    annotations = [pd.DataFrame(columns=['x1','y1','x2','y2','label', 'confidence', 'objectid','frame_num'])]
     for i, frame in enumerate(video_frames):
         frame_num = i
         # update tracking for currently tracked objects
@@ -189,7 +189,7 @@ def predict_frames(video_frames, fps, model):
                 match, matched_object = does_match_existing_tracked_object(detection, currently_tracked_objects)
                 if not match:
                     tracked_object = Tracked_object(detection, frame, frame_num)
-                    prev_annotations, matched_obj_id = track_backwards(video_frames, frame_num, detection, tracked_object.id, fps, annotations)
+                    prev_annotations, matched_obj_id = track_backwards(video_frames, frame_num, detection, tracked_object.id, fps, pd.concat(annotations))
                     if matched_obj_id:
                         tracked_object.change_id(matched_obj_id)
                     tracked_object.annotations = tracked_object.annotations.append(prev_annotations)
@@ -200,7 +200,10 @@ def predict_frames(video_frames, fps, model):
         for obj in currently_tracked_objects:
             (x, y, w, h) = obj.box
             cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-
+    
+    for obj in currently_tracked_objects:
+        annotations.append(obj.annotations)
+                
     results = pd.concat(annotations)
     results.to_csv('results.csv')
     return results, video_frames
@@ -260,7 +263,7 @@ def track_backwards(video_frames, frame_num, detection, object_id, fps, old_anno
         if success:
             annotation = make_annotation(box, object_id, frame_num)
             last_frame_annotations = old_annotations[old_annotations['frame_num'] == frame_num]
-            matched_obj_id = match_old_annotations(last_frame_annotations, annotation)
+            matched_obj_id = match_old_annotations(last_frame_annotations, pd.Series(annotation))
             if matched_obj_id:
                 annotations['objectid'] = matched_obj_id
                 return annotations, matched_obj_id
@@ -272,11 +275,11 @@ def track_backwards(video_frames, frame_num, detection, object_id, fps, old_anno
 def match_old_annotations(old_annotations, annotation):
     max_iou = 0 
     match = None
-    for annot in old_annotations:
+    for _, annot in old_annotations.iterrows():
         iou = compute_IOU(annot, annotation)
         if (iou > max_iou):
             max_iou = iou
-            match = annot.id
+            match = annot['objectid']
     return match if (max_iou >= TRACKING_IOU_THRESH) else None
 
 def make_annotation(box, object_id, frame_num):
