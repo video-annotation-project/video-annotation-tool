@@ -187,15 +187,18 @@ def predict_frames(video_frames, fps, model):
             detections = get_predictions(frame, model)
             for detection in detections:
                 match, matched_object = does_match_existing_tracked_object(detection, currently_tracked_objects)
-                if not match:
+                if match:
+                    matched_object.reinit(detection, frame, frame_num)
+                else:
                     tracked_object = Tracked_object(detection, frame, frame_num)
                     prev_annotations, matched_obj_id = track_backwards(video_frames, frame_num, detection, tracked_object.id, fps, pd.concat(annotations))
                     if matched_obj_id:
                         tracked_object.change_id(matched_obj_id)
                     tracked_object.annotations = tracked_object.annotations.append(prev_annotations)
                     currently_tracked_objects.append(tracked_object)
-                else:
-                    matched_object.reinit(detection, frame, frame_num)
+                    (x, y, w, h) = obj.box
+                    cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 3)
+                    
          # draw boxes 
         for obj in currently_tracked_objects:
             (x, y, w, h) = obj.box
