@@ -14,7 +14,6 @@ import Slider from "@material-ui/lab/Slider";
 
 const styles = theme => ({
   videoContainer: {
-    postion: "absolute",
     top: "50px",
     width: "1600px",
     height: "900px"

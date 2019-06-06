@@ -32,7 +32,6 @@ const styles = theme => ({
     paddingLeft: 0
   },
   img: {
-    postion: "absolute",
     top: "50px"
   },
   container: {
