@@ -921,8 +921,9 @@ app.delete(
           Key: process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + element.imagewithbox
         });
       });
+      // add tracking video
       Objects.push({
-        Key: process.env.AWS_S3_BUCKET_VIDEOS_FOLDER + req.body.id
+        Key: process.env.AWS_S3_BUCKET_VIDEOS_FOLDER + req.body.id + '_tracking.mp4'
       });
       let params = {
         Bucket: process.env.AWS_S3_BUCKET_NAME,
