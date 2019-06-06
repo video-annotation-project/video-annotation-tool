@@ -34,10 +34,10 @@ import Description from "@material-ui/icons/Description";
 import VideoMetadata from "./VideoMetadata.jsx";
 
 //Select hyperparameters
-import TextField from "@material-ui/core/TextField";
+import TextField from '@material-ui/core/TextField';
 
 //Websockets
-import io from "socket.io-client";
+import io from "socket.io-client"
 
 const styles = theme => ({
   root: {
@@ -67,13 +67,13 @@ const styles = theme => ({
     overflow: "auto"
   },
   hyperparametersForm: {
-    display: "flex",
-    flexWrap: "wrap"
+    display: 'flex',
+    flexWrap: 'wrap',
   },
   textField: {
     marginLeft: theme.spacing,
     marginRight: theme.spacing,
-    width: 200
+    width: 200,
   }
 });
 
@@ -101,13 +101,13 @@ class TrainModel extends Component {
 
     this.state = {
       videos: [],
-      videosSelected: [],
+      videosSelected: null,
       users: [],
-      usersSelected: [],
+      usersSelected: null,
       models: [],
-      modelSelected: "",
+      modelSelected: null,
       concepts: [],
-      conceptsSelected: [],
+      conceptsSelected: null,
       minImages: 5000,
       epochs: 0,
       activeStep: 0,
@@ -134,7 +134,7 @@ class TrainModel extends Component {
     this.loadOptionInfo();
     this.loadExistingModels();
     this.loadUserList();
-  };
+  }
 
   loadOptionInfo = () => {
     const config = {
@@ -197,15 +197,15 @@ class TrainModel extends Component {
   loadUserList = () => {
     const config = {
       headers: {
-        Authorization: "Bearer " + localStorage.getItem("token")
+        'Authorization': 'Bearer ' + localStorage.getItem('token')
       }
-    };
+    }
     axios.get(`/api/users`, config).then(res => {
       this.setState({
         users: res.data
       });
-    });
-  };
+    })
+  }
 
   loadVideoList = () => {
     const config = {
@@ -213,13 +213,14 @@ class TrainModel extends Component {
         Authorization: "Bearer " + localStorage.getItem("token")
       }
     };
-    axios
-      .get(`/api/videos/usersViewed/` + this.state.usersSelected, config)
-      .then(res => {
-        this.setState({
-          videos: res.data
-        });
+    axios.get(
+      `/api/videos/usersViewed/` + this.state.usersSelected,
+      config
+    ).then(res => {
+      this.setState({
+        videos: res.data
       });
+    });
   };
 
   loadConceptList = () => {
@@ -228,20 +229,16 @@ class TrainModel extends Component {
         Authorization: "Bearer " + localStorage.getItem("token")
       }
     };
-    axios
-      .get(
-        `/api/trainModel/concepts/` +
-          this.state.videosSelected +
-          "/" +
-          this.state.modelSelected,
-        config
-      )
-      .then(res => {
-        this.setState({
-          concepts: res.data
-        });
+    axios.get(
+      `/api/trainModel/concepts/` +
+      this.state.videosSelected + '/' + this.state.modelSelected,
+      config
+    ).then(res => {
+      this.setState({
+        concepts: res.data
       });
-  };
+    });
+  }
 
   //Used to handle changes in the hyperparameters
   //and in the select model
@@ -252,6 +249,11 @@ class TrainModel extends Component {
   };
 
   selectModel = () => {
+    if (!this.state.modelSelected) {
+      return (
+        <div>Loading...</div>
+      )
+    }
     return (
       <FormControl className={this.props.classes.form}>
         <InputLabel>Select Model</InputLabel>
@@ -284,6 +286,11 @@ class TrainModel extends Component {
   };
 
   selectUser = () => {
+    if (!this.state.usersSelected) {
+      return (
+        <div>Loading...</div>
+      )
+    }
     return (
       <FormControl
         component="fieldset"
@@ -298,7 +305,7 @@ class TrainModel extends Component {
               <FormControlLabel
                 control={
                   <Checkbox
-                    onChange={this.checkboxSelect("usersSelected", user.id)}
+                    onChange={this.checkboxSelect('usersSelected', user.id)}
                     color="primary"
                     checked={this.state.usersSelected.includes(user.id)}
                   />
@@ -314,7 +321,9 @@ class TrainModel extends Component {
 
   selectVideo = () => {
     if (!this.state.videosSelected) {
-      return <div>Loading...</div>;
+      return (
+        <div>Loading...</div>
+      )
     }
     return (
       <FormControl
@@ -328,16 +337,25 @@ class TrainModel extends Component {
               <FormControlLabel
                 control={
                   <Checkbox
-                    onChange={this.checkboxSelect("videosSelected", video.id)}
-                    color="primary"
-                    checked={this.state.videosSelected.includes(video.id)}
+                    onChange={this.checkboxSelect('videosSelected', video.id)}
+                    color='primary'
+                    checked={
+                      this.state.videosSelected.includes(video.id)
+                    }
                   />
                 }
                 label={video.filename}
-              />
-              <IconButton style={{ float: "right" }}>
+              >
+              </FormControlLabel>
+              <IconButton style={{ float: 'right' }}>
                 <Description
-                  onClick={event => this.openVideoMetadata(event, video)}
+                  onClick={
+                    (event) =>
+                      this.openVideoMetadata(
+                        event,
+                        video,
+                      )
+                  }
                 />
               </IconButton>
             </div>
@@ -349,12 +367,15 @@ class TrainModel extends Component {
 
   selectConcepts = () => {
     const classes = this.props.classes;
-    if (!this.state.concepts) {
-      return <div>Loading...</div>;
+    if (!this.state.conceptsSelected) {
+      return (<div>Loading...</div>)
     }
 
     return (
-      <FormControl component="fieldset" className={classes.checkSelector}>
+      <FormControl
+        component="fieldset"
+        className={classes.checkSelector}
+      >
         <FormLabel component="legend">Select Species to Train With</FormLabel>
         <FormGroup>
           {this.state.concepts.map(concept => (
@@ -362,54 +383,54 @@ class TrainModel extends Component {
               <FormControlLabel
                 control={
                   <Checkbox
-                    onChange={this.checkboxSelect(
-                      "conceptsSelected",
-                      concept.id
-                    )}
-                    color="primary"
-                    checked={this.state.conceptsSelected.includes(concept.id)}
+                    onChange={this.checkboxSelect('conceptsSelected', concept.id)}
+                    color='primary'
+                    checked={
+                      this.state.conceptsSelected.includes(concept.id)
+                    }
                   />
                 }
                 label={concept.name}
-              />
+              >
+              </FormControlLabel>
             </div>
           ))}
         </FormGroup>
       </FormControl>
-    );
-  };
+    )
+  }
 
   selectHyperparameters = () => {
     const classes = this.props.classes;
     return (
       <form className={classes.hyperparametersForm}>
         <TextField
-          margin="normal"
-          name="epochs"
-          label="Number of epochs (0=Until Increased Loss)"
+          margin='normal'
+          name='epochs'
+          label='Number of epochs (0=Until Increased Loss)'
           value={this.state.epochs}
           onChange={this.handleChange}
         />
         <TextField
           margin="normal"
-          name="minImages"
-          label="Number Training Images"
+          name='minImages'
+          label='Number Training Images'
           value={this.state.minImages}
           onChange={this.handleChange}
         />
       </form>
-    );
-  };
+    )
+  }
 
   getSteps = () => {
     return [
-      "Select model",
-      "Select users",
-      "Select videos",
-      "Select species",
-      "Select hyperparameters"
+      'Select model',
+      'Select users',
+      'Select videos',
+      'Select species',
+      'Select hyperparameters'
     ];
-  };
+  }
 
   getStepContent = step => {
     switch (step) {
@@ -468,43 +489,34 @@ class TrainModel extends Component {
     if (this.state.activeStep === 2) {
       this.loadConceptList();
     }
-    this.setState(
-      state => ({
-        activeStep: state.activeStep + 1
-      }),
-      () => {
-        if (this.state.activeStep === 5) {
-          this.postModelInstance("start");
-        }
-        this.updateBackendInfo();
+    this.setState(state => ({
+      activeStep: state.activeStep + 1
+    }), () => {
+      if (this.state.activeStep === 5) {
+        this.postModelInstance('start');
       }
-    );
+      this.updateBackendInfo();
+    });
   };
 
   handleBack = () => {
-    this.setState(
-      state => ({
-        activeStep: state.activeStep - 1
-      }),
-      () => {
-        this.updateBackendInfo();
-      }
-    );
+    this.setState(state => ({
+      activeStep: state.activeStep - 1
+    }), () => {
+      this.updateBackendInfo();
+    });
   };
 
   handleStop = () => {
-    this.setState(
-      {
-        activeStep: 0
-      },
-      () => {
-        this.updateBackendInfo();
-        this.postModelInstance("stop");
-      }
-    );
+    this.setState({
+      activeStep: 0
+    }, () => {
+      this.updateBackendInfo();
+      this.postModelInstance('stop');
+    });
   };
 
-  postModelInstance = command => {
+  postModelInstance = (command) => {
     const config = {
       headers: {
         Authorization: "Bearer " + localStorage.getItem("token")
@@ -512,12 +524,12 @@ class TrainModel extends Component {
     };
     const body = {
       command: command,
-      modelInstanceId: "i-011660b3e976035d8"
+      modelInstanceId: 'i-011660b3e976035d8'
     };
     axios.post(`/api/modelInstance`, body, config).then(res => {
       console.log(res);
     });
-  };
+  }
 
   render() {
     const { classes } = this.props;

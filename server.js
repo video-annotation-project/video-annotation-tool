@@ -783,7 +783,7 @@ app.get(
                      false as extended 
                      FROM annotations
                      LEFT JOIN concepts ON concepts.id=annotations.conceptid
-                     WHERE annotations.userid!=17`;
+                     WHERE annotations.userid NOT IN (17, 32)`;
     if (req.query.unsureOnly === "true") {
       queryPass = queryPass + " AND annotations.unsure = true";
     }
@@ -900,14 +900,42 @@ app.delete(
   "/api/annotations",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    queryText =
-      "DELETE FROM annotations \
-                 WHERE annotations.id=$1 OR \
-                 annotations.originalid=$1 RETURNING *";
+    let s3 = new AWS.S3();
+    let queryText = `
+      DELETE FROM
+        annotations \
+      WHERE 
+        annotations.id=$1 
+        OR annotations.originalid=$1 
+      RETURNING *`;
     try {
       var deleteRes = await psql.query(queryText, [req.body.id]);
-      res.json(deleteRes.rows);
+
+      //These are the s3 object we will be deleting
+      let Objects = [];
+
+      deleteRes.rows.forEach(element => {
+        Objects.push({
+          Key: process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + element.image
+        });
+        Objects.push({
+          Key: process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + element.imagewithbox
+        });
+      });
+      // add tracking video
+      Objects.push({
+        Key: process.env.AWS_S3_BUCKET_VIDEOS_FOLDER + req.body.id + '_tracking.mp4'
+      });
+      let params = {
+        Bucket: process.env.AWS_S3_BUCKET_NAME,
+        Delete: {
+          Objects: Objects
+        }
+      };
+      let s3Res = await s3.deleteObjects(params);
+      res.json('delete');
     } catch (error) {
+      console.log('Error in delete /api/annotations');
       console.log(error);
       res.status(400).json(error);
     }
@@ -1038,7 +1066,7 @@ let selectLevelQuery = level => {
                  false as expanded\
                  FROM annotations, videos \
                  WHERE videos.id=annotations.videoid \
-                 AND annotations.userid!=17";
+                 AND annotations.userid NOT IN (17, 32)";
   }
   if (level === "Concept") {
     queryPass =
@@ -1048,7 +1076,7 @@ let selectLevelQuery = level => {
                  false as expanded\
                  FROM annotations, concepts \
                  WHERE annotations.conceptid=concepts.id \
-                 AND annotations.userid!=17";
+                 AND annotations.userid NOT IN (17, 32)";
   }
   if (level === "User") {
     queryPass =
@@ -1058,7 +1086,7 @@ let selectLevelQuery = level => {
                  false as expanded \
                  FROM annotations, users \
                  WHERE annotations.userid=users.id \
-                 AND annotations.userid!=17";
+                 AND annotations.userid NOT IN (17, 32)";
   }
   return queryPass;
 };
@@ -1209,7 +1237,7 @@ app.post(
     let ec2 = new AWS.EC2({ region: "us-west-1" });
 
     var params = {
-      InstanceIds: [process.env[req.body.modelInstanceId]]
+      InstanceIds: [req.body.modelInstanceId]
     };
     if (req.body.command === "stop") {
       ec2.stopInstances(params, (err, data) => {

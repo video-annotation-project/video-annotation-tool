@@ -1,5 +1,5 @@
-# Loads data, updates anchor boxes, and trains.
 from loading_data import download_annotations
+from loading_data import queryDB, get_classmap
 import json
 import os
 from dotenv import load_dotenv
@@ -7,15 +7,30 @@ import argparse
 import shutil
 import subprocess
 import time
+from keras_retinanet import models
+from keras_retinanet import losses
+from keras_retinanet.preprocessing.csv_generator import CSVGenerator
+from keras_retinanet.utils.transform import random_transform_generator
+import keras 
+import pandas as pd
+from keras_retinanet.utils.model import freeze as freeze_model
+from keras.utils import multi_gpu_model
+from keras.callbacks import ModelCheckpoint, EarlyStopping
+from keras_retinanet.models.retinanet import retinanet_bbox
+from keras_retinanet.callbacks import RedirectModel
+import tensorflow as tf
+import skimage as sk
+import random
+import numpy as np
+from tensorflow.python.client import device_lib
+import boto3
 
-start = time.time()
 argparser = argparse.ArgumentParser()
 argparser.add_argument(
     '-c',
     '--conf',
     default='config.json',
     help='path to configuration file')
-
 
 args = argparser.parse_args()
 config_path = args.conf
@@ -24,61 +39,140 @@ load_dotenv(dotenv_path="../.env")
 with open(config_path) as config_buffer:    
     config = json.loads(config_buffer.read())
 
-concepts = list(map(int, config['model']['labels']))
-min_examples = config['data']['min_examples']
-num_anchors = config['data']['num_anchors']
-bad_users = json.loads(os.getenv("BAD_USERS"))
+train_annot_file = config['train_annot_file']
+valid_annot_file = config['valid_annot_file']
+img_folder = config['image_folder']
+model_path = config['model_weights']
+batch_size = config['batch_size']
+
+AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+S3_BUCKET = os.getenv('AWS_S3_BUCKET_NAME')
+S3_BUCKET_WEIGHTS_FOLDER = os.getenv('AWS_S3_BUCKET_WEIGHTS_FOLDER')
+s3 = boto3.client('s3', aws_access_key_id = AWS_ACCESS_KEY_ID, aws_secret_access_key = AWS_SECRET_ACCESS_KEY)
+
+# Wrapper for csv generator to allow for further data augmentation
+class custom(CSVGenerator):
+    def __getitem__(self, index):
+        inputs, targets = CSVGenerator.__getitem__(self, index)
+        '''
+        for i,x in enumerate(inputs):
+            temp = x
+            temp = sk.exposure.rescale_intensity(temp,in_range=(0,255))
+            temp = sk.util.random_noise(temp, var= random.uniform(0,.0005))
+            temp = sk.exposure.adjust_gamma(temp,gamma=random.uniform(.5,1.5))
+            inputs[i] = np.array(temp)
+        '''
+        return inputs, targets
 
 
-folders = []
-folders.append(config['train']["train_image_folder"])
-folders.append(config['train']["train_annot_folder"])
-folders.append(config['valid']["valid_annot_folder"])
-folders.append(config['valid']["valid_image_folder"])
+def train_model(concepts, users, min_examples, epochs, model_name, videos, selected_concepts, download_data=True):
 
-for dir in folders:
-    if os.path.exists(dir):
-        shutil.rmtree(dir)
-    os.makedirs(dir)
+    classmap = get_classmap(concepts)
+    '''
+    Downloads the annotation data and saves it into training and validation csv's.
+    Also downloads corresponding images.
+    '''
+    if download_data:
+        folders = ["weights"]
+        folders.append(img_folder)
+        for dir in folders:
+            if os.path.exists(dir):
+                shutil.rmtree(dir)
+            os.makedirs(dir)
 
-end = time.time()
-print("Done Initializing: " + str((end - start)/60) + " minutes")
+        start = time.time()
+        print("Starting Download.")
 
-print("Starting Download.")
-start = time.time()
+        download_annotations(min_examples, selected_concepts, classmap, users, videos, img_folder, train_annot_file, valid_annot_file)
 
-download_annotations(min_examples,concepts, bad_users)
+        end = time.time()
+        print("Done Downloading Annotations: " + str((end - start)/60) + " minutes")
 
-end = time.time()
-print("Done Downloading Annotations: " + str((end - start)/60) + " minutes")
+    '''
+    Trains the model!!!!! WOOOT WOOOT!
+    '''
+    start = time.time()
+    print("Starting Training.")
 
-print("Getting Anchors.")
-start = time.time()
+    # Suggested to initialize model on cpu before turning into a multi_gpu model to save gpu memory
+    with tf.device('/cpu:0'):
+        model = models.backbone('resnet50').retinanet(num_classes=len(concepts))#modifier=freeze_model)
+        model.load_weights(model_path, by_name=True, skip_mismatch=True)
 
-p = subprocess.Popen(("python3 gen_anchors.py -c " + config_path + " -a " + str(num_anchors)).split(),
-                     stdout=subprocess.PIPE)
-preprocessed, _ = p.communicate()
+    gpus = len([i for i in device_lib.list_local_devices() if i.device_type == 'GPU'])
 
-anchors = json.loads(preprocessed.decode('UTF-8'))
 
-config['model']['anchors'] = anchors
 
-with open(config_path, 'w') as file:
-    json.dump(config, file, sort_keys=True, indent=4)
+    if gpus > 1:
+        training_model = multi_gpu_model(model, gpus=gpus)
+    else:
+        training_model = model
 
-end = time.time()
-print("Done Getting Anchors: " + str((end - start)/60) + " minutes")
+    training_model.compile(
+        loss={
+            'regression'    : losses.smooth_l1(),
+            'classification': losses.focal()
+        },
+        optimizer=keras.optimizers.adam(lr=1e-5, clipnorm=0.001)
+    )
+    transform_generator = random_transform_generator(
+        min_rotation=-0.1,
+        max_rotation=0.1,
+        min_translation=(-0.1, -0.1),
+        max_translation=(0.1, 0.1),
+        min_shear=-0.1,
+        max_shear=0.1,
+        min_scaling=(0.9, 0.9),
+        max_scaling=(1.1, 1.1),
+        flip_x_chance=0.5,
+        flip_y_chance=0.5,
+    )
+    
+    temp = pd.DataFrame(list(zip(classmap.values(), classmap.keys())))
+    temp.to_csv('classmap.csv',index=False, header=False)
+    train_generator = custom(
+        train_annot_file,
+        'classmap.csv',
+        transform_generator=transform_generator,
+        batch_size = batch_size
+    )
 
-print("Starting Training.")
-start = time.time()
+    test_generator = CSVGenerator(
+        valid_annot_file,
+        'classmap.csv',
+        batch_size = batch_size,
+        shuffle_groups=False
+    )
 
-p = subprocess.Popen(("python3 train.py -c " + config_path).split(),
-                     stdout=subprocess.PIPE)
 
-p.wait()
-preprocessed, _ = p.communicate()
-print("Training Results: ")
-print(preprocessed.decode('UTF-8'))
+    # Checkpoint: save models that are improvements
+    filepath =  "weights/" + model_name + ".h5"
+    checkpoint = ModelCheckpoint(filepath, monitor='val_loss', save_best_only=True)
+    checkpoint = RedirectModel(checkpoint, model)
 
-end = time.time()
-print("Done Training: " + str((end - start)/60) + " minutes")
+    #stopping: stops training if val_loss stops improving
+    stopping = EarlyStopping(monitor='val_loss', min_delta=0, patience=10)
+
+    history = training_model.fit_generator(train_generator, 
+        epochs=epochs, 
+        callbacks=[checkpoint, stopping],
+        validation_data=test_generator,
+        verbose=2
+    ).history
+
+    s3.upload_file("weights/"+model_name+".h5", S3_BUCKET, S3_BUCKET_WEIGHTS_FOLDER + model_name+".h5") 
+
+    end = time.time()
+    print("Done Training Model: " + str((end - start)/60) + " minutes")
+
+    os.system("sudo shutdown -h")
+
+if __name__ == '__main__':
+    epochs = 100
+    users = [15, 12, 11, 6, 17]
+    min_examples = 1000
+    concepts = [1,2,3]
+    model_name = "jake_test"
+    videos = [81,32]
+    train_model(concepts, users, min_examples, epochs, model_name, videos, selected_concepts, download_data=False)

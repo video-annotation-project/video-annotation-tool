@@ -609,7 +609,7 @@ class VideoDialog extends React.Component {
             src={
               "https://cdn.deepseaannotations.com/videos/" +
               this.props.annotation.id +
-              "_ai.mp4"
+              "_tracking.mp4"
             }
             type="video/mp4"
             controls
