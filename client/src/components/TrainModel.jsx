@@ -101,13 +101,13 @@ class TrainModel extends Component {
 
     this.state = {
       videos: [],
-      videosSelected: [],
+      videosSelected: null,
       users: [],
-      usersSelected: [],
+      usersSelected: null,
       models: [],
-      modelSelected: "",
+      modelSelected: null,
       concepts: [],
-      conceptsSelected: [],
+      conceptsSelected: null,
       minImages: 5000,
       epochs: 0,
       activeStep: 0,
@@ -249,6 +249,11 @@ class TrainModel extends Component {
   };
 
   selectModel = () => {
+    if (!this.state.modelSelected) {
+      return (
+        <div>Loading...</div>
+      )
+    }
     return (
       <FormControl className={this.props.classes.form}>
         <InputLabel>Select Model</InputLabel>
@@ -281,6 +286,11 @@ class TrainModel extends Component {
   };
 
   selectUser = () => {
+    if (!this.state.usersSelected) {
+      return (
+        <div>Loading...</div>
+      )
+    }
     return (
       <FormControl
         component="fieldset"
@@ -357,7 +367,7 @@ class TrainModel extends Component {
 
   selectConcepts = () => {
     const classes = this.props.classes;
-    if (!this.state.concepts) {
+    if (!this.state.conceptsSelected) {
       return (<div>Loading...</div>)
     }
 

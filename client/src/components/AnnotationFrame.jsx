@@ -113,9 +113,8 @@ class AnnotationFrame extends Component {
           <img
             className={classes.img}
             id="imageId"
-            src={`/api/annotationImages/${
-              this.props.annotation.id
-            }?withBox=true`}
+            src={"https://cdn.deepseaannotations.com/test/" +
+              this.props.annotation.imagewithbox}
             alt="error"
           />
         </ListItem>

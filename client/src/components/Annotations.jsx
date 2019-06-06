@@ -216,7 +216,7 @@ class Annotations extends Component {
                     src={
                       "https://cdn.deepseaannotations.com/videos/" +
                       annotation.id +
-                      "_ai.mp4"
+                      "_tracking.mp4"
                     }
                     type="video/mp4"
                     controls
