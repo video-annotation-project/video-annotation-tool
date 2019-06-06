@@ -171,8 +171,7 @@ def init_model(model_path):
 def predict_frames(video_frames, fps, model):
     currently_tracked_objects = []
     annotations = [pd.DataFrame(columns=['x1','y1','x2','y2','label', 'confidence', 'objectid','frame_num'])]
-    for i, frame in enumerate(video_frames):
-        frame_num = i
+    for frame_num, frame in enumerate(video_frames):
         # update tracking for currently tracked objects
         for obj in currently_tracked_objects:
             success = obj.update(frame, frame_num)
@@ -183,7 +182,7 @@ def predict_frames(video_frames, fps, model):
 
         # Every NUM_FRAMES frames, get new predictions
         # Then, check if any detections match a currently tracked object
-        if i % NUM_FRAMES == 0:
+        if frame_num % NUM_FRAMES == 0:
             detections = get_predictions(frame, model)
             for detection in detections:
                 match, matched_object = does_match_existing_tracked_object(detection, currently_tracked_objects)
@@ -196,13 +195,6 @@ def predict_frames(video_frames, fps, model):
                         tracked_object.change_id(matched_obj_id)
                     tracked_object.annotations = tracked_object.annotations.append(prev_annotations)
                     currently_tracked_objects.append(tracked_object)
-                    (x1, y1, x2, y2) = detection[0]
-                    cv2.rectangle(frame, (x, y), (x2, y2), (255, 0, 0), 3)
-                    
-         # draw boxes 
-        for obj in currently_tracked_objects:
-            (x, y, w, h) = obj.box
-            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
     
     for obj in currently_tracked_objects:
         annotations.append(obj.annotations)
@@ -265,8 +257,8 @@ def track_backwards(video_frames, frame_num, detection, object_id, fps, old_anno
         success, box = tracker.update(frame)
         if success:
             annotation = make_annotation(box, object_id, frame_num)
-            last_frame_annotations = old_annotations[old_annotations['frame_num'] == frame_num]
-            matched_obj_id = match_old_annotations(last_frame_annotations, pd.Series(annotation))
+            prev_frame_annotations = old_annotations[old_annotations['frame_num'] == frame_num]
+            matched_obj_id = match_old_annotations(prev_frame_annotations, pd.Series(annotation))
             if matched_obj_id:
                 annotations['objectid'] = matched_obj_id
                 return annotations, matched_obj_id
