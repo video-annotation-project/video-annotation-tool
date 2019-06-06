@@ -4,8 +4,25 @@ from dotenv import load_dotenv
 from load_n_train import train_model
 import boto3
 import json
+import argparse
+
+argparser = argparse.ArgumentParser()
+argparser.add_argument(
+    '-c',
+    '--conf',
+    default='config.json',
+    help='path to configuration file')
+
+args = argparser.parse_args()
+config_path = args.conf
 
 load_dotenv(dotenv_path="../.env")
+with open(config_path) as config_buffer:    
+    config = json.loads(config_buffer.read())
+
+weights_path = config['weights_path']
+default_weights = config['default_weights']
+
 
 # aws stuff
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
@@ -22,6 +39,7 @@ DB_HOST = os.getenv("DB_HOST")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 
+
 con = connect(database=DB_NAME, host=DB_HOST, user=DB_USER, password=DB_PASSWORD)
 cursor = con.cursor()
 # get annotations from test
@@ -31,6 +49,13 @@ info = row[1]
 
 if info['activeStep'] != 5:
     exit()
+
+try:
+	s3.download_file(S3_BUCKET, S3_WEIGHTS_FOLDER + str(info['modelSelected']) + '.h5', weights_path )
+except:
+	s3.download_file(S3_BUCKET, S3_WEIGHTS_FOLDER + default_weights, weights_path)
+
+
 
 cursor.execute("SELECT * FROM MODELS WHERE name='" + str(info['modelSelected']) + "'")
 model = cursor.fetchone()
