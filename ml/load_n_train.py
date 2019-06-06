@@ -3,7 +3,6 @@ from loading_data import queryDB, get_classmap
 import json
 import os
 from dotenv import load_dotenv
-import argparse
 import shutil
 import subprocess
 import time
@@ -25,19 +24,10 @@ import numpy as np
 from tensorflow.python.client import device_lib
 import boto3
 
-argparser = argparse.ArgumentParser()
-argparser.add_argument(
-    '-c',
-    '--conf',
-    default='config.json',
-    help='path to configuration file')
-
-args = argparser.parse_args()
-config_path = args.conf
-
+config_path = "../config.json"
 load_dotenv(dotenv_path="../.env")
 with open(config_path) as config_buffer:    
-    config = json.loads(config_buffer.read())
+    config = json.loads(config_buffer.read())['ml']
 
 train_annot_file = config['train_annot_file']
 valid_annot_file = config['valid_annot_file']

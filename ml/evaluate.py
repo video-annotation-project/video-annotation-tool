@@ -1,4 +1,3 @@
-import argparse
 import os
 from dotenv import load_dotenv
 import json
@@ -17,20 +16,11 @@ from model_scoring import f1_evaluation
 from keras_retinanet.utils.eval import evaluate
 from keras_retinanet.models import convert_model
 from keras_retinanet.models import load_model
- 
 
-argparser = argparse.ArgumentParser()
-argparser.add_argument(
-    '-c',
-    '--conf',
-    default='config.json',
-    help='path to configuration file')
-args = argparser.parse_args()
-config_path = args.conf
-
+config_path = "../config.json"
 load_dotenv(dotenv_path="../.env")
 with open(config_path) as config_buffer:    
-    config = json.loads(config_buffer.read())
+    config = json.loads(config_buffer.read())['ml']
 
 train_annot_file = config['train_annot_file']
 valid_annot_file = config['valid_annot_file']
