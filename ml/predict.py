@@ -196,8 +196,8 @@ def predict_frames(video_frames, fps, model):
                         tracked_object.change_id(matched_obj_id)
                     tracked_object.annotations = tracked_object.annotations.append(prev_annotations)
                     currently_tracked_objects.append(tracked_object)
-                    (x, y, w, h) = obj.box
-                    cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 3)
+                    (x1, y1, x2, y2) = detection[0]
+                    cv2.rectangle(frame, (x, y), (x2, y2), (255, 0, 0), 3)
                     
          # draw boxes 
         for obj in currently_tracked_objects:
