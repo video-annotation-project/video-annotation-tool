@@ -899,14 +899,41 @@ app.delete(
   "/api/annotations",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    queryText =
-      "DELETE FROM annotations \
-                 WHERE annotations.id=$1 OR \
-                 annotations.originalid=$1 RETURNING *";
+    let s3 = new AWS.S3();
+    let queryText = `
+      DELETE FROM
+        annotations \
+      WHERE 
+        annotations.id=$1 
+        OR annotations.originalid=$1 
+      RETURNING *`;
     try {
       var deleteRes = await psql.query(queryText, [req.body.id]);
-      res.json(deleteRes.rows);
+
+      //These are the s3 object we will be deleting
+      let Objects = [];
+
+      deleteRes.rows.forEach(element => {
+        Objects.push({
+          Key: process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + element.image
+        });
+        Objects.push({
+          Key: process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + element.imagewithbox
+        });
+      });
+      Objects.push({
+        Key: process.env.AWS_S3_BUCKET_VIDEOS_FOLDER + req.body.id
+      });
+      let params = {
+        Bucket: process.env.AWS_S3_BUCKET_NAME,
+        Delete: {
+          Objects: Objects
+        }
+      };
+      let s3Res = await s3.deleteObjects(params);
+      res.json('delete');
     } catch (error) {
+      console.log('Error in delete /api/annotations');
       console.log(error);
       res.status(400).json(error);
     }
