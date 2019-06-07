@@ -208,7 +208,7 @@ app.get(
                        FROM users";
 
     if (req.query.noAi === "true") {
-      queryText += " WHERE username != 'ai'";
+      queryText += " WHERE username NOT IN ('tracking', 'ai')";
     }
 
     try {
@@ -1352,34 +1352,35 @@ app.get(
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const selectedUsers = req.query.selectedUsers;
+    let params = [];
 
-    let queryText = ``;
-    let sqlUsers = ``;
+    let queryText = `
+      SELECT DISTINCT
+        v.id, v.filename
+      FROM 
+        annotations a
+      JOIN videos v ON v.id=a.videoid
+      WHERE a.verifiedby IS NULL
+    `;
 
-    if (!(selectedUsers.length === 1 && selectedUsers[0] === "-1")) {
-      sqlUsers = ` AND (a.userid=` + selectedUsers[0];
-      for (let i = 0; i < selectedUsers.length; i++) {
-        sqlUsers += ` OR a.userid=` + selectedUsers[i];
-      }
-      sqlUsers += `)`;
-    } else {
+    if (selectedUsers.length === 1 && selectedUsers[0] === "-1") {
       let aiId = null;
-      queryText = `SELECT * FROM users u WHERE u.username='ai'`;
+      let queryText2 = `SELECT * FROM users u WHERE u.username='tracking'`;
       try {
-        let users = await psql.query(queryText);
+        let users = await psql.query(queryText2);
         aiId = users.rows[0].id;
       } catch (error) {
         res.status(500).json(error);
       }
-      sqlUsers += ` AND a.userid!=` + aiId;
+      queryText += ` AND a.userid!=$1`;
+      params.push(aiId);
+    } else {
+      queryText += ` AND a.userid::text=ANY($1)`;
+      params.push(selectedUsers);
     }
 
-    queryText =
-      `SELECT DISTINCT v.id, v.filename
-              FROM annotations a, videos v
-              WHERE a.verifiedby IS NULL AND v.id=a.videoid` + sqlUsers;
     try {
-      let videos = await psql.query(queryText);
+      let videos = await psql.query(queryText, params);
       res.json(videos.rows);
     } catch (error) {
       res.status(500).json(error);
@@ -1393,46 +1394,35 @@ app.get(
   async (req, res) => {
     const selectedUsers = req.query.selectedUsers;
     const selectedVideos = req.query.selectedVideos;
+    let params = [];
 
-    let queryText = ``;
-    let sqlUsers = ``;
+    let queryText = `SELECT DISTINCT c.id, c.name
+        FROM annotations a, concepts c
+        WHERE a.verifiedby IS NULL AND a.conceptid=c.id`;
 
-    if (!(selectedUsers.length === 1 && selectedUsers[0] === "-1")) {
-      sqlUsers = " AND (a.userid=" + selectedUsers[0];
-      for (let i = 0; i < selectedUsers.length; i++) {
-        sqlUsers += " OR a.userid=" + selectedUsers[i];
-      }
-      sqlUsers += ")";
-    } else {
+    if (selectedUsers.length === 1 && selectedUsers[0] === "-1") {
       let aiId = null;
-      queryText = `SELECT * FROM users u WHERE u.username='ai'`;
+      let queryText2 = `SELECT * FROM users u WHERE u.username='tracking'`;
       try {
-        let users = await psql.query(queryText);
+        let users = await psql.query(queryText2);
         aiId = users.rows[0].id;
       } catch (error) {
         res.status(500).json(error);
       }
-      sqlUsers += ` AND a.userid!=` + aiId;
+      queryText += ` AND a.userid!=$1`;
+      params.push(aiId);
+    } else {
+      queryText += ` AND a.userid::text=ANY($1)`;
+      params.push(selectedUsers);
     }
 
-    let sqlVideos = "";
     if (!(selectedVideos.length === 1 && selectedVideos[0] === "-1")) {
-      sqlVideos = " AND (a.videoid=" + selectedVideos[0];
-      for (let i = 0; i < selectedVideos.length; i++) {
-        sqlVideos += " OR a.videoid=" + selectedVideos[i];
-      }
-      sqlVideos += ")";
+      queryText += ` AND a.videoid::text=ANY($${params.length + 1})`;
+      params.push(selectedVideos);
     }
-
-    queryText =
-      `SELECT DISTINCT c.id, c.name
-        FROM annotations a, concepts c
-        WHERE a.verifiedby IS NULL AND a.conceptid=c.id` +
-      sqlUsers +
-      sqlVideos;
 
     try {
-      let concepts = await psql.query(queryText);
+      let concepts = await psql.query(queryText, params);
       res.json(concepts.rows);
     } catch (error) {
       res.status(500).json(error);
@@ -1459,7 +1449,7 @@ app.get(
       sqlUsers += ")";
     } else {
       let aiId = null;
-      queryText = `SELECT * FROM users u WHERE u.username='ai'`;
+      queryText = `SELECT * FROM users u WHERE u.username='tracking'`;
       try {
         let users = await psql.query(queryText);
         aiId = users.rows[0].id;
