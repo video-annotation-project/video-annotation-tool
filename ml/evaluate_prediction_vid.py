@@ -95,8 +95,8 @@ def score_predictions(validation, predictions, iou_thresh, concepts):
 
 
 def resize(row):
-    new_width = 640
-    new_height = 480
+    new_width = RESIZED_WIDTH
+    new_height = RESIZED_HEIGHT
     row.x1 = (row.x1 * new_width) / row.videowidth
     row.x2 = (row.x2 * new_width) / row.videowidth
     row.y1 = (row.y1 * new_height) / row.videoheight
