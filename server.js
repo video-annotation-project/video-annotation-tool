@@ -968,28 +968,28 @@ app.delete(
 //   }
 // );
 
-app.get("/api/annotationImages/:id", async (req, res) => {
-  let s3 = new AWS.S3();
-  queryText = "select image, imagewithbox from annotations where id=$1";
-  try {
-    const response = await psql.query(queryText, [req.params.id]);
-    var picture = null;
-    if (req.query.withBox === "true") {
-      picture = response.rows[0].imagewithbox;
-    } else {
-      picture = response.rows[0].image;
-    }
-    const params = {
-      Bucket: process.env.AWS_S3_BUCKET_NAME,
-      Key: process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + `${picture}`
-    };
-    s3.getObject(params)
-      .createReadStream()
-      .pipe(res);
-  } catch (error) {
-    res.status(400).json(error);
-  }
-});
+// app.get("/api/annotationImages/:id", async (req, res) => {
+//   let s3 = new AWS.S3();
+//   queryText = "select image, imagewithbox from annotations where id=$1";
+//   try {
+//     const response = await psql.query(queryText, [req.params.id]);
+//     var picture = null;
+//     if (req.query.withBox === "true") {
+//       picture = response.rows[0].imagewithbox;
+//     } else {
+//       picture = response.rows[0].image;
+//     }
+//     const params = {
+//       Bucket: process.env.AWS_S3_BUCKET_NAME,
+//       Key: process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + `${picture}`
+//     };
+//     s3.getObject(params)
+//       .createReadStream()
+//       .pipe(res);
+//   } catch (error) {
+//     res.status(400).json(error);
+//   }
+// });
 
 // app.get("/api/annotationImageWithoutBox/:id", async (req, res) => {
 //   let s3 = new AWS.S3();
