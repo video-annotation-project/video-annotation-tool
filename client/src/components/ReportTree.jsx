@@ -45,8 +45,7 @@ class ReportTree extends Component {
           `levelName=${this.state.levelName}&` +
           `queryConditions=${this.props.queryConditions}&` +
           `unsureOnly=${this.props.unsureOnly}&` +
-          `verifiedOnly=${this.props.verifiedOnly}&` +
-          `unverifiedOnly=${this.props.unverifiedOnly}&` +
+          `verifiedCondition=${this.props.verifiedCondition}&` +
           `admin=${localStorage.getItem("admin")}`,
         config
       );
@@ -86,7 +85,8 @@ class ReportTree extends Component {
       levels,
       treeDepth,
       queryConditions,
-      unsureOnly
+      unsureOnly,
+      verifiedCondition
     } = this.props;
     if (!isLoaded) {
       return <List>Loading...</List>;
@@ -118,8 +118,7 @@ class ReportTree extends Component {
                   levels={levels}
                   unsureOnly={unsureOnly}
                   classes={classes}
-                  verifiedOnly={this.props.verifiedOnly}
-                  unverifiedOnly={this.props.unverifiedOnly}
+                  verifiedCondition={verifiedCondition}
                 />
               ) : data.count > 100 ? (
                 <AnnotationsGroup
@@ -132,6 +131,7 @@ class ReportTree extends Component {
                   }
                   unsureOnly={unsureOnly}
                   count={data.count}
+                  verifiedCondition={verifiedCondition}
                 />
               ) : (
                 <Annotations
@@ -143,8 +143,7 @@ class ReportTree extends Component {
                     data.key
                   }
                   unsureOnly={unsureOnly}
-                  verifiedOnly={this.props.verifiedOnly}
-                  unverifiedOnly={this.props.unverifiedOnly}
+                  verifiedCondition={verifiedCondition}
                 />
               )}
             </Collapse>

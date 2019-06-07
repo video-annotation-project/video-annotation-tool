@@ -24,8 +24,7 @@ class Report extends React.Component {
       level3: "",
       renderTree: false,
       unsureOnly: false,
-      verifiedOnly: false,
-      unverifiedOnly: false
+      verifiedCondition: 'all'
     };
   }
 
@@ -38,18 +37,6 @@ class Report extends React.Component {
   setUnsureOnly = value => {
     this.setState({
       unsureOnly: value
-    });
-  };
-
-  setVerifiedOnly = bool => {
-    this.setState({
-      verifiedOnly: bool
-    });
-  };
-
-  setUnverifiedOnly = bool => {
-    this.setState({
-      unverifiedOnly: bool
     });
   };
 
@@ -79,12 +66,17 @@ class Report extends React.Component {
     });
   };
 
+  handleVerifiedCondition = (event) => {
+    this.setState({
+      verifiedCondition: event.target.value
+    })
+  }
+
   render() {
     const { classes } = this.props;
     const {
       unsureOnly,
-      verifiedOnly,
-      unverifiedOnly,
+      verifiedCondition,
       level1,
       level2,
       level3,
@@ -98,10 +90,8 @@ class Report extends React.Component {
         <ReportModal
           unsureOnly={unsureOnly}
           setUnsureOnly={this.setUnsureOnly}
-          verifiedOnly={verifiedOnly}
-          setVerifiedOnly={this.setVerifiedOnly}
-          unverifiedOnly={unverifiedOnly}
-          setUnverifiedOnly={this.setUnverifiedOnly}
+          verifiedCondition={verifiedCondition}
+          handleVerifiedCondition={this.handleVerifiedCondition}
           level1={level1}
           level2={level2}
           level3={level3}
@@ -116,8 +106,7 @@ class Report extends React.Component {
             queryConditions={""}
             levels={[level1, level2, level3]}
             unsureOnly={this.state.unsureOnly}
-            verifiedOnly={verifiedOnly}
-            unverifiedOnly={unverifiedOnly}
+            verifiedCondition={verifiedCondition}
           />
         ) : (
           <div />

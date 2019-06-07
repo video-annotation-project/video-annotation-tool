@@ -780,31 +780,32 @@ app.get(
   async (req, res) => {
     let params = [];
     //Build query string
-    let queryPass = `SELECT annotations.id, annotations.comment, annotations.verifiedby,
-                     annotations.unsure, annotations.timeinvideo, 
-                     annotations.imagewithbox, concepts.name, 
-                     false as extended 
-                     FROM annotations
-                     LEFT JOIN concepts ON concepts.id=annotations.conceptid
-                     WHERE annotations.userid NOT IN (17, 32)`;
+    let queryPass = `
+      SELECT
+        annotations.id, annotations.comment, annotations.verifiedby,
+        annotations.unsure, annotations.timeinvideo, 
+        annotations.imagewithbox, concepts.name, 
+        false as extended 
+      FROM
+        annotations
+      LEFT JOIN
+        concepts ON concepts.id=annotations.conceptid
+      WHERE 
+        annotations.userid NOT IN (17, 32)`;
     if (req.query.unsureOnly === "true") {
       queryPass = queryPass + " AND annotations.unsure = true";
     }
-    if (!(req.query.verifiedOnly === "true" && req.query.unverifiedOnly === "true")) {
-      if (req.query.verifiedOnly === "true") {
-        queryPass = queryPass + " AND annotations.verifiedby IS NOT NULL";
-      }
-      if (req.query.unverifiedOnly === "true") {
-        queryPass = queryPass + " AND annotations.verifiedby IS NULL";
-      }
+    if (req.query.verifiedCondition === "verified only") {
+      queryPass = queryPass + " AND annotations.verifiedby IS NOT NULL";
+    } else if (req.query.verifiedCondition === "unverified only") {
+      queryPass = queryPass + " AND annotations.verifiedby IS NULL";
     }
     if (req.query.admin !== "true") {
       queryPass = queryPass + " AND annotations.userid = $1";
       params.push(req.user.id);
     }
     // Adds query conditions from report tree
-    queryPass =
-      queryPass +
+    queryPass +=
       req.query.queryConditions +
       " ORDER BY annotations.timeinvideo";
     // Retrieves only selected 100 if queryLimit exists
@@ -1102,13 +1103,10 @@ app.get(
     if (req.query.unsureOnly === "true") {
       queryPass = queryPass + " AND annotations.unsure = true";
     }
-    if (!(req.query.verifiedOnly === "true" && req.query.unverifiedOnly === "true")) {
-      if (req.query.verifiedOnly === "true") {
-        queryPass = queryPass + " AND annotations.verifiedby IS NOT NULL";
-      }
-      if (req.query.unverifiedOnly === "true") {
-        queryPass = queryPass + " AND annotations.verifiedby IS NULL";
-      }
+    if (req.query.verifiedCondition === "verified only") {
+      queryPass = queryPass + " AND annotations.verifiedby IS NOT NULL";
+    } else if (req.query.verifiedCondition === "unverified only") {
+      queryPass = queryPass + " AND annotations.verifiedby IS NULL";
     }
     if (req.query.admin !== "true") {
       queryPass = queryPass + " AND annotations.userid = $1";
