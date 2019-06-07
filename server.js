@@ -1364,16 +1364,16 @@ app.get(
     `;
 
     if (selectedUsers.length === 1 && selectedUsers[0] === "-1") {
-      let aiId = null;
+      let trackingId = null;
       let queryText2 = `SELECT * FROM users u WHERE u.username='tracking'`;
       try {
         let users = await psql.query(queryText2);
-        aiId = users.rows[0].id;
+        trackingId = users.rows[0].id;
       } catch (error) {
         res.status(500).json(error);
       }
       queryText += ` AND a.userid!=$1`;
-      params.push(aiId);
+      params.push(trackingId);
     } else {
       queryText += ` AND a.userid::text=ANY($1)`;
       params.push(selectedUsers);
@@ -1401,16 +1401,16 @@ app.get(
         WHERE a.verifiedby IS NULL AND a.conceptid=c.id`;
 
     if (selectedUsers.length === 1 && selectedUsers[0] === "-1") {
-      let aiId = null;
+      let trackingId = null;
       let queryText2 = `SELECT * FROM users u WHERE u.username='tracking'`;
       try {
         let users = await psql.query(queryText2);
-        aiId = users.rows[0].id;
+        trackingId = users.rows[0].id;
       } catch (error) {
         res.status(500).json(error);
       }
       queryText += ` AND a.userid!=$1`;
-      params.push(aiId);
+      params.push(trackingId);
     } else {
       queryText += ` AND a.userid::text=ANY($1)`;
       params.push(selectedUsers);
@@ -1445,16 +1445,16 @@ app.get(
       WHERE c.id=a.conceptid AND u.id=a.userid AND v.id=a.videoid AND a.verifiedby IS NULL`;
 
     if (selectedUsers.length === 1 && selectedUsers[0] === "-1") {
-      let aiId = null;
+      let trackingId = null;
       var queryText2 = `SELECT * FROM users u WHERE u.username='tracking'`;
       try {
         let users = await psql.query(queryText2);
-        aiId = users.rows[0].id;
+        trackingId = users.rows[0].id;
       } catch (error) {
         res.status(500).json(error);
       }
       queryText += ` AND a.userid!=$1`;
-      params.push(aiId);
+      params.push(trackingId);
     } else {
       queryText += ` AND a.userid::text=ANY($${params.length + 1})`;
       params.push(selectedUsers);
