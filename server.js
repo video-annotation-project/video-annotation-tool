@@ -1129,8 +1129,15 @@ app.get(
   "/api/models",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    const queryText = "select * \
-                       from models";
+    const queryText = `
+      SELECT m.name, m.timestamp, array_agg(c.name) concepts
+      FROM 
+        (SELECT 
+          name, timestamp, UNNEST(concepts) concept
+          FROM models
+        ) m
+      JOIN concepts c ON c.id=m.concept
+      GROUP BY (m.name, m.timestamp)`;
     try {
       let response = await psql.query(queryText);
       res.json(response.rows);
@@ -1145,17 +1152,16 @@ app.post(
   "/api/models",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    const queryText =
-      "INSERT INTO models( \
-                         name, \
-                         timestamp) \
-                       VALUES( \
-                         $1, \
-                         current_timestamp) \
-                       RETURNING *";
+    const queryText =`
+      INSERT INTO 
+        models(name, timestamp, concepts)
+      VALUES($1, current_timestamp, $2)
+      RETURNING *`;
 
     try {
-      let response = await psql.query(queryText, [req.body.name]);
+      let response = await psql.query(
+        queryText,
+        [req.body.name, req.body.concepts]);
       res.json(response.rows);
     } catch (error) {
       console.log(error);

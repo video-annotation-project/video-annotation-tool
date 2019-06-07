@@ -155,13 +155,14 @@ class TrainModel extends Component {
           modelSelected: info.modelSelected,
           minImages: info.minImages,
           epochs: info.epochs
+        }, () => {
+          if (info.usersSelected.length > 0) {
+            this.loadVideoList();
+          }
+          if (info.videosSelected.length > 0) {
+            this.loadConceptList();
+          }
         });
-        if (info.usersSelected) {
-          this.loadVideoList();
-        }
-        if (info.videosSelected) {
-          this.loadConceptList();
-        }
       })
       .catch(error => {
         console.log("Error in get /api/modelTab");
@@ -224,6 +225,7 @@ class TrainModel extends Component {
   };
 
   loadConceptList = () => {
+    const {videosSelected, modelSelected} = this.state;
     const config = {
       headers: {
         Authorization: "Bearer " + localStorage.getItem("token")
@@ -231,7 +233,7 @@ class TrainModel extends Component {
     };
     axios.get(
       `/api/trainModel/concepts/` +
-      this.state.videosSelected + '/' + this.state.modelSelected,
+      videosSelected + '/' + modelSelected,
       config
     ).then(res => {
       this.setState({
@@ -249,7 +251,7 @@ class TrainModel extends Component {
   };
 
   selectModel = () => {
-    if (!this.state.modelSelected) {
+    if (this.state.modelSelected === null) {
       return (
         <div>Loading...</div>
       )
@@ -471,7 +473,6 @@ class TrainModel extends Component {
     axios
       .put("/api/modelTab/trainmodel", body, config)
       .then(res => {
-        console.log(this.state.socket);
         this.state.socket.emit("refresh trainmodel");
       })
       .catch(error => {
