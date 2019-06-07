@@ -1438,55 +1438,40 @@ app.get(
     const selectedVideos = req.query.selectedVideos;
     const selectedConcepts = req.query.selectedConcepts;
 
-    let queryText = ``;
-    let sqlUsers = ``;
+    let params = [];
+    let queryText =
+    `SELECT distinct a.*, c.name, u.username, v.filename
+      FROM annotations a, concepts c, users u, videos v
+      WHERE c.id=a.conceptid AND u.id=a.userid AND v.id=a.videoid AND a.verifiedby IS NULL`;
 
-    if (!(selectedUsers.length === 1 && selectedUsers[0] === "-1")) {
-      sqlUsers = " AND (a.userid=" + selectedUsers[0];
-      for (let i = 0; i < selectedUsers.length; i++) {
-        sqlUsers += " OR a.userid=" + selectedUsers[i];
-      }
-      sqlUsers += ")";
-    } else {
+    if (selectedUsers.length === 1 && selectedUsers[0] === "-1") {
       let aiId = null;
-      queryText = `SELECT * FROM users u WHERE u.username='tracking'`;
+      var queryText2 = `SELECT * FROM users u WHERE u.username='tracking'`;
       try {
-        let users = await psql.query(queryText);
+        let users = await psql.query(queryText2);
         aiId = users.rows[0].id;
       } catch (error) {
         res.status(500).json(error);
       }
-      sqlUsers += ` AND a.userid!=` + aiId;
+      queryText += ` AND a.userid!=$1`;
+      params.push(aiId);
+    } else {
+      queryText += ` AND a.userid::text=ANY($${params.length + 1})`;
+      params.push(selectedUsers);
     }
 
-    let sqlVideos = "";
     if (!(selectedVideos.length === 1 && selectedVideos[0] === "-1")) {
-      sqlVideos = " AND (a.videoid=" + selectedVideos[0];
-      for (let i = 0; i < selectedVideos.length; i++) {
-        sqlVideos += " OR a.videoid=" + selectedVideos[i];
-      }
-      sqlVideos += ")";
+      queryText += ` AND a.videoid::text=ANY($${params.length + 1})`;
+      params.push(selectedVideos);
     }
 
-    let sqlConcepts = "";
     if (!(selectedConcepts.length === 1 && selectedConcepts[0] === "-1")) {
-      sqlConcepts = " AND (a.conceptid=" + selectedConcepts[0];
-      for (let i = 0; i < selectedConcepts.length; i++) {
-        sqlConcepts += " OR a.conceptid=" + selectedConcepts[i];
-      }
-      sqlConcepts += ")";
+      queryText += ` AND a.conceptid::text=ANY($${params.length + 1})`;
+      params.push(selectedConcepts);
     }
-
-    queryText =
-      `SELECT distinct a.*, c.name, u.username, v.filename
-        FROM annotations a, concepts c, users u, videos v
-        WHERE c.id=a.conceptid AND u.id=a.userid AND v.id=a.videoid AND a.verifiedby IS NULL` +
-      sqlUsers +
-      sqlVideos +
-      sqlConcepts;
 
     try {
-      let concepts = await psql.query(queryText);
+      let concepts = await psql.query(queryText, params);
       res.json(concepts.rows);
     } catch (error) {
       console.log(error);
