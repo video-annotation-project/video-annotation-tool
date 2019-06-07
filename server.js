@@ -919,12 +919,16 @@ app.delete(
           Key: process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + element.image
         });
         Objects.push({
-          Key: process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + element.imagewithbox
+          Key:
+            process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + element.imagewithbox
         });
       });
       // add tracking video
       Objects.push({
-        Key: process.env.AWS_S3_BUCKET_VIDEOS_FOLDER + req.body.id + '_tracking.mp4'
+        Key:
+          process.env.AWS_S3_BUCKET_VIDEOS_FOLDER +
+          req.body.id +
+          "_tracking.mp4"
       });
       let params = {
         Bucket: process.env.AWS_S3_BUCKET_NAME,
@@ -933,9 +937,9 @@ app.delete(
         }
       };
       let s3Res = await s3.deleteObjects(params);
-      res.json('delete');
+      res.json("delete");
     } catch (error) {
-      console.log('Error in delete /api/annotations');
+      console.log("Error in delete /api/annotations");
       console.log(error);
       res.status(400).json(error);
     }
@@ -1512,15 +1516,54 @@ app.patch(
       req.body.comment != null ? `, comment='` + req.body.comment + `'` : ``;
     const unsure = req.body.unsure != null ? `, unsure=` + req.body.unsure : ``;
     const verifiedby = req.user.id;
-    const queryText =
-      `UPDATE annotations SET verifiedby=$2, verifieddate=current_timestamp` +
+    let s3 = new AWS.S3();
+
+    const queryText1 =
+      `UPDATE annotations SET verifiedby=$2, verifieddate=current_timestamp, originalid=null` +
       conceptid +
       comment +
       unsure +
       ` WHERE id=$1`;
+
+    let queryText2 = `
+      DELETE FROM
+        annotations \
+      WHERE 
+        originalid=$1 
+        and annotations.id<>$1
+      RETURNING *`;
     try {
-      let update = await psql.query(queryText, [id, verifiedby]);
-      res.json(update.rows);
+      let update = await psql.query(queryText1, [id, verifiedby]);
+
+      var deleteRes = await psql.query(queryText2, [id]);
+
+      //These are the s3 object we will be deleting
+      let Objects = [];
+
+      deleteRes.rows.forEach(element => {
+        Objects.push({
+          Key: process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + element.image
+        });
+        Objects.push({
+          Key:
+            process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + element.imagewithbox
+        });
+      });
+      // add tracking video
+      Objects.push({
+        Key:
+          process.env.AWS_S3_BUCKET_VIDEOS_FOLDER +
+          req.body.id +
+          "_tracking.mp4"
+      });
+      let params = {
+        Bucket: process.env.AWS_S3_BUCKET_NAME,
+        Delete: {
+          Objects: Objects
+        }
+      };
+      await s3.deleteObjects(params);
+      res.json("verified");
     } catch (error) {
       console.log(error);
       res.status(500).json(error);
@@ -1541,8 +1584,7 @@ app.patch(
     var y1 = req.body.y1;
     var y2 = req.body.y2;
 
-    const queryText =
-      `UPDATE annotations SET x1=$1, x2=$2, y1=$3, y2=$4 WHERE id=$5`;
+    const queryText = `UPDATE annotations SET x1=$1, x2=$2, y1=$3, y2=$4 WHERE id=$5`;
     try {
       let update = await psql.query(queryText, [x1, x2, y1, y2, id]);
       res.json(update.rows);
