@@ -10,9 +10,9 @@ from loading_data import queryDB
 from psycopg2 import connect
 import predict
 
-config_path = 'config.json'
+config_path = '../config.json'
 with open(config_path) as config_buffer:
-   config = json.loads(config_buffer.read())
+   config = json.loads(config_buffer.read())['ml']
 
 bad_users = json.loads(os.getenv("BAD_USERS"))
 EVALUATION_IOU_THRESH = config['evaluation_iou_threshold']
