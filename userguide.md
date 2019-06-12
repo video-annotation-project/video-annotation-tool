@@ -5,7 +5,7 @@ Video Annotation Tool is a web app with a NodeJS back end and a ReactJS front en
 Our own app used for deep sea annotations is live [here](https://www.deepseaannotations.com/).
 
 ## Installation
-#### Envrionment
+### Envrionment
 To set up the project environment, run the following commands.
 ```
 git clone git@github.com:ishaanj1/video-annotation-tool.git
@@ -17,7 +17,7 @@ npm install
 cd ..
 ```
 ### Setting up your AWS account
-Our project relies entirely upon AWS for hosting our database, webserver, video/image files, and machine learning EC2 instances.
+Our project relies entirely upon AWS for hosting our database, webserver, video/image files, and machine learning EC2 instances. You will need to set up the various Amazon Web Services to be able to use the source code.
 
 #### S3 Bucket
 First, create a S3 bucket where you will store all of your videos, images, and model files. If you have never done this before, you can follow [this tutorial](https://docs.aws.amazon.com/quickstarts/latest/s3backup/step-1-create-bucket.html). Once you have your bucket, create four folders inside:
@@ -27,17 +27,21 @@ First, create a S3 bucket where you will store all of your videos, images, and m
 - videos (for the videos that will be annotated on the website as well as videos that will be generated with tracking and displayed in the report tab)
 
 #### RDS Database
-You will need to create an RDS DB instance to host your database. If you have never done this before, you can follow [this tutorial](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_Tutorials.WebServerDB.CreateDBInstance.html). Make sure you choose a postgres database.
+You will need to create an RDS DB instance to host your database. If you have never done this before, you can follow [this tutorial](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_Tutorials.WebServerDB.CreateDBInstance.html). Make sure you choose a postgres database when selecting the type. Dont follow the next tutorial linked at the bottom of the page. 
 
---- get hanson input here ---
-Did you follow this tutorial https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_Tutorials.WebServerDB.CreateDBInstance.html
-plus the 'Step 2: Create an EC2 Instance and Install a Web Server' tutorial at the bottom to set everything up?
-Did you have to do anything special for setting them up that isnt covered in the tutorial?
-Does the setup part install psql command line tool for you?
------------------------------
+We used Elastic Beanstalk to deploy and manage our web app. Below are steps to show you how to configure and deploy the web app.
 
-#### EC2 Instances -- lets pretend like the AMIs are public for now --
-You will need to create three more EC2 instances in addition to your web server EC2 from the previous step. We have made our AMIs for these three EC2 instances public so you can simply launch your own instances with everything pre-installed (OpenCV, Tensorflow, Keras) and the training model ready to go.
+Prerequisites:
+You will need to install and configure the EB CLI. See [Install the EB CLI](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/eb-cli3-install.html) and [Configure the EB CLI](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/eb-cli3-configuration.html). When configuring, make sure you enter 'video-annotation-tool' as the name of the folder in step 4.
+
+Creating EB environment:
+1. Navigate to video-annotation-tool and create an eb environment with the **eb init** command, replacing us-west-2 with your own region.
+`eb init --platform node.js --region us-west-2`
+
+
+
+#### EC2 Instances
+
 
 To create the instances, you can reference [this tutorial](https://docs.aws.amazon.com/efs/latest/ug/gs-step-one-create-ec2-resources.html). 
 - tracking
