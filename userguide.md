@@ -31,16 +31,20 @@ You will need to upload your videos to the videos folder and any concept images 
 #### EC2 Instances
 
 To create the instances, you can reference [this tutorial](https://docs.aws.amazon.com/efs/latest/ug/gs-step-one-create-ec2-resources.html). 
-- tracking
-- training
-- predictions
+1. Tracking
+  * When creating this instance, choose an ubuntu server AMI, and make sure to add extra storage space (NOT MEMORY, 32Gigs on an ssd should be enough).
+  * On this EC2 you will need to install OpenCV. Note this is a somewhat lengthy process. Here is a link to the [tutorial](https://www.pyimagesearch.com/2015/07/20/install-opencv-3-0-and-python-3-4-on-ubuntu/). **IMPORTANT!** Before setting up the build in step 3, make sure you add '-DWITH_FFMPEG=ON' to the 'cmake -D' command.
+
+2. Training
+3. Predictions
 
 #### Setting up your RDS Database
 1. You will need to create an RDS DB instance to host your database. If you have never done this before, you can follow [this tutorial](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_Tutorials.WebServerDB.CreateDBInstance.html). Make sure you choose a postgres database when selecting the type. Do not follow the 'Next Step' tutorial linked at the bottom.
 
 2. You will need to install [psql](http://postgresguide.com/setup/install.html) if you do not have it already. [Here](http://postgresguide.com/utilities/psql.html) is a very useful list of commands to interact with the DB.
 
-3. There is a file named `scripts.sql` in the root of the project. This folder contains the scripts for creating the appropriate tables within your database. It will also create a default 'admin' user with the password '123'. Execute this command only once to initialize these tables.  
+3. There is a file named `scripts.sql` in the root of the project. This folder contains the scripts for creating the appropriate tables within your database. It will also create a default 'admin' user with the password '123'.  
+Execute this command only once to initialize these tables:
 ```psql -h hostname -d databasename -U username -f scripts.sql```
 
 #### Linking your AWS and DB accounts
@@ -51,7 +55,7 @@ annotations/`.
 
 Don't worry about your secrets being exposed, ```.env``` is added to ```.gitignore```, so they won't be committed to your own repository.
 
-### Setting up Elastic Beanstalk
+#### Setting up Elastic Beanstalk
 We used Elastic Beanstalk to deploy and manage our web app. Follow these instructions to be able to deploy and manage the web app.
 
 1. You will need to install and configure the EB CLI.
