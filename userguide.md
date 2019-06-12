@@ -36,11 +36,11 @@ To create the instances, you can reference [this tutorial](https://docs.aws.amaz
 - predictions
 
 #### Setting up your RDS Database
-1.You will need to create an RDS DB instance to host your database. If you have never done this before, you can follow [this tutorial](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_Tutorials.WebServerDB.CreateDBInstance.html). Make sure you choose a postgres database when selecting the type. Do not follow the 'Next Step' tutorial linked at the bottom.
+1. You will need to create an RDS DB instance to host your database. If you have never done this before, you can follow [this tutorial](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_Tutorials.WebServerDB.CreateDBInstance.html). Make sure you choose a postgres database when selecting the type. Do not follow the 'Next Step' tutorial linked at the bottom.
 
 2. You will need to install [psql](http://postgresguide.com/setup/install.html) if you do not have it already. [Here](http://postgresguide.com/utilities/psql.html) is a very useful list of commands to interact with the DB.
 
-3. There is a file named `scripts.sql` in the root of the project. This folder contains the scripts for creating the appropriate tables within your database. It will also create a default 'admin' user with the password '123'. Execute this command only once to initialize these tables.
+3. There is a file named `scripts.sql` in the root of the project. This folder contains the scripts for creating the appropriate tables within your database. It will also create a default 'admin' user with the password '123'. Execute this command only once to initialize these tables.  
 ```psql -h hostname -d databasename -U username -f scripts.sql```
 
 #### Linking your AWS and DB accounts
@@ -64,15 +64,16 @@ You will then be prompted to choose your region and application - select video-a
 
 3. Finally, deploy!
 
-``` cd ~/video-annotation-tool/client
-    npm run build
-    cd ..
-    eb deploy
+``` 
+cd ~/video-annotation-tool/client
+npm run build
+cd ..
+eb deploy
 ```
 The environment will be updated after a few minutes. After the environment is green and ready, verify by refreshing your browser and making sure the changes are there.
 To terminate this environment and its resources, you can use ```eb terminate```.
 
-#### Development
+### Development
 You can run ``` npm start ``` (in the root of the project) to start the development version. A new window in your browser routed to ```localhost:3000``` should appear with the app. Login using the default admin credentials above. Make sure to create a new user and remove the default admin user from your database afterwards!
 
 
