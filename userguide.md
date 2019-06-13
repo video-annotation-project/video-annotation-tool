@@ -32,8 +32,8 @@ You will need to upload your videos to the videos folder and any concept images 
 
 To create the instances, you can reference [this tutorial](https://docs.aws.amazon.com/efs/latest/ug/gs-step-one-create-ec2-resources.html). Be sure to choose an ubuntu server AMI. You will need to clone the git repo and follow the environment project setup step on all of them.     
 
-**Tracking**  
-  * When creating this instance, make sure to add extra storage space (NOT MEMORY, 32Gigs on an ssd should be enough).
+**Tracking Instance**  
+  * When creating this instance, make sure to add extra storage space (NOT MEMORY, 32Gigs on an ssd should be enough). We used a c5.4xlarge.
   1. On this EC2 you will need to install OpenCV. Note this is a somewhat lengthy process. Here is a link to the [tutorial](https://www.pyimagesearch.com/2015/07/20/install-opencv-3-0-and-python-3-4-on-ubuntu/). **IMPORTANT!** Before setting up the build in step 3, make sure you add '-DWITH_FFMPEG=ON' to the 'cmake -D' command.
   2. Once you are done installing OpenCV, you will have to pip install a bunch of packages (Make sure to be doing everything on python 3.6 and in your virtual env (usually named 'cv'))
   ```
@@ -53,9 +53,10 @@ To create the instances, you can reference [this tutorial](https://docs.aws.amaz
    * You can view the status of the program with `tail nohup.out`
    * Note: This script runs constantly, always looking for a new annotation to track.  
 
-**Training**  
+**Training Instance**  
+  * For this instance, we recommend a much larger EC2 with more GPUs, like a g3.16x large.
 
-**Predictions**  
+**Predictions Instance**  
 
 
 #### Setting up your RDS Database
@@ -63,7 +64,7 @@ To create the instances, you can reference [this tutorial](https://docs.aws.amaz
 
 2. You will need to install [psql](http://postgresguide.com/setup/install.html) if you do not have it already. [Here](http://postgresguide.com/utilities/psql.html) is a very useful list of commands to interact with the DB.
 
-3. There is a file named `scripts.sql` in the root of the project. This folder contains the scripts for creating the appropriate tables within your database. It will also create a default 'admin' user with the password '123'.  
+3. There is a file named `scripts.sql` in the root of the project. This folder contains the scripts for creating the appropriate tables within your database. **It will also create a default 'admin' user with the password '123'.**
 Execute this command only once to initialize these tables:
 ```psql -h hostname -d databasename -U username -f scripts.sql```
 
