@@ -38,16 +38,19 @@ To create the instances, you can reference [this tutorial](https://docs.aws.amaz
   2. Once you are done installing OpenCV, you will have to pip install a bunch of packages (Make sure to be doing everything on python 3.6 and in your virtual env (usually named 'cv'))
 ```
    pip install python-dotenv
-   pip install keras
    pip install boto3
-   pip install tensorflow
+   pip install Pillow
+   pip install scikit-image
+   pip install imutils
+   pip install PyGreSQL
+   pip install numpy
    sudo apt install ffmpeg
    sudo apt-get install libpq-dev
    ```
    3. Your tracking EC2 is ready to go! Just run  
 ``` 
    cd aiAnnotations  
-   nohup python annotateAll.py &
+   nohup python trackAll.py &
 ```  
   * This will automatically generate a new video that tracks an object whenever an annotation is made. The video will be stored in your videos folder within your S3 bucket, and can be viewed in the report tab of the website.
   * You can view the status of the program with `tail nohup.out`
@@ -55,8 +58,25 @@ To create the instances, you can reference [this tutorial](https://docs.aws.amaz
 
 **Training Instance**  
   * For this instance, we recommend a much larger EC2 with more GPUs, like a g3.16x large.
+  1. Install keras-retinanet following instructions from [their repo](https://github.com/fizyr/keras-retinanet)
+  2. Run 'pip install -r ml/requirements.txt'
+  3. In order to run training on startup by the webserver run:
+  'sudo crontab -e'
+  and add the following line to the file:
+  "@reboot sudo runuser -l <currentuser> -c '<path-to>/video-annotation-tool/ml/run_training.sh'"
+
 
 **Predictions Instance**  
+  1. Install keras-retinanet following instructions from [their repo](https://github.com/fizyr/keras-retinanet)
+  2. Uninstall opencv version that comes with keras-retinanet: 'pip uninstall opencv-python'
+  2. Install opencv following the tutorial listed for the tracking instance.
+  3. Run 'pip install -r ml/requirements.txt'
+  4. In order to run predictions on startup by the webserver run:
+  'sudo crontab -e'
+  and add the following line to the file:
+  "@reboot sudo runuser -l <currentuser> -c '<path-to>/video-annotation-tool/ml/run_prediction.sh'"
+  
+  
 
 
 ### RDS Database
