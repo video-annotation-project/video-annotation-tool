@@ -19,20 +19,20 @@ cd ..
 ### Setting up your AWS account
 Our project relies entirely upon AWS for hosting our database, webserver, video/image files, and machine learning EC2 instances. You will need to set up the various Amazon Web Services to be able to use the source code.
 
-#### S3 Bucket
+### S3 Bucket
 First, create a S3 bucket where you will store all of your videos, images, and model files. If you have never done this before, you can follow [this tutorial](https://docs.aws.amazon.com/quickstarts/latest/s3backup/step-1-create-bucket.html). Once you have your bucket, create four folders inside:
 - annotations (for the annotation images, with and without bounding boxes, which will be used for model training)
 - concept_images 
 - models 
 - videos (for the videos that will be annotated on the website as well as videos that will be generated with tracking and displayed in the report tab)
 
-You will need to upload your videos to the videos folder and any concept images to the concept_images folder. You can name your bucket and the folders whatever you like, you will just need to supply them in the .env file later.
+You will need to upload your videos to the videos folder and any concept images to the concept_images folder. You can name your bucket and the folders whatever you like, you will just need to supply them in the `.env` file later.
 
-#### EC2 Instances
+### EC2 Instances
 
 To create the instances, you can reference [this tutorial](https://docs.aws.amazon.com/efs/latest/ug/gs-step-one-create-ec2-resources.html). Be sure to choose an ubuntu server AMI. You will need to clone the git repo and follow the environment project setup step on all of them.     
 
-**Tracking Instance**  
+####Tracking Instance  
   * When creating this instance, make sure to add extra storage space (NOT MEMORY, 32Gigs on an ssd should be enough). We used a c5.4xlarge.
   1. On this EC2 you will need to install OpenCV. Note this is a somewhat lengthy process. Here is a link to the [tutorial](https://www.pyimagesearch.com/2015/07/20/install-opencv-3-0-and-python-3-4-on-ubuntu/). **IMPORTANT!** Before setting up the build in step 3, make sure you add '-DWITH_FFMPEG=ON' to the 'cmake -D' command.
   2. Once you are done installing OpenCV, you will have to pip install a bunch of packages (Make sure to be doing everything on python 3.6 and in your virtual env (usually named 'cv'))
@@ -46,20 +46,20 @@ To create the instances, you can reference [this tutorial](https://docs.aws.amaz
    ```
    3. Your tracking EC2 is ready to go! Just run  
      ``` 
-     cd aiAnnotations
+     cd aiAnnotations  
      nohup python annotateAll.py &
      ```  
      to automatically generate a new video that tracks an object whenever an annotation is made. The video will be stored in your videos folder within your S3 bucket, and can be viewed in the report tab of the website.
    * You can view the status of the program with `tail nohup.out`
    * Note: This script runs constantly, always looking for a new annotation to track.  
 
-**Training Instance**  
+####Training Instance  
   * For this instance, we recommend a much larger EC2 with more GPUs, like a g3.16x large.
 
-**Predictions Instance**  
+####Predictions Instance  
 
 
-#### Setting up your RDS Database
+### Setting up your RDS Database
 1. You will need to create an RDS DB instance to host your database. If you have never done this before, you can follow [this tutorial](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_Tutorials.WebServerDB.CreateDBInstance.html). Make sure you choose a postgres database when selecting the type. Do not follow the 'Next Step' tutorial linked at the bottom.
 
 2. You will need to install [psql](http://postgresguide.com/setup/install.html) if you do not have it already. [Here](http://postgresguide.com/utilities/psql.html) is a very useful list of commands to interact with the DB.
@@ -68,7 +68,7 @@ To create the instances, you can reference [this tutorial](https://docs.aws.amaz
 Execute this command only once to initialize these tables:
 ```psql -h hostname -d databasename -U username -f scripts.sql```
 
-#### Linking your AWS and DB accounts
+### Linking your AWS and DB accounts
 To link your AWS bucket and Postgres database, open the `.env` file in the root of the project. In this file you will need to supply your AWS info, DB info, and a JWT key. The JWT key can be anything you like. It simply allows us to pass JSON objects between the server and client.
 
 For AWS variables ending with ` _FOLDER `, enter the name of the appropriate AWS folder within your S3 bucket, with the forward slash. Ex: ` AWS_S3_BUCKET_ANNOTATIONS_FOLDER = 
@@ -76,7 +76,7 @@ annotations/`.
 
 Don't worry about your secrets being exposed, ```.env``` is added to ```.gitignore```, so they won't be committed to your own repository.
 
-#### Setting up Elastic Beanstalk
+### Setting up Elastic Beanstalk
 We used Elastic Beanstalk to deploy and manage our web app. Follow these instructions to be able to deploy and manage the web app.
 
 1. You will need to install and configure the EB CLI.
@@ -98,7 +98,7 @@ eb deploy
 The environment will be updated after a few minutes. After the environment is green and ready, verify by refreshing your browser and making sure the changes are there.
 To terminate this environment and its resources, you can use ```eb terminate```.
 
-### Development
+## Development
 You can run ``` npm start ``` (in the root of the project) to start the development version. A new window in your browser routed to ```localhost:3000``` should appear with the app. Login using the default admin credentials above. Make sure to create a new user and remove the default admin user from your database afterwards!
 
 
