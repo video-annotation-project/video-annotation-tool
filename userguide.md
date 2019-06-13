@@ -82,9 +82,9 @@ We used Elastic Beanstalk to deploy and manage our web app. Follow these instruc
 1. You will need to install and configure the EB CLI.
 See [Install the EB CLI](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/eb-cli3-install.html) and [Configure the EB CLI](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/eb-cli3-configuration.html). When configuring, make sure you enter 'video-annotation-tool' as the name of the folder in step 4.
 
-2. Navigate to video-annotation-tool and create an eb environment.
-`~/video-annotation-tool$ eb init`
-You will be prompted to enter your AWS access keys.
+2. Navigate to video-annotation-tool and create an eb environment by running  
+`~/video-annotation-tool$ eb init`  
+You will be prompted to enter your AWS access keys.  
 You will then be prompted to choose your region and application - select video-annotation-tool for the application.
 
 3. Finally, deploy!
