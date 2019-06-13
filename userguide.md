@@ -36,7 +36,7 @@ To create the instances, you can reference [this tutorial](https://docs.aws.amaz
   * When creating this instance, make sure to add extra storage space (NOT MEMORY, 32Gigs on an ssd should be enough). We used a c5.4xlarge.
   1. On this EC2 you will need to install OpenCV. Note this is a somewhat lengthy process. Here is a link to the [tutorial](https://www.pyimagesearch.com/2015/07/20/install-opencv-3-0-and-python-3-4-on-ubuntu/). **IMPORTANT!** Before setting up the build in step 3, make sure you add '-DWITH_FFMPEG=ON' to the 'cmake -D' command.
   2. Once you are done installing OpenCV, you will have to pip install a bunch of packages (Make sure to be doing everything on python 3.6 and in your virtual env (usually named 'cv'))
-  ```
+```
    pip install python-dotenv
    pip install keras
    pip install boto3
@@ -45,10 +45,10 @@ To create the instances, you can reference [this tutorial](https://docs.aws.amaz
    sudo apt-get install libpq-dev
    ```
    3. Your tracking EC2 is ready to go! Just run  
-     ``` 
-     cd aiAnnotations    
-     nohup python annotateAll.py &
-     ```  
+``` 
+   cd aiAnnotations  
+   nohup python annotateAll.py &
+```  
   * This will automatically generate a new video that tracks an object whenever an annotation is made. The video will be stored in your videos folder within your S3 bucket, and can be viewed in the report tab of the website.
   * You can view the status of the program with `tail nohup.out`
   * Note: This script runs constantly, always looking for a new annotation to track.  
@@ -66,7 +66,9 @@ To create the instances, you can reference [this tutorial](https://docs.aws.amaz
 
 3. There is a file named `scripts.sql` in the root of the project. This folder contains the scripts for creating the appropriate tables within your database. It will also create a default 'admin' user with the password '123'.  
 **Execute this command only once to initialize these tables**:  
-```psql -h hostname -d databasename -U username -f scripts.sql```
+```
+psql -h hostname -d databasename -U username -f scripts.sql
+```
 
 ### Linking your AWS and DB accounts
 To link your AWS bucket and Postgres database, open the `.env` file in the root of the project. In this file you will need to supply your AWS info, DB info, and a JWT key. The JWT key can be anything you like. It simply allows us to pass JSON objects between the server and client.
