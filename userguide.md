@@ -64,8 +64,8 @@ To create the instances, you can reference [this tutorial](https://docs.aws.amaz
 
 2. You will need to install [psql](http://postgresguide.com/setup/install.html) if you do not have it already. [Here](http://postgresguide.com/utilities/psql.html) is a very useful list of commands to interact with the DB.
 
-3. There is a file named `scripts.sql` in the root of the project. This folder contains the scripts for creating the appropriate tables within your database. **It will also create a default 'admin' user with the password '123'.**
-Execute this command only once to initialize these tables:
+3. There is a file named `scripts.sql` in the root of the project. This folder contains the scripts for creating the appropriate tables within your database. It will also create a default 'admin' user with the password '123'.  
+**Execute this command only once to initialize these tables**:
 ```psql -h hostname -d databasename -U username -f scripts.sql```
 
 ### Linking your AWS and DB accounts
