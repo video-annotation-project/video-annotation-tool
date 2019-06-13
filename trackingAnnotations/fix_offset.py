@@ -80,7 +80,7 @@ def fix_offset(annotation):
         Key= S3_ANNOTATION_FOLDER + annotation.image
      )
    except:
-    print("Annotation missing image.")
+    #print("Annotation missing image.")
     con.close()
     return
    img = Image.open(obj['Body'])
