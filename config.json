@@ -8,7 +8,6 @@
          "test_examples" : "test_examples",
          "default_weights" : "resnet50_coco_best_v2.1.0.h5",
          "weights_path" : "weights.h5",
-         "annotations" : "annotations.csv",
          "batch_size" : 8,
          "frames_between_predictions" : 10,
          "prediction_tracking_iou_threshold" : 0.20,
