@@ -59,22 +59,22 @@ To create the instances, you can reference [this tutorial](https://docs.aws.amaz
 **Training Instance**  
   * For this instance, we recommend a much larger EC2 with more GPUs, like a g3.16x large.
   1. Install keras-retinanet following instructions from [their repo](https://github.com/fizyr/keras-retinanet)
-  2. Run 'pip install -r ml/requirements.txt'
+  2. Run `pip install -r ml/requirements.txt`
   3. In order to run training on startup by the webserver run:
-  'sudo crontab -e'
+  `sudo crontab -e`
   and add the following line to the file:
-  "@reboot sudo runuser -l <currentuser> -c '<path-to>/video-annotation-tool/ml/run_training.sh'"
+  `@reboot sudo runuser -l <currentuser> -c '<path-to>/video-annotation-tool/ml/run_training.sh'`
 
 
 **Predictions Instance**  
   1. Install keras-retinanet following instructions from [their repo](https://github.com/fizyr/keras-retinanet)
-  2. Uninstall opencv version that comes with keras-retinanet: 'pip uninstall opencv-python'
+  2. Uninstall opencv version that comes with keras-retinanet: `pip uninstall opencv-python`
   2. Install opencv following the tutorial listed for the tracking instance.
-  3. Run 'pip install -r ml/requirements.txt'
+  3. Run `pip install -r ml/requirements.txt`
   4. In order to run predictions on startup by the webserver run:
-  'sudo crontab -e'
+  `sudo crontab -e`
   and add the following line to the file:
-  "@reboot sudo runuser -l <currentuser> -c '<path-to>/video-annotation-tool/ml/run_prediction.sh'"
+  `@reboot sudo runuser -l <currentuser> -c '<path-to>/video-annotation-tool/ml/run_prediction.sh'`
   
   
 
@@ -124,3 +124,21 @@ To terminate this environment and its resources, you can use ```eb terminate```.
 You can run ``` npm start ``` (in the root of the project) to start the development version. A new window in your browser routed to ```localhost:3000``` should appear with the app. Login using the default admin credentials above. Make sure to create a new user and remove the default admin user from your database afterwards!
 
 
+## Config Explanation
+```
+         "prediction_confidence_thresholds" : <list of confidence thresholds for predictions, by concept> (THIS NEEDS TO BE REMOVED FROM CONFIG)
+         "train_annot_file" : <temp csv file containing all training annotations>,
+         "valid_annot_file": <temp csv file containing all validation annotations>,
+         "image_folder": <folder where all images will be stored for training/validation>,
+         "test_examples" : <folder where evaluation examples will be stored for debugging>,
+         "default_weights" : <file for default weights within s3 weights folder>,
+         "weights_path" : <temp h5 file for checkpointing during training> ,
+         "batch_size" : <size of each training/evaluation batch (rec: 8)>,
+         "frames_between_predictions" : <number of frames to weight between running model on prediction video (rec: 10)>,
+         "prediction_tracking_iou_threshold" : <minimum iou value at which we merge two objects during predictions (rec: 0.20)>,
+         "evaluation_iou_threshold" : 0.20,
+         "min_frames_threshold" : <minimum number of frames that a predicted object must appear to be valid (rec: 15,
+         "resized_video_width" : 640,
+         "resized_video_height" : 480,
+         "max_seconds_back" : <seconds backwards in the video each new object is tracked (rec: 5)>
+```
