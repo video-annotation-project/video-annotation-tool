@@ -30,7 +30,8 @@ You will need to upload your videos to the videos folder and any concept images 
 
 #### EC2 Instances
 
-To create the instances, you can reference [this tutorial](https://docs.aws.amazon.com/efs/latest/ug/gs-step-one-create-ec2-resources.html). Be sure to choose an ubuntu server AMI. You will need to clone the git repo and follow the environment project setup step on all of them.   
+To create the instances, you can reference [this tutorial](https://docs.aws.amazon.com/efs/latest/ug/gs-step-one-create-ec2-resources.html). Be sure to choose an ubuntu server AMI. You will need to clone the git repo and follow the environment project setup step on all of them.     
+
 **Tracking**  
   * When creating this instance, make sure to add extra storage space (NOT MEMORY, 32Gigs on an ssd should be enough).
   1. On this EC2 you will need to install OpenCV. Note this is a somewhat lengthy process. Here is a link to the [tutorial](https://www.pyimagesearch.com/2015/07/20/install-opencv-3-0-and-python-3-4-on-ubuntu/). **IMPORTANT!** Before setting up the build in step 3, make sure you add '-DWITH_FFMPEG=ON' to the 'cmake -D' command.
@@ -51,7 +52,9 @@ To create the instances, you can reference [this tutorial](https://docs.aws.amaz
       to automatically generate a new video that tracks an object whenever an annotation is made. The video will be stored in your videos folder within your S3 bucket, and can be viewed in the report tab of the website.
    * You can view the status of the program with `tail nohup.out`
    * Note: This script runs constantly, always looking for a new annotation to track.  
+
 **Training**  
+
 **Predictions**  
 
 
