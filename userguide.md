@@ -48,8 +48,8 @@ To create the instances, you can reference [this tutorial](https://docs.aws.amaz
      ``` 
      cd aiAnnotations
      nohup python annotateAll.py &
-     ```
-      to automatically generate a new video that tracks an object whenever an annotation is made. The video will be stored in your videos folder within your S3 bucket, and can be viewed in the report tab of the website.
+     ```  
+     to automatically generate a new video that tracks an object whenever an annotation is made. The video will be stored in your videos folder within your S3 bucket, and can be viewed in the report tab of the website.
    * You can view the status of the program with `tail nohup.out`
    * Note: This script runs constantly, always looking for a new annotation to track.  
 
