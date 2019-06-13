@@ -21,7 +21,7 @@ import Checkbox from "@material-ui/core/Checkbox";
 
 import Typography from "@material-ui/core/Typography";
 import { withStyles } from "@material-ui/core/styles";
-import Swal from 'sweetalert2';
+import Swal from "sweetalert2";
 
 const styles = theme => ({
   root: {

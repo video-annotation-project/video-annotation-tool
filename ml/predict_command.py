@@ -22,6 +22,13 @@ DB_PASSWORD = os.getenv("DB_PASSWORD")
 con = connect(database=DB_NAME, host=DB_HOST, user=DB_USER, password=DB_PASSWORD)
 cursor = con.cursor()
 
+config_path = "../config.json"
+load_dotenv(dotenv_path="../.env")
+with open(config_path) as config_buffer:    
+    config = json.loads(config_buffer.read())['ml']
+
+weights_path = config['weights_path']
+
 # get annotations from test
 cursor.execute("SELECT * FROM MODELTAB WHERE option='runmodel'")
 info = cursor.fetchone()[1]
@@ -29,7 +36,7 @@ if info['activeStep'] != 3:
     exit()
 
 model_name = str(info['modelSelected'])
-s3.download_file(S3_BUCKET, S3_WEIGHTS_FOLDER + model_name + '.h5', 'current_weights.h5')
+s3.download_file(S3_BUCKET, S3_WEIGHTS_FOLDER + model_name + '.h5', weights_path)
 
 cursor.execute("SELECT * FROM MODELS WHERE name='" + model_name + "'")
 model = cursor.fetchone()
@@ -37,7 +44,7 @@ videoid = int(info['videoSelected'])
 concepts = model[2]
 userid = int(info['userSelected'])
 
-predict_on_video(videoid, 'current_weights.h5', concepts, upload_annotations=True, userid)
+predict_on_video(videoid, weights_path, concepts, upload_annotations=True, userid)
 
 cursor.execute("Update modeltab SET info =  '{\"activeStep\": 0, \"modelSelected\":\"\",\"videoSelected\":\"\",\"userSelected\":\"\"}' WHERE option = 'predictmodel'")
 con.commit()

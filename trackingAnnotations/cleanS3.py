@@ -16,7 +16,7 @@ while True:
         break
     for i in results['Contents']:
         file = i["Key"]
-        if "_ai" in file:
+        if "_tracking" in file:
             s3.delete_object(Bucket=S3_BUCKET, Key=file)
             print(file)
     marker = file
@@ -28,7 +28,7 @@ while True:
         break
     for i in results['Contents']:
         file = i["Key"]
-        if "_ai" in file:
+        if "_tracking" in file:
             s3.delete_object(Bucket=S3_BUCKET, Key=file)
             print(file)
         marker = file
