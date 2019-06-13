@@ -777,35 +777,32 @@ app.get(
   async (req, res) => {
     let params = [];
     //Build query string
-    let queryPass = `SELECT annotations.id, annotations.comment, annotations.verifiedby,
-                     annotations.unsure, annotations.timeinvideo, 
-                     annotations.imagewithbox, concepts.name, 
-                     false as extended 
-                     FROM annotations
-                     LEFT JOIN concepts ON concepts.id=annotations.conceptid
-                     WHERE annotations.userid NOT IN (17, 32)`;
+    let queryPass = `
+      SELECT
+        annotations.id, annotations.comment, annotations.verifiedby,
+        annotations.unsure, annotations.timeinvideo, 
+        annotations.imagewithbox, concepts.name, 
+        false as extended 
+      FROM
+        annotations
+      LEFT JOIN
+        concepts ON concepts.id=annotations.conceptid
+      WHERE 
+        annotations.userid NOT IN (17, 32)`;
     if (req.query.unsureOnly === "true") {
       queryPass = queryPass + " AND annotations.unsure = true";
     }
-    if (
-      !(
-        req.query.verifiedOnly === "true" && req.query.unverifiedOnly === "true"
-      )
-    ) {
-      if (req.query.verifiedOnly === "true") {
-        queryPass = queryPass + " AND annotations.verifiedby IS NOT NULL";
-      }
-      if (req.query.unverifiedOnly === "true") {
-        queryPass = queryPass + " AND annotations.verifiedby IS NULL";
-      }
+    if (req.query.verifiedCondition === "verified only") {
+      queryPass = queryPass + " AND annotations.verifiedby IS NOT NULL";
+    } else if (req.query.verifiedCondition === "unverified only") {
+      queryPass = queryPass + " AND annotations.verifiedby IS NULL";
     }
     if (req.query.admin !== "true") {
       queryPass = queryPass + " AND annotations.userid = $1";
       params.push(req.user.id);
     }
     // Adds query conditions from report tree
-    queryPass =
-      queryPass +
+    queryPass +=
       req.query.queryConditions +
       " ORDER BY annotations.timeinvideo";
     // Retrieves only selected 100 if queryLimit exists
@@ -1107,17 +1104,10 @@ app.get(
     if (req.query.unsureOnly === "true") {
       queryPass = queryPass + " AND annotations.unsure = true";
     }
-    if (
-      !(
-        req.query.verifiedOnly === "true" && req.query.unverifiedOnly === "true"
-      )
-    ) {
-      if (req.query.verifiedOnly === "true") {
-        queryPass = queryPass + " AND annotations.verifiedby IS NOT NULL";
-      }
-      if (req.query.unverifiedOnly === "true") {
-        queryPass = queryPass + " AND annotations.verifiedby IS NULL";
-      }
+    if (req.query.verifiedCondition === "verified only") {
+      queryPass = queryPass + " AND annotations.verifiedby IS NOT NULL";
+    } else if (req.query.verifiedCondition === "unverified only") {
+      queryPass = queryPass + " AND annotations.verifiedby IS NULL";
     }
     if (req.query.admin !== "true") {
       queryPass = queryPass + " AND annotations.userid = $1";
@@ -1138,8 +1128,15 @@ app.get(
   "/api/models",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    const queryText = "select * \
-                       from models";
+    const queryText = `
+      SELECT m.name, m.timestamp, array_agg(c.name) concepts
+      FROM 
+        (SELECT 
+          name, timestamp, UNNEST(concepts) concept
+          FROM models
+        ) m
+      JOIN concepts c ON c.id=m.concept
+      GROUP BY (m.name, m.timestamp)`;
     try {
       let response = await psql.query(queryText);
       res.json(response.rows);
@@ -1154,17 +1151,16 @@ app.post(
   "/api/models",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    const queryText =
-      "INSERT INTO models( \
-                         name, \
-                         timestamp) \
-                       VALUES( \
-                         $1, \
-                         current_timestamp) \
-                       RETURNING *";
+    const queryText =`
+      INSERT INTO 
+        models(name, timestamp, concepts)
+      VALUES($1, current_timestamp, $2)
+      RETURNING *`;
 
     try {
-      let response = await psql.query(queryText, [req.body.name]);
+      let response = await psql.query(
+        queryText,
+        [req.body.name, req.body.concepts]);
       res.json(response.rows);
     } catch (error) {
       console.log(error);
