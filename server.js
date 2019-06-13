@@ -792,24 +792,10 @@ app.get(
     if (req.query.unsureOnly === "true") {
       queryPass = queryPass + " AND annotations.unsure = true";
     }
-<<<<<<< HEAD
     if (req.query.verifiedCondition === "verified only") {
       queryPass = queryPass + " AND annotations.verifiedby IS NOT NULL";
     } else if (req.query.verifiedCondition === "unverified only") {
       queryPass = queryPass + " AND annotations.verifiedby IS NULL";
-=======
-    if (
-      !(
-        req.query.verifiedOnly === "true" && req.query.unverifiedOnly === "true"
-      )
-    ) {
-      if (req.query.verifiedOnly === "true") {
-        queryPass = queryPass + " AND annotations.verifiedby IS NOT NULL";
-      }
-      if (req.query.unverifiedOnly === "true") {
-        queryPass = queryPass + " AND annotations.verifiedby IS NULL";
-      }
->>>>>>> origin/master
     }
     if (req.query.admin !== "true") {
       queryPass = queryPass + " AND annotations.userid = $1";
@@ -1118,24 +1104,10 @@ app.get(
     if (req.query.unsureOnly === "true") {
       queryPass = queryPass + " AND annotations.unsure = true";
     }
-<<<<<<< HEAD
     if (req.query.verifiedCondition === "verified only") {
       queryPass = queryPass + " AND annotations.verifiedby IS NOT NULL";
     } else if (req.query.verifiedCondition === "unverified only") {
       queryPass = queryPass + " AND annotations.verifiedby IS NULL";
-=======
-    if (
-      !(
-        req.query.verifiedOnly === "true" && req.query.unverifiedOnly === "true"
-      )
-    ) {
-      if (req.query.verifiedOnly === "true") {
-        queryPass = queryPass + " AND annotations.verifiedby IS NOT NULL";
-      }
-      if (req.query.unverifiedOnly === "true") {
-        queryPass = queryPass + " AND annotations.verifiedby IS NULL";
-      }
->>>>>>> origin/master
     }
     if (req.query.admin !== "true") {
       queryPass = queryPass + " AND annotations.userid = $1";
