@@ -34,23 +34,21 @@ while True:
     print("Annotating " + str(len(rows)) + " videos.")
     for count, i in enumerate(rows):
         print("Working annotation: " + str(count))
+        
         results = s3.list_objects(Bucket=S3_BUCKET, Prefix=S3_VIDEO_FOLDER + str(i.id) + "_tracking.mp4")
         if 'Contents' in results:
             continue
         process = Process(target=tracking.track_annotation, args=(i,))
         process.start()
         processes.append((process,i.id))
-        
+                
         while(len(active_children()) >= cpu_count()-1):
             pass
-        
+    
         if(len(processes) > 256):
             for p, originid in processes:
                 p.join()
             processes = []
-
-    for p, originid in processes:
-        p.join()
 
     for i in rows:
         results = s3.list_objects(Bucket=S3_BUCKET, Prefix=S3_VIDEO_FOLDER + str(i.id) + "_tracking.mp4")

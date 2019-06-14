@@ -10,9 +10,6 @@ import TableHead from "@material-ui/core/TableHead";
 import TableRow from "@material-ui/core/TableRow";
 import Table from "@material-ui/core/Table";
 
-import IconButton from "@material-ui/core/IconButton";
-import Description from "@material-ui/icons/Description";
-
 const CustomTableCell = withStyles(theme => ({
   head: {
     backgroundColor: theme.palette.common.black,
@@ -88,7 +85,7 @@ class ViewModels extends Component {
             <TableRow>
               <CustomTableCell>Name</CustomTableCell>
               <CustomTableCell align="right">Date Created</CustomTableCell>
-              <CustomTableCell>Description</CustomTableCell>
+              <CustomTableCell>Concepts</CustomTableCell>
               <CustomTableCell>Etc...</CustomTableCell>
             </TableRow>
           </TableHead>
@@ -102,9 +99,7 @@ class ViewModels extends Component {
                   {model.timestamp}
                 </CustomTableCell>
                 <CustomTableCell align="right">
-                  <IconButton>
-                    <Description />
-                  </IconButton>
+                  {model.concepts.toString()}
                 </CustomTableCell>
                 <CustomTableCell>Foo Bar</CustomTableCell>
               </TableRow>

@@ -41,7 +41,7 @@ async function findUser(userId) {
   }
 }
 
-var strategy = new JwtStrategy(jwtOptions, async function (jwt_payload, next) {
+var strategy = new JwtStrategy(jwtOptions, async function(jwt_payload, next) {
   // console.log('payload received', jwt_payload);
   var user = await findUser(jwt_payload.id);
   if (user) {
@@ -102,7 +102,7 @@ const setCookies = res => {
   });
 };
 
-app.post("/api/login", async function (req, res) {
+app.post("/api/login", async function(req, res) {
   const { username, password } = req.body;
   let queryPass = `
     SELECT 
@@ -204,11 +204,11 @@ app.get(
   "/api/users",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    var queryText = "SELECT id, username \
+    let queryText = "SELECT id, username \
                        FROM users";
 
     if (req.query.noAi === "true") {
-      queryText += " WHERE id <> 17";
+      queryText += " WHERE username NOT IN ('tracking', 'ai')";
     }
 
     try {
@@ -611,10 +611,7 @@ app.get(
       c.userid::text = ANY(string_to_array($1, ','))
     `;
     try {
-      const videos = await psql.query(
-        queryText,
-        [req.params.userIDs]
-      );
+      const videos = await psql.query(queryText, [req.params.userIDs]);
       res.json(videos.rows);
     } catch (error) {
       console.log("Error in get /api/videos/usersViewed/:userIDs");
@@ -780,31 +777,32 @@ app.get(
   async (req, res) => {
     let params = [];
     //Build query string
-    let queryPass = `SELECT annotations.id, annotations.comment, annotations.verifiedby,
-                     annotations.unsure, annotations.timeinvideo, 
-                     annotations.imagewithbox, concepts.name, 
-                     false as extended 
-                     FROM annotations
-                     LEFT JOIN concepts ON concepts.id=annotations.conceptid
-                     WHERE annotations.userid NOT IN (17, 32)`;
+    let queryPass = `
+      SELECT
+        annotations.id, annotations.comment, annotations.verifiedby,
+        annotations.unsure, annotations.timeinvideo, 
+        annotations.imagewithbox, concepts.name, 
+        false as extended 
+      FROM
+        annotations
+      LEFT JOIN
+        concepts ON concepts.id=annotations.conceptid
+      WHERE 
+        annotations.userid NOT IN (17, 32)`;
     if (req.query.unsureOnly === "true") {
       queryPass = queryPass + " AND annotations.unsure = true";
     }
-    if (!(req.query.verifiedOnly === "true" && req.query.unverifiedOnly === "true")) {
-      if (req.query.verifiedOnly === "true") {
-        queryPass = queryPass + " AND annotations.verifiedby IS NOT NULL";
-      }
-      if (req.query.unverifiedOnly === "true") {
-        queryPass = queryPass + " AND annotations.verifiedby IS NULL";
-      }
+    if (req.query.verifiedCondition === "verified only") {
+      queryPass = queryPass + " AND annotations.verifiedby IS NOT NULL";
+    } else if (req.query.verifiedCondition === "unverified only") {
+      queryPass = queryPass + " AND annotations.verifiedby IS NULL";
     }
     if (req.query.admin !== "true") {
       queryPass = queryPass + " AND annotations.userid = $1";
       params.push(req.user.id);
     }
     // Adds query conditions from report tree
-    queryPass =
-      queryPass +
+    queryPass +=
       req.query.queryConditions +
       " ORDER BY annotations.timeinvideo";
     // Retrieves only selected 100 if queryLimit exists
@@ -899,14 +897,46 @@ app.delete(
   "/api/annotations",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    queryText =
-      "DELETE FROM annotations \
-                 WHERE annotations.id=$1 OR \
-                 annotations.originalid=$1 RETURNING *";
+    let s3 = new AWS.S3();
+    let queryText = `
+      DELETE FROM
+        annotations \
+      WHERE 
+        annotations.id=$1 
+        OR annotations.originalid=$1 
+      RETURNING *`;
     try {
       var deleteRes = await psql.query(queryText, [req.body.id]);
-      res.json(deleteRes.rows);
+
+      //These are the s3 object we will be deleting
+      let Objects = [];
+
+      deleteRes.rows.forEach(element => {
+        Objects.push({
+          Key: process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + element.image
+        });
+        Objects.push({
+          Key:
+            process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + element.imagewithbox
+        });
+      });
+      // add tracking video
+      Objects.push({
+        Key:
+          process.env.AWS_S3_BUCKET_VIDEOS_FOLDER +
+          req.body.id +
+          "_tracking.mp4"
+      });
+      let params = {
+        Bucket: process.env.AWS_S3_BUCKET_NAME,
+        Delete: {
+          Objects: Objects
+        }
+      };
+      let s3Res = await s3.deleteObjects(params);
+      res.json("delete");
     } catch (error) {
+      console.log("Error in delete /api/annotations");
       console.log(error);
       res.status(400).json(error);
     }
@@ -935,28 +965,28 @@ app.delete(
 //   }
 // );
 
-app.get("/api/annotationImages/:id", async (req, res) => {
-  let s3 = new AWS.S3();
-  queryText = "select image, imagewithbox from annotations where id=$1";
-  try {
-    const response = await psql.query(queryText, [req.params.id]);
-    var picture = null;
-    if (req.query.withBox === "true") {
-      picture = response.rows[0].imagewithbox;
-    } else {
-      picture = response.rows[0].image;
-    }
-    const params = {
-      Bucket: process.env.AWS_S3_BUCKET_NAME,
-      Key: process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + `${picture}`
-    };
-    s3.getObject(params)
-      .createReadStream()
-      .pipe(res);
-  } catch (error) {
-    res.status(400).json(error);
-  }
-});
+// app.get("/api/annotationImages/:id", async (req, res) => {
+//   let s3 = new AWS.S3();
+//   queryText = "select image, imagewithbox from annotations where id=$1";
+//   try {
+//     const response = await psql.query(queryText, [req.params.id]);
+//     var picture = null;
+//     if (req.query.withBox === "true") {
+//       picture = response.rows[0].imagewithbox;
+//     } else {
+//       picture = response.rows[0].image;
+//     }
+//     const params = {
+//       Bucket: process.env.AWS_S3_BUCKET_NAME,
+//       Key: process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + `${picture}`
+//     };
+//     s3.getObject(params)
+//       .createReadStream()
+//       .pipe(res);
+//   } catch (error) {
+//     res.status(400).json(error);
+//   }
+// });
 
 // app.get("/api/annotationImageWithoutBox/:id", async (req, res) => {
 //   let s3 = new AWS.S3();
@@ -1074,13 +1104,10 @@ app.get(
     if (req.query.unsureOnly === "true") {
       queryPass = queryPass + " AND annotations.unsure = true";
     }
-    if (!(req.query.verifiedOnly === "true" && req.query.unverifiedOnly === "true")) {
-      if (req.query.verifiedOnly === "true") {
-        queryPass = queryPass + " AND annotations.verifiedby IS NOT NULL";
-      }
-      if (req.query.unverifiedOnly === "true") {
-        queryPass = queryPass + " AND annotations.verifiedby IS NULL";
-      }
+    if (req.query.verifiedCondition === "verified only") {
+      queryPass = queryPass + " AND annotations.verifiedby IS NOT NULL";
+    } else if (req.query.verifiedCondition === "unverified only") {
+      queryPass = queryPass + " AND annotations.verifiedby IS NULL";
     }
     if (req.query.admin !== "true") {
       queryPass = queryPass + " AND annotations.userid = $1";
@@ -1101,8 +1128,15 @@ app.get(
   "/api/models",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    const queryText = "select * \
-                       from models";
+    const queryText = `
+      SELECT m.name, m.timestamp, array_agg(c.name) concepts
+      FROM 
+        (SELECT 
+          name, timestamp, UNNEST(concepts) concept
+          FROM models
+        ) m
+      JOIN concepts c ON c.id=m.concept
+      GROUP BY (m.name, m.timestamp)`;
     try {
       let response = await psql.query(queryText);
       res.json(response.rows);
@@ -1117,17 +1151,16 @@ app.post(
   "/api/models",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    const queryText =
-      "INSERT INTO models( \
-                         name, \
-                         timestamp) \
-                       VALUES( \
-                         $1, \
-                         current_timestamp) \
-                       RETURNING *";
+    const queryText =`
+      INSERT INTO 
+        models(name, timestamp, concepts)
+      VALUES($1, current_timestamp, $2)
+      RETURNING *`;
 
     try {
-      let response = await psql.query(queryText, [req.body.name]);
+      let response = await psql.query(
+        queryText,
+        [req.body.name, req.body.concepts]);
       res.json(response.rows);
     } catch (error) {
       console.log(error);
@@ -1202,7 +1235,7 @@ app.post(
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     let ec2 = new AWS.EC2({ region: "us-west-1" });
-    
+
     var params = {
       InstanceIds: [req.body.modelInstanceId]
     };
@@ -1247,10 +1280,10 @@ app.get(
         )
     `;
     try {
-      let response = await psql.query(
-        queryText,
-        [req.params.modelName, req.params.videoIDs]
-      );
+      let response = await psql.query(queryText, [
+        req.params.modelName,
+        req.params.videoIDs
+      ]);
       res.json(response.rows);
     } catch (error) {
       console.log("Error on GET /api/trainModel/concepts");
@@ -1315,25 +1348,35 @@ app.get(
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const selectedUsers = req.query.selectedUsers;
+    let params = [];
 
-    let sqlUsers = "";
-    if (!(selectedUsers.length === 1 && selectedUsers[0] === "-1")) {
-      sqlUsers = " AND (a.userid=" + selectedUsers[0];
-      for (let i = 0; i < selectedUsers.length; i++) {
-        sqlUsers += " OR a.userid=" + selectedUsers[i];
+    let queryText = `
+      SELECT DISTINCT
+        v.id, v.filename
+      FROM 
+        annotations a
+      JOIN videos v ON v.id=a.videoid
+      WHERE a.verifiedby IS NULL
+    `;
+
+    if (selectedUsers.length === 1 && selectedUsers[0] === "-1") {
+      let trackingId = null;
+      let queryText2 = `SELECT * FROM users u WHERE u.username='tracking'`;
+      try {
+        let users = await psql.query(queryText2);
+        trackingId = users.rows[0].id;
+      } catch (error) {
+        res.status(500).json(error);
       }
-      sqlUsers += ")";
-    }
-    else {
-      sqlUsers = " AND a.userid <> 17";
+      queryText += ` AND a.userid!=$1`;
+      params.push(trackingId);
+    } else {
+      queryText += ` AND a.userid::text=ANY($1)`;
+      params.push(selectedUsers);
     }
 
-    let queryText =
-      `SELECT DISTINCT v.id, v.filename
-              FROM annotations a, videos v
-              WHERE a.verifiedby IS NULL AND v.id=a.videoid` + sqlUsers;
     try {
-      let videos = await psql.query(queryText);
+      let videos = await psql.query(queryText, params);
       res.json(videos.rows);
     } catch (error) {
       res.status(500).json(error);
@@ -1347,37 +1390,35 @@ app.get(
   async (req, res) => {
     const selectedUsers = req.query.selectedUsers;
     const selectedVideos = req.query.selectedVideos;
+    let params = [];
 
-    let sqlUsers = "";
-    if (!(selectedUsers.length === 1 && selectedUsers[0] === "-1")) {
-      sqlUsers = " AND (a.userid=" + selectedUsers[0];
-      for (let i = 0; i < selectedUsers.length; i++) {
-        sqlUsers += " OR a.userid=" + selectedUsers[i];
-      }
-      sqlUsers += ")";
-    }
-    else {
-      sqlUsers = " AND a.userid <> 17";
-    }
-
-    let sqlVideos = "";
-    if (!(selectedVideos.length === 1 && selectedVideos[0] === "-1")) {
-      sqlVideos = " AND (a.videoid=" + selectedVideos[0];
-      for (let i = 0; i < selectedVideos.length; i++) {
-        sqlVideos += " OR a.videoid=" + selectedVideos[i];
-      }
-      sqlVideos += ")";
-    }
-
-    let queryText =
-      `SELECT DISTINCT c.id, c.name
+    let queryText = `SELECT DISTINCT c.id, c.name
         FROM annotations a, concepts c
-        WHERE a.verifiedby IS NULL AND a.conceptid=c.id` +
-      sqlUsers +
-      sqlVideos;
+        WHERE a.verifiedby IS NULL AND a.conceptid=c.id`;
+
+    if (selectedUsers.length === 1 && selectedUsers[0] === "-1") {
+      let trackingId = null;
+      let queryText2 = `SELECT * FROM users u WHERE u.username='tracking'`;
+      try {
+        let users = await psql.query(queryText2);
+        trackingId = users.rows[0].id;
+      } catch (error) {
+        res.status(500).json(error);
+      }
+      queryText += ` AND a.userid!=$1`;
+      params.push(trackingId);
+    } else {
+      queryText += ` AND a.userid::text=ANY($1)`;
+      params.push(selectedUsers);
+    }
+
+    if (!(selectedVideos.length === 1 && selectedVideos[0] === "-1")) {
+      queryText += ` AND a.videoid::text=ANY($${params.length + 1})`;
+      params.push(selectedVideos);
+    }
 
     try {
-      let concepts = await psql.query(queryText);
+      let concepts = await psql.query(queryText, params);
       res.json(concepts.rows);
     } catch (error) {
       res.status(500).json(error);
@@ -1393,46 +1434,40 @@ app.get(
     const selectedVideos = req.query.selectedVideos;
     const selectedConcepts = req.query.selectedConcepts;
 
-    let sqlUsers = "";
-    if (!(selectedUsers.length === 1 && selectedUsers[0] === "-1")) {
-      sqlUsers = " AND (a.userid=" + selectedUsers[0];
-      for (let i = 0; i < selectedUsers.length; i++) {
-        sqlUsers += " OR a.userid=" + selectedUsers[i];
+    let params = [];
+    let queryText =
+    `SELECT distinct a.*, c.name, u.username, v.filename
+      FROM annotations a, concepts c, users u, videos v
+      WHERE c.id=a.conceptid AND u.id=a.userid AND v.id=a.videoid AND a.verifiedby IS NULL`;
+
+    if (selectedUsers.length === 1 && selectedUsers[0] === "-1") {
+      let trackingId = null;
+      var queryText2 = `SELECT * FROM users u WHERE u.username='tracking'`;
+      try {
+        let users = await psql.query(queryText2);
+        trackingId = users.rows[0].id;
+      } catch (error) {
+        res.status(500).json(error);
       }
-      sqlUsers += ")";
-    }
-    else {
-      sqlUsers = " AND a.userid <> 17";
+      queryText += ` AND a.userid!=$1`;
+      params.push(trackingId);
+    } else {
+      queryText += ` AND a.userid::text=ANY($${params.length + 1})`;
+      params.push(selectedUsers);
     }
 
-    let sqlVideos = "";
     if (!(selectedVideos.length === 1 && selectedVideos[0] === "-1")) {
-      sqlVideos = " AND (a.videoid=" + selectedVideos[0];
-      for (let i = 0; i < selectedVideos.length; i++) {
-        sqlVideos += " OR a.videoid=" + selectedVideos[i];
-      }
-      sqlVideos += ")";
+      queryText += ` AND a.videoid::text=ANY($${params.length + 1})`;
+      params.push(selectedVideos);
     }
 
-    let sqlConcepts = "";
     if (!(selectedConcepts.length === 1 && selectedConcepts[0] === "-1")) {
-      sqlConcepts = " AND (a.conceptid=" + selectedConcepts[0];
-      for (let i = 0; i < selectedConcepts.length; i++) {
-        sqlConcepts += " OR a.conceptid=" + selectedConcepts[i];
-      }
-      sqlConcepts += ")";
+      queryText += ` AND a.conceptid::text=ANY($${params.length + 1})`;
+      params.push(selectedConcepts);
     }
-
-    var queryText =
-      `SELECT distinct a.*, c.name, u.username, v.filename
-        FROM annotations a, concepts c, users u, videos v
-        WHERE c.id=a.conceptid AND u.id=a.userid AND v.id=a.videoid AND a.verifiedby IS NULL` +
-      sqlUsers +
-      sqlVideos +
-      sqlConcepts;
 
     try {
-      let concepts = await psql.query(queryText);
+      let concepts = await psql.query(queryText, params);
       res.json(concepts.rows);
     } catch (error) {
       console.log(error);
@@ -1442,25 +1477,64 @@ app.get(
 );
 
 app.patch(
-  "/api/annotationsVerify",
+  `/api/annotationsVerify`,
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const id = req.body.id;
     const conceptid =
-      req.body.conceptid != null ? ", conceptid=" + req.body.conceptid : "";
+      req.body.conceptid != null ? `, conceptid=` + req.body.conceptid : ``;
     const comment =
-      req.body.comment != null ? ", comment='" + req.body.comment + "'" : "";
-    const unsure = req.body.unsure != null ? ", unsure=" + req.body.unsure : "";
+      req.body.comment != null ? `, comment='` + req.body.comment + `'` : ``;
+    const unsure = req.body.unsure != null ? `, unsure=` + req.body.unsure : ``;
     const verifiedby = req.user.id;
-    const queryText =
-      "UPDATE annotations SET verifiedby=$2, verifieddate=current_timestamp" +
+    let s3 = new AWS.S3();
+
+    const queryText1 =
+      `UPDATE annotations SET verifiedby=$2, verifieddate=current_timestamp, originalid=null` +
       conceptid +
       comment +
       unsure +
-      " WHERE id=$1";
+      ` WHERE id=$1`;
+
+    let queryText2 = `
+      DELETE FROM
+        annotations \
+      WHERE 
+        originalid=$1 
+        and annotations.id<>$1
+      RETURNING *`;
     try {
-      let update = await psql.query(queryText, [id, verifiedby]);
-      res.json(update.rows);
+      let update = await psql.query(queryText1, [id, verifiedby]);
+
+      var deleteRes = await psql.query(queryText2, [id]);
+
+      //These are the s3 object we will be deleting
+      let Objects = [];
+
+      deleteRes.rows.forEach(element => {
+        Objects.push({
+          Key: process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + element.image
+        });
+        Objects.push({
+          Key:
+            process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + element.imagewithbox
+        });
+      });
+      // add tracking video
+      Objects.push({
+        Key:
+          process.env.AWS_S3_BUCKET_VIDEOS_FOLDER +
+          req.body.id +
+          "_tracking.mp4"
+      });
+      let params = {
+        Bucket: process.env.AWS_S3_BUCKET_NAME,
+        Delete: {
+          Objects: Objects
+        }
+      };
+      await s3.deleteObjects(params);
+      res.json("verified");
     } catch (error) {
       console.log(error);
       res.status(500).json(error);
@@ -1468,7 +1542,7 @@ app.patch(
   }
 );
 
-// update box coordinates
+// Update box coordinates
 app.patch(
   "/api/annotationsUpdateBox",
   passport.authenticate("jwt", { session: false }),
@@ -1481,8 +1555,7 @@ app.patch(
     var y1 = req.body.y1;
     var y2 = req.body.y2;
 
-    const queryText =
-      "UPDATE annotations SET x1=$1, x2=$2, y1=$3, y2=$4 WHERE id=$5";
+    const queryText = `UPDATE annotations SET x1=$1, x2=$2, y1=$3, y2=$4 WHERE id=$5`;
     try {
       let update = await psql.query(queryText, [x1, x2, y1, y2, id]);
       res.json(update.rows);

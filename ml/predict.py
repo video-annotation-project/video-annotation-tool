@@ -33,18 +33,10 @@ DB_HOST = os.getenv("DB_HOST")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 
-argparser = argparse.ArgumentParser()
-argparser.add_argument(
-   '-c',
-   '--conf',
-   default='config.json',
-   help='path to configuration file')
-
-args = argparser.parse_args()
-config_path = args.conf
-
-with open(config_path) as config_buffer:
-    config = json.loads(config_buffer.read())
+config_path = "../config.json"
+load_dotenv(dotenv_path="../.env")
+with open(config_path) as config_buffer:    
+    config = json.loads(config_buffer.read())['ml']
 
 NUM_FRAMES = config['frames_between_predictions']
 THRESHOLDS = config['prediction_confidence_thresholds']

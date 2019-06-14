@@ -2,6 +2,7 @@ from pgdb import connect
 import boto3
 import os
 from dotenv import load_dotenv
+from multiprocessing import Pool
 
 load_dotenv(dotenv_path="../.env")
 
@@ -20,18 +21,25 @@ con = connect(database=DB_NAME, host=DB_HOST, user=DB_USER, password=DB_PASSWORD
 cursor = con.cursor()
 
 #Get ai userid
-cursor.execute("SELECT id FROM users WHERE username=%s", ("tracing",))
+cursor.execute("SELECT id FROM users WHERE username=%s", ("tracking",))
 TRACKING_ID = cursor.fetchone().id
+
+def remove_data(annotation):
+    (image, imagewithbox, originalid) = annotation
+    con = connect(database=DB_NAME, host=DB_HOST, user=DB_USER, password=DB_PASSWORD)
+    cursor = con.cursor()
+    s3.delete_object(Bucket=S3_BUCKET, Key=os.getenv("AWS_S3_BUCKET_ANNOTATIONS_FOLDER") + image)
+    s3.delete_object(Bucket=S3_BUCKET, Key=os.getenv("AWS_S3_BUCKET_ANNOTATIONS_FOLDER") + imagewithbox)
+    s3.delete_object(Bucket=S3_BUCKET, Key=os.getenv('AWS_S3_BUCKET_VIDEOS_FOLDER') + str(originalid) + "_tracking.mp4")
+    cursor.execute("UPDATE annotations SET originalid=null WHERE id=%d;",(originalid,))
+    print(annotation)
+    con.commit()
+    con.close()
 
 #removes all tracking annotations from psql table
 cursor.execute("DELETE FROM annotations WHERE userid=%d RETURNING *",(TRACKING_ID,))
-for i in cursor.fetchall():
-        s3.delete_object(Bucket=S3_BUCKET, Key=os.getenv("AWS_S3_BUCKET_ANNOTATIONS_FOLDER") + i.image)
-        s3.delete_object(Bucket=S3_BUCKET, Key=os.getenv("AWS_S3_BUCKET_ANNOTATIONS_FOLDER") + i.imagewithbox)
-        s3.delete_object(Bucket=S3_BUCKET, Key=os.getenv('AWS_S3_BUCKET_VIDEOS_FOLDER') + str(i.originalid) + "_tracking.mp4")
-        cursor.execute("UPDATE annotations SET originalid=null WHERE id=%d;",(i.originalid,))
-        print(i)
+with Pool() as p:
+    p.map(remove_data,map(lambda x : (x.image, x.imagewithbox, x.originalid),cursor.fetchall()))
 con.commit()
 con.close()
-
 
