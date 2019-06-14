@@ -13,6 +13,9 @@ import Select from "@material-ui/core/Select";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import Checkbox from "@material-ui/core/Checkbox";
 
+//Radio Buttons
+import Radio from "@material-ui/core/Radio";
+
 const styles = theme => ({
   container: {
     display: "flex",
@@ -90,8 +93,8 @@ class ReportModal extends Component {
   render() {
     const {
       unsureOnly,
-      verifiedOnly,
-      unverifiedOnly,
+      verifiedCondition,
+      handleVerifiedCondition,
       level1,
       level2,
       level3,
@@ -143,8 +146,8 @@ class ReportModal extends Component {
                   </Select>
                 </FormControl>
               ) : (
-                <div />
-              )}
+                  <div />
+                )}
 
               <FormControlLabel
                 control={
@@ -158,28 +161,27 @@ class ReportModal extends Component {
                 label="Unsure Only"
               />
               <div>
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={verifiedOnly}
-                      onChange={event => this.handleVerifiedCheckbox(event)}
-                      value="verifiedOnly"
-                      color="primary"
-                    />
-                  }
-                  label="Verified Only"
+                <Radio
+                  checked={verifiedCondition === "verified only"}
+                  onChange={handleVerifiedCondition}
+                  value="verified only"
+                  color="default"
                 />
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={unverifiedOnly}
-                      onChange={event => this.handleUnverifiedCheckbox(event)}
-                      value="unverifiedOnly"
-                      color="primary"
-                    />
-                  }
-                  label="Unverified Only"
+                Verified Only
+                <Radio
+                  checked={verifiedCondition === "unverified only"}
+                  onChange={handleVerifiedCondition}
+                  value="unverified only"
+                  color="default"
                 />
+                Unverified Only
+                <Radio
+                  checked={verifiedCondition === "all"}
+                  onChange={handleVerifiedCondition}
+                  value="all"
+                  color="default"
+                />
+                All
               </div>
             </form>
           </DialogContent>

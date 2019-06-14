@@ -157,7 +157,6 @@ def track_object(frame_num, frames, box, video_object, end, original, cursor, co
 
 #original must be pgdb row
 def track_annotation(original):
-
    # Weird javascript time errors are fixed here
    fix_offset(original)
 
@@ -213,13 +212,13 @@ def track_annotation(original):
    vs.set(0, start)
    frames = vs
    frame_num = (int(frames.get(1)))
-   print("tracking forwards..")
+   #print("tracking forwards..")
    forward_frames = track_object(frame_num, frames, box, True, start + (LENGTH / 2), original, cursor, con, TRACKING_ID, fps)
    vs.release()
 
    # get object tracking frames prior to annotation
    frames = frame_list
-   print("tracking backwards..")
+   #print("tracking backwards..")
    reverse_frames = track_object(frame_num, frames, box, False, 0, original, cursor, con, TRACKING_ID, fps)
    reverse_frames.reverse()
 
@@ -231,7 +230,6 @@ def track_annotation(original):
       out.write(frame)		
 #      cv2.imshow("Frame", frame)
 #      cv2.waitKey(1)
-            
    out.release()
    os.system('ffmpeg -loglevel 0 -i ' + output_file + ' -codec:v libx264 '+ converted_file)
    if os.path.isfile(converted_file):
@@ -244,7 +242,8 @@ def track_annotation(original):
       )
       os.system('rm '+ converted_file)
    else:
-      print("no video made for " + str(original.id))
+      pass
+      #print("no video made for " + str(original.id))
    os.system('rm ' + output_file)
    cv2.destroyAllWindows()
    con.close()

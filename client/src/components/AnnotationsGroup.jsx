@@ -61,7 +61,13 @@ class AnnotationsGroup extends Component {
 
   render() {
     const { error, isLoaded, annotationGroups, groupInterval } = this.state;
-    const { classes, queryConditions, unsureOnly, count } = this.props;
+    const { 
+      classes,
+      queryConditions, 
+      unsureOnly, 
+      count,
+      verifiedCondition
+    } = this.props;
     if (!isLoaded) {
       return <List>Loading...</List>;
     }
@@ -93,6 +99,7 @@ class AnnotationsGroup extends Component {
                     " LIMIT " + groupInterval + " OFFSET " + group.offset
                   }
                   unsureOnly={unsureOnly}
+                  verifiedCondition={verifiedCondition}
                 />
               </Collapse>
             </React.Fragment>

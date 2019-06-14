@@ -3,7 +3,6 @@ from loading_data import queryDB, get_classmap
 import json
 import os
 from dotenv import load_dotenv
-import argparse
 import shutil
 import subprocess
 import time
@@ -25,25 +24,16 @@ import numpy as np
 from tensorflow.python.client import device_lib
 import boto3
 
-argparser = argparse.ArgumentParser()
-argparser.add_argument(
-    '-c',
-    '--conf',
-    default='config.json',
-    help='path to configuration file')
-
-args = argparser.parse_args()
-config_path = args.conf
-
+config_path = "../config.json"
 load_dotenv(dotenv_path="../.env")
 with open(config_path) as config_buffer:    
-    config = json.loads(config_buffer.read())
+    config = json.loads(config_buffer.read())['ml']
 
 train_annot_file = config['train_annot_file']
 valid_annot_file = config['valid_annot_file']
 img_folder = config['image_folder']
-model_path = config['model_weights']
 batch_size = config['batch_size']
+weights_path = config['weights_path']
 
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
@@ -98,7 +88,7 @@ def train_model(concepts, users, min_examples, epochs, model_name, videos, selec
     # Suggested to initialize model on cpu before turning into a multi_gpu model to save gpu memory
     with tf.device('/cpu:0'):
         model = models.backbone('resnet50').retinanet(num_classes=len(concepts))#modifier=freeze_model)
-        model.load_weights(model_path, by_name=True, skip_mismatch=True)
+        model.load_weights(weights_path, by_name=True, skip_mismatch=True)
 
     gpus = len([i for i in device_lib.list_local_devices() if i.device_type == 'GPU'])
 
@@ -147,8 +137,7 @@ def train_model(concepts, users, min_examples, epochs, model_name, videos, selec
 
 
     # Checkpoint: save models that are improvements
-    filepath =  "weights/" + model_name + ".h5"
-    checkpoint = ModelCheckpoint(filepath, monitor='val_loss', save_best_only=True)
+    checkpoint = ModelCheckpoint(weights_path, monitor='val_loss', save_best_only=True)
     checkpoint = RedirectModel(checkpoint, model)
 
     #stopping: stops training if val_loss stops improving
@@ -161,7 +150,7 @@ def train_model(concepts, users, min_examples, epochs, model_name, videos, selec
         verbose=2
     ).history
 
-    s3.upload_file("weights/"+model_name+".h5", S3_BUCKET, S3_BUCKET_WEIGHTS_FOLDER + model_name+".h5") 
+    s3.upload_file(weights_path, S3_BUCKET, S3_BUCKET_WEIGHTS_FOLDER + model_name+".h5") 
 
     end = time.time()
     print("Done Training Model: " + str((end - start)/60) + " minutes")
@@ -169,10 +158,10 @@ def train_model(concepts, users, min_examples, epochs, model_name, videos, selec
     os.system("sudo shutdown -h")
 
 if __name__ == '__main__':
-    epochs = 100
-    users = [15, 12, 11, 6, 17]
-    min_examples = 1000
-    concepts = [1,2,3]
+    epochs = 1
+    users = [6]
+    min_examples = 1
+    concepts = [383]
     model_name = "jake_test"
-    videos = [81,32]
-    train_model(concepts, users, min_examples, epochs, model_name, videos, selected_concepts, download_data=False)
+    videos = [8]
+    train_model(concepts, users, min_examples, epochs, model_name, videos, concepts, download_data=True)
