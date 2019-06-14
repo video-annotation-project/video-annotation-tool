@@ -13,7 +13,7 @@ import pandas as pd
 import uuid
 import boto3
 from psycopg2 import connect
-from loading_data import queryDB
+from loading_data import queryDB, get_classmap
 import psycopg2
 import datetime
 
@@ -125,7 +125,7 @@ def predict_on_video(videoid, model_weights, concepts, upload_annotations=False,
     results, frames = predict_frames(frames, fps, model)
     results = propagate_conceptids(results, concepts)
     results = length_limit_objects(results, MIN_FRAMES_THRESH)
-    generate_video('output.mp4', copy.deepcopy(original_frames), fps, results)
+    generate_video('output.mp4', copy.deepcopy(original_frames), fps, results, concepts)
     if upload_annotations:
         con = psycopg2.connect(database = DB_NAME,
                         user = DB_USER,
@@ -315,12 +315,20 @@ def length_limit_objects(pred, frame_thresh):
     return pred[[(obj in len_thresh) for obj in pred.objectid]] 
 
 # Generates the video with the ground truth frames interlaced
-def generate_video(filename, frames, fps, results):
+def generate_video(filename, frames, fps, results, concepts):
+    classmap = get_classmap(concepts)
     for res in results.itertuples():
         x1, y1, x2, y2 = int(res.x1), int(res.y1), int(res.x2), int(res.y2)
-        cv2.rectangle(frames[res.frame_num], (x1, y1), (x2, y2), (0, 255, 0), 2)
-        cv2.putText(frames[res.frame_num], str(res.conceptid), (x1, y1+15), 
+        if res.confidence:
+            cv2.rectangle(frames[res.frame_num], (x1, y1), (x2, y2), (0, 255, 0), 2)
+        else:
+            cv2.rectangle(frames[res.frame_num], (x1, y1), (x2, y2), (255, 0, 0), 2)
+        cv2.putText(frames[res.frame_num], classmap[res.conceptid], (x1, y1+15), 
             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+        cv2.putText(frames[res.frame_num], str(res.objectid), (x1, y2), 
+            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+
+
     save_video(filename, frames, fps)
 
 def save_video(filename, frames, fps):
