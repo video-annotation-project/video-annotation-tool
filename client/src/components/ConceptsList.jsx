@@ -101,7 +101,7 @@ class ConceptsList extends React.Component {
                 <CheckBox
                   checked={conceptsSelected[concept.id]}
                   onClick={e => this.handleCheckBoxClick(e, concept.id)}
-                  color='primary'
+                  color="primary"
                 />
               </ListItemSecondaryAction>
               {concept.expandable ? (

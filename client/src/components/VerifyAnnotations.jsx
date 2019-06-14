@@ -370,7 +370,8 @@ class VerifyAnnotations extends Component {
 
   render() {
     const { classes } = this.props;
-    var annotation = this.props.annotation;
+    let annotation = this.props.annotation;
+
     if (this.state.x === null) {
       return <div>Loading...</div>;
     }
@@ -420,7 +421,10 @@ class VerifyAnnotations extends Component {
                     id="image"
                     onLoad={Swal.close}
                     className={classes.img}
-                    src={`/api/annotationImages/${annotation.id}?withBox=false`}
+                    src={
+                      "https://cdn.deepseaannotations.com/test/" +
+                      annotation.image
+                    }
                     alt="error"
                     crossOrigin="use-credentials"
                     style={{

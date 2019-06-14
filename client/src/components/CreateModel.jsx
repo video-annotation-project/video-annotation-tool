@@ -3,7 +3,7 @@ import axios from "axios";
 
 import Typography from "@material-ui/core/Typography";
 import { withStyles } from "@material-ui/core/styles";
-import Swal from 'sweetalert2';
+import Swal from "sweetalert2";
 
 const styles = {
   root: {
