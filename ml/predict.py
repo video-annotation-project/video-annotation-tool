@@ -315,8 +315,8 @@ def generate_video(filename, frames, fps, results, concepts):
             cv2.rectangle(frames[res.frame_num], (x1, y1), (x2, y2), (0, 255, 0), 2)
         else:
             cv2.rectangle(frames[res.frame_num], (x1, y1), (x2, y2), (255, 0, 0), 2)
-        cv2.putText(frames[res.frame_num], classmap[res.conceptid], (x1, y1+15), 
-            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+        # cv2.putText(frames[res.frame_num], classmap[res.conceptid], (x1, y1+15), 
+        #     cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
         cv2.putText(frames[res.frame_num], str(res.objectid), (x1, y2), 
             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
 
@@ -387,7 +387,7 @@ if __name__ == '__main__':
         password=os.getenv("DB_PASSWORD"))
     cursor = con.cursor()
 
-    model_name = 'test'
+    model_name = 'testV2'
 
     s3.download_file(S3_BUCKET, S3_WEIGHTS_FOLDER + model_name + '.h5', 'current_weights.h5')
     cursor.execute("SELECT * FROM MODELS WHERE name='" + model_name + "'")
