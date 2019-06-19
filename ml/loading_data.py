@@ -49,12 +49,12 @@ def queryDB(query):
     return result
 
 
-def select_annotations(annotations, min_examples, concepts):
+def select_annotations(annotations, min_examples, selected_concepts):
     speed.update_annotation_speed()
     selected = []
     concept_count = {}
 
-    for concept in concepts:
+    for concept in selected_concepts:
         concept_count[concept] = 0
 
     # Get's fps for each video in order to calculate frame_num from timeinvideo
@@ -107,11 +107,11 @@ def select_annotations(annotations, min_examples, concepts):
 #   train_annot_file: name of training annotation csv
 #   valid_annot_file: name of validation annotations csv
 #   split: fraction of annotation images that willbe used for training (rest used in validation)
-def download_annotations(min_examples, concepts, concept_map, users, videos, img_folder, train_annot_file, valid_annot_file, split=.8):
+def download_annotations(min_examples, concepts, selected_concepts, concept_map, users, videos, img_folder, train_annot_file, valid_annot_file, split=.8):
     # Get all annotations for given concepts (and child concepts) making sure that any tracking annotations originated from good users
     users = "\'" +  ','.join(str(e) for e in users) + "\'"
     videos = "\'" + ','.join(str(e) for e in videos) + "\'"
-    str_concepts = "\'" + ','.join(str(e) for e in concepts) + "\'"
+    str_concepts = "\'" + ','.join(str(e) for e in selected_concepts) + "\'"
 
     annotations = queryDB(
         ''' SELECT *
@@ -125,7 +125,7 @@ def download_annotations(min_examples, concepts, concept_map, users, videos, img
                 AND unsure = False
                 AND userid::text = ANY(string_to_array(''' + users + ",',')))")
 
-    selected, concept_count = select_annotations(annotations, min_examples, concepts)
+    selected, concept_count = select_annotations(annotations, min_examples, selected_concepts)
     print("Concept counts: " + str(concept_count))
     print("Number of images: " + str(len(selected)))
         

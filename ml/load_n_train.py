@@ -74,7 +74,7 @@ def train_model(concepts, users, min_examples, epochs, model_name, videos, selec
         start = time.time()
         print("Starting Download.")
 
-        download_annotations(min_examples, selected_concepts, classmap, users, videos, img_folder, train_annot_file, valid_annot_file)
+        download_annotations(min_examples, concepts, selected_concepts, classmap, users, videos, img_folder, train_annot_file, valid_annot_file)
 
         end = time.time()
         print("Done Downloading Annotations: " + str((end - start)/60) + " minutes")
