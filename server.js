@@ -565,25 +565,25 @@ app.get(
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     let queryText =
-      "SELECT \
-                       usernames.userswatching, \
-                       usernames.usersfinished, \
-                       videos.* \
-                     FROM \
-                       (SELECT \
-                         videos.id,\
-                         array_agg(users.username) AS userswatching, \
-                         array_agg(checkpoints.finished) AS usersfinished \
-                         FROM videos \
-                         FULL OUTER JOIN checkpoints \
-                         ON checkpoints.videoid=videos.id \
-                         LEFT JOIN users \
-                         ON users.id=checkpoints.userid \
-                         WHERE videos.id=$1 \
-                         GROUP BY videos.id) \
-                       AS usernames \
-                     LEFT JOIN videos \
-                     ON videos.id=usernames.id";
+      `SELECT 
+        usernames.userswatching, 
+        usernames.usersfinished,
+        videos.* 
+      FROM 
+        (SELECT 
+          videos.id,
+          array_agg(users.username) AS userswatching, 
+          array_agg(checkpoints.finished) AS usersfinished 
+          FROM videos 
+          FULL OUTER JOIN checkpoints 
+          ON checkpoints.videoid=videos.id 
+          LEFT JOIN users 
+          ON users.id=checkpoints.userid 
+          WHERE videos.id=$1 
+          GROUP BY videos.id) 
+        AS usernames 
+      LEFT JOIN videos 
+      ON videos.id=usernames.id`;
     try {
       const videoMetadata = await psql.query(queryText, [req.params.videoid]);
       res.json(videoMetadata.rows);
@@ -600,7 +600,7 @@ app.get(
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     let queryText = `
-    SELECT v.id, v.filename 
+    SELECT DISTINCT v.id, v.filename
     FROM
       checkpoints c
     LEFT JOIN
