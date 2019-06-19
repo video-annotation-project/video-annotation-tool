@@ -21,7 +21,7 @@ class DragBox extends Component {
       <Rnd 
         id="dragBox"
         key={this.props.name}
-        className={ this.props.dragBox }
+        className={this.props.dragBox}
 
         size={ this.props.size }
       	position={ this.props.position }
@@ -33,8 +33,7 @@ class DragBox extends Component {
 
         onDragStop={this.props.onDragStop}
         onResize={this.props.onResize}
-      >
-      </Rnd>
+			/>
     )
   }
 }
@@ -148,7 +147,7 @@ class DragBoxContainer extends Component {
           onResize={this.props.onResize}
           onDragStop={this.props.onDragStop}
         ></DragBox>
-        : <div></div>}
+        : <div/>}
       </div>
     )
   }
