@@ -224,21 +224,20 @@ class TrainModel extends Component {
     });
   };
 
-  loadConceptList = () => {
-    const {videosSelected, modelSelected} = this.state;
+  loadConceptList = async () => {
+    const { videosSelected, modelSelected } = this.state;
     const config = {
       headers: {
         Authorization: "Bearer " + localStorage.getItem("token")
       }
     };
-    axios.get(
+    let response = await axios.get(
       `/api/trainModel/concepts/` +
       videosSelected + '/' + modelSelected,
       config
-    ).then(res => {
-      this.setState({
-        concepts: res.data
-      });
+    )
+    this.setState({
+      concepts: response.data
     });
   }
 
@@ -360,6 +359,7 @@ class TrainModel extends Component {
                   }
                 />
               </IconButton>
+
             </div>
           ))}
         </FormGroup>
@@ -451,6 +451,42 @@ class TrainModel extends Component {
     }
   };
 
+  getStepState = step => {
+    switch (step) {
+      case 0:
+        return 'models';
+      case 1:
+        return 'users';
+      case 2:
+        return 'videos';
+      case 3:
+        return 'concepts';
+      default:
+        return 'NAN';
+    }
+  }
+
+  handleSelectAll = () => {
+    const stateName = this.getStepState(this.state.activeStep);
+    const data = this.state[stateName];
+    const dataSelected = JSON.parse(JSON.stringify(
+      this.state[stateName + "Selected"]));
+    data.forEach(row => {
+      if (!dataSelected.includes(row.id)) {
+        dataSelected.push(row.id);
+      }
+    });
+    this.setState({
+      [stateName+"Selected"]: dataSelected
+    });
+  }
+
+  handleUnselectAll = () => {
+    const stateName = this.getStepState(this.state.activeStep);
+    this.setState({
+      [stateName+"Selected"]: []
+    });
+  }
   updateBackendInfo = () => {
     const config = {
       headers: {
@@ -481,14 +517,14 @@ class TrainModel extends Component {
       });
   };
 
-  handleNext = () => {
+  handleNext = async () => {
     // After users have been selected load user videos
     if (this.state.activeStep === 1) {
       this.loadVideoList();
     }
     // After Model and videos have been selected load avalible concepts
     if (this.state.activeStep === 2) {
-      this.loadConceptList();
+      await this.loadConceptList();
     }
     this.setState(state => ({
       activeStep: state.activeStep + 1
@@ -580,6 +616,22 @@ class TrainModel extends Component {
                       }
                     >
                       {activeStep === steps.length - 1 ? "Train Model" : "Next"}
+                    </Button>
+                    <Button
+                      onClick={this.handleSelectAll}
+                      disabled={
+                        activeStep === 0 || activeStep === 4
+                      }
+                    >
+                      Select All
+                    </Button>
+                    <Button
+                      onClick={this.handleUnselectAll}
+                      disabled={
+                        activeStep === 0 || activeStep === 4
+                      }
+                    >
+                      Unselect All
                     </Button>
                   </div>
                 </div>
