@@ -136,18 +136,22 @@ class DragBoxContainer extends Component {
           onPlay={(e) => this.removeDragBox()}>
           {this.props.children}
         </div>
-        {this.state.drawDragBox ?
-        <DragBox 
-          name={this.state.boxCounter}
-          size={this.props.size}
-          position={this.props.position}
-          dragBox={this.props.dragBox}
-          disabledMouse={this.state.disabledMouse}
 
-          onResize={this.props.onResize}
-          onDragStop={this.props.onDragStop}
-        ></DragBox>
-        : <div/>}
+        <Rnd
+            id="dragBox"
+            className={this.props.className}
+            default={{
+              x: 30,
+              y: 30,
+              width: 60,
+              height: 60
+            }}
+            minWidth={25}
+            minHeight={25}
+            maxWidth={900}
+            maxHeight={650}
+            bounds="parent"
+          />
       </div>
     )
   }

@@ -457,23 +457,6 @@ class Annotate extends Component {
             dragBox={classes.dragBox}
             drawDragBox={true}
 
-            size={{
-              width: this.state.dragBoxWidth,
-              height: this.state.dragBoxHeight
-            }}
-            
-            position={{ x: this.state.dragBoxX, y: this.state.dragBoxY }}
-            onDragStop={(e, d) => {
-              this.setState({ dragBoxX: d.x, dragBoxY: d.y });
-            }}
-
-            onResize={(e, direction, ref, delta, position) => {
-              this.setState({
-                dragBoxWidth: ref.style.width,
-                dragBoxHeight: ref.style.height,
-                ...position
-              });
-            }}
           >
             <video
               onPause={() => this.updateCheckpoint(false, true)}
