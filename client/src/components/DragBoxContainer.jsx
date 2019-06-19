@@ -69,7 +69,8 @@ class DragBoxContainer extends Component {
       boxCounter: this.state.boxCounter + 1,
       dragBoxX: x,
       dragBoxY: y,
-
+      dragBoxWidth: 0,
+      dragBoxHeight: 0,
       mouseDown: true,
       disabledMouse: true,
     }, 
