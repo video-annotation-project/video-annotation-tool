@@ -399,11 +399,12 @@ class VerifyAnnotations extends Component {
                   dragBox={classes.dragBox}
                   drawDragBox={true}
 
-                  width={this.state.width}
-                  height={this.state.height}
-
-                  x={this.state.x}
-                  y={this.state.y}
+                  size={{
+                    width: this.state.width,
+                    height: this.state.height
+                  }}
+                  
+                  position={{ x: this.state.x, y: this.state.y }}
 
                   onDragStop={(e, d) => {
                     this.setState({ x: d.x, y: d.y });

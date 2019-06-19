@@ -22,12 +22,10 @@ class DragBox extends Component {
         id="dragBox"
         key={this.props.name}
         className={ this.props.dragBox }
-        default={{
-          x: this.props.x,
-          y: this.props.y,
-          width: this.props.width,
-          height: this.props.height,
-        }}
+
+        size={ this.props.size }
+      	position={ this.props.position }
+
         maxWidth={900}
         maxHeight={650}
         bounds="parent"
@@ -49,10 +47,6 @@ class DragBoxContainer extends Component {
 
     this.state = {
       boxCounter: 0,
-      dragBoxX: this.props.x || 0,
-      dragBoxY: this.props.y || 0,
-      dragBoxWidth: this.props.width || 0,
-      dragBoxHeight: this.props.height || 0,
       drawDragBox: this.props.drawDragBox || false,
       disabledMouse: !this.props.drawDragBox || false,
     }
@@ -146,10 +140,8 @@ class DragBoxContainer extends Component {
         {this.state.drawDragBox ?
         <DragBox 
           name={this.state.boxCounter}
-          x={this.state.dragBoxX} 
-          y={this.state.dragBoxY}
-          width={this.state.dragBoxWidth}
-          height={this.state.dragBoxHeight}
+          size={this.props.size}
+          position={this.props.position}
           dragBox={this.props.dragBox}
           disabledMouse={this.state.disabledMouse}
 
