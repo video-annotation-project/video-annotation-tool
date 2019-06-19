@@ -56,25 +56,30 @@ class DragBoxContainer extends Component {
     this.removeDragBox = this.removeDragBox.bind(this);
   }
 
-  resetDragBox = (e) => {
+  resetDragBox = async (e) => {
     e.preventDefault();
     var video = e.target;
     var dim = video.getBoundingClientRect();
     var x = e.clientX - dim.left;
     var y = e.clientY - dim.top;
 
-    this.props.onDragStop && this.props.onDragStop(e, 
-    	{x: x, y: y});
-    
+
     this.setState({
       drawDragBox: true,
       boxCounter: this.state.boxCounter + 1,
       dragBoxX: x,
       dragBoxY: y,
-      dragBoxWidth: 0,
-      dragBoxHeight: 0,
+
       mouseDown: true,
       disabledMouse: true,
+    }, 
+    () => {
+      this.props.onResize && this.props.onResize(e, 
+        null, 
+        {style: {width: 0, height: 0}},
+        null,
+        {x: this.state.dragBoxX, y: this.state.dragBoxY}
+      );
     });
   }
 
@@ -139,8 +144,10 @@ class DragBoxContainer extends Component {
         {this.state.drawDragBox ?
         <DragBox 
           name={this.state.boxCounter}
-          size={this.props.size}
-          position={this.props.position}
+          size={this.props.size 
+            || {width: this.state.dragBoxWidth, height: this.state.dragBoxHeight}}
+          position={this.props.position 
+            || {x: this.state.dragBoxX, y: this.state.dragBoxY}}
           dragBox={this.props.dragBox}
           disabledMouse={this.state.disabledMouse}
 

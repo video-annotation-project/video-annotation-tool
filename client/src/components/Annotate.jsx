@@ -19,6 +19,12 @@ const styles = theme => ({
     width: "1600px",
     height: "900px"
   },
+  dragBox: {
+    margin: "0px",
+    backgroundColor: "transparent",
+    border: "2px coral solid",
+    borderStyle: "ridge"
+  },
   button: {
     marginTop: "10px",
     marginLeft: "20px",
@@ -66,10 +72,6 @@ class Annotate extends Component {
       videoPlaybackRate: 1.0,
       error: null,
       socket: socket,
-      dragBoxWidth: 30,
-      dragBoxHeight: 30,
-      dragBoxX: 30,
-      dragBoxY: 30,
     };
   }
 
@@ -456,24 +458,6 @@ class Annotate extends Component {
             className={classes.videoContainer} 
             dragBox={classes.dragBox}
             drawDragBox={true}
-
-            size={{
-              width: this.state.dragBoxWidth,
-              height: this.state.dragBoxHeight
-            }}
-            
-            position={{ x: this.state.dragBoxX, y: this.state.dragBoxY }}
-            onDragStop={(e, d) => {
-              this.setState({ dragBoxX: d.x, dragBoxY: d.y });
-            }}
-
-            onResize={(e, direction, ref, delta, position) => {
-              this.setState({
-                dragBoxWidth: ref.style.width,
-                dragBoxHeight: ref.style.height,
-                ...position
-              });
-            }}
           >
             <video
               onPause={() => this.updateCheckpoint(false, true)}
