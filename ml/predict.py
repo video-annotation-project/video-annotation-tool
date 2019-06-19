@@ -315,8 +315,10 @@ def generate_video(filename, frames, fps, results, concepts):
             cv2.rectangle(frames[res.frame_num], (x1, y1), (x2, y2), (0, 255, 0), 2)
         else:
             cv2.rectangle(frames[res.frame_num], (x1, y1), (x2, y2), (255, 0, 0), 2)
-        # cv2.putText(frames[res.frame_num], classmap[res.conceptid], (x1, y1+15), 
-        #     cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+        # Replaced classmap[res.conceptid] with str(res.conceptid)
+        # Because of a bug, but will replace in the future once bug is relized
+        cv2.putText(frames[res.frame_num], str(res.conceptid), (x1, y1+15), 
+             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
         cv2.putText(frames[res.frame_num], str(res.objectid), (x1, y2), 
             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
 
