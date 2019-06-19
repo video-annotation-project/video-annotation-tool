@@ -457,7 +457,7 @@ class VerifyAnnotations extends Component {
                 variant="contained"
                 onClick={this.resetState}
               >
-                Reset
+                Reset Box
               </Button>
               <Button
                 className={classes.button}
