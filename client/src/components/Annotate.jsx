@@ -72,6 +72,10 @@ class Annotate extends Component {
       videoPlaybackRate: 1.0,
       error: null,
       socket: socket,
+      width: 0,
+      height: 0,
+      x: 0,
+      y: 0,
     };
   }
 
@@ -458,6 +462,25 @@ class Annotate extends Component {
             className={classes.videoContainer} 
             dragBox={classes.dragBox}
             drawDragBox={true}
+
+            size={{
+              width: this.state.width,
+              height: this.state.height
+            }}
+            
+            position={{ x: this.state.x, y: this.state.y }}
+
+            onDragStop={(e, d) => {
+              this.setState({ x: d.x, y: d.y });
+            }}
+
+            onResize={(e, direction, ref, delta, position) => {
+              this.setState({
+                width: ref.style.width,
+                height: ref.style.height,
+                ...position
+              });
+            }}
           >
             <video
               onPause={() => this.updateCheckpoint(false, true)}
