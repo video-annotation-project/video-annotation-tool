@@ -12,6 +12,7 @@ with open(config_path) as config_buffer:
 
 weights_path = config['weights_path']
 default_weights = config['default_weights']
+print(default_weights)
 
 
 # aws stuff
