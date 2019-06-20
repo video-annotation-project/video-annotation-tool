@@ -95,8 +95,8 @@ def score_predictions(validation, predictions, iou_thresh, concepts):
 
 
 def resize(row):
-    new_width = 640
-    new_height = 480
+    new_width = RESIZED_WIDTH
+    new_height = RESIZED_HEIGHT
     row.x1 = (row.x1 * new_width) / row.videowidth
     row.x2 = (row.x2 * new_width) / row.videowidth
     row.y1 = (row.y1 * new_height) / row.videoheight
@@ -148,7 +148,7 @@ def evaluate(video_id, user_id, model_path, concepts):
 
     # REMOVE BAD USERS ?
     annotations = queryDB('select * from annotations where videoid= ' + str(video_id) 
-        + ' and userid not in ' + str(tuple(bad_users)) +' and userid not in (17, 29)') # 17 is tracking ai, 29 is retinet ai
+        + ' and userid not in ' + str(tuple(bad_users)) +' and userid not in (32, 29)') # 32 is tracking ai, 29 is retinet ai
     annotations['frame_num'] = np.rint(annotations['timeinvideo'] * fps).astype(int)
 
     metrics = score_predictions(annotations, results, EVALUATION_IOU_THRESH, concepts)
@@ -177,7 +177,7 @@ if __name__ == '__main__':
     userid = 29
 
     evaluate(video_id, userid, 'current_weights.h5', concepts)
-
+    # evaluate(video_id, userid, 'BEST_WEIGHTS.h5', concepts)
 
 
 
