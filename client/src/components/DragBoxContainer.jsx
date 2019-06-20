@@ -146,7 +146,7 @@ class DragBoxContainer extends Component {
         <DragBox 
           name={this.state.boxCounter}
           size={this.props.size 
-            || {width: xthis.state.dragBoxWidth, height: this.state.dragBoxHeight}}
+            || {width: this.state.dragBoxWidth, height: this.state.dragBoxHeight}}
           position={this.props.position 
             || {x: this.state.dragBoxX, y: this.state.dragBoxY}}
           dragBox={this.props.dragBox}
