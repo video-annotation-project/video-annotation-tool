@@ -13,7 +13,7 @@ import pandas as pd
 import uuid
 import boto3
 from psycopg2 import connect
-from loading_data import queryDB
+from loading_data import queryDB, get_classmap
 import psycopg2
 import datetime
 
@@ -101,6 +101,10 @@ class Tracked_object:
             self.save_annotation(frame_num)
         return success
 
+    def change_id(self, matched_obj_id):
+        self.id = matched_obj_id
+        self.annotations['objectid'] = matched_obj_id
+
 
 def predict_on_video(videoid, model_weights, concepts, upload_annotations=False, userid=None):
     video_name = queryDB("select * from videos where id = " + str(videoid)).iloc[0].filename
@@ -113,7 +117,7 @@ def predict_on_video(videoid, model_weights, concepts, upload_annotations=False,
     results, frames = predict_frames(frames, fps, model)
     results = propagate_conceptids(results, concepts)
     results = length_limit_objects(results, MIN_FRAMES_THRESH)
-    generate_video('output.mp4', copy.deepcopy(original_frames), fps, results)
+    generate_video('output.mp4', copy.deepcopy(original_frames), fps, results, concepts)
     if upload_annotations:
         con = psycopg2.connect(database = DB_NAME,
                         user = DB_USER,
@@ -158,9 +162,8 @@ def init_model(model_path):
 
 def predict_frames(video_frames, fps, model):
     currently_tracked_objects = []
-    annotations = []
-    for i, frame in enumerate(video_frames):
-        frame_num = i
+    annotations = [pd.DataFrame(columns=['x1','y1','x2','y2','label', 'confidence', 'objectid','frame_num'])]
+    for frame_num, frame in enumerate(video_frames):
         # update tracking for currently tracked objects
         for obj in currently_tracked_objects:
             success = obj.update(frame, frame_num)
@@ -171,22 +174,23 @@ def predict_frames(video_frames, fps, model):
 
         # Every NUM_FRAMES frames, get new predictions
         # Then, check if any detections match a currently tracked object
-        if i % NUM_FRAMES == 0:
+        if frame_num % NUM_FRAMES == 0:
             detections = get_predictions(frame, model)
             for detection in detections:
                 match, matched_object = does_match_existing_tracked_object(detection, currently_tracked_objects)
-                if not match:
+                if match:
+                    matched_object.reinit(detection, frame, frame_num)
+                else:
                     tracked_object = Tracked_object(detection, frame, frame_num)
-                    prev_annotations = track_backwards(video_frames, frame_num, detection, tracked_object.id, fps)
+                    prev_annotations, matched_obj_id = track_backwards(video_frames, frame_num, detection, tracked_object.id, fps, pd.concat(annotations))
+                    if matched_obj_id:
+                        tracked_object.change_id(matched_obj_id)
                     tracked_object.annotations = tracked_object.annotations.append(prev_annotations)
                     currently_tracked_objects.append(tracked_object)
-                else:
-                    matched_object.reinit(detection, frame, frame_num)
-         # draw boxes 
-        for obj in currently_tracked_objects:
-            (x, y, w, h) = obj.box
-            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-
+    
+    for obj in currently_tracked_objects:
+        annotations.append(obj.annotations)
+                
     results = pd.concat(annotations)
     results.to_csv('results.csv')
     return results, video_frames
@@ -229,7 +233,7 @@ def compute_IOU(A, B):
 
 # get tracking annotations before first model prediction for object - max_time_back seconds
 # skipping original frame annotation, already saved in object initialization
-def track_backwards(video_frames, frame_num, detection, object_id, fps):
+def track_backwards(video_frames, frame_num, detection, object_id, fps, old_annotations):
     annotations = pd.DataFrame(columns=['x1','y1','x2','y2','label', 'confidence', 'objectid','frame_num'])
     (x1, y1, x2, y2) = detection[0]
     box = (x1, y1, (x2-x1), (y2-y1))
@@ -245,9 +249,25 @@ def track_backwards(video_frames, frame_num, detection, object_id, fps):
         success, box = tracker.update(frame)
         if success:
             annotation = make_annotation(box, object_id, frame_num)
+            prev_frame_annotations = old_annotations[old_annotations['frame_num'] == frame_num]
+            matched_obj_id = match_old_annotations(prev_frame_annotations, pd.Series(annotation))
+            if matched_obj_id:
+                annotations['objectid'] = matched_obj_id
+                return annotations, matched_obj_id
+
             annotations = annotations.append(annotation, ignore_index=True)
             frames += 1
-    return annotations
+    return annotations, None
+
+def match_old_annotations(old_annotations, annotation):
+    max_iou = 0 
+    match = None
+    for _, annot in old_annotations.iterrows():
+        iou = compute_IOU(annot, annotation)
+        if (iou > max_iou):
+            max_iou = iou
+            match = annot['objectid']
+    return match if (max_iou >= TRACKING_IOU_THRESH) else None
 
 def make_annotation(box, object_id, frame_num):
     (x1, y1, w, h) = [int(v) for v in box]
@@ -287,12 +307,22 @@ def length_limit_objects(pred, frame_thresh):
     return pred[[(obj in len_thresh) for obj in pred.objectid]] 
 
 # Generates the video with the ground truth frames interlaced
-def generate_video(filename, frames, fps, results):
+def generate_video(filename, frames, fps, results, concepts):
+    classmap = get_classmap(concepts)
     for res in results.itertuples():
         x1, y1, x2, y2 = int(res.x1), int(res.y1), int(res.x2), int(res.y2)
-        cv2.rectangle(frames[res.frame_num], (x1, y1), (x2, y2), (0, 255, 0), 2)
+        if res.confidence:
+            cv2.rectangle(frames[res.frame_num], (x1, y1), (x2, y2), (0, 255, 0), 2)
+        else:
+            cv2.rectangle(frames[res.frame_num], (x1, y1), (x2, y2), (255, 0, 0), 2)
+        # Replaced classmap[res.conceptid] with str(res.conceptid)
+        # Because of a bug, but will replace in the future once bug is relized
         cv2.putText(frames[res.frame_num], str(res.conceptid), (x1, y1+15), 
+             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+        cv2.putText(frames[res.frame_num], str(res.objectid), (x1, y2), 
             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+
+
     save_video(filename, frames, fps)
 
 def save_video(filename, frames, fps):
@@ -359,7 +389,7 @@ if __name__ == '__main__':
         password=os.getenv("DB_PASSWORD"))
     cursor = con.cursor()
 
-    model_name = 'test'
+    model_name = 'testV2'
 
     s3.download_file(S3_BUCKET, S3_WEIGHTS_FOLDER + model_name + '.h5', 'current_weights.h5')
     cursor.execute("SELECT * FROM MODELS WHERE name='" + model_name + "'")
