@@ -5,7 +5,6 @@ import { withStyles } from "@material-ui/core/styles";
 import { Typography } from "@material-ui/core";
 import Button from "@material-ui/core/Button";
 import DialogModal from "./DialogModal";
-import Rnd from "react-rnd";
 import OndemandVideo from "@material-ui/icons/OndemandVideo";
 import IconButton from "@material-ui/core/IconButton";
 import DialogTitle from "@material-ui/core/DialogTitle";
@@ -13,12 +12,15 @@ import Dialog from "@material-ui/core/Dialog";
 import blue from "@material-ui/core/colors/blue";
 import { MuiThemeProvider, createMuiTheme } from "@material-ui/core/styles";
 import ConceptsSelected from "./ConceptsSelected";
+import DragBoxContainer from "./DragBoxContainer.jsx";
 
 import VideoMetadata from "./VideoMetadata.jsx";
 import Description from "@material-ui/icons/Description";
 import Avatar from "@material-ui/core/Avatar";
 import Grid from "@material-ui/core/Grid";
 import Swal from "sweetalert2";
+
+
 
 const styles = theme => ({
   button: {
@@ -392,31 +394,30 @@ class VerifyAnnotations extends Component {
               <Typography className={classes.paper}>No Image</Typography>
             ) : (
               <div>
-                <div className={classes.img}>
-                  <Rnd
-                    id="dragBox"
-                    className={classes.dragBox}
-                    size={{
-                      width: this.state.width,
-                      height: this.state.height
-                    }}
-                    position={{ x: this.state.x, y: this.state.y }}
-                    onDragStop={(e, d) => {
-                      this.setState({ x: d.x, y: d.y });
-                    }}
-                    onResize={(e, direction, ref, delta, position) => {
-                      this.setState({
-                        width: ref.style.width,
-                        height: ref.style.height,
-                        ...position
-                      });
-                    }}
-                    minWidth={25}
-                    minHeight={25}
-                    maxWidth={900}
-                    maxHeight={650}
-                    bounds="parent"
-                  />
+                <DragBoxContainer 
+                  className={classes.img}
+                  dragBox={classes.dragBox}
+                  drawDragBox={true}
+
+                  size={{
+                    width: this.state.width,
+                    height: this.state.height
+                  }}
+                  
+                  position={{ x: this.state.x, y: this.state.y }}
+
+                  onDragStop={(e, d) => {
+                    this.setState({ x: d.x, y: d.y });
+                  }}
+
+                  onResize={(e, direction, ref, delta, position) => {
+                    this.setState({
+                      width: ref.style.width,
+                      height: ref.style.height,
+                      ...position
+                    });
+                  }}
+                >
                   <img
                     id="image"
                     onLoad={Swal.close}
@@ -432,7 +433,7 @@ class VerifyAnnotations extends Component {
                       height: annotation.videoheight
                     }}
                   />
-                </div>
+                </DragBoxContainer>
               </div>
             )}
             <Typography className={classes.paper}>
