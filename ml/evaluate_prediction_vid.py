@@ -166,7 +166,7 @@ if __name__ == '__main__':
         password=os.getenv("DB_PASSWORD"))
     cursor = con.cursor()
 
-    model_name = 'test' 
+    model_name = 'testV2' 
 
     s3.download_file(S3_BUCKET, S3_WEIGHTS_FOLDER + model_name + '.h5', 'current_weights.h5')
     cursor.execute("SELECT * FROM MODELS WHERE name='" + model_name + "'")
