@@ -297,6 +297,7 @@ def propagate_conceptids(annotations, concepts):
             scores[k] = label.confidence.mean() # Maybe the sum?
         idmax = max(scores.keys(), key=(lambda k: scores[k]))
         annotations.loc[annotations.objectid == oid,'label'] = idmax
+        annotations.loc[annotations.objectid == oid,'confidence'] = scores[idmax]
     annotations['label'] = annotations['label'].apply(lambda x: concepts[int(x)])
     annotations['conceptid'] = annotations['label'] # need both label and conceptid for later
     return annotations
@@ -320,7 +321,7 @@ def generate_video(filename, frames, fps, results, concepts):
             frames[res.frame_num], classmap[concepts.index(res.conceptid)],
             (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
         cv2.putText(
-            frames[res.frame_num], res.confidence,
+            frames[res.frame_num], str(res.confidence),
             (x1, y1+10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
         cv2.putText(frames[res.frame_num], str(res.objectid), (x1, y2), 
             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
