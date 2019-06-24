@@ -144,9 +144,15 @@ def train_model(concepts, users, min_examples, epochs, model_name, videos, selec
     #stopping: stops training if val_loss stops improving
     stopping = EarlyStopping(monitor='val_loss', min_delta=0, patience=10)
 
+    tensorboard_callback = keras.callbacks.TensorBoard(
+        log_dir='./logs', histogram_freq=0, batch_size=batch_size,
+        write_graph=True, write_grads=False, write_images=False,
+        embeddings_freq=0, embeddings_layer_names=None,
+        embeddings_metadata=None, embeddings_data=None, update_freq='epoch')
+    
     history = training_model.fit_generator(train_generator, 
         epochs=epochs, 
-        callbacks=[checkpoint, stopping],
+        callbacks=[checkpoint, stopping, tensorboard_callback],
         validation_data=test_generator,
         verbose=2
     ).history
