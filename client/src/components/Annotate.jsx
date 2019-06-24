@@ -12,6 +12,9 @@ import Typography from "@material-ui/core/Typography";
 import { withStyles } from "@material-ui/core/styles";
 import Slider from "@material-ui/lab/Slider";
 
+import Swal from "sweetalert2";
+
+
 const styles = theme => ({
   videoContainer: {
     postion: "absolute",
@@ -288,9 +291,20 @@ class Annotate extends Component {
     var videoElement = document.getElementById("video");
     var cTime = videoElement.currentTime;
 
-    var dragBoxCord = document
-      .getElementById("dragBox")
-      .getBoundingClientRect();
+    var dragBox = document.getElementById("dragBox");
+
+    if (dragBox === null){
+      Swal.fire({
+        title: 'Error',
+        text: 'No bounding box exists.',
+        type: 'error',
+        confirmButtonText: 'Okay'
+      });
+      return;
+    }
+
+    var dragBoxCord = dragBox.getBoundingClientRect();
+
     var vidCord = videoElement.getBoundingClientRect();
     var video_x1 = vidCord.left;
     var video_y1 = vidCord.top;
@@ -461,7 +475,7 @@ class Annotate extends Component {
           <DragBoxContainer 
             className={classes.videoContainer} 
             dragBox={classes.dragBox}
-            drawDragBox={true}
+            drawDragBox={false}
 
             size={{
               width: this.state.width,
