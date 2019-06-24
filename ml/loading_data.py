@@ -165,6 +165,7 @@ def download_annotations(min_examples, concepts, selected_concepts, concept_map,
                 failed_to_load_images.append(str(first['id']))
                 continue
 
+        # Make training and testing csv files
         for index, row in frame.iterrows():
             concept_index = concepts.index(row['conceptid'])
             if (int(row['videowidth']) != int(first['videowidth'])):
