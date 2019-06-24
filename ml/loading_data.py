@@ -149,12 +149,13 @@ def download_annotations(min_examples, concepts, selected_concepts, concept_map,
     for frame in selected:
         # Get image for first annotation in frame
         first = frame.iloc[0]
-        img_location = img_folder + "/" + str(first['image'])
-        if ".png" not in img_location:
-           img_location += ".png"
+        image = str(first['image'])
+        if ".png" not in image:
+           image += ".png"
+        img_location = img_folder + "/" + image
 
         # Check if image already exists in image folder
-        if str(first['image']) not in existing_images:
+        if image not in existing_images:
             try:
                 # try to download image. 
                 obj = client.get_object(Bucket=S3_BUCKET, Key= SRC_IMG_FOLDER + str(first['image']))
