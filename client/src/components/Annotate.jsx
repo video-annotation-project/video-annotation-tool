@@ -1,11 +1,11 @@
 import React, { Component } from "react";
-import Rnd from "react-rnd";
 import axios from "axios";
 import io from "socket.io-client";
 
 import ConceptsSelected from "./ConceptsSelected.jsx";
 import DialogModal from "./DialogModal.jsx";
 import VideoList from "./VideoList.jsx";
+import DragBoxContainer from "./DragBoxContainer.jsx";
 
 import Button from "@material-ui/core/Button";
 import Typography from "@material-ui/core/Typography";
@@ -31,6 +31,7 @@ const styles = theme => ({
     marginBottom: "10px"
   }
 });
+
 
 class Annotate extends Component {
   constructor(props) {
@@ -70,7 +71,11 @@ class Annotate extends Component {
       inProgressVideos: [],
       videoPlaybackRate: 1.0,
       error: null,
-      socket: socket
+      socket: socket,
+      width: 0,
+      height: 0,
+      x: 0,
+      y: 0,
     };
   }
 
@@ -453,37 +458,43 @@ class Annotate extends Component {
         />
         <div>
           {this.state.currentVideo.id + " " + this.state.currentVideo.filename}
-          <div className={classes.videoContainer}>
+          <DragBoxContainer 
+            className={classes.videoContainer} 
+            dragBox={classes.dragBox}
+            drawDragBox={true}
+
+            size={{
+              width: this.state.width,
+              height: this.state.height
+            }}
+            
+            position={{ x: this.state.x, y: this.state.y }}
+
+            onDragStop={(e, d) => {
+              this.setState({ x: d.x, y: d.y });
+            }}
+
+            onResize={(e, direction, ref, delta, position) => {
+              this.setState({
+                width: ref.style.width,
+                height: ref.style.height,
+                ...position
+              });
+            }}
+          >
             <video
               onPause={() => this.updateCheckpoint(false, true)}
               id="video"
               width="1600"
               height="900"
-              src={
-                "https://cdn.deepseaannotations.com/videos/" +
-                this.state.currentVideo.filename
-              }
-              type="video/mp4"
+              src={'https://cdn.deepseaannotations.com/videos/' +
+                this.state.currentVideo.filename}
+              type='video/mp4'
               crossOrigin="use-credentials"
             >
               Your browser does not support the video tag.
             </video>
-            <Rnd
-              id="dragBox"
-              className={classes.dragBox}
-              default={{
-                x: 30,
-                y: 30,
-                width: 60,
-                height: 60
-              }}
-              minWidth={25}
-              minHeight={25}
-              maxWidth={900}
-              maxHeight={650}
-              bounds="parent"
-            />
-          </div>
+          </DragBoxContainer>
           <div
             style={{
               marginTop: "10px",
