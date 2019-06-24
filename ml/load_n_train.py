@@ -106,6 +106,7 @@ def train_model(concepts, users, min_examples, epochs, model_name, videos, selec
         },
         optimizer=keras.optimizers.adam(lr=1e-5, clipnorm=0.001)
     )
+    '''
     transform_generator = random_transform_generator(
         min_rotation=-0.1,
         max_rotation=0.1,
@@ -118,13 +119,13 @@ def train_model(concepts, users, min_examples, epochs, model_name, videos, selec
         flip_x_chance=0.5,
         flip_y_chance=0.5,
     )
-    
+    '''
     temp = pd.DataFrame(list(zip(classmap.values(), classmap.keys())))
     temp.to_csv('classmap.csv',index=False, header=False)
     train_generator = custom(
         train_annot_file,
         'classmap.csv',
-        transform_generator=transform_generator,
+        #transform_generator=transform_generator,
         batch_size = batch_size
     )
 
