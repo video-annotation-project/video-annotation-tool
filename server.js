@@ -1483,8 +1483,6 @@ app.patch(
   `/api/annotationsVerify`,
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    console.log(req.body.conceptid != null ? "Adding 3" : "Adding 1");
-
     const id = req.body.id;
     const conceptid =
       req.body.conceptid != null
