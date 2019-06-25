@@ -1551,7 +1551,6 @@ app.patch(
   "/api/annotationsUpdateBox",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    console.log("Adding 1 (bounding box)");
     const id = req.body.id;
 
     var x1 = req.body.x1;
