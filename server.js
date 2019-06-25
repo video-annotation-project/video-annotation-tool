@@ -564,8 +564,7 @@ app.get(
   "/api/videos/:videoid",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    let queryText =
-      `SELECT 
+    let queryText = `SELECT 
         usernames.userswatching, 
         usernames.usersfinished,
         videos.* 
@@ -803,8 +802,7 @@ app.get(
     }
     // Adds query conditions from report tree
     queryPass +=
-      req.query.queryConditions +
-      " ORDER BY annotations.timeinvideo";
+      req.query.queryConditions + " ORDER BY annotations.timeinvideo";
     // Retrieves only selected 100 if queryLimit exists
     if (req.query.queryLimit !== "undefined") {
       queryPass = queryPass + req.query.queryLimit;
@@ -1151,16 +1149,17 @@ app.post(
   "/api/models",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    const queryText =`
+    const queryText = `
       INSERT INTO 
         models(name, timestamp, concepts)
       VALUES($1, current_timestamp, $2)
       RETURNING *`;
 
     try {
-      let response = await psql.query(
-        queryText,
-        [req.body.name, req.body.concepts]);
+      let response = await psql.query(queryText, [
+        req.body.name,
+        req.body.concepts
+      ]);
       res.json(response.rows);
     } catch (error) {
       console.log(error);
@@ -1435,8 +1434,7 @@ app.get(
     const selectedConcepts = req.query.selectedConcepts;
 
     let params = [];
-    let queryText =
-    `SELECT distinct a.*, c.name, u.username, v.filename
+    let queryText = `SELECT distinct a.*, c.name, u.username, v.filename
       FROM annotations a, concepts c, users u, videos v
       WHERE c.id=a.conceptid AND u.id=a.userid AND v.id=a.videoid AND a.verifiedby IS NULL`;
 
@@ -1480,9 +1478,13 @@ app.patch(
   `/api/annotationsVerify`,
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
+    console.log(req.body.conceptid != null ? "Adding 3" : "Adding 1");
+
     const id = req.body.id;
     const conceptid =
-      req.body.conceptid != null ? `, conceptid=` + req.body.conceptid : ``;
+      req.body.conceptid != null
+        ? `, conceptid=` + req.body.conceptid + `, priority = priority + 3`
+        : `, priority = priority + 1`;
     const comment =
       req.body.comment != null ? `, comment='` + req.body.comment + `'` : ``;
     const unsure = req.body.unsure != null ? `, unsure=` + req.body.unsure : ``;
@@ -1503,10 +1505,11 @@ app.patch(
         originalid=$1 
         and annotations.id<>$1
       RETURNING *`;
-    try {
-      let update = await psql.query(queryText1, [id, verifiedby]);
 
-      var deleteRes = await psql.query(queryText2, [id]);
+    try {
+      await psql.query(queryText1, [id, verifiedby]);
+
+      let deleteRes = await psql.query(queryText2, [id]);
 
       //These are the s3 object we will be deleting
       let Objects = [];
@@ -1547,7 +1550,7 @@ app.patch(
   "/api/annotationsUpdateBox",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    // console.log(req.body)
+    console.log("Adding 1 (bounding box)");
     const id = req.body.id;
 
     var x1 = req.body.x1;
@@ -1555,7 +1558,7 @@ app.patch(
     var y1 = req.body.y1;
     var y2 = req.body.y2;
 
-    const queryText = `UPDATE annotations SET x1=$1, x2=$2, y1=$3, y2=$4 WHERE id=$5`;
+    const queryText = `UPDATE annotations SET x1=$1, x2=$2, y1=$3, y2=$4, priority = priority + 1 WHERE id=$5`;
     try {
       let update = await psql.query(queryText, [x1, x2, y1, y2, id]);
       res.json(update.rows);

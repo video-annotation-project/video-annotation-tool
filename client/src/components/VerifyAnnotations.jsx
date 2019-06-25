@@ -20,8 +20,6 @@ import Avatar from "@material-ui/core/Avatar";
 import Grid from "@material-ui/core/Grid";
 import Swal from "sweetalert2";
 
-
-
 const styles = theme => ({
   button: {
     margin: theme.spacing.unit
@@ -210,7 +208,8 @@ class VerifyAnnotations extends Component {
       conceptDialogMsg:
         "Switch " + this.props.annotation + " to " + concept.name + "?",
       conceptDialogOpen: true,
-      clickedConcept: concept
+      clickedConcept:
+        this.props.annotation.conceptid === concept.id ? null : concept
     });
   };
 
@@ -263,6 +262,7 @@ class VerifyAnnotations extends Component {
     var x2 = Math.min(x1 + width, this.props.annotation.videowidth - 1);
     var y2 = Math.min(y1 + height, this.props.annotation.videoheight - 1);
 
+    // Only update box if it is changed by user
     await this.updateBox(x1, y1, x2, y2, imageCord, dragBoxCord, imageElement);
   };
 
@@ -394,22 +394,18 @@ class VerifyAnnotations extends Component {
               <Typography className={classes.paper}>No Image</Typography>
             ) : (
               <div>
-                <DragBoxContainer 
+                <DragBoxContainer
                   className={classes.img}
                   dragBox={classes.dragBox}
                   drawDragBox={true}
-
                   size={{
                     width: this.state.width,
                     height: this.state.height
                   }}
-                  
                   position={{ x: this.state.x, y: this.state.y }}
-
                   onDragStop={(e, d) => {
                     this.setState({ x: d.x, y: d.y });
                   }}
-
                   onResize={(e, direction, ref, delta, position) => {
                     this.setState({
                       width: ref.style.width,
