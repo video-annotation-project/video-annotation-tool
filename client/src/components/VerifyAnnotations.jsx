@@ -336,12 +336,6 @@ class VerifyAnnotations extends Component {
           x1,
           y1
         );
-        if (res.status === 200) {
-          this.setState({
-            redraw: !this.state.redraw,
-            redrawn: true
-          });
-        }
       })
       .catch(error => {
         this.setState({
