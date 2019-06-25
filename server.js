@@ -778,7 +778,8 @@ app.get(
     //Build query string
     let queryPass = `
       SELECT
-        annotations.id, annotations.comment, annotations.verifiedby,
+        annotations.id, annotations.comment, 
+        annotations.verifiedby, annotations.priority,
         annotations.unsure, annotations.timeinvideo, 
         annotations.imagewithbox, concepts.name, 
         false as extended 

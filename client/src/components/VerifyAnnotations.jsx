@@ -263,8 +263,13 @@ class VerifyAnnotations extends Component {
     var x2 = Math.min(x1 + width, this.props.annotation.videowidth - 1);
     var y2 = Math.min(y1 + height, this.props.annotation.videoheight - 1);
 
-    // Only update box if it is changed by user
-    await this.updateBox(x1, y1, x2, y2, imageCord, dragBoxCord, imageElement);
+    var annotation = this.props.annotation;
+
+    if (Math.abs(annotation.x1 + annotation.x2 + annotation.y1 + annotation.y2 
+      - x1 - x2 - y1 - y2) > 0.1) {
+      // Only update box if it is changed by user
+      await this.updateBox(x1, y1, x2, y2, imageCord, dragBoxCord, imageElement);
+    }
   };
 
   createAndUploadImages = async (
