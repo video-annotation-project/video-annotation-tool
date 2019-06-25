@@ -166,7 +166,7 @@ class Annotations extends Component {
                 {annotation.verifiedby ? <DoneAll color="primary" /> : ""}
                 <ListItemText
                   primary={
-                    " At " +
+                    "At " +
                     Math.floor(annotation.timeinvideo / 60) +
                     " minutes " +
                     (annotation.timeinvideo % 60) +
