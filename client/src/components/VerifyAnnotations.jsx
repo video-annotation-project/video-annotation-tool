@@ -244,10 +244,11 @@ class VerifyAnnotations extends Component {
     this.nextAnnotation();
   };
 
-  postBoxImage = async () => {
-    var dragBoxCord = document
-      .getElementById("dragBox")
-      .getBoundingClientRect();
+  postBoxImage = async (dragBox) => {
+
+
+    var dragBoxCord = dragBox.getBoundingClientRect();
+
     var imageElement = document.getElementById("image");
     var imageCord = imageElement.getBoundingClientRect("dragBox");
     var x1_image = imageCord.left;
@@ -345,9 +346,22 @@ class VerifyAnnotations extends Component {
   };
 
   handleVerifyClick = () => {
-    if (this.props.annotation.image) {
-      this.postBoxImage();
+    var dragBox = document.getElementById("dragBox");
+
+    if (dragBox === null){
+      Swal.fire({
+        title: 'Error',
+        text: 'No bounding box exists.',
+        type: 'error',
+        confirmButtonText: 'Okay'
+      });
+      return;
     }
+
+    if (this.props.annotation.image) {
+      this.postBoxImage(dragBox);
+    }
+    
     this.verifyAnnotation();
   };
 
