@@ -1393,8 +1393,9 @@ app.get(
     let params = [];
 
     let queryText = `SELECT DISTINCT c.id, c.name
-        FROM annotations a, concepts c
-        WHERE a.verifiedby IS NULL AND a.conceptid=c.id`;
+        FROM annotations a
+        LEFT JOIN concepts c ON c.id=conceptid
+        WHERE a.verifiedby IS NULL`;
 
     if (selectedUsers.length === 1 && selectedUsers[0] === "-1") {
       let trackingId = null;
@@ -1436,8 +1437,11 @@ app.get(
 
     let params = [];
     let queryText = `SELECT distinct a.*, c.name, u.username, v.filename
-      FROM annotations a, concepts c, users u, videos v
-      WHERE c.id=a.conceptid AND u.id=a.userid AND v.id=a.videoid AND a.verifiedby IS NULL`;
+      FROM annotations a
+      LEFT JOIN concepts c ON c.id=conceptid
+      LEFT JOIN users u ON u.id=userid
+      LEFT JOIN videos v ON v.id=videoid
+      WHERE a.verifiedby IS NULL`;
 
     if (selectedUsers.length === 1 && selectedUsers[0] === "-1") {
       let trackingId = null;
@@ -1479,7 +1483,6 @@ app.patch(
   `/api/annotationsVerify`,
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-
     const id = req.body.id;
     const conceptid =
       req.body.conceptid != null
