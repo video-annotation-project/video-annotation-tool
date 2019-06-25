@@ -263,28 +263,36 @@ class VerifyAnnotations extends Component {
 
     var annotation = this.props.annotation;
 
-    if (
-      Math.abs(
-        annotation.x1 +
-          annotation.x2 +
-          annotation.y1 +
-          annotation.y2 -
-          x1 -
-          x2 -
-          y1 -
-          y2
-      ) > 0.1
-    ) {
-      // Only update box if it is changed by user
-      await this.updateBox(
-        x1,
-        y1,
-        x2,
-        y2,
-        imageCord,
-        dragBoxCord,
-        imageElement
-      );
+    try {
+      if (
+          Math.abs(
+              annotation.x1 +
+              annotation.x2 +
+              annotation.y1 +
+              annotation.y2 -
+              x1 -
+              x2 -
+              y1 -
+              y2
+          ) > 0.1
+      ) {
+        // Only update box if it is changed by user
+        await this.updateBox(
+            x1,
+            y1,
+            x2,
+            y2,
+            imageCord,
+            dragBoxCord,
+            imageElement
+        );
+      }
+
+      this.verifyAnnotation();
+    }
+    catch {
+        console.log("Unable to verify");
+        this.nextAnnotation();
     }
   };
 
@@ -373,11 +381,7 @@ class VerifyAnnotations extends Component {
       return;
     }
 
-    if (this.props.annotation.image) {
-      this.postBoxImage(dragBox);
-    }
-
-    this.verifyAnnotation();
+    this.postBoxImage(dragBox);
   };
 
   videoDialogToggle = () => {
