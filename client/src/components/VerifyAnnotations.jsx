@@ -80,8 +80,8 @@ class VerifyAnnotations extends Component {
     this.state = {
       currentIndex: this.props.index,
       concept: null,
-      comment: null,
-      unsure: null,
+      comment: this.props.annotation.comment,
+      unsure: this.props.annotation.unsure,
       error: null,
       conceptDialogMsg: null,
       conceptDialogOpen: false,
@@ -175,8 +175,8 @@ class VerifyAnnotations extends Component {
   resetState = () => {
     this.setState({
       concept: null,
-      comment: null,
-      unsure: null,
+      comment: this.props.annotation.comment,
+      unsure: this.props.annotation.unsure,
       x: this.props.annotation.x1,
       y: this.props.annotation.y1,
       width: this.props.annotation.x2 - this.props.annotation.x1,
