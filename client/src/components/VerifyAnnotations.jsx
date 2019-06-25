@@ -206,7 +206,7 @@ class VerifyAnnotations extends Component {
   handleConceptClick = concept => {
     this.setState({
       conceptDialogMsg:
-        "Switch " + this.props.annotation + " to " + concept.name + "?",
+        "Switch " + this.props.annotation.name + " to " + concept.name + "?",
       conceptDialogOpen: true,
       clickedConcept:
         this.props.annotation.conceptid === concept.id ? null : concept
