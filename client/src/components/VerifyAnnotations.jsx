@@ -20,8 +20,6 @@ import Avatar from "@material-ui/core/Avatar";
 import Grid from "@material-ui/core/Grid";
 import Swal from "sweetalert2";
 
-
-
 const styles = theme => ({
   button: {
     margin: theme.spacing.unit
@@ -82,8 +80,8 @@ class VerifyAnnotations extends Component {
     this.state = {
       currentIndex: this.props.index,
       concept: null,
-      comment: null,
-      unsure: null,
+      comment: this.props.annotation.comment,
+      unsure: this.props.annotation.unsure,
       error: null,
       conceptDialogMsg: null,
       conceptDialogOpen: false,
@@ -177,8 +175,8 @@ class VerifyAnnotations extends Component {
   resetState = () => {
     this.setState({
       concept: null,
-      comment: null,
-      unsure: null,
+      comment: this.props.annotation.comment,
+      unsure: this.props.annotation.unsure,
       x: this.props.annotation.x1,
       y: this.props.annotation.y1,
       width: this.props.annotation.x2 - this.props.annotation.x1,
@@ -208,9 +206,10 @@ class VerifyAnnotations extends Component {
   handleConceptClick = concept => {
     this.setState({
       conceptDialogMsg:
-        "Switch " + this.props.annotation + " to " + concept.name + "?",
+        "Switch " + this.props.annotation.name + " to " + concept.name + "?",
       conceptDialogOpen: true,
-      clickedConcept: concept
+      clickedConcept:
+        this.props.annotation.conceptid === concept.id ? null : concept
     });
   };
 
@@ -245,9 +244,7 @@ class VerifyAnnotations extends Component {
     this.nextAnnotation();
   };
 
-  postBoxImage = async (dragBox) => {
-
-
+  postBoxImage = async dragBox => {
     var dragBoxCord = dragBox.getBoundingClientRect();
 
     var imageElement = document.getElementById("image");
@@ -264,7 +261,31 @@ class VerifyAnnotations extends Component {
     var x2 = Math.min(x1 + width, this.props.annotation.videowidth - 1);
     var y2 = Math.min(y1 + height, this.props.annotation.videoheight - 1);
 
-    await this.updateBox(x1, y1, x2, y2, imageCord, dragBoxCord, imageElement);
+    var annotation = this.props.annotation;
+
+    if (
+      Math.abs(
+        annotation.x1 +
+          annotation.x2 +
+          annotation.y1 +
+          annotation.y2 -
+          x1 -
+          x2 -
+          y1 -
+          y2
+      ) > 0.1
+    ) {
+      // Only update box if it is changed by user
+      await this.updateBox(
+        x1,
+        y1,
+        x2,
+        y2,
+        imageCord,
+        dragBoxCord,
+        imageElement
+      );
+    }
   };
 
   createAndUploadImages = async (
@@ -331,12 +352,6 @@ class VerifyAnnotations extends Component {
           x1,
           y1
         );
-        if (res.status === 200) {
-          this.setState({
-            redraw: !this.state.redraw,
-            redrawn: true
-          });
-        }
       })
       .catch(error => {
         this.setState({
@@ -348,12 +363,12 @@ class VerifyAnnotations extends Component {
   handleVerifyClick = () => {
     var dragBox = document.getElementById("dragBox");
 
-    if (dragBox === null){
+    if (dragBox === null) {
       Swal.fire({
-        title: 'Error',
-        text: 'No bounding box exists.',
-        type: 'error',
-        confirmButtonText: 'Okay'
+        title: "Error",
+        text: "No bounding box exists.",
+        type: "error",
+        confirmButtonText: "Okay"
       });
       return;
     }
@@ -361,7 +376,7 @@ class VerifyAnnotations extends Component {
     if (this.props.annotation.image) {
       this.postBoxImage(dragBox);
     }
-    
+
     this.verifyAnnotation();
   };
 
@@ -394,36 +409,34 @@ class VerifyAnnotations extends Component {
 
     return (
       <React.Fragment>
-        <DialogModal
-          title={"Confirm Annotation Edit"}
-          message={this.state.conceptDialogMsg}
-          placeholder={"Comments"}
-          inputHandler={this.changeConcept}
-          open={this.state.conceptDialogOpen}
-          handleClose={this.handleConceptDialogClose}
-        />
+        {this.state.conceptDialogOpen && (
+          <DialogModal
+            title={"Confirm Annotation Edit"}
+            message={this.state.conceptDialogMsg}
+            placeholder={"Comments"}
+            inputHandler={this.changeConcept}
+            open={true}
+            handleClose={this.handleConceptDialogClose}
+          />
+        )}
         {!this.state.end ? (
           <React.Fragment>
             {!annotation.image ? (
               <Typography className={classes.paper}>No Image</Typography>
             ) : (
               <div>
-                <DragBoxContainer 
+                <DragBoxContainer
                   className={classes.img}
                   dragBox={classes.dragBox}
                   drawDragBox={true}
-
                   size={{
                     width: this.state.width,
                     height: this.state.height
                   }}
-                  
                   position={{ x: this.state.x, y: this.state.y }}
-
                   onDragStop={(e, d) => {
                     this.setState({ x: d.x, y: d.y });
                   }}
-
                   onResize={(e, direction, ref, delta, position) => {
                     this.setState({
                       width: ref.style.width,
@@ -561,6 +574,20 @@ class VerifyAnnotations extends Component {
                   ? annotation.name
                   : this.state.concept.name}
               </Typography>
+              {this.state.comment !== "" ? (
+                <Typography className={classes.paper} variant="body2">
+                  {"Comment: " + this.state.comment}
+                </Typography>
+              ) : (
+                ""
+              )}
+              {this.state.unsure !== null ? (
+                <Typography className={classes.paper} variant="body2">
+                  {"Unsure: " + this.state.unsure}
+                </Typography>
+              ) : (
+                ""
+              )}
             </div>
           </React.Fragment>
         ) : (
