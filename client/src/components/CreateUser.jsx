@@ -3,6 +3,10 @@ import axios from "axios";
 import Typography from "@material-ui/core/Typography";
 import { withStyles } from "@material-ui/core/styles";
 import Swal from "sweetalert2";
+import { TextField } from "@material-ui/core";
+import Button from "@material-ui/core/Button";
+import Checkbox from '@material-ui/core/Checkbox';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
 
 const styles = {
   root: {
@@ -51,7 +55,8 @@ class CreateUser extends Component {
     try {
       let newUserInfo = await axios.post("/api/createUser", body, config);
       console.log(newUserInfo);
-      alert("Created a new user: " + JSON.stringify(newUserInfo.data.user));
+      Swal.fire("Created a new user: " + newUserInfo.data.user.username, 
+      "", "success");
       this.props.history.push("/");
     } catch (error) {
       console.log(error);
@@ -73,35 +78,44 @@ class CreateUser extends Component {
         <Typography variant="display1">Create New User</Typography>
         <br />
         <form onSubmit={this.handleSubmit}>
-          <div>username</div>
-          <input
+          {/* <div>username</div> */}
+          <TextField
+            label="User Name"
             type="text"
             name="username"
             value={this.state.username}
             onChange={this.handleChange}
+            margin="normal"
             required
           />
           <br />
-          <br />
-          <div>password</div>
-          <input
+          {/* <br />
+          <div>password</div> */}
+          <TextField
+            label="Password"
             type="password"
             name="password"
             value={this.state.password}
             onChange={this.handleChange}
+            margin="normal"
             required
           />
           <br />
-          <br />
-          <input
-            type="checkbox"
-            name="admin"
-            checked={this.state.admin}
-            onChange={this.handleBoxChange}
+          <FormControlLabel
+            control={
+              <Checkbox
+                // type="checkbox"
+                name="admin"
+                checked={this.state.admin}
+                onChange={this.handleBoxChange}
+              />
+            }
+            label = "admin"
           />
-          admin
           <br />
-          <input type="submit" value="Create" />
+          <Button type="submit" variant="contained" color="primary">
+            Create
+          </Button>
         </form>
       </div>
     );

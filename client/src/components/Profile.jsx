@@ -58,7 +58,7 @@ class Profile extends Component {
     axios
       .post("/api/changePassword", body, config)
       .then(res => {
-        this.showAlert();
+        Swal.fire("Password Changed!", "", "success");
         this.props.history.push("/");
       })
       .catch(error => {
@@ -67,10 +67,6 @@ class Profile extends Component {
           Swal(error.response.data.detail, "", "error");
         }
       });
-  };
-
-  showAlert = () => {
-    Swal.fire("Password Changed!", "", "success");
   };
 
   render() {
