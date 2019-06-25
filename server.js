@@ -1503,18 +1503,17 @@ app.patch(
     queryText1 += `, unsure=$`+ params.length;
     queryText1 += ` WHERE id=$1`;
 
-    let queryText2 = `
+    const queryText2 = `
       DELETE FROM
         annotations \
       WHERE 
         originalid=$1 
         and annotations.id<>$1
-      RETURNING *`;
+      RETURNING *`;      
 
     try {
-      await psql.query(queryText1, params);
-
       let deleteRes = await psql.query(queryText2, [id]);
+      await psql.query(queryText1, params);
 
       //These are the s3 object we will be deleting
       let Objects = [];
