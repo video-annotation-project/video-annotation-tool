@@ -1483,32 +1483,37 @@ app.patch(
   `/api/annotationsVerify`,
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    const id = req.body.id;
-    const conceptid =
-      req.body.conceptid != null
-        ? `, conceptid=` + req.body.conceptid + `, priority = priority + 3`
-        : `, priority = priority + 1`;
-    const comment =
-      req.body.comment != null ? `, comment='` + req.body.comment + `'` : ``;
-    const unsure = req.body.unsure != null ? `, unsure=` + req.body.unsure : ``;
     const verifiedby = req.user.id;
-
+    const id = req.body.id;
     let s3 = new AWS.S3();
 
-    const queryText1 = `
+    var params = [id, verifiedby];
+    var queryText1 =
+    `UPDATE annotations SET verifiedby=$2, verifieddate=current_timestamp, originalid=null`;
+
+    if (req.body.conceptid !== null) {
+      queryText1 += `, conceptid=$3, priority=priority+3`;
+      params.push(req.body.conceptid);
+    } else {
+      queryText1 += `, priority= priority+1`;
+    }
+    params.push(req.body.comment);
+    queryText1 += `, comment=$`+ params.length;
+    params.push(req.body.unsure);
+    queryText1 += `, unsure=$`+ params.length;
+    queryText1 += ` WHERE id=$1`;
+
+    const queryText2 = `
       DELETE FROM
         annotations \
       WHERE 
         originalid=$1 
         and annotations.id<>$1
-      RETURNING *`;
-
-    const queryText2 =
-      `UPDATE annotations SET verifiedby=$1, verifieddate=current_timestamp, originalid=null` +  conceptid + comment + unsure + `WHERE id=$2`;
+      RETURNING *`;      
 
     try {
-      let deleteRes = await psql.query(queryText1, [id]);
-      await psql.query(queryText2, [verifiedby, id]);
+      let deleteRes = await psql.query(queryText2, [id]);
+      await psql.query(queryText1, params);
 
       //These are the s3 object we will be deleting
       let Objects = [];
@@ -1529,7 +1534,7 @@ app.patch(
           req.body.id +
           "_tracking.mp4"
       });
-      let params = {
+      params = {
         Bucket: process.env.AWS_S3_BUCKET_NAME,
         Delete: {
           Objects: Objects
