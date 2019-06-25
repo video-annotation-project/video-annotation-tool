@@ -1492,16 +1492,10 @@ app.patch(
       req.body.comment != null ? `, comment='` + req.body.comment + `'` : ``;
     const unsure = req.body.unsure != null ? `, unsure=` + req.body.unsure : ``;
     const verifiedby = req.user.id;
+
     let s3 = new AWS.S3();
 
-    const queryText1 =
-      `UPDATE annotations SET verifiedby=$2, verifieddate=current_timestamp, originalid=null` +
-      conceptid +
-      comment +
-      unsure +
-      ` WHERE id=$1`;
-
-    let queryText2 = `
+    const queryText1 = `
       DELETE FROM
         annotations \
       WHERE 
@@ -1509,10 +1503,12 @@ app.patch(
         and annotations.id<>$1
       RETURNING *`;
 
-    try {
-      await psql.query(queryText1, [id, verifiedby]);
+    const queryText2 =
+      `UPDATE annotations SET verifiedby=$1, verifieddate=current_timestamp, originalid=null` +  conceptid + comment + unsure + `WHERE id=$2`;
 
-      let deleteRes = await psql.query(queryText2, [id]);
+    try {
+      let deleteRes = await psql.query(queryText1, [id]);
+      await psql.query(queryText2, [verifiedby, id]);
 
       //These are the s3 object we will be deleting
       let Objects = [];
