@@ -244,9 +244,7 @@ class VerifyAnnotations extends Component {
     this.nextAnnotation();
   };
 
-  postBoxImage = async (dragBox) => {
-
-
+  postBoxImage = async dragBox => {
     var dragBoxCord = dragBox.getBoundingClientRect();
 
     var imageElement = document.getElementById("image");
@@ -265,10 +263,28 @@ class VerifyAnnotations extends Component {
 
     var annotation = this.props.annotation;
 
-    if (Math.abs(annotation.x1 + annotation.x2 + annotation.y1 + annotation.y2 
-      - x1 - x2 - y1 - y2) > 0.1) {
+    if (
+      Math.abs(
+        annotation.x1 +
+          annotation.x2 +
+          annotation.y1 +
+          annotation.y2 -
+          x1 -
+          x2 -
+          y1 -
+          y2
+      ) > 0.1
+    ) {
       // Only update box if it is changed by user
-      await this.updateBox(x1, y1, x2, y2, imageCord, dragBoxCord, imageElement);
+      await this.updateBox(
+        x1,
+        y1,
+        x2,
+        y2,
+        imageCord,
+        dragBoxCord,
+        imageElement
+      );
     }
   };
 
@@ -347,12 +363,12 @@ class VerifyAnnotations extends Component {
   handleVerifyClick = () => {
     var dragBox = document.getElementById("dragBox");
 
-    if (dragBox === null){
+    if (dragBox === null) {
       Swal.fire({
-        title: 'Error',
-        text: 'No bounding box exists.',
-        type: 'error',
-        confirmButtonText: 'Okay'
+        title: "Error",
+        text: "No bounding box exists.",
+        type: "error",
+        confirmButtonText: "Okay"
       });
       return;
     }
@@ -360,7 +376,7 @@ class VerifyAnnotations extends Component {
     if (this.props.annotation.image) {
       this.postBoxImage(dragBox);
     }
-    
+
     this.verifyAnnotation();
   };
 
@@ -393,14 +409,16 @@ class VerifyAnnotations extends Component {
 
     return (
       <React.Fragment>
-        <DialogModal
-          title={"Confirm Annotation Edit"}
-          message={this.state.conceptDialogMsg}
-          placeholder={"Comments"}
-          inputHandler={this.changeConcept}
-          open={this.state.conceptDialogOpen}
-          handleClose={this.handleConceptDialogClose}
-        />
+        {this.state.conceptDialogOpen && (
+          <DialogModal
+            title={"Confirm Annotation Edit"}
+            message={this.state.conceptDialogMsg}
+            placeholder={"Comments"}
+            inputHandler={this.changeConcept}
+            open={true}
+            handleClose={this.handleConceptDialogClose}
+          />
+        )}
         {!this.state.end ? (
           <React.Fragment>
             {!annotation.image ? (
@@ -556,12 +574,20 @@ class VerifyAnnotations extends Component {
                   ? annotation.name
                   : this.state.concept.name}
               </Typography>
-              <Typography className={classes.paper} variant="body2">
-                Comment: {this.state.comment}
-              </Typography>
-              <Typography className={classes.paper} variant="body2">
-                Unsure: {this.state.unsure}
-              </Typography>
+              {this.state.comment !== "" ? (
+                <Typography className={classes.paper} variant="body2">
+                  {"Comment: " + this.state.comment}
+                </Typography>
+              ) : (
+                ""
+              )}
+              {this.state.unsure !== null ? (
+                <Typography className={classes.paper} variant="body2">
+                  {"Unsure: " + this.state.unsure}
+                </Typography>
+              ) : (
+                ""
+              )}
             </div>
           </React.Fragment>
         ) : (
