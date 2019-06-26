@@ -265,34 +265,32 @@ class VerifyAnnotations extends Component {
 
     try {
       if (
-          Math.abs(
-              annotation.x1 +
-              annotation.x2 +
-              annotation.y1 +
-              annotation.y2 -
-              x1 -
-              x2 -
-              y1 -
-              y2
-          ) > 0.1
+        Math.abs(
+          annotation.x1 +
+            annotation.x2 +
+            annotation.y1 +
+            annotation.y2 -
+            x1 -
+            x2 -
+            y1 -
+            y2
+        ) > 0.1
       ) {
         // Only update box if it is changed by user
         await this.updateBox(
-            x1,
-            y1,
-            x2,
-            y2,
-            imageCord,
-            dragBoxCord,
-            imageElement
+          x1,
+          y1,
+          x2,
+          y2,
+          imageCord,
+          dragBoxCord,
+          imageElement
         );
       }
-
-      this.verifyAnnotation();
-    }
-    catch {
-        console.log("Unable to verify");
-        this.nextAnnotation();
+      await this.verifyAnnotation();
+    } catch {
+      console.log("Unable to verify");
+      this.nextAnnotation();
     }
   };
 
