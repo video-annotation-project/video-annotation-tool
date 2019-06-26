@@ -78,6 +78,7 @@ class VerifyAnnotations extends Component {
   constructor(props) {
     super(props);
     this.state = {
+      disableVerify: false,
       currentIndex: this.props.index,
       concept: null,
       comment: this.props.annotation.comment,
@@ -166,14 +167,13 @@ class VerifyAnnotations extends Component {
         return res.data;
       })
       .catch(error => {
-        this.setState({
-          error: error
-        });
+        Swal.fire(error, "", "error");
       });
   };
 
   resetState = () => {
     this.setState({
+      disableVerify: false,
       concept: null,
       comment: this.props.annotation.comment,
       unsure: this.props.annotation.unsure,
@@ -237,9 +237,7 @@ class VerifyAnnotations extends Component {
         return res.data;
       })
       .catch(error => {
-        this.setState({
-          error: error
-        });
+        Swal.fire(error, "", "error");
       });
     this.nextAnnotation();
   };
@@ -263,32 +261,47 @@ class VerifyAnnotations extends Component {
 
     var annotation = this.props.annotation;
 
-    if (
-      Math.abs(
-        annotation.x1 +
-          annotation.x2 +
-          annotation.y1 +
-          annotation.y2 -
-          x1 -
-          x2 -
-          y1 -
-          y2
-      ) > 0.1
-    ) {
-      // Only update box if it is changed by user
-      await this.updateBox(
-        x1,
-        y1,
-        x2,
-        y2,
-        imageCord,
-        dragBoxCord,
-        imageElement
-      );
+    try {
+      if (
+          Math.abs(
+              annotation.x1 +
+              annotation.x2 +
+              annotation.y1 +
+              annotation.y2 -
+              x1 -
+              x2 -
+              y1 -
+              y2
+          ) > 0.1 
+          && this.props.annotation.image
+      ) {
+        this.createAndUploadImages(
+          imageCord,
+          dragBoxCord,
+          imageElement,
+          x1,
+          y1
+        );
+        this.updateBox(
+            x1,
+            y1,
+            x2,
+            y2,
+            imageCord,
+            dragBoxCord,
+            imageElement
+        );
+      }
+
+      this.verifyAnnotation();
+    }
+    catch {
+        console.log("Unable to verify");
+        this.nextAnnotation();
     }
   };
 
-  createAndUploadImages = async (
+  createAndUploadImages = (
     imageCord,
     dragBoxCord,
     imageElement,
@@ -307,7 +320,7 @@ class VerifyAnnotations extends Component {
     ctx.rect(x1, y1, dragBoxCord.width, dragBoxCord.height);
     ctx.stroke();
     img.src = canvas.toDataURL(1.0);
-    await this.uploadImage(img);
+    this.uploadImage(img);
   };
 
   uploadImage = img => {
@@ -325,7 +338,12 @@ class VerifyAnnotations extends Component {
       buf: buf,
       name: this.props.annotation.imagewithbox
     };
-    return axios.post("/api/updateImageBox", body, config);
+    try {
+      axios.patch("/api/updateImageBox", body, config);
+    }
+    catch {
+      Swal.fire("ERR: uploading image", "", "error");
+    }
   };
 
   updateBox = (x1, y1, x2, y2, imageCord, dragBoxCord, imageElement) => {
@@ -344,19 +362,8 @@ class VerifyAnnotations extends Component {
     };
     return axios
       .patch(`/api/annotationsUpdateBox/`, body, config)
-      .then(res => {
-        this.createAndUploadImages(
-          imageCord,
-          dragBoxCord,
-          imageElement,
-          x1,
-          y1
-        );
-      })
       .catch(error => {
-        this.setState({
-          error: error
-        });
+        Swal.fire(error, "", "error");
       });
   };
 
@@ -373,11 +380,7 @@ class VerifyAnnotations extends Component {
       return;
     }
 
-    if (this.props.annotation.image) {
-      this.postBoxImage(dragBox);
-    }
-
-    this.verifyAnnotation();
+    this.postBoxImage(dragBox);
   };
 
   videoDialogToggle = () => {
@@ -398,6 +401,13 @@ class VerifyAnnotations extends Component {
       openedVideo: null
     });
   };
+
+  handleErrImage = () => {
+    Swal.close();
+    this.setState({
+      disableVerify: true
+    });
+  }
 
   render() {
     const { classes } = this.props;
@@ -421,48 +431,45 @@ class VerifyAnnotations extends Component {
         )}
         {!this.state.end ? (
           <React.Fragment>
-            {!annotation.image ? (
-              <Typography className={classes.paper}>No Image</Typography>
-            ) : (
-              <div>
-                <DragBoxContainer
+            <div>
+              <DragBoxContainer
+                className={classes.img}
+                dragBox={classes.dragBox}
+                drawDragBox={true}
+                size={{
+                  width: this.state.width,
+                  height: this.state.height
+                }}
+                position={{ x: this.state.x, y: this.state.y }}
+                onDragStop={(e, d) => {
+                  this.setState({ x: d.x, y: d.y });
+                }}
+                onResize={(e, direction, ref, delta, position) => {
+                  this.setState({
+                    width: ref.style.width,
+                    height: ref.style.height,
+                    ...position
+                  });
+                }}
+              >
+                <img
+                  id="image"
+                  onLoad={Swal.close}
+                  onError={this.handleErrImage}
                   className={classes.img}
-                  dragBox={classes.dragBox}
-                  drawDragBox={true}
-                  size={{
-                    width: this.state.width,
-                    height: this.state.height
+                  src={
+                    "https://cdn.deepseaannotations.com/test/" +
+                    annotation.image
+                  }
+                  alt="error"
+                  crossOrigin="use-credentials"
+                  style={{
+                    width: annotation.videowidth,
+                    height: annotation.videoheight
                   }}
-                  position={{ x: this.state.x, y: this.state.y }}
-                  onDragStop={(e, d) => {
-                    this.setState({ x: d.x, y: d.y });
-                  }}
-                  onResize={(e, direction, ref, delta, position) => {
-                    this.setState({
-                      width: ref.style.width,
-                      height: ref.style.height,
-                      ...position
-                    });
-                  }}
-                >
-                  <img
-                    id="image"
-                    onLoad={Swal.close}
-                    className={classes.img}
-                    src={
-                      "https://cdn.deepseaannotations.com/test/" +
-                      annotation.image
-                    }
-                    alt="error"
-                    crossOrigin="use-credentials"
-                    style={{
-                      width: annotation.videowidth,
-                      height: annotation.videoheight
-                    }}
-                  />
-                </DragBoxContainer>
-              </div>
-            )}
+                />
+              </DragBoxContainer>
+            </div>
             <Typography className={classes.paper}>
               {this.props.index + 1} of {this.props.size}
             </Typography>
@@ -494,6 +501,7 @@ class VerifyAnnotations extends Component {
               >
                 Ignore
               </Button>
+              {this.state.disableVerify !== true ?
               <Button
                 className={classes.button}
                 variant="contained"
@@ -501,7 +509,17 @@ class VerifyAnnotations extends Component {
                 onClick={this.handleVerifyClick}
               >
                 Verify
-              </Button>
+              </Button> :
+              <Button
+                className={classes.button}
+                variant="contained"
+                color="primary"
+                onClick={this.handleVerifyClick}
+                disabled
+              >
+                Verify
+              </Button>}
+
 
               <IconButton aria-label="OnDemandVideo">
                 <OndemandVideo onClick={this.videoDialogToggle} />
