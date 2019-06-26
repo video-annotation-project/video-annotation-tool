@@ -123,6 +123,7 @@ def download_annotations(min_examples, concepts, selected_concepts, concept_map,
               x1, x2, y1, y2,
               fps*timeinvideo as frame_num
             FROM annotations as A
+            LEFT JOIN videos ON videos.id=videoid
             WHERE conceptid::text = ANY(string_to_array({str_concepts},','))
             AND videoid::text = ANY(string_to_array({videos},','))
             AND EXISTS ( 
@@ -131,7 +132,7 @@ def download_annotations(min_examples, concepts, selected_concepts, concept_map,
                 WHERE id=A.originalid 
                 AND unsure = False
                 AND userid::text = ANY(string_to_array({users},',')))
-            LEFT JOIN videos ON videos.id=videoid''')
+            ''')
 
     '''
     Returns
