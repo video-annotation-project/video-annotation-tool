@@ -1032,7 +1032,7 @@ app.post(
   }
 );
 
-app.post(
+app.patch(
   "/api/updateImageBox",
   passport.authenticate("jwt", { session: false }),
   (req, res) => {
