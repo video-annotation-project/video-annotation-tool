@@ -51,7 +51,7 @@ def queryDB(query):
 
 
 def select_annotations(annotations, min_examples, selected_concepts):
-    speed.update_annotation_speed()
+    # speed.update_annotation_speed()
     selected = []
     concept_count = {}
 
