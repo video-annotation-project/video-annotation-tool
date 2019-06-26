@@ -20,7 +20,7 @@ DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 FRAME_WIDTH = 1280
 FRAME_HEIGHT = 720
-AI_ID = 17
+AI_ID = 32
 
 client = boto3.client('s3',
     aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),

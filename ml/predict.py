@@ -117,7 +117,8 @@ def predict_on_video(videoid, model_weights, concepts, upload_annotations=False,
     results, frames = predict_frames(frames, fps, model)
     results = propagate_conceptids(results, concepts)
     results = length_limit_objects(results, MIN_FRAMES_THRESH)
-    generate_video('output.mp4', copy.deepcopy(original_frames), fps, results, concepts)
+    generate_video(
+        'output.mp4', copy.deepcopy(original_frames), fps, results, concepts)
     if upload_annotations:
         con = psycopg2.connect(database = DB_NAME,
                         user = DB_USER,
@@ -296,6 +297,7 @@ def propagate_conceptids(annotations, concepts):
             scores[k] = label.confidence.mean() # Maybe the sum?
         idmax = max(scores.keys(), key=(lambda k: scores[k]))
         annotations.loc[annotations.objectid == oid,'label'] = idmax
+        annotations.loc[annotations.objectid == oid,'confidence'] = scores[idmax]
     annotations['label'] = annotations['label'].apply(lambda x: concepts[int(x)])
     annotations['conceptid'] = annotations['label'] # need both label and conceptid for later
     return annotations
@@ -315,10 +317,12 @@ def generate_video(filename, frames, fps, results, concepts):
             cv2.rectangle(frames[res.frame_num], (x1, y1), (x2, y2), (0, 255, 0), 2)
         else:
             cv2.rectangle(frames[res.frame_num], (x1, y1), (x2, y2), (255, 0, 0), 2)
-        # Replaced classmap[res.conceptid] with str(res.conceptid)
-        # Because of a bug, but will replace in the future once bug is relized
-        cv2.putText(frames[res.frame_num], str(res.conceptid), (x1, y1+15), 
-             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+        cv2.putText(
+            frames[res.frame_num], classmap[concepts.index(res.conceptid)],
+            (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+        cv2.putText(
+            frames[res.frame_num], str(res.confidence),
+            (x1, y1+10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
         cv2.putText(frames[res.frame_num], str(res.objectid), (x1, y2), 
             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
 
@@ -350,14 +354,18 @@ def get_final_predictions(results):
 def handle_annotation(cursor, x, frames, videoid, videoheight, videowidth, userid, fps):
     frame = frames[int(x.frame_num)]
     frame_w_box = get_boxed_image(x.x1, x.x2, x.y1, x.y2, copy.deepcopy(frame))
-    upload_annotation(cursor, frame, frame_w_box, x.x1, x.x2, x.y1, x.y2, x.frame_num, x.conceptid, videoid, videowidth, videoheight, userid, fps)
+    upload_annotation(
+        cursor, frame, frame_w_box, x.x1, x.x2, x.y1, x.y2,
+        x.frame_num, x.conceptid, videoid, videowidth, videoheight, userid, fps)
 
 def get_boxed_image(x1, x2, y1, y2, frame):
     cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)
     return frame
 
 #Uploads images and puts annotation in database
-def upload_annotation(cursor, frame, frame_w_box, x1, x2, y1, y2, frame_num, conceptid, videoid, videowidth, videoheight, userid, fps):
+def upload_annotation(
+    cursor, frame, frame_w_box, x1, x2, y1, y2,
+    frame_num, conceptid, videoid, videowidth, videoheight, userid, fps):
     timeinvideo = frame_num / fps
     no_box = str(videoid) + "_" + str(timeinvideo) + "_ai.png"
     box = str(uuid.uuid4()) + "_" + str(videoid) +  "_" + str(timeinvideo) + "_box_ai.png"

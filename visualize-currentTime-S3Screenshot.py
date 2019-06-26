@@ -49,7 +49,7 @@ def main():
       FROM \
         annotations \
       WHERE \
-        userid!=17 and DATE(dateannotated) between DATE(\'01/01/2019\') and DATE(\'05/18/2019\') \
+        userid!=32 and DATE(dateannotated) between DATE(\'01/01/2019\') and DATE(\'05/18/2019\') \
       ORDER BY \
         random() \
       LIMIT 500'
