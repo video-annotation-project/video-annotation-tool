@@ -74,7 +74,7 @@ def train_model(concepts, users, min_examples, epochs, model_name, videos, selec
         start = time.time()
         print("Starting Download.")
 
-        download_annotations(min_examples, selected_concepts, classmap, users, videos, img_folder, train_annot_file, valid_annot_file)
+        download_annotations(min_examples, concepts, selected_concepts, classmap, users, videos, img_folder, train_annot_file, valid_annot_file)
 
         end = time.time()
         print("Done Downloading Annotations: " + str((end - start)/60) + " minutes")
@@ -106,6 +106,7 @@ def train_model(concepts, users, min_examples, epochs, model_name, videos, selec
         },
         optimizer=keras.optimizers.adam(lr=1e-5, clipnorm=0.001)
     )
+    '''
     transform_generator = random_transform_generator(
         min_rotation=-0.1,
         max_rotation=0.1,
@@ -118,13 +119,13 @@ def train_model(concepts, users, min_examples, epochs, model_name, videos, selec
         flip_x_chance=0.5,
         flip_y_chance=0.5,
     )
-    
+    '''
     temp = pd.DataFrame(list(zip(classmap.values(), classmap.keys())))
     temp.to_csv('classmap.csv',index=False, header=False)
     train_generator = custom(
         train_annot_file,
         'classmap.csv',
-        transform_generator=transform_generator,
+        #transform_generator=transform_generator,
         batch_size = batch_size
     )
 
@@ -143,9 +144,15 @@ def train_model(concepts, users, min_examples, epochs, model_name, videos, selec
     #stopping: stops training if val_loss stops improving
     stopping = EarlyStopping(monitor='val_loss', min_delta=0, patience=10)
 
+    tensorboard_callback = keras.callbacks.TensorBoard(
+        log_dir='./logs', histogram_freq=0, batch_size=batch_size,
+        write_graph=True, write_grads=False, write_images=False,
+        embeddings_freq=0, embeddings_layer_names=None,
+        embeddings_metadata=None, embeddings_data=None, update_freq='epoch')
+    
     history = training_model.fit_generator(train_generator, 
         epochs=epochs, 
-        callbacks=[checkpoint, stopping],
+        callbacks=[checkpoint, stopping, tensorboard_callback],
         validation_data=test_generator,
         verbose=2
     ).history
