@@ -114,7 +114,7 @@ def download_annotations(min_examples, concepts, selected_concepts, concept_map,
     # To-do: change to prepared statement
     annotations = queryDB(
         f'''SELECT 
-              id,
+              A.id,
               image,
               videoid,
               videowidth,
@@ -129,7 +129,7 @@ def download_annotations(min_examples, concepts, selected_concepts, concept_map,
             AND EXISTS ( 
                 SELECT id, userid 
                 FROM annotations 
-                WHERE id=A.originalid 
+                WHERE id=originalid 
                 AND unsure = False
                 AND userid::text = ANY(string_to_array({users},',')))
             ''')
