@@ -244,37 +244,30 @@ class VerifyAnnotations extends Component {
   };
 
   postBoxImage = async dragBox => {
-    let dragBoxCord = dragBox.getBoundingClientRect();
+    const dragBoxCord = dragBox.getBoundingClientRect();
 
-    let imageElement = document.getElementById("image");
-    let imageCord = imageElement.getBoundingClientRect("dragBox");
-    let x1_image = imageCord.left;
-    let y1_image = imageCord.top;
-    let x1_box = dragBoxCord.left;
-    let y1_box = dragBoxCord.top;
-    let height = dragBoxCord.height;
-    let width = dragBoxCord.width;
+    const imageElement = document.getElementById("image");
+    const imageCord = imageElement.getBoundingClientRect("dragBox");
+    const x1_image = imageCord.left;
+    const y1_image = imageCord.top;
+    const x1_box = dragBoxCord.left;
+    const y1_box = dragBoxCord.top;
+    const height = dragBoxCord.height;
+    const width = dragBoxCord.width;
 
-    let x1 = Math.max(x1_box - x1_image, 0);
-    let y1 = Math.max(y1_box - y1_image, 0);
-    let x2 = Math.min(x1 + width, this.props.annotation.videowidth - 1);
-    let y2 = Math.min(y1 + height, this.props.annotation.videoheight - 1);
+    const x1 = Math.max(x1_box - x1_image, 0);
+    const y1 = Math.max(y1_box - y1_image, 0);
+    const x2 = Math.min(x1 + width, this.props.annotation.videowidth - 1);
+    const y2 = Math.min(y1 + height, this.props.annotation.videoheight - 1);
 
-    let annotation = this.props.annotation;
+    const annotation = this.props.annotation;
 
     try {
       if (
         Math.abs(
-          annotation.x1 +
-            annotation.x2 +
-            annotation.y1 +
-            annotation.y2 -
-            x1 -
-            x2 -
-            y1 -
-            y2
+          annotation.x1 - x1 + annotation.y1 - y1 + annotation.x2 - x2 + annotation.y2 - y2
         ) > 0.1 &&
-        this.props.annotation.image
+        annotation.image
       ) {
         this.createAndUploadImages(
           imageCord,
