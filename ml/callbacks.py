@@ -43,10 +43,10 @@ class Progress(keras.callbacks.Callback):
     def on_train_begin(self, logs={}):
         self.cursor.execute(
             f"""INSERT INTO {self.table_name} 
-                    (running, curr_epoch, max_epoch, curr_batch) 
+                    (running, curr_epoch, max_epoch, curr_batch, steps_per_epoch) 
                 VALUES 
-                    (TRUE, 0, %s, 0) RETURNING id""", 
-            (self.max_epoch,))
+                    (TRUE, 0, %s, 0, %s) RETURNING id""", 
+            (self.max_epoch, self.steps_per_epoch))
 
         self.run_id = self.cursor.fetchone()[0]
         self.connection.commit()
@@ -57,9 +57,9 @@ class Progress(keras.callbacks.Callback):
         self.connection.commit()
 
  
-    def on_epoch_begin(self, logs={}):
+    def on_epoch_begin(self, epoch, logs={}):
         self.cursor.execute(f"""UPDATE {self.table_name}  SET curr_epoch = %s WHERE id = %s""", 
-            (self.curr_epoch, self.run_id))
+            (epoch, self.run_id))
         self.connection.commit()
  
 

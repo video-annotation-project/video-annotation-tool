@@ -65,7 +65,7 @@ def select_annotations(annotations, min_examples, selected_concepts):
     ai_id = queryDB("SELECT id FROM users WHERE username='tracking'").id[0]
     # Give priority to frames with least amount of tracking annotations
     # And lower speed
-    sort_lambda = lambda df : (df['userid'].count(ai_id), df.speed.mean())
+    sort_lambda = lambda df : (list(df['userid']).count(ai_id), df.speed.mean())
     group_frame.sort(key=sort_lambda)
 
     #selects images that we'll use (each group has annotations for an image)
@@ -116,11 +116,13 @@ def download_annotations(min_examples, concepts, selected_concepts, concept_map,
         f'''SELECT 
               A.id,
               image,
+              userid,
               videoid,
               videowidth,
               videoheight,
               conceptid,
               x1, x2, y1, y2,
+              speed,
               fps*timeinvideo as frame_num
             FROM annotations as A
             LEFT JOIN videos ON videos.id=videoid
