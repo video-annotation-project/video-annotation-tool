@@ -10,7 +10,8 @@ from dotenv import load_dotenv
 #     running bool,
 #     curr_epoch integer,
 #     max_epoch integer,
-#     curr_batch integer
+#     curr_batch integer,
+#     steps_per_epoch integer
 # );
 
 class Progress(keras.callbacks.Callback):
