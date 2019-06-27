@@ -158,6 +158,9 @@ def evaluate(video_id, user_id, model_path, concepts):
     metrics.to_csv("metrics" + str(video_id) + ".csv")
     print(metrics)
 
+def outputVerificationVideos():
+    print('in progress...')
+
 if __name__ == '__main__':
     # connect to db
     con = connect(database=os.getenv("DB_NAME"), 
