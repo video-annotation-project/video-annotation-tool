@@ -245,20 +245,12 @@ class VerifyAnnotations extends Component {
 
   postBoxImage = async dragBox => {
     const dragBoxCord = dragBox.getBoundingClientRect();
-
     const imageElement = document.getElementById("image");
     const imageCord = imageElement.getBoundingClientRect("dragBox");
-    const x1_image = imageCord.left;
-    const y1_image = imageCord.top;
-    const x1_box = dragBoxCord.left;
-    const y1_box = dragBoxCord.top;
-    const height = dragBoxCord.height;
-    const width = dragBoxCord.width;
-
-    const x1 = Math.max(x1_box - x1_image, 0);
-    const y1 = Math.max(y1_box - y1_image, 0);
-    const x2 = Math.min(x1 + width, this.props.annotation.videowidth - 1);
-    const y2 = Math.min(y1 + height, this.props.annotation.videoheight - 1);
+    const x1 = this.state.x;
+    const y1 = this.state.y;
+    const x2 = this.state.x + this.state.width;
+    const y2 = this.state.y + this.state.height;
 
     const annotation = this.props.annotation;
 
