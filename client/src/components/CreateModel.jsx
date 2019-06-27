@@ -350,6 +350,7 @@ class CreateModel extends Component {
       activeStep,
       modelName,
       conceptsSelected,
+      videosSelected,
       openedVideo
     } = this.state;
     if (!models) {
@@ -379,7 +380,8 @@ class CreateModel extends Component {
                       className={classes.button}
                       disabled={
                         (activeStep === 0 && modelName === "") ||
-                        (activeStep === 1 && conceptsSelected.length < 1)
+                        (activeStep === 1 && conceptsSelected.length < 1) ||
+                        (activeStep === 2 && videosSelected.length < 1)
                       }
                     >
                       {activeStep === steps.length - 1 ? "Create Model" : "Next"}
