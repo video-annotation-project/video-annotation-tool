@@ -326,7 +326,6 @@ class VerifyAnnotations extends Component {
 
   updateBox = (x1, y1, x2, y2, imageCord, dragBoxCord, imageElement) => {
     const body = {
-      id: this.props.annotation.id,
       x1: x1,
       y1: y1,
       x2: x2,
@@ -334,7 +333,8 @@ class VerifyAnnotations extends Component {
       oldx1: this.props.annotation.x1,
       oldy1: this.props.annotation.y1,
       oldx2: this.props.annotation.x2,
-      oldy2: this.props.annotation.y2
+      oldy2: this.props.annotation.y2,
+      id: this.props.annotation.id
     };
     const config = {
       headers: {

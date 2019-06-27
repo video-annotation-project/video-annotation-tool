@@ -304,8 +304,7 @@ class Annotate extends Component {
     var dragBoxCord = dragBox.getBoundingClientRect();
 
     var vidCord = videoElement.getBoundingClientRect();
-    var video_x1 = vidCord.left;
-    var video_y1 = vidCord.top;
+
 
     //Make video image
     var canvas = document.createElement("canvas");
@@ -317,16 +316,11 @@ class Annotate extends Component {
     videoImage.setAttribute("crossOrigin", "use-credentials");
     videoImage.src = canvas.toDataURL(1.0);
 
-    var box_x1 = dragBoxCord.left;
-    var box_y1 = dragBoxCord.top;
-    var height = dragBoxCord.height;
-    var width = dragBoxCord.width;
-
     // Bouding box coordinates
-    var x1 = Math.max(box_x1 - video_x1, 0);
-    var y1 = Math.max(box_y1 - video_y1, 0);
-    var x2 = Math.min(x1 + width, 1599);
-    var y2 = Math.min(y1 + height, 899);
+    var x1 = Math.max(this.state.x, 0);
+    var y1 = Math.max(this.state.y, 0);
+    var x2 = Math.min(x1 + this.state.width, 1599);
+    var y2 = Math.min(y1 + this.state.height, 899);
 
     //draw video with and without bounding box to canvas and save as img
     var date = Date.now().toString();

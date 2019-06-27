@@ -1554,30 +1554,11 @@ app.patch(
   "/api/annotationsUpdateBox",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    const id = req.body.id;
-
-    const x1 = req.body.x1;
-    const y1 = req.body.y1;
-    const x2 = req.body.x2;
-    const y2 = req.body.y2;
-    const oldx1 = req.body.oldx1;
-    const oldy1 = req.body.oldy1;
-    const oldx2 = req.body.oldx2;
-    const oldy2 = req.body.oldy2;
+    const params = Object.values(req.body);
     const queryText = `UPDATE annotations SET x1=$1, y1=$2, x2=$3, y2=$4, oldx1=$5, oldy1=$6, oldx2=$7, oldy2=$8, priority = priority+1 WHERE id=$9`;
 
     try {
-      let update = await psql.query(queryText, [
-        x1,
-        y1,
-        x2,
-        y2,
-        oldx1,
-        oldy1,
-        oldx2,
-        oldy2,
-        id
-      ]);
+      let update = await psql.query(queryText, params);
       res.json(update.rows);
     } catch (error) {
       console.log(error);
