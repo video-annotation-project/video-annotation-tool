@@ -1153,14 +1153,23 @@ app.post(
   async (req, res) => {
     const queryText =`
       INSERT INTO 
-        models(name, timestamp, concepts)
-      VALUES($1, current_timestamp, $2)
+        models(
+          name,
+          timestamp,
+          concepts,
+          videos,
+          verificationvideos)
+      VALUES($1, current_timestamp, $2, $3)
       RETURNING *`;
 
     try {
       let response = await psql.query(
         queryText,
-        [req.body.name, req.body.concepts]);
+        [
+          req.body.name,
+          req.body.concepts,
+          req.body.videos
+        ]);
       res.json(response.rows);
     } catch (error) {
       console.log(error);

@@ -19,6 +19,11 @@ import FormControlLabel from "@material-ui/core/FormControlLabel";
 import FormLabel from "@material-ui/core/FormLabel";
 import Checkbox from "@material-ui/core/Checkbox";
 
+//Video description
+import IconButton from "@material-ui/core/IconButton";
+import Description from "@material-ui/icons/Description";
+import VideoMetadata from "./VideoMetadata.jsx";
+
 import Typography from "@material-ui/core/Typography";
 import { withStyles } from "@material-ui/core/styles";
 import Swal from "sweetalert2";
@@ -60,7 +65,10 @@ class CreateModel extends Component {
       models: [],
       concepts: [],
       conceptsSelected: [],
-      activeStep: 0
+      videos: [],
+      videosSelected: [],
+      activeStep: 0,
+      openedVideo: null,
     };
   }
 
@@ -68,6 +76,7 @@ class CreateModel extends Component {
     return [
       'Name model',
       'Select species',
+      'Select test videos'
    ];
   }
 
@@ -77,6 +86,8 @@ class CreateModel extends Component {
         return this.nameModel();
       case 1:
         return this.selectConcepts();
+      case 2:
+        return this.selectVideo();
       default:
         return "Unknown step";
     }
@@ -85,6 +96,7 @@ class CreateModel extends Component {
   componentDidMount = () => {
     this.loadExistingModels();
     this.loadConcepts();
+    this.loadVideoList();
   };
 
   loadExistingModels = () => {
@@ -134,6 +146,22 @@ class CreateModel extends Component {
         }
       });
   }
+
+  loadVideoList = () => {
+    const config = {
+      headers: {
+        Authorization: "Bearer " + localStorage.getItem("token")
+      }
+    };
+    axios.get(
+      `/api/videos`,
+      config
+    ).then(res => {
+      this.setState({
+        videos: res.data[2].rows
+      });
+    });
+  };
 
   handleChange = event => {
     this.setState({
@@ -209,8 +237,55 @@ class CreateModel extends Component {
     )
   }
 
+  selectVideo = () => {
+    if (!this.state.videos) {
+      return <div>Loading...</div>
+    }
+    return (
+      <FormControl
+        component="fieldset"
+        className={this.props.classes.checkSelector}
+      >
+        <FormLabel component="legend">Select Videos to Test Model</FormLabel>
+        <FormGroup>
+          {this.state.videos.map(video => (
+            <div key={video.filename}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    onChange={this.checkboxSelect('videosSelected', video.id)}
+                    color='primary'
+                    checked={
+                      this.state.videosSelected.includes(video.id)
+                    }
+                  />
+                }
+                label={video.id + " " + video.filename}
+              >
+              </FormControlLabel>
+              <IconButton style={{ float: 'right' }}>
+                <Description
+                  onClick={
+                    (event) =>
+                      this.openVideoMetadata(
+                        event,
+                        video,
+                      )
+                  }
+                />
+              </IconButton>
+
+            </div>
+          ))}
+        </FormGroup>
+      </FormControl>
+    );
+  };
+
   postModel = async () => {
-    const {modelName, conceptsSelected} = this.state;
+    const {
+      modelName, conceptsSelected, videosSelected
+    } = this.state;
     const config = {
       headers: {
         Authorization: "Bearer " + localStorage.getItem("token")
@@ -218,7 +293,8 @@ class CreateModel extends Component {
     };
     const body = {
       name: modelName,
-      concepts: conceptsSelected
+      concepts: conceptsSelected,
+      videos: videosSelected
     };
     try {
       await axios.post(`/api/models`, body, config);
@@ -243,7 +319,7 @@ class CreateModel extends Component {
       }
     }
     // If step = 2 then model ready to submit
-    if (this.state.activeStep === 1) {
+    if (this.state.activeStep === 2) {
       this.postModel();
     }
 
@@ -273,7 +349,8 @@ class CreateModel extends Component {
       models,
       activeStep,
       modelName,
-      conceptsSelected
+      conceptsSelected,
+      openedVideo
     } = this.state;
     if (!models) {
       return <div>Loading...</div>;
@@ -320,6 +397,23 @@ class CreateModel extends Component {
               Another One...
             </Button>
           </Paper>
+        )}
+        {this.state.openedVideo && (
+          <VideoMetadata
+            open={
+              true /* The VideoMetadata 'openness' is controlled through
+              boolean logic rather than by passing in a variable as an
+              attribute. This is to force VideoMetadata to unmount when it 
+              closes so that its state is reset. This also prevents the 
+              accidental double submission bug, by implicitly reducing 
+              the transition time of VideoMetadata to zero. */
+            }
+            handleClose={this.closeVideoMetadata}
+            openedVideo={openedVideo}
+            socket={this.props.socket}
+            loadVideos={this.props.loadVideos}
+            modelTab={true}
+          />
         )}
       </div>
     );
