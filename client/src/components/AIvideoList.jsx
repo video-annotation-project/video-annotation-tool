@@ -7,12 +7,12 @@ import ListItem from "@material-ui/core/ListItem";
 import ListItemText from "@material-ui/core/ListItemText";
 import { withStyles } from "@material-ui/core/styles";
 
-import VideoMetadata from "./VideoMetadata.jsx";
 import IconButton from "@material-ui/core/IconButton";
 import DeleteIcon from "@material-ui/icons/Delete";
 import Description from "@material-ui/icons/Description";
 import axios from "axios";
 
+import Summary from "./Summary.jsx";
 import Swal from "sweetalert2";
 
 const styles = theme => ({
@@ -36,7 +36,9 @@ class VideoList extends Component {
     super(props);
     this.state = {
       aiListOpen: false,
-      openedVideo: null
+      openedVideo: null,
+      descriptionOpen: false,
+      summary: null
     };
   }
 
@@ -81,6 +83,42 @@ class VideoList extends Component {
     })
   }
 
+  openVideoSummary = async (event, video) => {
+    event.stopPropagation();
+
+    this.setState({
+      descriptionOpen: true,
+      summary: await this.getSummary(video)
+    });
+  };
+
+  closeVideoSummary = () => {
+    this.setState({
+      descriptionOpen: false,
+      summary: null
+    });
+  };
+
+
+  getSummary = async video => {
+    const config = {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + localStorage.getItem("token")
+      }
+    };
+    try {
+      var summary = await axios.get("/api/aivideos/summary/" + video.name, config)
+
+      if (summary) {
+        return summary;
+      }
+    } catch (error) {
+        console.log("Error in summary.jsx get /api/aivideos/summary");
+        console.log(error.response.data);
+    };
+  };
+
   //Methods for video meta data
   openVideoMetadata = (event, video) => {
     event.stopPropagation();
@@ -101,9 +139,6 @@ class VideoList extends Component {
       handleVideoClick,
       aiVideos
     } = this.props;
-    const {
-      openedVideo
-    } = this.state;
 
     return (
       <div className={classes.root}>
@@ -132,7 +167,7 @@ class VideoList extends Component {
                     <ListItemText primary={video.id + ". " + video.name} />
                     <IconButton>
                       <Description
-                        onClick={event => this.openVideoMetadata(event, video)}
+                        onClick={event => this.openVideoSummary(event, video)}
                       />
                     </IconButton>
                     <IconButton aria-label="Delete">
@@ -145,23 +180,21 @@ class VideoList extends Component {
               </List>
           </div>
         </Drawer>
-        {this.state.openedVideo && (
-          <VideoMetadata
-            open={
-              true /* The VideoMetadata 'openness' is controlled through
+        {this.state.descriptionOpen && (
+            <Summary
+              open={
+                true /* The 'openness' is controlled through
               boolean logic rather than by passing in a variable as an
-              attribute. This is to force VideoMetadata to unmount when it 
+              attribute. This is to force Summary to unmount when it 
               closes so that its state is reset. This also prevents the 
               accidental double submission bug, by implicitly reducing 
-              the transition time of VideoMetadata to zero. */
-            }
-            handleClose={this.closeVideoMetadata}
-            openedVideo={openedVideo}
-            socket={this.props.socket}
-            loadVideos={this.props.loadVideos}
-            model={false}
-          />
-        )}
+              the transition time of Summary to zero. */
+              }
+              handleClose={this.closeVideoSummary}
+              summary={this.state.summary}
+              aiSummary={true}
+            />
+          )}
       </div>
     );
   }

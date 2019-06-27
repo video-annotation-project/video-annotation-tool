@@ -718,6 +718,46 @@ app.get(
   }
 );
 
+
+app.get(
+  "/api/aivideos/summary/:name",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    let params = [];
+    var video = req.params.name;
+    var splitted = video.split("_");
+    params.push(splitted[1]); // userid
+    params.push(splitted[0]); // videoid
+
+    let queryText = `SELECT *
+      FROM concepts c
+      JOIN
+      ((SELECT conceptid, videoid,
+        sum(case when userid  = $1 then 1 else 0 end) as count,
+        sum(case when userid  <> $1 then 1 else 0 end) as notai
+      FROM annotations
+      GROUP BY
+      conceptid, videoid)
+      ) AS counts
+
+      ON counts.conceptid=c.id
+      WHERE 
+        videoid=$2
+      AND
+        c.id = ANY(SELECT unnest(concepts) from models where userid= $1);`
+
+    try {
+      const summary = await psql.query(queryText, params);
+
+      res.json(summary.rows);
+    } catch (error) {
+      console.log("Error in get /api/videos/summary/:videoid");
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
+);
+
 app.patch(
   "/api/videos/:videoid",
   passport.authenticate("jwt", { session: false }),
@@ -1007,8 +1047,17 @@ app.delete(
           Objects: Objects
         }
       };
-      let s3Res = await s3.deleteObjects(params);
-      res.json("delete");
+      let s3Res = await s3.deleteObjects(params,
+        (err, data) => {
+          if (err) {
+            console.log("Err: deleting images");
+            res.status(500).json(err);
+          }
+          else {
+            res.json("delete");
+          }
+        }
+        );
     } catch (error) {
       console.log("Error in delete /api/annotations");
       console.log(error);

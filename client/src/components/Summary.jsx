@@ -77,8 +77,14 @@ class Summary extends React.Component {
       end = { latitude: this.props.gpsstop.x, longitude: this.props.gpsstop.y };
       dist = geoLib.getDistance(start, end, 1, 3);
     }
+    else {
+      dist = 1;
+    }
     if (this.props.startdepth && this.props.enddepth) {
       depth = this.props.startdepth - this.props.enddepth;
+    }
+    else {
+      depth = 0;
     }
 
     return (
@@ -97,11 +103,14 @@ class Summary extends React.Component {
                     <TableCell>Picture</TableCell>
                     <TableCell>Name</TableCell>
                     <TableCell align="right"># of Annotations</TableCell>
+
                     <TableCell align="right">
-                      {this.state.km
+                      {this.props.aiSummary ? "# of Annotations by Non-AI" :
+                      this.state.km
                         ? "Creatures per km"
                         : "Creatures per square meter"}
                     </TableCell>
+
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -115,10 +124,13 @@ class Summary extends React.Component {
                           {row.name}
                         </TableCell>
                         <TableCell align="right">{row.count}</TableCell>
+
                         <TableCell align="right">
-                          {this.state.km
+                          {this.props.aiSummary ? row.notai :
+                          this.state.km
                             ? this.setDecimal(row.count / (dist * 1000))
-                            : this.setDecimal(row.count / (dist * 2))}
+                            : this.setDecimal(row.count / (dist * 2))
+                          }
                         </TableCell>
                       </TableRow>
                     ))
@@ -131,7 +143,7 @@ class Summary extends React.Component {
               </Table>
             </Paper>
             <div>
-              {this.props.summary && (
+              {this.props.summary && !this.props.aiSummary && (
                 <Button
                   onClick={() => this.getTotal(this.props.summary.data)}
                   color="primary"
@@ -139,7 +151,7 @@ class Summary extends React.Component {
                   Total
                 </Button>
               )}
-              {this.props.summary && (
+              {this.props.summary && !this.props.aiSummary && (
                 <Button onClick={() => this.convertDistance()} color="primary">
                   Convert
                 </Button>
