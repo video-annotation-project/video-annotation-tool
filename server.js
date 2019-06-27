@@ -801,7 +801,7 @@ app.get(
       queryPass = queryPass + " AND annotations.userid = $1";
       params.push(req.user.id);
     }
-    // Adds query conditions from report tree
+    // Adds query conditions from Report tree
     queryPass +=
       req.query.queryConditions + " ORDER BY annotations.timeinvideo";
     // Retrieves only selected 100 if queryLimit exists
@@ -1068,7 +1068,7 @@ let selectLevelQuery = level => {
                  WHERE videos.id=annotations.videoid \
                  AND annotations.userid NOT IN (17, 32)";
   }
-  if (level === "Concept") {
+  if (level === "concepts") {
     queryPass =
       "SELECT concepts.name as name,\
                  concepts.id as key,\

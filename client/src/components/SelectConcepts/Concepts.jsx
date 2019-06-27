@@ -1,11 +1,10 @@
 import React from "react";
 import axios from "axios";
-
-// import Typography from '@material-ui/core/Typography';
 import { withStyles } from "@material-ui/core/styles";
 import List from "@material-ui/core/List";
-import ConceptsList from "./ConceptsList.jsx";
 import Swal from "sweetalert2";
+
+import ConceptsList from "./ConceptsList.jsx";
 
 const styles = theme => ({
   root: {

@@ -1,18 +1,16 @@
 import React, { Component } from "react";
 import axios from "axios";
 import io from "socket.io-client";
-
-import ConceptsSelected from "./ConceptsSelected.jsx";
-import DialogModal from "./DialogModal.jsx";
-import VideoList from "./VideoList.jsx";
-import DragBoxContainer from "./DragBoxContainer.jsx";
-
 import Button from "@material-ui/core/Button";
 import Typography from "@material-ui/core/Typography";
 import { withStyles } from "@material-ui/core/styles";
 import Slider from "@material-ui/lab/Slider";
-
 import Swal from "sweetalert2";
+
+import ConceptsSelected from "../Utilities/ConceptsSelected.jsx";
+import DialogModal from "../Utilities/DialogModal.jsx";
+import VideoList from "./VideoList.jsx";
+import DragBoxContainer from "../Utilities/DragBoxContainer.jsx";
 
 
 const styles = theme => ({

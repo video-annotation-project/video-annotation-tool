@@ -4,21 +4,21 @@ import PropTypes from "prop-types";
 import { withStyles } from "@material-ui/core/styles";
 import { Typography } from "@material-ui/core";
 import Button from "@material-ui/core/Button";
-import DialogModal from "./DialogModal";
 import OndemandVideo from "@material-ui/icons/OndemandVideo";
 import IconButton from "@material-ui/core/IconButton";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import Dialog from "@material-ui/core/Dialog";
 import blue from "@material-ui/core/colors/blue";
 import { MuiThemeProvider, createMuiTheme } from "@material-ui/core/styles";
-import ConceptsSelected from "./ConceptsSelected";
-import DragBoxContainer from "./DragBoxContainer.jsx";
-
-import VideoMetadata from "./VideoMetadata.jsx";
 import Description from "@material-ui/icons/Description";
 import Avatar from "@material-ui/core/Avatar";
 import Grid from "@material-ui/core/Grid";
 import Swal from "sweetalert2";
+
+import DialogModal from "../Utilities/DialogModal";
+import ConceptsSelected from "../Utilities/ConceptsSelected";
+import DragBoxContainer from "../Utilities/DragBoxContainer.jsx";
+import VideoMetadata from "../Utilities/VideoMetadata.jsx";
 
 const styles = theme => ({
   button: {
@@ -140,7 +140,7 @@ class VerifyAnnotations extends Component {
       // ignore shortcut
       this.nextAnnotation();
     } else if (e.code === "KeyV") {
-      // verify shortcut
+      // Verify shortcut
       this.handleVerifyClick();
     }
   };
@@ -288,7 +288,7 @@ class VerifyAnnotations extends Component {
 
       this.verifyAnnotation();
     } catch {
-      console.log("Unable to verify");
+      console.log("Unable to Verify");
       this.nextAnnotation();
     }
   };
@@ -469,7 +469,7 @@ class VerifyAnnotations extends Component {
               <MuiThemeProvider theme={theme}>
                 <Button
                   className={classes.button}
-                  letiant="contained"
+                  variant="contained"
                   color="secondary"
                   onClick={this.handleDelete}
                 >
@@ -478,14 +478,14 @@ class VerifyAnnotations extends Component {
               </MuiThemeProvider>
               <Button
                 className={classes.button}
-                letiant="contained"
+                variant="contained"
                 onClick={this.resetState}
               >
                 Reset Box
               </Button>
               <Button
                 className={classes.button}
-                letiant="contained"
+                variant="contained"
                 onClick={this.nextAnnotation}
               >
                 Ignore
@@ -493,7 +493,7 @@ class VerifyAnnotations extends Component {
               {this.state.disableVerify !== true ? (
                 <Button
                   className={classes.button}
-                  letiant="contained"
+                  variant="contained"
                   color="primary"
                   onClick={this.handleVerifyClick}
                 >
@@ -502,7 +502,7 @@ class VerifyAnnotations extends Component {
               ) : (
                 <Button
                   className={classes.button}
-                  letiant="contained"
+                  variant="contained"
                   color="primary"
                   onClick={this.handleVerifyClick}
                   disabled
@@ -555,13 +555,10 @@ class VerifyAnnotations extends Component {
             <br />
             <br />
             <div>
-              <Typography className={classes.paper} letiant="title">
+              <Typography className={classes.paper} variant="title">
                 Annotation #{annotation.id}
               </Typography>
-              <Typography className={classes.paper} letiant="body2">
-                Annotated by: {annotation.username}
-              </Typography>
-              <Typography className={classes.paper} letiant="body2">
+              <Typography className={classes.paper} variant="body2">
                 Video: {annotation.filename}
                 <IconButton>
                   <Description
@@ -572,26 +569,29 @@ class VerifyAnnotations extends Component {
                   />
                 </IconButton>
               </Typography>
-              <Typography className={classes.paper} letiant="body2">
+              <Typography className={classes.paper} variant="body2">
+                Annotated by: {annotation.username}
+              </Typography>
+              <Typography className={classes.paper} variant="body2">
                 Time: {Math.floor(annotation.timeinvideo / 60)} minutes{" "}
                 {Math.floor(annotation.timeinvideo % 60)} seconds
               </Typography>
-              <Typography className={classes.paper} letiant="body2">
+              <Typography className={classes.paper} variant="body2">
                 Concept:{" "}
                 {!this.state.concept
                   ? annotation.name
                   : this.state.concept.name}
               </Typography>
               {this.state.comment !== "" ? (
-                <Typography className={classes.paper} letiant="body2">
-                  {"Comment: " + this.state.comment}
+                <Typography className={classes.paper} variant="body2">
+                  Comment: {this.state.comment}
                 </Typography>
               ) : (
                 ""
               )}
               {this.state.unsure !== null ? (
-                <Typography className={classes.paper} letiant="body2">
-                  {"Unsure: " + this.state.unsure}
+                <Typography className={classes.paper} variant="body2">
+                  Unsure: {this.state.unsure}
                 </Typography>
               ) : (
                 ""
@@ -603,7 +603,7 @@ class VerifyAnnotations extends Component {
             <Typography className={classes.paper}>Finished</Typography>
             <Button
               className={classes.button}
-              letiant="contained"
+              variant="contained"
               color="primary"
               onClick={this.props.toggleSelection}
             >

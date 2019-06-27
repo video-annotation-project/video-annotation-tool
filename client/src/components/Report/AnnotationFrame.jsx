@@ -1,10 +1,11 @@
 import React, { Component } from "react";
+import axios from "axios";
 import PropTypes from "prop-types";
 import { withStyles } from "@material-ui/core/styles";
 import ListItem from "@material-ui/core/ListItem";
-import ConceptsSelected from "./ConceptsSelected.jsx";
-import DialogModal from "./DialogModal.jsx";
-import axios from "axios";
+
+import ConceptsSelected from "../Utilities/ConceptsSelected.jsx";
+import DialogModal from "../Utilities/DialogModal.jsx";
 
 const styles = theme => ({
   item: {
