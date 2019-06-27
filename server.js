@@ -564,8 +564,7 @@ app.get(
   "/api/videos/:videoid",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    let queryText =
-      `SELECT 
+    let queryText = `SELECT 
         usernames.userswatching, 
         usernames.usersfinished,
         videos.* 
@@ -779,7 +778,8 @@ app.get(
     //Build query string
     let queryPass = `
       SELECT
-        annotations.id, annotations.comment, annotations.verifiedby,
+        annotations.id, annotations.comment, 
+        annotations.verifiedby, annotations.priority,
         annotations.unsure, annotations.timeinvideo, 
         annotations.imagewithbox, concepts.name, 
         false as extended 
@@ -803,8 +803,7 @@ app.get(
     }
     // Adds query conditions from report tree
     queryPass +=
-      req.query.queryConditions +
-      " ORDER BY annotations.timeinvideo";
+      req.query.queryConditions + " ORDER BY annotations.timeinvideo";
     // Retrieves only selected 100 if queryLimit exists
     if (req.query.queryLimit !== "undefined") {
       queryPass = queryPass + req.query.queryLimit;
@@ -1033,7 +1032,7 @@ app.post(
   }
 );
 
-app.post(
+app.patch(
   "/api/updateImageBox",
   passport.authenticate("jwt", { session: false }),
   (req, res) => {
@@ -1151,7 +1150,7 @@ app.post(
   "/api/models",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    const queryText =`
+    const queryText = `
       INSERT INTO 
         models(
           name,
@@ -1402,8 +1401,9 @@ app.get(
     let params = [];
 
     let queryText = `SELECT DISTINCT c.id, c.name
-        FROM annotations a, concepts c
-        WHERE a.verifiedby IS NULL AND a.conceptid=c.id`;
+        FROM annotations a
+        LEFT JOIN concepts c ON c.id=conceptid
+        WHERE a.verifiedby IS NULL`;
 
     if (selectedUsers.length === 1 && selectedUsers[0] === "-1") {
       let trackingId = null;
@@ -1444,10 +1444,12 @@ app.get(
     const selectedConcepts = req.query.selectedConcepts;
 
     let params = [];
-    let queryText =
-    `SELECT distinct a.*, c.name, u.username, v.filename
-      FROM annotations a, concepts c, users u, videos v
-      WHERE c.id=a.conceptid AND u.id=a.userid AND v.id=a.videoid AND a.verifiedby IS NULL`;
+    let queryText = `SELECT distinct a.*, c.name, u.username, v.filename
+      FROM annotations a
+      LEFT JOIN concepts c ON c.id=conceptid
+      LEFT JOIN users u ON u.id=userid
+      LEFT JOIN videos v ON v.id=videoid
+      WHERE a.verifiedby IS NULL`;
 
     if (selectedUsers.length === 1 && selectedUsers[0] === "-1") {
       let trackingId = null;
@@ -1489,33 +1491,37 @@ app.patch(
   `/api/annotationsVerify`,
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    const id = req.body.id;
-    const conceptid =
-      req.body.conceptid != null ? `, conceptid=` + req.body.conceptid : ``;
-    const comment =
-      req.body.comment != null ? `, comment='` + req.body.comment + `'` : ``;
-    const unsure = req.body.unsure != null ? `, unsure=` + req.body.unsure : ``;
     const verifiedby = req.user.id;
+    const id = req.body.id;
     let s3 = new AWS.S3();
 
-    const queryText1 =
-      `UPDATE annotations SET verifiedby=$2, verifieddate=current_timestamp, originalid=null` +
-      conceptid +
-      comment +
-      unsure +
-      ` WHERE id=$1`;
+    var params = [id, verifiedby];
+    var queryText1 =
+    `UPDATE annotations SET verifiedby=$2, verifieddate=current_timestamp, originalid=null`;
 
-    let queryText2 = `
+    if (req.body.conceptid !== null) {
+      queryText1 += `, conceptid=$3, priority=priority+3`;
+      params.push(req.body.conceptid);
+    } else {
+      queryText1 += `, priority= priority+1`;
+    }
+    params.push(req.body.comment);
+    queryText1 += `, comment=$`+ params.length;
+    params.push(req.body.unsure);
+    queryText1 += `, unsure=$`+ params.length;
+    queryText1 += ` WHERE id=$1`;
+
+    const queryText2 = `
       DELETE FROM
         annotations \
       WHERE 
         originalid=$1 
         and annotations.id<>$1
-      RETURNING *`;
-    try {
-      let update = await psql.query(queryText1, [id, verifiedby]);
+      RETURNING *`;      
 
-      var deleteRes = await psql.query(queryText2, [id]);
+    try {
+      let deleteRes = await psql.query(queryText2, [id]);
+      await psql.query(queryText1, params);
 
       //These are the s3 object we will be deleting
       let Objects = [];
@@ -1536,7 +1542,7 @@ app.patch(
           req.body.id +
           "_tracking.mp4"
       });
-      let params = {
+      params = {
         Bucket: process.env.AWS_S3_BUCKET_NAME,
         Delete: {
           Objects: Objects
@@ -1556,7 +1562,6 @@ app.patch(
   "/api/annotationsUpdateBox",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    // console.log(req.body)
     const id = req.body.id;
 
     var x1 = req.body.x1;
@@ -1564,7 +1569,7 @@ app.patch(
     var y1 = req.body.y1;
     var y2 = req.body.y2;
 
-    const queryText = `UPDATE annotations SET x1=$1, x2=$2, y1=$3, y2=$4 WHERE id=$5`;
+    const queryText = `UPDATE annotations SET x1=$1, x2=$2, y1=$3, y2=$4, priority = priority + 1 WHERE id=$5`;
     try {
       let update = await psql.query(queryText, [x1, x2, y1, y2, id]);
       res.json(update.rows);

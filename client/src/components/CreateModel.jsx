@@ -314,7 +314,7 @@ class CreateModel extends Component {
     if (this.state.activeStep === 0) {
       if (this.state.models.includes(
         this.state.modelName)) {
-        alert('Model Already Exists');
+        Swal.fire('Model Already Exists', '', "info");
         return;
       }
     }

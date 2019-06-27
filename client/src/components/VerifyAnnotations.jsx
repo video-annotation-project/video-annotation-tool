@@ -20,8 +20,6 @@ import Avatar from "@material-ui/core/Avatar";
 import Grid from "@material-ui/core/Grid";
 import Swal from "sweetalert2";
 
-
-
 const styles = theme => ({
   button: {
     margin: theme.spacing.unit
@@ -80,10 +78,11 @@ class VerifyAnnotations extends Component {
   constructor(props) {
     super(props);
     this.state = {
+      disableVerify: false,
       currentIndex: this.props.index,
       concept: null,
-      comment: null,
-      unsure: null,
+      comment: this.props.annotation.comment,
+      unsure: this.props.annotation.unsure,
       error: null,
       conceptDialogMsg: null,
       conceptDialogOpen: false,
@@ -168,17 +167,16 @@ class VerifyAnnotations extends Component {
         return res.data;
       })
       .catch(error => {
-        this.setState({
-          error: error
-        });
+        Swal.fire(error, "", "error");
       });
   };
 
   resetState = () => {
     this.setState({
+      disableVerify: false,
       concept: null,
-      comment: null,
-      unsure: null,
+      comment: this.props.annotation.comment,
+      unsure: this.props.annotation.unsure,
       x: this.props.annotation.x1,
       y: this.props.annotation.y1,
       width: this.props.annotation.x2 - this.props.annotation.x1,
@@ -208,9 +206,10 @@ class VerifyAnnotations extends Component {
   handleConceptClick = concept => {
     this.setState({
       conceptDialogMsg:
-        "Switch " + this.props.annotation + " to " + concept.name + "?",
+        "Switch " + this.props.annotation.name + " to " + concept.name + "?",
       conceptDialogOpen: true,
-      clickedConcept: concept
+      clickedConcept:
+        this.props.annotation.conceptid === concept.id ? null : concept
     });
   };
 
@@ -238,17 +237,14 @@ class VerifyAnnotations extends Component {
         return res.data;
       })
       .catch(error => {
-        this.setState({
-          error: error
-        });
+        Swal.fire(error, "", "error");
       });
     this.nextAnnotation();
   };
 
-  postBoxImage = async () => {
-    var dragBoxCord = document
-      .getElementById("dragBox")
-      .getBoundingClientRect();
+  postBoxImage = async dragBox => {
+    var dragBoxCord = dragBox.getBoundingClientRect();
+
     var imageElement = document.getElementById("image");
     var imageCord = imageElement.getBoundingClientRect("dragBox");
     var x1_image = imageCord.left;
@@ -263,10 +259,49 @@ class VerifyAnnotations extends Component {
     var x2 = Math.min(x1 + width, this.props.annotation.videowidth - 1);
     var y2 = Math.min(y1 + height, this.props.annotation.videoheight - 1);
 
-    await this.updateBox(x1, y1, x2, y2, imageCord, dragBoxCord, imageElement);
+    var annotation = this.props.annotation;
+
+    try {
+      if (
+          Math.abs(
+              annotation.x1 +
+              annotation.x2 +
+              annotation.y1 +
+              annotation.y2 -
+              x1 -
+              x2 -
+              y1 -
+              y2
+          ) > 0.1 
+          && this.props.annotation.image
+      ) {
+        this.createAndUploadImages(
+          imageCord,
+          dragBoxCord,
+          imageElement,
+          x1,
+          y1
+        );
+        this.updateBox(
+            x1,
+            y1,
+            x2,
+            y2,
+            imageCord,
+            dragBoxCord,
+            imageElement
+        );
+      }
+
+      this.verifyAnnotation();
+    }
+    catch {
+        console.log("Unable to verify");
+        this.nextAnnotation();
+    }
   };
 
-  createAndUploadImages = async (
+  createAndUploadImages = (
     imageCord,
     dragBoxCord,
     imageElement,
@@ -285,7 +320,7 @@ class VerifyAnnotations extends Component {
     ctx.rect(x1, y1, dragBoxCord.width, dragBoxCord.height);
     ctx.stroke();
     img.src = canvas.toDataURL(1.0);
-    await this.uploadImage(img);
+    this.uploadImage(img);
   };
 
   uploadImage = img => {
@@ -303,7 +338,12 @@ class VerifyAnnotations extends Component {
       buf: buf,
       name: this.props.annotation.imagewithbox
     };
-    return axios.post("/api/updateImageBox", body, config);
+    try {
+      axios.patch("/api/updateImageBox", body, config);
+    }
+    catch {
+      Swal.fire("ERR: uploading image", "", "error");
+    }
   };
 
   updateBox = (x1, y1, x2, y2, imageCord, dragBoxCord, imageElement) => {
@@ -322,33 +362,25 @@ class VerifyAnnotations extends Component {
     };
     return axios
       .patch(`/api/annotationsUpdateBox/`, body, config)
-      .then(res => {
-        this.createAndUploadImages(
-          imageCord,
-          dragBoxCord,
-          imageElement,
-          x1,
-          y1
-        );
-        if (res.status === 200) {
-          this.setState({
-            redraw: !this.state.redraw,
-            redrawn: true
-          });
-        }
-      })
       .catch(error => {
-        this.setState({
-          error: error
-        });
+        Swal.fire(error, "", "error");
       });
   };
 
   handleVerifyClick = () => {
-    if (this.props.annotation.image) {
-      this.postBoxImage();
+    var dragBox = document.getElementById("dragBox");
+
+    if (dragBox === null) {
+      Swal.fire({
+        title: "Error",
+        text: "No bounding box exists.",
+        type: "error",
+        confirmButtonText: "Okay"
+      });
+      return;
     }
-    this.verifyAnnotation();
+
+    this.postBoxImage(dragBox);
   };
 
   videoDialogToggle = () => {
@@ -370,6 +402,13 @@ class VerifyAnnotations extends Component {
     });
   };
 
+  handleErrImage = () => {
+    Swal.close();
+    this.setState({
+      disableVerify: true
+    });
+  }
+
   render() {
     const { classes } = this.props;
     let annotation = this.props.annotation;
@@ -380,62 +419,57 @@ class VerifyAnnotations extends Component {
 
     return (
       <React.Fragment>
-        <DialogModal
-          title={"Confirm Annotation Edit"}
-          message={this.state.conceptDialogMsg}
-          placeholder={"Comments"}
-          inputHandler={this.changeConcept}
-          open={this.state.conceptDialogOpen}
-          handleClose={this.handleConceptDialogClose}
-        />
+        {this.state.conceptDialogOpen && (
+          <DialogModal
+            title={"Confirm Annotation Edit"}
+            message={this.state.conceptDialogMsg}
+            placeholder={"Comments"}
+            inputHandler={this.changeConcept}
+            open={true}
+            handleClose={this.handleConceptDialogClose}
+          />
+        )}
         {!this.state.end ? (
           <React.Fragment>
-            {!annotation.image ? (
-              <Typography className={classes.paper}>No Image</Typography>
-            ) : (
-              <div>
-                <DragBoxContainer 
+            <div>
+              <DragBoxContainer
+                className={classes.img}
+                dragBox={classes.dragBox}
+                drawDragBox={true}
+                size={{
+                  width: this.state.width,
+                  height: this.state.height
+                }}
+                position={{ x: this.state.x, y: this.state.y }}
+                onDragStop={(e, d) => {
+                  this.setState({ x: d.x, y: d.y });
+                }}
+                onResize={(e, direction, ref, delta, position) => {
+                  this.setState({
+                    width: ref.style.width,
+                    height: ref.style.height,
+                    ...position
+                  });
+                }}
+              >
+                <img
+                  id="image"
+                  onLoad={Swal.close}
+                  onError={this.handleErrImage}
                   className={classes.img}
-                  dragBox={classes.dragBox}
-                  drawDragBox={true}
-
-                  size={{
-                    width: this.state.width,
-                    height: this.state.height
+                  src={
+                    "https://cdn.deepseaannotations.com/test/" +
+                    annotation.image
+                  }
+                  alt="error"
+                  crossOrigin="use-credentials"
+                  style={{
+                    width: annotation.videowidth,
+                    height: annotation.videoheight
                   }}
-                  
-                  position={{ x: this.state.x, y: this.state.y }}
-
-                  onDragStop={(e, d) => {
-                    this.setState({ x: d.x, y: d.y });
-                  }}
-
-                  onResize={(e, direction, ref, delta, position) => {
-                    this.setState({
-                      width: ref.style.width,
-                      height: ref.style.height,
-                      ...position
-                    });
-                  }}
-                >
-                  <img
-                    id="image"
-                    onLoad={Swal.close}
-                    className={classes.img}
-                    src={
-                      "https://cdn.deepseaannotations.com/test/" +
-                      annotation.image
-                    }
-                    alt="error"
-                    crossOrigin="use-credentials"
-                    style={{
-                      width: annotation.videowidth,
-                      height: annotation.videoheight
-                    }}
-                  />
-                </DragBoxContainer>
-              </div>
-            )}
+                />
+              </DragBoxContainer>
+            </div>
             <Typography className={classes.paper}>
               {this.props.index + 1} of {this.props.size}
             </Typography>
@@ -467,6 +501,7 @@ class VerifyAnnotations extends Component {
               >
                 Ignore
               </Button>
+              {this.state.disableVerify !== true ?
               <Button
                 className={classes.button}
                 variant="contained"
@@ -474,7 +509,17 @@ class VerifyAnnotations extends Component {
                 onClick={this.handleVerifyClick}
               >
                 Verify
-              </Button>
+              </Button> :
+              <Button
+                className={classes.button}
+                variant="contained"
+                color="primary"
+                onClick={this.handleVerifyClick}
+                disabled
+              >
+                Verify
+              </Button>}
+
 
               <IconButton aria-label="OnDemandVideo">
                 <OndemandVideo onClick={this.videoDialogToggle} />
@@ -547,6 +592,20 @@ class VerifyAnnotations extends Component {
                   ? annotation.name
                   : this.state.concept.name}
               </Typography>
+              {this.state.comment !== "" ? (
+                <Typography className={classes.paper} variant="body2">
+                  {"Comment: " + this.state.comment}
+                </Typography>
+              ) : (
+                ""
+              )}
+              {this.state.unsure !== null ? (
+                <Typography className={classes.paper} variant="body2">
+                  {"Unsure: " + this.state.unsure}
+                </Typography>
+              ) : (
+                ""
+              )}
             </div>
           </React.Fragment>
         ) : (

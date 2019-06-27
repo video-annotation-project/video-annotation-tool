@@ -85,6 +85,7 @@ class Login extends Component {
             value={this.state.username}
             onChange={this.handleChange}
             margin="normal"
+            required
           />
           <br />
           <TextField
@@ -94,6 +95,7 @@ class Login extends Component {
             value={this.state.password}
             onChange={this.handleChange}
             margin="normal"
+            required
           />
           <br />
           <br />
