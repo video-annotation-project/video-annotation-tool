@@ -342,7 +342,7 @@ class VerifyAnnotations extends Component {
         Authorization: "Bearer " + localStorage.getItem("token")
       }
     };
-    return axios
+    axios
       .patch(`/api/annotationsUpdateBox/`, body, config)
       .catch(error => {
         Swal.fire(error, "", "error");
