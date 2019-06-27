@@ -1068,7 +1068,7 @@ let selectLevelQuery = level => {
                  WHERE videos.id=annotations.videoid \
                  AND annotations.userid NOT IN (17, 32)";
   }
-  if (level === "concepts") {
+  if (level === "Concept") {
     queryPass =
       "SELECT concepts.name as name,\
                  concepts.id as key,\
