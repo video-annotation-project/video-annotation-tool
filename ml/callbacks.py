@@ -10,7 +10,8 @@ from dotenv import load_dotenv
 #     running bool,
 #     curr_epoch integer,
 #     max_epoch integer,
-#     curr_batch integer
+#     curr_batch integer,
+#     steps_per_epoch integer
 # );
 
 class Progress(keras.callbacks.Callback):
@@ -57,9 +58,9 @@ class Progress(keras.callbacks.Callback):
         self.connection.commit()
 
  
-    def on_epoch_begin(self, logs={}):
+    def on_epoch_begin(self, epoch, logs={}):
         self.cursor.execute(f"""UPDATE {self.table_name}  SET curr_epoch = %s WHERE id = %s""", 
-            (self.curr_epoch, self.run_id))
+            (epoch, self.run_id))
         self.connection.commit()
  
 

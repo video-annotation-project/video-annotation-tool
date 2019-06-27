@@ -1,16 +1,18 @@
+import os
 import json
 import math
-import pandas as pd
-import psycopg2
-from PIL import Image
-import boto3
-import numpy as np
-import os
-from dotenv import load_dotenv
-from pascal_voc_writer import Writer
 import random
 import speed
 import time
+
+import pandas as pd
+import numpy as np
+import psycopg2
+import boto3
+from PIL import Image
+from dotenv import load_dotenv
+from pascal_voc_writer import Writer
+
 
 load_dotenv(dotenv_path="../.env")
 S3_BUCKET = os.getenv('AWS_S3_BUCKET_NAME')
@@ -58,7 +60,7 @@ def select_annotations(annotations, min_examples, selected_concepts):
     for concept in selected_concepts:
         concept_count[concept] = 0
 
-    group_frame = annotations.groupby(['videoid','frame_num'], sort=False)
+    group_frame = annotations.groupby(['videoid', 'frame_num'], sort=False)
     group_frame = [df for _, df in group_frame]
     random.shuffle(group_frame) # Shuffle BEFORE the sort
 
@@ -102,7 +104,9 @@ def select_annotations(annotations, min_examples, selected_concepts):
 #   train_annot_file: name of training annotation csv
 #   valid_annot_file: name of validation annotations csv
 #   split: fraction of annotation images that willbe used for training (rest used in validation)
-def download_annotations(min_examples, concepts, selected_concepts, concept_map, users, videos, img_folder, train_annot_file, valid_annot_file, split=.8):
+def download_annotations(min_examples, concepts, selected_concepts, concept_map, users, 
+    videos, img_folder, train_annot_file, valid_annot_file, split=.8):
+
     # Variable that represents all images already in the image folder
     existing_images = set(os.listdir(img_folder))
     
@@ -115,6 +119,7 @@ def download_annotations(min_examples, concepts, selected_concepts, concept_map,
     annotations = queryDB(
         f'''SELECT 
               A.id,
+              userid,
               image,
               videoid,
               videowidth,
