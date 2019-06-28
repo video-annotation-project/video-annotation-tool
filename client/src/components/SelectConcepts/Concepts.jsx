@@ -2,7 +2,6 @@ import React from "react";
 import axios from "axios";
 import { withStyles } from "@material-ui/core/styles";
 import List from "@material-ui/core/List";
-import Swal from "sweetalert2";
 
 import ConceptsList from "./ConceptsList.jsx";
 

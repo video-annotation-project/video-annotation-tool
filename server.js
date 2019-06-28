@@ -1555,7 +1555,14 @@ app.patch(
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const params = Object.values(req.body);
-    const queryText = `UPDATE annotations SET x1=$1, y1=$2, x2=$3, y2=$4, oldx1=$5, oldy1=$6, oldx2=$7, oldy2=$8, priority = priority+1 WHERE id=$9`;
+    const queryText = `
+    UPDATE
+      annotations 
+    SET 
+      x1=$1, y1=$2, x2=$3, y2=$4, 
+      oldx1=$5, oldy1=$6, oldx2=$7, oldy2=$8,
+      priority = priority+1 
+    WHERE id=$9`;
 
     try {
       let update = await psql.query(queryText, params);
