@@ -440,12 +440,13 @@ app.delete(
       DELETE FROM
         users  
       WHERE
-        id=$1
+        username=$1
       RETURNING *
     `;
     var videoName = req.body.video.name;
     var splitName = videoName.split("_");
-    var modelId = splitName[splitName.length-2];
+    var modelNamewithMP4 = splitName[splitName.length-1];
+    var modelName = modelNamewithMP4.split(".mp4")[0];
 
     try {
       let Objects = [];
@@ -470,7 +471,7 @@ app.delete(
 
       let del = await psql.query(queryText, [req.body.video.id]);
       
-      del = await psql.query(queryText1, [modelId]);
+      del = await psql.query(queryText1, [modelName]);
 
 
       res.json("deleted");
@@ -755,25 +756,29 @@ app.get(
     let params = [];
     var video = req.params.name;
     var splitted = video.split("_");
-    params.push(splitted[1]); // userid
+    var username = splitted[1].split(".mp4")
+    params.push(username[0]); // username
     params.push(splitted[0]); // videoid
+    console.log(params);
 
     let queryText = `SELECT *
       FROM concepts c
       JOIN
       ((SELECT conceptid, videoid,
-        sum(case when userid  = $1 then 1 else 0 end) as count,
-        sum(case when userid  <> $1 then 1 else 0 end) as notai
-      FROM annotations
+        sum(case when username  = $1 then 1 else 0 end) as count,
+        sum(case when username  <> $1 then 1 else 0 end) as notai
+      FROM annotations a LEFT JOIN users u ON u.id = a.userid
       GROUP BY
-      conceptid, videoid)
+      a.conceptid, a.videoid)
       ) AS counts
 
       ON counts.conceptid=c.id
       WHERE 
         videoid=$2
       AND
-        c.id = ANY(SELECT unnest(concepts) from models where userid= $1);`
+        c.id = ANY(SELECT unnest(concepts) from models m
+        LEFT JOIN users u ON m.userid = u.id
+        where username = $1);`
 
     try {
       const summary = await psql.query(queryText, params);
