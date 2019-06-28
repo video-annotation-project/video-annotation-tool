@@ -17,7 +17,6 @@ import Swal from "sweetalert2";
 
 const styles = theme => ({
   videoContainer: {
-    postion: "absolute",
     top: "50px",
     width: "1600px",
     height: "900px"
