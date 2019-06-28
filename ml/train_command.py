@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from load_n_train import train_model
 import boto3
 import json
+import time
 
 config_path = "../config.json"
 load_dotenv(dotenv_path="../.env")
@@ -50,6 +51,29 @@ except:
 cursor.execute("SELECT * FROM MODELS WHERE name='" + str(info['modelSelected']) + "'")
 model = cursor.fetchone()
 concepts = model[2]
+user_model = model[0] + "_" + time.ctime() # testV2_Fri Jun 28 11:58:37 2019
+# insert into users
+cursor.execute('''
+    INSERT INTO users (username, password, admin) 
+    VALUES (%s, 0, null) 
+    RETURING *''',
+    (user_model,))
+model_user_id = cursor.fetchone()[0]
+
+# update models
+cursor.execute('''
+    UPDATE models 
+    SET userid=%d
+    WHERE name=%s
+    RETURING *''',
+    (model_user_id,str(info['modelSelected']),))
+
+print('cursor without fetch')
+print(cursor)
+print('cursor with fetch')
+print(cursor.fetchone())
+
+# Start training job
 train_model(concepts, info['usersSelected'], int(info['minImages']), int(info['epochs']), info['modelSelected'], info['videosSelected'], info['conceptsSelected'], download_data=True)
 
 cursor.execute("Update modeltab SET info =  '{\"activeStep\": 0, \"conceptsSelected\":[], \"epochs\":0, \"minImages\":0, \"modelSelected\":\"\",\"videosSelected\":[],\"usersSelected\":[]}' WHERE option = 'trainmodel'")
