@@ -147,11 +147,11 @@ def interlace_annotations_to_video(annotations, filename, concepts):
             cv2.putText(frames[val.frame_num], str(val.conceptid), (x1, y1+15),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
     predict.save_video(filename, frames, fps)
-
-    os.system('ffmpeg -loglevel 0 -i ' + filename + ' -codec:v libx264 '+ filename)
+    converted_file = 'testing.mp4'
+    os.system('ffmpeg -loglevel 0 -i \'' + filename + '\' -codec:v libx264 -y \''+ converted_file + '\'')
     #upload video..
-    s3.upload_file(filename, S3_BUCKET, AWS_S3_BUCKET_AIVIDEOS_FOLDER +  filename,  ExtraArgs={'ContentType':'video/mp4'})
-    os.system('rm '+ filename)
+    s3.upload_file(converted_file, S3_BUCKET, AWS_S3_BUCKET_AIVIDEOS_FOLDER +  filename,  ExtraArgs={'ContentType':'video/mp4'})
+    os.system('rm \'' + filename + '\'')
 
     # add the entry to ai_videos
     cursor.execute('''

@@ -46,7 +46,7 @@ MIN_FRAMES_THRESH = config['min_frames_threshold']
 VIDEO_WIDTH = config['resized_video_width']
 VIDEO_HEIGHT = config['resized_video_height']
 MAX_TIME_BACK = config['max_seconds_back']
-weights_file = config['weights_file']
+weights_path = config['weights_path']
 
 class Tracked_object:
 
@@ -401,11 +401,11 @@ if __name__ == '__main__':
 
     model_name = 'testV2'
 
-    s3.download_file(S3_BUCKET, S3_WEIGHTS_FOLDER + model_name + '.h5', weights_file)
+    s3.download_file(S3_BUCKET, S3_WEIGHTS_FOLDER + model_name + '.h5', weights_path)
     cursor.execute("SELECT * FROM MODELS WHERE name='" + model_name + "'")
     model = cursor.fetchone()
 
     videoid = 86 
     concepts = model[2]
 
-    predict_on_video(videoid, 'current_weights', concepts)
+    predict_on_video(videoid, weights_path, concepts)
