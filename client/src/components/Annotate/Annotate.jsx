@@ -319,9 +319,9 @@ class Annotate extends Component {
     // Bouding box coordinates
     var x1 = Math.max(this.state.x, 0);
     var y1 = Math.max(this.state.y, 0);
-    var x2 = Math.min(x1 + this.state.width, 1599);
-    var y2 = Math.min(y1 + this.state.height, 899);
-
+    var x2 = Math.min(x1 + parseInt(this.state.width,0), 1599);
+    var y2 = Math.min(y1 + parseInt(this.state.height,0), 899);
+    
     //draw video with and without bounding box to canvas and save as img
     var date = Date.now().toString();
 

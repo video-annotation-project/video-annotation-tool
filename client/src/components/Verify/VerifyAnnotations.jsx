@@ -249,8 +249,8 @@ class VerifyAnnotations extends Component {
     const imageCord = imageElement.getBoundingClientRect("dragBox");
     const x1 = this.state.x;
     const y1 = this.state.y;
-    const x2 = this.state.x + this.state.width;
-    const y2 = this.state.y + this.state.height;
+    const x2 = this.state.x + parseInt(this.state.width, 0);
+    const y2 = this.state.y + parseInt(this.state.height, 0);
 
     const annotation = this.props.annotation;
 
