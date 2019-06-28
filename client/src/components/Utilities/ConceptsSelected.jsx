@@ -1,14 +1,12 @@
 import React from "react";
 import axios from "axios";
-
-import SearchModal from "./SearchModal.jsx";
-
 import Button from "@material-ui/core/Button";
-// import Drawer from '@material-ui/core/Drawer';
 import IconButton from "@material-ui/core/IconButton";
 import { withStyles } from "@material-ui/core/styles";
 import AddIcon from "@material-ui/icons/Add";
 import { ChevronRight, Close } from "@material-ui/icons";
+
+import SearchModal from "./SearchModal.jsx";
 
 const styles = theme => ({
   root: {},

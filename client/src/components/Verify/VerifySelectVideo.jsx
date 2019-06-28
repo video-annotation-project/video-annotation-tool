@@ -8,9 +8,6 @@ import FormControl from "@material-ui/core/FormControl";
 import { Typography } from "@material-ui/core";
 
 const styles = theme => ({
-  root: {
-    display: "flex"
-  },
   formControl: {
     margin: theme.spacing.unit * 3
   },
@@ -41,7 +38,6 @@ class VerifySelectVideo extends React.Component {
     const { classes, value, handleChange } = this.props;
 
     return (
-      <div className={classes.root}>
         <FormControl component="fieldset" className={classes.formControl}>
           <FormGroup
             aria-label="Video"
@@ -76,7 +72,6 @@ class VerifySelectVideo extends React.Component {
             )}
           </FormGroup>
         </FormControl>
-      </div>
     );
   }
 }

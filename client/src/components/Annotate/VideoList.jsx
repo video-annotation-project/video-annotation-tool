@@ -9,10 +9,10 @@ import { withStyles } from "@material-ui/core/styles";
 import Collapse from "@material-ui/core/Collapse";
 import ExpandLess from "@material-ui/icons/ExpandLess";
 import ExpandMore from "@material-ui/icons/ExpandMore";
-
-import VideoMetadata from "./VideoMetadata.jsx";
 import IconButton from "@material-ui/core/IconButton";
 import Description from "@material-ui/icons/Description";
+
+import VideoMetadata from "../Utilities/VideoMetadata.jsx";
 
 const styles = theme => ({
   root: {

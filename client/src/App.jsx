@@ -1,16 +1,16 @@
 import React from "react";
 import { Redirect, Route, Switch } from "react-router-dom";
 
-import Annotate from "./components/Annotate.jsx";
-import Concepts from "./components/Concepts.jsx";
+import Annotate from "./components/Annotate/Annotate.jsx";
+import Concepts from "./components/SelectConcepts/Concepts.jsx";
 import CreateUser from "./components/CreateUser.jsx";
 import Home from "./components/Home.jsx";
 import Login from "./components/Login.jsx";
 import Navbar from "./components/Navbar.jsx";
 import Profile from "./components/Profile.jsx";
-import Report from "./components/Report.jsx";
-import Verify from "./components/Verify.jsx";
-import Models from "./components/Models.jsx";
+import Report from "./components/Report/Report.jsx";
+import Verify from "./components/Verify/Verify.jsx";
+import Models from "./components/Model/Models.jsx";
 import Users from "./components/Users.jsx";
 
 require("dotenv").config();

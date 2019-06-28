@@ -1,18 +1,16 @@
 import React, { Component } from "react";
 import axios from "axios";
 import io from "socket.io-client";
-
-import ConceptsSelected from "./ConceptsSelected.jsx";
-import DialogModal from "./DialogModal.jsx";
-import VideoList from "./VideoList.jsx";
-import DragBoxContainer from "./DragBoxContainer.jsx";
-
 import Button from "@material-ui/core/Button";
 import Typography from "@material-ui/core/Typography";
 import { withStyles } from "@material-ui/core/styles";
 import Slider from "@material-ui/lab/Slider";
-
 import Swal from "sweetalert2";
+
+import ConceptsSelected from "../Utilities/ConceptsSelected.jsx";
+import DialogModal from "../Utilities/DialogModal.jsx";
+import VideoList from "./VideoList.jsx";
+import DragBoxContainer from "../Utilities/DragBoxContainer.jsx";
 
 
 const styles = theme => ({
@@ -306,8 +304,7 @@ class Annotate extends Component {
     var dragBoxCord = dragBox.getBoundingClientRect();
 
     var vidCord = videoElement.getBoundingClientRect();
-    var video_x1 = vidCord.left;
-    var video_y1 = vidCord.top;
+
 
     //Make video image
     var canvas = document.createElement("canvas");
@@ -319,17 +316,12 @@ class Annotate extends Component {
     videoImage.setAttribute("crossOrigin", "use-credentials");
     videoImage.src = canvas.toDataURL(1.0);
 
-    var box_x1 = dragBoxCord.left;
-    var box_y1 = dragBoxCord.top;
-    var height = dragBoxCord.height;
-    var width = dragBoxCord.width;
-
     // Bouding box coordinates
-    var x1 = Math.max(box_x1 - video_x1, 0);
-    var y1 = Math.max(box_y1 - video_y1, 0);
-    var x2 = Math.min(x1 + width, 1599);
-    var y2 = Math.min(y1 + height, 899);
-
+    var x1 = Math.max(this.state.x, 0);
+    var y1 = Math.max(this.state.y, 0);
+    var x2 = Math.min(x1 + parseInt(this.state.width,0), 1599);
+    var y2 = Math.min(y1 + parseInt(this.state.height,0), 899);
+    
     //draw video with and without bounding box to canvas and save as img
     var date = Date.now().toString();
 
@@ -582,6 +574,7 @@ class Annotate extends Component {
             title={"Confirm Annotation"}
             message={this.state.dialogMsg}
             placeholder={"Comments"}
+            comment={""}
             inputHandler={this.postAnnotation}
             open={
               true /* The DialogModal 'openness' is controlled through
