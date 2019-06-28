@@ -27,6 +27,12 @@ S3_BUCKET = os.getenv('AWS_S3_BUCKET_NAME')
 s3 = boto3.client('s3', aws_access_key_id = AWS_ACCESS_KEY_ID, aws_secret_access_key = AWS_SECRET_ACCESS_KEY)
 S3_WEIGHTS_FOLDER = os.getenv("AWS_S3_BUCKET_WEIGHTS_FOLDER")
 
+# connect to db
+con = connect(database=os.getenv("DB_NAME"), 
+    host=os.getenv("DB_HOST"), 
+    user=os.getenv("DB_USER"), 
+    password=os.getenv("DB_PASSWORD"))
+cursor = con.cursor()
 
 def score_predictions(validation, predictions, iou_thresh, concepts):
     # Maintain a set of predicted objects to verify
@@ -141,14 +147,19 @@ def interlace_annotations_to_video(annotations, filename, concepts):
             cv2.putText(frames[val.frame_num], str(val.conceptid), (x1, y1+15),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
     predict.save_video(filename, frames, fps)
+
+    os.system('ffmpeg -loglevel 0 -i ' + filename + ' -codec:v libx264 '+ filename)
+    #upload video..
     s3.upload_file(filename, S3_BUCKET, AWS_S3_BUCKET_AIVIDEOS_FOLDER +  filename,  ExtraArgs={'ContentType':'video/mp4'})
+    os.system('rm '+ filename)
 
     # add the entry to ai_videos
-    queryDB("""
+    cursor.execute('''
         INSERT INTO ai_videos (name)
-        VALUES (%(filename)s)""",
-        {'filename': filename} 
+        VALUES (%s)''',
+        (filename,)
     )
+
 
 # s3.upload_file(temp_file, S3_BUCKET, S3_ANNOTATION_FOLDER + no_box, ExtraArgs={'ContentType':'image/png'}) 
 
@@ -168,15 +179,10 @@ def evaluate(video_id, model_username, concepts):
     metrics = metrics.set_index('conceptid').join(concept_counts)
     metrics.to_csv("metrics" + str(video_id) + ".csv")
     print(metrics)
+    con.commit()
+    con.close() 
 
 if __name__ == '__main__':
-    # connect to db
-    con = connect(database=os.getenv("DB_NAME"), 
-        host=os.getenv("DB_HOST"), 
-        user=os.getenv("DB_USER"), 
-        password=os.getenv("DB_PASSWORD"))
-    cursor = con.cursor()
-
     model_name = 'testV2' 
 
     s3.download_file(S3_BUCKET, S3_WEIGHTS_FOLDER + model_name + '.h5', weights_path)
@@ -193,4 +199,3 @@ if __name__ == '__main__':
     model_username = model[6]
 
     evaluate(video_id, model_username, concepts)
-    # evaluate(video_id, userid, 'BEST_WEIGHTS.h5', concepts)

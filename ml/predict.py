@@ -26,6 +26,7 @@ s3 = boto3.client('s3', aws_access_key_id = AWS_ACCESS_KEY_ID, aws_secret_access
 S3_VIDEO_FOLDER = os.getenv('AWS_S3_BUCKET_VIDEOS_FOLDER')
 S3_ANNOTATION_FOLDER = os.getenv("AWS_S3_BUCKET_ANNOTATIONS_FOLDER")
 S3_TRACKING_FOLDER = os.getenv("AWS_S3_BUCKET_TRACKING_FOLDER")
+S3_WEIGHTS_FOLDER = os.getenv("S3_WEIGHTS_FOLDER")
 
 # Connect to db
 DB_NAME = os.getenv("DB_NAME")
@@ -45,6 +46,7 @@ MIN_FRAMES_THRESH = config['min_frames_threshold']
 VIDEO_WIDTH = config['resized_video_width']
 VIDEO_HEIGHT = config['resized_video_height']
 MAX_TIME_BACK = config['max_seconds_back']
+weights_file = config['weights_file']
 
 class Tracked_object:
 
@@ -399,7 +401,7 @@ if __name__ == '__main__':
 
     model_name = 'testV2'
 
-    s3.download_file(S3_BUCKET, S3_WEIGHTS_FOLDER + model_name + '.h5', 'current_weights.h5')
+    s3.download_file(S3_BUCKET, S3_WEIGHTS_FOLDER + model_name + '.h5', weights_file)
     cursor.execute("SELECT * FROM MODELS WHERE name='" + model_name + "'")
     model = cursor.fetchone()
 
