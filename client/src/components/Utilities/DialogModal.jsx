@@ -31,6 +31,12 @@ class DialogModal extends Component {
     };
   }
 
+  componentDidMount() {
+    this.setState({
+      comment: this.props.comment
+    })
+  }
+
   handleInputKeyUp = event => {
     if (event.key === "Enter") {
       this.handleSubmit();
@@ -72,6 +78,7 @@ class DialogModal extends Component {
             margin="dense"
             id="concept"
             type="text"
+            defaultValue={this.state.comment}
             placeholder={this.props.placeholder}
             fullWidth
           />

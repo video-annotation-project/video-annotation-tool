@@ -574,6 +574,7 @@ class Annotate extends Component {
             title={"Confirm Annotation"}
             message={this.state.dialogMsg}
             placeholder={"Comments"}
+            comment={""}
             inputHandler={this.postAnnotation}
             open={
               true /* The DialogModal 'openness' is controlled through

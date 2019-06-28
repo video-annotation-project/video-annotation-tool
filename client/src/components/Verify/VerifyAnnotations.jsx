@@ -398,6 +398,7 @@ class VerifyAnnotations extends Component {
             title={"Confirm Annotation Edit"}
             message={this.state.conceptDialogMsg}
             placeholder={"Comments"}
+            comment={this.state.comment}
             inputHandler={this.changeConcept}
             open={true}
             handleClose={this.handleConceptDialogClose}
