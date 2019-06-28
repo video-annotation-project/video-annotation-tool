@@ -106,7 +106,7 @@ class Tracked_object:
         self.annotations['objectid'] = matched_obj_id
 
 
-def predict_on_video(videoid, model_weights, concepts, upload_annotations=False, userid=None):
+def predict_on_video(videoid, model_weights, concepts, filename, upload_annotations=False, userid=None):
     video_name = queryDB("select * from videos where id = " + str(videoid)).iloc[0].filename
     print("Loading Video")
     frames, fps = get_video_frames(video_name)
@@ -118,7 +118,7 @@ def predict_on_video(videoid, model_weights, concepts, upload_annotations=False,
     results = propagate_conceptids(results, concepts)
     results = length_limit_objects(results, MIN_FRAMES_THRESH)
     generate_video(
-        'output.mp4', copy.deepcopy(original_frames), fps, results, concepts)
+        filename, copy.deepcopy(original_frames), fps, results, concepts)
     if upload_annotations:
         con = psycopg2.connect(database = DB_NAME,
                         user = DB_USER,

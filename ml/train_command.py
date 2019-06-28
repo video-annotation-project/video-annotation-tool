@@ -42,7 +42,7 @@ if info['activeStep'] != 5:
     exit()
 
 try:
-	s3.download_file(S3_BUCKET, S3_WEIGHTS_FOLDER + str(info['modelSelected']) + '.h5', weights_path )
+	s3.download_file(S3_BUCKET, S3_WEIGHTS_FOLDER + str(info['modelSelected']) + '.h5', weights_path)
 except:
 	s3.download_file(S3_BUCKET, S3_WEIGHTS_FOLDER + default_weights, weights_path)
 
@@ -59,8 +59,8 @@ if (model[4] != 'None'):
         WHERE id=%s''',
         (model[4],))
 
-user_model = model[0] + "_" + time.ctime() 
-# username example: testV2_Fri Jun 28 11:58:37 2019
+user_model = model[0] + "-" + time.ctime() 
+# username example: testV2-Fri Jun 28 11:58:37 2019
 # insert into users
 cursor.execute('''
     INSERT INTO users (username, password, admin) 
