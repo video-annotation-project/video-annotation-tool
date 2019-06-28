@@ -51,27 +51,31 @@ except:
 cursor.execute("SELECT * FROM MODELS WHERE name='" + str(info['modelSelected']) + "'")
 model = cursor.fetchone()
 concepts = model[2]
-user_model = model[0] + "_" + time.ctime() # testV2_Fri Jun 28 11:58:37 2019
+
+#Delete old model user
+if (model[4] != 'None'):
+    cursor.execute('''
+        DELETE FROM users
+        WHERE id=%s''',
+        (model[4],))
+
+user_model = model[0] + "_" + time.ctime() 
+# username example: testV2_Fri Jun 28 11:58:37 2019
 # insert into users
 cursor.execute('''
     INSERT INTO users (username, password, admin) 
     VALUES (%s, 0, null) 
-    RETURING *''',
+    RETURNING *''',
     (user_model,))
-model_user_id = cursor.fetchone()[0]
+model_user_id = int(cursor.fetchone()[0])
 
 # update models
 cursor.execute('''
     UPDATE models 
-    SET userid=%d
+    SET userid=%s
     WHERE name=%s
-    RETURING *''',
+    RETURNING *''',
     (model_user_id,str(info['modelSelected']),))
-
-print('cursor without fetch')
-print(cursor)
-print('cursor with fetch')
-print(cursor.fetchone())
 
 # Start training job
 train_model(concepts, info['usersSelected'], int(info['minImages']), int(info['epochs']), info['modelSelected'], info['videosSelected'], info['conceptsSelected'], download_data=True)
