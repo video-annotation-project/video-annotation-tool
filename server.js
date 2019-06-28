@@ -670,7 +670,7 @@ app.get(
 
 // Get videos that users have viewed
 app.get(
-  "/api/videos/usersViewed/:userIDs",
+  "/api/videos/trainModel/:userIDs/:model",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     let queryText = `
@@ -681,14 +681,43 @@ app.get(
       videos v
     ON
       v.id=c.videoid
-    WHERE
+    WHERE /* Get videos from only users selected */
       c.userid::text = ANY(string_to_array($1, ','))
+    AND /* Exclude verification videos */
+      NOT (v.id = ANY(
+        SELECT 
+          unnest(verificationvideos)
+        FROM 
+          models 
+        WHERE 
+          name=$2))
+    AND /* Include only videos that have concepts model is training on */
+      v.id IN (
+        SELECT
+          DISTINCT videoid
+        FROM
+          annotations
+        WHERE
+          conceptid = ANY(
+            SELECT
+              unnest(concepts)
+            FROM
+             models
+            WHERE
+              name=$2
+          )
+      )
     `;
     try {
-      const videos = await psql.query(queryText, [req.params.userIDs]);
+      const videos = await psql.query(
+        queryText,
+        [
+          req.params.userIDs,
+          req.params.model
+        ]);
       res.json(videos.rows);
     } catch (error) {
-      console.log("Error in get /api/videos/usersViewed/:userIDs");
+      console.log("Error in get /api/videos/trainModel/");
       console.log(error);
       res.status(500).json(error);
     }
@@ -1276,15 +1305,22 @@ app.post(
   async (req, res) => {
     const queryText = `
       INSERT INTO 
-        models(name, timestamp, concepts)
-      VALUES($1, current_timestamp, $2)
+        models(
+          name,
+          timestamp,
+          concepts,
+          verificationvideos)
+      VALUES($1, current_timestamp, $2, $3)
       RETURNING *`;
 
     try {
-      let response = await psql.query(queryText, [
-        req.body.name,
-        req.body.concepts
-      ]);
+      let response = await psql.query(
+        queryText,
+        [
+          req.body.name,
+          req.body.concepts,
+          req.body.videos
+        ]);
       res.json(response.rows);
     } catch (error) {
       console.log(error);
