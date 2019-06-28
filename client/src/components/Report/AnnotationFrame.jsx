@@ -103,6 +103,7 @@ class AnnotationFrame extends Component {
         <DialogModal
           title={"Confirm Annotation Edit"}
           message={this.state.dialogMsg}
+          comment={""}
           placeholder={"Comments"}
           inputHandler={this.editAnnotation}
           open={this.state.dialogOpen}
