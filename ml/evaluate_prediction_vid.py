@@ -14,7 +14,7 @@ config_path = '../config.json'
 with open(config_path) as config_buffer:
    config = json.loads(config_buffer.read())['ml']
 
-bad_users = json.loads(os.getenv("BAD_USERS"))
+good_users = config['biologist_users']
 EVALUATION_IOU_THRESH = config['evaluation_iou_threshold']
 RESIZED_WIDTH = config['resized_video_width']
 RESIZED_HEIGHT = config['resized_video_height']
@@ -148,7 +148,7 @@ def evaluate(video_id, user_id, model_path, concepts):
 
     # REMOVE BAD USERS ?
     annotations = queryDB('select * from annotations where videoid= ' + str(video_id) 
-        + ' and userid not in ' + str(tuple(bad_users)) +' and userid not in (32, 29)') # 32 is tracking ai, 29 is retinet ai
+        + ' and userid in ' + str(tuple(good_users)) +' and userid not in (32, 29)') # 32 is tracking ai, 29 is retinet ai
     annotations['frame_num'] = np.rint(annotations['timeinvideo'] * fps).astype(int)
 
     metrics = score_predictions(annotations, results, EVALUATION_IOU_THRESH, concepts)
