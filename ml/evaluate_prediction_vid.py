@@ -152,7 +152,8 @@ def interlace_annotations_to_video(annotations, filename, concepts):
     #upload video..
     s3.upload_file(converted_file, S3_BUCKET, AWS_S3_BUCKET_AIVIDEOS_FOLDER +  filename,  ExtraArgs={'ContentType':'video/mp4'})
     os.system('rm \'' + filename + '\'')
-
+    os.system('rm ' + converted_file)
+    
     # add the entry to ai_videos
     cursor.execute('''
         INSERT INTO ai_videos (name)
