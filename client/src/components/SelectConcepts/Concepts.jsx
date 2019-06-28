@@ -77,7 +77,6 @@ class Concepts extends React.Component {
     axios
       .request(config)
       .then(res => {
-        Swal.fire("Changed: " + res.data.value, "", "success");
         this.setState({
           conceptsSelected: JSON.parse(JSON.stringify(conceptsSelected))
         });
