@@ -154,7 +154,7 @@ def interlace_annotations_to_video(annotations, filename, concepts):
 
 def evaluate(video_id, model_username, concepts):
     # file format: (video_id)_(model_name)-(ctime).mp4
-    filename = video_id + '_' + model_username + '.mp4'
+    filename = str(video_id) + '_' + model_username + '.mp4'
     results, fps = predict.predict_on_video(video_id, weights_path, concepts, filename)
     print("done predicting")
 
