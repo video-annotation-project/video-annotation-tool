@@ -1,10 +1,8 @@
 import React, { Component } from "react";
 import axios from "axios";
-
+import io from "socket.io-client";
 import Typography from "@material-ui/core/Typography";
 import { withStyles } from "@material-ui/core/styles";
-
-//Steppers for choosing model and videos
 import PropTypes from "prop-types";
 import Stepper from "@material-ui/core/Stepper";
 import Step from "@material-ui/core/Step";
@@ -12,25 +10,16 @@ import StepLabel from "@material-ui/core/StepLabel";
 import StepContent from "@material-ui/core/StepContent";
 import Button from "@material-ui/core/Button";
 import Paper from "@material-ui/core/Paper";
-
-//Display progress circle
 import CircularProgress from "@material-ui/core/CircularProgress";
-
-//Select Model
 import { FormControl } from "@material-ui/core";
 import InputLabel from "@material-ui/core/InputLabel";
 import Select from "@material-ui/core/Select";
 import MenuItem from "@material-ui/core/MenuItem";
-
-//Select Video
 import Radio from "@material-ui/core/Radio";
-//Video description
 import IconButton from "@material-ui/core/IconButton";
 import Description from "@material-ui/icons/Description";
-import VideoMetadata from "./VideoMetadata.jsx";
 
-//Websockets
-import io from "socket.io-client";
+import VideoMetadata from "../Utilities/VideoMetadata.jsx";
 
 const styles = theme => ({
   root: {

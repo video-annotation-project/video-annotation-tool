@@ -1,12 +1,10 @@
 import React from "react";
-
 import { withStyles } from "@material-ui/core/styles";
 import PropTypes from "prop-types";
 import Button from "@material-ui/core/Button";
 import Menu from "@material-ui/core/Menu";
 import MenuItem from "@material-ui/core/MenuItem";
 
-//Model components
 import CreateModel from "./CreateModel.jsx";
 import ViewModels from "./ViewModels.jsx";
 import PredictModel from "./PredictModel.jsx";

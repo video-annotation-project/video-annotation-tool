@@ -1,11 +1,9 @@
 import React from "react";
 import axios from "axios";
-
-// import Typography from '@material-ui/core/Typography';
 import { withStyles } from "@material-ui/core/styles";
 import List from "@material-ui/core/List";
+
 import ConceptsList from "./ConceptsList.jsx";
-import Swal from "sweetalert2";
 
 const styles = theme => ({
   root: {
@@ -78,7 +76,6 @@ class Concepts extends React.Component {
     axios
       .request(config)
       .then(res => {
-        Swal.fire("Changed: " + res.data.value, "", "success");
         this.setState({
           conceptsSelected: JSON.parse(JSON.stringify(conceptsSelected))
         });

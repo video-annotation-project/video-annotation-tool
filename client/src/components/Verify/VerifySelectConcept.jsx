@@ -1,15 +1,12 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { withStyles } from "@material-ui/core/styles";
+import FormGroup from "@material-ui/core/FormGroup";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import FormControl from "@material-ui/core/FormControl";
-import FormGroup from "@material-ui/core/FormGroup";
 import { Checkbox } from "@material-ui/core";
 
 const styles = theme => ({
-  root: {
-    display: "flex"
-  },
   formControl: {
     margin: theme.spacing.unit * 3
   },
@@ -18,19 +15,19 @@ const styles = theme => ({
   }
 });
 
-class VerifySelectUser extends React.Component {
+class VerifySelectConcept extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      users: []
+      concepts: []
     };
   }
 
   componentDidMount = async () => {
-    let users = await this.props.getUsers();
+    let concepts = await this.props.getConcepts();
 
     this.setState({
-      users: users
+      concepts: concepts
     });
   };
 
@@ -38,11 +35,8 @@ class VerifySelectUser extends React.Component {
     const { classes, value, handleChange } = this.props;
 
     return (
-      <div className={classes.root}>
         <FormControl component="fieldset" className={classes.formControl}>
           <FormGroup
-            aria-label="User"
-            name="user"
             className={classes.group}
             value={value}
             onChange={handleChange}
@@ -51,27 +45,26 @@ class VerifySelectUser extends React.Component {
               key={-1}
               value={"-1"}
               control={<Checkbox color="primary" />}
-              label="All users"
+              label="All concepts"
               checked={this.props.value.includes("-1")}
             />
-            {this.state.users.map(user => (
+            {this.state.concepts.map(concept => (
               <FormControlLabel
-                key={user.id}
-                value={user.id.toString()}
+                key={concept.id}
+                value={concept.id.toString()}
                 control={<Checkbox color="primary" />}
-                label={user.username}
-                checked={this.props.value.includes(user.id.toString())}
+                label={concept.name}
+                checked={this.props.value.includes(concept.id.toString())}
               />
             ))}
           </FormGroup>
         </FormControl>
-      </div>
     );
   }
 }
 
-VerifySelectUser.propTypes = {
+VerifySelectConcept.propTypes = {
   classes: PropTypes.object.isRequired
 };
 
-export default withStyles(styles)(VerifySelectUser);
+export default withStyles(styles)(VerifySelectConcept);

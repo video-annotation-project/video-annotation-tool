@@ -17,7 +17,7 @@ const bcrypt = require("bcrypt");
 const psql = require("./db/simpleConnect");
 const AWS = require("aws-sdk");
 
-var jwtOptions = {};
+let jwtOptions = {};
 jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
 jwtOptions.secretOrKey = process.env.JWT_KEY;
 
@@ -41,9 +41,9 @@ async function findUser(userId) {
   }
 }
 
-var strategy = new JwtStrategy(jwtOptions, async function(jwt_payload, next) {
+let strategy = new JwtStrategy(jwtOptions, async function(jwt_payload, next) {
   // console.log('payload received', jwt_payload);
-  var user = await findUser(jwt_payload.id);
+  let user = await findUser(jwt_payload.id);
   if (user) {
     next(null, user);
   } else {
@@ -83,7 +83,7 @@ const setCookies = res => {
   let policyString = JSON.stringify(policy);
 
   let signer = new AWS.CloudFront.Signer(keyPairId, privateKey);
-  var options = { url: "https://" + cdnUrl, policy: policyString };
+  let options = { url: "https://" + cdnUrl, policy: policyString };
   signer.getSignedCookie(options, (error, cookies) => {
     if (error) {
       console.log("Error recieved from getSignedCookie function.");
@@ -945,7 +945,7 @@ app.get(
       queryPass = queryPass + " AND annotations.userid = $1";
       params.push(req.user.id);
     }
-    // Adds query conditions from report tree
+    // Adds query conditions from Report tree
     queryPass +=
       req.query.queryConditions + " ORDER BY annotations.timeinvideo";
     // Retrieves only selected 100 if queryLimit exists
@@ -1021,13 +1021,13 @@ app.patch(
                    WHERE annotations.id = $1 \
                    AND annotations.conceptid=concepts.id";
     try {
-      var editRes = await psql.query(queryText, [
+      await psql.query(queryText, [
         req.body.conceptId,
         req.body.comment,
         req.body.unsure,
         req.body.id
       ]);
-      var updatedRow = await psql.query(queryUpdate, [req.body.id]);
+      let updatedRow = await psql.query(queryUpdate, [req.body.id]);
       res.json(updatedRow.rows[0]);
     } catch (error) {
       console.log(error);
@@ -1049,7 +1049,7 @@ app.delete(
         OR annotations.originalid=$1 
       RETURNING *`;
     try {
-      var deleteRes = await psql.query(queryText, [req.body.id]);
+      let deleteRes = await psql.query(queryText, [req.body.id]);
 
       //These are the s3 object we will be deleting
       let Objects = [];
@@ -1163,11 +1163,11 @@ app.post(
   passport.authenticate("jwt", { session: false }),
   (req, res) => {
     let s3 = new AWS.S3();
-    var key = process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + req.body.date;
+    let key = process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + req.body.date;
     if (req.body.box) {
       key += "_box";
     }
-    var params = {
+    const params = {
       Key: key + ".png",
       Bucket: process.env.AWS_S3_BUCKET_NAME,
       ContentEncoding: "base64",
@@ -1190,8 +1190,8 @@ app.patch(
   passport.authenticate("jwt", { session: false }),
   (req, res) => {
     let s3 = new AWS.S3();
-    var key = process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + req.body.name;
-    var params = {
+    const key = process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + req.body.name;
+    const params = {
       Key: key,
       Bucket: process.env.AWS_S3_BUCKET_NAME,
       ContentEncoding: "base64",
@@ -1396,7 +1396,7 @@ app.post(
   async (req, res) => {
     let ec2 = new AWS.EC2({ region: "us-west-1" });
 
-    var params = {
+    let params = {
       InstanceIds: [req.body.modelInstanceId]
     };
     if (req.body.command === "stop") {
@@ -1605,7 +1605,7 @@ app.get(
 
     if (selectedUsers.length === 1 && selectedUsers[0] === "-1") {
       let trackingId = null;
-      var queryText2 = `SELECT * FROM users u WHERE u.username='tracking'`;
+      const queryText2 = `SELECT * FROM users u WHERE u.username='tracking'`;
       try {
         let users = await psql.query(queryText2);
         trackingId = users.rows[0].id;
@@ -1647,20 +1647,20 @@ app.patch(
     const id = req.body.id;
     let s3 = new AWS.S3();
 
-    var params = [id, verifiedby];
-    var queryText1 =
-    `UPDATE annotations SET verifiedby=$2, verifieddate=current_timestamp, originalid=null`;
+    let params = [id, verifiedby];
+    let queryText1 = `UPDATE annotations SET verifiedby=$2, verifieddate=current_timestamp, originalid=null`;
 
     if (req.body.conceptid !== null) {
-      queryText1 += `, conceptid=$3, priority=priority+3`;
+      queryText1 += `, conceptid=$3, oldconceptid=$4, priority=priority+3`;
       params.push(req.body.conceptid);
+      params.push(req.body.oldconceptid);
     } else {
       queryText1 += `, priority= priority+1`;
     }
     params.push(req.body.comment);
-    queryText1 += `, comment=$`+ params.length;
+    queryText1 += `, comment=$` + params.length;
     params.push(req.body.unsure);
-    queryText1 += `, unsure=$`+ params.length;
+    queryText1 += `, unsure=$` + params.length;
     queryText1 += ` WHERE id=$1`;
 
     const queryText2 = `
@@ -1669,7 +1669,7 @@ app.patch(
       WHERE 
         originalid=$1 
         and annotations.id<>$1
-      RETURNING *`;      
+      RETURNING *`;
 
     try {
       let deleteRes = await psql.query(queryText2, [id]);
@@ -1714,16 +1714,18 @@ app.patch(
   "/api/annotationsUpdateBox",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    const id = req.body.id;
+    const params = Object.values(req.body);
+    const queryText = `
+    UPDATE
+      annotations 
+    SET 
+      x1=$1, y1=$2, x2=$3, y2=$4, 
+      oldx1=$5, oldy1=$6, oldx2=$7, oldy2=$8,
+      priority = priority+1 
+    WHERE id=$9`;
 
-    var x1 = req.body.x1;
-    var x2 = req.body.x2;
-    var y1 = req.body.y1;
-    var y2 = req.body.y2;
-
-    const queryText = `UPDATE annotations SET x1=$1, x2=$2, y1=$3, y2=$4, priority = priority + 1 WHERE id=$5`;
     try {
-      let update = await psql.query(queryText, [x1, x2, y1, y2, id]);
+      let update = await psql.query(queryText, params);
       res.json(update.rows);
     } catch (error) {
       console.log(error);
