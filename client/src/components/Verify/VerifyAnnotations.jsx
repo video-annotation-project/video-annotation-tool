@@ -577,7 +577,7 @@ class VerifyAnnotations extends Component {
               )}
               {this.state.unsure !== null ? (
                 <Typography className={classes.paper} variant="body2">
-                  Unsure: {this.state.unsure}
+                  Unsure: {this.state.unsure.toString()}
                 </Typography>
               ) : (
                 ""
