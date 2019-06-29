@@ -16,7 +16,7 @@ import Checkbox from "@material-ui/core/Checkbox";
 //Video description
 import IconButton from "@material-ui/core/IconButton";
 import Description from "@material-ui/icons/Description";
-import VideoMetadata from "./VideoMetadata.jsx";
+import VideoMetadata from "../Utilities/VideoMetadata.jsx";
 
 import Typography from "@material-ui/core/Typography";
 import { withStyles } from "@material-ui/core/styles";

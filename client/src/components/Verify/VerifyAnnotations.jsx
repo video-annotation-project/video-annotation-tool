@@ -385,6 +385,7 @@ class VerifyAnnotations extends Component {
 
   render() {
     const { classes } = this.props;
+    let { unsure } = this.state;
     let annotation = this.props.annotation;
 
     if (this.state.x === null) {
@@ -402,6 +403,7 @@ class VerifyAnnotations extends Component {
             inputHandler={this.changeConcept}
             open={true}
             handleClose={this.handleConceptDialogClose}
+            unsure={unsure}
           />
         )}
         {!this.state.end ? (

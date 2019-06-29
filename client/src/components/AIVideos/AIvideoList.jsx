@@ -12,7 +12,7 @@ import DeleteIcon from "@material-ui/icons/Delete";
 import Description from "@material-ui/icons/Description";
 import axios from "axios";
 
-import Summary from "./Summary.jsx";
+import Summary from "../Utilities/Summary.jsx";
 import Swal from "sweetalert2";
 
 const styles = theme => ({

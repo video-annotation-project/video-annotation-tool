@@ -12,7 +12,7 @@ import Report from "./components/Report/Report.jsx";
 import Verify from "./components/Verify/Verify.jsx";
 import Models from "./components/Model/Models.jsx";
 import Users from "./components/Users.jsx";
-import AIvideos from "./components/AIvideos.jsx";
+import AIvideos from "./components/AIVideos/AIvideos.jsx";
 
 require("dotenv").config();
 

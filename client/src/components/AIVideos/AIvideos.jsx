@@ -3,7 +3,7 @@ import axios from "axios";
 import io from "socket.io-client";
 
 import AIvideoList from "./AIvideoList.jsx";
-import DragBoxContainer from "./DragBoxContainer.jsx";
+import DragBoxContainer from "../Utilities/DragBoxContainer.jsx";
 
 import Button from "@material-ui/core/Button";
 import Typography from "@material-ui/core/Typography";
