@@ -213,7 +213,7 @@ def track_annotation(original):
    frames = vs
    frame_num = (int(frames.get(1)))
    #print("tracking forwards..")
-   forward_frames = track_object(frame_num, frames, box, True, start + (LENGTH / 2), original, cursor, con, TRACKING_ID, fps)
+   forward_frames = track_object(frame_num, frames, box, True, end, original, cursor, con, TRACKING_ID, fps)
    vs.release()
 
    # get object tracking frames prior to annotation
