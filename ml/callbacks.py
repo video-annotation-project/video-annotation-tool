@@ -45,7 +45,7 @@ class Progress(keras.callbacks.Callback):
             f"""INSERT INTO {self.table_name} 
                     (running, curr_epoch, max_epoch, curr_batch, steps_per_epoch) 
                 VALUES 
-                    (TRUE, 0, %s, 0, %s) RETURNING id""", 
+                    (TRUE, 0, %s, 0, %s) RETURNING id""",
             (self.max_epoch, self.steps_per_epoch))
 
         self.run_id = self.cursor.fetchone()[0]

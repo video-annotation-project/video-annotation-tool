@@ -1,10 +1,9 @@
 import React, { Component } from "react";
 import axios from "axios";
-
+import TextField from '@material-ui/core/TextField';
+import io from "socket.io-client"
 import Typography from "@material-ui/core/Typography";
 import { withStyles } from "@material-ui/core/styles";
-
-//Steppers for choosing model and videos
 import PropTypes from "prop-types";
 import Stepper from "@material-ui/core/Stepper";
 import Step from "@material-ui/core/Step";
@@ -12,35 +11,20 @@ import StepLabel from "@material-ui/core/StepLabel";
 import StepContent from "@material-ui/core/StepContent";
 import Button from "@material-ui/core/Button";
 import Paper from "@material-ui/core/Paper";
-
-//Display progress circle
 import CircularProgress from "@material-ui/core/CircularProgress";
-
-//Select Model
 import { FormControl } from "@material-ui/core";
 import InputLabel from "@material-ui/core/InputLabel";
 import Select from "@material-ui/core/Select";
 import MenuItem from "@material-ui/core/MenuItem";
-
-//Select Video
 import FormGroup from "@material-ui/core/FormGroup";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import FormLabel from "@material-ui/core/FormLabel";
 import Checkbox from "@material-ui/core/Checkbox";
-
-//Video description
 import IconButton from "@material-ui/core/IconButton";
 import Description from "@material-ui/icons/Description";
-import VideoMetadata from "./VideoMetadata.jsx";
-
-//Progress Bar
 import ModelProgress from "./ModelProgress.jsx";
+import VideoMetadata from "../Utilities/VideoMetadata.jsx";
 
-//Select hyperparameters
-import TextField from '@material-ui/core/TextField';
-
-//Websockets
-import io from "socket.io-client"
 
 const styles = theme => ({
   root: {
@@ -577,7 +561,7 @@ class TrainModel extends Component {
     if (this.state.activeStep === 1) {
       this.loadVideoList();
     }
-    // After Model and videos have been selected load avalible concepts
+    // After Model and videos have been selected load available concepts
     if (this.state.activeStep === 2) {
       await this.loadConceptList();
     }

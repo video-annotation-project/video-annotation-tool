@@ -1,9 +1,7 @@
 import React, { Component } from "react";
 import axios from "axios";
-
 import PropTypes from "prop-types";
 import { withStyles } from "@material-ui/core/styles";
-
 import TableBody from "@material-ui/core/TableBody";
 import TableCell from "@material-ui/core/TableCell";
 import TableHead from "@material-ui/core/TableHead";

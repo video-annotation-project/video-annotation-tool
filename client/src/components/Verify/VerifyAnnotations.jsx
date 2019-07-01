@@ -4,21 +4,21 @@ import PropTypes from "prop-types";
 import { withStyles } from "@material-ui/core/styles";
 import { Typography } from "@material-ui/core";
 import Button from "@material-ui/core/Button";
-import DialogModal from "./DialogModal";
 import OndemandVideo from "@material-ui/icons/OndemandVideo";
 import IconButton from "@material-ui/core/IconButton";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import Dialog from "@material-ui/core/Dialog";
 import blue from "@material-ui/core/colors/blue";
 import { MuiThemeProvider, createMuiTheme } from "@material-ui/core/styles";
-import ConceptsSelected from "./ConceptsSelected";
-import DragBoxContainer from "./DragBoxContainer.jsx";
-
-import VideoMetadata from "./VideoMetadata.jsx";
 import Description from "@material-ui/icons/Description";
 import Avatar from "@material-ui/core/Avatar";
 import Grid from "@material-ui/core/Grid";
 import Swal from "sweetalert2";
+
+import DialogModal from "../Utilities/DialogModal";
+import ConceptsSelected from "../Utilities/ConceptsSelected";
+import DragBoxContainer from "../Utilities/DragBoxContainer.jsx";
+import VideoMetadata from "../Utilities/VideoMetadata.jsx";
 
 const styles = theme => ({
   button: {
@@ -91,7 +91,7 @@ class VerifyAnnotations extends Component {
       y: this.props.annotation.y1,
       width: this.props.annotation.x2 - this.props.annotation.x1,
       height: this.props.annotation.y2 - this.props.annotation.y1,
-      videoDialogOpen: false /* needed for dialog component */
+      videoDialogOpen: false /* Needed for dialog component */
     };
   }
 
@@ -140,7 +140,7 @@ class VerifyAnnotations extends Component {
       // ignore shortcut
       this.nextAnnotation();
     } else if (e.code === "KeyV") {
-      // verify shortcut
+      // Verify shortcut
       this.handleVerifyClick();
     }
   };
@@ -150,7 +150,8 @@ class VerifyAnnotations extends Component {
       id: this.props.annotation.id,
       conceptid: !this.state.concept ? null : this.state.concept.id,
       comment: this.state.comment,
-      unsure: this.state.unsure
+      unsure: this.state.unsure,
+      oldconceptid: !this.state.concept ? null : this.props.annotation.conceptid
     };
 
     const config = {
@@ -243,37 +244,22 @@ class VerifyAnnotations extends Component {
   };
 
   postBoxImage = async dragBox => {
-    var dragBoxCord = dragBox.getBoundingClientRect();
+    const dragBoxCord = dragBox.getBoundingClientRect();
+    const imageElement = document.getElementById("image");
+    const imageCord = imageElement.getBoundingClientRect("dragBox");
+    const x1 = this.state.x;
+    const y1 = this.state.y;
+    const x2 = this.state.x + parseInt(this.state.width, 0);
+    const y2 = this.state.y + parseInt(this.state.height, 0);
 
-    var imageElement = document.getElementById("image");
-    var imageCord = imageElement.getBoundingClientRect("dragBox");
-    var x1_image = imageCord.left;
-    var y1_image = imageCord.top;
-    var x1_box = dragBoxCord.left;
-    var y1_box = dragBoxCord.top;
-    var height = dragBoxCord.height;
-    var width = dragBoxCord.width;
-
-    var x1 = Math.max(x1_box - x1_image, 0);
-    var y1 = Math.max(y1_box - y1_image, 0);
-    var x2 = Math.min(x1 + width, this.props.annotation.videowidth - 1);
-    var y2 = Math.min(y1 + height, this.props.annotation.videoheight - 1);
-
-    var annotation = this.props.annotation;
+    const annotation = this.props.annotation;
 
     try {
       if (
-          Math.abs(
-              annotation.x1 +
-              annotation.x2 +
-              annotation.y1 +
-              annotation.y2 -
-              x1 -
-              x2 -
-              y1 -
-              y2
-          ) > 0.1 
-          && this.props.annotation.image
+        Math.abs(
+          annotation.x1 - x1 + annotation.y1 - y1 + annotation.x2 - x2 + annotation.y2 - y2
+        ) > 0.1 &&
+        annotation.image
       ) {
         this.createAndUploadImages(
           imageCord,
@@ -282,38 +268,23 @@ class VerifyAnnotations extends Component {
           x1,
           y1
         );
-        this.updateBox(
-            x1,
-            y1,
-            x2,
-            y2,
-            imageCord,
-            dragBoxCord,
-            imageElement
-        );
+        this.updateBox(x1, y1, x2, y2, imageCord, dragBoxCord, imageElement);
       }
 
       this.verifyAnnotation();
-    }
-    catch {
-        console.log("Unable to verify");
-        this.nextAnnotation();
+    } catch {
+      console.log("Unable to Verify");
+      this.nextAnnotation();
     }
   };
 
-  createAndUploadImages = (
-    imageCord,
-    dragBoxCord,
-    imageElement,
-    x1,
-    y1
-  ) => {
-    var canvas = document.createElement("canvas");
+  createAndUploadImages = (imageCord, dragBoxCord, imageElement, x1, y1) => {
+    let canvas = document.createElement("canvas");
     canvas.height = imageCord.height;
     canvas.width = imageCord.width;
-    var ctx = canvas.getContext("2d");
+    let ctx = canvas.getContext("2d");
     ctx.drawImage(imageElement, 0, 0, canvas.width, canvas.height);
-    var img = new Image();
+    let img = new Image();
     img.setAttribute("crossOrigin", "use-credentials");
     ctx.lineWidth = "2";
     ctx.strokeStyle = "coral";
@@ -340,19 +311,22 @@ class VerifyAnnotations extends Component {
     };
     try {
       axios.patch("/api/updateImageBox", body, config);
-    }
-    catch {
+    } catch {
       Swal.fire("ERR: uploading image", "", "error");
     }
   };
 
   updateBox = (x1, y1, x2, y2, imageCord, dragBoxCord, imageElement) => {
     const body = {
-      id: this.props.annotation.id,
       x1: x1,
       y1: y1,
       x2: x2,
-      y2: y2
+      y2: y2,
+      oldx1: this.props.annotation.x1,
+      oldy1: this.props.annotation.y1,
+      oldx2: this.props.annotation.x2,
+      oldy2: this.props.annotation.y2,
+      id: this.props.annotation.id
     };
     const config = {
       headers: {
@@ -360,7 +334,7 @@ class VerifyAnnotations extends Component {
         Authorization: "Bearer " + localStorage.getItem("token")
       }
     };
-    return axios
+    axios
       .patch(`/api/annotationsUpdateBox/`, body, config)
       .catch(error => {
         Swal.fire(error, "", "error");
@@ -368,7 +342,7 @@ class VerifyAnnotations extends Component {
   };
 
   handleVerifyClick = () => {
-    var dragBox = document.getElementById("dragBox");
+    let dragBox = document.getElementById("dragBox");
 
     if (dragBox === null) {
       Swal.fire({
@@ -407,7 +381,7 @@ class VerifyAnnotations extends Component {
     this.setState({
       disableVerify: true
     });
-  }
+  };
 
   render() {
     const { classes } = this.props;
@@ -424,6 +398,7 @@ class VerifyAnnotations extends Component {
             title={"Confirm Annotation Edit"}
             message={this.state.conceptDialogMsg}
             placeholder={"Comments"}
+            comment={this.state.comment}
             inputHandler={this.changeConcept}
             open={true}
             handleClose={this.handleConceptDialogClose}
@@ -501,25 +476,26 @@ class VerifyAnnotations extends Component {
               >
                 Ignore
               </Button>
-              {this.state.disableVerify !== true ?
-              <Button
-                className={classes.button}
-                variant="contained"
-                color="primary"
-                onClick={this.handleVerifyClick}
-              >
-                Verify
-              </Button> :
-              <Button
-                className={classes.button}
-                variant="contained"
-                color="primary"
-                onClick={this.handleVerifyClick}
-                disabled
-              >
-                Verify
-              </Button>}
-
+              {this.state.disableVerify !== true ? (
+                <Button
+                  className={classes.button}
+                  variant="contained"
+                  color="primary"
+                  onClick={this.handleVerifyClick}
+                >
+                  Verify
+                </Button>
+              ) : (
+                <Button
+                  className={classes.button}
+                  variant="contained"
+                  color="primary"
+                  onClick={this.handleVerifyClick}
+                  disabled
+                >
+                  Verify
+                </Button>
+              )}
 
               <IconButton aria-label="OnDemandVideo">
                 <OndemandVideo onClick={this.videoDialogToggle} />
@@ -569,9 +545,6 @@ class VerifyAnnotations extends Component {
                 Annotation #{annotation.id}
               </Typography>
               <Typography className={classes.paper} variant="body2">
-                Annotated by: {annotation.username}
-              </Typography>
-              <Typography className={classes.paper} variant="body2">
                 Video: {annotation.filename}
                 <IconButton>
                   <Description
@@ -581,6 +554,9 @@ class VerifyAnnotations extends Component {
                     }
                   />
                 </IconButton>
+              </Typography>
+              <Typography className={classes.paper} variant="body2">
+                Annotated by: {annotation.username}
               </Typography>
               <Typography className={classes.paper} variant="body2">
                 Time: {Math.floor(annotation.timeinvideo / 60)} minutes{" "}
@@ -594,14 +570,14 @@ class VerifyAnnotations extends Component {
               </Typography>
               {this.state.comment !== "" ? (
                 <Typography className={classes.paper} variant="body2">
-                  {"Comment: " + this.state.comment}
+                  Comment: {this.state.comment}
                 </Typography>
               ) : (
                 ""
               )}
               {this.state.unsure !== null ? (
                 <Typography className={classes.paper} variant="body2">
-                  {"Unsure: " + this.state.unsure}
+                  Unsure: {this.state.unsure}
                 </Typography>
               ) : (
                 ""
@@ -625,7 +601,7 @@ class VerifyAnnotations extends Component {
           <VideoMetadata
             open={
               true /* The VideoMetadata 'openness' is controlled through
-              boolean logic rather than by passing in a variable as an
+              boolean logic rather than by passing in a letiable as an
               attribute. This is to force VideoMetadata to unmount when it 
               closes so that its state is reset. This also prevents the 
               accidental double submission bug, by implicitly reducing 

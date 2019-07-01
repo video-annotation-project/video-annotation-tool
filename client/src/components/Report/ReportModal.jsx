@@ -1,5 +1,4 @@
 import React, { Component } from "react";
-
 import { withStyles } from "@material-ui/core/styles";
 import PropTypes from "prop-types";
 import Button from "@material-ui/core/Button";
@@ -12,8 +11,6 @@ import FormControl from "@material-ui/core/FormControl";
 import Select from "@material-ui/core/Select";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import Checkbox from "@material-ui/core/Checkbox";
-
-//Radio Buttons
 import Radio from "@material-ui/core/Radio";
 
 const styles = theme => ({
