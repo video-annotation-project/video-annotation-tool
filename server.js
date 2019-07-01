@@ -204,14 +204,15 @@ app.get(
   "/api/users",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    let queryText = "SELECT id, username \
-                       FROM users";
+    let queryText = "SELECT DISTINCT u.id, u.username \
+                       FROM users u\
+                       JOIN annotations a ON a.userid=u.id";
 
     if (req.query.noAi === "true") {
-      queryText += " WHERE username NOT IN ('tracking', 'ai')";
+      queryText += " WHERE u.username NOT IN ('tracking', 'ai')";
     }
 
-    queryText += " ORDER BY username";
+    queryText += " ORDER BY u.username";
 
     try {
       const users = await psql.query(queryText);
@@ -1318,27 +1319,6 @@ app.post(
       ]);
       res.json(response.rows);
     } catch (error) {
-      console.log(error);
-      res.status(500).json(error);
-    }
-  }
-);
-
-app.get(
-  "/api/users",
-  passport.authenticate("jwt", { session: false }),
-  async (req, res) => {
-    const queryText = `
-      SELECT DISTINCT 
-        U.id, 
-        U.username
-      FROM 
-        Users U`;
-    try {
-      let response = await psql.query(queryText);
-      res.json(response.rows);
-    } catch (error) {
-      console.log("Error on GET /api/users: ");
       console.log(error);
       res.status(500).json(error);
     }
