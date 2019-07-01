@@ -83,7 +83,7 @@ def update_annotation_speed():
           conn.commit()
        except psycopg2.Error:
           print("Error - Couldn't update speed for annotation id=" + str(original_id))
-       print(original_id, max_dist)
+       # print(original_id, max_dist)
 
 def get_center(x1, x2, y1, y2):
    return (((x2 - x1) / 2) + x1, ((y2 - y1) / 2) + y1)

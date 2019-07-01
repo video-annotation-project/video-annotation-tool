@@ -1449,6 +1449,30 @@ app.get(
 );
 
 app.get(
+  "/api/modelTab/progress",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    const queryText = `
+      SELECT 
+        *
+      FROM 
+        training_progress
+      ORDER BY 
+        id DESC
+      LIMIT 1`;
+    try {
+      let response = await psql.query(queryText);
+      res.json(response.rows);
+    } catch (error) {
+      console.log("Error on GET /api/modelTab");
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
+);
+
+
+app.get(
   "/api/modelTab/:option",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
