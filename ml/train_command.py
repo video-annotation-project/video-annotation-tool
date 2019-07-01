@@ -5,6 +5,8 @@ from load_n_train import train_model
 import boto3
 import json
 import time
+from evaluate_prediction_vid import evaluate
+from multiprocessing import process
 
 config_path = "../config.json"
 load_dotenv(dotenv_path="../.env")
@@ -51,6 +53,7 @@ except:
 cursor.execute("SELECT * FROM MODELS WHERE name='" + str(info['modelSelected']) + "'")
 model = cursor.fetchone()
 concepts = model[2]
+verifyVideos = model[3]
 
 #Delete old model user
 if (model[4] != 'None'):
@@ -79,6 +82,17 @@ cursor.execute('''
 
 # Start training job
 train_model(concepts, info['usersSelected'], int(info['minImages']), int(info['epochs']), info['modelSelected'], info['videosSelected'], info['conceptsSelected'], download_data=True)
+
+# Run evaluate on all the videos in verifyVideos
+print(verifyVideos)
+proc = []
+for video in verifyVideos:
+    p = Process(target=evaluate, args=(video, user_model, concepts,))
+    p.start()
+    proc.append(p)
+for p in proc:
+    p.join()
+
 
 cursor.execute("Update modeltab SET info =  '{\"activeStep\": 0, \"conceptsSelected\":[], \"epochs\":0, \"minImages\":0, \"modelSelected\":\"\",\"videosSelected\":[],\"usersSelected\":[]}' WHERE option = 'trainmodel'")
 con.commit()
