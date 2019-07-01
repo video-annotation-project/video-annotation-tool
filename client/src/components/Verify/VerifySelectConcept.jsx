@@ -9,7 +9,7 @@ import { Checkbox } from "@material-ui/core";
 const styles = theme => ({
   formControl: {
     margin: theme.spacing.unit * 3,
-    maxHeight: "500px",
+    maxHeight: "400px",
     overflow: "auto"
   },
   group: {
