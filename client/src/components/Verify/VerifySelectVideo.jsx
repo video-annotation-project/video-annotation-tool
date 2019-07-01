@@ -9,7 +9,9 @@ import { Typography } from "@material-ui/core";
 
 const styles = theme => ({
   formControl: {
-    margin: theme.spacing.unit * 3
+    margin: theme.spacing.unit * 3,
+    maxHeight: "500px",
+    overflow: "auto"
   },
   group: {
     margin: `${theme.spacing.unit}px 0`
@@ -64,7 +66,7 @@ class VerifySelectVideo extends React.Component {
                     key={video.id}
                     value={video.id.toString()}
                     control={<Checkbox color="primary" />}
-                    label={video.filename}
+                    label={video.id + " " + video.filename}
                     checked={this.props.value.includes(video.id.toString())}
                   />
                 ))}

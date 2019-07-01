@@ -211,6 +211,8 @@ app.get(
       queryText += " WHERE username NOT IN ('tracking', 'ai')";
     }
 
+    queryText += " ORDER BY username"
+
     try {
       const users = await psql.query(queryText);
       res.json(users.rows);
@@ -1540,6 +1542,8 @@ app.get(
       params.push(selectedUsers);
     }
 
+    queryText += ` ORDER BY v.id`;
+
     try {
       let videos = await psql.query(queryText, params);
       res.json(videos.rows);
@@ -1582,6 +1586,8 @@ app.get(
       queryText += ` AND a.videoid::text=ANY($${params.length + 1})`;
       params.push(selectedVideos);
     }
+
+    queryText += ` ORDER BY c.name`;
 
     try {
       let concepts = await psql.query(queryText, params);

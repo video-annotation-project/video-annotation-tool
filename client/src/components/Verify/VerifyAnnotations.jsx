@@ -547,7 +547,7 @@ class VerifyAnnotations extends Component {
                 Annotation #{annotation.id}
               </Typography>
               <Typography className={classes.paper} variant="body2">
-                Video: {annotation.filename}
+                Video: {annotation.videoid + " " + annotation.filename}
                 <IconButton>
                   <Description
                     style={{ fontSize: 20 }}
