@@ -1,16 +1,18 @@
+import os
 import json
 import math
-import pandas as pd
-import psycopg2
-from PIL import Image
-import boto3
-import numpy as np
-import os
-from dotenv import load_dotenv
-from pascal_voc_writer import Writer
 import random
 import speed
 import time
+
+import pandas as pd
+import numpy as np
+import psycopg2
+import boto3
+from PIL import Image
+from dotenv import load_dotenv
+from pascal_voc_writer import Writer
+
 
 load_dotenv(dotenv_path="../.env")
 S3_BUCKET = os.getenv('AWS_S3_BUCKET_NAME')
@@ -51,21 +53,21 @@ def queryDB(query):
 
 
 def select_annotations(annotations, min_examples, selected_concepts):
-    speed.update_annotation_speed()
+    # speed.update_annotation_speed()
     selected = []
     concept_count = {}
 
     for concept in selected_concepts:
         concept_count[concept] = 0
 
-    group_frame = annotations.groupby(['videoid','frame_num'], sort=False)
+    group_frame = annotations.groupby(['videoid', 'frame_num'], sort=False)
     group_frame = [df for _, df in group_frame]
     random.shuffle(group_frame) # Shuffle BEFORE the sort
 
     ai_id = queryDB("SELECT id FROM users WHERE username='tracking'").id[0]
     # Give priority to frames with least amount of tracking annotations
     # And lower speed
-    sort_lambda = lambda df : (df['userid'].count(ai_id), df.speed.mean())
+    sort_lambda = lambda df : (list(df['userid']).count(ai_id), df.speed.mean())
     group_frame.sort(key=sort_lambda)
 
     #selects images that we'll use (each group has annotations for an image)
@@ -102,7 +104,9 @@ def select_annotations(annotations, min_examples, selected_concepts):
 #   train_annot_file: name of training annotation csv
 #   valid_annot_file: name of validation annotations csv
 #   split: fraction of annotation images that willbe used for training (rest used in validation)
-def download_annotations(min_examples, concepts, selected_concepts, concept_map, users, videos, img_folder, train_annot_file, valid_annot_file, split=.8):
+def download_annotations(min_examples, concepts, selected_concepts, concept_map, users, 
+    videos, img_folder, train_annot_file, valid_annot_file, split=.8):
+
     # Variable that represents all images already in the image folder
     existing_images = set(os.listdir(img_folder))
     
@@ -114,24 +118,27 @@ def download_annotations(min_examples, concepts, selected_concepts, concept_map,
     # To-do: change to prepared statement
     annotations = queryDB(
         f'''SELECT 
-              id,
+              A.id,
               image,
+              userid,
               videoid,
               videowidth,
               videoheight,
               conceptid,
               x1, x2, y1, y2,
+              speed,
               fps*timeinvideo as frame_num
             FROM annotations as A
+            LEFT JOIN videos ON videos.id=videoid
             WHERE conceptid::text = ANY(string_to_array({str_concepts},','))
             AND videoid::text = ANY(string_to_array({videos},','))
             AND EXISTS ( 
                 SELECT id, userid 
                 FROM annotations 
-                WHERE id=A.originalid 
+                WHERE id=originalid 
                 AND unsure = False
                 AND userid::text = ANY(string_to_array({users},',')))
-            LEFT JOIN videos ON videos.id=videoid''')
+            ''')
 
     '''
     Returns
