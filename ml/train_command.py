@@ -6,7 +6,7 @@ import boto3
 import json
 import time
 from evaluate_prediction_vid import evaluate
-from multiprocessing import Process
+from multiprocessing import Pool
 
 config_path = "../config.json"
 load_dotenv(dotenv_path="../.env")
@@ -84,14 +84,8 @@ cursor.execute('''
 train_model(concepts, info['usersSelected'], int(info['minImages']), int(info['epochs']), info['modelSelected'], info['videosSelected'], info['conceptsSelected'], download_data=True)
 
 # Run evaluate on all the videos in verifyVideos
-print(verifyVideos)
-proc = []
-for video in verifyVideos:
-    p = Process(target=evaluate, args=(video, user_model, concepts,))
-    p.start()
-    proc.append(p)
-for p in proc:
-    p.join()
+with Pool() as p:
+    p.map(evaluate,map(lambda video: (video, user_model, concepts),verifyVideos))
 
 
 cursor.execute("Update modeltab SET info =  '{\"activeStep\": 0, \"conceptsSelected\":[], \"epochs\":0, \"minImages\":0, \"modelSelected\":\"\",\"videosSelected\":[],\"usersSelected\":[]}' WHERE option = 'trainmodel'")
