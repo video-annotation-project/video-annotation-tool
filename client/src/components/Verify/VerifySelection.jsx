@@ -60,7 +60,7 @@ class VerifySelection extends React.Component {
           <VerifySelectUser
             value={this.props.selectedUsers}
             getUsers={this.props.getUsers}
-            handleChange={this.props.handleChange("selectedUsers")}
+            handleChange={this.props.handleChangeList("selectedUsers")}
           />
         );
       case 1:
@@ -68,7 +68,7 @@ class VerifySelection extends React.Component {
           <VerifySelectVideo
             value={this.props.selectedVideos}
             getVideos={this.props.getVideos}
-            handleChange={this.props.handleChange("selectedVideos")}
+            handleChange={this.props.handleChangeList("selectedVideos")}
           />
         );
       case 2:
@@ -76,7 +76,7 @@ class VerifySelection extends React.Component {
           <VerifySelectConcept
             value={this.props.selectedConcepts}
             getConcepts={this.props.getConcepts}
-            handleChange={this.props.handleChange("selectedConcepts")}
+            handleChange={this.props.handleChangeList("selectedConcepts")}
           />
         );
       case 3:
@@ -84,7 +84,7 @@ class VerifySelection extends React.Component {
             <VerifySelectUnsure
                 value={this.props.selectedUnsure}
                 getUnsure={this.props.getUnsure}
-                handleChange={this.props.handleChange("selectedUnsure")}
+                handleChange={this.props.handleChangeSwitch("selectedUnsure")}
             />
         );
       default:
@@ -100,10 +100,8 @@ class VerifySelection extends React.Component {
         return this.props.selectedVideos.length === 0;
       case 2:
         return this.props.selectedConcepts.length === 0;
-      case 3:
-        return this.props.selectedUnsure.length === 0;
       default:
-        return true;
+        return false;
     }
   };
 

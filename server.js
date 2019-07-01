@@ -211,7 +211,7 @@ app.get(
       queryText += " WHERE username NOT IN ('tracking', 'ai')";
     }
 
-    queryText += " ORDER BY username"
+    queryText += " ORDER BY username";
 
     try {
       const users = await psql.query(queryText);
@@ -419,13 +419,12 @@ app.get(
     try {
       let ai_videos = await psql.query(queryText);
       res.json(ai_videos);
-    }
-    catch (error) {
+    } catch (error) {
       console.log(error);
       res.status(500).json(error);
     }
   }
-)
+);
 
 app.delete(
   "/api/aivideos",
@@ -447,7 +446,7 @@ app.delete(
     `;
     var videoName = req.body.video.name;
     var splitName = videoName.split("_");
-    var modelNamewithMP4 = splitName[splitName.length-1];
+    var modelNamewithMP4 = splitName[splitName.length - 1];
     var modelName = modelNamewithMP4.split(".mp4")[0];
 
     try {
@@ -461,23 +460,20 @@ app.delete(
           Objects: Objects
         }
       };
-      let s3Res = await s3.deleteObjects(params,
-        (err, data) => {
-          if (err) {
-            console.log(err);
-            res.status(500).json(err);
-          } else {
-            console.log(data);
-          }
-        });
+      let s3Res = await s3.deleteObjects(params, (err, data) => {
+        if (err) {
+          console.log(err);
+          res.status(500).json(err);
+        } else {
+          console.log(data);
+        }
+      });
 
       let del = await psql.query(queryText, [req.body.video.id]);
-      
+
       del = await psql.query(queryText1, [modelName]);
 
-
       res.json("deleted");
-      
     } catch (error) {
       console.log(error);
       res.status(400).json(error);
@@ -712,12 +708,10 @@ app.get(
       )
     `;
     try {
-      const videos = await psql.query(
-        queryText,
-        [
-          req.params.userIDs,
-          req.params.model
-        ]);
+      const videos = await psql.query(queryText, [
+        req.params.userIDs,
+        req.params.model
+      ]);
       res.json(videos.rows);
     } catch (error) {
       console.log("Error in get /api/videos/trainModel/");
@@ -750,7 +744,6 @@ app.get(
   }
 );
 
-
 app.get(
   "/api/aivideos/summary/:name",
   passport.authenticate("jwt", { session: false }),
@@ -758,7 +751,7 @@ app.get(
     let params = [];
     var video = req.params.name;
     var splitted = video.split("_");
-    var username = splitted[1].split(".mp4")
+    var username = splitted[1].split(".mp4");
     params.push(username[0]); // username
     params.push(splitted[0]); // videoid
     console.log(params);
@@ -780,7 +773,7 @@ app.get(
       AND
         c.id = ANY(SELECT unnest(concepts) from models m
         LEFT JOIN users u ON m.userid = u.id
-        where username = $1);`
+        where username = $1);`;
 
     try {
       const summary = await psql.query(queryText, params);
@@ -1083,17 +1076,14 @@ app.delete(
           Objects: Objects
         }
       };
-      let s3Res = await s3.deleteObjects(params,
-        (err, data) => {
-          if (err) {
-            console.log("Err: deleting images");
-            res.status(500).json(err);
-          }
-          else {
-            res.json("delete");
-          }
+      let s3Res = await s3.deleteObjects(params, (err, data) => {
+        if (err) {
+          console.log("Err: deleting images");
+          res.status(500).json(err);
+        } else {
+          res.json("delete");
         }
-        );
+      });
     } catch (error) {
       console.log("Error in delete /api/annotations");
       console.log(error);
@@ -1321,13 +1311,11 @@ app.post(
       RETURNING *`;
 
     try {
-      let response = await psql.query(
-        queryText,
-        [
-          req.body.name,
-          req.body.concepts,
-          req.body.videos
-        ]);
+      let response = await psql.query(queryText, [
+        req.body.name,
+        req.body.concepts,
+        req.body.videos
+      ]);
       res.json(response.rows);
     } catch (error) {
       console.log(error);
@@ -1599,55 +1587,55 @@ app.get(
 );
 
 app.get(
-    "/api/unverifiedUnsureByUserVideoConcept",
-    passport.authenticate("jwt", { session: false }),
-    async (req, res) => {
-        const selectedUsers = req.query.selectedUsers;
-        const selectedVideos = req.query.selectedVideos;
-        const selectedConcepts = req.query.selectedConcepts;
+  "/api/unverifiedUnsureByUserVideoConcept",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    const selectedUsers = req.query.selectedUsers;
+    const selectedVideos = req.query.selectedVideos;
+    const selectedConcepts = req.query.selectedConcepts;
 
-        let params = [];
-        let queryText = `SELECT distinct a.unsure
+    let params = [];
+    let queryText = `SELECT distinct a.unsure
       FROM annotations a
       LEFT JOIN concepts c ON c.id=conceptid
       LEFT JOIN users u ON u.id=userid
       LEFT JOIN videos v ON v.id=videoid
       WHERE a.verifiedby IS NULL`;
 
-        if (selectedUsers.length === 1 && selectedUsers[0] === "-1") {
-            let trackingId = null;
-            const queryText2 = `SELECT * FROM users u WHERE u.username='tracking'`;
-            try {
-                let users = await psql.query(queryText2);
-                trackingId = users.rows[0].id;
-            } catch (error) {
-                res.status(500).json(error);
-            }
-            queryText += ` AND a.userid!=$1`;
-            params.push(trackingId);
-        } else {
-            queryText += ` AND a.userid::text=ANY($${params.length + 1})`;
-            params.push(selectedUsers);
-        }
-
-        if (!(selectedVideos.length === 1 && selectedVideos[0] === "-1")) {
-            queryText += ` AND a.videoid::text=ANY($${params.length + 1})`;
-            params.push(selectedVideos);
-        }
-
-        if (!(selectedConcepts.length === 1 && selectedConcepts[0] === "-1")) {
-            queryText += ` AND a.conceptid::text=ANY($${params.length + 1})`;
-            params.push(selectedConcepts);
-        }
-
-        try {
-            let concepts = await psql.query(queryText, params);
-            res.json(concepts.rows);
-        } catch (error) {
-            console.log(error);
-            res.status(500).json(error);
-        }
+    if (selectedUsers.length === 1 && selectedUsers[0] === "-1") {
+      let trackingId = null;
+      const queryText2 = `SELECT * FROM users u WHERE u.username='tracking'`;
+      try {
+        let users = await psql.query(queryText2);
+        trackingId = users.rows[0].id;
+      } catch (error) {
+        res.status(500).json(error);
+      }
+      queryText += ` AND a.userid!=$1`;
+      params.push(trackingId);
+    } else {
+      queryText += ` AND a.userid::text=ANY($${params.length + 1})`;
+      params.push(selectedUsers);
     }
+
+    if (!(selectedVideos.length === 1 && selectedVideos[0] === "-1")) {
+      queryText += ` AND a.videoid::text=ANY($${params.length + 1})`;
+      params.push(selectedVideos);
+    }
+
+    if (!(selectedConcepts.length === 1 && selectedConcepts[0] === "-1")) {
+      queryText += ` AND a.conceptid::text=ANY($${params.length + 1})`;
+      params.push(selectedConcepts);
+    }
+
+    try {
+      let concepts = await psql.query(queryText, params);
+      res.json(concepts.rows);
+    } catch (error) {
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
 );
 
 app.get(
@@ -1693,13 +1681,7 @@ app.get(
       params.push(selectedConcepts);
     }
 
-    if (selectedUnsure.length === 1) {
-        if (selectedUnsure[0] === "true") {
-            queryText += ` AND unsure`
-        } else {
-            queryText += ` AND NOT unsure`
-        }
-    }
+    if (selectedUnsure === "true") queryText += ` AND unsure`;
 
     try {
       let concepts = await psql.query(queryText, params);

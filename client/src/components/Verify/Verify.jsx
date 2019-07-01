@@ -52,7 +52,7 @@ class Verify extends Component {
       selectedUsers: ["-1"],
       selectedVideos: ["-1"],
       selectedConcepts: ["-1"],
-      selectedUnsure: ["true", "false"],
+      selectedUnsure: false,
       annotations: [],
       error: null,
       index: 0
@@ -164,7 +164,13 @@ class Verify extends Component {
       });
   };
 
-  handleChange = type => event => {
+  handleChangeSwitch = type => event => {
+    this.setState({
+      [type]: event.target.checked
+    })
+  }
+
+  handleChangeList = type => event => {
     if (!this.state[type].includes(event.target.value)) {
       if (event.target.value === "-1") {
         this.setState({
@@ -193,7 +199,7 @@ class Verify extends Component {
       selectedUsers: ["-1"],
       selectedVideos: ["-1"],
       selectedConcepts: ["-1"],
-      selectedUnsure: ["true", "false"],
+      selectedUnsure: false,
       index: 0
     });
   };
@@ -220,7 +226,8 @@ class Verify extends Component {
           getVideos={this.getVideos}
           getConcepts={this.getConcepts}
           getUnsure={this.getUnsure}
-          handleChange={this.handleChange}
+          handleChangeSwitch={this.handleChangeSwitch}
+          handleChangeList={this.handleChangeList}
           resetState={this.resetState}
           toggleSelection={this.toggleSelection}
         />

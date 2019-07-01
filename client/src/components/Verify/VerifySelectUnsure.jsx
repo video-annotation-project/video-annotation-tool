@@ -3,15 +3,12 @@ import PropTypes from "prop-types";
 import { withStyles } from "@material-ui/core/styles";
 import FormGroup from "@material-ui/core/FormGroup";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
+import Switch from "@material-ui/core/Switch";
 import FormControl from "@material-ui/core/FormControl";
-import { Checkbox } from "@material-ui/core";
 
 const styles = theme => ({
   formControl: {
     margin: theme.spacing.unit * 3
-  },
-  group: {
-    marginLeft: 15
   }
 });
 
@@ -19,15 +16,15 @@ class VerifySelectUnsure extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      unsure: []
+      disabled: false
     };
   }
 
   componentDidMount = async () => {
-    let unsure = await this.props.getUnsure();
+    let annotations = await this.props.getUnsure();
 
     this.setState({
-      unsure: unsure
+      disabled: (annotations.length === 1 && !annotations[0].unsure)
     });
   };
 
@@ -36,23 +33,19 @@ class VerifySelectUnsure extends React.Component {
 
     return (
       <FormControl component="fieldset" className={classes.formControl}>
-        <FormGroup
-          className={classes.group}
-          value={value}
-          onChange={handleChange}
-        >
-          {this.state.unsure.map(annotation => (
-            <FormControlLabel
-              key={annotation.unsure.toString()}
-              value={annotation.unsure.toString()}
-              control={<Checkbox color="primary" />}
-              label={
-                annotation.unsure.toString().charAt(0).toUpperCase() +
-                annotation.unsure.toString().slice(1)
-              }
-              checked={this.props.value.includes(annotation.unsure.toString())}
-            />
-          ))}
+        <FormGroup>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={value}
+                onChange={handleChange}
+                value="selectedUnsure"
+                color="primary"
+                disabled={this.state.disabled}
+              />
+            }
+            label="Unsure Only"
+          />
         </FormGroup>
       </FormControl>
     );
