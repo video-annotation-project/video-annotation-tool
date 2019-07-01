@@ -19,9 +19,8 @@ class Progress(keras.callbacks.Callback):
     def __init__(self, steps_per_epoch, num_epochs):
 
         self.steps_per_epoch = steps_per_epoch
-        self.max_epoch = num_epochs - 1
-        self.last_epoch_end_batch = 0
-        self.curr_epoch = 0
+        self.max_epoch = num_epochs
+        self.curr_epoch = 1
 
         self.table_name = 'training_progress'
 
@@ -44,10 +43,10 @@ class Progress(keras.callbacks.Callback):
     def on_train_begin(self, logs={}):
         self.cursor.execute(
             f"""INSERT INTO {self.table_name} 
-                    (running, curr_epoch, max_epoch, curr_batch) 
+                    (running, curr_epoch, max_epoch, curr_batch, steps_per_epoch) 
                 VALUES 
-                    (TRUE, 0, %s, 0) RETURNING id""", 
-            (self.max_epoch,))
+                    (TRUE, 0, %s, 0, %s) RETURNING id""", 
+            (self.max_epoch, self.steps_per_epoch))
 
         self.run_id = self.cursor.fetchone()[0]
         self.connection.commit()
@@ -87,14 +86,14 @@ class Progress(keras.callbacks.Callback):
 
 # Testing
 if __name__ == '__main__':
-    steps_per_epoch = 10
-    num_epochs = 5
+    steps_per_epoch = 100
+    num_epochs = 3
 
     progress = Progress(steps_per_epoch=steps_per_epoch, num_epochs=num_epochs)
 
     progress.on_train_begin()
     for epoch in range(num_epochs + 1):
-        progress.on_epoch_begin()
+        progress.on_epoch_begin(epoch)
         for batch in range(steps_per_epoch + 1):
             progress.on_batch_begin(batch)
             progress.on_batch_end(batch)
