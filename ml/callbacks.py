@@ -20,7 +20,7 @@ class Progress(keras.callbacks.Callback):
 
         self.steps_per_epoch = steps_per_epoch
         self.max_epoch = num_epochs
-        self.curr_epoch = 1
+        self.curr_epoch = 0
 
         self.table_name = 'training_progress'
 
@@ -92,9 +92,9 @@ if __name__ == '__main__':
     progress = Progress(steps_per_epoch=steps_per_epoch, num_epochs=num_epochs)
 
     progress.on_train_begin()
-    for epoch in range(num_epochs + 1):
+    for epoch in range(num_epochs):
         progress.on_epoch_begin(epoch)
-        for batch in range(steps_per_epoch + 1):
+        for batch in range(steps_per_epoch):
             progress.on_batch_begin(batch)
             progress.on_batch_end(batch)
         progress.on_epoch_end(epoch)
