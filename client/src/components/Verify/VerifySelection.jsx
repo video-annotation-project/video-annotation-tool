@@ -11,6 +11,7 @@ import Typography from "@material-ui/core/Typography";
 import VerifySelectUser from "./VerifySelectUser.jsx";
 import VerifySelectVideo from "./VerifySelectVideo.jsx";
 import VerifySelectConcept from "./VerifySelectConcept.jsx";
+import VerifySelectUnsure from "./VerifySelectUnsure";
 
 const styles = theme => ({
   button: {
@@ -26,7 +27,7 @@ const styles = theme => ({
 });
 
 function getSteps() {
-  return ["Users", "Videos", "Concepts"];
+  return ["Users", "Videos", "Concepts", "Unsure"];
 }
 
 function getStepContent(step) {
@@ -37,6 +38,8 @@ function getStepContent(step) {
       return "Select videos";
     case 2:
       return "Select concepts";
+    case 3:
+      return "Select unsure";
     default:
       return "Unknown step";
   }
@@ -76,6 +79,14 @@ class VerifySelection extends React.Component {
             handleChange={this.props.handleChange("selectedConcepts")}
           />
         );
+      case 3:
+        return (
+            <VerifySelectUnsure
+                value={this.props.selectedUnsure}
+                getUnsure={this.props.getUnsure}
+                handleChange={this.props.handleChange("selectedUnsure")}
+            />
+        );
       default:
         return "Unknown step";
     }
@@ -89,6 +100,8 @@ class VerifySelection extends React.Component {
         return this.props.selectedVideos.length === 0;
       case 2:
         return this.props.selectedConcepts.length === 0;
+      case 3:
+        return this.props.selectedUnsure.length === 0;
       default:
         return true;
     }

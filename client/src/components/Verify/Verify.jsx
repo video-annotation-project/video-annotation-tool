@@ -52,6 +52,7 @@ class Verify extends Component {
       selectedUsers: ["-1"],
       selectedVideos: ["-1"],
       selectedConcepts: ["-1"],
+      selectedUnsure: ["true", "false"],
       annotations: [],
       error: null,
       index: 0
@@ -120,9 +121,30 @@ class Verify extends Component {
       });
   };
 
+  getUnsure = async () => {
+    return axios
+        .get(`/api/unverifiedUnsureByUserVideoConcept`, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + localStorage.getItem("token")
+          },
+          params: {
+            selectedUsers: this.state.selectedUsers,
+            selectedVideos: this.state.selectedVideos,
+            selectedConcepts: this.state.selectedConcepts
+          }
+        })
+        .then(res => res.data)
+        .catch(error => {
+          this.setState({
+            error: error
+          });
+        });
+  };
+
   getAnnotations = async () => {
     return axios
-      .get(`/api/unverifiedAnnotationsByUserVideoConcept/`, {
+      .get(`/api/unverifiedAnnotationsByUserVideoConceptUnsure/`, {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + localStorage.getItem("token")
@@ -130,7 +152,8 @@ class Verify extends Component {
         params: {
           selectedUsers: this.state.selectedUsers,
           selectedVideos: this.state.selectedVideos,
-          selectedConcepts: this.state.selectedConcepts
+          selectedConcepts: this.state.selectedConcepts,
+          selectedUnsure: this.state.selectedUnsure
         }
       })
       .then(res => res.data)
@@ -170,6 +193,7 @@ class Verify extends Component {
       selectedUsers: ["-1"],
       selectedVideos: ["-1"],
       selectedConcepts: ["-1"],
+      selectedUnsure: ["true", "false"],
       index: 0
     });
   };
@@ -191,9 +215,11 @@ class Verify extends Component {
           selectedUsers={this.state.selectedUsers}
           selectedVideos={this.state.selectedVideos}
           selectedConcepts={this.state.selectedConcepts}
+          selectedUnsure={this.state.selectedUnsure}
           getUsers={this.getUsers}
           getVideos={this.getVideos}
           getConcepts={this.getConcepts}
+          getUnsure={this.getUnsure}
           handleChange={this.handleChange}
           resetState={this.resetState}
           toggleSelection={this.toggleSelection}

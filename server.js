@@ -1599,12 +1599,65 @@ app.get(
 );
 
 app.get(
-  "/api/unverifiedAnnotationsByUserVideoConcept",
+    "/api/unverifiedUnsureByUserVideoConcept",
+    passport.authenticate("jwt", { session: false }),
+    async (req, res) => {
+        const selectedUsers = req.query.selectedUsers;
+        const selectedVideos = req.query.selectedVideos;
+        const selectedConcepts = req.query.selectedConcepts;
+
+        let params = [];
+        let queryText = `SELECT distinct a.unsure
+      FROM annotations a
+      LEFT JOIN concepts c ON c.id=conceptid
+      LEFT JOIN users u ON u.id=userid
+      LEFT JOIN videos v ON v.id=videoid
+      WHERE a.verifiedby IS NULL`;
+
+        if (selectedUsers.length === 1 && selectedUsers[0] === "-1") {
+            let trackingId = null;
+            const queryText2 = `SELECT * FROM users u WHERE u.username='tracking'`;
+            try {
+                let users = await psql.query(queryText2);
+                trackingId = users.rows[0].id;
+            } catch (error) {
+                res.status(500).json(error);
+            }
+            queryText += ` AND a.userid!=$1`;
+            params.push(trackingId);
+        } else {
+            queryText += ` AND a.userid::text=ANY($${params.length + 1})`;
+            params.push(selectedUsers);
+        }
+
+        if (!(selectedVideos.length === 1 && selectedVideos[0] === "-1")) {
+            queryText += ` AND a.videoid::text=ANY($${params.length + 1})`;
+            params.push(selectedVideos);
+        }
+
+        if (!(selectedConcepts.length === 1 && selectedConcepts[0] === "-1")) {
+            queryText += ` AND a.conceptid::text=ANY($${params.length + 1})`;
+            params.push(selectedConcepts);
+        }
+
+        try {
+            let concepts = await psql.query(queryText, params);
+            res.json(concepts.rows);
+        } catch (error) {
+            console.log(error);
+            res.status(500).json(error);
+        }
+    }
+);
+
+app.get(
+  "/api/unverifiedAnnotationsByUserVideoConceptUnsure",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const selectedUsers = req.query.selectedUsers;
     const selectedVideos = req.query.selectedVideos;
     const selectedConcepts = req.query.selectedConcepts;
+    const selectedUnsure = req.query.selectedUnsure;
 
     let params = [];
     let queryText = `SELECT distinct a.*, c.name, u.username, v.filename
@@ -1638,6 +1691,14 @@ app.get(
     if (!(selectedConcepts.length === 1 && selectedConcepts[0] === "-1")) {
       queryText += ` AND a.conceptid::text=ANY($${params.length + 1})`;
       params.push(selectedConcepts);
+    }
+
+    if (selectedUnsure.length === 1) {
+        if (selectedUnsure[0] === "true") {
+            queryText += ` AND unsure`
+        } else {
+            queryText += ` AND NOT unsure`
+        }
     }
 
     try {

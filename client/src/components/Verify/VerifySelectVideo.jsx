@@ -14,7 +14,7 @@ const styles = theme => ({
     overflow: "auto"
   },
   group: {
-    margin: `${theme.spacing.unit}px 0`
+    marginLeft: 15
   }
 });
 
