@@ -119,7 +119,6 @@ def download_annotations(min_examples, concepts, selected_concepts, concept_map,
     annotations = queryDB(
         f'''SELECT 
               A.id,
-              userid,
               image,
               userid,
               videoid,

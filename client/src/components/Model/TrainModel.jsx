@@ -145,35 +145,7 @@ class TrainModel extends Component {
     this.loadOptionInfo();
     this.loadExistingModels();
     this.loadUserList();
-    this.loadProgress();
   }
-
-  loadProgress = () => {
-    const config = {
-      headers: {
-        Authorization: "Bearer " + localStorage.getItem("token")
-      }
-    };
-    axios
-      .get(`/api/modelTab/progress`, config)
-      .then(res => {
-        const progress = res.data[0];
-        this.setState({
-            running: progress.running,
-            currentEpoch: progress.curr_epoch,
-            currentBatch: progress.curr_batch,
-            maxEpoch: progress.max_epoch,
-            stepsPerEpoch: progress.steps_per_epoch,
-        });
-      })
-      .catch(error => {
-        console.log("Error in get /api/modelTab");
-        console.log(error);
-        if (error.response) {
-          console.log(error.response.data.detail);
-        }
-      });
-  };
 
   loadOptionInfo = () => {
     const config = {

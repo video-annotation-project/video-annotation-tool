@@ -25,7 +25,7 @@ from dotenv import load_dotenv
 
 from loading_data import download_annotations
 from loading_data import queryDB, get_classmap
-from callbacks import Progress
+from progress_callbacks import Progress
 
 
 config_path = "../config.json"
@@ -69,7 +69,6 @@ def train_model(concepts, users, min_examples, epochs, model_name, videos, selec
     '''
     if download_data:
         folders = ["weights"]
-        folders.append(img_folder)
         for dir in folders:
             if os.path.exists(dir):
                 shutil.rmtree(dir)

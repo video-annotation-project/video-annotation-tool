@@ -55,12 +55,12 @@ class ModelProgress extends Component {
 
         this.setState({
             running: progress.running,
-            currentEpoch: progress.curr_epoch,
-            currentBatch: progress.curr_batch,
+            currentEpoch: progress.curr_epoch + 1,
+            currentBatch: progress.curr_batch + 1,
             maxEpoch: progress.max_epoch,
             stepsPerEpoch: progress.steps_per_epoch,
-            epochProgress: (progress.curr_epoch / progress.max_epoch) * 100,
-            batchProgress: (progress.curr_batch / (progress.steps_per_epoch)) * 100,
+            epochProgress: ((progress.curr_epoch + 1) / progress.max_epoch) * 100,
+            batchProgress: ((progress.curr_batch + 1) / (progress.steps_per_epoch)) * 100,
         });
       })
       .catch(error => {
