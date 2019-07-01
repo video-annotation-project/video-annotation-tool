@@ -1,28 +1,32 @@
-from loading_data import download_annotations
-from loading_data import queryDB, get_classmap
 import json
 import os
-from dotenv import load_dotenv
 import shutil
 import subprocess
 import time
+
+import keras 
+import pandas as pd
+import tensorflow as tf
+import skimage as sk
+import random
+import numpy as np
+import boto3
 from keras_retinanet import models
 from keras_retinanet import losses
 from keras_retinanet.preprocessing.csv_generator import CSVGenerator
 from keras_retinanet.utils.transform import random_transform_generator
-import keras 
-import pandas as pd
 from keras_retinanet.utils.model import freeze as freeze_model
 from keras.utils import multi_gpu_model
 from keras.callbacks import ModelCheckpoint, EarlyStopping
 from keras_retinanet.models.retinanet import retinanet_bbox
 from keras_retinanet.callbacks import RedirectModel
-import tensorflow as tf
-import skimage as sk
-import random
-import numpy as np
 from tensorflow.python.client import device_lib
-import boto3
+from dotenv import load_dotenv
+
+from loading_data import download_annotations
+from loading_data import queryDB, get_classmap
+from progress_callbacks import Progress
+
 
 config_path = "../config.json"
 load_dotenv(dotenv_path="../.env")
@@ -65,7 +69,6 @@ def train_model(concepts, users, min_examples, epochs, model_name, videos, selec
     '''
     if download_data:
         folders = ["weights"]
-        folders.append(img_folder)
         for dir in folders:
             if os.path.exists(dir):
                 shutil.rmtree(dir)
@@ -91,7 +94,6 @@ def train_model(concepts, users, min_examples, epochs, model_name, videos, selec
         model.load_weights(weights_path, by_name=True, skip_mismatch=True)
 
     gpus = len([i for i in device_lib.list_local_devices() if i.device_type == 'GPU'])
-
 
 
     if gpus > 1:
@@ -149,10 +151,12 @@ def train_model(concepts, users, min_examples, epochs, model_name, videos, selec
         write_graph=True, write_grads=False, write_images=False,
         embeddings_freq=0, embeddings_layer_names=None,
         embeddings_metadata=None, embeddings_data=None, update_freq='epoch')
+
+    progress_callback = Progress(steps_per_epoch=len(train_generator), num_epochs=epochs)
     
     history = training_model.fit_generator(train_generator, 
         epochs=epochs, 
-        callbacks=[checkpoint, stopping, tensorboard_callback],
+        callbacks=[checkpoint, stopping, tensorboard_callback, progress_callback],
         validation_data=test_generator,
         verbose=2
     ).history

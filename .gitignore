@@ -4,6 +4,7 @@ npm-debug.log
 client/build
 .vscode/
 .idea/
+.DS_Store
 
 # private info in here
 # includes DB_HOST url, which has a dev and a production version
@@ -15,3 +16,7 @@ client/build
 !.elasticbeanstalk/*.global.yml
 *.pem
 kls.pgsql
+
+# Python precompiled files
+*.pyc
+
