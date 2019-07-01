@@ -6,7 +6,7 @@ import boto3
 import json
 import time
 from evaluate_prediction_vid import evaluate
-from multiprocessing import process
+from multiprocessing import Process
 
 config_path = "../config.json"
 load_dotenv(dotenv_path="../.env")

@@ -1286,14 +1286,17 @@ app.get(
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const queryText = `
-      SELECT m.name, m.timestamp, array_agg(c.name) concepts
+      SELECT 
+        m.name, m.timestamp, array_agg(c.name) concepts,
+        m.videos
       FROM 
         (SELECT 
-          name, timestamp, UNNEST(concepts) concept
+          name, timestamp, UNNEST(concepts) concept,
+          verificationvideos videos
           FROM models
         ) m
       JOIN concepts c ON c.id=m.concept
-      GROUP BY (m.name, m.timestamp)`;
+      GROUP BY (m.name, m.timestamp, m.videos)`;
     try {
       let response = await psql.query(queryText);
       res.json(response.rows);
@@ -1330,6 +1333,75 @@ app.post(
     } catch (error) {
       console.log(error);
       res.status(500).json(error);
+    }
+  }
+);
+
+
+app.delete(
+  "/api/models/",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    let s3 = new AWS.S3();
+    let deleteModel = `
+      DELETE FROM
+        models
+      WHERE
+        name=$1
+      RETURNING *`;
+    let deleteModelUser = `
+      DELETE FROM
+        users  
+      WHERE
+        username LIKE $1
+      RETURNING *
+    `;
+    let deleteModelVideos = `
+      DELETE FROM
+        ai_videos  
+      WHERE
+        name LIKE $1
+      RETURNING *
+    `;
+
+    try {
+      var arg = req.body.model.name + '-%';
+      let modelRes = await psql.query(deleteModel, [req.body.model.name]);
+      
+      let modelUserRes = await psql.query(deleteModelUser, [arg]);
+
+      arg = '%_' + arg;
+      let modelVideosRes = await psql.query(deleteModelVideos, [arg]);
+
+      //These are the s3 object we will be deleting
+      let Objects = [];
+
+      modelVideosRes.rows.forEach(element => {
+        Objects.push({
+          Key: process.env.AWS_S3_BUCKET_AIVIDEOS_FOLDER + element.name
+        });
+      });
+    
+      let params = {
+        Bucket: process.env.AWS_S3_BUCKET_NAME,
+        Delete: {
+          Objects: Objects
+        }
+      };
+      let s3Res = await s3.deleteObjects(params,
+        (err, data) => {
+          if (err) {
+            console.log(err);
+            res.status(500).json(err);
+          } else {
+            console.log(data);
+          }
+        });
+
+      res.json("deleted");
+    } catch (error) {
+      console.log(error);
+      res.status(400).json(error);
     }
   }
 );
