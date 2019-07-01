@@ -22,8 +22,9 @@ import FormLabel from "@material-ui/core/FormLabel";
 import Checkbox from "@material-ui/core/Checkbox";
 import IconButton from "@material-ui/core/IconButton";
 import Description from "@material-ui/icons/Description";
-
+import ModelProgress from "./ModelProgress.jsx";
 import VideoMetadata from "../Utilities/VideoMetadata.jsx";
+
 
 const styles = theme => ({
   root: {
@@ -38,11 +39,33 @@ const styles = theme => ({
     justifyContent: "center",
     alignItems: "center"
   },
+  container: {
+    display: "flex",
+    flexDirection: "row",
+    width: "100%",
+  },
+  stepper: {
+    display: "flex",
+    flex: 1,
+    flexDirection: "column",
+    justifyContent: "left",
+    width: '50%',
+  },
+  progress: {
+    display: "flex",
+    flex: 1,
+    flexDirection: "column",
+    justifyContent: "right",
+    alignItems: "right",
+    width: '50%',
+  },
   button: {
     marginTop: theme.spacing.unit,
     marginRight: theme.spacing.unit
   },
   actionsContainer: {
+    flexDirection: "column",
+    justifyContent: "left",
     marginBottom: theme.spacing.unit * 2
   },
   resetContainer: {
@@ -98,6 +121,8 @@ class TrainModel extends Component {
       epochs: 0,
       activeStep: 0,
       openedVideo: null,
+      currentEpoch: 0,
+      currentBatch: 0,
       socket: socket
     };
   }
@@ -577,56 +602,59 @@ class TrainModel extends Component {
           <Typography variant="display1">Train a model on video(s)</Typography>
           <br />
         </div>
-        <Stepper activeStep={activeStep} orientation="vertical">
-          {steps.map((label, index) => (
-            <Step key={label}>
-              <StepLabel>{label}</StepLabel>
-              <StepContent>
-                {this.getStepContent(index)}
-                <div className={classes.actionsContainer}>
-                  <div>
-                    <Button
-                      disabled={activeStep === 0}
-                      onClick={this.handleBack}
-                      className={classes.button}
-                    >
-                      Back
-                    </Button>
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      onClick={this.handleNext}
-                      className={classes.button}
-                      disabled={
-                        (activeStep === 0 && modelSelected === "") ||
-                        (activeStep === 1 && usersSelected.length < 1) ||
-                        (activeStep === 2 && videosSelected.length < 1)
-                      }
-                    >
-                      {activeStep === steps.length - 1 ? "Train Model" : "Next"}
-                    </Button>
-                    <Button
-                      onClick={this.handleSelectAll}
-                      disabled={
-                        activeStep === 0 || activeStep === 4
-                      }
-                    >
-                      Select All
-                    </Button>
-                    <Button
-                      onClick={this.handleUnselectAll}
-                      disabled={
-                        activeStep === 0 || activeStep === 4
-                      }
-                    >
-                      Unselect All
-                    </Button>
+        <div className={classes.container}>
+          <Stepper className={classes.stepper} activeStep={activeStep} orientation="vertical">
+            {steps.map((label, index) => (
+              <Step key={label}>
+                <StepLabel>{label}</StepLabel>
+                <StepContent>
+                  {this.getStepContent(index)}
+                  <div className={classes.actionsContainer}>
+                    <div>
+                      <Button
+                        disabled={activeStep === 0}
+                        onClick={this.handleBack}
+                        className={classes.button}
+                      >
+                        Back
+                      </Button>
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={this.handleNext}
+                        className={classes.button}
+                        disabled={
+                          (activeStep === 0 && modelSelected === "") ||
+                          (activeStep === 1 && usersSelected.length < 1) ||
+                          (activeStep === 2 && videosSelected.length < 1)
+                        }
+                      >
+                        {activeStep === steps.length - 1 ? "Train Model" : "Next"}
+                      </Button>
+                      <Button
+                        onClick={this.handleSelectAll}
+                        disabled={
+                          activeStep === 0 || activeStep === 4
+                        }
+                      >
+                        Select All
+                      </Button>
+                      <Button
+                        onClick={this.handleUnselectAll}
+                        disabled={
+                          activeStep === 0 || activeStep === 4
+                        }
+                      >
+                        Unselect All
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              </StepContent>
-            </Step>
-          ))}
-        </Stepper>
+                </StepContent>
+              </Step>
+            ))}
+          </Stepper>
+          <ModelProgress className={classes.progress}/>
+        </div>
         {activeStep === steps.length && (
           <Paper square elevation={0} className={classes.resetContainer}>
             <Typography>Model is training...</Typography>
