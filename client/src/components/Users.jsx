@@ -214,9 +214,13 @@ class Users extends Component {
       const newDate = this.formatDate(value);
 
       this.setState({ [name]: newDate });
-      if (this.state.selectedUser.id) {
+      let selectedUser = this.state.selectedUser;
+      if (selectedUser) {
+        let user = this.state.users.find(user => {
+          return user.username === selectedUser
+        })
         this.getAnnotationCount(
-          this.state.selectedUser.id,
+          user.id,
           name === "fromDate"
             ? newDate.ISOString
             : this.state.fromDate.ISOString,
