@@ -12,6 +12,7 @@ import Report from "./components/Report/Report.jsx";
 import Verify from "./components/Verify/Verify.jsx";
 import Models from "./components/Model/Models.jsx";
 import Users from "./components/Users.jsx";
+import AIvideos from "./components/AIVideos/AIvideos.jsx";
 
 require("dotenv").config();
 
@@ -33,6 +34,7 @@ class App extends React.Component {
                   <Route exact path="/createUser" component={CreateUser} />
                   <Route exact path="/models" component={Models} />
                   <Route exact path="/users" component={Users} />
+                  <Route exact path="/aivideos" component={AIvideos} />
                 </React.Fragment>
               ) : (
                 <React.Fragment>

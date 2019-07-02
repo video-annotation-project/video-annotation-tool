@@ -49,6 +49,9 @@ class Navbar extends React.Component {
                   <Button color="inherit" component={Link} to="/annotate">
                     Annotate Videos
                   </Button>
+                  <Button color="inherit" component={Link} to="/aivideos">
+                    AI Videos
+                  </Button>
                   <Button color="inherit" component={Link} to="/report">
                     Report
                   </Button>

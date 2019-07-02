@@ -32,10 +32,7 @@ const styles = theme => ({
 
 class Users extends Component {
   state = {
-    selectedUser: {
-      id: null,
-      username: ""
-    },
+    selectedUser: "",
     users: [],
     annotationCount: [],
     fromDate: {
@@ -176,7 +173,7 @@ class Users extends Component {
 
   renderUserSelectOptions = () => {
     return this.state.users.map(option => (
-      <MenuItem key={option.id} value={option}>
+      <MenuItem key={option.id} value={option.username}>
         {option.username}
       </MenuItem>
     ));
@@ -196,10 +193,13 @@ class Users extends Component {
   handleUserSelectChange = event => {
     if (event) {
       const selectedUser = event.target.value;
-      if (selectedUser.id) {
+      if (selectedUser) {
         this.setState({ selectedUser: selectedUser });
+        let user = this.state.users.find(user => {
+          return user.username === selectedUser
+        })
         this.getAnnotationCount(
-          selectedUser.id,
+          user.id,
           this.state.fromDate.ISOString,
           this.state.toDate.ISOString
         );
@@ -214,9 +214,13 @@ class Users extends Component {
       const newDate = this.formatDate(value);
 
       this.setState({ [name]: newDate });
-      if (this.state.selectedUser.id) {
+      let selectedUser = this.state.selectedUser;
+      if (selectedUser) {
+        let user = this.state.users.find(user => {
+          return user.username === selectedUser
+        })
         this.getAnnotationCount(
-          this.state.selectedUser.id,
+          user.id,
           name === "fromDate"
             ? newDate.ISOString
             : this.state.fromDate.ISOString,
@@ -278,7 +282,7 @@ class Users extends Component {
             <TableHead>
               <TableRow>
                 <TableCell>Species</TableCell>
-                <TableCell align="right">Total Anootated</TableCell>
+                <TableCell align="right">Total Annotated</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>

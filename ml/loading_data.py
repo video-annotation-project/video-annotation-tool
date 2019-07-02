@@ -40,14 +40,13 @@ def get_classmap(concepts):
     return classmap
 
 # SQL queries to the database
-def queryDB(query):
+def queryDB(query, params=None):
     conn = psycopg2.connect(database = DB_NAME,
                         user = DB_USER,
                         password = DB_PASSWORD,
                         host = DB_HOST,
                         port = "5432")
-    cur = conn.cursor()
-    result = pd.read_sql_query(query, conn)
+    result = pd.read_sql_query(query, conn, params=params)
     conn.close()
     return result
 

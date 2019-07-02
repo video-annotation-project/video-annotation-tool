@@ -27,7 +27,7 @@ valid_annot_file = config['valid_annot_file']
 img_folder = config['image_folder']
 test_examples = config['test_examples']
 batch_size = config['batch_size']
-
+good_users = config['biologist_users']
 
 
 '''
@@ -45,7 +45,7 @@ def evaluate_model(concepts, model_path,  min_examples, download_data=False):
             if os.path.exists(dir):
                 shutil.rmtree(dir)
             os.makedirs(dir)
-        download_annotations(min_examples, concepts, classmap, bad_users, img_folder, train_annot_file, valid_annot_file, split=0)
+        download_annotations(min_examples, concepts, classmap, good_users, img_folder, train_annot_file, valid_annot_file, split=0)
 
     '''
     Initializing model for eval
