@@ -159,7 +159,7 @@ def train_model(concepts, users, min_examples, epochs, model_name, videos, selec
         epochs=epochs
     )
 
-    log_callback = TensorBoardLog(id=tb_log_id, table_name=log_table_name)
+    log_callback = TensorBoardLog(id_=tb_log_id, table_name=log_table_name)
 
     tensorboard_callback = keras.callbacks.TensorBoard(
         log_dir=f'./logs/{tb_log_id}', histogram_freq=0, batch_size=batch_size,
