@@ -128,7 +128,7 @@ app.post("/api/login", async function(req, res) {
     const token = jwt.sign(payload, jwtOptions.secretOrKey);
     setCookies(res);
     res.json({
-      id: user.rows[0].id,
+      userid: user.rows[0].id,
       token: token,
       isAdmin: user.rows[0].admin
     });

@@ -76,14 +76,12 @@ class Summary extends React.Component {
       };
       end = { latitude: this.props.gpsstop.x, longitude: this.props.gpsstop.y };
       dist = geoLib.getDistance(start, end, 1, 3);
-    }
-    else {
+    } else {
       dist = 1;
     }
     if (this.props.startdepth && this.props.enddepth) {
       depth = this.props.startdepth - this.props.enddepth;
-    }
-    else {
+    } else {
       depth = 0;
     }
 
@@ -105,12 +103,12 @@ class Summary extends React.Component {
                     <TableCell align="right"># of Annotations</TableCell>
 
                     <TableCell align="right">
-                      {this.props.aiSummary ? "# of Annotations by Non-AI" :
-                      this.state.km
+                      {this.props.aiSummary
+                        ? "# of Annotations by Non-AI"
+                        : this.state.km
                         ? "Creatures per km"
                         : "Creatures per square meter"}
                     </TableCell>
-
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -126,11 +124,11 @@ class Summary extends React.Component {
                         <TableCell align="right">{row.count}</TableCell>
 
                         <TableCell align="right">
-                          {this.props.aiSummary ? row.notai :
-                          this.state.km
+                          {this.props.aiSummary
+                            ? row.notai
+                            : this.state.km
                             ? this.setDecimal(row.count / (dist * 1000))
-                            : this.setDecimal(row.count / (dist * 2))
-                          }
+                            : this.setDecimal(row.count / (dist * 2))}
                         </TableCell>
                       </TableRow>
                     ))

@@ -32,8 +32,8 @@ class VerifySelectUser extends React.Component {
       users: users
     });
 
-    if (users.some(user => user.id.toString() === localStorage.getItem("id"))) {
-      this.props.selectUser(localStorage.getItem("id"));
+    if (users.some(user => user.id.toString() === localStorage.getItem("userid"))) {
+      this.props.selectUser(localStorage.getItem("userid"));
     }
   };
 
