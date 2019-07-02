@@ -60,6 +60,7 @@ class VerifySelection extends React.Component {
           <VerifySelectUser
             value={this.props.selectedUsers}
             getUsers={this.props.getUsers}
+            selectUser={this.props.selectUser}
             handleChange={this.props.handleChangeList("selectedUsers")}
           />
         );

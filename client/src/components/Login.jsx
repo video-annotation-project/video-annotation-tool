@@ -49,6 +49,7 @@ class Login extends Component {
       })
       .then(res => {
         localStorage.setItem("isAuthed", "true");
+        localStorage.setItem("id", res.data.id);
         localStorage.setItem("username", username);
         localStorage.setItem("token", res.data.token);
         //Add code for isAdmin

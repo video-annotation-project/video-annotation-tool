@@ -164,6 +164,12 @@ class Verify extends Component {
       });
   };
 
+  selectUser = (user) => {
+      this.setState({
+          selectedUsers: this.state.selectedUsers.concat(user)
+      });
+  };
+
   handleChangeSwitch = type => event => {
     this.setState({
       [type]: event.target.checked
@@ -230,6 +236,7 @@ class Verify extends Component {
           handleChangeList={this.handleChangeList}
           resetState={this.resetState}
           toggleSelection={this.toggleSelection}
+          selectUser={this.selectUser}
         />
       );
     } else {

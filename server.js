@@ -128,6 +128,7 @@ app.post("/api/login", async function(req, res) {
     const token = jwt.sign(payload, jwtOptions.secretOrKey);
     setCookies(res);
     res.json({
+      id: user.rows[0].id,
       token: token,
       isAdmin: user.rows[0].admin
     });
@@ -755,7 +756,6 @@ app.get(
     var username = splitted[1].split(".mp4");
     params.push(username[0]); // username
     params.push(splitted[0]); // videoid
-    console.log(params);
 
     let queryText = `SELECT *
       FROM concepts c
