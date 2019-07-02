@@ -46,7 +46,7 @@ def create_log_entry(table_name, min_examples, videos, concepts, epochs, users):
                 (%s, %s, %s, %s, %s) RETURNING id""",
         (epochs, min_examples, videos, concepts, users))
 
-    run_id = cursor.fetchone()[0]
+    log_id = cursor.fetchone()[0]
     connection.commit()
 
     return log_id
