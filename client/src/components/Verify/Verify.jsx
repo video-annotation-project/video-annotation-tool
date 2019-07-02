@@ -49,7 +49,7 @@ class Verify extends Component {
     this.state = {
       selectionMounted: true,
       /* -1 represents select all */
-      selectedUsers: ["-1"],
+      selectedUsers: [],
       selectedVideos: ["-1"],
       selectedConcepts: ["-1"],
       selectedUnsure: false,
@@ -196,7 +196,7 @@ class Verify extends Component {
 
   resetState = () => {
     this.setState({
-      selectedUsers: ["-1"],
+      selectedUsers: [],
       selectedVideos: ["-1"],
       selectedConcepts: ["-1"],
       selectedUnsure: false,

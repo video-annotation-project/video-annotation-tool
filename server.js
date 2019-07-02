@@ -204,7 +204,8 @@ app.get(
   "/api/users",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    let queryText = "SELECT DISTINCT u.id, u.username \
+    let queryText =
+      "SELECT DISTINCT u.id, u.username \
                        FROM users u\
                        JOIN annotations a ON a.userid=u.id";
 
@@ -1451,7 +1452,6 @@ app.get(
   }
 );
 
-
 app.get(
   "/api/modelTab/:option",
   passport.authenticate("jwt", { session: false }),
@@ -1507,7 +1507,7 @@ app.get(
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const selectedUsers = req.query.selectedUsers;
-    let params = [];
+    let params = [selectedUsers];
 
     let queryText = `
       SELECT DISTINCT
@@ -1515,26 +1515,7 @@ app.get(
       FROM 
         annotations a
       JOIN videos v ON v.id=a.videoid
-      WHERE a.verifiedby IS NULL
-    `;
-
-    if (selectedUsers.length === 1 && selectedUsers[0] === "-1") {
-      let trackingId = null;
-      let queryText2 = `SELECT * FROM users u WHERE u.username='tracking'`;
-      try {
-        let users = await psql.query(queryText2);
-        trackingId = users.rows[0].id;
-      } catch (error) {
-        res.status(500).json(error);
-      }
-      queryText += ` AND a.userid!=$1`;
-      params.push(trackingId);
-    } else {
-      queryText += ` AND a.userid::text=ANY($1)`;
-      params.push(selectedUsers);
-    }
-
-    queryText += ` ORDER BY v.id`;
+      WHERE a.verifiedby IS NULL AND a.userid::text=ANY($1) ORDER BY v.id`;
 
     try {
       let videos = await psql.query(queryText, params);
@@ -1551,28 +1532,12 @@ app.get(
   async (req, res) => {
     const selectedUsers = req.query.selectedUsers;
     const selectedVideos = req.query.selectedVideos;
-    let params = [];
+    let params = [selectedUsers];
 
     let queryText = `SELECT DISTINCT c.id, c.name
         FROM annotations a
         LEFT JOIN concepts c ON c.id=conceptid
-        WHERE a.verifiedby IS NULL`;
-
-    if (selectedUsers.length === 1 && selectedUsers[0] === "-1") {
-      let trackingId = null;
-      let queryText2 = `SELECT * FROM users u WHERE u.username='tracking'`;
-      try {
-        let users = await psql.query(queryText2);
-        trackingId = users.rows[0].id;
-      } catch (error) {
-        res.status(500).json(error);
-      }
-      queryText += ` AND a.userid!=$1`;
-      params.push(trackingId);
-    } else {
-      queryText += ` AND a.userid::text=ANY($1)`;
-      params.push(selectedUsers);
-    }
+        WHERE a.verifiedby IS NULL AND a.userid::text=ANY($1)`;
 
     if (!(selectedVideos.length === 1 && selectedVideos[0] === "-1")) {
       queryText += ` AND a.videoid::text=ANY($${params.length + 1})`;
@@ -1598,29 +1563,13 @@ app.get(
     const selectedVideos = req.query.selectedVideos;
     const selectedConcepts = req.query.selectedConcepts;
 
-    let params = [];
+    let params = [selectedUsers];
     let queryText = `SELECT distinct a.unsure
       FROM annotations a
       LEFT JOIN concepts c ON c.id=conceptid
       LEFT JOIN users u ON u.id=userid
       LEFT JOIN videos v ON v.id=videoid
-      WHERE a.verifiedby IS NULL`;
-
-    if (selectedUsers.length === 1 && selectedUsers[0] === "-1") {
-      let trackingId = null;
-      const queryText2 = `SELECT * FROM users u WHERE u.username='tracking'`;
-      try {
-        let users = await psql.query(queryText2);
-        trackingId = users.rows[0].id;
-      } catch (error) {
-        res.status(500).json(error);
-      }
-      queryText += ` AND a.userid!=$1`;
-      params.push(trackingId);
-    } else {
-      queryText += ` AND a.userid::text=ANY($${params.length + 1})`;
-      params.push(selectedUsers);
-    }
+      WHERE a.verifiedby IS NULL AND a.userid::text=ANY($1)`;
 
     if (!(selectedVideos.length === 1 && selectedVideos[0] === "-1")) {
       queryText += ` AND a.videoid::text=ANY($${params.length + 1})`;
@@ -1651,29 +1600,14 @@ app.get(
     const selectedConcepts = req.query.selectedConcepts;
     const selectedUnsure = req.query.selectedUnsure;
 
-    let params = [];
+    let params = [selectedUsers];
+
     let queryText = `SELECT distinct a.*, c.name, u.username, v.filename
       FROM annotations a
       LEFT JOIN concepts c ON c.id=conceptid
       LEFT JOIN users u ON u.id=userid
       LEFT JOIN videos v ON v.id=videoid
-      WHERE a.verifiedby IS NULL`;
-
-    if (selectedUsers.length === 1 && selectedUsers[0] === "-1") {
-      let trackingId = null;
-      const queryText2 = `SELECT * FROM users u WHERE u.username='tracking'`;
-      try {
-        let users = await psql.query(queryText2);
-        trackingId = users.rows[0].id;
-      } catch (error) {
-        res.status(500).json(error);
-      }
-      queryText += ` AND a.userid!=$1`;
-      params.push(trackingId);
-    } else {
-      queryText += ` AND a.userid::text=ANY($${params.length + 1})`;
-      params.push(selectedUsers);
-    }
+      WHERE a.verifiedby IS NULL AND a.userid::text=ANY($1)`;
 
     if (!(selectedVideos.length === 1 && selectedVideos[0] === "-1")) {
       queryText += ` AND a.videoid::text=ANY($${params.length + 1})`;

@@ -37,32 +37,25 @@ class VerifySelectUser extends React.Component {
     const { classes, value, handleChange } = this.props;
 
     return (
-        <FormControl component="fieldset" className={classes.formControl}>
-          <FormGroup
-            aria-label="User"
-            name="user"
-            className={classes.group}
-            value={value}
-            onChange={handleChange}
-          >
+      <FormControl component="fieldset" className={classes.formControl}>
+        <FormGroup
+          aria-label="User"
+          name="user"
+          className={classes.group}
+          value={value}
+          onChange={handleChange}
+        >
+          {this.state.users.map(user => (
             <FormControlLabel
-              key={-1}
-              value={"-1"}
+              key={user.id}
+              value={user.id.toString()}
               control={<Checkbox color="primary" />}
-              label="All users"
-              checked={this.props.value.includes("-1")}
+              label={user.username}
+              checked={this.props.value.includes(user.id.toString())}
             />
-            {this.state.users.map(user => (
-              <FormControlLabel
-                key={user.id}
-                value={user.id.toString()}
-                control={<Checkbox color="primary" />}
-                label={user.username}
-                checked={this.props.value.includes(user.id.toString())}
-              />
-            ))}
-          </FormGroup>
-        </FormControl>
+          ))}
+        </FormGroup>
+      </FormControl>
     );
   }
 }
