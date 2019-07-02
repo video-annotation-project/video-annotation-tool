@@ -257,14 +257,10 @@ class VerifyAnnotations extends Component {
     try {
       if (
         Math.abs(
-          annotation.x1 -
-            x1 +
-            annotation.y1 -
-            y1 +
-            annotation.x2 -
-            x2 +
-            annotation.y2 -
-            y2
+            (annotation.x1 - x1) +
+            (annotation.y1 - y1) +
+            (annotation.x2 - x2) +
+            (annotation.y2 - y2)
         ) > 0.1 &&
         annotation.image
       ) {
@@ -585,8 +581,10 @@ class VerifyAnnotations extends Component {
               {this.state.unsure !== null ? (
                 <Typography className={classes.paper} variant="body2">
                   Unsure:{" "}
-                  {this.state.unsure.toString().charAt(0).toUpperCase() +
-                    this.state.unsure.toString().slice(1)}
+                  {this.state.unsure
+                    .toString()
+                    .charAt(0)
+                    .toUpperCase() + this.state.unsure.toString().slice(1)}
                 </Typography>
               ) : (
                 ""
