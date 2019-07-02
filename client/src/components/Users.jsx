@@ -32,7 +32,7 @@ const styles = theme => ({
 
 class Users extends Component {
   state = {
-    selectedUserId: -1,
+    selectedUser: "",
     users: [],
     annotationCount: [],
     fromDate: {
@@ -173,7 +173,7 @@ class Users extends Component {
 
   renderUserSelectOptions = () => {
     return this.state.users.map(option => (
-      <MenuItem key={option.id} value={option.id}>
+      <MenuItem key={option.id} value={option.username}>
         {option.username}
       </MenuItem>
     ));
@@ -195,8 +195,11 @@ class Users extends Component {
       const selectedUser = event.target.value;
       if (selectedUser) {
         this.setState({ selectedUser: selectedUser });
+        let user = this.state.users.find(user => {
+          return user.username === selectedUser
+        })
         this.getAnnotationCount(
-          selectedUser,
+          user.id,
           this.state.fromDate.ISOString,
           this.state.toDate.ISOString
         );
@@ -211,9 +214,13 @@ class Users extends Component {
       const newDate = this.formatDate(value);
 
       this.setState({ [name]: newDate });
-      if (this.state.selectedUser.id) {
+      let selectedUser = this.state.selectedUser;
+      if (selectedUser) {
+        let user = this.state.users.find(user => {
+          return user.username === selectedUser
+        })
         this.getAnnotationCount(
-          this.state.selectedUser.id,
+          user.id,
           name === "fromDate"
             ? newDate.ISOString
             : this.state.fromDate.ISOString,
@@ -233,7 +240,7 @@ class Users extends Component {
             <FormControl className={classes.formControl}>
               <InputLabel>User</InputLabel>
               <Select
-                value={this.state.selectedUserId}
+                value={this.state.selectedUser}
                 onChange={this.handleUserSelectChange}
                 inputProps={{
                   name: "user"
