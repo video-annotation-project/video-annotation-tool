@@ -27,7 +27,7 @@ from loading_data import download_annotations
 from loading_data import queryDB, get_classmap
 from progress_callbacks import Progress
 from progress_callbacks import TensorBoardLog
-from tensorboard_logs import get_log_id
+from tensorboard_logs import create_log_entry
 
 
 config_path = "../config.json"
