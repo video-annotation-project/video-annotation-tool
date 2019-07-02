@@ -85,8 +85,7 @@ train_model(concepts, info['usersSelected'], int(info['minImages']), int(info['e
 
 # Run evaluate on all the videos in verifyVideos
 with Pool() as p:
-    p.map(evaluate,map(lambda video: (video, user_model, concepts),verifyVideos))
-
+    p.starmap(evaluate, map(lambda video: (video, user_model, concepts), verifyVideos))
 
 cursor.execute("Update modeltab SET info =  '{\"activeStep\": 0, \"conceptsSelected\":[], \"epochs\":0, \"minImages\":0, \"modelSelected\":\"\",\"videosSelected\":[],\"usersSelected\":[]}' WHERE option = 'trainmodel'")
 con.commit()
