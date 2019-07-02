@@ -278,7 +278,7 @@ class Users extends Component {
             <TableHead>
               <TableRow>
                 <TableCell>Species</TableCell>
-                <TableCell align="right">Total Anootated</TableCell>
+                <TableCell align="right">Total Annotated</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>

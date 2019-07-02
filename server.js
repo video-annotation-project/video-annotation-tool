@@ -162,7 +162,7 @@ app.post(
       }
       const saltRounds = 10;
       const hash = await bcrypt.hash(newPassword1, saltRounds);
-      queryUpdate = "UPDATE users SET password=$1 WHERE username=$2";
+      queryUpdate = `UPDATE users SET password=$1 WHERE username=$2`;
       const update = await psql.query(queryUpdate, [hash, username]);
       res.json({ message: "Changed" });
     } catch (error) {
@@ -205,15 +205,15 @@ app.get(
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     let queryText =
-      "SELECT DISTINCT u.id, u.username \
-                       FROM users u\
-                       JOIN annotations a ON a.userid=u.id";
+      `SELECT DISTINCT u.id, u.username
+                       FROM users u
+                       JOIN annotations a ON a.userid=u.id`;
 
     if (req.query.noAi === "true") {
-      queryText += " WHERE u.username NOT IN ('tracking', 'ai')";
+      queryText += ` WHERE u.username NOT IN ('tracking', 'ai')`;
     }
 
-    queryText += " ORDER BY u.username";
+    queryText += ` ORDER BY u.username`;
 
     try {
       const users = await psql.query(queryText);
@@ -794,9 +794,9 @@ app.patch(
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     let queryText =
-      "UPDATE videos \
-                   SET description=$1 \
-                   WHERE id=$2 RETURNING *";
+      `UPDATE videos
+                   SET description=$1
+                   WHERE id=$2 RETURNING *`;
     try {
       const updateRes = await psql.query(queryText, [
         req.body.description,
@@ -816,10 +816,10 @@ app.delete(
     const userid = req.user.id;
     const videoid = req.params.videoid;
     const queryText =
-      "DELETE FROM checkpoints \
-                       WHERE userid=$1 \
-                       AND videoid=$2\
-                       RETURNING *";
+      `DELETE FROM checkpoints
+                       WHERE userid=$1
+                       AND videoid=$2
+                       RETURNING *`;
     try {
       let deleteRes = await psql.query(queryText, [userid, videoid]);
       res.json({ message: "unwatched" });
@@ -839,11 +839,11 @@ app.put(
     const userId = req.user.id;
     const data = [timeinvideo, finished, userId, videoid];
     let queryText =
-      "UPDATE checkpoints \
-                     SET timeinvideo=$1,\
-                     timestamp=current_timestamp,\
-                     finished=$2 \
-                     WHERE userid=$3 AND videoid=$4";
+      `UPDATE checkpoints
+                     SET timeinvideo=$1,
+                     timestamp=current_timestamp,
+                     finished=$2
+                     WHERE userid=$3 AND videoid=$4`;
     try {
       const updateRes = await psql.query(queryText, data);
       if (updateRes.rowCount > 0) {
@@ -852,9 +852,9 @@ app.put(
       }
       // User has no checkpoint for this video
       queryText =
-        "INSERT INTO checkpoints \
-                 (timeinvideo, finished, userid, videoid, timestamp) \
-                 VALUES($1, $2, $3, $4, current_timestamp)";
+        `INSERT INTO checkpoints
+                 (timeinvideo, finished, userid, videoid, timestamp)
+                 VALUES($1, $2, $3, $4, current_timestamp)`;
       let insertRes = await psql.query(queryText, data);
       res.json({ message: "updated" });
     } catch (error) {
@@ -936,20 +936,20 @@ app.get(
       WHERE 
         annotations.userid NOT IN (17, 32)`;
     if (req.query.unsureOnly === "true") {
-      queryPass = queryPass + " AND annotations.unsure = true";
+      queryPass = queryPass + ` AND annotations.unsure = true`;
     }
     if (req.query.verifiedCondition === "verified only") {
-      queryPass = queryPass + " AND annotations.verifiedby IS NOT NULL";
+      queryPass = queryPass + ` AND annotations.verifiedby IS NOT NULL`;
     } else if (req.query.verifiedCondition === "unverified only") {
-      queryPass = queryPass + " AND annotations.verifiedby IS NULL";
+      queryPass = queryPass + ` AND annotations.verifiedby IS NULL`;
     }
     if (req.query.admin !== "true") {
-      queryPass = queryPass + " AND annotations.userid = $1";
+      queryPass = queryPass + ` AND annotations.userid = $1`;
       params.push(req.user.id);
     }
     // Adds query conditions from Report tree
     queryPass +=
-      req.query.queryConditions + " ORDER BY annotations.timeinvideo";
+      req.query.queryConditions + ` ORDER BY annotations.timeinvideo`;
     // Retrieves only selected 100 if queryLimit exists
     if (req.query.queryLimit !== "undefined") {
       queryPass = queryPass + req.query.queryLimit;
@@ -985,14 +985,14 @@ app.post(
       req.body.unsure
     ];
     const queryText =
-      "INSERT INTO annotations(userid, videoid,\
-                       conceptid, timeinvideo, \
-                       x1, y1, x2, y2, \
-                       videoWidth, videoHeight, \
-                       image, imagewithbox, \
-                       comment, unsure, dateannotated) \
-                       VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10,\
-                       $11, $12, $13, $14, current_timestamp) RETURNING *";
+      `INSERT INTO annotations(userid, videoid,
+                       conceptid, timeinvideo,
+                       x1, y1, x2, y2,
+                       videoWidth, videoHeight,
+                       image, imagewithbox,
+                       comment, unsure, dateannotated)
+                       VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
+                       $11, $12, $13, $14, current_timestamp) RETURNING *`;
     try {
       let insertRes = await psql.query(queryText, data);
       res.json({
@@ -1011,17 +1011,17 @@ app.patch(
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     queryText =
-      "UPDATE annotations \
-                 SET conceptid = $1, comment = $2, unsure = $3 \
-                 WHERE annotations.id=$4 OR annotations.originalid=$4 RETURNING *";
+      `UPDATE annotations
+                 SET conceptid = $1, comment = $2, unsure = $3
+                 WHERE annotations.id=$4 OR annotations.originalid=$4 RETURNING *`;
     queryUpdate =
-      "SELECT annotations.id, annotations.comment,\
-                   annotations.unsure, annotations.timeinvideo, \
-                   annotations.videoWidth, annotations.videoHeight, \
-                   annotations.imagewithbox, concepts.name \
-                   FROM annotations, concepts \
-                   WHERE annotations.id = $1 \
-                   AND annotations.conceptid=concepts.id";
+      `SELECT annotations.id, annotations.comment,
+                   annotations.unsure, annotations.timeinvideo,
+                   annotations.videoWidth, annotations.videoHeight,
+                   annotations.imagewithbox, concepts.name
+                   FROM annotations, concepts
+                   WHERE annotations.id = $1
+                   AND annotations.conceptid=concepts.id`;
     try {
       await psql.query(queryText, [
         req.body.conceptId,
@@ -1212,33 +1212,33 @@ let selectLevelQuery = level => {
   let queryPass = "";
   if (level === "Video") {
     queryPass =
-      "SELECT videos.filename as name,\
-                 videos.id as key,\
-                 COUNT(*) as count, \
-                 false as expanded\
-                 FROM annotations, videos \
-                 WHERE videos.id=annotations.videoid \
-                 AND annotations.userid NOT IN (17, 32)";
+      `SELECT videos.filename as name,
+                 videos.id as key,
+                 COUNT(*) as count,
+                 false as expanded
+                 FROM annotations, videos
+                 WHERE videos.id=annotations.videoid 
+                 AND annotations.userid NOT IN (17, 32)`;
   }
   if (level === "Concept") {
     queryPass =
-      "SELECT concepts.name as name,\
-                 concepts.id as key,\
-                 COUNT(*) as count,\
-                 false as expanded\
-                 FROM annotations, concepts \
-                 WHERE annotations.conceptid=concepts.id \
-                 AND annotations.userid NOT IN (17, 32)";
+      `SELECT concepts.name as name,
+                 concepts.id as key,
+                 COUNT(*) as count,
+                 false as expanded
+                 FROM annotations, concepts
+                 WHERE annotations.conceptid=concepts.id
+                 AND annotations.userid NOT IN (17, 32)`;
   }
   if (level === "User") {
     queryPass =
-      "SELECT users.username as name,\
-                 users.id as key,\
-                 COUNT(*) as count, \
-                 false as expanded \
-                 FROM annotations, users \
-                 WHERE annotations.userid=users.id \
-                 AND annotations.userid NOT IN (17, 32)";
+      `SELECT users.username as name,
+                 users.id as key,
+                 COUNT(*) as count,
+                 false as expanded
+                 FROM annotations, users
+                 WHERE annotations.userid=users.id
+                 AND annotations.userid NOT IN (17, 32)`;
   }
   return queryPass;
 };
@@ -1253,18 +1253,18 @@ app.get(
       queryPass = queryPass + req.query.queryConditions;
     }
     if (req.query.unsureOnly === "true") {
-      queryPass = queryPass + " AND annotations.unsure = true";
+      queryPass = queryPass + ` AND annotations.unsure = true`;
     }
     if (req.query.verifiedCondition === "verified only") {
-      queryPass = queryPass + " AND annotations.verifiedby IS NOT NULL";
+      queryPass = queryPass + ` AND annotations.verifiedby IS NOT NULL`;
     } else if (req.query.verifiedCondition === "unverified only") {
-      queryPass = queryPass + " AND annotations.verifiedby IS NULL";
+      queryPass = queryPass + ` AND annotations.verifiedby IS NULL`;
     }
     if (req.query.admin !== "true") {
-      queryPass = queryPass + " AND annotations.userid = $1";
+      queryPass = queryPass + ` AND annotations.userid = $1`;
       params.push(req.user.id);
     }
-    queryPass = queryPass + " GROUP BY (name, key) ORDER BY count DESC";
+    queryPass = queryPass + ` GROUP BY (name, key) ORDER BY count DESC`;
     try {
       const data = await psql.query(queryPass, params);
       res.json(data.rows);
