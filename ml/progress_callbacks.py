@@ -2,6 +2,7 @@ import os
 import json
 
 import keras
+import boto3
 from psycopg2 import connect
 from dotenv import load_dotenv
 
