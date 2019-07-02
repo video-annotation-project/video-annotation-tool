@@ -22,7 +22,7 @@ def create_log_entry(table_name, min_examples, videos, concepts, epochs, users):
 
     users = "\'" +  ','.join(str(e) for e in users) + "\'"
     videos = "\'" + ','.join(str(e) for e in videos) + "\'"
-    concepts = "\'" + ','.join(str(e) for e in selected_concepts) + "\'"
+    concepts = "\'" + ','.join(str(e) for e in concepts) + "\'"
 
     config_path = "../config.json"
     load_dotenv(dotenv_path="../.env")
