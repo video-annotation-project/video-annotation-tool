@@ -204,8 +204,7 @@ app.get(
   "/api/users",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    let queryText =
-      `SELECT DISTINCT u.id, u.username
+    let queryText = `SELECT DISTINCT u.id, u.username
                        FROM users u
                        JOIN annotations a ON a.userid=u.id`;
 
@@ -793,8 +792,7 @@ app.patch(
   "/api/videos/:videoid",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    let queryText =
-      `UPDATE videos
+    let queryText = `UPDATE videos
                    SET description=$1
                    WHERE id=$2 RETURNING *`;
     try {
@@ -815,8 +813,7 @@ app.delete(
   async (req, res) => {
     const userid = req.user.id;
     const videoid = req.params.videoid;
-    const queryText =
-      `DELETE FROM checkpoints
+    const queryText = `DELETE FROM checkpoints
                        WHERE userid=$1
                        AND videoid=$2
                        RETURNING *`;
@@ -838,8 +835,7 @@ app.put(
     const { timeinvideo, finished } = req.body;
     const userId = req.user.id;
     const data = [timeinvideo, finished, userId, videoid];
-    let queryText =
-      `UPDATE checkpoints
+    let queryText = `UPDATE checkpoints
                      SET timeinvideo=$1,
                      timestamp=current_timestamp,
                      finished=$2
@@ -851,8 +847,7 @@ app.put(
         return;
       }
       // User has no checkpoint for this video
-      queryText =
-        `INSERT INTO checkpoints
+      queryText = `INSERT INTO checkpoints
                  (timeinvideo, finished, userid, videoid, timestamp)
                  VALUES($1, $2, $3, $4, current_timestamp)`;
       let insertRes = await psql.query(queryText, data);
@@ -984,8 +979,7 @@ app.post(
       req.body.comment,
       req.body.unsure
     ];
-    const queryText =
-      `INSERT INTO annotations(userid, videoid,
+    const queryText = `INSERT INTO annotations(userid, videoid,
                        conceptid, timeinvideo,
                        x1, y1, x2, y2,
                        videoWidth, videoHeight,
@@ -1010,12 +1004,10 @@ app.patch(
   "/api/annotations",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    queryText =
-      `UPDATE annotations
+    queryText = `UPDATE annotations
                  SET conceptid = $1, comment = $2, unsure = $3
                  WHERE annotations.id=$4 OR annotations.originalid=$4 RETURNING *`;
-    queryUpdate =
-      `SELECT annotations.id, annotations.comment,
+    queryUpdate = `SELECT annotations.id, annotations.comment,
                    annotations.unsure, annotations.timeinvideo,
                    annotations.videoWidth, annotations.videoHeight,
                    annotations.imagewithbox, concepts.name
@@ -1211,8 +1203,7 @@ app.patch(
 let selectLevelQuery = level => {
   let queryPass = "";
   if (level === "Video") {
-    queryPass =
-      `SELECT videos.filename as name,
+    queryPass = `SELECT videos.filename as name,
                  videos.id as key,
                  COUNT(*) as count,
                  false as expanded
@@ -1221,8 +1212,7 @@ let selectLevelQuery = level => {
                  AND annotations.userid NOT IN (17, 32)`;
   }
   if (level === "Concept") {
-    queryPass =
-      `SELECT concepts.name as name,
+    queryPass = `SELECT concepts.name as name,
                  concepts.id as key,
                  COUNT(*) as count,
                  false as expanded
@@ -1231,8 +1221,7 @@ let selectLevelQuery = level => {
                  AND annotations.userid NOT IN (17, 32)`;
   }
   if (level === "User") {
-    queryPass =
-      `SELECT users.username as name,
+    queryPass = `SELECT users.username as name,
                  users.id as key,
                  COUNT(*) as count,
                  false as expanded
