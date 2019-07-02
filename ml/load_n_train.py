@@ -154,6 +154,7 @@ def train_model(concepts, users, min_examples, epochs, model_name, videos, selec
         table_name=log_table_name,
         users=users,
         videos=videos,
+        min_examples=min_examples,
         concepts=selected_concepts,
         epochs=epochs
     )

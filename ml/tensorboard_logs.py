@@ -10,15 +10,19 @@ from dotenv import load_dotenv
 #     id serial PRIMARY KEY,
 #     start_train timestamp,
 #     end_train timestamp,
-#     images integer,
+#     min_examples integer,
 #     epochs integer,
-#     concepts string,
-#     videos string,
-#     users string,
+#     concepts text,
+#     videos text,
+#     users text
 # );
 
 
-def create_log_entry(table_name, images, videos, concepts, epochs, users):
+def create_log_entry(table_name, min_examples, videos, concepts, epochs, users):
+
+    users = "\'" +  ','.join(str(e) for e in users) + "\'"
+    videos = "\'" + ','.join(str(e) for e in videos) + "\'"
+    concepts = "\'" + ','.join(str(e) for e in selected_concepts) + "\'"
 
     config_path = "../config.json"
     load_dotenv(dotenv_path="../.env")
@@ -37,10 +41,10 @@ def create_log_entry(table_name, images, videos, concepts, epochs, users):
 
     cursor.execute(
         f"""INSERT INTO {table_name} 
-                (epochs, images, videos, concepts, users) 
+                (epochs, min_examples, videos, concepts, users) 
             VALUES 
                 (%s, %s, %s, %s, %s) RETURNING id""",
-        (epochs, images, videos, concepts, users))
+        (epochs, min_examples, videos, concepts, users))
 
     run_id = cursor.fetchone()[0]
     connection.commit()
