@@ -765,8 +765,8 @@ app.put(
       queryText = `
         INSERT INTO 
           checkpoints (timeinvideo, finished, userid, videoid, timestamp)
-        VALUES(
-        $1, $2, $3, $4, current_timestamp)
+        VALUES
+          ($1, $2, $3, $4, current_timestamp)
        `;
       let insertRes = await psql.query(queryText, data);
       res.json({ message: "updated" });
