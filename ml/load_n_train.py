@@ -152,6 +152,7 @@ def train_model(concepts, users, min_examples, epochs, model_name, videos, selec
 
     tb_log_id = create_log_entry(
         table_name=log_table_name,
+        model_name=model_name,
         users=users,
         videos=videos,
         min_examples=min_examples,

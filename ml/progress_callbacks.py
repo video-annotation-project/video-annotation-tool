@@ -1,5 +1,6 @@
 import os
 import json
+import datetime
 
 import keras
 import boto3
@@ -117,13 +118,29 @@ class TensorBoardLog(keras.callbacks.Callback):
 
 
     def on_train_begin(self, logs={}):
-        # Log time started
-        return
+        self.cursor.execute(
+        f"""UPDATE 
+                {table_name} 
+            SET
+                start_train=%s 
+            WHERE 
+                id=%s""",
+        (datetime.datetime.now(), self.id))
+
+        self.connection.commit()
     
 
     def on_train_end(self, logs={}):
-        # Log time finihsed
-        return
+        self.cursor.execute(
+        f"""UPDATE 
+                {table_name} 
+            SET
+                end_train=%s 
+            WHERE 
+                id=%s""",
+        (datetime.datetime.now(), self.id))
+        
+        self.connection.commit()
 
  
     def on_epoch_begin(self, epoch, logs={}):

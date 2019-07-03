@@ -17,8 +17,7 @@ from dotenv import load_dotenv
 #     users text
 # );
 
-
-def create_log_entry(table_name, min_examples, videos, concepts, epochs, users):
+def create_log_entry(table_name, model_name, min_examples, videos, concepts, epochs, users):
 
     users = "\'" +  ','.join(str(e) for e in users) + "\'"
     videos = "\'" + ','.join(str(e) for e in videos) + "\'"
@@ -41,10 +40,10 @@ def create_log_entry(table_name, min_examples, videos, concepts, epochs, users):
 
     cursor.execute(
         f"""INSERT INTO {table_name} 
-                (epochs, min_examples, videos, concepts, users) 
+                (model_name, epochs, min_examples, videos, concepts, users) 
             VALUES 
-                (%s, %s, %s, %s, %s) RETURNING id""",
-        (epochs, min_examples, videos, concepts, users))
+                (%s, %s, %s, %s, %s, %s) RETURNING id""",
+        (model_name, epochs, min_examples, videos, concepts, users))
 
     log_id = cursor.fetchone()[0]
     connection.commit()
