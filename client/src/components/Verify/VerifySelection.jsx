@@ -11,6 +11,7 @@ import Typography from "@material-ui/core/Typography";
 import VerifySelectUser from "./VerifySelectUser.jsx";
 import VerifySelectVideo from "./VerifySelectVideo.jsx";
 import VerifySelectConcept from "./VerifySelectConcept.jsx";
+import VerifySelectUnsure from "./VerifySelectUnsure";
 
 const styles = theme => ({
   button: {
@@ -26,7 +27,7 @@ const styles = theme => ({
 });
 
 function getSteps() {
-  return ["Users", "Videos", "Concepts"];
+  return ["Users", "Videos", "Concepts", "Unsure"];
 }
 
 function getStepContent(step) {
@@ -37,6 +38,8 @@ function getStepContent(step) {
       return "Select videos";
     case 2:
       return "Select concepts";
+    case 3:
+      return "Select unsure";
     default:
       return "Unknown step";
   }
@@ -57,7 +60,8 @@ class VerifySelection extends React.Component {
           <VerifySelectUser
             value={this.props.selectedUsers}
             getUsers={this.props.getUsers}
-            handleChange={this.props.handleChange("selectedUsers")}
+            selectUser={this.props.selectUser}
+            handleChange={this.props.handleChangeList("selectedUsers")}
           />
         );
       case 1:
@@ -65,7 +69,7 @@ class VerifySelection extends React.Component {
           <VerifySelectVideo
             value={this.props.selectedVideos}
             getVideos={this.props.getVideos}
-            handleChange={this.props.handleChange("selectedVideos")}
+            handleChange={this.props.handleChangeList("selectedVideos")}
           />
         );
       case 2:
@@ -73,8 +77,16 @@ class VerifySelection extends React.Component {
           <VerifySelectConcept
             value={this.props.selectedConcepts}
             getConcepts={this.props.getConcepts}
-            handleChange={this.props.handleChange("selectedConcepts")}
+            handleChange={this.props.handleChangeList("selectedConcepts")}
           />
+        );
+      case 3:
+        return (
+            <VerifySelectUnsure
+                value={this.props.selectedUnsure}
+                getUnsure={this.props.getUnsure}
+                handleChange={this.props.handleChangeSwitch("selectedUnsure")}
+            />
         );
       default:
         return "Unknown step";
@@ -90,7 +102,7 @@ class VerifySelection extends React.Component {
       case 2:
         return this.props.selectedConcepts.length === 0;
       default:
-        return true;
+        return false;
     }
   };
 
