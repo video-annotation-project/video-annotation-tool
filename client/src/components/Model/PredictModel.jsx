@@ -18,6 +18,7 @@ import MenuItem from "@material-ui/core/MenuItem";
 import Radio from "@material-ui/core/Radio";
 import IconButton from "@material-ui/core/IconButton";
 import Description from "@material-ui/icons/Description";
+import PredictProgress from "./PredictProgress.jsx";
 
 import VideoMetadata from "../Utilities/VideoMetadata.jsx";
 
@@ -48,7 +49,15 @@ const styles = theme => ({
     width: "50%",
     height: "500px",
     overflow: "auto"
-  }
+  },  
+  progress: {
+    display: "flex",
+    flex: 1,
+    flexDirection: "column",
+    justifyContent: "right",
+    alignItems: "right",
+    width: '50%',
+  },
 });
 
 class PredictModel extends Component {
@@ -379,6 +388,7 @@ class PredictModel extends Component {
           <Typography variant="display1">
             Run a trained model on video(s)
           </Typography>
+          <PredictProgress className={classes.progress}/>
           <br />
         </div>
         <Stepper activeStep={activeStep} orientation="vertical">
