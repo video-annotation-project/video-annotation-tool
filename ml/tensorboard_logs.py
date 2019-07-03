@@ -8,20 +8,17 @@ from dotenv import load_dotenv
 
 # CREATE TABLE previous_runs (
 #     id serial PRIMARY KEY,
+#     model_name text,
 #     start_train timestamp,
 #     end_train timestamp,
 #     min_examples integer,
 #     epochs integer,
-#     concepts text,
-#     videos text,
-#     users text
+#     concepts integer[],
+#     videos integer[],
+#     users integer[]
 # );
 
 def create_log_entry(table_name, model_name, min_examples, videos, concepts, epochs, users):
-
-    users = "\'" +  ','.join(str(e) for e in users) + "\'"
-    videos = "\'" + ','.join(str(e) for e in videos) + "\'"
-    concepts = "\'" + ','.join(str(e) for e in concepts) + "\'"
 
     config_path = "../config.json"
     load_dotenv(dotenv_path="../.env")
