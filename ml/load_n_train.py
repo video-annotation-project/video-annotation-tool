@@ -3,12 +3,12 @@ import os
 import shutil
 import subprocess
 import time
+import random
 
 import keras 
 import pandas as pd
 import tensorflow as tf
 import skimage as sk
-import random
 import numpy as np
 import boto3
 from keras_retinanet import models
@@ -26,6 +26,8 @@ from dotenv import load_dotenv
 from loading_data import download_annotations
 from loading_data import queryDB, get_classmap
 from progress_callbacks import Progress
+from progress_callbacks import TensorBoardLog
+from tensorboard_logs import create_log_entry
 
 
 config_path = "../config.json"
@@ -146,8 +148,22 @@ def train_model(concepts, users, min_examples, epochs, model_name, videos, selec
     #stopping: stops training if val_loss stops improving
     stopping = EarlyStopping(monitor='val_loss', min_delta=0, patience=10)
 
+    log_table_name = 'previous_runs'
+
+    tb_log_id = create_log_entry(
+        table_name=log_table_name,
+        model_name=model_name,
+        users=users,
+        videos=videos,
+        min_examples=min_examples,
+        concepts=selected_concepts,
+        epochs=epochs
+    )
+
+    log_callback = TensorBoardLog(id_=tb_log_id, table_name=log_table_name)
+
     tensorboard_callback = keras.callbacks.TensorBoard(
-        log_dir='./logs', histogram_freq=0, batch_size=batch_size,
+        log_dir=f'./logs/{tb_log_id}', histogram_freq=0, batch_size=batch_size,
         write_graph=True, write_grads=False, write_images=False,
         embeddings_freq=0, embeddings_layer_names=None,
         embeddings_metadata=None, embeddings_data=None, update_freq='epoch')
@@ -156,7 +172,7 @@ def train_model(concepts, users, min_examples, epochs, model_name, videos, selec
     
     history = training_model.fit_generator(train_generator, 
         epochs=epochs, 
-        callbacks=[checkpoint, stopping, tensorboard_callback, progress_callback],
+        callbacks=[checkpoint, stopping, tensorboard_callback, progress_callback, log_callback],
         validation_data=test_generator,
         verbose=2
     ).history
@@ -167,6 +183,7 @@ def train_model(concepts, users, min_examples, epochs, model_name, videos, selec
     print("Done Training Model: " + str((end - start)/60) + " minutes")
 
     os.system("sudo shutdown -h")
+
 
 if __name__ == '__main__':
     epochs = 1
