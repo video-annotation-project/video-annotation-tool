@@ -22,19 +22,16 @@ jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
 jwtOptions.secretOrKey = process.env.JWT_KEY;
 
 async function findUser(userId) {
-  queryPass = `
-    SELECT 
-      id,
-      username,
-      password,
-      admin
+  let queryPass = `
+    SELECT
+      id, username, password, admin
     FROM
       users
     WHERE
       users.id=$1
   `;
   const user = await psql.query(queryPass, [userId]);
-  if (user.rows.length == 1) {
+  if (user.rows.length === 1) {
     return user.rows[0];
   } else {
     return false;
@@ -106,9 +103,7 @@ app.post("/api/login", async function(req, res) {
   const { username, password } = req.body;
   let queryPass = `
     SELECT 
-      id,
-      password, 
-      admin
+      id, password, admin
     FROM 
       users 
     WHERE
@@ -128,6 +123,7 @@ app.post("/api/login", async function(req, res) {
     const token = jwt.sign(payload, jwtOptions.secretOrKey);
     setCookies(res);
     res.json({
+      userid: user.rows[0].id,
       token: token,
       isAdmin: user.rows[0].admin
     });
@@ -146,14 +142,7 @@ app.post(
   async (req, res) => {
     const { password, newPassword1, newPassword2 } = req.body;
     const username = req.user.username;
-    const queryPass = `
-      SELECT
-        password 
-      FROM
-        users
-      WHERE 
-        users.username=$1
-    `;
+    const queryPass = `SELECT password FROM users WHERE users.username=$1`;
     try {
       const currentPass = await psql.query(queryPass, [username]);
       if (!(await bcrypt.compare(password, currentPass.rows[0].password))) {
@@ -162,8 +151,8 @@ app.post(
       }
       const saltRounds = 10;
       const hash = await bcrypt.hash(newPassword1, saltRounds);
-      queryUpdate = "UPDATE users SET password=$1 WHERE username=$2";
-      const update = await psql.query(queryUpdate, [hash, username]);
+      let queryUpdate = `UPDATE users SET password=$1 WHERE username=$2`;
+      await psql.query(queryUpdate, [hash, username]);
       res.json({ message: "Changed" });
     } catch (error) {
       res.status(500).json(error);
@@ -176,16 +165,10 @@ app.post(
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const queryText = `
-      INSERT INTO users(
-        username, 
-        password, 
-        admin
-      )
-      VALUES(
-        $1,
-        $2, 
-        $3
-      ) 
+      INSERT INTO 
+        users (username, password, admin)
+      VALUES
+        ($1, $2, $3) 
       RETURNING *
     `;
     const saltRounds = 10;
@@ -204,12 +187,20 @@ app.get(
   "/api/users",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    let queryText = "SELECT id, username \
-                       FROM users";
+    let queryText = `
+      SELECT DISTINCT 
+        u.id, u.username 
+      FROM 
+        users u
+      JOIN 
+        annotations a ON a.userid=u.id
+    `;
 
     if (req.query.noAi === "true") {
-      queryText += " WHERE username NOT IN ('tracking', 'ai')";
+      queryText += ` WHERE u.username NOT IN ('tracking', 'ai')`;
     }
+
+    queryText += ` ORDER BY u.username`;
 
     try {
       const users = await psql.query(queryText);
@@ -224,15 +215,7 @@ app.get(
   "/api/concepts/:id",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    queryText = `
-      SELECT
-        id, 
-        name 
-      FROM 
-        concepts 
-      WHERE
-        concepts.parent=$1
-    `;
+    const queryText = `SELECT id, name FROM concepts WHERE concepts.parent=$1`;
     try {
       const concepts = await psql.query(queryText, [req.params.id]);
       res.json(concepts.rows);
@@ -249,12 +232,10 @@ app.get(
   async (req, res) => {
     const queryText = `
       SELECT 
-        concepts.id,
-        concepts.name
+        concepts.id, concepts.name
       FROM (
         SELECT
-          conceptid, 
-          count(*)
+          conceptid, count(*)
         FROM
           annotations
         GROUP BY
@@ -280,14 +261,7 @@ app.get(
 // be circumvented by using cloudfront
 app.get("/api/conceptImages/:id", async (req, res) => {
   let s3 = new AWS.S3();
-  queryText = `
-      SELECT
-        picture 
-      FROM
-        concepts 
-      WHERE
-        concepts.id=$1
-    `;
+  const queryText = `SELECT picture FROM concepts WHERE concepts.id=$1`;
   try {
     const response = await psql.query(queryText, [req.params.id]);
     const picture = response.rows[0].picture;
@@ -307,18 +281,15 @@ app.get(
   "/api/conceptsSelected",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    queryText = `
+    const queryText = `
       SELECT 
         *
       FROM
-        profile, 
-        concepts
+        profile, concepts
       WHERE 
-        profile.userid=$1
-        AND concepts.id=profile.conceptId
+        profile.userid=$1 AND concepts.id=profile.conceptId
       ORDER BY
-        profile.conceptidx,
-        concepts.name
+        profile.conceptidx, concepts.name
     `;
     try {
       let concepts = await psql.query(queryText, [req.user.id]);
@@ -334,15 +305,11 @@ app.post(
   "/api/conceptsSelected",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    queryText = `
-      INSERT INTO profile(
-        userid, 
-        conceptid
-      )
-      VALUES(
-         $1,
-         $2
-      )
+    const queryText = `
+      INSERT INTO 
+        profile (userid, conceptid)
+      VALUES
+        ($1, $2)
       RETURNING *
     `;
     try {
@@ -362,8 +329,7 @@ app.delete(
       DELETE FROM
         profile
       WHERE
-        profile.userid=$1 
-        AND profile.conceptid=$2
+        profile.userid=$1 AND profile.conceptid=$2
       RETURNING *
     `;
     try {
@@ -384,18 +350,13 @@ app.patch(
     const conceptsSelected = JSON.stringify(req.body.conceptsSelected);
     const queryText = `
       UPDATE 
-        profile
-      AS
-        p
+        profile AS p
       SET
         conceptidx=c.conceptidx
       FROM 
-        json_populate_recordset(null::profile,'${conceptsSelected}')
-      AS
-        c
+        json_populate_recordset(null::profile,'${conceptsSelected}') AS c
       WHERE
-        c.userid=p.userid 
-        AND c.conceptid=p.conceptid
+        c.userid=p.userid AND c.conceptid=p.conceptid
     `;
     try {
       let update = await psql.query(queryText);
@@ -413,40 +374,27 @@ app.get(
 
   async (req, res) => {
     let queryText = `SELECT * FROM ai_videos`;
-
     try {
       let ai_videos = await psql.query(queryText);
       res.json(ai_videos);
-    }
-    catch (error) {
+    } catch (error) {
       console.log(error);
       res.status(500).json(error);
     }
   }
-)
+);
 
 app.delete(
   "/api/aivideos",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     let s3 = new AWS.S3();
-    let queryText = `
-      DELETE FROM
-        ai_videos
-      WHERE
-        id=$1
-      RETURNING *`;
-    let queryText1 = `
-      DELETE FROM
-        users  
-      WHERE
-        username=$1
-      RETURNING *
-    `;
-    var videoName = req.body.video.name;
-    var splitName = videoName.split("_");
-    var modelNamewithMP4 = splitName[splitName.length-1];
-    var modelName = modelNamewithMP4.split(".mp4")[0];
+    let queryText = `DELETE FROM ai_videos WHERE id=$1 RETURNING *`;
+    let queryText1 = `DELETE FROM users WHERE username=$1 RETURNING *`;
+    let videoName = req.body.video.name;
+    let splitName = videoName.split("_");
+    let modelNamewithMP4 = splitName[splitName.length - 1];
+    const modelName = modelNamewithMP4.split(".mp4")[0];
 
     try {
       let Objects = [];
@@ -459,23 +407,20 @@ app.delete(
           Objects: Objects
         }
       };
-      let s3Res = await s3.deleteObjects(params,
-        (err, data) => {
-          if (err) {
-            console.log(err);
-            res.status(500).json(err);
-          } else {
-            console.log(data);
-          }
-        });
+      let s3Res = await s3.deleteObjects(params, (err, data) => {
+        if (err) {
+          console.log(err);
+          res.status(500).json(err);
+        } else {
+          console.log(data);
+        }
+      });
 
       let del = await psql.query(queryText, [req.body.video.id]);
-      
+
       del = await psql.query(queryText1, [modelName]);
 
-
       res.json("deleted");
-      
     } catch (error) {
       console.log(error);
       res.status(400).json(error);
@@ -498,120 +443,67 @@ app.get(
         count.count
       FROM
         checkpoints
-      LEFT JOIN (
-        SELECT 
-          videoid,
-          count(*)
-        FROM
-          checkpoints 
-        GROUP BY 
-          videoid
-      ) as count
-      ON 
-        count.videoid=checkpoints.videoid
+      LEFT JOIN 
+        (
+          SELECT videoid, count(*) FROM checkpoints GROUP BY videoid
+        ) AS count ON count.videoid=checkpoints.videoid
       LEFT JOIN
-        videos 
-      ON 
-        videos.id=checkpoints.videoid
+        videos ON videos.id=checkpoints.videoid
       WHERE
-        checkpoints.userid=$1
-        AND checkpoints.finished=false
+        checkpoints.userid=$1 AND checkpoints.finished=false
       ORDER BY
         videos.id
     `;
     let queryGlobalUnwatched = `
       SELECT 
-        videos.id, 
-        videos.filename,
-        false as finished,
-        0 as timeinvideo
+        videos.id, videos.filename, false as finished, 0 as timeinvideo
       FROM 
         videos
       WHERE 
-        id NOT IN (
-          SELECT 
-            videoid
-          FROM
-            checkpoints
-        )
+        id NOT IN (SELECT videoid FROM checkpoints)
       ORDER BY
         videos.id
     `;
     let queryGlobalWatched = `
       SELECT DISTINCT
-        videos.id, 
-        videos.filename,
-        checkpoints.finished,
-      CASE WHEN 
-        c.timeinvideo IS null
-        THEN 
-          0 
-        ELSE 
-          c.timeinvideo 
-      END AS timeinvideo
-      FROM
-        checkpoints
-      LEFT JOIN (
-        SELECT
-          videoid, 
-          timeinvideo
-        FROM
-          checkpoints
-        WHERE 
-          userid=$1
-      ) AS c
-      ON 
-        c.videoid=checkpoints.videoid
-      LEFT JOIN
-        videos
-      ON
-        videos.id=checkpoints.videoid
-      WHERE 
-        checkpoints.finished=true
-      ORDER BY 
-        videos.id
-    `;
-    let queryGlobalInProgress = `
-      SELECT 
-        DISTINCT ON (
-          videos.id
-        )
         videos.id,
         videos.filename,
         checkpoints.finished,
-        CASE WHEN 
-          c.timeinvideo IS null 
-          THEN 
-            0
-          ELSE
-            c.timeinvideo 
-        END AS timeinvideo
+        (
+          CASE WHEN c.timeinvideo IS NULL THEN 0 ELSE c.timeinvideo END
+        ) AS timeinvideo
       FROM
         checkpoints
-      LEFT JOIN (
-        SELECT
-          videoid,
-          timeinvideo
-        FROM 
-          checkpoints 
-        WHERE 
-          userid=$1
-      ) AS c
-      ON
-        c.videoid=checkpoints.videoid
       LEFT JOIN
-        videos
-      ON
-        videos.id=checkpoints.videoid
+        (
+          SELECT videoid, timeinvideo FROM checkpoints WHERE userid=$1
+        ) AS c ON c.videoid=checkpoints.videoid
+      LEFT JOIN
+        videos ON videos.id=checkpoints.videoid
+      WHERE
+        checkpoints.finished=true
+      ORDER BY
+        videos.id
+    `;
+
+    let queryGlobalInProgress = `
+      SELECT 
+        DISTINCT ON (videos.id) videos.id,
+        videos.filename,
+        checkpoints.finished,
+        (
+          CASE WHEN c.timeinvideo IS NULL THEN 0 ELSE c.timeinvideo END
+        ) AS timeinvideo
+      FROM
+        checkpoints
+      LEFT JOIN 
+        (
+          SELECT videoid, timeinvideo FROM checkpoints WHERE userid=$1
+        ) AS c ON c.videoid=checkpoints.videoid
+      LEFT JOIN
+        videos ON videos.id=checkpoints.videoid
       WHERE 
-        videos.id NOT IN (
-          SELECT 
-            videoid
-          FROM
-            checkpoints
-          WHERE
-            finished=true
-        )
+        videos.id NOT IN (SELECT videoid FROM checkpoints WHERE finished=true)
       ORDER BY
         videos.id
     `;
@@ -640,25 +532,28 @@ app.get(
   "/api/videos/:videoid",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    let queryText = `SELECT 
-        usernames.userswatching, 
-        usernames.usersfinished,
-        videos.* 
+    let queryText = `
+      SELECT 
+        usernames.userswatching, usernames.usersfinished, videos.* 
       FROM 
-        (SELECT 
-          videos.id,
-          array_agg(users.username) AS userswatching, 
-          array_agg(checkpoints.finished) AS usersfinished 
-          FROM videos 
-          FULL OUTER JOIN checkpoints 
-          ON checkpoints.videoid=videos.id 
-          LEFT JOIN users 
-          ON users.id=checkpoints.userid 
-          WHERE videos.id=$1 
-          GROUP BY videos.id) 
-        AS usernames 
-      LEFT JOIN videos 
-      ON videos.id=usernames.id`;
+        (
+          SELECT 
+            videos.id,
+            array_agg(users.username) AS userswatching, 
+            array_agg(checkpoints.finished) AS usersfinished 
+          FROM 
+            videos 
+          FULL OUTER JOIN 
+            checkpoints ON checkpoints.videoid=videos.id 
+          LEFT JOIN 
+            users ON users.id=checkpoints.userid 
+          WHERE 
+            videos.id=$1 
+          GROUP BY videos.id
+        ) AS usernames  
+      LEFT JOIN 
+        videos ON videos.id=usernames.id
+    `;
     try {
       const videoMetadata = await psql.query(queryText, [req.params.videoid]);
       res.json(videoMetadata.rows);
@@ -675,47 +570,36 @@ app.get(
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     let queryText = `
-    SELECT DISTINCT v.id, v.filename
+    SELECT DISTINCT 
+      v.id, v.filename
     FROM
       checkpoints c
     LEFT JOIN
-      videos v
-    ON
-      v.id=c.videoid
-    WHERE /* Get videos from only users selected */
+      videos v ON v.id=c.videoid
+    WHERE 
+      /* Get videos from only users selected */
       c.userid::text = ANY(string_to_array($1, ','))
-    AND /* Exclude verification videos */
+    AND 
+      /* Exclude verification videos */
       NOT (v.id = ANY(
-        SELECT 
-          unnest(verificationvideos)
-        FROM 
-          models 
-        WHERE 
-          name=$2))
-    AND /* Include only videos that have concepts model is training on */
+        SELECT unnest(verificationvideos) FROM models WHERE name=$2)
+      )
+    AND 
+      /* Include only videos that have concepts model is training on */
       v.id IN (
         SELECT
           DISTINCT videoid
         FROM
           annotations
         WHERE
-          conceptid = ANY(
-            SELECT
-              unnest(concepts)
-            FROM
-             models
-            WHERE
-              name=$2
-          )
+          conceptid = ANY(SELECT unnest(concepts) FROM models WHERE name=$2)
       )
     `;
     try {
-      const videos = await psql.query(
-        queryText,
-        [
-          req.params.userIDs,
-          req.params.model
-        ]);
+      const videos = await psql.query(queryText, [
+        req.params.userIDs,
+        req.params.model
+      ]);
       res.json(videos.rows);
     } catch (error) {
       console.log("Error in get /api/videos/trainModel/");
@@ -730,13 +614,20 @@ app.get(
   "/api/videos/summary/:videoid",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    let queryText = `SELECT * 
-                      FROM concepts a 
-                      JOIN 
-                      (SELECT conceptid, videoid, COUNT(*) FROM annotations GROUP BY 
-                      conceptid, videoid) AS counts 
-                      ON counts.conceptid=a.id
-                      WHERE videoid = $1`;
+    let queryText = `
+    SELECT 
+      *
+    FROM 
+      concepts a 
+    JOIN 
+      (
+        SELECT 
+          conceptid, videoid, COUNT(*) 
+        FROM 
+          annotations 
+        GROUP BY conceptid, videoid
+      ) AS counts ON counts.conceptid=a.id
+    WHERE videoid = $1`;
     try {
       const summary = await psql.query(queryText, [req.params.videoid]);
       res.json(summary.rows);
@@ -748,37 +639,51 @@ app.get(
   }
 );
 
-
 app.get(
   "/api/aivideos/summary/:name",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     let params = [];
-    var video = req.params.name;
-    var splitted = video.split("_");
-    var username = splitted[1].split(".mp4")
+    let video = req.params.name;
+    let splitted = video.split("_");
+    let username = splitted[1].split(".mp4");
     params.push(username[0]); // username
     params.push(splitted[0]); // videoid
-    console.log(params);
 
-    let queryText = `SELECT *
-      FROM concepts c
+    let queryText = `
+      SELECT 
+        *
+      FROM 
+        concepts c
       JOIN
-      ((SELECT conceptid, videoid,
-        sum(case when username  = $1 then 1 else 0 end) as count,
-        sum(case when username  <> $1 then 1 else 0 end) as notai
-      FROM annotations a LEFT JOIN users u ON u.id = a.userid
-      GROUP BY
-      a.conceptid, a.videoid)
-      ) AS counts
-
-      ON counts.conceptid=c.id
+        (
+          (
+            SELECT 
+              conceptid, 
+              videoid,
+              sum(case when username  = $1 then 1 else 0 end) as count,
+              sum(case when username  <> $1 then 1 else 0 end) as notai
+            FROM 
+              annotations a 
+            LEFT JOIN 
+              users u ON u.id = a.userid
+            GROUP BY
+              a.conceptid, a.videoid
+          )
+        ) AS counts ON counts.conceptid=c.id
       WHERE 
         videoid=$2
       AND
-        c.id = ANY(SELECT unnest(concepts) from models m
-        LEFT JOIN users u ON m.userid = u.id
-        where username = $1);`
+        c.id = ANY(
+          SELECT 
+            unnest(concepts)
+          FROM 
+            models m
+          LEFT JOIN 
+            users u ON m.userid = u.id
+          WHERE username = $1
+        )
+    `;
 
     try {
       const summary = await psql.query(queryText, params);
@@ -796,10 +701,7 @@ app.patch(
   "/api/videos/:videoid",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    let queryText =
-      "UPDATE videos \
-                   SET description=$1 \
-                   WHERE id=$2 RETURNING *";
+    let queryText = `UPDATE videos SET description=$1 WHERE id=$2 RETURNING *`;
     try {
       const updateRes = await psql.query(queryText, [
         req.body.description,
@@ -818,13 +720,15 @@ app.delete(
   async (req, res) => {
     const userid = req.user.id;
     const videoid = req.params.videoid;
-    const queryText =
-      "DELETE FROM checkpoints \
-                       WHERE userid=$1 \
-                       AND videoid=$2\
-                       RETURNING *";
+    const queryText = `
+      DELETE FROM 
+        checkpoints
+      WHERE 
+        userid=$1 AND videoid=$2
+      RETURNING *
+     `;
     try {
-      let deleteRes = await psql.query(queryText, [userid, videoid]);
+      await psql.query(queryText, [userid, videoid]);
       res.json({ message: "unwatched" });
     } catch (error) {
       console.log(error);
@@ -841,12 +745,16 @@ app.put(
     const { timeinvideo, finished } = req.body;
     const userId = req.user.id;
     const data = [timeinvideo, finished, userId, videoid];
-    let queryText =
-      "UPDATE checkpoints \
-                     SET timeinvideo=$1,\
-                     timestamp=current_timestamp,\
-                     finished=$2 \
-                     WHERE userid=$3 AND videoid=$4";
+    let queryText = `
+      UPDATE 
+        checkpoints
+      SET 
+        timeinvideo=$1,
+        timestamp=current_timestamp,
+        finished=$2
+      WHERE 
+        userid=$3 AND videoid=$4
+    `;
     try {
       const updateRes = await psql.query(queryText, data);
       if (updateRes.rowCount > 0) {
@@ -854,10 +762,12 @@ app.put(
         return;
       }
       // User has no checkpoint for this video
-      queryText =
-        "INSERT INTO checkpoints \
-                 (timeinvideo, finished, userid, videoid, timestamp) \
-                 VALUES($1, $2, $3, $4, current_timestamp)";
+      queryText = `
+        INSERT INTO 
+          checkpoints (timeinvideo, finished, userid, videoid, timestamp)
+        VALUES
+          ($1, $2, $3, $4, current_timestamp)
+       `;
       let insertRes = await psql.query(queryText, data);
       res.json({ message: "updated" });
     } catch (error) {
@@ -939,20 +849,20 @@ app.get(
       WHERE 
         annotations.userid NOT IN (17, 32)`;
     if (req.query.unsureOnly === "true") {
-      queryPass = queryPass + " AND annotations.unsure = true";
+      queryPass = queryPass + ` AND annotations.unsure = true`;
     }
     if (req.query.verifiedCondition === "verified only") {
-      queryPass = queryPass + " AND annotations.verifiedby IS NOT NULL";
+      queryPass = queryPass + ` AND annotations.verifiedby IS NOT NULL`;
     } else if (req.query.verifiedCondition === "unverified only") {
-      queryPass = queryPass + " AND annotations.verifiedby IS NULL";
+      queryPass = queryPass + ` AND annotations.verifiedby IS NULL`;
     }
     if (req.query.admin !== "true") {
-      queryPass = queryPass + " AND annotations.userid = $1";
+      queryPass = queryPass + ` AND annotations.userid = $1`;
       params.push(req.user.id);
     }
     // Adds query conditions from Report tree
     queryPass +=
-      req.query.queryConditions + " ORDER BY annotations.timeinvideo";
+      req.query.queryConditions + ` ORDER BY annotations.timeinvideo`;
     // Retrieves only selected 100 if queryLimit exists
     if (req.query.queryLimit !== "undefined") {
       queryPass = queryPass + req.query.queryLimit;
@@ -987,15 +897,19 @@ app.post(
       req.body.comment,
       req.body.unsure
     ];
-    const queryText =
-      "INSERT INTO annotations(userid, videoid,\
-                       conceptid, timeinvideo, \
-                       x1, y1, x2, y2, \
-                       videoWidth, videoHeight, \
-                       image, imagewithbox, \
-                       comment, unsure, dateannotated) \
-                       VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10,\
-                       $11, $12, $13, $14, current_timestamp) RETURNING *";
+    const queryText = `
+      INSERT INTO 
+        annotations (
+          userid, videoid, conceptid, timeinvideo, x1, y1, x2, y2, videoWidth,
+          videoHeight, image, imagewithbox, comment, unsure, dateannotated
+        )
+      VALUES
+        (
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, 
+          current_timestamp
+        )
+      RETURNING *
+     `;
     try {
       let insertRes = await psql.query(queryText, data);
       res.json({
@@ -1013,18 +927,24 @@ app.patch(
   "/api/annotations",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    queryText =
-      "UPDATE annotations \
-                 SET conceptid = $1, comment = $2, unsure = $3 \
-                 WHERE annotations.id=$4 OR annotations.originalid=$4 RETURNING *";
-    queryUpdate =
-      "SELECT annotations.id, annotations.comment,\
-                   annotations.unsure, annotations.timeinvideo, \
-                   annotations.videoWidth, annotations.videoHeight, \
-                   annotations.imagewithbox, concepts.name \
-                   FROM annotations, concepts \
-                   WHERE annotations.id = $1 \
-                   AND annotations.conceptid=concepts.id";
+    const queryText = `
+      UPDATE 
+        annotations
+      SET 
+        conceptid = $1, comment = $2, unsure = $3
+      WHERE 
+        annotations.id=$4 OR annotations.originalid=$4 RETURNING *
+    `;
+    let queryUpdate = `
+      SELECT 
+        annotations.id, annotations.comment, annotations.unsure, 
+        annotations.timeinvideo, annotations.videoWidth,
+        annotations.videoHeight, annotations.imagewithbox, concepts.name
+      FROM 
+        annotations, concepts
+      WHERE 
+        annotations.id = $1 AND annotations.conceptid=concepts.id
+    `;
     try {
       await psql.query(queryText, [
         req.body.conceptId,
@@ -1048,11 +968,11 @@ app.delete(
     let s3 = new AWS.S3();
     let queryText = `
       DELETE FROM
-        annotations \
+        annotations
       WHERE 
-        annotations.id=$1 
-        OR annotations.originalid=$1 
-      RETURNING *`;
+        annotations.id=$1 OR annotations.originalid=$1 
+      RETURNING *
+    `;
     try {
       let deleteRes = await psql.query(queryText, [req.body.id]);
 
@@ -1081,17 +1001,14 @@ app.delete(
           Objects: Objects
         }
       };
-      let s3Res = await s3.deleteObjects(params,
-        (err, data) => {
-          if (err) {
-            console.log("Err: deleting images");
-            res.status(500).json(err);
-          }
-          else {
-            res.json("delete");
-          }
+      let s3Res = await s3.deleteObjects(params, (err, data) => {
+        if (err) {
+          console.log("Err: deleting images");
+          res.status(500).json(err);
+        } else {
+          res.json("delete");
         }
-        );
+      });
     } catch (error) {
       console.log("Error in delete /api/annotations");
       console.log(error);
@@ -1217,34 +1134,37 @@ app.patch(
 let selectLevelQuery = level => {
   let queryPass = "";
   if (level === "Video") {
-    queryPass =
-      "SELECT videos.filename as name,\
-                 videos.id as key,\
-                 COUNT(*) as count, \
-                 false as expanded\
-                 FROM annotations, videos \
-                 WHERE videos.id=annotations.videoid \
-                 AND annotations.userid NOT IN (17, 32)";
+    queryPass = `
+      SELECT 
+        videos.filename as name, videos.id as key, COUNT(*) as count,
+        false as expanded
+      FROM 
+        annotations, videos
+      WHERE 
+        videos.id=annotations.videoid AND annotations.userid NOT IN (17, 32)
+    `;
   }
   if (level === "Concept") {
-    queryPass =
-      "SELECT concepts.name as name,\
-                 concepts.id as key,\
-                 COUNT(*) as count,\
-                 false as expanded\
-                 FROM annotations, concepts \
-                 WHERE annotations.conceptid=concepts.id \
-                 AND annotations.userid NOT IN (17, 32)";
+    queryPass = `
+      SELECT 
+        concepts.name as name, concepts.id as key, COUNT(*) as count,
+        false as expanded
+      FROM 
+        annotations, concepts
+      WHERE 
+        annotations.conceptid=concepts.id AND annotations.userid NOT IN (17, 32)
+    `;
   }
   if (level === "User") {
-    queryPass =
-      "SELECT users.username as name,\
-                 users.id as key,\
-                 COUNT(*) as count, \
-                 false as expanded \
-                 FROM annotations, users \
-                 WHERE annotations.userid=users.id \
-                 AND annotations.userid NOT IN (17, 32)";
+    queryPass = `
+      SELECT 
+        users.username as name, users.id as key, COUNT(*) as count,
+        false as expanded
+      FROM 
+        annotations, users
+      WHERE
+        annotations.userid=users.id AND annotations.userid NOT IN (17, 32)
+    `;
   }
   return queryPass;
 };
@@ -1259,18 +1179,18 @@ app.get(
       queryPass = queryPass + req.query.queryConditions;
     }
     if (req.query.unsureOnly === "true") {
-      queryPass = queryPass + " AND annotations.unsure = true";
+      queryPass = queryPass + ` AND annotations.unsure = true`;
     }
     if (req.query.verifiedCondition === "verified only") {
-      queryPass = queryPass + " AND annotations.verifiedby IS NOT NULL";
+      queryPass = queryPass + ` AND annotations.verifiedby IS NOT NULL`;
     } else if (req.query.verifiedCondition === "unverified only") {
-      queryPass = queryPass + " AND annotations.verifiedby IS NULL";
+      queryPass = queryPass + ` AND annotations.verifiedby IS NULL`;
     }
     if (req.query.admin !== "true") {
-      queryPass = queryPass + " AND annotations.userid = $1";
+      queryPass = queryPass + ` AND annotations.userid = $1`;
       params.push(req.user.id);
     }
-    queryPass = queryPass + " GROUP BY (name, key) ORDER BY count DESC";
+    queryPass = queryPass + ` GROUP BY (name, key) ORDER BY count DESC`;
     try {
       const data = await psql.query(queryPass, params);
       res.json(data.rows);
@@ -1287,16 +1207,14 @@ app.get(
   async (req, res) => {
     const queryText = `
       SELECT 
-        m.name, m.timestamp, array_agg(c.name) concepts,
-        m.videos
+        m.name, m.timestamp, array_agg(c.name) concepts
       FROM 
-        (SELECT 
-          name, timestamp, UNNEST(concepts) concept,
-          verificationvideos videos
-          FROM models
-        ) m
-      JOIN concepts c ON c.id=m.concept
-      GROUP BY (m.name, m.timestamp, m.videos)`;
+        (SELECT name, timestamp, UNNEST(concepts) concept FROM models) m
+      JOIN 
+        concepts c ON c.id=m.concept
+      GROUP BY
+        (m.name, m.timestamp)
+    `;
     try {
       let response = await psql.query(queryText);
       res.json(response.rows);
@@ -1313,114 +1231,19 @@ app.post(
   async (req, res) => {
     const queryText = `
       INSERT INTO 
-        models(
-          name,
-          timestamp,
-          concepts,
-          verificationvideos)
-      VALUES($1, current_timestamp, $2, $3)
-      RETURNING *`;
-
-    try {
-      let response = await psql.query(
-        queryText,
-        [
-          req.body.name,
-          req.body.concepts,
-          req.body.videos
-        ]);
-      res.json(response.rows);
-    } catch (error) {
-      console.log(error);
-      res.status(500).json(error);
-    }
-  }
-);
-
-
-app.delete(
-  "/api/models/",
-  passport.authenticate("jwt", { session: false }),
-  async (req, res) => {
-    let s3 = new AWS.S3();
-    let deleteModel = `
-      DELETE FROM
-        models
-      WHERE
-        name=$1
-      RETURNING *`;
-    let deleteModelUser = `
-      DELETE FROM
-        users  
-      WHERE
-        username LIKE $1
+        models (name, timestamp, concepts, verificationvideos)
+      VALUES
+        ($1, current_timestamp, $2, $3)
       RETURNING *
     `;
-    let deleteModelVideos = `
-      DELETE FROM
-        ai_videos  
-      WHERE
-        name LIKE $1
-      RETURNING *
-    `;
-
     try {
-      var arg = req.body.model.name + '-%';
-      let modelRes = await psql.query(deleteModel, [req.body.model.name]);
-      
-      let modelUserRes = await psql.query(deleteModelUser, [arg]);
-
-      arg = '%_' + arg;
-      let modelVideosRes = await psql.query(deleteModelVideos, [arg]);
-
-      //These are the s3 object we will be deleting
-      let Objects = [];
-
-      modelVideosRes.rows.forEach(element => {
-        Objects.push({
-          Key: process.env.AWS_S3_BUCKET_AIVIDEOS_FOLDER + element.name
-        });
-      });
-    
-      let params = {
-        Bucket: process.env.AWS_S3_BUCKET_NAME,
-        Delete: {
-          Objects: Objects
-        }
-      };
-      let s3Res = await s3.deleteObjects(params,
-        (err, data) => {
-          if (err) {
-            console.log(err);
-            res.status(500).json(err);
-          } else {
-            console.log(data);
-          }
-        });
-
-      res.json("deleted");
-    } catch (error) {
-      console.log(error);
-      res.status(400).json(error);
-    }
-  }
-);
-
-app.get(
-  "/api/users",
-  passport.authenticate("jwt", { session: false }),
-  async (req, res) => {
-    const queryText = `
-      SELECT DISTINCT 
-        U.id, 
-        U.username
-      FROM 
-        Users U`;
-    try {
-      let response = await psql.query(queryText);
+      let response = await psql.query(queryText, [
+        req.body.name,
+        req.body.concepts,
+        req.body.videos
+      ]);
       res.json(response.rows);
     } catch (error) {
-      console.log("Error on GET /api/users: ");
       console.log(error);
       res.status(500).json(error);
     }
@@ -1441,21 +1264,14 @@ app.get(
     }
     const queryText = `
       SELECT DISTINCT
-        A.conceptid, 
-        C.name, 
-        COUNT(A.conceptid) AS total_count
+        A.conceptid, C.name, COUNT(A.conceptid) AS total_count
       FROM 
         annotations A
       LEFT JOIN 
-        concepts C 
-      ON 
-        A.conceptid = C.id
-      WHERE
-        A.userid = $1 
-        AND (A.dateannotated BETWEEN $2 AND $3)
-      GROUP BY 
-        A.conceptid, 
-        C.name`;
+        concepts C ON A.conceptid = C.id
+      WHERE 
+        A.userid = $1 AND (A.dateannotated BETWEEN $2 AND $3)
+      GROUP BY A.conceptid, C.name`;
     try {
       let response = await psql.query(queryText, data);
       res.json(response.rows);
@@ -1498,22 +1314,14 @@ app.get(
       FROM 
         concepts
       WHERE
-        concepts.id in (
-          SELECT
-            unnest(concepts)
-          FROM
-            models
-          WHERE
-            name=$1
-        )
-      AND
+        concepts.id in (SELECT unnest(concepts) FROM models WHERE name=$1) AND
         concepts.id in (
           SELECT
             DISTINCT conceptid
           FROM
             annotations
           WHERE
-            videoid::text = any(string_to_array($2, ','))
+            videoid::text = ANY(string_to_array($2, ','))
         )
     `;
     try {
@@ -1536,12 +1344,12 @@ app.get(
   async (req, res) => {
     const queryText = `
       SELECT 
-        *
+        * 
       FROM 
-        training_progress
+        training_progress 
       ORDER BY 
-        id DESC
-      LIMIT 1`;
+        id DESC LIMIT 1
+    `;
     try {
       let response = await psql.query(queryText);
       res.json(response.rows);
@@ -1553,18 +1361,11 @@ app.get(
   }
 );
 
-
 app.get(
   "/api/modelTab/:option",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    const queryText = `
-      SELECT 
-        *
-      FROM 
-        modeltab
-      WHERE
-        option = $1`;
+    const queryText = `SELECT * FROM modeltab WHERE option = $1`;
     try {
       let response = await psql.query(queryText, [req.params.option]);
       res.json(response.rows);
@@ -1580,14 +1381,7 @@ app.put(
   "/api/modelTab/:option",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    const queryText = `
-      UPDATE
-        modeltab
-      SET
-        info = $1
-      WHERE
-        option = $2
-      `;
+    const queryText = `UPDATE modeltab SET info = $1 WHERE option = $2`;
     try {
       let response = await psql.query(queryText, [
         req.body.info,
@@ -1609,33 +1403,17 @@ app.get(
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const selectedUsers = req.query.selectedUsers;
-    let params = [];
-
+    let params = [selectedUsers];
     let queryText = `
       SELECT DISTINCT
         v.id, v.filename
       FROM 
         annotations a
-      JOIN videos v ON v.id=a.videoid
-      WHERE a.verifiedby IS NULL
+      JOIN 
+        videos v ON v.id=a.videoid
+      WHERE 
+        a.verifiedby IS NULL AND a.userid::text=ANY($1) ORDER BY v.id
     `;
-
-    if (selectedUsers.length === 1 && selectedUsers[0] === "-1") {
-      let trackingId = null;
-      let queryText2 = `SELECT * FROM users u WHERE u.username='tracking'`;
-      try {
-        let users = await psql.query(queryText2);
-        trackingId = users.rows[0].id;
-      } catch (error) {
-        res.status(500).json(error);
-      }
-      queryText += ` AND a.userid!=$1`;
-      params.push(trackingId);
-    } else {
-      queryText += ` AND a.userid::text=ANY($1)`;
-      params.push(selectedUsers);
-    }
-
     try {
       let videos = await psql.query(queryText, params);
       res.json(videos.rows);
@@ -1651,33 +1429,24 @@ app.get(
   async (req, res) => {
     const selectedUsers = req.query.selectedUsers;
     const selectedVideos = req.query.selectedVideos;
-    let params = [];
+    let params = [selectedUsers];
 
-    let queryText = `SELECT DISTINCT c.id, c.name
-        FROM annotations a
-        LEFT JOIN concepts c ON c.id=conceptid
-        WHERE a.verifiedby IS NULL`;
-
-    if (selectedUsers.length === 1 && selectedUsers[0] === "-1") {
-      let trackingId = null;
-      let queryText2 = `SELECT * FROM users u WHERE u.username='tracking'`;
-      try {
-        let users = await psql.query(queryText2);
-        trackingId = users.rows[0].id;
-      } catch (error) {
-        res.status(500).json(error);
-      }
-      queryText += ` AND a.userid!=$1`;
-      params.push(trackingId);
-    } else {
-      queryText += ` AND a.userid::text=ANY($1)`;
-      params.push(selectedUsers);
-    }
+    let queryText = `
+      SELECT DISTINCT
+        c.id, c.name
+      FROM 
+        annotations a
+      LEFT JOIN 
+        concepts c ON c.id=conceptid
+      WHERE
+        a.verifiedby IS NULL AND a.userid::text=ANY($1)`;
 
     if (!(selectedVideos.length === 1 && selectedVideos[0] === "-1")) {
       queryText += ` AND a.videoid::text=ANY($${params.length + 1})`;
       params.push(selectedVideos);
     }
+
+    queryText += ` ORDER BY c.name`;
 
     try {
       let concepts = await psql.query(queryText, params);
@@ -1689,37 +1458,28 @@ app.get(
 );
 
 app.get(
-  "/api/unverifiedAnnotationsByUserVideoConcept",
+  "/api/unverifiedUnsureByUserVideoConcept",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const selectedUsers = req.query.selectedUsers;
     const selectedVideos = req.query.selectedVideos;
     const selectedConcepts = req.query.selectedConcepts;
 
-    let params = [];
-    let queryText = `SELECT distinct a.*, c.name, u.username, v.filename
-      FROM annotations a
-      LEFT JOIN concepts c ON c.id=conceptid
-      LEFT JOIN users u ON u.id=userid
-      LEFT JOIN videos v ON v.id=videoid
-      WHERE a.verifiedby IS NULL`;
-
-    if (selectedUsers.length === 1 && selectedUsers[0] === "-1") {
-      let trackingId = null;
-      const queryText2 = `SELECT * FROM users u WHERE u.username='tracking'`;
-      try {
-        let users = await psql.query(queryText2);
-        trackingId = users.rows[0].id;
-      } catch (error) {
-        res.status(500).json(error);
-      }
-      queryText += ` AND a.userid!=$1`;
-      params.push(trackingId);
-    } else {
-      queryText += ` AND a.userid::text=ANY($${params.length + 1})`;
-      params.push(selectedUsers);
-    }
-
+    let params = [selectedUsers];
+    let queryText = `
+      SELECT DISTINCT
+        a.unsure
+      FROM 
+        annotations a
+      LEFT JOIN 
+        concepts c ON c.id=conceptid
+      LEFT JOIN 
+        users u ON u.id=userid
+      LEFT JOIN 
+        videos v ON v.id=videoid
+      WHERE 
+        a.verifiedby IS NULL AND a.userid::text=ANY($1)
+    `;
     if (!(selectedVideos.length === 1 && selectedVideos[0] === "-1")) {
       queryText += ` AND a.videoid::text=ANY($${params.length + 1})`;
       params.push(selectedVideos);
@@ -1740,6 +1500,53 @@ app.get(
   }
 );
 
+app.get(
+  "/api/unverifiedAnnotationsByUserVideoConceptUnsure",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    const selectedUsers = req.query.selectedUsers;
+    const selectedVideos = req.query.selectedVideos;
+    const selectedConcepts = req.query.selectedConcepts;
+    const selectedUnsure = req.query.selectedUnsure;
+
+    let params = [selectedUsers];
+
+    let queryText = `
+      SELECT DISTINCT
+        a.*, c.name, u.username, v.filename
+      FROM 
+        annotations a
+      LEFT JOIN
+        concepts c ON c.id=conceptid
+      LEFT JOIN
+        users u ON u.id=userid
+      LEFT JOIN
+        videos v ON v.id=videoid
+      WHERE
+        a.verifiedby IS NULL AND a.userid::text=ANY($1)
+    `;
+    if (!(selectedVideos.length === 1 && selectedVideos[0] === "-1")) {
+      queryText += ` AND a.videoid::text=ANY($${params.length + 1})`;
+      params.push(selectedVideos);
+    }
+
+    if (!(selectedConcepts.length === 1 && selectedConcepts[0] === "-1")) {
+      queryText += ` AND a.conceptid::text=ANY($${params.length + 1})`;
+      params.push(selectedConcepts);
+    }
+
+    if (selectedUnsure === "true") queryText += ` AND unsure`;
+
+    try {
+      let concepts = await psql.query(queryText, params);
+      res.json(concepts.rows);
+    } catch (error) {
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
+);
+
 app.patch(
   `/api/annotationsVerify`,
   passport.authenticate("jwt", { session: false }),
@@ -1749,7 +1556,11 @@ app.patch(
     let s3 = new AWS.S3();
 
     let params = [id, verifiedby];
-    let queryText1 = `UPDATE annotations SET verifiedby=$2, verifieddate=current_timestamp, originalid=null`;
+    let queryText1 = `
+      UPDATE 
+        annotations 
+      SET 
+        verifiedby=$2, verifieddate=current_timestamp, originalid=null`;
 
     if (req.body.conceptid !== null) {
       queryText1 += `, conceptid=$3, oldconceptid=$4, priority=priority+3`;
@@ -1766,12 +1577,11 @@ app.patch(
 
     const queryText2 = `
       DELETE FROM
-        annotations \
+        annotations
       WHERE 
-        originalid=$1 
-        and annotations.id<>$1
-      RETURNING *`;
-
+        originalid=$1 AND annotations.id<>$1
+      RETURNING *
+    `;
     try {
       let deleteRes = await psql.query(queryText2, [id]);
       await psql.query(queryText1, params);
@@ -1817,14 +1627,14 @@ app.patch(
   async (req, res) => {
     const params = Object.values(req.body);
     const queryText = `
-    UPDATE
-      annotations 
-    SET 
-      x1=$1, y1=$2, x2=$3, y2=$4, 
-      oldx1=$5, oldy1=$6, oldx2=$7, oldy2=$8,
-      priority = priority+1 
-    WHERE id=$9`;
-
+      UPDATE
+        annotations 
+      SET 
+        x1=$1, y1=$2, x2=$3, y2=$4, oldx1=$5, oldy1=$6, oldx2=$7, oldy2=$8,
+        priority = priority+1 
+      WHERE 
+        id=$9
+    `;
     try {
       let update = await psql.query(queryText, params);
       res.json(update.rows);
