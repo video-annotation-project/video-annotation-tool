@@ -91,7 +91,7 @@ class TensorBoardLog(keras.callbacks.Callback):
     def __init__(self, id_, table_name):
 
         self.id = id_
-        self.table_name = 'training_progress'
+        self.table_name = 'previous_runs'
 
         config_path = "../config.json"
         load_dotenv(dotenv_path="../.env")
