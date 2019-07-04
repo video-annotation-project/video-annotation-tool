@@ -120,7 +120,7 @@ class TensorBoardLog(keras.callbacks.Callback):
     def on_train_begin(self, logs={}):
         self.cursor.execute(
         f"""UPDATE 
-                {table_name} 
+                {self.table_name} 
             SET
                 start_train=%s 
             WHERE 
