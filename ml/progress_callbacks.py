@@ -1,18 +1,12 @@
 import os
 import json
+import datetime
 
 import keras
+import boto3
 from psycopg2 import connect
 from dotenv import load_dotenv
 
-# CREATE TABLE training_progress (
-#     id serial PRIMARY KEY,
-#     running bool,
-#     curr_epoch integer,
-#     max_epoch integer,
-#     curr_batch integer,
-#     steps_per_epoch integer
-# );
 
 class Progress(keras.callbacks.Callback):
 
@@ -83,6 +77,83 @@ class Progress(keras.callbacks.Callback):
     def on_batch_end(self, batch, logs={}):
         return
 
+
+class TensorBoardLog(keras.callbacks.Callback):
+
+    def __init__(self, id_, table_name):
+
+        self.id = id_
+        self.table_name = table_name
+
+        config_path = "../config.json"
+        load_dotenv(dotenv_path="../.env")
+
+        with open(config_path) as config_buffer:    
+            config = json.loads(config_buffer.read())['ml']
+
+        # Connect to database
+        DB_NAME = os.getenv("DB_NAME")
+        DB_HOST = os.getenv("DB_HOST")
+        DB_USER = os.getenv("DB_USER")
+        DB_PASSWORD = os.getenv("DB_PASSWORD")
+
+        self.bucket = os.getenv('AWS_S3_BUCKET_NAME')
+        self.logs_dir = os.getenv('AWS_S3_BUCKET_LOGS_FOLDER')
+
+        self.connection = connect(database=DB_NAME, host=DB_HOST, user=DB_USER, password=DB_PASSWORD)
+        self.cursor = self.connection.cursor()
+
+        self.client = boto3.client('s3',
+            aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
+            aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'))
+
+
+
+    def on_train_begin(self, logs={}):
+        self.cursor.execute(
+        f"""UPDATE 
+                {self.table_name} 
+            SET
+                start_train=%s 
+            WHERE 
+                id=%s""",
+        (datetime.datetime.now(), self.id))
+
+        self.connection.commit()
+    
+
+    def on_train_end(self, logs={}):
+        self.cursor.execute(
+        f"""UPDATE 
+                {self.table_name} 
+            SET
+                end_train=%s 
+            WHERE 
+                id=%s""",
+        (datetime.datetime.now(), self.id))
+        
+        self.connection.commit()
+
+ 
+    def on_epoch_begin(self, epoch, logs={}):
+        return
+ 
+
+    def on_epoch_end(self, epoch, logs={}):
+        path = f'./logs/{self.id}'
+
+        for root, dirs, files in os.walk(path):
+            for file in files:
+                self.client.upload_file(os.path.join(root, file), 
+                    self.bucket, f'{self.logs_dir}{self.id}/{file}')
+
+
+    def on_batch_begin(self, batch, logs={}):
+        return
+ 
+
+    def on_batch_end(self, batch, logs={}):
+        return
 
 # Testing
 if __name__ == '__main__':
