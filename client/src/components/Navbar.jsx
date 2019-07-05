@@ -7,18 +7,19 @@ import Toolbar from "@material-ui/core/Toolbar";
 import Typography from "@material-ui/core/Typography";
 import GeneralMenu from "./Utilities/GeneralMenu";
 
-
 const styles = {
   flex: {
     flexGrow: 1
-  }
+  },
 };
-
 
 class Navbar extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {};
+
+    this.state = {
+      modelTabOpen: false,
+    };
   }
 
   handleLogout = () => {
@@ -29,6 +30,16 @@ class Navbar extends React.Component {
     window.location.replace("/");
     localStorage.clear();
   };
+
+  handleModelTab = () => {
+    this.setState({ modelTabOpen: !this.state.modelTabOpen });
+  }
+
+  closeModelTab = () => {
+    console.log("JERE");
+    this.setState({ modelTabOpen: false });
+  }
+
 
   render() {
     const { classes } = this.props;
@@ -63,12 +74,46 @@ class Navbar extends React.Component {
                   <GeneralMenu
                     name={"Models"}
                     Link={Link}
-                    items={[{name: 'Create Model', link:'/createModel'},
-                      {name: 'View Models', link: '/viewModels'},
-                      {name: 'Train Models', link: '/trainModel'},
-                      {name: 'Predict Models', link: '/predictModel'}
+                    items={[{name: 'Create Model', link:'/models/create'},
+                      {name: 'View Models', link: '/models/view'},
+                      {name: 'Train Models', link: '/models/train'},
+                      {name: 'Predict Models', link: '/models/predict'},
+                      {name: 'Previous Models', link: '/models/runs'}
                     ]}
                   />
+                  {/* <Button 
+                    color="inherit" 
+                    id="modelButton"
+                    onClick={this.handleModelTab}
+                  >
+                    Models
+                  </Button>
+                  <Popper 
+                    open={ this.state.modelTabOpen }
+                    anchorEl={document.getElementById("modelButton")}
+                  >
+                    <ClickAwayListener onClickAway={this.closeModelTab}>
+                      <Paper square>
+                        <MenuList onClick={ this.closeModelTab }>
+                          <MenuItem component={Link} to="/models/create">
+                            Create New Model
+                          </MenuItem>
+                          <MenuItem component={Link} to="/models/view">
+                            View Models
+                          </MenuItem>
+                          <MenuItem component={Link} to="/models/train">
+                            Train Model
+                          </MenuItem>
+                          <MenuItem component={Link} to="/models/predict">
+                            Predict Model
+                          </MenuItem>
+                          <MenuItem component={Link} to="/models/runs">
+                            Previous Models
+                          </MenuItem>
+                        </MenuList>
+                      </Paper>
+                    </ClickAwayListener>
+                    </Popper> */}
                   <Button color="inherit" component={Link} to="/users">
                     Users
                   </Button>

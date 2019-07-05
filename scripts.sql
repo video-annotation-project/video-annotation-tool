@@ -143,4 +143,37 @@ CREATE TABLE Checkpoints (
   FOREIGN KEY (userid) REFERENCES Users
 );
 
+/*
+  previous_runs
+  This table keeps track of previous training
+  runs of a particular model.
+*/
+CREATE TABLE previous_runs (
+  id serial PRIMARY KEY,
+  model_name text,
+  start_train timestamp,
+  end_train timestamp,
+  min_examples integer,
+  epochs integer,
+  concepts integer[],
+  videos integer[],
+  users integer[]
+);
+
+/* 
+  training_progress
+  This table keeps track of the current progress
+  on a training model.
+*/
+
+CREATE TABLE training_progress (
+  id serial PRIMARY KEY,
+  running bool,
+  curr_epoch integer,
+  max_epoch integer,
+  curr_batch integer,
+  steps_per_epoch integer
+);
+
+
 INSERT INTO users(username, password, admin) VALUES('admin', '$2b$10$cTBlJX8aQC8joysM78ZTtuAj5vW55Trwuy6kYe.PbY/m1wzQFsA1a', true);
