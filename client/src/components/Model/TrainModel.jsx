@@ -2,7 +2,6 @@ import React, { Component } from "react";
 import axios from "axios";
 import TextField from '@material-ui/core/TextField';
 import io from "socket.io-client"
-import Typography from "@material-ui/core/Typography";
 import { withStyles } from "@material-ui/core/styles";
 import PropTypes from "prop-types";
 import Stepper from "@material-ui/core/Stepper";
@@ -11,7 +10,6 @@ import StepLabel from "@material-ui/core/StepLabel";
 import StepContent from "@material-ui/core/StepContent";
 import Button from "@material-ui/core/Button";
 import Paper from "@material-ui/core/Paper";
-import CircularProgress from "@material-ui/core/CircularProgress";
 import { FormControl } from "@material-ui/core";
 import InputLabel from "@material-ui/core/InputLabel";
 import Select from "@material-ui/core/Select";
