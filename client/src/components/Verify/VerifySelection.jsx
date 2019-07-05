@@ -6,7 +6,6 @@ import Step from "@material-ui/core/Step";
 import StepLabel from "@material-ui/core/StepLabel";
 import StepContent from "@material-ui/core/StepContent";
 import Button from "@material-ui/core/Button";
-import Typography from "@material-ui/core/Typography";
 
 import VerifySelectUser from "./VerifySelectUser.jsx";
 import VerifySelectVideo from "./VerifySelectVideo.jsx";
@@ -28,21 +27,6 @@ const styles = theme => ({
 
 function getSteps() {
   return ["Users", "Videos", "Concepts", "Unsure"];
-}
-
-function getStepContent(step) {
-  switch (step) {
-    case 0:
-      return "Select users";
-    case 1:
-      return "Select videos";
-    case 2:
-      return "Select concepts";
-    case 3:
-      return "Select unsure";
-    default:
-      return "Unknown step";
-  }
 }
 
 class VerifySelection extends React.Component {
@@ -131,7 +115,6 @@ class VerifySelection extends React.Component {
             <Step key={label}>
               <StepLabel>{label}</StepLabel>
               <StepContent>
-                <Typography>{getStepContent(index)}</Typography>
                 {this.getStepForm(index)}
                 <div className={classes.actionsContainer}>
                   <div>
