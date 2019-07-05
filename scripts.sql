@@ -1,5 +1,3 @@
--- Hanson Egbert 6/19/18;
--- Samantha Gunzl 10/24/18 (update);
 /*
   Create SQL Tables
   The following lines of code initialize tables in mySQL. Each
@@ -18,8 +16,14 @@
 CREATE TABLE Videos (
   id SERIAL PRIMARY KEY,
   fileName text NOT NULL,
-  gpaStart Point,
-  gpsStop Point
+  gpsStart Point,
+  gpsStop Point,
+  startTime TIMESTAMP WITHOUT TIME ZONE,
+  endTime TIMESTAMP WITHOUT TIME ZONE,
+  startDepth int,
+  endDepth int,
+  description text,
+  fps DOUBLE PRECISION 
 );
 
 /*
@@ -84,6 +88,13 @@ CREATE TABLE Profile (
   botLeftX - Profile box
   botLeftY - Profile box
   DateAnnotated - Date of classification
+  image - name of annotation image in s3 bucket
+  imagewithbox - name of annotation image with bounding box in s3 bucket
+  comment - comment left by annotator
+  unsure - t/f value left by annotator
+  originalid - id of original annotation used for tracking annotations
+  framenum - frame number of annotation
+  speed - used for filtering out bad tracking annotations 
 */
 CREATE TABLE Annotations (
   id SERIAL PRIMARY KEY,
@@ -102,6 +113,11 @@ CREATE TABLE Annotations (
   imagewithbox TEXT NOT NULL,
   comment TEXT,
   unsure BOOLEAN,
+  originalid int,
+  framenum int,
+  speed DOUBLE PRECISION,
+  verifieddate TIMESTAMP WITHOUT TIME ZONE,
+  verifiedby int,
   FOREIGN KEY (videoID) REFERENCES Videos,
   FOREIGN KEY (userID) REFERENCES Users,
   FOREIGN KEY (conceptID) REFERENCES Concepts

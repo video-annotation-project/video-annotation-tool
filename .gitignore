@@ -18,8 +18,8 @@ logs/
 !.elasticbeanstalk/*.cfg.yml
 !.elasticbeanstalk/*.global.yml
 *.pem
+kls.pgsql
 
 # Python precompiled files
 *.pyc
-
 

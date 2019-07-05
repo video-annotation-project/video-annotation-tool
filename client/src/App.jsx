@@ -16,6 +16,7 @@ import TrainModel from "./components/Model/TrainModel.jsx";
 import ViewModels from "./components/Model/ViewModels.jsx";
 import PreviousModels from "./components/Model/PreviousModels.jsx";
 import Users from "./components/Users.jsx";
+import AIvideos from "./components/AIVideos/AIvideos.jsx";
 
 require("dotenv").config();
 
@@ -41,6 +42,7 @@ class App extends React.Component {
                   <Route exact path="/models/view" component={ViewModels} />
                   <Route exact path="/models/runs" component={PreviousModels} />
                   <Route exact path="/users" component={Users} />
+                  <Route exact path="/aivideos" component={AIvideos} />
                 </React.Fragment>
               ) : (
                 <React.Fragment>

@@ -14,17 +14,25 @@ config_path = '../config.json'
 with open(config_path) as config_buffer:
    config = json.loads(config_buffer.read())['ml']
 
-bad_users = json.loads(os.getenv("BAD_USERS"))
+good_users = config['biologist_users']
 EVALUATION_IOU_THRESH = config['evaluation_iou_threshold']
 RESIZED_WIDTH = config['resized_video_width']
 RESIZED_HEIGHT = config['resized_video_height']
+weights_path = config['weights_path']
 
+AWS_S3_BUCKET_AIVIDEOS_FOLDER = os.getenv("AWS_S3_BUCKET_AIVIDEOS_FOLDER")
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 S3_BUCKET = os.getenv('AWS_S3_BUCKET_NAME')
 s3 = boto3.client('s3', aws_access_key_id = AWS_ACCESS_KEY_ID, aws_secret_access_key = AWS_SECRET_ACCESS_KEY)
 S3_WEIGHTS_FOLDER = os.getenv("AWS_S3_BUCKET_WEIGHTS_FOLDER")
 
+# connect to db
+con = connect(database=os.getenv("DB_NAME"), 
+    host=os.getenv("DB_HOST"), 
+    user=os.getenv("DB_USER"), 
+    password=os.getenv("DB_PASSWORD"))
+cursor = con.cursor()
 
 def score_predictions(validation, predictions, iou_thresh, concepts):
     # Maintain a set of predicted objects to verify
@@ -115,7 +123,7 @@ def get_counts(results, annotations):
     counts['count_accuracy'] = 1 - abs(counts.true_num - counts.pred_num) / counts.true_num
     return counts
 
-def interlace_annotations_to_video(annotations, filename, concepts, video_id):
+def interlace_annotations_to_video(annotations, filename, concepts):
     vid = cv2.VideoCapture(filename)
     fps = vid.get(cv2.CAP_PROP_FPS)
     while not vid.isOpened():
@@ -138,46 +146,57 @@ def interlace_annotations_to_video(annotations, filename, concepts, video_id):
             cv2.rectangle(frames[val.frame_num], (x1, y1), (x2, y2), (0, 0, 255), 3)
             cv2.putText(frames[val.frame_num], str(val.conceptid), (x1, y1+15),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
-    predict.save_video("interlaced_" + str(video_id) + "_" + filename, frames, fps)
+    predict.save_video(filename, frames, fps)
+    converted_file = 'testing.mp4'
+    os.system('ffmpeg -loglevel 0 -i \'' + filename + '\' -codec:v libx264 -y \''+ converted_file + '\'')
+    #upload video..
+    s3.upload_file(converted_file, S3_BUCKET, AWS_S3_BUCKET_AIVIDEOS_FOLDER +  filename,  ExtraArgs={'ContentType':'video/mp4'})
+    os.system('rm \'' + filename + '\'')
+    os.system('rm ' + converted_file)
+    
+    # add the entry to ai_videos
+    cursor.execute('''
+        INSERT INTO ai_videos (name)
+        VALUES (%s)''',
+        (filename,)
+    )
 
 
+# s3.upload_file(temp_file, S3_BUCKET, S3_ANNOTATION_FOLDER + no_box, ExtraArgs={'ContentType':'image/png'}) 
 
-def evaluate(video_id, user_id, model_path, concepts):
-    results, fps = predict.predict_on_video(video_id, model_path, concepts)
+def evaluate(video_id, model_username, concepts):
+    # file format: (video_id)_(model_name)-(ctime).mp4
+    filename = str(video_id) + '_' + model_username + '.mp4'
+    results, fps = predict.predict_on_video(video_id, weights_path, concepts, filename)
     print("done predicting")
 
-    # REMOVE BAD USERS ?
     annotations = queryDB('select * from annotations where videoid= ' + str(video_id) 
-        + ' and userid not in ' + str(tuple(bad_users)) +' and userid not in (32, 29)') # 32 is tracking ai, 29 is retinet ai
+        + ' and userid in ' + str(tuple(good_users)) +' and userid not in (32, 29)') # 32 is tracking ai, 29 is retinet ai
     annotations['frame_num'] = np.rint(annotations['timeinvideo'] * fps).astype(int)
 
     metrics = score_predictions(annotations, results, EVALUATION_IOU_THRESH, concepts)
-    interlace_annotations_to_video(copy.deepcopy(annotations), 'output.mp4', concepts, video_id)
+    interlace_annotations_to_video(copy.deepcopy(annotations), filename, concepts)
     concept_counts = get_counts(results, annotations)
     metrics = metrics.set_index('conceptid').join(concept_counts)
     metrics.to_csv("metrics" + str(video_id) + ".csv")
     print(metrics)
+    con.commit()
+    con.close() 
 
 if __name__ == '__main__':
-    # connect to db
-    con = connect(database=os.getenv("DB_NAME"), 
-        host=os.getenv("DB_HOST"), 
-        user=os.getenv("DB_USER"), 
-        password=os.getenv("DB_PASSWORD"))
-    cursor = con.cursor()
-
     model_name = 'testV2' 
 
-    s3.download_file(S3_BUCKET, S3_WEIGHTS_FOLDER + model_name + '.h5', 'current_weights.h5')
-    cursor.execute("SELECT * FROM MODELS WHERE name='" + model_name + "'")
+    s3.download_file(S3_BUCKET, S3_WEIGHTS_FOLDER + model_name + '.h5', weights_path)
+    cursor.execute('''
+        SELECT * FROM models
+        LEFT JOIN users u ON u.id=userid
+        WHERE name=%s
+        ''', (model_name,))
     model = cursor.fetchone()
 
     video_id = 86 
     concepts = model[2]
-    userid = 29
+    userid = model[4]
+    model_username = model[6]
 
-    evaluate(video_id, userid, 'current_weights.h5', concepts)
-    # evaluate(video_id, userid, 'BEST_WEIGHTS.h5', concepts)
-
-
-
+    evaluate(video_id, model_username, concepts)
