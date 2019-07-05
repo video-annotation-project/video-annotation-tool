@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from load_n_train import train_model
 import boto3
 import json
+import time
 
 config_path = "../config.json"
 load_dotenv(dotenv_path="../.env")
@@ -41,7 +42,7 @@ if info['activeStep'] != 5:
     exit()
 
 try:
-	s3.download_file(S3_BUCKET, S3_WEIGHTS_FOLDER + str(info['modelSelected']) + '.h5', weights_path )
+	s3.download_file(S3_BUCKET, S3_WEIGHTS_FOLDER + str(info['modelSelected']) + '.h5', weights_path)
 except:
 	s3.download_file(S3_BUCKET, S3_WEIGHTS_FOLDER + default_weights, weights_path)
 
@@ -50,6 +51,33 @@ except:
 cursor.execute("SELECT * FROM MODELS WHERE name='" + str(info['modelSelected']) + "'")
 model = cursor.fetchone()
 concepts = model[2]
+
+#Delete old model user
+if (model[4] != 'None'):
+    cursor.execute('''
+        DELETE FROM users
+        WHERE id=%s''',
+        (model[4],))
+
+user_model = model[0] + "-" + time.ctime() 
+# username example: testV2-Fri Jun 28 11:58:37 2019
+# insert into users
+cursor.execute('''
+    INSERT INTO users (username, password, admin) 
+    VALUES (%s, 0, null) 
+    RETURNING *''',
+    (user_model,))
+model_user_id = int(cursor.fetchone()[0])
+
+# update models
+cursor.execute('''
+    UPDATE models 
+    SET userid=%s
+    WHERE name=%s
+    RETURNING *''',
+    (model_user_id,str(info['modelSelected']),))
+
+# Start training job
 train_model(concepts, info['usersSelected'], int(info['minImages']), int(info['epochs']), info['modelSelected'], info['videosSelected'], info['conceptsSelected'], download_data=True)
 
 cursor.execute("Update modeltab SET info =  '{\"activeStep\": 0, \"conceptsSelected\":[], \"epochs\":0, \"minImages\":0, \"modelSelected\":\"\",\"videosSelected\":[],\"usersSelected\":[]}' WHERE option = 'trainmodel'")

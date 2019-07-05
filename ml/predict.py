@@ -26,6 +26,7 @@ s3 = boto3.client('s3', aws_access_key_id = AWS_ACCESS_KEY_ID, aws_secret_access
 S3_VIDEO_FOLDER = os.getenv('AWS_S3_BUCKET_VIDEOS_FOLDER')
 S3_ANNOTATION_FOLDER = os.getenv("AWS_S3_BUCKET_ANNOTATIONS_FOLDER")
 S3_TRACKING_FOLDER = os.getenv("AWS_S3_BUCKET_TRACKING_FOLDER")
+S3_WEIGHTS_FOLDER = os.getenv("S3_WEIGHTS_FOLDER")
 
 # Connect to db
 DB_NAME = os.getenv("DB_NAME")
@@ -45,6 +46,7 @@ MIN_FRAMES_THRESH = config['min_frames_threshold']
 VIDEO_WIDTH = config['resized_video_width']
 VIDEO_HEIGHT = config['resized_video_height']
 MAX_TIME_BACK = config['max_seconds_back']
+weights_path = config['weights_path']
 
 class Tracked_object:
 
@@ -106,7 +108,7 @@ class Tracked_object:
         self.annotations['objectid'] = matched_obj_id
 
 
-def predict_on_video(videoid, model_weights, concepts, upload_annotations=False, userid=None):
+def predict_on_video(videoid, model_weights, concepts, filename, upload_annotations=False, userid=None):
     video_name = queryDB("select * from videos where id = " + str(videoid)).iloc[0].filename
     print("Loading Video")
     frames, fps = get_video_frames(video_name)
@@ -118,7 +120,7 @@ def predict_on_video(videoid, model_weights, concepts, upload_annotations=False,
     results = propagate_conceptids(results, concepts)
     results = length_limit_objects(results, MIN_FRAMES_THRESH)
     generate_video(
-        'output.mp4', copy.deepcopy(original_frames), fps, results, concepts)
+        filename, copy.deepcopy(original_frames), fps, results, concepts)
     if upload_annotations:
         con = psycopg2.connect(database = DB_NAME,
                         user = DB_USER,
@@ -399,11 +401,11 @@ if __name__ == '__main__':
 
     model_name = 'testV2'
 
-    s3.download_file(S3_BUCKET, S3_WEIGHTS_FOLDER + model_name + '.h5', 'current_weights.h5')
+    s3.download_file(S3_BUCKET, S3_WEIGHTS_FOLDER + model_name + '.h5', weights_path)
     cursor.execute("SELECT * FROM MODELS WHERE name='" + model_name + "'")
     model = cursor.fetchone()
 
     videoid = 86 
     concepts = model[2]
 
-    predict_on_video(videoid, 'current_weights', concepts)
+    predict_on_video(videoid, weights_path, concepts)

@@ -227,7 +227,9 @@ class TrainModel extends Component {
       }
     };
     axios.get(
-      `/api/videos/usersViewed/` + this.state.usersSelected,
+      `/api/videos/trainModel/` +
+       this.state.usersSelected + `/` +
+       this.state.modelSelected,
       config
     ).then(res => {
       this.setState({
@@ -357,7 +359,7 @@ class TrainModel extends Component {
                     }
                   />
                 }
-                label={video.filename}
+                label={video.id + " " + video.filename}
               >
               </FormControlLabel>
               <IconButton style={{ float: 'right' }}>

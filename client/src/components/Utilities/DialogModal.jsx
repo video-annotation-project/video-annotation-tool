@@ -26,7 +26,7 @@ class DialogModal extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      unsure: false,
+      unsure: this.props.unsure || false,
       comment: ""
     };
   }
