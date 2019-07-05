@@ -51,24 +51,24 @@ s3 = boto3.client('s3', aws_access_key_id = AWS_ACCESS_KEY_ID, aws_secret_access
 class custom(CSVGenerator):
     def __getitem__(self, index):
         inputs, targets = CSVGenerator.__getitem__(self, index)
-        '''
-        for i,x in enumerate(inputs):
-            temp = x
-            temp = sk.exposure.rescale_intensity(temp,in_range=(0,255))
-            temp = sk.util.random_noise(temp, var= random.uniform(0,.0005))
-            temp = sk.exposure.adjust_gamma(temp,gamma=random.uniform(.5,1.5))
-            inputs[i] = np.array(temp)
-        '''
+
+        # for i,x in enumerate(inputs):
+        #     temp = x
+        #     temp = sk.exposure.rescale_intensity(temp,in_range=(0,255))
+        #     temp = sk.util.random_noise(temp, var= random.uniform(0,.0005))
+        #     temp = sk.exposure.adjust_gamma(temp,gamma=random.uniform(.5,1.5))
+        #     inputs[i] = np.array(temp)
+
         return inputs, targets
 
 
 def train_model(concepts, users, min_examples, epochs, model_name, videos, selected_concepts, download_data=True):
 
     classmap = get_classmap(concepts)
-    '''
-    Downloads the annotation data and saves it into training and validation csv's.
-    Also downloads corresponding images.
-    '''
+    
+    # Downloads the annotation data and saves it into training and validation csv's.
+    # Also downloads corresponding images.
+    
     if download_data:
         folders = ["weights"]
         for dir in folders:
@@ -84,9 +84,9 @@ def train_model(concepts, users, min_examples, epochs, model_name, videos, selec
         end = time.time()
         print("Done Downloading Annotations: " + str((end - start)/60) + " minutes")
 
-    '''
-    Trains the model!!!!! WOOOT WOOOT!
-    '''
+
+    # Trains the model!!!!! WOOOT WOOOT!
+
     start = time.time()
     print("Starting Training.")
 
@@ -110,26 +110,26 @@ def train_model(concepts, users, min_examples, epochs, model_name, videos, selec
         },
         optimizer=keras.optimizers.adam(lr=1e-5, clipnorm=0.001)
     )
-    '''
-    transform_generator = random_transform_generator(
-        min_rotation=-0.1,
-        max_rotation=0.1,
-        min_translation=(-0.1, -0.1),
-        max_translation=(0.1, 0.1),
-        min_shear=-0.1,
-        max_shear=0.1,
-        min_scaling=(0.9, 0.9),
-        max_scaling=(1.1, 1.1),
-        flip_x_chance=0.5,
-        flip_y_chance=0.5,
-    )
-    '''
+    
+    # transform_generator = random_transform_generator(
+    #     min_rotation=-0.1,
+    #     max_rotation=0.1,
+    #     min_translation=(-0.1, -0.1),
+    #     max_translation=(0.1, 0.1),
+    #     min_shear=-0.1,
+    #     max_shear=0.1,
+    #     min_scaling=(0.9, 0.9),
+    #     max_scaling=(1.1, 1.1),
+    #     flip_x_chance=0.5,
+    #     flip_y_chance=0.5,
+    # )
+    
     temp = pd.DataFrame(list(zip(classmap.values(), classmap.keys())))
     temp.to_csv('classmap.csv',index=False, header=False)
     train_generator = custom(
         train_annot_file,
         'classmap.csv',
-        #transform_generator=transform_generator,
+        # transform_generator=transform_generator,
         batch_size = batch_size
     )
 
@@ -150,6 +150,8 @@ def train_model(concepts, users, min_examples, epochs, model_name, videos, selec
 
     log_table_name = 'previous_runs'
 
+    # Initialize a log entry in the previous_runs table
+    # TODO: put this in progress_callbacks.py, it makes more sense there
     tb_log_id = create_log_entry(
         table_name=log_table_name,
         model_name=model_name,
@@ -160,6 +162,7 @@ def train_model(concepts, users, min_examples, epochs, model_name, videos, selec
         epochs=epochs
     )
 
+    # Every epoch upload tensorboard logs to the S3 bucket
     log_callback = TensorBoardLog(id_=tb_log_id, table_name=log_table_name)
 
     tensorboard_callback = keras.callbacks.TensorBoard(
@@ -168,6 +171,7 @@ def train_model(concepts, users, min_examples, epochs, model_name, videos, selec
         embeddings_freq=0, embeddings_layer_names=None,
         embeddings_metadata=None, embeddings_data=None, update_freq='epoch')
 
+    # Every batch and epoch update a database table with the current progress
     progress_callback = Progress(steps_per_epoch=len(train_generator), num_epochs=epochs)
     
     history = training_model.fit_generator(train_generator, 

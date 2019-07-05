@@ -140,11 +140,11 @@ def download_annotations(min_examples, concepts, selected_concepts, concept_map,
                 AND userid::text = ANY(string_to_array({users},',')))
             ''')
 
-    '''
-    Returns
-    selected - list of frames (frame is a group of annotations at same frame)
-    concept_count - dictionary of conceptid and number of annotations within selected
-    '''
+    
+    # Returns
+    # selected - list of frames (frame is a group of annotations at same frame)
+    # concept_count - dictionary of conceptid and number of annotations within selected
+
     selected, concept_count = select_annotations(annotations, min_examples, selected_concepts)
     print("Concept counts: " + str(concept_count))
     print("Number of images: " + str(len(selected)))

@@ -9,6 +9,7 @@ import CreateModel from "./CreateModel.jsx";
 import ViewModels from "./ViewModels.jsx";
 import PredictModel from "./PredictModel.jsx";
 import TrainModel from "./TrainModel.jsx";
+import PreviousModels from "./PreviousModels.jsx";
 
 const styles = theme => ({
   root: {}
@@ -41,29 +42,8 @@ class Models extends React.Component {
   render() {
     const { classes } = this.props;
     const { modelMenuOpen, modelSelection } = this.state;
-    let modelElement = <div />;
-    //Switch statement to set modelElement
-    switch (modelSelection) {
-      case "create":
-        //set modelElement to create model component
-        modelElement = <CreateModel />;
-        break;
-      case "view":
-        //set modelElement to view models component
-        modelElement = <ViewModels />;
-        break;
-      case "train":
-        //set modelElement to train model component
-        modelElement = <TrainModel />;
-        break;
-      case "run":
-        //set modelElement to run model component
-        modelElement = <PredictModel />;
-        break;
-      default:
-        //set modelElement to empty div (nothing)
-        modelElement = <div />;
-    }
+    let modelElement = this.props.modelElement;
+
     return (
       <div className={classes.root}>
         <Button id="modelButton" onClick={this.handleClick}>
@@ -86,6 +66,9 @@ class Models extends React.Component {
           </MenuItem>
           <MenuItem onClick={() => this.handleSelection("run")}>
             Predict Model
+          </MenuItem>
+          <MenuItem onClick={() => this.handleSelection("previous")}>
+            Previous Models
           </MenuItem>
         </Menu>
         {modelElement}
