@@ -14,6 +14,14 @@ import Models from "./components/Model/Models.jsx";
 import Users from "./components/Users.jsx";
 import AIvideos from "./components/AIVideos/AIvideos.jsx";
 
+import ConceptCollection from "./components/Collections/conceptCollection.jsx"
+import VideoCollection from "./components/Collections/videoCollection.jsx"
+
+import CreateModel from "./components/Model/CreateModel.jsx";
+import ViewModels from "./components/Model/ViewModels.jsx";
+import PredictModel from "./components/Model/PredictModel.jsx";
+import TrainModel from "./components/Model/TrainModel.jsx";
+
 require("dotenv").config();
 
 class App extends React.Component {
@@ -35,6 +43,13 @@ class App extends React.Component {
                   <Route exact path="/models" component={Models} />
                   <Route exact path="/users" component={Users} />
                   <Route exact path="/aivideos" component={AIvideos} />
+                  <Route exact path="/conceptCollection" component={ConceptCollection} />
+                  <Route exact path="/videoCollection" component={VideoCollection} />
+
+                  <Route exact path="/createModel" component={CreateModel} />
+                  <Route exact path="/viewModels" component={ViewModels} />
+                  <Route exact path="/predictModel" component={PredictModel} />
+                  <Route exact path="/trainModel" component={TrainModel} />
                 </React.Fragment>
               ) : (
                 <React.Fragment>
@@ -42,6 +57,9 @@ class App extends React.Component {
                   <Route exact path="/annotate" component={Annotate} />
                   <Route exact path="/report" component={Report} />
                   <Route exact path="/verify" component={Verify} />
+
+                  <Route exact path="/conceptCollection" component={ConceptCollection} />
+                  <Route exact path="/videoCollection" component={VideoCollection} />
                 </React.Fragment>
               )}
               <Route exact path="/profile" component={Profile} />

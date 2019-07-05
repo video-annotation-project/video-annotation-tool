@@ -5,6 +5,8 @@ import AppBar from "@material-ui/core/AppBar";
 import Button from "@material-ui/core/Button";
 import Toolbar from "@material-ui/core/Toolbar";
 import Typography from "@material-ui/core/Typography";
+import GeneralMenu from "./Utilities/GeneralMenu";
+
 
 const styles = {
   flex: {
@@ -58,12 +60,26 @@ class Navbar extends React.Component {
                   <Button color="inherit" component={Link} to="/createUser">
                     Create User
                   </Button>
-                  <Button color="inherit" component={Link} to="/models">
-                    Models
-                  </Button>
+                  <GeneralMenu
+                    name={"Models"}
+                    Link={Link}
+                    items={[{name: 'Create Model', link:'/createModel'},
+                      {name: 'View Models', link: '/viewModels'},
+                      {name: 'Train Models', link: '/trainModel'},
+                      {name: 'Predict Models', link: '/predictModel'}
+                    ]}
+                  />
                   <Button color="inherit" component={Link} to="/users">
                     Users
                   </Button>
+                  <GeneralMenu
+                    name={"Collections"}
+                    Link={Link}
+                    items={[{name: 'Concepts', link:'/conceptCollection'},{name: 'Videos', link: '/videoCollection'}]}
+                  />
+
+
+                  
                 </React.Fragment>
               ) : (
                 <React.Fragment>
