@@ -49,8 +49,8 @@ class VerifySelectVideo extends React.Component {
     } = this.props;
 
     return (
-      <Grid container spacing={24}>
-        <Grid item xs={3}>
+      <Grid container>
+        <Grid item>
           <Typography>Select videos</Typography>
           <FormControl component="fieldset" className={classes.formControl}>
             <FormGroup
@@ -85,7 +85,7 @@ class VerifySelectVideo extends React.Component {
             </FormGroup>
           </FormControl>
         </Grid>
-        <Grid item xs={3}>
+        <Grid item>
           <Typography>Select video collections</Typography>
           <FormControl component="fieldset" className={classes.formControl}>
             <FormGroup
