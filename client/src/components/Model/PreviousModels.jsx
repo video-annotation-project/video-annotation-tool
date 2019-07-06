@@ -114,7 +114,7 @@ class PreviousModels extends Component {
     if (this.state.launched !== null){
       if (process.env.NODE_ENV === 'production'){
         const domain = this.getDomain(window.location.hostname);
-        window.open(`http://tensorboard.${domain}`, "_blank");
+        window.open(`https://tensorboard.${domain}`, "_blank");
       } else {
         window.open("http://localhost:6008", "_blank");
       }
