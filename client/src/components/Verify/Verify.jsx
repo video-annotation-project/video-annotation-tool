@@ -51,7 +51,6 @@ class Verify extends Component {
       /* -1 represents select all */
       selectedUsers: [],
       selectedVideos: ["-1"],
-      selectedVideoCollections: [],
       selectedConcepts: ["-1"],
       selectedUnsure: false,
       annotations: [],
@@ -218,7 +217,6 @@ class Verify extends Component {
     this.setState({
       selectedUsers: [],
       selectedVideos: ["-1"],
-      selectedVideoCollections: [],
       selectedConcepts: ["-1"],
       selectedUnsure: false,
       index: 0
@@ -241,7 +239,6 @@ class Verify extends Component {
         <VerifySelection
           selectedUsers={this.state.selectedUsers}
           selectedVideos={this.state.selectedVideos}
-          selectedVideoCollections={this.state.selectedVideoCollections}
           selectedConcepts={this.state.selectedConcepts}
           selectedUnsure={this.state.selectedUnsure}
           getUsers={this.getUsers}

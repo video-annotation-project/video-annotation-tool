@@ -9,7 +9,7 @@ import Typography from "@material-ui/core/Typography";
 
 const styles = theme => ({
   formControl: {
-    margin: theme.spacing.unit * 3,
+    marginTop: theme.spacing.unit * 2,
     maxHeight: "400px",
     overflow: "auto"
   },
@@ -38,7 +38,7 @@ class VerifySelectConcept extends React.Component {
     const { classes, value, handleChange } = this.props;
 
     return (
-      <Grid container>
+      <Grid container spacing={32}>
         <Grid item>
           <Typography>Select concepts</Typography>
           <FormControl component="fieldset" className={classes.formControl}>
