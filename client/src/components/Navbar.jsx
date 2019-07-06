@@ -36,7 +36,6 @@ class Navbar extends React.Component {
   };
 
   closeModelTab = () => {
-    console.log("JERE");
     this.setState({ modelTabOpen: false });
   };
 
