@@ -40,7 +40,13 @@ class VerifySelectVideo extends React.Component {
   };
 
   render() {
-    const { classes, selectedVideos, selectedVideoCollections, handleChangeVideo, handleChangeVideoCollection } = this.props;
+    const {
+      classes,
+      selectedVideos,
+      selectedVideoCollections,
+      handleChangeVideo,
+      handleChangeVideoCollection
+    } = this.props;
 
     return (
       <Grid container spacing={24}>
@@ -90,7 +96,9 @@ class VerifySelectVideo extends React.Component {
               {!this.state.loaded ? (
                 "Loading..."
               ) : this.state.videoCollections.length === 0 ? (
-                <Typography>No video collections for current selection</Typography>
+                <Typography>
+                  No video collections for current selection
+                </Typography>
               ) : (
                 <React.Fragment>
                   {this.state.videoCollections.map(videoCollection => (
@@ -99,7 +107,9 @@ class VerifySelectVideo extends React.Component {
                       value={videoCollection.id.toString()}
                       control={<Checkbox color="primary" />}
                       label={videoCollection.name}
-                      checked={selectedVideoCollections.includes(videoCollection.id.toString())}
+                      checked={selectedVideoCollections.includes(
+                        videoCollection.id.toString()
+                      )}
                     />
                   ))}
                 </React.Fragment>

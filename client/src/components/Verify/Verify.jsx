@@ -105,7 +105,7 @@ class Verify extends Component {
   getVideoCollections = async () => {
     return axios
       .get(`/api/videoCollections`, {
-        headers: { Authorization: "Bearer " + localStorage.getItem("token") },
+        headers: { Authorization: "Bearer " + localStorage.getItem("token") }
       })
       .then(res => res.data)
       .catch(error => {
@@ -113,7 +113,7 @@ class Verify extends Component {
           error: error
         });
       });
-  }
+  };
 
   getConcepts = async () => {
     return axios
@@ -137,23 +137,23 @@ class Verify extends Component {
 
   getUnsure = async () => {
     return axios
-        .get(`/api/unverifiedUnsureByUserVideoConcept`, {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: "Bearer " + localStorage.getItem("token")
-          },
-          params: {
-            selectedUsers: this.state.selectedUsers,
-            selectedVideos: this.state.selectedVideos,
-            selectedConcepts: this.state.selectedConcepts
-          }
-        })
-        .then(res => res.data)
-        .catch(error => {
-          this.setState({
-            error: error
-          });
+      .get(`/api/unverifiedUnsureByUserVideoConcept`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + localStorage.getItem("token")
+        },
+        params: {
+          selectedUsers: this.state.selectedUsers,
+          selectedVideos: this.state.selectedVideos,
+          selectedConcepts: this.state.selectedConcepts
+        }
+      })
+      .then(res => res.data)
+      .catch(error => {
+        this.setState({
+          error: error
         });
+      });
   };
 
   getAnnotations = async () => {
@@ -178,17 +178,17 @@ class Verify extends Component {
       });
   };
 
-  selectUser = (user) => {
-      this.setState({
-          selectedUsers: this.state.selectedUsers.concat(user)
-      });
+  selectUser = user => {
+    this.setState({
+      selectedUsers: this.state.selectedUsers.concat(user)
+    });
   };
 
   handleChangeSwitch = type => event => {
     this.setState({
       [type]: event.target.checked
-    })
-  }
+    });
+  };
 
   handleChangeList = type => event => {
     if (!this.state[type].includes(event.target.value)) {
