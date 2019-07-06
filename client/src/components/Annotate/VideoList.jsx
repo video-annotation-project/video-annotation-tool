@@ -14,6 +14,8 @@ import Description from "@material-ui/icons/Description";
 
 import VideoMetadata from "../Utilities/VideoMetadata.jsx";
 
+import Checkbox from '@material-ui/core/Checkbox';
+
 const styles = theme => ({
   root: {
     // float: 'right',
@@ -39,7 +41,8 @@ class VideoList extends Component {
       unwatchedListOpen: false,
       watchedListOpen: false,
       inProgressListOpen: false,
-      openedVideo: null
+      openedVideo: null,
+      checkedVideos: []
     };
   }
 
@@ -63,6 +66,23 @@ class VideoList extends Component {
     });
   };
 
+
+  handleChange = (name, videoid) => event => {
+    var checkedVideos = this.state.checkedVideos;
+    var index = checkedVideos.indexOf(videoid);
+    if (event.target.checked) {
+      checkedVideos.push(videoid);
+    }
+    else {
+      checkedVideos.splice(index, 1);
+    }
+    this.setState({
+      ...this.state, 
+      [name]: event.target.checked,
+      checkedVideos: checkedVideos
+    });
+  }
+
   render() {
     const {
       classes,
@@ -79,6 +99,8 @@ class VideoList extends Component {
       inProgressListOpen,
       openedVideo
     } = this.state;
+
+    // console.log(this.state.checkedVideos);
 
     return (
       <div className={classes.root}>
@@ -110,6 +132,17 @@ class VideoList extends Component {
                     style={video.count > 1 ? { backgroundColor: "red" } : {}}
                     onClick={() => handleVideoClick(video, "startedVideos")}
                   >
+                    {this.props.collection ? 
+                      <Checkbox
+                        checked={video.selected}
+                        onChange={this.handleChange(video.selected, video.id)}
+                        value="selected"
+                        color="primary"
+                        inputProps={{
+                          'aria-label': 'secondary checkbox',
+                        }}
+                      /> : ""
+                    }
                     <ListItemText primary={video.id + ". " + video.filename} />
                     <IconButton>
                       <Description
@@ -133,6 +166,17 @@ class VideoList extends Component {
                     key={video.id}
                     onClick={() => handleVideoClick(video, "unwatchedVideos")}
                   >
+                    {this.props.collection ? 
+                      <Checkbox
+                        checked={video.selected}
+                        onChange={this.handleChange(video.selected, video.id)}
+                        value="selected"
+                        color="primary"
+                        inputProps={{
+                          'aria-label': 'secondary checkbox',
+                        }}
+                      /> : ""
+                    }
                     <ListItemText primary={video.id + ". " + video.filename} />
                     <IconButton>
                       <Description
@@ -156,6 +200,17 @@ class VideoList extends Component {
                     key={video.id}
                     onClick={() => handleVideoClick(video, "watchedVideos")}
                   >
+                    {this.props.collection ? 
+                      <Checkbox
+                        checked={video.selected}
+                        onChange={this.handleChange(video.selected, video.id)}
+                        value="selected"
+                        color="primary"
+                        inputProps={{
+                          'aria-label': 'secondary checkbox',
+                        }}
+                      /> : ""
+                    }
                     <ListItemText primary={video.id + ". " + video.filename} />
                     <IconButton>
                       <Description
@@ -179,6 +234,17 @@ class VideoList extends Component {
                     key={video.id}
                     onClick={() => handleVideoClick(video, "inProgressVideos")}
                   >
+                    {this.props.collection ? 
+                      <Checkbox
+                        checked={video.selected}
+                        onChange={this.handleChange(video.selected, video.id)}
+                        value="selected"
+                        color="primary"
+                        inputProps={{
+                          'aria-label': 'secondary checkbox',
+                        }}
+                      /> : ""
+                    }                    
                     <ListItemText primary={video.id + ". " + video.filename} />
                     <IconButton>
                       <Description

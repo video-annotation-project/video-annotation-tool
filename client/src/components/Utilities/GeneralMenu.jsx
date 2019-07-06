@@ -23,14 +23,15 @@ const GeneralMenu = (props) => {
         <Menu
           id="simple-menu"
           anchorEl={anchorEl}
-          keepMounted
           open={Boolean(anchorEl)}
           onClose={handleClose}
         >
           {props.items.map(item => (
             <MenuItem
+              key={item.name}
               component={props.Link}
               to={item.link}
+              onClick={() => handleClose()}
             >
               {item.name}
             </MenuItem>

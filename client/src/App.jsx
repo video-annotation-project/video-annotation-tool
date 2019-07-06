@@ -14,8 +14,8 @@ import PreviousModels from "./components/Model/PreviousModels.jsx";
 import Users from "./components/Users.jsx";
 import AIvideos from "./components/AIVideos/AIvideos.jsx";
 
-import ConceptCollection from "./components/Collections/conceptCollection.jsx"
-import VideoCollection from "./components/Collections/videoCollection.jsx"
+import ConceptCollection from "./components/Collections/ConceptCollection.jsx"
+import VideoCollection from "./components/Collections/VideoCollection.jsx"
 
 import CreateModel from "./components/Model/CreateModel.jsx";
 import ViewModels from "./components/Model/ViewModels.jsx";
@@ -36,10 +36,9 @@ class App extends React.Component {
               {localStorage.getItem("admin") ? (
                 <React.Fragment>
                   <Route exact path="/concepts" component={Concepts} />
-                  <Route exact path="/annotate" component={Annotate} />
+
                   <Route exact path="/report" component={Report} />
-                  <Route exact path="/verify" component={Verify} />
-                  <Route exact path="/createUser" component={CreateUser} />
+                  <Route exact path="/account/createUser" component={CreateUser} />
                   <Route exact path="/models/create" component={CreateModel} />
                   <Route exact path="/models/predict" component={PredictModel} />
                   <Route exact path="/models/train" component={TrainModel} />
@@ -49,11 +48,6 @@ class App extends React.Component {
                   <Route exact path="/aivideos" component={AIvideos} />
                   <Route exact path="/conceptCollection" component={ConceptCollection} />
                   <Route exact path="/videoCollection" component={VideoCollection} />
-
-                  <Route exact path="/createModel" component={CreateModel} />
-                  <Route exact path="/viewModels" component={ViewModels} />
-                  <Route exact path="/predictModel" component={PredictModel} />
-                  <Route exact path="/trainModel" component={TrainModel} />
                 </React.Fragment>
               ) : (
                 <React.Fragment>
@@ -62,11 +56,13 @@ class App extends React.Component {
                   <Route exact path="/report" component={Report} />
                   <Route exact path="/verify" component={Verify} />
 
-                  <Route exact path="/conceptCollection" component={ConceptCollection} />
-                  <Route exact path="/videoCollection" component={VideoCollection} />
+                  <Route exact path="/ConceptCollection" component={ConceptCollection} />
+                  <Route exact path="/VideoCollection" component={VideoCollection} />
                 </React.Fragment>
               )}
-              <Route exact path="/profile" component={Profile} />
+              <Route exact path="/annotate/videos" component={Annotate} />
+              <Route exact path="/annotate/verify" component={Verify} />
+              <Route exact path="/account/profile" component={Profile} />
             </React.Fragment>
           ) : (
             <Route exact path="/login" component={Login} />

@@ -51,6 +51,7 @@ class Verify extends Component {
       /* -1 represents select all */
       selectedUsers: [],
       selectedVideos: ["-1"],
+      selectedVideoCollections: [],
       selectedConcepts: ["-1"],
       selectedUnsure: false,
       annotations: [],
@@ -100,6 +101,19 @@ class Verify extends Component {
         });
       });
   };
+
+  getVideoCollections = async () => {
+    return axios
+      .get(`/api/videoCollections`, {
+        headers: { Authorization: "Bearer " + localStorage.getItem("token") },
+      })
+      .then(res => res.data)
+      .catch(error => {
+        this.setState({
+          error: error
+        });
+      });
+  }
 
   getConcepts = async () => {
     return axios
@@ -204,6 +218,7 @@ class Verify extends Component {
     this.setState({
       selectedUsers: [],
       selectedVideos: ["-1"],
+      selectedVideoCollections: [],
       selectedConcepts: ["-1"],
       selectedUnsure: false,
       index: 0
@@ -226,10 +241,12 @@ class Verify extends Component {
         <VerifySelection
           selectedUsers={this.state.selectedUsers}
           selectedVideos={this.state.selectedVideos}
+          selectedVideoCollections={this.state.selectedVideoCollections}
           selectedConcepts={this.state.selectedConcepts}
           selectedUnsure={this.state.selectedUnsure}
           getUsers={this.getUsers}
           getVideos={this.getVideos}
+          getVideoCollections={this.getVideoCollections}
           getConcepts={this.getConcepts}
           getUnsure={this.getUnsure}
           handleChangeSwitch={this.handleChangeSwitch}

@@ -51,9 +51,12 @@ class VerifySelection extends React.Component {
       case 1:
         return (
           <VerifySelectVideo
-            value={this.props.selectedVideos}
+            selectedVideos={this.props.selectedVideos}
+            selectedVideoCollections={this.props.selectedVideoCollections}
             getVideos={this.props.getVideos}
-            handleChange={this.props.handleChangeList("selectedVideos")}
+            getVideoCollections={this.props.getVideoCollections}
+            handleChangeVideo={this.props.handleChangeList("selectedVideos")}
+            handleChangeVideoCollection={this.props.handleChangeList("selectedVideoCollections")}
           />
         );
       case 2:
@@ -82,7 +85,7 @@ class VerifySelection extends React.Component {
       case 0:
         return this.props.selectedUsers.length === 0;
       case 1:
-        return this.props.selectedVideos.length === 0;
+        return this.props.selectedVideos.length === 0 && this.props.selectedVideoCollections.length === 0;
       case 2:
         return this.props.selectedConcepts.length === 0;
       default:
