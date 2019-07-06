@@ -79,7 +79,6 @@ class PreviousModels extends Component {
         this.setState({
           runs: res.data
         });
-        console.log(this.state);
       })
       .catch(error => {
         console.log("Error in get /api/models/runs");
@@ -111,9 +110,14 @@ class PreviousModels extends Component {
       });
   }
 
-  openTensorboard = () => {
+  openTensorboard = () => {          
     if (this.state.launched !== null){
-      window.open("http://localhost:6008", "_blank");
+      if (process.env.NODE_ENV === 'production'){
+        const domain = this.getDomain(window.location.hostname);
+        window.open(`http://tensorboard.${domain}`, "_blank");
+      } else {
+        window.open("http://localhost:6008", "_blank");
+      }
     }
   }
 
@@ -159,8 +163,8 @@ class PreviousModels extends Component {
     axios
       .post(`/api/models/tensorboard/${id}`, body, config)
       .then(res => {
-        window.open("http://localhost:6008", "_blank");
         this.setState({ launched: id });
+        this.openTensorboard();
       })
       .catch(error => {
         console.log("Error in get /api/models/tensorboard/");
@@ -170,6 +174,18 @@ class PreviousModels extends Component {
         }
       })
       .finally(() => this.setState({ loadingId: null }));
+  }
+
+  getDomain = (url) => {
+    url = url.replace(/(https?:\/\/)?(www.)?/i, '');
+    url = url.split('.');
+    url = url.slice(url.length - 2).join('.');
+
+    if (url.indexOf('/') !== -1) {
+        return url.split('/')[0];
+    }
+
+    return url;
   }
     
   render() {
