@@ -655,7 +655,7 @@ class TrainModel extends Component {
           </Stepper>
           <ModelProgress className={classes.progress}/>
         </div>
-        {activeStep === steps.length && (
+        {activeStep >= steps.length && (
           <Paper square elevation={0} className={classes.resetContainer}>
             <Typography>Model is training...</Typography>
             <CircularProgress />
