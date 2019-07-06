@@ -16,6 +16,7 @@ const styles = theme => ({
 	},
 	progressBar: {
 		height: '8px',
+    width: '82%',
 	},
 	progressText: {
     marginTop: '20px',
