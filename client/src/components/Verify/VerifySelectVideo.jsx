@@ -23,21 +23,24 @@ class VerifySelectVideo extends React.Component {
     super(props);
     this.state = {
       videos: [],
+      videoCollections: [],
       loaded: false
     };
   }
 
   componentDidMount = async () => {
     let videos = await this.props.getVideos();
+    let videoCollections = await this.props.getVideoCollections();
 
     this.setState({
       videos: videos,
+      videoCollections: videoCollections,
       loaded: true
     });
   };
 
   render() {
-    const { classes, value, handleChange } = this.props;
+    const { classes, selectedVideos, selectedVideoCollections, handleChangeVideo, handleChangeVideoCollection } = this.props;
 
     return (
       <Grid container spacing={24}>
@@ -45,11 +48,9 @@ class VerifySelectVideo extends React.Component {
           <Typography>Select videos</Typography>
           <FormControl component="fieldset" className={classes.formControl}>
             <FormGroup
-              aria-label="Video"
-              name="video"
               className={classes.group}
-              value={value}
-              onChange={handleChange}
+              value={selectedVideos}
+              onChange={handleChangeVideo}
             >
               {!this.state.loaded ? (
                 "Loading..."
@@ -62,7 +63,7 @@ class VerifySelectVideo extends React.Component {
                     value={"-1"}
                     control={<Checkbox color="primary" />}
                     label="All videos"
-                    checked={this.props.value.includes("-1")}
+                    checked={selectedVideos.includes("-1")}
                   />
                   {this.state.videos.map(video => (
                     <FormControlLabel
@@ -70,7 +71,7 @@ class VerifySelectVideo extends React.Component {
                       value={video.id.toString()}
                       control={<Checkbox color="primary" />}
                       label={video.id + " " + video.filename}
-                      checked={this.props.value.includes(video.id.toString())}
+                      checked={selectedVideos.includes(video.id.toString())}
                     />
                   ))}
                 </React.Fragment>
@@ -82,32 +83,23 @@ class VerifySelectVideo extends React.Component {
           <Typography>Select video collections</Typography>
           <FormControl component="fieldset" className={classes.formControl}>
             <FormGroup
-              aria-label="Video"
-              name="video"
               className={classes.group}
-              value={value}
-              onChange={handleChange}
+              value={selectedVideoCollections}
+              onChange={handleChangeVideoCollection}
             >
               {!this.state.loaded ? (
                 "Loading..."
-              ) : this.state.videos.length === 0 ? (
-                <Typography>No videos for current selection</Typography>
+              ) : this.state.videoCollections.length === 0 ? (
+                <Typography>No video collections for current selection</Typography>
               ) : (
                 <React.Fragment>
-                  <FormControlLabel
-                    key={-1}
-                    value={"-1"}
-                    control={<Checkbox color="primary" />}
-                    label="All videos"
-                    checked={this.props.value.includes("-1")}
-                  />
-                  {this.state.videos.map(video => (
+                  {this.state.videoCollections.map(videoCollection => (
                     <FormControlLabel
-                      key={video.id}
-                      value={video.id.toString()}
+                      key={videoCollection.id}
+                      value={videoCollection.id.toString()}
                       control={<Checkbox color="primary" />}
-                      label={video.id + " " + video.filename}
-                      checked={this.props.value.includes(video.id.toString())}
+                      label={videoCollection.name}
+                      checked={selectedVideoCollections.includes(videoCollection.id.toString())}
                     />
                   ))}
                 </React.Fragment>

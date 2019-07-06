@@ -36,10 +36,9 @@ class App extends React.Component {
               {localStorage.getItem("admin") ? (
                 <React.Fragment>
                   <Route exact path="/concepts" component={Concepts} />
-                  <Route exact path="/annotate" component={Annotate} />
+
                   <Route exact path="/report" component={Report} />
-                  <Route exact path="/verify" component={Verify} />
-                  <Route exact path="/createUser" component={CreateUser} />
+                  <Route exact path="/account/createUser" component={CreateUser} />
                   <Route exact path="/models/create" component={CreateModel} />
                   <Route exact path="/models/predict" component={PredictModel} />
                   <Route exact path="/models/train" component={TrainModel} />
@@ -61,7 +60,9 @@ class App extends React.Component {
                   <Route exact path="/VideoCollection" component={VideoCollection} />
                 </React.Fragment>
               )}
-              <Route exact path="/profile" component={Profile} />
+              <Route exact path="/annotate/videos" component={Annotate} />
+              <Route exact path="/annotate/verify" component={Verify} />
+              <Route exact path="/account/profile" component={Profile} />
             </React.Fragment>
           ) : (
             <Route exact path="/login" component={Login} />

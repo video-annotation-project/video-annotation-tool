@@ -128,7 +128,7 @@ class PredictModel extends Component {
     };
     let option = "predictmodel";
     axios
-      .get(`/api/modelTab/${option}`, config)
+      .get(`/api/models/${option}`, config)
       .then(res => {
         const info = res.data[0].info;
         this.setState({
@@ -139,7 +139,7 @@ class PredictModel extends Component {
         });
       })
       .catch(error => {
-        console.log("Error in get /api/modelTab");
+        console.log("Error in get /api/models");
         console.log(error);
         if (error.response) {
           console.log(error.response.data.detail);
@@ -305,7 +305,7 @@ class PredictModel extends Component {
     };
     // update SQL database
     axios
-      .put("/api/modelTab/predictmodel", body, config)
+      .put("/api/models/predictmodel", body, config)
       .then(res => {
         this.state.socket.emit("refresh predictmodel");
       })

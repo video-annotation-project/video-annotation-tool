@@ -6,7 +6,8 @@ import Typography from "@material-ui/core/Typography";
 import { withStyles } from "@material-ui/core/styles";
 import Slider from "@material-ui/lab/Slider";
 import VideoList from "../Annotate/VideoList";
-
+import Swal from "sweetalert2";
+import CollectionList from "./CollectionList.jsx";
 
 const styles = theme => ({
   videoContainer: {
@@ -24,6 +25,14 @@ const styles = theme => ({
     marginTop: "10px",
     marginLeft: "20px",
     marginBottom: "10px"
+  },
+  drawer: {
+    width: "550px",
+    overflow: "auto"
+  },
+  toggleButton: {
+    float: "right",
+    marginTop: "5px"
   }
 });
 
@@ -54,6 +63,7 @@ class videoCollection extends Component {
     socket.on("refresh videos", this.loadVideos);
 
     this.state = {
+      collectionListOpen: false,
       currentVideo: null,
       dialogMsg: null,
       dialogOpen: false,
@@ -83,6 +93,7 @@ class videoCollection extends Component {
 
     try {
       this.loadVideos(this.getCurrentVideo);
+      this.loadCollections();
     } catch (error) {
       console.log(error);
       console.log(JSON.parse(JSON.stringify(error)));
@@ -295,6 +306,56 @@ class videoCollection extends Component {
     */
   };
 
+  handleCreateCollection = () => {
+    Swal.mixin({
+      confirmButtonText: 'Next',
+      showCancelButton: true,
+      progressSteps: ['1', '2']
+    }).queue([
+      { 
+        title: 'Collection Name',
+        input: 'text'
+      },
+      {
+        title: 'Description',
+        input: 'textarea'
+      }
+    ]).then(async (result) => {
+      if (result.value) {
+        const body = {
+          name: result.value[0],
+          description: result.value[1]
+        }
+        const config = {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + localStorage.getItem("token")
+          }
+        };
+        try {
+          await axios.post("/api/videoCollection", body, config)
+          Swal.fire({
+            title: 'Collection Created!',
+            confirmButtonText: 'Lovely!'
+          })
+        } catch (error) {
+          Swal.fire("", error, error);
+        }
+      }
+    })
+  }
+
+  toggleDrawer = () => {
+    this.setState({
+      drawerOpen: !this.state.drawerOpen
+    });
+  };
+
+  toggle = list => {
+    this.setState({
+      [list]: !this.state[list]
+    });
+  };
 
   render() {
     const { classes } = this.props;
@@ -307,6 +368,11 @@ class videoCollection extends Component {
     }
     return (
       <React.Fragment>
+        <CollectionList
+          collType="video"
+          data={this.state.collections}
+          handleCreateCollection={this.handleCreateCollection}
+        />
         <VideoList
           handleVideoClick={this.handleVideoClick}
           startedVideos={this.state.startedVideos}
@@ -399,6 +465,14 @@ class videoCollection extends Component {
             onClick={() => this.handleDoneClick()}
           >
             Done
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            className={classes.button}
+            onClick={() => this.handleCreateCollection()}
+          >
+            Create New Collection
           </Button>
         </div>
       </React.Fragment>

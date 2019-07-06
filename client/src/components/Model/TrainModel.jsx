@@ -154,7 +154,7 @@ class TrainModel extends Component {
     };
     let option = "trainmodel";
     axios
-      .get(`/api/modelTab/${option}`, config)
+      .get(`/api/models/${option}`, config)
       .then(res => {
         const info = res.data[0].info;
         this.setState({
@@ -175,7 +175,7 @@ class TrainModel extends Component {
         });
       })
       .catch(error => {
-        console.log("Error in get /api/modelTab");
+        console.log("Error in get /api/models");
         console.log(error);
         if (error.response) {
           console.log(error.response.data.detail);
@@ -244,7 +244,7 @@ class TrainModel extends Component {
       }
     };
     let response = await axios.get(
-      `/api/trainModel/concepts/` +
+      `/api/models/concepts/` +
       videosSelected + '/' + modelSelected,
       config
     )
@@ -519,7 +519,7 @@ class TrainModel extends Component {
     };
     // update SQL database
     axios
-      .put("/api/modelTab/trainmodel", body, config)
+      .put("/api/models/trainmodel", body, config)
       .then(res => {
         this.state.socket.emit("refresh trainmodel");
       })
