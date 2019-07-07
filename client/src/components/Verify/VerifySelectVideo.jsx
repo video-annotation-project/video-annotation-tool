@@ -25,7 +25,7 @@ const styles = theme => ({
   list: {
     marginTop: theme.spacing.unit * 2,
     overflow: "auto",
-    maxHeight: (400 - theme.spacing.unit * 2).toString() + "px",
+    maxHeight: (400 - theme.spacing.unit * 2).toString() + "px"
   }
 });
 
@@ -42,6 +42,8 @@ class VerifySelectVideo extends React.Component {
   componentDidMount = async () => {
     let videos = await this.props.getVideos();
     let videoCollections = await this.props.getVideoCollections();
+
+    console.log(videoCollections);
 
     this.setState({
       videos: videos,
@@ -99,6 +101,17 @@ class VerifySelectVideo extends React.Component {
                   className={classes.button}
                   variant="outlined"
                   value={videoCollection.id.toString()}
+                  onClick={() => {
+                    if (videoCollection.videos[0]) {
+                      let videoids = [];
+                      this.state.videos.forEach(video => {
+                        if (videoCollection.videos.includes(video.id)) {
+                          videoids.push(video.id.toString());
+                        }
+                      });
+                      this.props.handleAdd(videoids)
+                    }
+                  }}
                 >
                   {videoCollection.name}
                 </Button>

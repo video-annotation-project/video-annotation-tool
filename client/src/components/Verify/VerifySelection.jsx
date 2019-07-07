@@ -55,6 +55,7 @@ class VerifySelection extends React.Component {
             getVideos={this.props.getVideos}
             getVideoCollections={this.props.getVideoCollections}
             handleChange={this.props.handleChangeList("selectedVideos")}
+            handleAdd={this.props.handleAdd("selectedVideos")}
           />
         );
       case 2:

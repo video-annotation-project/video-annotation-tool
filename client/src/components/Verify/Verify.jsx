@@ -213,6 +213,14 @@ class Verify extends Component {
     }
   };
 
+  handleAdd = type => list => {
+    if (!this.state[type].includes("-1")) {
+      this.setState({
+        [type]: Array.from(new Set(this.state[type].concat(list)))
+      })
+    }
+  }
+
   resetState = () => {
     this.setState({
       selectedUsers: [],
@@ -248,6 +256,7 @@ class Verify extends Component {
           getUnsure={this.getUnsure}
           handleChangeSwitch={this.handleChangeSwitch}
           handleChangeList={this.handleChangeList}
+          handleAdd={this.handleAdd}
           resetState={this.resetState}
           toggleSelection={this.toggleSelection}
           selectUser={this.selectUser}
