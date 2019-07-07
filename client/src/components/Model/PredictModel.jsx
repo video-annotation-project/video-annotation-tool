@@ -35,14 +35,14 @@ const styles = theme => ({
     alignItems: "center"
   },
   button: {
-    marginTop: theme.spacing.unit,
-    marginRight: theme.spacing.unit
+    marginTop: theme.spacing(),
+    marginRight: theme.spacing()
   },
   actionsContainer: {
-    marginBottom: theme.spacing.unit * 2
+    marginBottom: theme.spacing(2)
   },
   resetContainer: {
-    padding: theme.spacing.unit * 3
+    padding: theme.spacing(3)
   },
   videoSelector: {
     width: "50%",
@@ -376,7 +376,7 @@ class PredictModel extends Component {
     return (
       <div className={classes.root}>
         <div className={classes.center}>
-          <Typography variant="display1">
+          <Typography variant="h4">
             Run a trained model on video(s)
           </Typography>
           <br />

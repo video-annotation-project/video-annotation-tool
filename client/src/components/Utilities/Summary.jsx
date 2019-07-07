@@ -16,10 +16,10 @@ import Typography from "@material-ui/core/Typography";
 const styles = theme => ({
   paper: {
     position: "absolute",
-    width: theme.spacing.unit * 100,
+    width: theme.spacing(100),
     backgroundColor: theme.palette.background.paper,
     boxShadow: theme.shadows[5],
-    padding: theme.spacing.unit * 4,
+    padding: theme.spacing(4),
     outline: "none",
     transform: "translate(-50%, -50%)",
     top: "50%",
@@ -27,7 +27,7 @@ const styles = theme => ({
   },
   root: {
     width: "100%",
-    marginTop: theme.spacing.unit * 3,
+    marginTop: theme.spacing(3),
     overflowX: "auto"
   },
   table: {
@@ -76,14 +76,12 @@ class Summary extends React.Component {
       };
       end = { latitude: this.props.gpsstop.x, longitude: this.props.gpsstop.y };
       dist = geoLib.getDistance(start, end, 1, 3);
-    }
-    else {
+    } else {
       dist = 1;
     }
     if (this.props.startdepth && this.props.enddepth) {
       depth = this.props.startdepth - this.props.enddepth;
-    }
-    else {
+    } else {
       depth = 0;
     }
 
@@ -105,12 +103,12 @@ class Summary extends React.Component {
                     <TableCell align="right"># of Annotations</TableCell>
 
                     <TableCell align="right">
-                      {this.props.aiSummary ? "# of Annotations by Non-AI" :
-                      this.state.km
+                      {this.props.aiSummary
+                        ? "# of Annotations by Non-AI"
+                        : this.state.km
                         ? "Creatures per km"
                         : "Creatures per square meter"}
                     </TableCell>
-
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -126,11 +124,11 @@ class Summary extends React.Component {
                         <TableCell align="right">{row.count}</TableCell>
 
                         <TableCell align="right">
-                          {this.props.aiSummary ? row.notai :
-                          this.state.km
+                          {this.props.aiSummary
+                            ? row.notai
+                            : this.state.km
                             ? this.setDecimal(row.count / (dist * 1000))
-                            : this.setDecimal(row.count / (dist * 2))
-                          }
+                            : this.setDecimal(row.count / (dist * 2))}
                         </TableCell>
                       </TableRow>
                     ))

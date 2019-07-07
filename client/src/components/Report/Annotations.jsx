@@ -25,11 +25,11 @@ const styles = theme => ({
     left: "-50px"
   },
   button: {
-    margin: theme.spacing.unit
+    margin: theme.spacing()
   },
   root: {
     backgroundColor: theme.palette.background.paper,
-    paddingLeft: theme.spacing.unit * 2
+    paddingLeft: theme.spacing(2)
   }
 });
 

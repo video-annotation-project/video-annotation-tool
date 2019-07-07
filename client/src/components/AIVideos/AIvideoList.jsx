@@ -157,7 +157,7 @@ class VideoList extends Component {
           onClose={() => this.toggle("videoListOpen")}
         >
           <div className={classes.drawer}>
-              <List component="div" disablePadding>
+              <List disablePadding>
                 {aiVideos.map(video => (
                   <ListItem
                     button

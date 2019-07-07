@@ -102,7 +102,7 @@ class VideoList extends Component {
               {startedListOpen ? <ExpandLess /> : <ExpandMore />}
             </ListItem>
             <Collapse in={startedListOpen} timeout="auto" unmountOnExit>
-              <List component="div" disablePadding>
+              <List disablePadding>
                 {startedVideos.map(video => (
                   <ListItem
                     button

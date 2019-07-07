@@ -528,7 +528,6 @@ class Annotate extends Component {
             </Typography>
           </div>
           <Button
-            variant="contained"
             color="primary"
             className={classes.button}
             onClick={() => this.skipVideoTime(-5)}
@@ -536,7 +535,6 @@ class Annotate extends Component {
             -5 sec
           </Button>
           <Button
-            variant="contained"
             color="primary"
             className={classes.button}
             onClick={this.playPause}
@@ -544,7 +542,6 @@ class Annotate extends Component {
             Play/Pause
           </Button>
           <Button
-            variant="contained"
             color="primary"
             className={classes.button}
             onClick={() => this.skipVideoTime(5)}
@@ -552,7 +549,6 @@ class Annotate extends Component {
             +5 sec
           </Button>
           <Button
-            variant="contained"
             color="primary"
             className={classes.button}
             onClick={() => this.toggleVideoControls()}
@@ -560,7 +556,6 @@ class Annotate extends Component {
             Toggle Controls
           </Button>
           <Button
-            variant="contained"
             color="primary"
             className={classes.button}
             onClick={() => this.handleDoneClick()}

@@ -12,10 +12,10 @@ const styles = theme => ({
     width: "90%"
   },
   button: {
-    margin: theme.spacing.unit
+    margin: theme.spacing
   },
   resetContainer: {
-    padding: theme.spacing.unit * 3
+    padding: theme.spacing(3)
   },
   list: {
     width: "100%",
@@ -29,17 +29,17 @@ const styles = theme => ({
     paddingLeft: 0
   },
   img: {
-    padding: theme.spacing.unit * 3,
+    padding: theme.spacing(3),
     width: "1280px",
     height: "720px"
   },
   container: {
     display: "grid",
     gridTemplateColumns: "repeat(12, 1fr)",
-    gridGap: `${theme.spacing.unit * 3}px`
+    gridGap: theme.spacing(3)
   },
   paper: {
-    padding: theme.spacing.unit * 5
+    padding: theme.spacing(5)
   }
 });
 
@@ -49,9 +49,10 @@ class Verify extends Component {
     this.state = {
       selectionMounted: true,
       /* -1 represents select all */
-      selectedUsers: ["-1"],
+      selectedUsers: [],
       selectedVideos: ["-1"],
       selectedConcepts: ["-1"],
+      selectedUnsure: false,
       annotations: [],
       error: null,
       index: 0
@@ -120,9 +121,30 @@ class Verify extends Component {
       });
   };
 
+  getUnsure = async () => {
+    return axios
+        .get(`/api/unverifiedUnsureByUserVideoConcept`, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + localStorage.getItem("token")
+          },
+          params: {
+            selectedUsers: this.state.selectedUsers,
+            selectedVideos: this.state.selectedVideos,
+            selectedConcepts: this.state.selectedConcepts
+          }
+        })
+        .then(res => res.data)
+        .catch(error => {
+          this.setState({
+            error: error
+          });
+        });
+  };
+
   getAnnotations = async () => {
     return axios
-      .get(`/api/unverifiedAnnotationsByUserVideoConcept/`, {
+      .get(`/api/unverifiedAnnotationsByUserVideoConceptUnsure/`, {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + localStorage.getItem("token")
@@ -130,7 +152,8 @@ class Verify extends Component {
         params: {
           selectedUsers: this.state.selectedUsers,
           selectedVideos: this.state.selectedVideos,
-          selectedConcepts: this.state.selectedConcepts
+          selectedConcepts: this.state.selectedConcepts,
+          selectedUnsure: this.state.selectedUnsure
         }
       })
       .then(res => res.data)
@@ -141,7 +164,19 @@ class Verify extends Component {
       });
   };
 
-  handleChange = type => event => {
+  selectUser = (user) => {
+      this.setState({
+          selectedUsers: this.state.selectedUsers.concat(user)
+      });
+  };
+
+  handleChangeSwitch = type => event => {
+    this.setState({
+      [type]: event.target.checked
+    })
+  }
+
+  handleChangeList = type => event => {
     if (!this.state[type].includes(event.target.value)) {
       if (event.target.value === "-1") {
         this.setState({
@@ -167,9 +202,10 @@ class Verify extends Component {
 
   resetState = () => {
     this.setState({
-      selectedUsers: ["-1"],
+      selectedUsers: [],
       selectedVideos: ["-1"],
       selectedConcepts: ["-1"],
+      selectedUnsure: false,
       index: 0
     });
   };
@@ -191,12 +227,16 @@ class Verify extends Component {
           selectedUsers={this.state.selectedUsers}
           selectedVideos={this.state.selectedVideos}
           selectedConcepts={this.state.selectedConcepts}
+          selectedUnsure={this.state.selectedUnsure}
           getUsers={this.getUsers}
           getVideos={this.getVideos}
           getConcepts={this.getConcepts}
-          handleChange={this.handleChange}
+          getUnsure={this.getUnsure}
+          handleChangeSwitch={this.handleChangeSwitch}
+          handleChangeList={this.handleChangeList}
           resetState={this.resetState}
           toggleSelection={this.toggleSelection}
+          selectUser={this.selectUser}
         />
       );
     } else {

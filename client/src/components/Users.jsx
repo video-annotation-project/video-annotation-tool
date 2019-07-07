@@ -22,11 +22,11 @@ const styles = theme => ({
     flexWrap: "wrap"
   },
   formControl: {
-    margin: theme.spacing.unit,
+    margin: theme.spacing(),
     minWidth: 120
   },
   selectEmpty: {
-    marginTop: theme.spacing.unit * 2
+    marginTop: theme.spacing(2)
   }
 });
 
@@ -235,7 +235,7 @@ class Users extends Component {
     return (
       <div className="users body-container">
         <h2>Users</h2>
-        <Grid container alignItems="baseline" wrap="nowrap" spacing={32}>
+        <Grid container alignItems="baseline" wrap="nowrap">
           <Grid item>
             <FormControl className={classes.formControl}>
               <InputLabel>User</InputLabel>
@@ -282,7 +282,7 @@ class Users extends Component {
             <TableHead>
               <TableRow>
                 <TableCell>Species</TableCell>
-                <TableCell align="right">Total Anootated</TableCell>
+                <TableCell align="right">Total Annotated</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>

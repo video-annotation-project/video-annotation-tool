@@ -49,6 +49,7 @@ class Login extends Component {
       })
       .then(res => {
         localStorage.setItem("isAuthed", "true");
+        localStorage.setItem("userid", res.data.userid);
         localStorage.setItem("username", username);
         localStorage.setItem("token", res.data.token);
         //Add code for isAdmin
@@ -75,7 +76,7 @@ class Login extends Component {
     const { classes } = this.props;
     return (
       <div className={classes.root}>
-        <Typography variant="display1">Login</Typography>
+        <Typography variant="h4">Login</Typography>
         <br />
         <form onSubmit={this.handleSubmit}>
           <TextField
