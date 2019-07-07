@@ -183,6 +183,12 @@ class Verify extends Component {
     });
   };
 
+  handleChange = type => value => {
+    this.setState({
+      [type]: value
+    });
+  };
+
   handleChangeSwitch = type => event => {
     this.setState({
       [type]: event.target.checked
@@ -212,14 +218,6 @@ class Verify extends Component {
       });
     }
   };
-
-  handleAdd = type => list => {
-    if (!this.state[type].includes("-1")) {
-      this.setState({
-        [type]: Array.from(new Set(this.state[type].concat(list)))
-      })
-    }
-  }
 
   resetState = () => {
     this.setState({
@@ -255,8 +253,8 @@ class Verify extends Component {
           getConcepts={this.getConcepts}
           getUnsure={this.getUnsure}
           handleChangeSwitch={this.handleChangeSwitch}
+          handleChange={this.handleChange}
           handleChangeList={this.handleChangeList}
-          handleAdd={this.handleAdd}
           resetState={this.resetState}
           toggleSelection={this.toggleSelection}
           selectUser={this.selectUser}

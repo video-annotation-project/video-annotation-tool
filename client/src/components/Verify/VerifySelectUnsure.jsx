@@ -32,7 +32,7 @@ class VerifySelectUnsure extends React.Component {
   };
 
   render() {
-    const { classes, value, handleChange } = this.props;
+    const { classes, value, handleChangeSwitch } = this.props;
 
     return (
       <>
@@ -43,7 +43,7 @@ class VerifySelectUnsure extends React.Component {
               control={
                 <Switch
                   checked={value}
-                  onChange={handleChange}
+                  onChange={handleChangeSwitch}
                   value="selectedUnsure"
                   color="primary"
                   disabled={this.state.disabled}

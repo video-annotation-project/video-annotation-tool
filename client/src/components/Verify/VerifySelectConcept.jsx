@@ -35,7 +35,7 @@ class VerifySelectConcept extends React.Component {
   };
 
   render() {
-    const { classes, value, handleChange } = this.props;
+    const { classes, value, handleChangeList } = this.props;
 
     return (
       <Grid container spacing={32}>
@@ -45,7 +45,7 @@ class VerifySelectConcept extends React.Component {
             <FormGroup
               className={classes.group}
               value={value}
-              onChange={handleChange}
+              onChange={handleChangeList}
             >
               <FormControlLabel
                 key={-1}
@@ -72,7 +72,7 @@ class VerifySelectConcept extends React.Component {
             <FormGroup
               className={classes.group}
               value={value}
-              onChange={handleChange}
+              onChange={handleChangeList}
             >
               <FormControlLabel
                 key={-1}

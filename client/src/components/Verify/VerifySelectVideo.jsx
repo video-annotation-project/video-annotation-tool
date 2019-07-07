@@ -51,7 +51,7 @@ class VerifySelectVideo extends React.Component {
   };
 
   render() {
-    const { classes, selectedVideos, handleChange } = this.props;
+    const { classes, selectedVideos } = this.props;
 
     return (
       <Grid container spacing={32}>
@@ -61,7 +61,7 @@ class VerifySelectVideo extends React.Component {
             <FormGroup
               className={classes.group}
               value={selectedVideos}
-              onChange={handleChange}
+              onChange={this.props.handleChangeList}
             >
               {!this.state.loaded ? (
                 "Loading..."
@@ -99,6 +99,7 @@ class VerifySelectVideo extends React.Component {
                   className={classes.button}
                   variant="outlined"
                   value={videoCollection.id.toString()}
+                  disabled={!videoCollection.videos[0]}
                   onClick={() => {
                     if (videoCollection.videos[0]) {
                       let videoids = [];
@@ -107,11 +108,12 @@ class VerifySelectVideo extends React.Component {
                           videoids.push(video.id.toString());
                         }
                       });
-                      this.props.handleAdd(videoids)
+                      this.props.handleChange(videoids);
                     }
                   }}
                 >
-                  {videoCollection.name}
+                  {videoCollection.name +
+                    (!videoCollection.videos[0] ? " (No Videos)" : "")}
                 </Button>
               </ListItem>
             ))}
