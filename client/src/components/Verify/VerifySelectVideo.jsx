@@ -43,8 +43,6 @@ class VerifySelectVideo extends React.Component {
     let videos = await this.props.getVideos();
     let videoCollections = await this.props.getVideoCollections();
 
-    console.log(videoCollections);
-
     this.setState({
       videos: videos,
       videoCollections: videoCollections,
