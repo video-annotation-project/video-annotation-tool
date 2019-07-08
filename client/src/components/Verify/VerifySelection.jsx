@@ -98,6 +98,13 @@ class VerifySelection extends React.Component {
     }));
   };
 
+  handleBack = step => {
+    this.props.resetStep(step);
+    this.setState({
+      activeStep: this.state.activeStep - 1
+    })
+  };
+
   resetState = () => {
     this.props.resetState();
     this.setState({
@@ -121,10 +128,21 @@ class VerifySelection extends React.Component {
                 <div className={classes.actionsContainer}>
                   <div>
                     <Button
+                      variant="contained"
                       onClick={this.resetState}
                       className={classes.button}
                     >
-                      Reset
+                      Reset All
+                    </Button>
+                    <Button
+                      variant="contained"
+                      onClick={()=> {
+                        this.handleBack(activeStep);
+                      }}
+                      className={classes.button}
+                      disabled={this.state.activeStep === 0}
+                    >
+                      Back
                     </Button>
                     <Button
                       variant="contained"

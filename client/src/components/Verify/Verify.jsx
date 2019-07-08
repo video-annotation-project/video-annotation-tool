@@ -219,6 +219,33 @@ class Verify extends Component {
     }
   };
 
+  resetStep = step => {
+    switch (step) {
+      case 0:
+        this.setState({
+          selectedUsers: []
+        });
+        return;
+      case 1:
+        this.setState({
+          selectedVideos: ["-1"]
+        });
+        return;
+      case 2:
+        this.setState({
+          selectedConcepts: ["-1"]
+        });
+        return;
+      case 3:
+        this.setState({
+          selectedUnsure: false
+        });
+        return;
+      default:
+        return;
+    }
+  };
+
   resetState = () => {
     this.setState({
       selectedUsers: [],
@@ -255,6 +282,7 @@ class Verify extends Component {
           handleChangeSwitch={this.handleChangeSwitch}
           handleChange={this.handleChange}
           handleChangeList={this.handleChangeList}
+          resetStep={this.resetStep}
           resetState={this.resetState}
           toggleSelection={this.toggleSelection}
           selectUser={this.selectUser}
