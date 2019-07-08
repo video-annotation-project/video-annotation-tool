@@ -51,18 +51,20 @@ class VerifySelectConcept extends React.Component {
                 key={-1}
                 value={"-1"}
                 control={<Checkbox color="primary" />}
-                label="All concepts"
+                label="All concepts and collections"
                 checked={this.props.value.includes("-1")}
               />
-              {this.state.concepts.map(concept => (
-                <FormControlLabel
-                  key={concept.id}
-                  value={concept.id.toString()}
-                  control={<Checkbox color="primary" />}
-                  label={concept.name}
-                  checked={this.props.value.includes(concept.id.toString())}
-                />
-              ))}
+              {this.state.concepts
+                .filter(concept => concept.rank)
+                .map(concept => (
+                  <FormControlLabel
+                    key={concept.id}
+                    value={concept.id.toString()}
+                    control={<Checkbox color="primary" />}
+                    label={concept.name}
+                    checked={this.props.value.includes(concept.id.toString())}
+                  />
+                ))}
             </FormGroup>
           </FormControl>
         </Grid>
@@ -74,22 +76,17 @@ class VerifySelectConcept extends React.Component {
               value={value}
               onChange={handleChangeList}
             >
-              <FormControlLabel
-                key={-1}
-                value={"-1"}
-                control={<Checkbox color="primary" />}
-                label="All concepts"
-                checked={this.props.value.includes("-1")}
-              />
-              {this.state.concepts.map(concept => (
-                <FormControlLabel
-                  key={concept.id}
-                  value={concept.id.toString()}
-                  control={<Checkbox color="primary" />}
-                  label={concept.name}
-                  checked={this.props.value.includes(concept.id.toString())}
-                />
-              ))}
+              {this.state.concepts
+                .filter(concept => !concept.rank)
+                .map(concept => (
+                  <FormControlLabel
+                    key={concept.id}
+                    value={concept.id.toString()}
+                    control={<Checkbox color="primary" />}
+                    label={concept.name}
+                    checked={this.props.value.includes(concept.id.toString())}
+                  />
+                ))}
             </FormGroup>
           </FormControl>
         </Grid>

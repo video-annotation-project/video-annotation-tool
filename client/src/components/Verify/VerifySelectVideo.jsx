@@ -9,6 +9,7 @@ import { Grid, Typography } from "@material-ui/core";
 import Button from "@material-ui/core/Button";
 import ListItem from "@material-ui/core/ListItem";
 import List from "@material-ui/core/List";
+import Tooltip from "@material-ui/core/Tooltip";
 
 const styles = theme => ({
   button: {
@@ -95,26 +96,37 @@ class VerifySelectVideo extends React.Component {
           <List className={classes.list}>
             {this.state.videoCollections.map(videoCollection => (
               <ListItem key={videoCollection.id}>
-                <Button
-                  className={classes.button}
-                  variant="outlined"
-                  value={videoCollection.id.toString()}
-                  disabled={!videoCollection.videos[0]}
-                  onClick={() => {
-                    if (videoCollection.videos[0]) {
-                      let videoids = [];
-                      this.state.videos.forEach(video => {
-                        if (videoCollection.videos.includes(video.id)) {
-                          videoids.push(video.id.toString());
-                        }
-                      });
-                      this.props.handleChange(videoids);
-                    }
-                  }}
+                <Tooltip
+                  title={
+                    !videoCollection.description
+                      ? ""
+                      : videoCollection.description
+                  }
+                  placement="bottom-start"
                 >
-                  {videoCollection.name +
-                    (!videoCollection.videos[0] ? " (No Videos)" : "")}
-                </Button>
+                  <div>
+                    <Button
+                      className={classes.button}
+                      variant="outlined"
+                      value={videoCollection.id.toString()}
+                      disabled={!videoCollection.videos[0]}
+                      onClick={() => {
+                        if (videoCollection.videos[0]) {
+                          let videoids = [];
+                          this.state.videos.forEach(video => {
+                            if (videoCollection.videos.includes(video.id)) {
+                              videoids.push(video.id.toString());
+                            }
+                          });
+                          this.props.handleChange(videoids);
+                        }
+                      }}
+                    >
+                      {videoCollection.name +
+                        (!videoCollection.videos[0] ? " (No Videos)" : "")}
+                    </Button>
+                  </div>
+                </Tooltip>
               </ListItem>
             ))}
           </List>
