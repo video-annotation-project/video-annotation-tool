@@ -65,7 +65,7 @@ class VerifySelectVideo extends React.Component {
               onChange={this.props.handleChangeList}
             >
               {!this.state.loaded ? (
-                "Loading..."
+                <Typography>Loading...</Typography>
               ) : this.state.videos.length === 0 ? (
                 <Typography>No videos for current selection</Typography>
               ) : (
