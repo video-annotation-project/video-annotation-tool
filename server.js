@@ -557,6 +557,60 @@ app.post(
 );
 
 app.delete(
+  "/api/videoCollection/:id",
+  passport.authenticate("jwt", {session: false}),
+  async (req, res) => {
+    const queryText = `
+      DELETE FROM 
+        video_collection
+      WHERE
+        id = $1
+      RETURNING *
+    `;
+    try {
+      let deleted = await psql.query(queryText, [req.params.id]);
+      if (deleted) {
+        res.json(deleted);
+      }
+    } catch (error) {
+      res.status(500).json(error);
+    }
+  }
+)
+
+app.post(
+  "/api/videoCollection/:id",
+  passport.authenticate("jwt", {session: false}),
+  async (req, res) => {
+    var params = [req.params.id];
+    var queryText = `
+      INSERT INTO 
+        video_intermediate (id, videoid)
+      VALUES
+    `;
+
+    var i = 0
+    for (i = 0; i < req.body.videos.length; i++ ) {
+      queryText += `($1, $${i + 2})`;
+      if (i !== req.body.videos.length - 1) {
+        queryText += `,`;
+      }
+      params.push(req.body.videos[i]);
+    }
+    queryText += `RETURNING *`;
+
+    try {
+      let added = await psql.query(queryText, params);
+      if (added) {
+        res.status(200).json(added);
+      }
+    } catch (error) {
+      res.status(500).json(error);
+    }
+  }
+)
+
+app.delete(
   "/api/aivideos",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {

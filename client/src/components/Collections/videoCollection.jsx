@@ -184,7 +184,7 @@ class videoCollection extends Component {
     return axios.get("/api/videoCollections", config).then(res => {
       this.setState(
         {
-          collections: res
+          collections: res.data
         },
         callback
       );
@@ -207,6 +207,35 @@ class videoCollection extends Component {
         },
         callback
       );
+    });
+  };
+
+  deleteVideoCollection = async id => {
+    const config = {
+      headers: {
+        Authorization: "Bearer " + localStorage.getItem("token")
+      }
+    };
+    Swal.fire({
+      title: "Are you sure?",
+      text: "You won't be able to revert this!",
+      type: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, delete it!"
+    }).then(async result => {
+      if (result.value) {
+        try {
+          let response = await axios.delete("/api/videoCollection/" + id, config);
+          if (response.status === 200) {
+            Swal.fire("Deleted!", "Collection has been deleted.", "success");
+            this.loadCollections();
+          }
+        } catch (error) {
+          Swal.fire(error, "", "error");
+        }
+      }
     });
   };
 
@@ -345,6 +374,32 @@ class videoCollection extends Component {
     })
   }
 
+  insertVideosToCollection = (id, list) => {
+    const config = {
+      headers: {
+        Authorization: "Bearer " + localStorage.getItem("token")
+      }
+    };
+    const body = {
+      videos: list
+    }
+    try {
+      axios.post("/api/videoCollection/" + id, body, config)
+        .then(res => {
+          this.toggleDrawer();
+          Swal.fire({
+            title: 'Inserted!',
+            confirmButtonText: 'Lovely!'
+          })
+        })
+        .catch(error => {
+          Swal.fire("Could not insert", "","error");
+        });
+    } catch (error) {
+      Swal.fire("", error, error);
+    }
+  }
+
   toggleDrawer = () => {
     this.setState({
       drawerOpen: !this.state.drawerOpen
@@ -372,6 +427,10 @@ class videoCollection extends Component {
           collType="video"
           data={this.state.collections}
           handleCreateCollection={this.handleCreateCollection}
+          loadCollections={this.loadCollections}
+          deleteCollection={this.deleteVideoCollection}
+          insertToCollection={this.insertVideosToCollection}
+          openedVideo={this.state.currentVideo}
         />
         <VideoList
           handleVideoClick={this.handleVideoClick}
@@ -381,7 +440,12 @@ class videoCollection extends Component {
           inProgressVideos={this.state.inProgressVideos}
           socket={socket}
           loadVideos={this.loadVideos}
+
+          /* these are props for collection component only */
           collection={true}
+          insertToCollection={this.insertVideosToCollection}
+          data={this.state.collections}
+          loadCollections={this.loadCollections}
         />
         <div>
           {this.state.currentVideo.id + " " + this.state.currentVideo.filename}
@@ -466,14 +530,14 @@ class videoCollection extends Component {
           >
             Done
           </Button>
-          <Button
+          {/* <Button
             variant="contained"
             color="primary"
             className={classes.button}
             onClick={() => this.handleCreateCollection()}
           >
             Create New Collection
-          </Button>
+          </Button> */}
         </div>
       </React.Fragment>
     );

@@ -6,6 +6,9 @@ import MenuItem from '@material-ui/core/MenuItem';
 
 const GeneralMenu = (props) => {
     const [anchorEl, setAnchorEl] = React.useState(null);
+    const color = props.color ? props.color : "inherit"
+    const variant = props.variant ? props.variant : "text"
+
   
     function handleClick(event) {
       setAnchorEl(event.currentTarget);
@@ -14,10 +17,18 @@ const GeneralMenu = (props) => {
     function handleClose() {
       setAnchorEl(null);
     }
+
+    function handleInsert(id) {
+      handleClose()
+      props.handleInsert(id);
+    }
   
     return (
       <div>
-        <Button color="inherit" onClick={handleClick}>
+        <Button 
+          variant={variant}
+          color={color} 
+          onClick={handleClick}>
           {props.name}
         </Button>
         <Menu
@@ -26,16 +37,25 @@ const GeneralMenu = (props) => {
           open={Boolean(anchorEl)}
           onClose={handleClose}
         >
-          {props.items.map(item => (
-            <MenuItem
-              key={item.name}
-              component={props.Link}
-              to={item.link}
-              onClick={() => handleClose()}
-            >
-              {item.name}
-            </MenuItem>
-          ))}
+          {props.Link ? 
+            props.items.map(item => (
+              <MenuItem
+                key={item.name}
+                component={props.Link}
+                to={item.link}
+                onClick={() => handleClose()}
+              >
+                {item.name}
+              </MenuItem>
+            )) :
+            props.items.map(item => (
+              <MenuItem
+                key={item.name}
+                onClick={() => handleInsert(item.id)}
+              >
+                {item.id + " " + item.name}
+              </MenuItem>
+            ))}
         </Menu>
       </div>
     );

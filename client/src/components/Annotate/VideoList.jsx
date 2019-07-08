@@ -15,6 +15,7 @@ import Description from "@material-ui/icons/Description";
 import VideoMetadata from "../Utilities/VideoMetadata.jsx";
 
 import Checkbox from '@material-ui/core/Checkbox';
+import GeneralMenu from "../Utilities/GeneralMenu";
 
 const styles = theme => ({
   root: {
@@ -29,7 +30,11 @@ const styles = theme => ({
   },
   toggleButton: {
     marginTop: "5px"
-  }
+  },
+  addButton: {
+    marginTop: "10px",
+    marginLeft: "20px"
+  },
 });
 
 class VideoList extends Component {
@@ -47,6 +52,12 @@ class VideoList extends Component {
   }
 
   toggle = list => {
+    if (list === "videoListOpen") {
+      this.props.loadCollections();
+      this.setState({
+        checkedVideos: []
+      })
+    }
     this.setState({
       [list]: !this.state[list]
     });
@@ -70,10 +81,12 @@ class VideoList extends Component {
   handleChange = (name, videoid) => event => {
     var checkedVideos = this.state.checkedVideos;
     var index = checkedVideos.indexOf(videoid);
-    if (event.target.checked) {
+    if (event.target.checked &&
+      !checkedVideos.includes(videoid)
+      ) {
       checkedVideos.push(videoid);
     }
-    else {
+    else if (!event.target.checked) {
       checkedVideos.splice(index, 1);
     }
     this.setState({
@@ -81,6 +94,11 @@ class VideoList extends Component {
       [name]: event.target.checked,
       checkedVideos: checkedVideos
     });
+  }
+
+  handleInsert = id => {
+    this.toggle("videoListOpen");
+    this.props.insertToCollection(id, this.state.checkedVideos)
   }
 
   render() {
@@ -100,7 +118,7 @@ class VideoList extends Component {
       openedVideo
     } = this.state;
 
-    // console.log(this.state.checkedVideos);
+    console.log(this.state.checkedVideos);
 
     return (
       <div className={classes.root}>
@@ -255,6 +273,29 @@ class VideoList extends Component {
                 ))}
               </List>
             </Collapse>
+            {this.state.checkedVideos[0] ? 
+              <div className={classes.addButton}>
+              <GeneralMenu
+                name={"Add to collection"}
+                variant="contained"
+                color="primary"
+                handleInsert={this.handleInsert}
+                Link={false}
+                items={
+                  this.props.data
+                }
+              />
+              </div>
+              : 
+              <Button
+                disabled
+                variant="contained"
+                color="primary"
+                className={classes.addButton}
+              >
+                Add to collection
+              </Button>
+            }
           </div>
         </Drawer>
         {this.state.openedVideo && (

@@ -9,9 +9,7 @@ import { withStyles } from "@material-ui/core/styles";
 
 import IconButton from "@material-ui/core/IconButton";
 import DeleteIcon from "@material-ui/icons/Delete";
-import axios from "axios";
-
-import Swal from "sweetalert2";
+import GeneralMenu from "../Utilities/GeneralMenu";
 
 const styles = theme => ({
   drawer: {
@@ -25,7 +23,12 @@ const styles = theme => ({
   createButton: {
     marginTop: "10px",
     marginLeft: "20px"
-  }
+  },  
+  addButton: {
+    float: "right",
+    marginTop: "10px",
+    marginLeft: "20px"
+  },
 });
 
 class VideoList extends Component {
@@ -37,39 +40,9 @@ class VideoList extends Component {
   }
 
   toggle = list => {
+    this.props.loadCollections();
     this.setState({
       [list]: !this.state[list]
-    });
-  };
-
-  deleteAiVideo = async video => {
-    const config = {
-      headers: {
-        Authorization: "Bearer " + localStorage.getItem("token")
-      },
-      data: {
-        video: video
-      }
-    };
-    this.toggle("videoListOpen");
-    Swal.fire({
-      title: "Are you sure?",
-      text: "You won't be able to revert this!",
-      type: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Yes, delete it!"
-    }).then(async result => {
-      if (result.value) {
-        try {
-          await axios.delete("/api/aivideos", config);
-          Swal.fire("Deleted!", "Video has been deleted.", "success");
-          this.props.loadVideos();
-        } catch (error) {
-          Swal.fire(error, "", "error");
-        }
-      }
     });
   };
 
@@ -77,6 +50,16 @@ class VideoList extends Component {
     this.toggle("CollectionOpen");
     this.props.handleCreateCollection();
   } 
+
+  handleDeleteCollectionModal = id => {
+    this.toggle("CollectionOpen");
+    this.props.deleteCollection(id)
+  } 
+
+  handleInsert = id => {
+    this.toggle("CollectionOpen");
+    this.props.insertToCollection(id, [this.props.openedVideo.id])
+  }
 
   // openVideoSummary = async (event, video) => {
   //   event.stopPropagation();
@@ -133,7 +116,8 @@ class VideoList extends Component {
   render() {
     const { classes, data } = this.props;
 
-    console.log(this.props);
+    console.log(data);
+
     return (
       <div className={classes.root}>
         <Button
@@ -151,6 +135,18 @@ class VideoList extends Component {
           onClose={() => this.toggle("CollectionOpen")}
         >
           <div className={classes.drawer}>
+            <div className={classes.addButton}>
+              <GeneralMenu
+                name={"Add opened video to collection"}
+                variant="contained"
+                color="primary"
+                handleInsert={this.handleInsert}
+                Link={false}
+                items={
+                  this.props.data
+                }
+              />
+            </div>
             <Button
               className={classes.createButton}
               variant="contained"
@@ -160,13 +156,15 @@ class VideoList extends Component {
               Create New Collection
             </Button>
             <List component="div" disablePadding>
-              {data.data.map(video => (
+              {data.map(collection => (
                 <ListItem
-                  key={data.id}
+                  key={collection.id}
                 >
-                  <ListItemText primary={video.id + ". " + video.name} />
+                  <ListItemText primary={collection.id + ". " + collection.name} 
+                    secondary={collection.videos.join(" , ")}
+                  />
                   <IconButton aria-label="Delete">
-                    <DeleteIcon onClick={() => this.deleteAiVideo(video)} />
+                    <DeleteIcon onClick={() => this.handleDeleteCollectionModal(collection.id)} />
                   </IconButton>
                 </ListItem>
               ))}
