@@ -29,7 +29,7 @@ const styles = theme => ({
     margin: '40px 180px',
   },
   form: {
-    width: "10%"
+    width: "200px"
   },
   center: {
     display: "flex",
@@ -74,15 +74,19 @@ const styles = theme => ({
     maxHeight: "150px",
     overflow: "auto"
   },
-  hyperparametersForm: {
-    display: 'flex',
-    flexWrap: 'wrap',
+  hyperParamsInput: {
+    width: '190px',
+    marginRight: '10px',
+  },
+  epochText: {
+    position: 'relative',
+    top: '-15px'
   },
   textField: {
     marginLeft: theme.spacing,
     marginRight: theme.spacing,
     width: 200,
-  }
+  },
 });
 
 class TrainModel extends Component {
@@ -416,21 +420,29 @@ class TrainModel extends Component {
 
   selectHyperparameters = () => {
     const classes = this.props.classes;
+    const label = (
+      <span className={classes.epochText}>
+        Number of epochs <br/>
+        (0 = Until Increased Loss)
+      </span>)
+
     return (
       <form className={classes.hyperparametersForm}>
         <TextField
           margin='normal'
           name='epochs'
-          label='Number of epochs (0=Until Increased Loss)'
+          label={label}
           value={this.state.epochs}
           onChange={this.handleChange}
+          className={classes.hyperParamsInput}
         />
         <TextField
           margin="normal"
           name='minImages'
-          label='Number Training Images'
+          label='Number of training images'
           value={this.state.minImages}
           onChange={this.handleChange}
+          className={classes.hyperParamsInput}
         />
       </form>
     )

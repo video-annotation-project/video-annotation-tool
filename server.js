@@ -1568,6 +1568,16 @@ app.post(
       InstanceIds: [req.body.modelInstanceId]
     };
     if (req.body.command === "stop") {
+      const queryText = `
+            UPDATE 
+              training_progress
+            SET 
+              running = False
+            WHERE
+              id=(SELECT max(id) FROM training_progress)`;
+
+      await psql.query(queryText);
+      
       ec2.stopInstances(params, (err, data) => {
         if (err) console.log(err, err.stack);
       });
