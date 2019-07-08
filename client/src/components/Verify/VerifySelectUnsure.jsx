@@ -9,7 +9,7 @@ import Typography from "@material-ui/core/Typography";
 
 const styles = theme => ({
   formControl: {
-    margin: theme.spacing.unit * 3,
+    marginTop: theme.spacing.unit * 2,
     maxHeight: "400px",
     overflow: "auto"
   }
@@ -32,7 +32,7 @@ class VerifySelectUnsure extends React.Component {
   };
 
   render() {
-    const { classes, value, handleChange } = this.props;
+    const { classes, value, handleChangeSwitch } = this.props;
 
     return (
       <>
@@ -43,7 +43,7 @@ class VerifySelectUnsure extends React.Component {
               control={
                 <Switch
                   checked={value}
-                  onChange={handleChange}
+                  onChange={handleChangeSwitch}
                   value="selectedUnsure"
                   color="primary"
                   disabled={this.state.disabled}

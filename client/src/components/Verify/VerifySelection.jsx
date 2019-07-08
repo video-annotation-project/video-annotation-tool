@@ -45,18 +45,17 @@ class VerifySelection extends React.Component {
             value={this.props.selectedUsers}
             getUsers={this.props.getUsers}
             selectUser={this.props.selectUser}
-            handleChange={this.props.handleChangeList("selectedUsers")}
+            handleChangeList={this.props.handleChangeList("selectedUsers")}
           />
         );
       case 1:
         return (
           <VerifySelectVideo
             selectedVideos={this.props.selectedVideos}
-            selectedVideoCollections={this.props.selectedVideoCollections}
             getVideos={this.props.getVideos}
             getVideoCollections={this.props.getVideoCollections}
-            handleChangeVideo={this.props.handleChangeList("selectedVideos")}
-            handleChangeVideoCollection={this.props.handleChangeList("selectedVideoCollections")}
+            handleChange={this.props.handleChange("selectedVideos")}
+            handleChangeList={this.props.handleChangeList("selectedVideos")}
           />
         );
       case 2:
@@ -64,16 +63,16 @@ class VerifySelection extends React.Component {
           <VerifySelectConcept
             value={this.props.selectedConcepts}
             getConcepts={this.props.getConcepts}
-            handleChange={this.props.handleChangeList("selectedConcepts")}
+            handleChangeList={this.props.handleChangeList("selectedConcepts")}
           />
         );
       case 3:
         return (
-            <VerifySelectUnsure
-                value={this.props.selectedUnsure}
-                getUnsure={this.props.getUnsure}
-                handleChange={this.props.handleChangeSwitch("selectedUnsure")}
-            />
+          <VerifySelectUnsure
+            value={this.props.selectedUnsure}
+            getUnsure={this.props.getUnsure}
+            handleChangeSwitch={this.props.handleChangeSwitch("selectedUnsure")}
+          />
         );
       default:
         return "Unknown step";
@@ -85,7 +84,7 @@ class VerifySelection extends React.Component {
       case 0:
         return this.props.selectedUsers.length === 0;
       case 1:
-        return this.props.selectedVideos.length === 0 && this.props.selectedVideoCollections.length === 0;
+        return this.props.selectedVideos.length === 0;
       case 2:
         return this.props.selectedConcepts.length === 0;
       default:
@@ -97,6 +96,13 @@ class VerifySelection extends React.Component {
     this.setState(state => ({
       activeStep: state.activeStep + 1
     }));
+  };
+
+  handleBack = step => {
+    this.props.resetStep(step);
+    this.setState({
+      activeStep: this.state.activeStep - 1
+    });
   };
 
   resetState = () => {
@@ -122,10 +128,21 @@ class VerifySelection extends React.Component {
                 <div className={classes.actionsContainer}>
                   <div>
                     <Button
+                      variant="contained"
                       onClick={this.resetState}
                       className={classes.button}
                     >
-                      Reset
+                      Reset All
+                    </Button>
+                    <Button
+                      variant="contained"
+                      onClick={() => {
+                        this.handleBack(activeStep);
+                      }}
+                      className={classes.button}
+                      disabled={this.state.activeStep === 0}
+                    >
+                      Back
                     </Button>
                     <Button
                       variant="contained"

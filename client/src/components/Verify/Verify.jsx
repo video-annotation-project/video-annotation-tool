@@ -51,7 +51,6 @@ class Verify extends Component {
       /* -1 represents select all */
       selectedUsers: [],
       selectedVideos: ["-1"],
-      selectedVideoCollections: [],
       selectedConcepts: ["-1"],
       selectedUnsure: false,
       annotations: [],
@@ -105,7 +104,7 @@ class Verify extends Component {
   getVideoCollections = async () => {
     return axios
       .get(`/api/videoCollections`, {
-        headers: { Authorization: "Bearer " + localStorage.getItem("token") },
+        headers: { Authorization: "Bearer " + localStorage.getItem("token") }
       })
       .then(res => res.data)
       .catch(error => {
@@ -113,7 +112,7 @@ class Verify extends Component {
           error: error
         });
       });
-  }
+  };
 
   getConcepts = async () => {
     return axios
@@ -137,23 +136,23 @@ class Verify extends Component {
 
   getUnsure = async () => {
     return axios
-        .get(`/api/unverifiedUnsureByUserVideoConcept`, {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: "Bearer " + localStorage.getItem("token")
-          },
-          params: {
-            selectedUsers: this.state.selectedUsers,
-            selectedVideos: this.state.selectedVideos,
-            selectedConcepts: this.state.selectedConcepts
-          }
-        })
-        .then(res => res.data)
-        .catch(error => {
-          this.setState({
-            error: error
-          });
+      .get(`/api/unverifiedUnsureByUserVideoConcept`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + localStorage.getItem("token")
+        },
+        params: {
+          selectedUsers: this.state.selectedUsers,
+          selectedVideos: this.state.selectedVideos,
+          selectedConcepts: this.state.selectedConcepts
+        }
+      })
+      .then(res => res.data)
+      .catch(error => {
+        this.setState({
+          error: error
         });
+      });
   };
 
   getAnnotations = async () => {
@@ -178,17 +177,23 @@ class Verify extends Component {
       });
   };
 
-  selectUser = (user) => {
-      this.setState({
-          selectedUsers: this.state.selectedUsers.concat(user)
-      });
+  selectUser = user => {
+    this.setState({
+      selectedUsers: this.state.selectedUsers.concat(user)
+    });
+  };
+
+  handleChange = type => value => {
+    this.setState({
+      [type]: value
+    });
   };
 
   handleChangeSwitch = type => event => {
     this.setState({
       [type]: event.target.checked
-    })
-  }
+    });
+  };
 
   handleChangeList = type => event => {
     if (!this.state[type].includes(event.target.value)) {
@@ -214,11 +219,37 @@ class Verify extends Component {
     }
   };
 
+  resetStep = step => {
+    switch (step) {
+      case 0:
+        this.setState({
+          selectedUsers: []
+        });
+        return;
+      case 1:
+        this.setState({
+          selectedVideos: ["-1"]
+        });
+        return;
+      case 2:
+        this.setState({
+          selectedConcepts: ["-1"]
+        });
+        return;
+      case 3:
+        this.setState({
+          selectedUnsure: false
+        });
+        return;
+      default:
+        return;
+    }
+  };
+
   resetState = () => {
     this.setState({
       selectedUsers: [],
       selectedVideos: ["-1"],
-      selectedVideoCollections: [],
       selectedConcepts: ["-1"],
       selectedUnsure: false,
       index: 0
@@ -241,7 +272,6 @@ class Verify extends Component {
         <VerifySelection
           selectedUsers={this.state.selectedUsers}
           selectedVideos={this.state.selectedVideos}
-          selectedVideoCollections={this.state.selectedVideoCollections}
           selectedConcepts={this.state.selectedConcepts}
           selectedUnsure={this.state.selectedUnsure}
           getUsers={this.getUsers}
@@ -250,7 +280,9 @@ class Verify extends Component {
           getConcepts={this.getConcepts}
           getUnsure={this.getUnsure}
           handleChangeSwitch={this.handleChangeSwitch}
+          handleChange={this.handleChange}
           handleChangeList={this.handleChangeList}
+          resetStep={this.resetStep}
           resetState={this.resetState}
           toggleSelection={this.toggleSelection}
           selectUser={this.selectUser}
