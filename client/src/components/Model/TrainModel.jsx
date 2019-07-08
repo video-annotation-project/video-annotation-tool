@@ -78,8 +78,6 @@ const styles = theme => ({
     width: '190px',
     marginRight: '10px',
   },
-  hyperparametersForm: {
-  },
   epochText: {
     position: 'relative',
     top: '-15px'
@@ -425,7 +423,7 @@ class TrainModel extends Component {
     const label = (
       <span className={classes.epochText}>
         Number of epochs <br/>
-        (0=Until Increased Loss)
+        (0 = Until Increased Loss)
       </span>)
 
     return (
