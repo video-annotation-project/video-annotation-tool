@@ -102,7 +102,7 @@ class VerifySelection extends React.Component {
     this.props.resetStep(step);
     this.setState({
       activeStep: this.state.activeStep - 1
-    })
+    });
   };
 
   resetState = () => {
@@ -136,7 +136,7 @@ class VerifySelection extends React.Component {
                     </Button>
                     <Button
                       variant="contained"
-                      onClick={()=> {
+                      onClick={() => {
                         this.handleBack(activeStep);
                       }}
                       className={classes.button}
