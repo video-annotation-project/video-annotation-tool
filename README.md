@@ -35,7 +35,8 @@ eb deploy --staged
 ```
 
 ### Configuring Tensorboard
-To install tensorboard on your instance, SSH into the instance and run
+To install tensorboard on your instance, SSH into the instance using `eb ssh` and run
+
 ```
 pip install tensorboard
 ```
