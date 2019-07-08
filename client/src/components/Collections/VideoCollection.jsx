@@ -36,7 +36,6 @@ const styles = theme => ({
   }
 });
 
-
 class videoCollection extends Component {
   constructor(props) {
     super(props);
@@ -80,7 +79,7 @@ class videoCollection extends Component {
       width: 0,
       height: 0,
       x: 0,
-      y: 0,
+      y: 0
     };
   }
 
@@ -227,7 +226,10 @@ class videoCollection extends Component {
     }).then(async result => {
       if (result.value) {
         try {
-          let response = await axios.delete("/api/videoCollection/" + id, config);
+          let response = await axios.delete(
+            "/api/videoCollection/" + id,
+            config
+          );
           if (response.status === 200) {
             Swal.fire("Deleted!", "Collection has been deleted.", "success");
             this.loadCollections();
@@ -337,42 +339,44 @@ class videoCollection extends Component {
 
   handleCreateCollection = () => {
     Swal.mixin({
-      confirmButtonText: 'Next',
+      confirmButtonText: "Next",
       showCancelButton: true,
-      progressSteps: ['1', '2']
-    }).queue([
-      { 
-        title: 'Collection Name',
-        input: 'text'
-      },
-      {
-        title: 'Description',
-        input: 'textarea'
-      }
-    ]).then(async (result) => {
-      if (result.value) {
-        const body = {
-          name: result.value[0],
-          description: result.value[1]
-        }
-        const config = {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: "Bearer " + localStorage.getItem("token")
-          }
-        };
-        try {
-          await axios.post("/api/videoCollection", body, config)
-          Swal.fire({
-            title: 'Collection Created!',
-            confirmButtonText: 'Lovely!'
-          })
-        } catch (error) {
-          Swal.fire("", error, error);
-        }
-      }
+      progressSteps: ["1", "2"]
     })
-  }
+      .queue([
+        {
+          title: "Collection Name",
+          input: "text"
+        },
+        {
+          title: "Description",
+          input: "textarea"
+        }
+      ])
+      .then(async result => {
+        if (result.value) {
+          const body = {
+            name: result.value[0],
+            description: result.value[1]
+          };
+          const config = {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + localStorage.getItem("token")
+            }
+          };
+          try {
+            await axios.post("/api/videoCollection", body, config);
+            Swal.fire({
+              title: "Collection Created!",
+              confirmButtonText: "Lovely!"
+            });
+          } catch (error) {
+            Swal.fire("", error, error);
+          }
+        }
+      });
+  };
 
   insertVideosToCollection = (id, list) => {
     const config = {
@@ -382,23 +386,24 @@ class videoCollection extends Component {
     };
     const body = {
       videos: list
-    }
+    };
     try {
-      axios.post("/api/videoCollection/" + id, body, config)
+      axios
+        .post("/api/videoCollection/" + id, body, config)
         .then(res => {
           this.toggleDrawer();
           Swal.fire({
-            title: 'Inserted!',
-            confirmButtonText: 'Lovely!'
-          })
+            title: "Inserted!",
+            confirmButtonText: "Lovely!"
+          });
         })
         .catch(error => {
-          Swal.fire("Could not insert", "","error");
+          Swal.fire("Could not insert", "", "error");
         });
     } catch (error) {
       Swal.fire("", error, error);
     }
-  }
+  };
 
   toggleDrawer = () => {
     this.setState({
@@ -440,7 +445,6 @@ class videoCollection extends Component {
           inProgressVideos={this.state.inProgressVideos}
           socket={socket}
           loadVideos={this.loadVideos}
-
           /* these are props for collection component only */
           collection={true}
           insertToCollection={this.insertVideosToCollection}
@@ -455,9 +459,11 @@ class videoCollection extends Component {
               id="video"
               width="1600"
               height="900"
-              src={'https://cdn.deepseaannotations.com/videos/' +
-                this.state.currentVideo.filename}
-              type='video/mp4'
+              src={
+                "https://cdn.deepseaannotations.com/videos/" +
+                this.state.currentVideo.filename
+              }
+              type="video/mp4"
               crossOrigin="use-credentials"
             >
               Your browser does not support the video tag.
