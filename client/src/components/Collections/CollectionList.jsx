@@ -61,62 +61,8 @@ class VideoList extends Component {
     this.props.insertToCollection(id, [this.props.openedVideo.id])
   }
 
-  // openVideoSummary = async (event, video) => {
-  //   event.stopPropagation();
-
-  //   this.setState({
-  //     descriptionOpen: true,
-  //     summary: await this.getSummary(video)
-  //   });
-  // };
-
-  // closeVideoSummary = () => {
-  //   this.setState({
-  //     descriptionOpen: false,
-  //     summary: null
-  //   });
-  // };
-
-  // getSummary = async video => {
-  //   const config = {
-  //     headers: {
-  //       "Content-Type": "application/json",
-  //       Authorization: "Bearer " + localStorage.getItem("token")
-  //     }
-  //   };
-  //   try {
-  //     var summary = await axios.get(
-  //       "/api/aivideos/summary/" + video.name,
-  //       config
-  //     );
-
-  //     if (summary) {
-  //       return summary;
-  //     }
-  //   } catch (error) {
-  //     console.log("Error in summary.jsx get /api/aivideos/summary");
-  //     console.log(error.response.data);
-  //   }
-  // };
-
-  // //Methods for video meta data
-  // openVideoMetadata = (event, video) => {
-  //   event.stopPropagation();
-  //   this.setState({
-  //     openedVideo: video
-  //   });
-  // };
-
-  // closeVideoMetadata = () => {
-  //   this.setState({
-  //     openedVideo: null
-  //   });
-  // };
-
   render() {
     const { classes, data } = this.props;
-
-    console.log(data);
 
     return (
       <div className={classes.root}>

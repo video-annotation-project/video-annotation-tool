@@ -9,7 +9,7 @@ import Typography from "@material-ui/core/Typography";
 
 const styles = theme => ({
   formControl: {
-    margin: theme.spacing.unit * 3,
+    marginTop: theme.spacing.unit * 2,
     maxHeight: "400px",
     overflow: "auto"
   },
@@ -41,7 +41,7 @@ class VerifySelectUser extends React.Component {
   };
 
   render() {
-    const { classes, value, handleChange } = this.props;
+    const { classes, value, handleChangeList } = this.props;
 
     return (
       <>
@@ -52,7 +52,7 @@ class VerifySelectUser extends React.Component {
             name="user"
             className={classes.group}
             value={value}
-            onChange={handleChange}
+            onChange={handleChangeList}
           >
             {this.state.users.map(user => (
               <FormControlLabel

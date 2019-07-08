@@ -257,7 +257,8 @@ class VerifyAnnotations extends Component {
     try {
       if (
         Math.abs(
-            (annotation.x1 - x1) +
+          annotation.x1 -
+            x1 +
             (annotation.y1 - y1) +
             (annotation.x2 - x2) +
             (annotation.y2 - y2)

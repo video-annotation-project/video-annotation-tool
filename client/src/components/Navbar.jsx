@@ -45,7 +45,7 @@ class Navbar extends React.Component {
     if (localStorage.getItem("admin")) {
       accountItems.push({ name: "Create User", link: "/account/createUser" });
     }
-    console.log(accountItems);
+
     return (
       <AppBar position="static">
         <Toolbar>

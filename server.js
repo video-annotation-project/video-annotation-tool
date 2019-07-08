@@ -524,8 +524,11 @@ app.get(
       ON 
         vc.id = vi.id
       GROUP BY 
-        vc.id;
+        vc.id
+      ORDER BY
+        vc.name
     `;
+
     try {
       let videoCollections = await psql.query(queryText);
       res.json(videoCollections.rows);
@@ -1738,7 +1741,7 @@ app.get(
 
     let queryText = `
       SELECT DISTINCT
-        c.id, c.name
+        c.*
       FROM 
         annotations a
       LEFT JOIN 
@@ -1811,7 +1814,6 @@ app.get(
   async (req, res) => {
     const selectedUsers = req.query.selectedUsers;
     const selectedVideos = req.query.selectedVideos;
-    const selectedVideoCollections = req.query.selectedVideos;
     const selectedConcepts = req.query.selectedConcepts;
     const selectedUnsure = req.query.selectedUnsure;
 

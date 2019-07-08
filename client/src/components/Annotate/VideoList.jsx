@@ -118,7 +118,6 @@ class VideoList extends Component {
       openedVideo
     } = this.state;
 
-    console.log(this.state.checkedVideos);
 
     return (
       <div className={classes.root}>

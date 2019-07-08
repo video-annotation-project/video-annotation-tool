@@ -9,7 +9,7 @@ import Typography from "@material-ui/core/Typography";
 
 const styles = theme => ({
   formControl: {
-    margin: theme.spacing.unit * 3,
+    marginTop: theme.spacing.unit * 2,
     maxHeight: "400px",
     overflow: "auto"
   },
@@ -35,26 +35,28 @@ class VerifySelectConcept extends React.Component {
   };
 
   render() {
-    const { classes, value, handleChange } = this.props;
+    const { classes, value, handleChangeList } = this.props;
 
     return (
-        <Grid container spacing={24}>
-          <Grid item xs={3}>
-            <Typography>Select concepts</Typography>
-            <FormControl component="fieldset" className={classes.formControl}>
-              <FormGroup
-                className={classes.group}
-                value={value}
-                onChange={handleChange}
-              >
-                <FormControlLabel
-                  key={-1}
-                  value={"-1"}
-                  control={<Checkbox color="primary" />}
-                  label="All concepts"
-                  checked={this.props.value.includes("-1")}
-                />
-                {this.state.concepts.map(concept => (
+      <Grid container spacing={32}>
+        <Grid item>
+          <Typography>Select concepts</Typography>
+          <FormControl component="fieldset" className={classes.formControl}>
+            <FormGroup
+              className={classes.group}
+              value={value}
+              onChange={handleChangeList}
+            >
+              <FormControlLabel
+                key={-1}
+                value={"-1"}
+                control={<Checkbox color="primary" />}
+                label="All concepts and collections"
+                checked={this.props.value.includes("-1")}
+              />
+              {this.state.concepts
+                .filter(concept => concept.rank)
+                .map(concept => (
                   <FormControlLabel
                     key={concept.id}
                     value={concept.id.toString()}
@@ -63,37 +65,32 @@ class VerifySelectConcept extends React.Component {
                     checked={this.props.value.includes(concept.id.toString())}
                   />
                 ))}
-              </FormGroup>
-            </FormControl>
-          </Grid>
-          <Grid item xs={3}>
-            <Typography>Select concept collections</Typography>
-            <FormControl component="fieldset" className={classes.formControl}>
-              <FormGroup
-                className={classes.group}
-                value={value}
-                onChange={handleChange}
-              >
-                <FormControlLabel
-                  key={-1}
-                  value={"-1"}
-                  control={<Checkbox color="primary" />}
-                  label="All concepts"
-                  checked={this.props.value.includes("-1")}
-                />
-                {this.state.concepts.map(concept => (
-                  <FormControlLabel
-                    key={concept.id}
-                    value={concept.id.toString()}
-                    control={<Checkbox color="primary" />}
-                    label={concept.name}
-                    checked={this.props.value.includes(concept.id.toString())}
-                  />
-                ))}
-              </FormGroup>
-            </FormControl>
-          </Grid>
+            </FormGroup>
+          </FormControl>
         </Grid>
+        <Grid item>
+          <Typography>Select concept collections</Typography>
+          <FormControl component="fieldset" className={classes.formControl}>
+            <FormGroup
+              className={classes.group}
+              value={value}
+              onChange={handleChangeList}
+            >
+              {this.state.concepts
+                .filter(concept => !concept.rank)
+                .map(concept => (
+                  <FormControlLabel
+                    key={concept.id}
+                    value={concept.id.toString()}
+                    control={<Checkbox color="primary" />}
+                    label={concept.name}
+                    checked={this.props.value.includes(concept.id.toString())}
+                  />
+                ))}
+            </FormGroup>
+          </FormControl>
+        </Grid>
+      </Grid>
     );
   }
 }
