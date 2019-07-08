@@ -16,6 +16,7 @@ const styles = theme => ({
 	},
 	progressBar: {
 		height: '8px',
+    width: '82%',
 	},
 	progressText: {
     marginTop: '20px',
@@ -57,6 +58,9 @@ class ModelProgress extends Component {
 	}
 
   loadProgressInfo = () => {
+    if (this.props.activeStep < 5){
+      return;
+    }
     const config = {
       headers: {
         Authorization: "Bearer " + localStorage.getItem("token")
