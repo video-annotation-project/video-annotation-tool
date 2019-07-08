@@ -34,6 +34,28 @@ cd ..
 eb deploy --staged
 ```
 
+### Configuring Tensorboard
+To install tensorboard on your instance, SSH into the instance and run
+```
+pip install tensorboard
+```
+
+Tensorboard is its own webserver running on Flask. It must run separate from the main website. We have Tensorboard running on port 6008, so ensure that this port is included in your instances security group. You will also want to proxy pass your tensorboard subdomain to this port. You can do this through an nginx configuration. This would look like
+
+tensboard.conf
+```
+server {
+    listen 8080;
+    server_name tensorboard.yourdomain.com;
+
+    location / {
+        proxy_pass http://localhost:6008;
+    }   
+}
+```
+
+This file should be placed in the `/etc/nginx/conf.d/`folder. This will allow the tensorboard server to be located at tensorboard.yourdomain.com .
+
 ### Coding/Style guide:
 * All code should have a purpose (unnecessary/redundant code introduces bugs and
   confuses people)
