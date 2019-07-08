@@ -58,6 +58,9 @@ class ModelProgress extends Component {
 	}
 
   loadProgressInfo = () => {
+    if (this.props.activeStep < 5){
+      return;
+    }
     const config = {
       headers: {
         Authorization: "Bearer " + localStorage.getItem("token")
