@@ -530,14 +530,6 @@ class videoCollection extends Component {
           >
             Done
           </Button>
-          {/* <Button
-            variant="contained"
-            color="primary"
-            className={classes.button}
-            onClick={() => this.handleCreateCollection()}
-          >
-            Create New Collection
-          </Button> */}
         </div>
       </React.Fragment>
     );
