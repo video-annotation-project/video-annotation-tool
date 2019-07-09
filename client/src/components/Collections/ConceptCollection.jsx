@@ -40,7 +40,7 @@ class ConceptCollection extends Component {
     this.state = {
       collections: [],
       selectedCollection: "",
-      concepts: [],
+      concepts: []
     };
   }
 
@@ -55,10 +55,11 @@ class ConceptCollection extends Component {
       }
     };
     return axios.get("/api/conceptCollections", config).then(res => {
-      console.log(res.data);
       this.setState(
         {
-          collections: res.data
+          collections: res.data.filter(collection => {
+            return !collection.deleted_flag;
+          })
         },
         callback
       );
@@ -99,6 +100,7 @@ class ConceptCollection extends Component {
               title: "Collection Created!",
               confirmButtonText: "Lovely!"
             });
+            this.loadCollections();
           } catch (error) {
             Swal.fire("", error, error);
           }
@@ -135,6 +137,10 @@ class ConceptCollection extends Component {
           if (response.status) {
             Swal.fire("Deleted!", "Collection has been deleted.", "success");
             this.loadCollections();
+            this.setState({
+              selectedCollection: "",
+              concepts: []
+            });
           }
         } catch (error) {
           Swal.fire("ERROR deleting", result.value, "error");
@@ -157,9 +163,10 @@ class ConceptCollection extends Component {
         .post("/api/conceptCollection/" + id, body, config)
         .then(res => {
           Swal.fire({
-            title: "Inserted!",
+            title: "Saved!",
             confirmButtonText: "Lovely!"
           });
+          this.loadCollections();
         })
         .catch(error => {
           Swal.fire("Could not insert", "", "error");
@@ -170,10 +177,17 @@ class ConceptCollection extends Component {
   };
 
   handleConceptClick = concept => {
-    let concepts = Array.from(new Set(this.state.concepts.concat(concept)));
-    this.setState({
-      concepts: concepts
-    });
+    if (
+      this.state.concepts.filter(selectedConcept => {
+        return selectedConcept.id === concept.id;
+      }).length === 0
+    ) {
+      this.setState({
+        concepts: this.state.concepts.concat(
+          (({ id, name, picture }) => ({ id, name, picture }))(concept)
+        )
+      });
+    }
   };
 
   handleRemove = concept => {
@@ -192,10 +206,17 @@ class ConceptCollection extends Component {
   };
 
   handleChangeCollection = event => {
+    let currentCollection = this.state.collections.filter(collection => {
+      return collection.collectionid === event.target.value;
+    })[0];
+
     this.setState({
       selectedCollection: event.target.value,
+      concepts:
+        !currentCollection || !currentCollection.concepts[0].id
+          ? []
+          : currentCollection.concepts
     });
-    console.log(this.state.selectedCollection);
   };
 
   render() {
@@ -226,7 +247,7 @@ class ConceptCollection extends Component {
         <div>
           <Button
             className={classes.button}
-            onClick={() => this.deleteCollection(4)}
+            onClick={() => this.deleteCollection(this.state.selectedCollection)}
           >
             Delete Concept Collection
           </Button>
@@ -268,7 +289,14 @@ class ConceptCollection extends Component {
           variant="contained"
           color="primary"
           className={classes.button}
-          onClick={() => this.saveToCollection(6, [10, 20, 30])}
+          onClick={() => {
+            let conceptids = [];
+            this.state.concepts.forEach(concept => {
+              conceptids.push(concept.id);
+            });
+            this.saveToCollection(this.state.selectedCollection, conceptids);
+          }}
+          disabled={this.state.selectedCollection === ""}
         >
           Save
         </Button>
