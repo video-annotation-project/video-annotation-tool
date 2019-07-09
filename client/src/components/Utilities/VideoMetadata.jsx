@@ -14,8 +14,8 @@ import Summary from "./Summary.jsx";
 
 const styles = theme => ({
   dialogStyle: {
-    width: theme.spacing.unit * 50,
-    height: theme.spacing.unit * 65,
+    width: theme.spacing(50),
+    height: theme.spacing(65),
     boxShadow: theme.shadows[5],
     margin: "auto",
     outline: "none"

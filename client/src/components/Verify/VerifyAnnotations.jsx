@@ -22,7 +22,7 @@ import VideoMetadata from "../Utilities/VideoMetadata.jsx";
 
 const styles = theme => ({
   button: {
-    margin: theme.spacing.unit
+    margin: theme.spacing()
   },
   item: {
     display: "inline",
@@ -37,10 +37,10 @@ const styles = theme => ({
   container: {
     display: "grid",
     gridTemplateColumns: "repeat(12, 1fr)",
-    gridGap: `${theme.spacing.unit * 3}px`
+    gridGap: theme.spacing(3)
   },
   paper: {
-    padding: theme.spacing.unit
+    padding: theme.spacing()
   },
   dragBox: {
     margin: "0px",
@@ -501,8 +501,11 @@ class VerifyAnnotations extends Component {
                 </Button>
               )}
 
-              <IconButton aria-label="OnDemandVideo">
-                <OndemandVideo onClick={this.videoDialogToggle} />
+              <IconButton
+                onClick={this.videoDialogToggle}
+                aria-label="OnDemandVideo"
+              >
+                <OndemandVideo/>
               </IconButton>
             </div>
             <div
@@ -545,18 +548,17 @@ class VerifyAnnotations extends Component {
             <br />
             <br />
             <div>
-              <Typography className={classes.paper} variant="title">
+              <Typography className={classes.paper} variant="h5">
                 Annotation #{annotation.id}
               </Typography>
               <Typography className={classes.paper} variant="body2">
                 Video: {annotation.videoid + " " + annotation.filename}
-                <IconButton>
-                  <Description
-                    style={{ fontSize: 20 }}
-                    onClick={event =>
-                      this.openVideoMetadata(event, { id: annotation.videoid })
-                    }
-                  />
+                <IconButton
+                  onClick={event =>
+                    this.openVideoMetadata(event, { id: annotation.videoid })
+                  }
+                >
+                  <Description style={{ fontSize: 20 }}/>
                 </IconButton>
               </Typography>
               <Typography className={classes.paper} variant="body2">
