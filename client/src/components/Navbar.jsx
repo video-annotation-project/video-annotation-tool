@@ -63,8 +63,8 @@ class Navbar extends React.Component {
                 name={"Collections"}
                 Link={Link}
                 items={[
-                  { name: "Concepts", link: "/conceptCollection" },
-                  { name: "Videos", link: "/videoCollection" }
+                  { name: "Concepts", link: "/collection/concepts" },
+                  { name: "Videos", link: "/collection/videos" }
                 ]}
               />
               <GeneralMenu
