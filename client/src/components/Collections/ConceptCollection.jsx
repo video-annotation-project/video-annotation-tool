@@ -8,17 +8,26 @@ import DeleteIcon from "@material-ui/icons/Delete";
 import List from "@material-ui/core/List";
 import ListItem from "@material-ui/core/ListItem";
 import Avatar from "@material-ui/core/Avatar";
-
-import ConceptsSelected from "../Utilities/ConceptsSelected";
-import Button from "@material-ui/core/Button";
-
 import Button from "@material-ui/core/Button";
 import Swal from "sweetalert2";
+
+import ConceptsSelected from "../Utilities/ConceptsSelected";
+import FormControl from "@material-ui/core/FormControl";
+import InputLabel from "@material-ui/core/InputLabel";
+import Select from "@material-ui/core/Select";
+import MenuItem from "@material-ui/core/MenuItem";
+
 const styles = theme => ({
   button: {
-    marginTop: theme.spacing.unit,
+    marginTop: theme.spacing.unit * 2,
     marginLeft: theme.spacing.unit
   },
+  formControl: {
+    marginBottom: theme.spacing.unit * 2,
+    marginTop: theme.spacing.unit * 3,
+    marginLeft: theme.spacing.unit * 3,
+    minWidth: 200
+  }
 });
 
 class ConceptCollection extends Component {
@@ -26,8 +35,13 @@ class ConceptCollection extends Component {
     super(props);
     this.state = {
       collections: [],
+      selectedCollection: "",
       concepts: []
     };
+  }
+
+  componentDidMount() {
+    return this.loadCollections();
   }
 
   loadCollections = callback => {
@@ -49,42 +63,44 @@ class ConceptCollection extends Component {
 
   createCollection = () => {
     Swal.mixin({
-      confirmButtonText: 'Next',
+      confirmButtonText: "Next",
       showCancelButton: true,
-      progressSteps: ['1', '2']
-    }).queue([
-      {
-        title: 'Collection Name',
-        input: 'text'
-      },
-      {
-        title: 'Description',
-        input: 'textarea'
-      }
-    ]).then(async (result) => {
-      if (result.value) {
-        const body = {
-          name: result.value[0],
-          description: result.value[1]
-        }
-        const config = {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: "Bearer " + localStorage.getItem("token")
-          }
-        };
-        try {
-          await axios.post("/api/conceptCollection", body, config)
-          Swal.fire({
-            title: 'Collection Created!',
-            confirmButtonText: 'Lovely!'
-          })
-        } catch (error) {
-          Swal.fire("", error, error);
-        }
-      }
+      progressSteps: ["1", "2"]
     })
-  }
+      .queue([
+        {
+          title: "Collection Name",
+          input: "text"
+        },
+        {
+          title: "Description",
+          input: "textarea"
+        }
+      ])
+      .then(async result => {
+        if (result.value) {
+          const body = {
+            name: result.value[0],
+            description: result.value[1]
+          };
+          const config = {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + localStorage.getItem("token")
+            }
+          };
+          try {
+            await axios.post("/api/conceptCollection", body, config);
+            Swal.fire({
+              title: "Collection Created!",
+              confirmButtonText: "Lovely!"
+            });
+          } catch (error) {
+            Swal.fire("", error, error);
+          }
+        }
+      });
+  };
 
   deleteCollection = async id => {
     const config = {
@@ -95,7 +111,7 @@ class ConceptCollection extends Component {
     };
     const body = {
       id: id
-    }
+    };
     Swal.fire({
       title: "Are you sure?",
       text: "You won't be able to revert this!",
@@ -107,7 +123,11 @@ class ConceptCollection extends Component {
     }).then(async result => {
       if (result.value) {
         try {
-          let response = await axios.patch("/api/conceptCollection/", body, config);
+          let response = await axios.patch(
+            "/api/conceptCollection/",
+            body,
+            config
+          );
           if (response.status) {
             Swal.fire("Deleted!", "Collection has been deleted.", "success");
             this.loadCollections();
@@ -119,7 +139,7 @@ class ConceptCollection extends Component {
     });
   };
 
-  insertToCollection = (id, list) => {
+  saveToCollection = (id, list) => {
     const config = {
       headers: {
         Authorization: "Bearer " + localStorage.getItem("token")
@@ -127,22 +147,23 @@ class ConceptCollection extends Component {
     };
     const body = {
       concepts: list
-    }
+    };
     try {
-      axios.post("/api/conceptCollection/" + id, body, config)
+      axios
+        .post("/api/conceptCollection/" + id, body, config)
         .then(res => {
           Swal.fire({
-            title: 'Inserted!',
-            confirmButtonText: 'Lovely!'
-          })
+            title: "Inserted!",
+            confirmButtonText: "Lovely!"
+          });
         })
         .catch(error => {
-          Swal.fire("Could not insert", "","error");
+          Swal.fire("Could not insert", "", "error");
         });
     } catch (error) {
       Swal.fire("", error, error);
     }
-  }
+  };
 
   handleConceptClick = concept => {
     let concepts = Array.from(new Set(this.state.concepts.concat(concept)));
@@ -166,19 +187,52 @@ class ConceptCollection extends Component {
     });
   };
 
+  handleChangeCollection = event => {
+    this.setState({
+      selectedCollection: event.target.value
+    });
+    console.log(this.state.selectedCollection);
+  };
+
   render() {
     const { classes } = this.props;
     return (
       <React.Fragment>
         <ConceptsSelected handleConceptClick={this.handleConceptClick} />
-        <Button
-          className={classes.button}
-          onClick={() => {
-            this.handleRemoveAll();
-          }}
-        >
-          Remove All
-        </Button>
+        <FormControl className={classes.formControl}>
+          <InputLabel>Select collection</InputLabel>
+          <Select
+            value={this.state.selectedCollection}
+            onChange={this.handleChangeCollection}
+            autoWidth={true}
+          >
+            <MenuItem value="">Select collection</MenuItem>
+            {this.state.collections.map(collection => {
+              return (
+                <MenuItem
+                  key={collection.collectionid}
+                  value={collection.collectionid}
+                >
+                  {collection.name}
+                </MenuItem>
+              );
+            })}
+          </Select>
+        </FormControl>
+        <div>
+          <Button
+            className={classes.button}
+            onClick={() => this.createCollection()}
+          >
+            New Concept Collection
+          </Button>
+          <Button
+            className={classes.button}
+            onClick={() => this.deleteCollection(4)}
+          >
+            Delete Concept Collection
+          </Button>
+        </div>
         <List className={classes.list}>
           {this.state.concepts.length > 0
             ? this.state.concepts.map(concept => {
@@ -198,30 +252,22 @@ class ConceptCollection extends Component {
               })
             : ""}
         </List>
-        <div>
-          <Button
-            onClick={()=>this.loadCollections()}
-          >
-            Load Concept Collection
-          </Button>
-          <Button
-            onClick={()=>this.createCollection()}
-          >
-            Create Concept Collection
-          </Button>
-          <Button
-            onClick={()=>this.deleteCollection(4)}
-          >
-            Delete Concept Collection
-          </Button>
-          <Button
-            onClick={()=>this.insertToCollection(4, [10,20,30])}
-          >
-            Insert Into Collection
-          </Button>
-
-
-        </div>
+        <Button
+          className={classes.button}
+          onClick={() => {
+            this.handleRemoveAll();
+          }}
+        >
+          Remove All
+        </Button>
+        <Button
+          variant="contained"
+          color="primary"
+          className={classes.button}
+          onClick={() => this.saveToCollection(6, [10, 20, 30])}
+        >
+          Save
+        </Button>
       </React.Fragment>
     );
   }
