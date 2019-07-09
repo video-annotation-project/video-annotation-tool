@@ -16,7 +16,7 @@ const styles = theme => ({
     textTransform: "none"
   },
   formControl: {
-    margin: theme.spacing(3),
+    marginTop: theme.spacing(2),
     maxHeight: "400px",
     overflow: "auto"
   },
@@ -109,12 +109,12 @@ class VerifySelectVideo extends React.Component {
                       className={classes.button}
                       variant="outlined"
                       value={videoCollection.id.toString()}
-                      disabled={!videoCollection.videos[0]}
+                      disabled={!videoCollection.videoids[0]}
                       onClick={() => {
-                        if (videoCollection.videos[0]) {
+                        if (videoCollection.videoids[0]) {
                           let videoids = [];
                           this.state.videos.forEach(video => {
-                            if (videoCollection.videos.includes(video.id)) {
+                            if (videoCollection.videoids.includes(video.id)) {
                               videoids.push(video.id.toString());
                             }
                           });
@@ -123,7 +123,7 @@ class VerifySelectVideo extends React.Component {
                       }}
                     >
                       {videoCollection.name +
-                        (!videoCollection.videos[0] ? " (No Videos)" : "")}
+                        (!videoCollection.videoids[0] ? " (No Videos)" : "")}
                     </Button>
                   </div>
                 </Tooltip>

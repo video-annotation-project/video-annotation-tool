@@ -7,9 +7,9 @@ import List from "@material-ui/core/List";
 import ListItem from "@material-ui/core/ListItem";
 import ListItemText from "@material-ui/core/ListItemText";
 import { withStyles } from "@material-ui/core/styles";
-
 import IconButton from "@material-ui/core/IconButton";
 import DeleteIcon from "@material-ui/icons/Delete";
+
 import GeneralMenu from "../Utilities/GeneralMenu";
 
 import Collapse from "@material-ui/core/Collapse";
@@ -40,7 +40,7 @@ const styles = theme => ({
   },
 });
 
-class VideoList extends Component {
+class CollectionVideoList extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -155,7 +155,6 @@ class VideoList extends Component {
     if (!data) {
       return <div>Loading...</div>
     } 
-    console.log(data);
 
     return (
       <div className={classes.root}>
@@ -246,8 +245,8 @@ class VideoList extends Component {
   }
 }
 
-VideoList.propTypes = {
+CollectionVideoList.propTypes = {
   classes: PropTypes.object.isRequired
 };
 
-export default withStyles(styles)(VideoList);
+export default withStyles(styles)(CollectionVideoList);

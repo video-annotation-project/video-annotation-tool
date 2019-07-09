@@ -54,19 +54,27 @@ class Navbar extends React.Component {
           <Button color="inherit" component={Link} to="/">
             Home
           </Button>
-          <Button color="inherit" component={Link} to="/concepts">
-            Select Concepts
-          </Button>
-          <GeneralMenu
-            name={"Annotate"}
-            Link={Link}
-            items={[
-              { name: "Videos", link: "/annotate/videos" },
-              { name: "Verify", link: "/annotate/verify" }
-            ]}
-          />
           {localStorage.getItem("isAuthed") ? (
-            <React.Fragment>
+            <React.Fragment>                 
+              <Button color="inherit" component={Link} to="/concepts">
+                Select Concepts
+              </Button>              
+              <GeneralMenu
+                name={"Collections"}
+                Link={Link}
+                items={[
+                  { name: "Concepts", link: "/conceptCollection" },
+                  { name: "Videos", link: "/videoCollection" }
+                ]}
+              />           
+              <GeneralMenu
+                name={"Annotate"}
+                Link={Link}
+                items={[
+                  { name: "Videos", link: "/annotate/videos" },
+                  { name: "Verify", link: "/annotate/verify" }
+                ]}
+              />
               {localStorage.getItem("admin") ? (
                 <React.Fragment>
                   <Button color="inherit" component={Link} to="/report">
@@ -89,27 +97,11 @@ class Navbar extends React.Component {
                   <Button color="inherit" component={Link} to="/users">
                     Users
                   </Button>
-                  <GeneralMenu
-                    name={"Collections"}
-                    Link={Link}
-                    items={[
-                      { name: "Concepts", link: "/conceptCollection" },
-                      { name: "Videos", link: "/videoCollection" }
-                    ]}
-                  />
                 </React.Fragment>
-              ) : (
-                <React.Fragment>
-                  <Button color="inherit" component={Link} to="/report">
-                    Report
-                  </Button>
-                </React.Fragment>
-              )}
+              ) : ("")}
               <GeneralMenu name={"Account"} Link={Link} items={accountItems} />
               <Button
                 color="inherit"
-                // component={Link}
-                // to="/"
                 onClick={this.handleLogout}
               >
                 Logout

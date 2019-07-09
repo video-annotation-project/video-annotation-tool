@@ -23,9 +23,6 @@ import { withStyles } from "@material-ui/core/styles";
 import Swal from "sweetalert2";
 
 const styles = theme => ({
-  root: {
-    width: "90%",
-  },
   checkSelector: {
     maxHeight: "150px",
     overflow: "auto"
