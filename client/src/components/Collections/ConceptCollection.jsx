@@ -10,23 +10,27 @@ import ListItem from "@material-ui/core/ListItem";
 import Avatar from "@material-ui/core/Avatar";
 import Button from "@material-ui/core/Button";
 import Swal from "sweetalert2";
-
-import ConceptsSelected from "../Utilities/ConceptsSelected";
 import FormControl from "@material-ui/core/FormControl";
 import InputLabel from "@material-ui/core/InputLabel";
 import Select from "@material-ui/core/Select";
 import MenuItem from "@material-ui/core/MenuItem";
 
+import ConceptsSelected from "../Utilities/ConceptsSelected";
+
 const styles = theme => ({
   button: {
-    marginTop: theme.spacing.unit * 2,
-    marginLeft: theme.spacing.unit
+    marginTop: theme.spacing(2),
+    marginBottom: theme.spacing(2),
+    marginLeft: theme.spacing(2)
   },
   formControl: {
-    marginBottom: theme.spacing.unit * 2,
-    marginTop: theme.spacing.unit * 3,
-    marginLeft: theme.spacing.unit * 3,
+    marginBottom: theme.spacing(2),
+    marginTop: theme.spacing(3),
+    marginLeft: theme.spacing(3),
     minWidth: 200
+  },
+  list: {
+    marginLeft: theme.spacing(1)
   }
 });
 
@@ -36,7 +40,7 @@ class ConceptCollection extends Component {
     this.state = {
       collections: [],
       selectedCollection: "",
-      concepts: []
+      concepts: [],
     };
   }
 
@@ -189,7 +193,7 @@ class ConceptCollection extends Component {
 
   handleChangeCollection = event => {
     this.setState({
-      selectedCollection: event.target.value
+      selectedCollection: event.target.value,
     });
     console.log(this.state.selectedCollection);
   };
@@ -222,15 +226,15 @@ class ConceptCollection extends Component {
         <div>
           <Button
             className={classes.button}
-            onClick={() => this.createCollection()}
-          >
-            New Concept Collection
-          </Button>
-          <Button
-            className={classes.button}
             onClick={() => this.deleteCollection(4)}
           >
             Delete Concept Collection
+          </Button>
+          <Button
+            className={classes.button}
+            onClick={() => this.createCollection()}
+          >
+            New Concept Collection
           </Button>
         </div>
         <List className={classes.list}>
