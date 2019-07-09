@@ -9,7 +9,8 @@ import { ChevronRight, Close } from "@material-ui/icons";
 import SearchModal from "./SearchModal.jsx";
 
 const styles = theme => ({
-  root: {},
+  root: {
+  },
   extendDrawerButton: {
     float: "right",
     marginTop: "5px"
