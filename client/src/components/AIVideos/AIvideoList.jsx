@@ -80,7 +80,7 @@ class VideoList extends Component {
           Swal.fire(error, "", "error");
         }
       }
-    })
+    });
   }
 
   openVideoSummary = async (event, video) => {

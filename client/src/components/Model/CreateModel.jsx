@@ -126,7 +126,7 @@ class CreateModel extends Component {
       }
     };
     axios
-      .get(`/api/concepts`, config)
+      .get(`/api/model/concepts`, config)
       .then(res => {
         this.setState({
           concepts: res.data
@@ -221,7 +221,7 @@ class CreateModel extends Component {
                     }
                   />
                 }
-                label={concept.name}
+                label={concept.id + " " + concept.name}
               >
               </FormControlLabel>
             </div>

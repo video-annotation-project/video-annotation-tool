@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import axios from "axios";
 import TextField from '@material-ui/core/TextField';
 import io from "socket.io-client"
+import Typography from "@material-ui/core/Typography";
 import { withStyles } from "@material-ui/core/styles";
 import PropTypes from "prop-types";
 import Stepper from "@material-ui/core/Stepper";
@@ -26,10 +27,10 @@ import VideoMetadata from "../Utilities/VideoMetadata.jsx";
 
 const styles = theme => ({
   root: {
-    margin: '40px 180px',
+    width: "90%"
   },
   form: {
-    width: "10%"
+    width: "200px"
   },
   center: {
     display: "flex",
@@ -40,8 +41,7 @@ const styles = theme => ({
   container: {
     display: "flex",
     flexDirection: "row",
-    padding: '20px',
-    height: '560px'
+    width: "100%",
   },
   stepper: {
     display: "flex",
@@ -80,6 +80,14 @@ const styles = theme => ({
   hyperparametersForm: {
     display: 'flex',
     flexWrap: 'wrap',
+  },
+  hyperParamsInput: {
+    width: '190px',
+    marginRight: '10px',
+  },
+  epochText: {
+    position: 'relative',
+    top: '-15px'
   },
   textField: {
     marginLeft: theme.spacing(),
@@ -157,7 +165,7 @@ class TrainModel extends Component {
     };
     let option = "trainmodel";
     axios
-      .get(`/api/modelTab/${option}`, config)
+      .get(`/api/models/${option}`, config)
       .then(res => {
         const info = res.data[0].info;
         this.setState({
@@ -178,7 +186,7 @@ class TrainModel extends Component {
         });
       })
       .catch(error => {
-        console.log("Error in get /api/modelTab");
+        console.log("Error in get /api/models");
         console.log(error);
         if (error.response) {
           console.log(error.response.data.detail);
@@ -247,7 +255,7 @@ class TrainModel extends Component {
       }
     };
     let response = await axios.get(
-      `/api/trainModel/concepts/` +
+      `/api/models/concepts/` +
       videosSelected + '/' + modelSelected,
       config
     )
@@ -424,21 +432,29 @@ class TrainModel extends Component {
 
   selectHyperparameters = () => {
     const classes = this.props.classes;
+    const label = (
+      <span className={classes.epochText}>
+        Number of epochs <br/>
+        (0 = Until Increased Loss)
+      </span>)
+
     return (
       <form className={classes.hyperparametersForm}>
         <TextField
           margin='normal'
           name='epochs'
-          label='Number of epochs (0=Until Increased Loss)'
+          label={label}
           value={this.state.epochs}
           onChange={this.handleChange}
+          className={classes.hyperParamsInput}
         />
         <TextField
           margin="normal"
           name='minImages'
-          label='Number Training Images'
+          label='Number of training images'
           value={this.state.minImages}
           onChange={this.handleChange}
+          className={classes.hyperParamsInput}
         />
       </form>
     )
@@ -527,7 +543,7 @@ class TrainModel extends Component {
     };
     // update SQL database
     axios
-      .put("/api/modelTab/trainmodel", body, config)
+      .put("/api/models/trainmodel", body, config)
       .then(res => {
         this.state.socket.emit("refresh trainmodel");
       })
@@ -605,6 +621,11 @@ class TrainModel extends Component {
     return (
       <div className={classes.root}>
         <Paper square>
+          <div className={classes.center}>
+            <h1 style={{ color: "red" }}>This page is still in progress</h1>
+            <Typography variant="h5">Train a model on video(s)</Typography>
+            <br />
+          </div>
           <div className={classes.container}>
             <Stepper className={classes.stepper} activeStep={activeStep} orientation="vertical">
               {steps.map((label, index) => (
@@ -613,7 +634,6 @@ class TrainModel extends Component {
                   <StepContent>
                     {this.getStepContent(index)}
                     <div className={classes.actionsContainer}>
-                      <div>
                         <Button
                           disabled={activeStep === 0}
                           onClick={this.handleBack}
@@ -650,7 +670,6 @@ class TrainModel extends Component {
                         >
                           Unselect All
                         </Button>
-                      </div>
                     </div>
                   </StepContent>
                 </Step>

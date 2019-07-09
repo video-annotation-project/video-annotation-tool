@@ -5,13 +5,9 @@ import Button from "@material-ui/core/Button";
 import Typography from "@material-ui/core/Typography";
 import { withStyles } from "@material-ui/core/styles";
 import Slider from "@material-ui/lab/Slider";
+import VideoList from "../Annotate/VideoList";
 import Swal from "sweetalert2";
-
-import ConceptsSelected from "../Utilities/ConceptsSelected.jsx";
-import DialogModal from "../Utilities/DialogModal.jsx";
-import VideoList from "./VideoList.jsx";
-import DragBoxContainer from "../Utilities/DragBoxContainer.jsx";
-
+import CollectionList from "./CollectionList.jsx";
 
 const styles = theme => ({
   videoContainer: {
@@ -29,11 +25,19 @@ const styles = theme => ({
     marginTop: "10px",
     marginLeft: "20px",
     marginBottom: "10px"
+  },
+  drawer: {
+    width: "550px",
+    overflow: "auto"
+  },
+  toggleButton: {
+    float: "right",
+    marginTop: "5px"
   }
 });
 
 
-class Annotate extends Component {
+class videoCollection extends Component {
   constructor(props) {
     super(props);
 
@@ -59,10 +63,12 @@ class Annotate extends Component {
     socket.on("refresh videos", this.loadVideos);
 
     this.state = {
+      collectionListOpen: false,
       currentVideo: null,
       dialogMsg: null,
       dialogOpen: false,
       clickedConcept: null,
+      closeHandler: null,
       isLoaded: false,
       startedVideos: [],
       unwatchedVideos: [],
@@ -87,6 +93,7 @@ class Annotate extends Component {
 
     try {
       this.loadVideos(this.getCurrentVideo);
+      this.loadCollections();
     } catch (error) {
       console.log(error);
       console.log(JSON.parse(JSON.stringify(error)));
@@ -168,6 +175,22 @@ class Annotate extends Component {
     );
   };
 
+  loadCollections = callback => {
+    const config = {
+      headers: {
+        Authorization: "Bearer " + localStorage.getItem("token")
+      }
+    };
+    return axios.get("/api/videoCollections", config).then(res => {
+      this.setState(
+        {
+          collections: res.data
+        },
+        callback
+      );
+    });
+  };
+
   loadVideos = callback => {
     const config = {
       headers: {
@@ -186,6 +209,36 @@ class Annotate extends Component {
       );
     });
   };
+
+  deleteVideoCollection = async id => {
+    const config = {
+      headers: {
+        Authorization: "Bearer " + localStorage.getItem("token")
+      }
+    };
+    Swal.fire({
+      title: "Are you sure?",
+      text: "You won't be able to revert this!",
+      type: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, delete it!"
+    }).then(async result => {
+      if (result.value) {
+        try {
+          let response = await axios.delete("/api/videoCollection/" + id, config);
+          if (response.status === 200) {
+            Swal.fire("Deleted!", "Collection has been deleted.", "success");
+            this.loadCollections();
+          }
+        } catch (error) {
+          Swal.fire(error, "", "error");
+        }
+      }
+    });
+  };
+
 
   getCurrentVideo = () => {
     // if user does not have a video to be played, return default video 1
@@ -283,158 +336,80 @@ class Annotate extends Component {
     */
   };
 
-  postAnnotation = (comment, unsure) => {
-    var videoElement = document.getElementById("video");
-    var cTime = videoElement.currentTime;
-
-    var dragBox = document.getElementById("dragBox");
-
-    if (dragBox === null){
-      Swal.fire({
-        title: 'Error',
-        text: 'No bounding box exists.',
-        type: 'error',
-        confirmButtonText: 'Okay'
-      });
-      return;
-    }
-
-    var dragBoxCord = dragBox.getBoundingClientRect();
-
-    var vidCord = videoElement.getBoundingClientRect();
-
-
-    //Make video image
-    var canvas = document.createElement("canvas");
-    canvas.height = vidCord.height;
-    canvas.width = vidCord.width;
-    var ctx = canvas.getContext("2d");
-    ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-    var videoImage = new Image();
-    videoImage.setAttribute("crossOrigin", "use-credentials");
-    videoImage.src = canvas.toDataURL(1.0);
-
-    // Bouding box coordinates
-    var x1 = Math.max(this.state.x, 0);
-    var y1 = Math.max(this.state.y, 0);
-    var x2 = Math.min(x1 + parseInt(this.state.width,0), 1599);
-    var y2 = Math.min(y1 + parseInt(this.state.height,0), 899);
-    
-    //draw video with and without bounding box to canvas and save as img
-    var date = Date.now().toString();
-
-    const body = {
-      conceptId: this.state.clickedConcept.id,
-      videoId: this.state.currentVideo.id,
-      timeinvideo: cTime,
-      x1: x1,
-      y1: y1,
-      x2: x2,
-      y2: y2,
-      videoWidth: 1600,
-      videoHeight: 900,
-      image: date,
-      imagewithbox: date + "_box",
-      comment: comment,
-      unsure: unsure
-    };
-    const config = {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + localStorage.getItem("token")
+  createCollection = () => {
+    Swal.mixin({
+      confirmButtonText: 'Next',
+      showCancelButton: true,
+      progressSteps: ['1', '2']
+    }).queue([
+      { 
+        title: 'Collection Name',
+        input: 'text'
+      },
+      {
+        title: 'Description',
+        input: 'textarea'
       }
-    };
-    axios
-      .post("/api/annotations", body, config)
-      .then(async res => {
-        console.log(res.data.message);
-        this.handleDialogClose();
-        this.createAndUploadImages(
-          videoImage,
-          ctx,
-          canvas,
-          dragBoxCord,
-          date,
-          x1,
-          y1
-        );
-      })
-      .catch(error => {
-        console.log(error);
-        console.log(JSON.parse(JSON.stringify(error)));
-        if (!error.response) {
-          return;
+    ]).then(async (result) => {
+      if (result.value) {
+        const body = {
+          name: result.value[0],
+          description: result.value[1]
         }
-        let errMsg =
-          error.response.data.detail || error.response.data.message || "Error";
-        console.log(errMsg);
-        this.setState({
-          error: errMsg
-        });
-      });
-  };
+        const config = {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + localStorage.getItem("token")
+          }
+        };
+        try {
+          await axios.post("/api/videoCollection", body, config)
+          Swal.fire({
+            title: 'Collection Created!',
+            confirmButtonText: 'Lovely!'
+          })
+        } catch (error) {
+          Swal.fire("", error, error);
+        }
+      }
+    })
+  }
 
-  createAndUploadImages = (
-    videoImage,
-    ctx,
-    canvas,
-    dragBoxCord,
-    date,
-    x1,
-    y1
-  ) => {
-    this.uploadImage(videoImage, date, false);
-    ctx.lineWidth = "2";
-    ctx.strokeStyle = "coral";
-    ctx.rect(x1, y1, dragBoxCord.width, dragBoxCord.height);
-    ctx.stroke();
-    videoImage.src = canvas.toDataURL(1.0);
-    this.uploadImage(videoImage, date, true);
-  };
-
-  uploadImage = (img, date, box) => {
-    let buf = new Buffer(
-      img.src.replace(/^data:image\/\w+;base64,/, ""),
-      "base64"
-    );
+  insertVideosToCollection = (id, list) => {
     const config = {
       headers: {
-        "Content-Type": "application/json",
         Authorization: "Bearer " + localStorage.getItem("token")
       }
     };
     const body = {
-      buf: buf,
-      date: date,
-      box: box
-    };
-    return axios.post("/api/annotationImages", body, config).catch(error => {
-      console.log(error);
+      videos: list
+    }
+    try {
+      axios.post("/api/videoCollection/" + id, body, config)
+        .then(res => {
+          this.toggleDrawer();
+          Swal.fire({
+            title: 'Inserted!',
+            confirmButtonText: 'Lovely!'
+          })
+        })
+        .catch(error => {
+          Swal.fire("Could not insert", "","error");
+        });
+    } catch (error) {
+      Swal.fire("", error, error);
+    }
+  }
+
+  toggleDrawer = () => {
+    this.setState({
+      drawerOpen: !this.state.drawerOpen
     });
   };
 
-  handleConceptClick = concept => {
-    var videoElement = document.getElementById("video");
+  toggle = list => {
     this.setState({
-      dialogMsg:
-        concept.name +
-        " in video " +
-        this.state.currentVideo.filename +
-        " at time " +
-        Math.floor(videoElement.currentTime / 60) +
-        " minutes " +
-        (videoElement.currentTime % 60) +
-        " seconds",
-      dialogOpen: true,
-      clickedConcept: concept,
-    });
-  };
-
-  handleDialogClose = () => {
-    this.setState({
-      dialogOpen: false,
-      dialogMsg: null,
-      clickedConcept: null
+      [list]: !this.state[list]
     });
   };
 
@@ -449,7 +424,15 @@ class Annotate extends Component {
     }
     return (
       <React.Fragment>
-        <ConceptsSelected handleConceptClick={this.handleConceptClick} />
+        <CollectionList
+          collType="video"
+          data={this.state.collections}
+          createCollection={this.createCollection}
+          loadCollections={this.loadCollections}
+          deleteCollection={this.deleteVideoCollection}
+          insertToCollection={this.insertVideosToCollection}
+          openedVideo={this.state.currentVideo}
+        />
         <VideoList
           handleVideoClick={this.handleVideoClick}
           startedVideos={this.state.startedVideos}
@@ -458,33 +441,16 @@ class Annotate extends Component {
           inProgressVideos={this.state.inProgressVideos}
           socket={socket}
           loadVideos={this.loadVideos}
+
+          /* these are props for collection component only */
+          collection={true}
+          insertToCollection={this.insertVideosToCollection}
+          data={this.state.collections}
+          loadCollections={this.loadCollections}
         />
         <div>
           {this.state.currentVideo.id + " " + this.state.currentVideo.filename}
-          <DragBoxContainer 
-            className={classes.videoContainer} 
-            dragBox={classes.dragBox}
-            drawDragBox={false}
-
-            size={{
-              width: this.state.width,
-              height: this.state.height
-            }}
-            
-            position={{ x: this.state.x, y: this.state.y }}
-
-            onDragStop={(e, d) => {
-              this.setState({ x: d.x, y: d.y });
-            }}
-
-            onResize={(e, direction, ref, delta, position) => {
-              this.setState({
-                width: ref.style.width,
-                height: ref.style.height,
-                ...position
-              });
-            }}
-          >
+          <div className={classes.videoContainer}>
             <video
               onPause={() => this.updateCheckpoint(false, true)}
               id="video"
@@ -497,7 +463,7 @@ class Annotate extends Component {
             >
               Your browser does not support the video tag.
             </video>
-          </DragBoxContainer>
+          </div>
           <div
             style={{
               marginTop: "10px",
@@ -509,7 +475,7 @@ class Annotate extends Component {
             <Slider
               style={{
                 width: 200,
-                marginTop: 0
+                marginTop: 10
               }}
               value={this.state.videoPlaybackRate}
               min={0}
@@ -518,76 +484,57 @@ class Annotate extends Component {
               onChange={this.handleChangeSpeed}
             />
             <Typography
-              color='textSecondary'
               style={{
-                marginTop: 0
+                marginTop: 20
               }}
             >
               Play Rate: {this.state.videoPlaybackRate}
             </Typography>
           </div>
           <Button
-            color="primary"
             variant="contained"
+            color="primary"
             className={classes.button}
             onClick={() => this.skipVideoTime(-5)}
           >
             -5 sec
           </Button>
           <Button
-            color="primary"
             variant="contained"
+            color="primary"
             className={classes.button}
             onClick={this.playPause}
           >
             Play/Pause
           </Button>
           <Button
-            color="primary"
             variant="contained"
+            color="primary"
             className={classes.button}
             onClick={() => this.skipVideoTime(5)}
           >
             +5 sec
           </Button>
           <Button
-            color="primary"
             variant="contained"
+            color="primary"
             className={classes.button}
             onClick={() => this.toggleVideoControls()}
           >
             Toggle Controls
           </Button>
           <Button
-            color="primary"
             variant="contained"
+            color="primary"
             className={classes.button}
             onClick={() => this.handleDoneClick()}
           >
             Done
           </Button>
         </div>
-        {this.state.dialogOpen && (
-          <DialogModal
-            title={"Confirm Annotation"}
-            message={this.state.dialogMsg}
-            placeholder={"Comments"}
-            comment={""}
-            inputHandler={this.postAnnotation}
-            open={
-              true /* The DialogModal 'openness' is controlled through
-              boolean logic rather than by passing in a variable as an
-              attribute. This is to force DialogModal to unmount when it closes
-              so that its state is reset. This also prevents the accidental
-              double submission bug, by implicitly reducing the transition time
-              of DialogModal to zero. */
-            }
-            handleClose={this.handleDialogClose}
-          />
-        )}
       </React.Fragment>
     );
   }
 }
 
-export default withStyles(styles)(Annotate);
+export default withStyles(styles)(videoCollection);

@@ -19,6 +19,7 @@ import MenuItem from "@material-ui/core/MenuItem";
 import Radio from "@material-ui/core/Radio";
 import IconButton from "@material-ui/core/IconButton";
 import Description from "@material-ui/icons/Description";
+import PredictProgress from "./PredictProgress.jsx";
 
 import VideoMetadata from "../Utilities/VideoMetadata.jsx";
 
@@ -50,7 +51,15 @@ const styles = theme => ({
     maxHeight: "150px",
     overflow: "auto",
     width: "630px"
-  }
+  },
+  progress: {
+    display: "flex",
+    flex: 1,
+    flexDirection: "column",
+    justifyContent: "right",
+    alignItems: "right",
+    width: '50%',
+  },
 });
 
 class PredictModel extends Component {
@@ -121,7 +130,7 @@ class PredictModel extends Component {
     };
     let option = "predictmodel";
     axios
-      .get(`/api/modelTab/${option}`, config)
+      .get(`/api/models/${option}`, config)
       .then(res => {
         const info = res.data[0].info;
         this.setState({
@@ -132,7 +141,7 @@ class PredictModel extends Component {
         });
       })
       .catch(error => {
-        console.log("Error in get /api/modelTab");
+        console.log("Error in get /api/models");
         console.log(error);
         if (error.response) {
           console.log(error.response.data.detail);
@@ -304,7 +313,7 @@ class PredictModel extends Component {
     };
     // update SQL database
     axios
-      .put("/api/modelTab/predictmodel", body, config)
+      .put("/api/models/predictmodel", body, config)
       .then(res => {
         this.state.socket.emit("refresh predictmodel");
       })
@@ -387,6 +396,7 @@ class PredictModel extends Component {
           <Typography variant="h6">
             Run a trained model on video(s)
           </Typography>
+          <PredictProgress className={classes.progress}/>
           <br />
         </div>
         <Stepper activeStep={activeStep} orientation="vertical">

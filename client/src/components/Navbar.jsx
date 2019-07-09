@@ -5,25 +5,19 @@ import AppBar from "@material-ui/core/AppBar";
 import Button from "@material-ui/core/Button";
 import Toolbar from "@material-ui/core/Toolbar";
 import Typography from "@material-ui/core/Typography";
-import Popper from '@material-ui/core/Popper';
-import Paper from '@material-ui/core/Paper';
-import MenuList from '@material-ui/core/MenuList';
-import MenuItem from '@material-ui/core/MenuItem';
-import ClickAwayListener from '@material-ui/core/ClickAwayListener';
+import GeneralMenu from "./Utilities/GeneralMenu";
 
 const styles = {
   flex: {
     flexGrow: 1
-  },
+  }
 };
-
-
 
 class Navbar extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      modelTabOpen: false,
+      modelTabOpen: false
     };
   }
 
@@ -38,15 +32,19 @@ class Navbar extends React.Component {
 
   handleModelTab = () => {
     this.setState({ modelTabOpen: !this.state.modelTabOpen });
-  }
+  };
 
   closeModelTab = () => {
     this.setState({ modelTabOpen: false });
-  }
-
+  };
 
   render() {
     const { classes } = this.props;
+    let accountItems = [{ name: "Profile", link: "/account/profile" }];
+    if (localStorage.getItem("admin")) {
+      accountItems.push({ name: "Create User", link: "/account/createUser" });
+    }
+
     return (
       <AppBar position="static">
         <Toolbar>
@@ -56,82 +54,58 @@ class Navbar extends React.Component {
           <Button color="inherit" component={Link} to="/">
             Home
           </Button>
+          <Button color="inherit" component={Link} to="/concepts">
+            Select Concepts
+          </Button>
+          <GeneralMenu
+            name={"Annotate"}
+            Link={Link}
+            items={[
+              { name: "Videos", link: "/annotate/videos" },
+              { name: "Verify", link: "/annotate/verify" }
+            ]}
+          />
           {localStorage.getItem("isAuthed") ? (
             <React.Fragment>
               {localStorage.getItem("admin") ? (
                 <React.Fragment>
-                  <Button color="inherit" component={Link} to="/concepts">
-                    Select Concepts
-                  </Button>
-                  <Button color="inherit" component={Link} to="/annotate">
-                    Annotate Videos
-                  </Button>
-                  <Button color="inherit" component={Link} to="/aivideos">
-                    AI Videos
-                  </Button>
                   <Button color="inherit" component={Link} to="/report">
                     Report
                   </Button>
-                  <Button color="inherit" component={Link} to="/createUser">
-                    Create User
+                  <GeneralMenu
+                    name={"Models"}
+                    Link={Link}
+                    items={[
+                      { name: "Create Model", link: "/models/create" },
+                      { name: "View Models", link: "/models/view" },
+                      { name: "Train Models", link: "/models/train" },
+                      { name: "Predict Models", link: "/models/predict" },
+                      { name: "Previous Models", link: "/models/runs" }
+                    ]}
+                  />
+                  <Button color="inherit" component={Link} to="/aivideos">
+                    AI Videos
                   </Button>
-                  <Button 
-                    color="inherit" 
-                    id="modelButton"
-                    onClick={this.handleModelTab}
-                  >
-                    Models
-                  </Button>
-                  <Popper 
-                    open={ this.state.modelTabOpen }
-                    anchorEl={document.getElementById("modelButton")}
-                  >
-                    <ClickAwayListener onClickAway={this.closeModelTab}>
-                      <Paper square>
-                        <MenuList onClick={ this.closeModelTab }>
-                          <MenuItem component={Link} to="/models/create">
-                            Create New Model
-                          </MenuItem>
-                          <MenuItem component={Link} to="/models/view">
-                            View Models
-                          </MenuItem>
-                          <MenuItem component={Link} to="/models/train">
-                            Train Model
-                          </MenuItem>
-                          <MenuItem component={Link} to="/models/predict">
-                            Predict Model
-                          </MenuItem>
-                          <MenuItem component={Link} to="/models/runs">
-                            Previous Models
-                          </MenuItem>
-                        </MenuList>
-                      </Paper>
-                    </ClickAwayListener>
-                    </Popper>
                   <Button color="inherit" component={Link} to="/users">
                     Users
                   </Button>
+                  <GeneralMenu
+                    name={"Collections"}
+                    Link={Link}
+                    items={[
+                      { name: "Concepts", link: "/conceptCollection" },
+                      { name: "Videos", link: "/videoCollection" }
+                    ]}
+                  />
                 </React.Fragment>
               ) : (
                 <React.Fragment>
-                  <Button color="inherit" component={Link} to="/concepts">
-                    Select Concepts
-                  </Button>
-                  <Button color="inherit" component={Link} to="/annotate">
-                    Annotate Videos
-                  </Button>
                   <Button color="inherit" component={Link} to="/report">
-                    {" "}
-                    Report{" "}
+                    Report
                   </Button>
                 </React.Fragment>
               )}
-              <Button color="inherit" component={Link} to="/verify">
-                Verify
-              </Button>
-              <Button color="inherit" component={Link} to="/profile">
-                Account
-              </Button>
+              <GeneralMenu name={"Account"} Link={Link} items={accountItems} />
               <Button
                 color="inherit"
                 // component={Link}

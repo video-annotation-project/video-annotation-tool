@@ -234,9 +234,9 @@ app.get(
   }
 );
 
-// returns a list of concept names
+// returns a list of concept names that have annotations
 app.get(
-  "/api/concepts",
+  "/api/model/concepts",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const queryText = `
@@ -256,6 +256,28 @@ app.get(
         a.conceptid=concepts.id
       ORDER BY 
         a.count DESC
+    `;
+    try {
+      const concepts = await psql.query(queryText);
+      res.json(concepts.rows);
+    } catch (error) {
+      res.status(500).json(error);
+    }
+  }
+);
+
+// returns a list of concept names
+app.get(
+  "/api/concepts",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    const queryText = `
+      SELECT 
+        concepts.id, concepts.name
+      FROM 
+        concepts
+      ORDER BY 
+        name
     `;
     try {
       const concepts = await psql.query(queryText);
@@ -325,7 +347,8 @@ app.post("/api/models/tensorboard/:id",
   });
 
   downloader.on('end', function(data) {
-    const tensorboard = spawn(`tensorboard`, [`--logdir=logs/${id}`, '--port=6008']);
+    const tensorboard = spawn(
+      `tensorboard`, [`--logdir=logs/${id}`, '--port=6008']);
 
     tensorboard.stderr.on('data', (data) => {
       if (!res.headersSent){
@@ -485,6 +508,263 @@ app.get(
     }
   }
 );
+
+app.get(
+  "/api/videoCollections",
+  passport.authenticate("jwt", { session: false }),
+
+  async (req, res) => {
+    let queryText = `
+      SELECT 
+        vc.*, 
+        json_agg((vi.videoid, v.filename)) as videos,
+        array_agg(vi.videoid) as videoids
+      FROM 
+        video_collection vc
+      LEFT JOIN 
+        video_intermediate vi
+      ON 
+        vc.id = vi.id
+      LEFT JOIN
+        videos v ON vi.videoid=v.id
+      GROUP BY 
+        vc.id
+      ORDER BY
+        vc.name;
+    `;
+
+    try {
+      let videoCollections = await psql.query(queryText);
+      res.json(videoCollections.rows);
+    } catch (error) {
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
+);
+
+app.post(
+  "/api/videoCollection",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    const queryText = `
+      INSERT INTO 
+        video_collection (name, description)
+      VALUES
+        ($1, $2)
+      RETURNING *
+    `;
+    try {
+      let insert = await psql.query(queryText, [req.body.name, req.body.description]);
+      res.json({ value: JSON.stringify(insert.rows) });
+    } catch (error) {
+      res.status(400).json(error);
+    }
+  }
+);
+
+app.delete(
+  "/api/videoCollection/:id",
+  passport.authenticate("jwt", {session: false}),
+  async (req, res) => {
+    const queryText = `
+      DELETE FROM 
+        video_collection
+      WHERE
+        id = $1
+      RETURNING *
+    `;
+    try {
+      let deleted = await psql.query(queryText, [req.params.id]);
+      if (deleted) {
+        res.json(deleted);
+      }
+    } catch (error) {
+      res.status(500).json(error);
+    }
+  }
+)
+
+app.post(
+  "/api/videoCollection/:id",
+  passport.authenticate("jwt", {session: false}),
+  async (req, res) => {
+    var params = [req.params.id];
+    var queryText = `
+      INSERT INTO 
+        video_intermediate (id, videoid)
+      VALUES
+    `;
+
+    var i = 0
+    for (i = 0; i < req.body.videos.length; i++ ) {
+      queryText += `($1, $${i + 2})`;
+      if (i !== req.body.videos.length - 1) {
+        queryText += `,`;
+      }
+      params.push(req.body.videos[i]);
+    }
+    queryText += `RETURNING *`;
+
+    try {
+      let added = await psql.query(queryText, params);
+      if (added) {
+        res.status(200).json(added);
+      }
+    } catch (error) {
+      res.status(500).json(error);
+    }
+  }
+)
+
+app.delete(
+  "/api/videoCollection/removeVideos/:id",
+  passport.authenticate("jwt", {session: false}),
+  async (req, res) => {
+    console.log(req.body);
+    var params = [req.params.id];
+    var queryText = `
+      DELETE FROM 
+        video_intermediate
+      WHERE
+        id=$1 AND (
+    `;
+
+    var i = 0
+    for (i = 0; i < req.body.videos.length; i++ ) {
+      queryText += `videoid=$${i + 2}`;
+      if (i !== req.body.videos.length - 1) {
+        queryText += ` OR `;
+      }
+      else {
+        queryText += `) `
+      }
+      params.push(req.body.videos[i]);
+    }
+    queryText += ` RETURNING *`;
+
+    try {
+      let removed = await psql.query(queryText, params);
+      if (removed) {
+        res.json(removed);
+      }
+    } catch (error) {
+      res.status(500).json(error);
+    }
+  }
+)
+
+app.get(
+  "/api/conceptCollections",
+  passport.authenticate("jwt", { session: false }),
+
+  async (req, res) => {
+    let queryText = `
+    SELECT 
+      cc.id, cc.name, 
+      cc.picture, cc.deleted_flag, cc.collectionid, cc.description,
+      json_agg((ci.conceptid, c.name, c.picture)) as concepts
+    FROM 
+      concept_collection cc
+    LEFT JOIN 
+      concept_intermediate ci
+    ON 
+      cc.collectionid = ci.collectionid
+    LEFT JOIN
+      concepts c
+    ON 
+      ci.conceptid = c.id
+    GROUP BY 
+      cc.id, cc.name, cc.picture, cc.deleted_flag, cc.collectionid, cc.description
+    ORDER BY
+      cc.name;
+    `;
+
+    try {
+      let conceptCollections = await psql.query(queryText);
+      res.json(conceptCollections.rows);
+    } catch (error) {
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
+);
+
+app.post(
+  "/api/conceptCollection",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    const queryText = `
+      INSERT INTO 
+        concept_collection (name, description)
+      VALUES
+        ($1, $2)
+      RETURNING *
+    `;
+    try {
+      let insert = await psql.query(queryText, [req.body.name, req.body.description]);
+      res.json({ value: JSON.stringify(insert.rows) });
+    } catch (error) {
+      res.status(400).json(error);
+    }
+  }
+);
+
+app.patch(
+  "/api/conceptCollection/",
+  passport.authenticate("jwt", {session: false}),
+  async (req, res) => {
+    const queryText = `
+      UPDATE 
+        concept_collection
+      SET
+        deleted_flag=TRUE
+      WHERE
+        collectionid=$1
+      RETURNING *
+    `;
+    try {
+      let deleted = await psql.query(queryText, [req.body.id]);
+      if (deleted) {
+        res.json(deleted);
+      }
+    } catch (error) {
+      res.status(500).json(error);
+    }
+  }
+)
+
+app.post(
+  "/api/conceptCollection/:id",
+  passport.authenticate("jwt", {session: false}),
+  async (req, res) => {
+    var params = [req.params.id];
+    var queryText = `
+      INSERT INTO 
+        concept_intermediate (collectionid, conceptid)
+      VALUES
+    `;
+
+    var i = 0
+    for (i = 0; i < req.body.concepts.length; i++ ) {
+      queryText += `($1, $${i + 2})`;
+      if (i !== req.body.concepts.length - 1) {
+        queryText += `,`;
+      }
+      params.push(req.body.concepts[i]);
+    }
+    queryText += `RETURNING *`;
+
+    try {
+      let added = await psql.query(queryText, params);
+      if (added) {
+        res.status(200).json(added);
+      }
+    } catch (error) {
+      res.status(500).json(error);
+    }
+  }
+)
 
 app.delete(
   "/api/aivideos",
@@ -1444,6 +1724,16 @@ app.post(
       InstanceIds: [req.body.modelInstanceId]
     };
     if (req.body.command === "stop") {
+      const queryText = `
+            UPDATE 
+              training_progress
+            SET 
+              running = False
+            WHERE
+              id=(SELECT max(id) FROM training_progress)`;
+
+      await psql.query(queryText);
+      
       ec2.stopInstances(params, (err, data) => {
         if (err) console.log(err, err.stack);
       });
@@ -1456,7 +1746,7 @@ app.post(
 );
 
 app.get(
-  "/api/trainModel/concepts/:videoIDs/:modelName",
+  "/api/models/concepts/:videoIDs/:modelName",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const queryText = `
@@ -1482,7 +1772,7 @@ app.get(
       ]);
       res.json(response.rows);
     } catch (error) {
-      console.log("Error on GET /api/trainModel/concepts");
+      console.log("Error on GET /api/models/concepts");
       console.log(error);
       res.status(500).json(error);
     }
@@ -1490,7 +1780,7 @@ app.get(
 );
 
 app.get(
-  "/api/modelTab/progress",
+  "/api/models/progress",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const queryText = `
@@ -1505,7 +1795,7 @@ app.get(
       let response = await psql.query(queryText);
       res.json(response.rows);
     } catch (error) {
-      console.log("Error on GET /api/modelTab");
+      console.log("Error on GET /api/models");
       console.log(error);
       res.status(500).json(error);
     }
@@ -1513,7 +1803,28 @@ app.get(
 );
 
 app.get(
-  "/api/modelTab/:option",
+  "/api/models/predictProgress",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    const queryText = `
+      SELECT 
+        * 
+      FROM 
+        predict_progress 
+    `;
+    try {
+      let response = await psql.query(queryText);
+      res.json(response.rows);
+    } catch (error) {
+      console.log("Error on GET /api/models");
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
+);
+
+app.get(
+  "/api/models/:option",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const queryText = `SELECT * FROM modeltab WHERE option = $1`;
@@ -1521,7 +1832,7 @@ app.get(
       let response = await psql.query(queryText, [req.params.option]);
       res.json(response.rows);
     } catch (error) {
-      console.log("Error on GET /api/modelTab");
+      console.log("Error on GET /api/models");
       console.log(error);
       res.status(500).json(error);
     }
@@ -1529,7 +1840,7 @@ app.get(
 );
 
 app.put(
-  "/api/modelTab/:option",
+  "/api/models/:option",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const queryText = `UPDATE modeltab SET info = $1 WHERE option = $2`;
@@ -1540,7 +1851,7 @@ app.put(
       ]);
       res.json(response.rows);
     } catch (error) {
-      console.log("Error on put /api/modelTab");
+      console.log("Error on put /api/models");
       console.log(error);
       res.status(500).json(error);
     }
@@ -1548,7 +1859,6 @@ app.put(
 );
 
 // Verify Annotations
-
 app.get(
   "/api/unverifiedVideosByUser",
   passport.authenticate("jwt", { session: false }),
@@ -1584,7 +1894,7 @@ app.get(
 
     let queryText = `
       SELECT DISTINCT
-        c.id, c.name
+        c.*
       FROM 
         annotations a
       LEFT JOIN 

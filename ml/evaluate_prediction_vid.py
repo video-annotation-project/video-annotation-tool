@@ -20,7 +20,6 @@ RESIZED_WIDTH = config['resized_video_width']
 RESIZED_HEIGHT = config['resized_video_height']
 weights_path = config['weights_path']
 
-AWS_S3_BUCKET_AIVIDEOS_FOLDER = os.getenv("AWS_S3_BUCKET_AIVIDEOS_FOLDER")
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 S3_BUCKET = os.getenv('AWS_S3_BUCKET_NAME')
@@ -37,7 +36,7 @@ cursor = con.cursor()
 def score_predictions(validation, predictions, iou_thresh, concepts):
     # Maintain a set of predicted objects to verify
     detected_objects = []
-    obj_map = predictions.groupby('objectid', sort=False).conceptid.max()
+    obj_map = predictions.groupby('objectid', sort=False).label.max()
     
     # group predictions by video frames
     predictions = predictions.groupby('frame_num', sort=False)
@@ -50,7 +49,6 @@ def score_predictions(validation, predictions, iou_thresh, concepts):
         frame_data[frame_num] = i
     
     # group validation annotations by frames
-    validation = validation.apply(resize, axis=1)
     validation = validation.groupby('frame_num', sort=False)
     validation = [df for _, df in validation]
     
@@ -70,15 +68,15 @@ def score_predictions(validation, predictions, iou_thresh, concepts):
         detected_truths = dict(zip(concepts, [0] * len(concepts)))
         for index, truth in group.iterrows():
             for index, prediction in predicted.iterrows():
-                if (prediction.conceptid == truth.conceptid
+                if (prediction.label == truth.label
                         and predict.compute_IOU(truth, prediction) > iou_thresh
                         and prediction.objectid not in detected_objects):
                     detected_objects.append(prediction.objectid)
-                    true_positives[prediction.conceptid] += 1
-                    detected_truths[prediction.conceptid] += 1
+                    true_positives[prediction.label] += 1
+                    detected_truths[prediction.label] += 1
                     
         # False Negatives (Missed ground truth predicitions)
-        counts = group.conceptid.value_counts()
+        counts = group.label.value_counts()
         for concept in concepts:
             count = counts[concept] if (concept in counts.index) else 0
             false_negatives[concept] += count - detected_truths[concept]
@@ -101,87 +99,30 @@ def score_predictions(validation, predictions, iou_thresh, concepts):
     metrics.columns = ['conceptid', 'TP', 'FP', 'FN', 'Precision', 'Recall', 'F1']
     return metrics
 
-
-def resize(row):
-    new_width = RESIZED_WIDTH
-    new_height = RESIZED_HEIGHT
-    row.x1 = (row.x1 * new_width) / row.videowidth
-    row.x2 = (row.x2 * new_width) / row.videowidth
-    row.y1 = (row.y1 * new_height) / row.videoheight
-    row.y2 = (row.y2 * new_height) / row.videoheight
-    row.videowidth = new_width
-    row.videoheight = new_height
-    return row
-
 def get_counts(results, annotations):
     grouped = results.groupby(['objectid']).label.mean().reset_index()
     counts = grouped.groupby('label').count()
     counts.columns = ['pred_num']
-    groundtruth_counts = pd.DataFrame(annotations.groupby('conceptid').id.count())
+    groundtruth_counts = pd.DataFrame(annotations.groupby('label').size())
     groundtruth_counts.columns = ['true_num']
     counts = pd.concat((counts, groundtruth_counts), axis=1, join='outer').fillna(0)
     counts['count_accuracy'] = 1 - abs(counts.true_num - counts.pred_num) / counts.true_num
     return counts
 
-def interlace_annotations_to_video(annotations, filename, concepts):
-    vid = cv2.VideoCapture(filename)
-    fps = vid.get(cv2.CAP_PROP_FPS)
-    while not vid.isOpened():
-       continue
-
-    frames = []
-    check = True
-    while True:
-       check, frame = vid.read()
-       if not check:
-          break
-       frame = cv2.resize(frame, (RESIZED_WIDTH, RESIZED_HEIGHT))
-       frames.append(frame)
-    vid.release()
-
-    validation = annotations.apply(resize, axis=1)
-    for val in validation.itertuples():
-        if val.conceptid in concepts and val.frame_num < len(frames):
-            x1, y1, x2, y2 = int(val.x1), int(val.y1), int(val.x2), int(val.y2)
-            cv2.rectangle(frames[val.frame_num], (x1, y1), (x2, y2), (0, 0, 255), 3)
-            cv2.putText(frames[val.frame_num], str(val.conceptid), (x1, y1+15),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
-    predict.save_video(filename, frames, fps)
-    converted_file = 'testing.mp4'
-    os.system('ffmpeg -loglevel 0 -i \'' + filename + '\' -codec:v libx264 -y \''+ converted_file + '\'')
-    #upload video..
-    s3.upload_file(converted_file, S3_BUCKET, AWS_S3_BUCKET_AIVIDEOS_FOLDER +  filename,  ExtraArgs={'ContentType':'video/mp4'})
-    os.system('rm \'' + filename + '\'')
-    os.system('rm ' + converted_file)
-    
-    # add the entry to ai_videos
-    cursor.execute('''
-        INSERT INTO ai_videos (name)
-        VALUES (%s)''',
-        (filename,)
-    )
-
-
-# s3.upload_file(temp_file, S3_BUCKET, S3_ANNOTATION_FOLDER + no_box, ExtraArgs={'ContentType':'image/png'}) 
-
 def evaluate(video_id, model_username, concepts):
     # file format: (video_id)_(model_name)-(ctime).mp4
     filename = str(video_id) + '_' + model_username + '.mp4'
-    results, fps = predict.predict_on_video(video_id, weights_path, concepts, filename)
+    results, fps, original_frames, annotations = predict.predict_on_video(
+        video_id, weights_path, concepts, filename)
     print("done predicting")
 
-    annotations = queryDB('select * from annotations where videoid= ' + str(video_id) 
-        + ' and userid in ' + str(tuple(good_users)) +' and userid not in (32, 29)') # 32 is tracking ai, 29 is retinet ai
-    annotations['frame_num'] = np.rint(annotations['timeinvideo'] * fps).astype(int)
-
-    metrics = score_predictions(annotations, results, EVALUATION_IOU_THRESH, concepts)
-    interlace_annotations_to_video(copy.deepcopy(annotations), filename, concepts)
+    metrics = score_predictions(
+        annotations, results, EVALUATION_IOU_THRESH, concepts)
     concept_counts = get_counts(results, annotations)
     metrics = metrics.set_index('conceptid').join(concept_counts)
     metrics.to_csv("metrics" + str(video_id) + ".csv")
     print(metrics)
     con.commit()
-    con.close() 
 
 if __name__ == '__main__':
     model_name = 'testV2' 

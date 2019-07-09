@@ -16,6 +16,7 @@ const styles = theme => ({
 	},
 	progressBar: {
 		height: '8px',
+    width: '82%',
 	},
 	progressText: {
     marginTop: '20px',
@@ -57,13 +58,16 @@ class ModelProgress extends Component {
 	}
 
   loadProgressInfo = () => {
+    if (this.props.activeStep < 5){
+      return;
+    }
     const config = {
       headers: {
         Authorization: "Bearer " + localStorage.getItem("token")
       }
     };
     axios
-      .get(`/api/modelTab/progress`, config)
+      .get(`/api/models/progress`, config)
       .then(res => {
         const progress = res.data[0];
 
@@ -78,7 +82,7 @@ class ModelProgress extends Component {
         });
       })
       .catch(error => {
-        console.log("Error in get /api/modelTab");
+        console.log("Error in get /api/models");
         console.log(error);
         if (error.response) {
           console.log(error.response.data.detail);
