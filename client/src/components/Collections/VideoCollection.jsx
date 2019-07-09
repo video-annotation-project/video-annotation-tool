@@ -335,7 +335,7 @@ class videoCollection extends Component {
     */
   };
 
-  handleCreateCollection = () => {
+  createCollection = () => {
     Swal.mixin({
       confirmButtonText: 'Next',
       showCancelButton: true,
@@ -426,7 +426,7 @@ class videoCollection extends Component {
         <CollectionList
           collType="video"
           data={this.state.collections}
-          handleCreateCollection={this.handleCreateCollection}
+          createCollection={this.createCollection}
           loadCollections={this.loadCollections}
           deleteCollection={this.deleteVideoCollection}
           insertToCollection={this.insertVideosToCollection}
