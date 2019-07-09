@@ -613,6 +613,114 @@ app.post(
   }
 )
 
+app.get(
+  "/api/conceptCollections",
+  passport.authenticate("jwt", { session: false }),
+
+  async (req, res) => {
+    let queryText = `
+    SELECT 
+      cc.id, cc.name, 
+      cc.picture, cc.deleted_flag, cc.collectionid, cc.description,
+      array_agg(ci.conceptid) as concepts
+    FROM 
+      concept_collection cc
+    LEFT JOIN 
+      concept_intermediate ci
+    ON 
+      cc.collectionid = ci.collectionid
+    GROUP BY 
+      cc.id, cc.name, cc.picture, cc.deleted_flag, cc.collectionid, cc.description
+    ORDER BY
+      cc.name;
+    `;
+
+    try {
+      let conceptCollections = await psql.query(queryText);
+      res.json(conceptCollections.rows);
+    } catch (error) {
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
+);
+
+app.post(
+  "/api/conceptCollection",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    const queryText = `
+      INSERT INTO 
+        concept_collection (name, description)
+      VALUES
+        ($1, $2)
+      RETURNING *
+    `;
+    try {
+      let insert = await psql.query(queryText, [req.body.name, req.body.description]);
+      res.json({ value: JSON.stringify(insert.rows) });
+    } catch (error) {
+      res.status(400).json(error);
+    }
+  }
+);
+
+app.patch(
+  "/api/conceptCollection/",
+  passport.authenticate("jwt", {session: false}),
+  async (req, res) => {
+    const queryText = `
+      UPDATE 
+        concept_collection
+      SET
+        deleted_flag=TRUE
+      WHERE
+        collectionid=$1
+      RETURNING *
+    `;
+    try {
+      let deleted = await psql.query(queryText, [req.body.id]);
+      if (deleted) {
+        res.json(deleted);
+      }
+    } catch (error) {
+      res.status(500).json(error);
+    }
+  }
+)
+
+app.post(
+  "/api/conceptCollection/:id",
+  passport.authenticate("jwt", {session: false}),
+  async (req, res) => {
+    var params = [req.params.id];
+    var queryText = `
+      INSERT INTO 
+        concept_intermediate (collectionid, conceptid)
+      VALUES
+    `;
+
+    var i = 0
+    for (i = 0; i < req.body.concepts.length; i++ ) {
+      queryText += `($1, $${i + 2})`;
+      if (i !== req.body.concepts.length - 1) {
+        queryText += `,`;
+      }
+      params.push(req.body.concepts[i]);
+    }
+    queryText += `RETURNING *`;
+
+    try {
+      let added = await psql.query(queryText, params);
+      if (added) {
+        res.status(200).json(added);
+      }
+    } catch (error) {
+      res.status(500).json(error);
+    }
+  }
+)
+
 app.delete(
   "/api/aivideos",
   passport.authenticate("jwt", { session: false }),

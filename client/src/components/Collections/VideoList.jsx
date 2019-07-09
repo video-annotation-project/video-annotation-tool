@@ -48,7 +48,7 @@ class VideoList extends Component {
 
   handleNewCollectionModal = () => {
     this.toggle("CollectionOpen");
-    this.props.handleCreateCollection();
+    this.props.createCollection();
   } 
 
   handleDeleteCollectionModal = id => {
@@ -63,6 +63,9 @@ class VideoList extends Component {
 
   render() {
     const { classes, data } = this.props;
+    if (!data) {
+      return <div>Loading...</div>
+    } 
 
     return (
       <div className={classes.root}>
