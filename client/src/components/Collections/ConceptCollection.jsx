@@ -59,7 +59,7 @@ class ConceptCollection extends Component {
             this.handleRemoveAll();
           }}
         >
-          Delete All
+          Remove All
         </Button>
         <List className={classes.list}>
           {this.state.concepts.length > 0
