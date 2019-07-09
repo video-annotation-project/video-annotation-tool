@@ -56,7 +56,7 @@ class Login extends Component {
         if (res.data.isAdmin) {
           localStorage.setItem("admin", res.data.isAdmin);
         }
-        this.props.history.push("/");
+        window.location.replace("/");
       })
       .catch(error => {
         console.log(error);

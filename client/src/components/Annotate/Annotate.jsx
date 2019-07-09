@@ -511,7 +511,7 @@ class Annotate extends Component {
             <Slider
               style={{
                 width: 200,
-                marginTop: 10
+                marginTop: 0
               }}
               value={this.state.videoPlaybackRate}
               min={0}
@@ -520,8 +520,9 @@ class Annotate extends Component {
               onChange={this.handleChangeSpeed}
             />
             <Typography
+              color='textSecondary'
               style={{
-                marginTop: 20
+                marginTop: 0
               }}
             >
               Play Rate: {this.state.videoPlaybackRate}
@@ -529,6 +530,7 @@ class Annotate extends Component {
           </div>
           <Button
             color="primary"
+            variant="contained"
             className={classes.button}
             onClick={() => this.skipVideoTime(-5)}
           >
@@ -536,6 +538,7 @@ class Annotate extends Component {
           </Button>
           <Button
             color="primary"
+            variant="contained"
             className={classes.button}
             onClick={this.playPause}
           >
@@ -543,6 +546,7 @@ class Annotate extends Component {
           </Button>
           <Button
             color="primary"
+            variant="contained"
             className={classes.button}
             onClick={() => this.skipVideoTime(5)}
           >
@@ -550,6 +554,7 @@ class Annotate extends Component {
           </Button>
           <Button
             color="primary"
+            variant="contained"
             className={classes.button}
             onClick={() => this.toggleVideoControls()}
           >
@@ -557,6 +562,7 @@ class Annotate extends Component {
           </Button>
           <Button
             color="primary"
+            variant="contained"
             className={classes.button}
             onClick={() => this.handleDoneClick()}
           >

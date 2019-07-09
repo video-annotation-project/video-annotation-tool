@@ -111,10 +111,10 @@ class VideoList extends Component {
                     onClick={() => handleVideoClick(video, "startedVideos")}
                   >
                     <ListItemText primary={video.id + ". " + video.filename} />
-                    <IconButton>
-                      <Description
-                        onClick={event => this.openVideoMetadata(event, video)}
-                      />
+                    <IconButton
+                      onClick={event => this.openVideoMetadata(event, video)}
+                    >
+                      <Description/>
                     </IconButton>
                   </ListItem>
                 ))}
@@ -134,10 +134,10 @@ class VideoList extends Component {
                     onClick={() => handleVideoClick(video, "unwatchedVideos")}
                   >
                     <ListItemText primary={video.id + ". " + video.filename} />
-                    <IconButton>
-                      <Description
-                        onClick={event => this.openVideoMetadata(event, video)}
-                      />
+                    <IconButton
+                      onClick={event => this.openVideoMetadata(event, video)}
+                    >
+                      <Description/>
                     </IconButton>
                   </ListItem>
                 ))}
@@ -157,10 +157,10 @@ class VideoList extends Component {
                     onClick={() => handleVideoClick(video, "watchedVideos")}
                   >
                     <ListItemText primary={video.id + ". " + video.filename} />
-                    <IconButton>
-                      <Description
-                        onClick={event => this.openVideoMetadata(event, video)}
-                      />
+                    <IconButton
+                      onClick={event => this.openVideoMetadata(event, video)}
+                    >
+                      <Description/>
                     </IconButton>
                   </ListItem>
                 ))}
@@ -180,10 +180,10 @@ class VideoList extends Component {
                     onClick={() => handleVideoClick(video, "inProgressVideos")}
                   >
                     <ListItemText primary={video.id + ". " + video.filename} />
-                    <IconButton>
-                      <Description
-                        onClick={event => this.openVideoMetadata(event, video)}
-                      />
+                    <IconButton
+                      onClick={event => this.openVideoMetadata(event, video)}
+                    >
+                      <Description/>
                     </IconButton>
                   </ListItem>
                 ))}

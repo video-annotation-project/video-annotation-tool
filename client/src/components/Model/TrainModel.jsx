@@ -74,6 +74,9 @@ const styles = theme => ({
     maxHeight: "150px",
     overflow: "auto"
   },
+  videoSelector: {
+    width: "625px"
+  },
   hyperparametersForm: {
     display: 'flex',
     flexWrap: 'wrap',
@@ -299,6 +302,7 @@ class TrainModel extends Component {
   };
 
   selectUser = () => {
+    const { checkSelector } = this.props.classes;
     if (!this.state.usersSelected) {
       return (
         <div>Loading...</div>
@@ -307,7 +311,7 @@ class TrainModel extends Component {
     return (
       <FormControl
         component="fieldset"
-        className={this.props.classes.checkSelector}
+        className={checkSelector}
       >
         <FormLabel component="legend">
           Select Users Whose Annotations to Use
@@ -333,6 +337,7 @@ class TrainModel extends Component {
   };
 
   selectVideo = () => {
+    const { checkSelector, videoSelector } = this.props.classes;
     if (!this.state.videosSelected) {
       return (
         <div>Loading...</div>
@@ -341,7 +346,7 @@ class TrainModel extends Component {
     return (
       <FormControl
         component="fieldset"
-        className={this.props.classes.checkSelector}
+        className={`${checkSelector} ${videoSelector}`}
       >
         <FormLabel component="legend">Select Videos to Train With</FormLabel>
         <FormGroup>
@@ -360,15 +365,18 @@ class TrainModel extends Component {
                 label={video.id + " " + video.filename}
               >
               </FormControlLabel>
-              <IconButton style={{ float: 'right' }}>
-                <Description
-                  onClick={
-                    (event) =>
-                      this.openVideoMetadata(
-                        event,
-                        video,
-                      )
+              <IconButton 
+                onClick={
+                  (event) =>
+                    this.openVideoMetadata(
+                      event,
+                      video
+                    )
                   }
+                style={{ float: 'right' }}
+              >
+                <Description
+                  
                 />
               </IconButton>
 

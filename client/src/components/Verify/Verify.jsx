@@ -12,7 +12,7 @@ const styles = theme => ({
     width: "90%"
   },
   button: {
-    margin: theme.spacing
+    margin: theme.spacing()
   },
   resetContainer: {
     padding: theme.spacing(3)

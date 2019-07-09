@@ -165,15 +165,16 @@ class VideoList extends Component {
                     onClick={() => handleVideoClick(video, "aiVideos")}
                   >
                     <ListItemText primary={video.id + ". " + video.name} />
-                    <IconButton>
-                      <Description
-                        onClick={event => this.openVideoSummary(event, video)}
-                      />
+                    <IconButton
+                      onClick={event => this.openVideoSummary(event, video)}
+                    >
+                      <Description/>
                     </IconButton>
-                    <IconButton aria-label="Delete">
-                      <DeleteIcon
-                        onClick={() => this.deleteAiVideo(video)}
-                      />
+                    <IconButton
+                      aria-label="Delete"
+                      onClick={() => this.deleteAiVideo(video)}
+                    >
+                      <DeleteIcon/>
                     </IconButton>
                   </ListItem>
                 ))}

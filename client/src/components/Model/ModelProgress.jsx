@@ -92,12 +92,12 @@ class ModelProgress extends Component {
 
     return (
       <div className={this.props.className}>
-      	<Typography variant="title" component="h4" gutterBottom className={classes.trainStatus}>
+      	<Typography variant="h6" gutterBottom className={classes.trainStatus}>
           Training Status
         </Typography>
         {activeStep >= steps.length && (
           <Paper square elevation={0} className={classes.resetContainer}>
-            <Typography variant="subheading" gutterBottom>
+            <Typography variant="subtitle2" gutterBottom>
               Model has started training...
             </Typography>
             <div className={classes.stopTraining}>
@@ -132,7 +132,7 @@ class ModelProgress extends Component {
 							color="secondary" />
 					</div>
 				: activeStep !== steps.length && (
-  				<Typography variant="subheading" gutterBottom>
+  				<Typography variant="subtitle2" gutterBottom>
             Not currently training
           </Typography>)
 				}
