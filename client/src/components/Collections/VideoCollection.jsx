@@ -5,7 +5,7 @@ import Button from "@material-ui/core/Button";
 import Typography from "@material-ui/core/Typography";
 import { withStyles } from "@material-ui/core/styles";
 import Slider from "@material-ui/lab/Slider";
-import VideoList from "../Annotate/VideoList";
+import VideoList from "../Utilities/VideoList";
 import Swal from "sweetalert2";
 import CollectionList from "./CollectionList.jsx";
 

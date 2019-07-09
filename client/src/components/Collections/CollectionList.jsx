@@ -40,7 +40,7 @@ const styles = theme => ({
   },
 });
 
-class VideoList extends Component {
+class CollectionVideoList extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -155,7 +155,6 @@ class VideoList extends Component {
     if (!data) {
       return <div>Loading...</div>
     } 
-    console.log(data);
 
     return (
       <div className={classes.root}>
@@ -243,8 +242,8 @@ class VideoList extends Component {
   }
 }
 
-VideoList.propTypes = {
+CollectionVideoList.propTypes = {
   classes: PropTypes.object.isRequired
 };
 
-export default withStyles(styles)(VideoList);
+export default withStyles(styles)(CollectionVideoList);

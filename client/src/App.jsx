@@ -52,9 +52,7 @@ class App extends React.Component {
               ) : (
                 <React.Fragment>
                   <Route exact path="/concepts" component={Concepts} />
-                  <Route exact path="/annotate" component={Annotate} />
                   <Route exact path="/report" component={Report} />
-                  <Route exact path="/verify" component={Verify} />
 
                   <Route exact path="/ConceptCollection" component={ConceptCollection} />
                   <Route exact path="/VideoCollection" component={VideoCollection} />
