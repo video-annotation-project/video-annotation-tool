@@ -15,7 +15,7 @@ import Annotations from "./Annotations.jsx";
 const styles = theme => ({
   root: {
     backgroundColor: theme.palette.background.paper,
-    paddingLeft: theme.spacing.unit * 2
+    paddingLeft: theme.spacing(2)
   }
 });
 

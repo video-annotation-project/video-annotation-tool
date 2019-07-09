@@ -23,27 +23,24 @@ import { withStyles } from "@material-ui/core/styles";
 import Swal from "sweetalert2";
 
 const styles = theme => ({
-  root: {
-    width: "90%",
-  },
   checkSelector: {
     maxHeight: "150px",
     overflow: "auto"
   },
   textField: {
-    marginLeft: theme.spacing,
-    marginRight: theme.spacing,
+    marginLeft: theme.spacing(),
+    marginRight: theme.spacing(),
     width: 200,
   },
   actionsContainer: {
-    marginBottom: theme.spacing.unit * 2
+    marginBottom: theme.spacing(2)
   },
   button: {
-    marginTop: theme.spacing.unit,
-    marginRight: theme.spacing.unit
+    marginTop: theme.spacing(),
+    marginRight: theme.spacing()
   },
   resetContainer: {
-    padding: theme.spacing.unit * 3
+    padding: theme.spacing(3)
   },
   ModelNameForm: {
     display: 'flex',
@@ -71,7 +68,7 @@ class CreateModel extends Component {
       'Name model',
       'Select species',
       'Select test videos'
-   ];
+    ];
   }
 
   getStepContent = step => {
@@ -166,7 +163,7 @@ class CreateModel extends Component {
   nameModel = () => {
     const classes = this.props.classes;
     return (
-      <form 
+      <form
         className={classes.ModelNameForm}
         onSubmit={this.handleNext}
       >
@@ -231,6 +228,20 @@ class CreateModel extends Component {
     )
   }
 
+  //Methods for video meta data
+  openVideoMetadata = (event, video) => {
+    event.stopPropagation();
+    this.setState({
+      openedVideo: video
+    });
+  };
+
+  closeVideoMetadata = () => {
+    this.setState({
+      openedVideo: null
+    });
+  };
+
   selectVideo = () => {
     if (!this.state.videos) {
       return <div>Loading...</div>
@@ -257,16 +268,14 @@ class CreateModel extends Component {
                 label={video.id + " " + video.filename}
               >
               </FormControlLabel>
-              <IconButton style={{ float: 'right' }}>
-                <Description
-                  onClick={
-                    (event) =>
-                      this.openVideoMetadata(
-                        event,
-                        video,
-                      )
-                  }
-                />
+              <IconButton
+                onClick={
+                  (event) =>
+                    this.openVideoMetadata(event, video)
+                }
+                style={{ float: 'right' }}
+              >
+                <Description />
               </IconButton>
 
             </div>
@@ -339,7 +348,7 @@ class CreateModel extends Component {
   render() {
     const { classes } = this.props;
     const steps = this.getSteps();
-    const { 
+    const {
       models,
       activeStep,
       modelName,

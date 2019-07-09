@@ -16,7 +16,6 @@ const styles = {
 class Navbar extends React.Component {
   constructor(props) {
     super(props);
-
     this.state = {
       modelTabOpen: false
     };
@@ -49,7 +48,7 @@ class Navbar extends React.Component {
     return (
       <AppBar position="static">
         <Toolbar>
-          <Typography variant="title" color="inherit" className={classes.flex}>
+          <Typography color="inherit" className={classes.flex}>
             Video Annotation Tool
           </Typography>
           <Button color="inherit" component={Link} to="/">

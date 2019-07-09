@@ -12,10 +12,10 @@ const styles = theme => ({
     width: "90%"
   },
   button: {
-    margin: theme.spacing.unit
+    margin: theme.spacing()
   },
   resetContainer: {
-    padding: theme.spacing.unit * 3
+    padding: theme.spacing(3)
   },
   list: {
     width: "100%",
@@ -29,17 +29,17 @@ const styles = theme => ({
     paddingLeft: 0
   },
   img: {
-    padding: theme.spacing.unit * 3,
+    padding: theme.spacing(3),
     width: "1280px",
     height: "720px"
   },
   container: {
     display: "grid",
     gridTemplateColumns: "repeat(12, 1fr)",
-    gridGap: `${theme.spacing.unit * 3}px`
+    gridGap: theme.spacing(3)
   },
   paper: {
-    padding: theme.spacing.unit * 5
+    padding: theme.spacing(5)
   }
 });
 

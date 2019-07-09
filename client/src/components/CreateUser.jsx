@@ -75,7 +75,7 @@ class CreateUser extends Component {
     const { classes } = this.props;
     return (
       <div className={classes.root}>
-        <Typography variant="display1">Create New User</Typography>
+        <Typography variant="h4">Create New User</Typography>
         <br />
         <form onSubmit={this.handleSubmit}>
           {/* <div>username</div> */}

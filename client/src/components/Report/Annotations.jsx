@@ -25,11 +25,24 @@ const styles = theme => ({
     left: "-50px"
   },
   button: {
-    margin: theme.spacing.unit
+    margin: theme.spacing()
   },
   root: {
     backgroundColor: theme.palette.background.paper,
-    paddingLeft: theme.spacing.unit * 2
+    paddingLeft: theme.spacing(2)
+  },
+  listItem: {
+    height: "57px"
+  },
+  helpIcon: {
+    position: "absolute",
+    top: "12px",
+    right: "40px"
+  },
+  doneIcon: {
+    position: "absolute",
+    top: "12px",
+    right: "175px"
   }
 });
 
@@ -52,11 +65,11 @@ class Annotations extends Component {
     try {
       let annotations = await axios.get(
         `/api/annotations?` +
-          `queryConditions=${this.props.queryConditions}&` +
-          `unsureOnly=${this.props.unsureOnly}&` +
-          `admin=${localStorage.getItem("admin")}&` +
-          `verifiedCondition=${this.props.verifiedCondition}&` +
-          `queryLimit=${this.props.queryLimit}`,
+        `queryConditions=${this.props.queryConditions}&` +
+        `unsureOnly=${this.props.unsureOnly}&` +
+        `admin=${localStorage.getItem("admin")}&` +
+        `verifiedCondition=${this.props.verifiedCondition}&` +
+        `queryLimit=${this.props.queryLimit}`,
         config
       );
       this.setState({
@@ -161,8 +174,10 @@ class Annotations extends Component {
         <List disablePadding className={classes.root}>
           {annotations.map(annotation => (
             <React.Fragment key={annotation.id}>
-              <ListItem button onClick={() => this.handleClick(annotation.id)}>
-                {annotation.verifiedby ? <DoneAll color="primary" /> : ""}
+              <ListItem
+                className={classes.listItem}
+                button onClick={() => this.handleClick(annotation.id)}
+              >
                 <ListItemText
                   primary={
                     "At " +
@@ -173,34 +188,46 @@ class Annotations extends Component {
                     annotation.name
                   }
                   secondary={
-                    annotation.comment
-                      ? "Annotation Comment: " + annotation.comment
-                      : ""
+                    annotation.comment ? (
+                      "Annotation Comment: " + annotation.comment
+                    ) : ("")
                   }
                 />
 
                 <ListItemSecondaryAction>
-                  {annotation.unsure ? <Icon>help</Icon> : <div />}
+                  {annotation.unsure ? (
+                    <Icon
+                      className={classes.helpIcon}
+                    >
+                      help
+                    </Icon>
+                  ) : (
+                      <div/>
+                    )}
+                  {annotation.verifiedby ? (
+                    <DoneAll
+                      color="primary"
+                      className={classes.doneIcon}
+                    />
+                  ) : (<div></div>)}
                   <IconButton
                     className={classes.icons}
                     aria-label="OndemandVideo"
+                    onClick={e => this.toggleShowVideo(e, annotation.id)}
                   >
                     {annotation.showVideo ? (
-                      <OndemandVideo
-                        onClick={e => this.toggleShowVideo(e, annotation.id)}
-                      />
+                      <OndemandVideo />
                     ) : (
-                      <Photo
-                        onClick={e => this.toggleShowVideo(e, annotation.id)}
-                      />
-                    )}
+                        <Photo />
+                      )}
                   </IconButton>
-                  <IconButton className={classes.icons} aria-label="Delete">
-                    <DeleteIcon
-                      onClick={e => this.handleDelete(e, annotation.id)}
-                    />
+                  <IconButton
+                    className={classes.icons}
+                    aria-label="Delete"
+                    onClick={e => this.handleDelete(e, annotation.id)}
+                  >
+                    <DeleteIcon />
                   </IconButton>
-
                   {annotation.expanded ? <ExpandLess /> : <ExpandMore />}
                 </ListItemSecondaryAction>
               </ListItem>
@@ -222,11 +249,11 @@ class Annotations extends Component {
                     Your browser does not support the video tag.
                   </video>
                 ) : (
-                  <AnnotationFrame
-                    annotation={annotation}
-                    updateAnnotations={this.updateAnnotations}
-                  />
-                )}
+                    <AnnotationFrame
+                      annotation={annotation}
+                      updateAnnotations={this.updateAnnotations}
+                    />
+                  )}
               </Collapse>
             </React.Fragment>
           ))}
