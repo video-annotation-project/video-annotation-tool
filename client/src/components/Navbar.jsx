@@ -55,10 +55,10 @@ class Navbar extends React.Component {
             Home
           </Button>
           {localStorage.getItem("isAuthed") ? (
-            <React.Fragment>                 
+            <React.Fragment>
               <Button color="inherit" component={Link} to="/concepts">
                 Select Concepts
-              </Button>              
+              </Button>
               <GeneralMenu
                 name={"Collections"}
                 Link={Link}
@@ -66,7 +66,7 @@ class Navbar extends React.Component {
                   { name: "Concepts", link: "/conceptCollection" },
                   { name: "Videos", link: "/videoCollection" }
                 ]}
-              />           
+              />
               <GeneralMenu
                 name={"Annotate"}
                 Link={Link}
@@ -75,29 +75,29 @@ class Navbar extends React.Component {
                   { name: "Verify", link: "/annotate/verify" }
                 ]}
               />
+              <Button color="inherit" component={Link} to="/report">
+                Report
+              </Button>
               {localStorage.getItem("admin") ? (
                 <React.Fragment>
-                  <Button color="inherit" component={Link} to="/report">
-                    Report
-                  </Button>
                   <GeneralMenu
-                    name={"Models"}
-                    Link={Link}
-                    items={[
-                      { name: "Create Model", link: "/models/create" },
-                      { name: "View Models", link: "/models/view" },
-                      { name: "Train Models", link: "/models/train" },
-                      { name: "Predict Models", link: "/models/predict" },
-                      { name: "Previous Models", link: "/models/runs" }
-                    ]}
-                  />
-                  <Button color="inherit" component={Link} to="/aivideos">
-                    AI Videos
+                  name={"Models"}
+                  Link={Link}
+                  items={[
+                    { name: "Create Model", link: "/models/create" },
+                    { name: "View Models", link: "/models/view" },
+                    { name: "Train Models", link: "/models/train" },
+                    { name: "Predict Models", link: "/models/predict" },
+                    { name: "Previous Models", link: "/models/runs" }
+                  ]}
+                />
+                <Button color="inherit" component={Link} to="/aivideos">
+                  AI Videos
                   </Button>
-                  <Button color="inherit" component={Link} to="/users">
-                    Users
+                <Button color="inherit" component={Link} to="/users">
+                  Users
                   </Button>
-                </React.Fragment>
+              </React.Fragment>
               ) : ("")}
               <GeneralMenu name={"Account"} Link={Link} items={accountItems} />
               <Button
@@ -108,10 +108,10 @@ class Navbar extends React.Component {
               </Button>
             </React.Fragment>
           ) : (
-            <Button color="inherit" component={Link} to="/login">
-              Login
+              <Button color="inherit" component={Link} to="/login">
+                Login
             </Button>
-          )}
+            )}
         </Toolbar>
       </AppBar>
     );
