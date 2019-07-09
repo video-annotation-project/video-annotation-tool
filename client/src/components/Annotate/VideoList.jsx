@@ -53,7 +53,9 @@ class VideoList extends Component {
 
   toggle = list => {
     if (list === "videoListOpen") {
-      this.props.loadCollections();
+      if (this.props.collection) {
+        this.props.loadCollections();
+      }
       this.setState({
         checkedVideos: []
       })
@@ -272,7 +274,9 @@ class VideoList extends Component {
                 ))}
               </List>
             </Collapse>
-            {this.state.checkedVideos[0] ? 
+             
+            {this.props.collection ? 
+              this.state.checkedVideos[0] ? 
               <div className={classes.addButton}>
               <GeneralMenu
                 name={"Add to collection"}
@@ -294,6 +298,8 @@ class VideoList extends Component {
               >
                 Add to collection
               </Button>
+              :
+              ""
             }
           </div>
         </Drawer>

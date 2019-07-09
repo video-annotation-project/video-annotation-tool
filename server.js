@@ -516,17 +516,21 @@ app.get(
   async (req, res) => {
     let queryText = `
       SELECT 
-        vc.*, array_agg(vi.videoid) as videos
+        vc.*, 
+        json_agg((vi.videoid, v.filename)) as videos,
+        array_agg(vi.videoid) as videoids
       FROM 
         video_collection vc
       LEFT JOIN 
         video_intermediate vi
       ON 
         vc.id = vi.id
+      LEFT JOIN
+        videos v ON vi.videoid=v.id
       GROUP BY 
         vc.id
       ORDER BY
-        vc.name
+        vc.name;
     `;
 
     try {
@@ -613,6 +617,43 @@ app.post(
   }
 )
 
+app.delete(
+  "/api/videoCollection/removeVideos/:id",
+  passport.authenticate("jwt", {session: false}),
+  async (req, res) => {
+    console.log(req.body);
+    var params = [req.params.id];
+    var queryText = `
+      DELETE FROM 
+        video_intermediate
+      WHERE
+        id=$1 AND (
+    `;
+
+    var i = 0
+    for (i = 0; i < req.body.videos.length; i++ ) {
+      queryText += `videoid=$${i + 2}`;
+      if (i !== req.body.videos.length - 1) {
+        queryText += ` OR `;
+      }
+      else {
+        queryText += `) `
+      }
+      params.push(req.body.videos[i]);
+    }
+    queryText += ` RETURNING *`;
+
+    try {
+      let removed = await psql.query(queryText, params);
+      if (removed) {
+        res.json(removed);
+      }
+    } catch (error) {
+      res.status(500).json(error);
+    }
+  }
+)
+
 app.get(
   "/api/conceptCollections",
   passport.authenticate("jwt", { session: false }),
@@ -622,13 +663,17 @@ app.get(
     SELECT 
       cc.id, cc.name, 
       cc.picture, cc.deleted_flag, cc.collectionid, cc.description,
-      array_agg(ci.conceptid) as concepts
+      json_agg((ci.conceptid, c.name, c.picture)) as concepts
     FROM 
       concept_collection cc
     LEFT JOIN 
       concept_intermediate ci
     ON 
       cc.collectionid = ci.collectionid
+    LEFT JOIN
+      concepts c
+    ON 
+      ci.conceptid = c.id
     GROUP BY 
       cc.id, cc.name, cc.picture, cc.deleted_flag, cc.collectionid, cc.description
     ORDER BY
