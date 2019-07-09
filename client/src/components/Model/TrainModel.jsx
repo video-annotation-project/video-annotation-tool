@@ -613,7 +613,6 @@ class TrainModel extends Component {
                   <StepContent>
                     {this.getStepContent(index)}
                     <div className={classes.actionsContainer}>
-                      <div>
                         <Button
                           disabled={activeStep === 0}
                           onClick={this.handleBack}
@@ -650,7 +649,6 @@ class TrainModel extends Component {
                         >
                           Unselect All
                         </Button>
-                      </div>
                     </div>
                   </StepContent>
                 </Step>

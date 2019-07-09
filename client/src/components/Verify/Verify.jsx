@@ -79,6 +79,7 @@ class Verify extends Component {
       })
       .then(res => res.data)
       .catch(error => {
+        console.log(error);
         this.setState({
           error: error
         });

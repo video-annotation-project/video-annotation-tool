@@ -108,7 +108,7 @@ class ConceptsList extends React.Component {
               )}
               <ListItemSecondaryAction className={classes.shiftRight}>
                 <CheckBox
-                  checked={conceptsSelected[concept.id]}
+                  checked={Boolean(conceptsSelected[concept.id])}
                   onClick={e => this.handleCheckBoxClick(e, concept.id)}
                   color="primary"
                 />

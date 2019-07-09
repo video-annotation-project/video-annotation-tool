@@ -27,14 +27,8 @@ class DialogModal extends Component {
     super(props);
     this.state = {
       unsure: this.props.unsure || false,
-      comment: ""
-    };
-  }
-
-  componentDidMount() {
-    this.setState({
       comment: this.props.comment
-    })
+    };
   }
 
   handleInputKeyUp = event => {

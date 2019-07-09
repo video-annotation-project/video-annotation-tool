@@ -200,8 +200,11 @@ class CollectionVideoList extends Component {
                     <ListItemText primary={collection.id + ". " + collection.name} 
                       secondary={collection.videoids.join(" , ")}
                     />
-                    <IconButton aria-label="Delete">
-                      <DeleteIcon onClick={() => this.handleDeleteCollectionModal(collection.id)} />
+                    <IconButton 
+                      onClick={() => this.handleDeleteCollectionModal(collection.id)} 
+                      aria-label="Delete"
+                    >
+                      <DeleteIcon/>
                     </IconButton>
                     {collection.expanded ? <ExpandLess /> : <ExpandMore />}
 
