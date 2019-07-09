@@ -241,6 +241,7 @@ class videoCollection extends Component {
     });
   };
 
+
   getCurrentVideo = () => {
     // if user does not have a video to be played, return default video 1
     let currentVideo = {
