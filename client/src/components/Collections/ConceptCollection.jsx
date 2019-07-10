@@ -209,7 +209,7 @@ class ConceptCollection extends Component {
     });
   };
 
-  handleReset = () => {
+  handleUndo = () => {
     let concepts = this.state.collections.filter(collection => {
       return collection.collectionid === this.state.selectedCollection;
     })[0].concepts;
@@ -282,10 +282,7 @@ class ConceptCollection extends Component {
           >
             Delete This Collection
           </Button>
-          <Button
-            className={classes.button}
-            onClick={() => this.createCollection()}
-          >
+          <Button className={classes.button} onClick={this.createCollection}>
             New Concept Collection
           </Button>
         </div>
@@ -304,21 +301,11 @@ class ConceptCollection extends Component {
               })
             : ""}
         </List>
-        <Button
-          className={classes.button}
-          onClick={() => {
-            this.handleRemoveAll();
-          }}
-        >
-          Remove All
+        <Button className={classes.button} onClick={this.handleUndo}>
+          Undo Changes
         </Button>
-        <Button
-          className={classes.button}
-          onClick={() => {
-            this.handleReset();
-          }}
-        >
-          Reset
+        <Button className={classes.button} onClick={this.handleRemoveAll}>
+          Remove All
         </Button>
         <Button
           variant="contained"
