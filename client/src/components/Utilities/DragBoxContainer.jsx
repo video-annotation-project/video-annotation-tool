@@ -131,7 +131,9 @@ class DragBoxContainer extends Component {
 
   render(){
     return (
-      <div>
+      <div
+        className={this.props.className}
+      >
         <div 
           className={this.props.className}
           onMouseDown={(e) => this.resetDragBox(e)}
