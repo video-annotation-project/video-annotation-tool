@@ -48,7 +48,7 @@ class Navbar extends React.Component {
     return (
       <AppBar position="static">
         <Toolbar>
-          <Typography color="inherit" className={classes.flex}>
+          <Typography variant="button" color="inherit" className={classes.flex}>
             Video Annotation Tool
           </Typography>
           <Button color="inherit" component={Link} to="/">
@@ -81,37 +81,36 @@ class Navbar extends React.Component {
               {localStorage.getItem("admin") ? (
                 <React.Fragment>
                   <GeneralMenu
-                  name={"Models"}
-                  Link={Link}
-                  items={[
-                    { name: "Create Model", link: "/models/create" },
-                    { name: "View Models", link: "/models/view" },
-                    { name: "Train Models", link: "/models/train" },
-                    { name: "Predict Models", link: "/models/predict" },
-                    { name: "Previous Models", link: "/models/runs" }
-                  ]}
-                />
-                <Button color="inherit" component={Link} to="/aivideos">
-                  AI Videos
+                    name={"Models"}
+                    Link={Link}
+                    items={[
+                      { name: "Create Model", link: "/models/create" },
+                      { name: "View Models", link: "/models/view" },
+                      { name: "Train Models", link: "/models/train" },
+                      { name: "Predict Models", link: "/models/predict" },
+                      { name: "Previous Models", link: "/models/runs" }
+                    ]}
+                  />
+                  <Button color="inherit" component={Link} to="/aivideos">
+                    AI Videos
                   </Button>
-                <Button color="inherit" component={Link} to="/users">
-                  Users
+                  <Button color="inherit" component={Link} to="/users">
+                    Users
                   </Button>
-              </React.Fragment>
-              ) : ("")}
+                </React.Fragment>
+              ) : (
+                ""
+              )}
               <GeneralMenu name={"Account"} Link={Link} items={accountItems} />
-              <Button
-                color="inherit"
-                onClick={this.handleLogout}
-              >
+              <Button color="inherit" onClick={this.handleLogout}>
                 Logout
               </Button>
             </React.Fragment>
           ) : (
-              <Button color="inherit" component={Link} to="/login">
-                Login
+            <Button color="inherit" component={Link} to="/login">
+              Login
             </Button>
-            )}
+          )}
         </Toolbar>
       </AppBar>
     );
