@@ -268,7 +268,6 @@ class ConceptCollection extends Component {
                     <ListItemText
                       inset
                       primary={concept.name}
-                      secondary={concept.id}
                     />
                     <IconButton onClick={() => this.handleRemove(concept)}>
                       <DeleteIcon />
