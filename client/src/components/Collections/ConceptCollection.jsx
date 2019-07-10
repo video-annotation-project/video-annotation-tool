@@ -248,8 +248,9 @@ class ConceptCollection extends Component {
           <Button
             className={classes.button}
             onClick={() => this.deleteCollection(this.state.selectedCollection)}
+            disabled={this.state.selectedCollection === ""}
           >
-            Delete Concept Collection
+            Delete This Collection
           </Button>
           <Button
             className={classes.button}
