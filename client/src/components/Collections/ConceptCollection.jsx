@@ -308,7 +308,11 @@ class ConceptCollection extends Component {
             this.state.selectedCollection === "" ||
             this.state.collections.filter(collection => {
               return collection.collectionid === this.state.selectedCollection;
-            })[0].concepts === this.state.concepts
+            })[0].concepts === this.state.concepts ||
+            (!this.state.collections.filter(collection => {
+              return collection.collectionid === this.state.selectedCollection;
+            })[0].concepts[0].id &&
+              this.state.concepts.length === 0)
           }
         >
           Undo Changes
@@ -335,7 +339,11 @@ class ConceptCollection extends Component {
             this.state.selectedCollection === "" ||
             this.state.collections.filter(collection => {
               return collection.collectionid === this.state.selectedCollection;
-            })[0].concepts === this.state.concepts
+            })[0].concepts === this.state.concepts ||
+            (!this.state.collections.filter(collection => {
+              return collection.collectionid === this.state.selectedCollection;
+            })[0].concepts[0].id &&
+              this.state.concepts.length === 0)
           }
         >
           Save
