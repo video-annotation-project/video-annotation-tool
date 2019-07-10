@@ -650,7 +650,7 @@ class VideoDialog extends React.Component {
         open={open}
         {...other}
       >
-        <DialogTitle id="video-dialog-title">Annotation Video</DialogTitle>
+        <DialogTitle id="video-dialog-title">Tracing Video</DialogTitle>
         <div>
           <video
             id="video"

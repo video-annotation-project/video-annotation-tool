@@ -341,7 +341,7 @@ class videoCollection extends Component {
               confirmButtonText: "Lovely!"
             });
           } catch (error) {
-            Swal.fire("", error, error);
+            Swal.fire("Error Creating Collection", "", "error");
           }
         }
       });
@@ -370,7 +370,7 @@ class videoCollection extends Component {
           Swal.fire("Could not insert", "", "error");
         });
     } catch (error) {
-      Swal.fire("", error, error);
+      Swal.fire("Error inserting video", "", "error");
     }
   };
 
