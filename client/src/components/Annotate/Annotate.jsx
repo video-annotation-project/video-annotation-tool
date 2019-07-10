@@ -9,7 +9,7 @@ import Swal from "sweetalert2";
 
 import ConceptsSelected from "../Utilities/ConceptsSelected.jsx";
 import DialogModal from "../Utilities/DialogModal.jsx";
-import VideoList from "./VideoList.jsx";
+import VideoList from "../Utilities/VideoList.jsx";
 import DragBoxContainer from "../Utilities/DragBoxContainer.jsx";
 
 
@@ -63,7 +63,6 @@ class Annotate extends Component {
       dialogMsg: null,
       dialogOpen: false,
       clickedConcept: null,
-      closeHandler: null,
       isLoaded: false,
       startedVideos: [],
       unwatchedVideos: [],
@@ -428,7 +427,6 @@ class Annotate extends Component {
         " seconds",
       dialogOpen: true,
       clickedConcept: concept,
-      closeHandler: this.handleDialogClose
     });
   };
 
@@ -584,7 +582,7 @@ class Annotate extends Component {
               double submission bug, by implicitly reducing the transition time
               of DialogModal to zero. */
             }
-            handleClose={this.state.closeHandler}
+            handleClose={this.handleDialogClose}
           />
         )}
       </React.Fragment>

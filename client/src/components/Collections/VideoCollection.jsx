@@ -5,7 +5,7 @@ import Button from "@material-ui/core/Button";
 import Typography from "@material-ui/core/Typography";
 import { withStyles } from "@material-ui/core/styles";
 import Slider from "@material-ui/lab/Slider";
-import VideoList from "../Annotate/VideoList";
+import VideoList from "../Utilities/VideoList";
 import Swal from "sweetalert2";
 import CollectionList from "./VideoList.jsx";
 
@@ -62,12 +62,7 @@ class videoCollection extends Component {
     socket.on("refresh videos", this.loadVideos);
 
     this.state = {
-      collectionListOpen: false,
       currentVideo: null,
-      dialogMsg: null,
-      dialogOpen: false,
-      clickedConcept: null,
-      closeHandler: null,
       isLoaded: false,
       startedVideos: [],
       unwatchedVideos: [],
@@ -75,11 +70,7 @@ class videoCollection extends Component {
       inProgressVideos: [],
       videoPlaybackRate: 1.0,
       error: null,
-      socket: socket,
-      width: 0,
-      height: 0,
-      x: 0,
-      y: 0
+      socket: socket
     };
   }
 

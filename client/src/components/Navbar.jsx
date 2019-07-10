@@ -54,72 +54,64 @@ class Navbar extends React.Component {
           <Button color="inherit" component={Link} to="/">
             Home
           </Button>
-          <Button color="inherit" component={Link} to="/concepts">
-            Select Concepts
-          </Button>
-          <GeneralMenu
-            name={"Annotate"}
-            Link={Link}
-            items={[
-              { name: "Videos", link: "/annotate/videos" },
-              { name: "Verify", link: "/annotate/verify" }
-            ]}
-          />
           {localStorage.getItem("isAuthed") ? (
             <React.Fragment>
+              <Button color="inherit" component={Link} to="/concepts">
+                Select Concepts
+              </Button>
+              <GeneralMenu
+                name={"Collections"}
+                Link={Link}
+                items={[
+                  { name: "Concepts", link: "/collection/concepts" },
+                  { name: "Videos", link: "/collection/videos" }
+                ]}
+              />
+              <GeneralMenu
+                name={"Annotate"}
+                Link={Link}
+                items={[
+                  { name: "Videos", link: "/annotate/videos" },
+                  { name: "Verify", link: "/annotate/verify" }
+                ]}
+              />
+              <Button color="inherit" component={Link} to="/report">
+                Report
+              </Button>
               {localStorage.getItem("admin") ? (
                 <React.Fragment>
-                  <Button color="inherit" component={Link} to="/report">
-                    Report
-                  </Button>
                   <GeneralMenu
-                    name={"Models"}
-                    Link={Link}
-                    items={[
-                      { name: "Create Model", link: "/models/create" },
-                      { name: "View Models", link: "/models/view" },
-                      { name: "Train Models", link: "/models/train" },
-                      { name: "Predict Models", link: "/models/predict" },
-                      { name: "Previous Models", link: "/models/runs" }
-                    ]}
-                  />
-                  <Button color="inherit" component={Link} to="/aivideos">
-                    AI Videos
+                  name={"Models"}
+                  Link={Link}
+                  items={[
+                    { name: "Create Model", link: "/models/create" },
+                    { name: "View Models", link: "/models/view" },
+                    { name: "Train Models", link: "/models/train" },
+                    { name: "Predict Models", link: "/models/predict" },
+                    { name: "Previous Models", link: "/models/runs" }
+                  ]}
+                />
+                <Button color="inherit" component={Link} to="/aivideos">
+                  AI Videos
                   </Button>
-                  <Button color="inherit" component={Link} to="/users">
-                    Users
+                <Button color="inherit" component={Link} to="/users">
+                  Users
                   </Button>
-                  <GeneralMenu
-                    name={"Collections"}
-                    Link={Link}
-                    items={[
-                      { name: "Concepts", link: "/conceptCollection" },
-                      { name: "Videos", link: "/videoCollection" }
-                    ]}
-                  />
-                </React.Fragment>
-              ) : (
-                <React.Fragment>
-                  <Button color="inherit" component={Link} to="/report">
-                    Report
-                  </Button>
-                </React.Fragment>
-              )}
+              </React.Fragment>
+              ) : ("")}
               <GeneralMenu name={"Account"} Link={Link} items={accountItems} />
               <Button
                 color="inherit"
-                // component={Link}
-                // to="/"
                 onClick={this.handleLogout}
               >
                 Logout
               </Button>
             </React.Fragment>
           ) : (
-            <Button color="inherit" component={Link} to="/login">
-              Login
+              <Button color="inherit" component={Link} to="/login">
+                Login
             </Button>
-          )}
+            )}
         </Toolbar>
       </AppBar>
     );

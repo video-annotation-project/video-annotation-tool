@@ -35,9 +35,6 @@ class App extends React.Component {
             <React.Fragment>
               {localStorage.getItem("admin") ? (
                 <React.Fragment>
-                  <Route exact path="/concepts" component={Concepts} />
-
-                  <Route exact path="/report" component={Report} />
                   <Route exact path="/account/createUser" component={CreateUser} />
                   <Route exact path="/models/create" component={CreateModel} />
                   <Route exact path="/models/predict" component={PredictModel} />
@@ -46,20 +43,12 @@ class App extends React.Component {
                   <Route exact path="/models/runs" component={PreviousModels} />
                   <Route exact path="/users" component={Users} />
                   <Route exact path="/aivideos" component={AIvideos} />
-                  <Route exact path="/conceptCollection" component={ConceptCollection} />
-                  <Route exact path="/videoCollection" component={VideoCollection} />
                 </React.Fragment>
-              ) : (
-                <React.Fragment>
-                  <Route exact path="/concepts" component={Concepts} />
-                  <Route exact path="/annotate" component={Annotate} />
-                  <Route exact path="/report" component={Report} />
-                  <Route exact path="/verify" component={Verify} />
-
-                  <Route exact path="/ConceptCollection" component={ConceptCollection} />
-                  <Route exact path="/VideoCollection" component={VideoCollection} />
-                </React.Fragment>
-              )}
+              ) : ""}
+              <Route exact path="/concepts" component={Concepts} />
+              <Route exact path="/report" component={Report} />
+              <Route exact path="/collection/concepts" component={ConceptCollection} />
+              <Route exact path="/collection/videos" component={VideoCollection} />
               <Route exact path="/annotate/videos" component={Annotate} />
               <Route exact path="/annotate/verify" component={Verify} />
               <Route exact path="/account/profile" component={Profile} />
