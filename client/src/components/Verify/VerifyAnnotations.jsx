@@ -694,8 +694,8 @@ class VideoDialog extends Component {
         </div>
         <Button
             className={classes.button}
-            variant="outlined"
-            color="primary"
+            variant="contained"
+            color="secondary"
             onClick={() => this.markTrackingAsBad()}
         >
             Mark as Bad Tracking Video
