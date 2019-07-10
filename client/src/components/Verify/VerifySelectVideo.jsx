@@ -55,7 +55,7 @@ class VerifySelectVideo extends React.Component {
     const { classes, selectedVideos } = this.props;
 
     return (
-      <Grid container spacing={1}>
+      <Grid container spacing={5}>
         <Grid item>
           <Typography>Select videos</Typography>
           <FormControl className={classes.formControl}>
