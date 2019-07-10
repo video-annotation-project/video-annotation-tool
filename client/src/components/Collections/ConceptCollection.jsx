@@ -14,6 +14,7 @@ import FormControl from "@material-ui/core/FormControl";
 import InputLabel from "@material-ui/core/InputLabel";
 import Select from "@material-ui/core/Select";
 import MenuItem from "@material-ui/core/MenuItem";
+import FormHelperText from "@material-ui/core/FormHelperText";
 
 import ConceptsSelected from "../Utilities/ConceptsSelected";
 
@@ -21,6 +22,9 @@ const styles = theme => ({
   button: {
     marginTop: theme.spacing(2),
     marginBottom: theme.spacing(2),
+    marginLeft: theme.spacing(2)
+  },
+  description: {
     marginLeft: theme.spacing(2)
   },
   formControl: {
@@ -243,6 +247,22 @@ class ConceptCollection extends Component {
               );
             })}
           </Select>
+          {this.state.selectedCollection === "" ||
+          !this.state.collections.filter(collection => {
+            return collection.collectionid === this.state.selectedCollection;
+          })[0].description ? (
+            ""
+          ) : (
+            <FormHelperText>
+              {
+                this.state.collections.filter(collection => {
+                  return (
+                    collection.collectionid === this.state.selectedCollection
+                  );
+                })[0].description
+              }
+            </FormHelperText>
+          )}
         </FormControl>
         <div>
           <Button
@@ -265,10 +285,7 @@ class ConceptCollection extends Component {
                 return (
                   <ListItem key={concept.id}>
                     <Avatar src={`/api/conceptImages/${concept.id}`} />
-                    <ListItemText
-                      inset
-                      primary={concept.name}
-                    />
+                    <ListItemText inset primary={concept.name} />
                     <IconButton onClick={() => this.handleRemove(concept)}>
                       <DeleteIcon />
                     </IconButton>
