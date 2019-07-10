@@ -605,6 +605,7 @@ class TrainModel extends Component {
       activeStep,
       openedVideo
     } = this.state;
+    
     if (!videos) {
       return <div>Loading...</div>;
     }
