@@ -38,7 +38,7 @@ class VerifySelectConcept extends React.Component {
     const { classes, value, handleChangeList } = this.props;
 
     return (
-      <Grid container spacing={1}>
+      <Grid container spacing={5}>
         <Grid item>
           <Typography>Select concepts</Typography>
           <FormControl component="fieldset" className={classes.formControl}>
