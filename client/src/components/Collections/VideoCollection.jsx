@@ -82,7 +82,6 @@ class videoCollection extends Component {
     // add event listener for different key presses
     document.addEventListener("keydown", this.handleKeyDown);
     this.handleUnload = Annotate.handleUnload;
-    this.handleKeyDown = Annotate.handleKeyDown;
     this.skipVideoTime = Annotate.skipVideoTime;
     this.playPause = Annotate.playPause;
     this.toggleVideoControls = Annotate.toggleVideoControls;
@@ -111,6 +110,24 @@ class videoCollection extends Component {
     this.state.socket.disconnect();
     window.removeEventListener("beforeunload", this.handleUnload);
     document.removeEventListener("keydown", this.handleKeyDown);
+  };
+
+  handleKeyDown = e => {
+    if (e.target !== document.body) {
+      return;
+    }
+    if (e.code === "Space") {
+      e.preventDefault();
+      Annotate.playPause();
+    }
+    if (e.code === "ArrowRight") {
+      e.preventDefault();
+      Annotate.skipVideoTime(1);
+    }
+    if (e.code === "ArrowLeft") {
+      e.preventDefault();
+      Annotate.skipVideoTime(-1);
+    }
   };
 
   handleChangeSpeed = (event, value) => {

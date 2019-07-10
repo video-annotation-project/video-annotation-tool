@@ -80,7 +80,7 @@ class Annotate extends Component {
 
   componentDidMount = async () => {
     // add event listener for closing or reloading window
-    window.addEventListener("beforeunload", this.handleUnload);
+    window.addEventListener("beforeunload", Annotate.handleUnload);
 
     // add event listener for different key presses
     document.addEventListener("keydown", this.handleKeyDown);
@@ -106,7 +106,7 @@ class Annotate extends Component {
   componentWillUnmount = () => {
     this.updateCheckpoint(false, false);
     this.state.socket.disconnect();
-    window.removeEventListener("beforeunload", this.handleUnload);
+    window.removeEventListener("beforeunload", Annotate.handleUnload);
     document.removeEventListener("keydown", this.handleKeyDown);
   };
 
@@ -118,21 +118,21 @@ class Annotate extends Component {
     }
   };
 
-  static handleKeyDown = e => {
+  handleKeyDown = e => {
     if (e.target !== document.body) {
       return;
     }
     if (e.code === "Space") {
       e.preventDefault();
-      this.playPause();
+      Annotate.playPause();
     }
     if (e.code === "ArrowRight") {
       e.preventDefault();
-      this.skipVideoTime(1);
+      Annotate.skipVideoTime(1);
     }
     if (e.code === "ArrowLeft") {
       e.preventDefault();
-      this.skipVideoTime(-1);
+      Annotate.skipVideoTime(-1);
     }
   };
 
@@ -515,7 +515,7 @@ class Annotate extends Component {
               min={0}
               max={4}
               step={0.1}
-              onChange={this.handleChangeSpeed}
+              onChange={Annotate.handleChangeSpeed}
             />
             <Typography
               color='textSecondary'
@@ -530,7 +530,7 @@ class Annotate extends Component {
             color="primary"
             variant="contained"
             className={classes.button}
-            onClick={() => this.skipVideoTime(-5)}
+            onClick={() => Annotate.skipVideoTime(-5)}
           >
             -5 sec
           </Button>
@@ -538,7 +538,7 @@ class Annotate extends Component {
             color="primary"
             variant="contained"
             className={classes.button}
-            onClick={this.playPause}
+            onClick={Annotate.playPause}
           >
             Play/Pause
           </Button>
@@ -546,7 +546,7 @@ class Annotate extends Component {
             color="primary"
             variant="contained"
             className={classes.button}
-            onClick={() => this.skipVideoTime(5)}
+            onClick={() => Annotate.skipVideoTime(5)}
           >
             +5 sec
           </Button>
@@ -554,7 +554,7 @@ class Annotate extends Component {
             color="primary"
             variant="contained"
             className={classes.button}
-            onClick={() => this.toggleVideoControls()}
+            onClick={() => Annotate.toggleVideoControls()}
           >
             Toggle Controls
           </Button>
