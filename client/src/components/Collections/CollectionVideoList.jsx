@@ -161,7 +161,6 @@ class CollectionVideoList extends Component {
       return <div>Loading...</div>
     } 
 
-    console.log(data);
     return (
       <div className={classes.root}>
         <Button
