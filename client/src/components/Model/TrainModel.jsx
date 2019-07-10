@@ -247,7 +247,7 @@ class TrainModel extends Component {
       }
     };
     let response = await axios.get(
-      `/api/trainModel/concepts/` +
+      `/api/models/concepts/` +
       videosSelected + '/' + modelSelected,
       config
     )
