@@ -8,6 +8,7 @@ import Slider from "@material-ui/lab/Slider";
 import VideoList from "../Utilities/VideoList";
 import Swal from "sweetalert2";
 import CollectionList from "./VideoList.jsx";
+import Annotate from "../Annotate/Annotate.jsx"
 
 const styles = theme => ({
   videoContainer: {
@@ -80,6 +81,11 @@ class videoCollection extends Component {
 
     // add event listener for different key presses
     document.addEventListener("keydown", this.handleKeyDown);
+    this.handleUnload = Annotate.handleUnload;
+    this.handleKeyDown = Annotate.handleKeyDown;
+    this.skipVideoTime = Annotate.skipVideoTime;
+    this.playPause = Annotate.playPause;
+    this.toggleVideoControls = Annotate.toggleVideoControls;
 
     try {
       this.loadVideos(this.getCurrentVideo);
@@ -105,52 +111,6 @@ class videoCollection extends Component {
     this.state.socket.disconnect();
     window.removeEventListener("beforeunload", this.handleUnload);
     document.removeEventListener("keydown", this.handleKeyDown);
-  };
-
-  handleUnload = ev => {
-    var videoElement = document.getElementById("video");
-    if (!videoElement.paused) {
-      ev.preventDefault();
-      ev.returnValue = "Are you sure you want to close?";
-    }
-  };
-
-  handleKeyDown = e => {
-    if (e.target !== document.body) {
-      return;
-    }
-    if (e.code === "Space") {
-      e.preventDefault();
-      this.playPause();
-    }
-    if (e.code === "ArrowRight") {
-      e.preventDefault();
-      this.skipVideoTime(1);
-    }
-    if (e.code === "ArrowLeft") {
-      e.preventDefault();
-      this.skipVideoTime(-1);
-    }
-  };
-
-  skipVideoTime = time => {
-    var videoElement = document.getElementById("video");
-    var cTime = videoElement.currentTime;
-    videoElement.currentTime = cTime + time;
-  };
-
-  playPause = () => {
-    var videoElement = document.getElementById("video");
-    if (videoElement.paused) {
-      videoElement.play();
-    } else {
-      videoElement.pause();
-    }
-  };
-
-  toggleVideoControls = () => {
-    var videoElement = document.getElementById("video");
-    videoElement.controls = !videoElement.controls;
   };
 
   handleChangeSpeed = (event, value) => {

@@ -110,7 +110,7 @@ class Annotate extends Component {
     document.removeEventListener("keydown", this.handleKeyDown);
   };
 
-  handleUnload = ev => {
+  static handleUnload = ev => {
     var videoElement = document.getElementById("video");
     if (!videoElement.paused) {
       ev.preventDefault();
@@ -118,7 +118,7 @@ class Annotate extends Component {
     }
   };
 
-  handleKeyDown = e => {
+  static handleKeyDown = e => {
     if (e.target !== document.body) {
       return;
     }
@@ -136,13 +136,13 @@ class Annotate extends Component {
     }
   };
 
-  skipVideoTime = time => {
+  static skipVideoTime = time => {
     var videoElement = document.getElementById("video");
     var cTime = videoElement.currentTime;
     videoElement.currentTime = cTime + time;
   };
 
-  playPause = () => {
+  static playPause = () => {
     var videoElement = document.getElementById("video");
     if (videoElement.paused) {
       videoElement.play();
@@ -151,12 +151,12 @@ class Annotate extends Component {
     }
   };
 
-  toggleVideoControls = () => {
+  static toggleVideoControls = () => {
     var videoElement = document.getElementById("video");
     videoElement.controls = !videoElement.controls;
   };
 
-  handleChangeSpeed = (event, value) => {
+  static handleChangeSpeed = (event, value) => {
     this.setState(
       {
         videoPlaybackRate: Math.round(value * 10) / 10
@@ -591,3 +591,4 @@ class Annotate extends Component {
 }
 
 export default withStyles(styles)(Annotate);
+
