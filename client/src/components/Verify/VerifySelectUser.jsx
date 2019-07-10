@@ -48,12 +48,18 @@ class VerifySelectUser extends React.Component {
         <Typography>Select users</Typography>
         <FormControl component="fieldset" className={classes.formControl}>
           <FormGroup
-            aria-label="User"
             name="user"
             className={classes.group}
             value={value}
             onChange={handleChangeList}
           >
+            <FormControlLabel
+              key={-1}
+              value={"-1"}
+              control={<Checkbox color="primary" />}
+              label="All users"
+              checked={value.includes("-1")}
+            />
             {this.state.users.map(user => (
               <FormControlLabel
                 key={user.id}

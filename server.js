@@ -1872,7 +1872,9 @@ app.get(
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const selectedUsers = req.query.selectedUsers;
-    let params = [selectedUsers];
+
+    let params = [];
+
     let queryText = `
       SELECT DISTINCT
         v.id, v.filename
@@ -1881,8 +1883,16 @@ app.get(
       JOIN 
         videos v ON v.id=a.videoid
       WHERE 
-        a.verifiedby IS NULL AND a.userid::text=ANY($1) ORDER BY v.id
+        a.verifiedby IS NULL
     `;
+
+    if (!(selectedUsers.length === 1 && selectedUsers[0] === "-1")) {
+      queryText += ` AND a.userid::text=ANY($${params.length + 1})`;
+      params.push(selectedUsers);
+    }
+
+    queryText += ` ORDER BY v.id`;
+
     try {
       let videos = await psql.query(queryText, params);
       res.json(videos.rows);
@@ -1898,7 +1908,8 @@ app.get(
   async (req, res) => {
     const selectedUsers = req.query.selectedUsers;
     const selectedVideos = req.query.selectedVideos;
-    let params = [selectedUsers];
+
+    let params = [];
 
     let queryText = `
       SELECT DISTINCT
@@ -1908,7 +1919,12 @@ app.get(
       LEFT JOIN 
         concepts c ON c.id=conceptid
       WHERE
-        a.verifiedby IS NULL AND a.userid::text=ANY($1)`;
+        a.verifiedby IS NULL`;
+
+    if (!(selectedUsers.length === 1 && selectedUsers[0] === "-1")) {
+      queryText += ` AND a.userid::text=ANY($${params.length + 1})`;
+      params.push(selectedUsers);
+    }
 
     if (!(selectedVideos.length === 1 && selectedVideos[0] === "-1")) {
       queryText += ` AND a.videoid::text=ANY($${params.length + 1})`;
@@ -1934,7 +1950,8 @@ app.get(
     const selectedVideos = req.query.selectedVideos;
     const selectedConcepts = req.query.selectedConcepts;
 
-    let params = [selectedUsers];
+    let params = [];
+
     let queryText = `
       SELECT DISTINCT
         a.unsure
@@ -1947,8 +1964,14 @@ app.get(
       LEFT JOIN 
         videos v ON v.id=videoid
       WHERE 
-        a.verifiedby IS NULL AND a.userid::text=ANY($1)
+        a.verifiedby IS NULL
     `;
+
+    if (!(selectedUsers.length === 1 && selectedUsers[0] === "-1")) {
+      queryText += ` AND a.userid::text=ANY($${params.length + 1})`;
+      params.push(selectedUsers);
+    }
+
     if (!(selectedVideos.length === 1 && selectedVideos[0] === "-1")) {
       queryText += ` AND a.videoid::text=ANY($${params.length + 1})`;
       params.push(selectedVideos);
@@ -1978,7 +2001,7 @@ app.get(
     const selectedConcepts = req.query.selectedConcepts;
     const selectedUnsure = req.query.selectedUnsure;
 
-    let params = [selectedUsers];
+    let params = [];
 
     let queryText = `
       SELECT DISTINCT
@@ -1992,8 +2015,14 @@ app.get(
       LEFT JOIN
         videos v ON v.id=videoid
       WHERE
-        a.verifiedby IS NULL AND a.userid::text=ANY($1)
+        a.verifiedby IS NULL
     `;
+
+    if (!(selectedUsers.length === 1 && selectedUsers[0] === "-1")) {
+      queryText += ` AND a.userid::text=ANY($${params.length + 1})`;
+      params.push(selectedUsers);
+    }
+
     if (!(selectedVideos.length === 1 && selectedVideos[0] === "-1")) {
       queryText += ` AND a.videoid::text=ANY($${params.length + 1})`;
       params.push(selectedVideos);
