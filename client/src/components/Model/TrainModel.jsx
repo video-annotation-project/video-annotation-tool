@@ -216,7 +216,7 @@ class TrainModel extends Component {
     }
     axios.get(`/api/users`, config).then(res => {
       this.setState({
-        users: res.data
+        users: res.data,
       });
     })
   }
@@ -233,8 +233,11 @@ class TrainModel extends Component {
        this.state.modelSelected,
       config
     ).then(res => {
+      let videoids = res.data.map(vid => vid.id);
       this.setState({
-        videos: res.data
+        videos: res.data,
+        videosSelected: this.state.videosSelected.filter(
+          id => videoids.includes(id))
       });
     });
   };
@@ -251,8 +254,11 @@ class TrainModel extends Component {
       videosSelected + '/' + modelSelected,
       config
     )
+    let conceptids = response.data.map(concept => concept.id);
     this.setState({
-      concepts: response.data
+      concepts: response.data,
+      conceptsSelected: this.state.conceptsSelected.filter(
+        id => conceptids.includes(id)),
     });
   }
 
