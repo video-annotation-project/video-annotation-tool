@@ -18,6 +18,8 @@ import ExpandMore from "@material-ui/icons/ExpandMore";
 
 import Checkbox from '@material-ui/core/Checkbox';
 
+import Typography from '@material-ui/core/Typography';
+
 import Swal from "sweetalert2";
 
 const styles = theme => ({
@@ -36,6 +38,9 @@ const styles = theme => ({
   addButton: {
     float: "right",
     marginTop: "10px",
+    marginLeft: "20px"
+  },
+  desc: {
     marginLeft: "20px"
   },
 });
@@ -156,6 +161,7 @@ class CollectionVideoList extends Component {
       return <div>Loading...</div>
     } 
 
+    console.log(data);
     return (
       <div className={classes.root}>
         <Button
@@ -206,35 +212,46 @@ class CollectionVideoList extends Component {
                     >
                       <DeleteIcon/>
                     </IconButton>
-                    {collection.expanded ? <ExpandLess /> : <ExpandMore />}
+                    {collection.videoids[0] || collection.description ? 
+                    collection.expanded ? <ExpandLess /> : <ExpandMore /> : ""
+                    }
 
                   </ListItem>
+                  
+                  {collection.videoids[0] || collection.description ? 
                   <Collapse in={collection.expanded} timeout="auto" unmountOnExit>
-                    <List component="div" disablePadding>
-                      {collection.videos.map(video => (
-                        <ListItem key={video.f1}>
-                          <Checkbox
-                            checked={video.selected}
-                            onChange={this.handleChange(collection.id, video.selected, video.f1)}
-                            value="selected"
-                            color="primary"
-                            inputProps={{
-                              'aria-label': 'secondary checkbox',
-                            }}
-                          /> 
-                          <ListItemText primary={video.f1 + " " + video.f2}/>
-                        </ListItem>
-                      ))}
-                    </List>
-                    <Button 
-                      className={classes.createButton}
-                      variant="contained"
-                      color="primary"
-                      onClick={() => this.removeVideo(collection.id)}
-                    >
-                      Remove Videos
-                    </Button>
-                  </Collapse>
+                    <Typography variant="subtitle1" gutterBottom className={classes.desc}>
+                      {collection.description} 
+                    </Typography>
+                    {collection.videoids[0] ?
+                    <div>
+                      <List disablePadding>
+                        {collection.videos.map(video => (
+                          <ListItem key={video.f1}>
+                            <Checkbox
+                              checked={video.selected}
+                              onChange={this.handleChange(collection.id, video.selected, video.f1)}
+                              value="selected"
+                              color="primary"
+                              inputProps={{
+                                'aria-label': 'secondary checkbox',
+                              }}
+                            /> 
+                            <ListItemText primary={video.f1 + " " + video.f2}/>
+                          </ListItem>
+                        ))}
+                      </List>
+                      <Button 
+                        className={classes.createButton}
+                        variant="contained"
+                        color="primary"
+                        onClick={() => this.removeVideo(collection.id)}
+                      >
+                        Remove Videos
+                      </Button>
+                    </div> : ""}
+                  </Collapse> : ""}
+                  
                 </React.Fragment>
               ))}
             </List>

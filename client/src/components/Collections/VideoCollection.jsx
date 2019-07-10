@@ -7,7 +7,7 @@ import { withStyles } from "@material-ui/core/styles";
 import Slider from "@material-ui/core/Slider";
 import VideoList from "../Utilities/VideoList";
 import Swal from "sweetalert2";
-import CollectionList from "./VideoList.jsx";
+import CollectionList from "./CollectionVideoList.jsx";
 import Annotate from "../Annotate/Annotate.jsx"
 
 const styles = theme => ({
