@@ -209,6 +209,16 @@ class ConceptCollection extends Component {
     });
   };
 
+  handleReset = () => {
+    let concepts = this.state.collections.filter(collection => {
+      return collection.collectionid === this.state.selectedCollection;
+    })[0].concepts;
+
+    this.setState({
+      concepts: !concepts[0].id ? [] : concepts
+    });
+  };
+
   handleChangeCollection = event => {
     let currentCollection = this.state.collections.filter(collection => {
       return collection.collectionid === event.target.value;
@@ -301,6 +311,14 @@ class ConceptCollection extends Component {
           }}
         >
           Remove All
+        </Button>
+        <Button
+          className={classes.button}
+          onClick={() => {
+            this.handleReset();
+          }}
+        >
+          Reset
         </Button>
         <Button
           variant="contained"
