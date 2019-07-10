@@ -659,7 +659,7 @@ class VideoDialog extends Component {
       this.handleVideoDialogClose();
       console.log(response);
       
-      Swal.fire("Success", "", "success");
+      Swal.fire("Successfully Marked", "", "success");
     } catch (error) {
       this.handleVideoDialogClose();
       Swal.fire("Error marking video as bad", "", "error");
