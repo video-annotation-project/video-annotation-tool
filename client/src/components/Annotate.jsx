@@ -156,7 +156,7 @@ class Annotate extends Component {
     videoElement.controls = !videoElement.controls;
   };
 
-  static handleChangeSpeed = (event, value) => {
+  handleChangeSpeed = (event, value) => {
     this.setState(
       {
         videoPlaybackRate: Math.round(value * 10) / 10
@@ -515,7 +515,7 @@ class Annotate extends Component {
               min={0}
               max={4}
               step={0.1}
-              onChange={Annotate.handleChangeSpeed}
+              onChange={this.handleChangeSpeed}
             />
             <Typography
               color='textSecondary'
