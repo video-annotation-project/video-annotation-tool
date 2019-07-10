@@ -7,6 +7,9 @@ import TableCell from "@material-ui/core/TableCell";
 import TableHead from "@material-ui/core/TableHead";
 import TableRow from "@material-ui/core/TableRow";
 import Table from "@material-ui/core/Table";
+import IconButton from "@material-ui/core/IconButton";
+import DeleteIcon from "@material-ui/icons/Delete";
+import Swal from "sweetalert2";
 
 const CustomTableCell = withStyles(theme => ({
   head: {
@@ -22,7 +25,7 @@ const CustomTableCell = withStyles(theme => ({
 const styles = theme => ({
   root: {
     //width: '100%',
-    marginTop: theme.spacing.unit * 3
+    marginTop: theme.spacing(3)
     //overflowX: 'auto',
   },
   table: {
@@ -70,6 +73,41 @@ class ViewModels extends Component {
       });
   };
 
+
+  deleteModel = async (model) => {
+    const config = {
+      headers: {
+        Authorization: "Bearer " + localStorage.getItem("token")
+      },
+      data: {
+        model: model
+      }
+    };
+    Swal.fire({
+      title: 'Are you sure?',
+      text: "You won't be able to revert this!",
+      type: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, delete it!'
+    }).then(async (result) => {
+      if (result.value) {
+        try {
+          await axios.delete("/api/models", config);
+          Swal.fire(
+            'Deleted!',
+            'Video has been deleted.',
+            'success'
+          )
+          this.loadExistingModels();
+        } catch (error) {
+          Swal.fire(error, "", "error");
+        }
+      }
+    })
+  }
+
   render() {
     const { classes } = this.props;
     const { models } = this.state;
@@ -84,7 +122,8 @@ class ViewModels extends Component {
               <CustomTableCell>Name</CustomTableCell>
               <CustomTableCell align="right">Date Created</CustomTableCell>
               <CustomTableCell>Concepts</CustomTableCell>
-              <CustomTableCell>Etc...</CustomTableCell>
+              <CustomTableCell>Verification Videos</CustomTableCell>
+              <CustomTableCell>Delete</CustomTableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -99,7 +138,15 @@ class ViewModels extends Component {
                 <CustomTableCell align="right">
                   {model.concepts.toString()}
                 </CustomTableCell>
-                <CustomTableCell>Foo Bar</CustomTableCell>
+                <CustomTableCell>{model.videos ? model.videos.toString() : "NON"}</CustomTableCell>
+                <CustomTableCell>
+                  <IconButton 
+                    onClick={() => this.deleteModel(model)} 
+                    aria-label="Delete"
+                  >
+                    <DeleteIcon/>
+                  </IconButton>
+                </CustomTableCell>
               </TableRow>
             ))}
           </TableBody>

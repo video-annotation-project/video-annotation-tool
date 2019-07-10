@@ -22,11 +22,11 @@ const styles = theme => ({
     flexWrap: "wrap"
   },
   formControl: {
-    margin: theme.spacing.unit,
+    margin: theme.spacing(),
     minWidth: 120
   },
   selectEmpty: {
-    marginTop: theme.spacing.unit * 2
+    marginTop: theme.spacing(2)
   }
 });
 
@@ -235,7 +235,7 @@ class Users extends Component {
     return (
       <div className="users body-container">
         <h2>Users</h2>
-        <Grid container alignItems="baseline" wrap="nowrap" spacing={32}>
+        <Grid container alignItems="center" wrap="nowrap">
           <Grid item>
             <FormControl className={classes.formControl}>
               <InputLabel>User</InputLabel>
@@ -256,6 +256,7 @@ class Users extends Component {
               label="From"
               type="datetime-local"
               name="fromDate"
+              className={classes.formControl}
               defaultValue={this.state.fromDate.localeISOString}
               onChange={this.handleDateChange}
               InputLabelProps={{
@@ -269,6 +270,7 @@ class Users extends Component {
               label="To"
               type="datetime-local"
               name="toDate"
+              className={classes.formControl}
               defaultValue={this.state.toDate.localeISOString}
               onChange={this.handleDateChange}
               InputLabelProps={{

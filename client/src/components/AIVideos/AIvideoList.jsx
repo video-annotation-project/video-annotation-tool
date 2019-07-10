@@ -31,7 +31,7 @@ const styles = theme => ({
   }
 });
 
-class VideoList extends Component {
+class AIvideoList extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -80,7 +80,7 @@ class VideoList extends Component {
           Swal.fire(error, "", "error");
         }
       }
-    })
+    });
   }
 
   openVideoSummary = async (event, video) => {
@@ -157,7 +157,7 @@ class VideoList extends Component {
           onClose={() => this.toggle("videoListOpen")}
         >
           <div className={classes.drawer}>
-              <List component="div" disablePadding>
+              <List disablePadding>
                 {aiVideos.map(video => (
                   <ListItem
                     button
@@ -165,15 +165,16 @@ class VideoList extends Component {
                     onClick={() => handleVideoClick(video, "aiVideos")}
                   >
                     <ListItemText primary={video.id + ". " + video.name} />
-                    <IconButton>
-                      <Description
-                        onClick={event => this.openVideoSummary(event, video)}
-                      />
+                    <IconButton
+                      onClick={event => this.openVideoSummary(event, video)}
+                    >
+                      <Description/>
                     </IconButton>
-                    <IconButton aria-label="Delete">
-                      <DeleteIcon
-                        onClick={() => this.deleteAiVideo(video)}
-                      />
+                    <IconButton
+                      aria-label="Delete"
+                      onClick={() => this.deleteAiVideo(video)}
+                    >
+                      <DeleteIcon/>
                     </IconButton>
                   </ListItem>
                 ))}
@@ -200,8 +201,8 @@ class VideoList extends Component {
   }
 }
 
-VideoList.propTypes = {
+AIvideoList.propTypes = {
   classes: PropTypes.object.isRequired
 };
 
-export default withStyles(styles)(VideoList);
+export default withStyles(styles)(AIvideoList);

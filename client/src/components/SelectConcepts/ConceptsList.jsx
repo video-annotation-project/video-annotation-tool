@@ -14,10 +14,10 @@ import ExpandMore from "@material-ui/icons/ExpandMore";
 
 const styles = theme => ({
   nested: {
-    paddingLeft: theme.spacing.unit * 2
+    paddingLeft: theme.spacing(2)
   },
   shiftRight: {
-    paddingRight: theme.spacing.unit * 5
+    paddingRight: theme.spacing(5)
   }
 });
 
@@ -97,13 +97,6 @@ class ConceptsList extends React.Component {
             >
               <Avatar src={`/api/conceptImages/${concept.id}`} />
               <ListItemText inset primary={concept.name} />
-              <ListItemSecondaryAction className={classes.shiftRight}>
-                <CheckBox
-                  checked={conceptsSelected[concept.id]}
-                  onClick={e => this.handleCheckBoxClick(e, concept.id)}
-                  color="primary"
-                />
-              </ListItemSecondaryAction>
               {concept.expandable ? (
                 concept.expanded ? (
                   <ExpandLess />
@@ -113,6 +106,13 @@ class ConceptsList extends React.Component {
               ) : (
                 <div />
               )}
+              <ListItemSecondaryAction className={classes.shiftRight}>
+                <CheckBox
+                  checked={Boolean(conceptsSelected[concept.id])}
+                  onClick={e => this.handleCheckBoxClick(e, concept.id)}
+                  color="primary"
+                />
+              </ListItemSecondaryAction>
             </ListItem>
             <Collapse in={concept.expanded} timeout="auto" unmountOnExit>
               <ConceptsList

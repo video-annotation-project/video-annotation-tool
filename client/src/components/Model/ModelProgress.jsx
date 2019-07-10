@@ -67,7 +67,7 @@ class ModelProgress extends Component {
       }
     };
     axios
-      .get(`/api/modelTab/progress`, config)
+      .get(`/api/models/progress`, config)
       .then(res => {
         const progress = res.data[0];
 
@@ -82,7 +82,7 @@ class ModelProgress extends Component {
         });
       })
       .catch(error => {
-        console.log("Error in get /api/modelTab");
+        console.log("Error in get /api/models");
         console.log(error);
         if (error.response) {
           console.log(error.response.data.detail);
@@ -96,12 +96,12 @@ class ModelProgress extends Component {
 
     return (
       <div className={this.props.className}>
-      	<Typography variant="title" component="h4" gutterBottom className={classes.trainStatus}>
+      	<Typography variant="h6" gutterBottom className={classes.trainStatus}>
           Training Status
         </Typography>
-        {activeStep === steps.length && (
+        {activeStep >= steps.length && (
           <Paper square elevation={0} className={classes.resetContainer}>
-            <Typography variant="subheading" gutterBottom>
+            <Typography variant="subtitle2" gutterBottom>
               Model has started training...
             </Typography>
             <div className={classes.stopTraining}>
@@ -136,7 +136,7 @@ class ModelProgress extends Component {
 							color="secondary" />
 					</div>
 				: activeStep !== steps.length && (
-  				<Typography variant="subheading" gutterBottom>
+  				<Typography variant="subtitle2" gutterBottom>
             Not currently training
           </Typography>)
 				}

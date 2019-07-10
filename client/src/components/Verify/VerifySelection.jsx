@@ -6,7 +6,6 @@ import Step from "@material-ui/core/Step";
 import StepLabel from "@material-ui/core/StepLabel";
 import StepContent from "@material-ui/core/StepContent";
 import Button from "@material-ui/core/Button";
-import Typography from "@material-ui/core/Typography";
 
 import VerifySelectUser from "./VerifySelectUser.jsx";
 import VerifySelectVideo from "./VerifySelectVideo.jsx";
@@ -15,34 +14,19 @@ import VerifySelectUnsure from "./VerifySelectUnsure";
 
 const styles = theme => ({
   button: {
-    marginTop: theme.spacing.unit,
-    marginRight: theme.spacing.unit
+    marginTop: theme.spacing(2),
+    marginRight: theme.spacing()
   },
   actionsContainer: {
-    marginBottom: theme.spacing.unit * 2
+    marginBottom: theme.spacing(2)
   },
   resetContainer: {
-    padding: theme.spacing.unit * 3
+    padding: theme.spacing(3)
   }
 });
 
 function getSteps() {
   return ["Users", "Videos", "Concepts", "Unsure"];
-}
-
-function getStepContent(step) {
-  switch (step) {
-    case 0:
-      return "Select users";
-    case 1:
-      return "Select videos";
-    case 2:
-      return "Select concepts";
-    case 3:
-      return "Select unsure";
-    default:
-      return "Unknown step";
-  }
 }
 
 class VerifySelection extends React.Component {
@@ -61,15 +45,17 @@ class VerifySelection extends React.Component {
             value={this.props.selectedUsers}
             getUsers={this.props.getUsers}
             selectUser={this.props.selectUser}
-            handleChange={this.props.handleChangeList("selectedUsers")}
+            handleChangeList={this.props.handleChangeList("selectedUsers")}
           />
         );
       case 1:
         return (
           <VerifySelectVideo
-            value={this.props.selectedVideos}
+            selectedVideos={this.props.selectedVideos}
             getVideos={this.props.getVideos}
-            handleChange={this.props.handleChangeList("selectedVideos")}
+            getVideoCollections={this.props.getVideoCollections}
+            handleChange={this.props.handleChange("selectedVideos")}
+            handleChangeList={this.props.handleChangeList("selectedVideos")}
           />
         );
       case 2:
@@ -77,16 +63,16 @@ class VerifySelection extends React.Component {
           <VerifySelectConcept
             value={this.props.selectedConcepts}
             getConcepts={this.props.getConcepts}
-            handleChange={this.props.handleChangeList("selectedConcepts")}
+            handleChangeList={this.props.handleChangeList("selectedConcepts")}
           />
         );
       case 3:
         return (
-            <VerifySelectUnsure
-                value={this.props.selectedUnsure}
-                getUnsure={this.props.getUnsure}
-                handleChange={this.props.handleChangeSwitch("selectedUnsure")}
-            />
+          <VerifySelectUnsure
+            value={this.props.selectedUnsure}
+            getUnsure={this.props.getUnsure}
+            handleChangeSwitch={this.props.handleChangeSwitch("selectedUnsure")}
+          />
         );
       default:
         return "Unknown step";
@@ -112,6 +98,13 @@ class VerifySelection extends React.Component {
     }));
   };
 
+  handleBack = step => {
+    this.props.resetStep(step);
+    this.setState({
+      activeStep: this.state.activeStep - 1
+    });
+  };
+
   resetState = () => {
     this.props.resetState();
     this.setState({
@@ -131,15 +124,25 @@ class VerifySelection extends React.Component {
             <Step key={label}>
               <StepLabel>{label}</StepLabel>
               <StepContent>
-                <Typography>{getStepContent(index)}</Typography>
                 {this.getStepForm(index)}
                 <div className={classes.actionsContainer}>
                   <div>
                     <Button
+                      variant="contained"
                       onClick={this.resetState}
                       className={classes.button}
                     >
-                      Reset
+                      Reset All
+                    </Button>
+                    <Button
+                      variant="contained"
+                      onClick={() => {
+                        this.handleBack(activeStep);
+                      }}
+                      className={classes.button}
+                      disabled={this.state.activeStep === 0}
+                    >
+                      Back
                     </Button>
                     <Button
                       variant="contained"

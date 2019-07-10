@@ -5,10 +5,11 @@ import FormControlLabel from "@material-ui/core/FormControlLabel";
 import FormControl from "@material-ui/core/FormControl";
 import FormGroup from "@material-ui/core/FormGroup";
 import { Checkbox } from "@material-ui/core";
+import Typography from "@material-ui/core/Typography";
 
 const styles = theme => ({
   formControl: {
-    margin: theme.spacing.unit * 3,
+    marginTop: theme.spacing(2),
     maxHeight: "400px",
     overflow: "auto"
   },
@@ -32,34 +33,39 @@ class VerifySelectUser extends React.Component {
       users: users
     });
 
-    if (users.some(user => user.id.toString() === localStorage.getItem("userid"))) {
+    if (
+      users.some(user => user.id.toString() === localStorage.getItem("userid"))
+    ) {
       this.props.selectUser(localStorage.getItem("userid"));
     }
   };
 
   render() {
-    const { classes, value, handleChange } = this.props;
+    const { classes, value, handleChangeList } = this.props;
 
     return (
-      <FormControl component="fieldset" className={classes.formControl}>
-        <FormGroup
-          aria-label="User"
-          name="user"
-          className={classes.group}
-          value={value}
-          onChange={handleChange}
-        >
-          {this.state.users.map(user => (
-            <FormControlLabel
-              key={user.id}
-              value={user.id.toString()}
-              control={<Checkbox color="primary" />}
-              label={user.username}
-              checked={this.props.value.includes(user.id.toString())}
-            />
-          ))}
-        </FormGroup>
-      </FormControl>
+      <>
+        <Typography>Select users</Typography>
+        <FormControl component="fieldset" className={classes.formControl}>
+          <FormGroup
+            aria-label="User"
+            name="user"
+            className={classes.group}
+            value={value}
+            onChange={handleChangeList}
+          >
+            {this.state.users.map(user => (
+              <FormControlLabel
+                key={user.id}
+                value={user.id.toString()}
+                control={<Checkbox color="primary" />}
+                label={user.username}
+                checked={this.props.value.includes(user.id.toString())}
+              />
+            ))}
+          </FormGroup>
+        </FormControl>
+      </>
     );
   }
 }

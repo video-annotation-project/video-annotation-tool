@@ -8,7 +8,7 @@ import DragBoxContainer from "../Utilities/DragBoxContainer.jsx";
 import Button from "@material-ui/core/Button";
 import Typography from "@material-ui/core/Typography";
 import { withStyles } from "@material-ui/core/styles";
-import Slider from "@material-ui/lab/Slider";
+import { Slider } from "@material-ui/core";
 
 
 const styles = theme => ({

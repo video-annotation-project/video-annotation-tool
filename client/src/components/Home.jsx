@@ -7,7 +7,8 @@ const styles = {
     height: "70vh",
     display: "flex",
     justifyContent: "center",
-    alignItems: "center"
+    alignItems: "center",
+    fontSize: 32
   }
 };
 
@@ -25,9 +26,11 @@ class HomePage extends Component {
   render() {
     const { classes } = this.props;
     return (
-      <div className={classes.root}>
-        <Typography variant="display2">Welcome {localStorage.username}</Typography>
-      </div>
+      <Typography
+        className={classes.root}
+      >
+        Welcome {localStorage.username}
+      </Typography>
     );
   }
 }

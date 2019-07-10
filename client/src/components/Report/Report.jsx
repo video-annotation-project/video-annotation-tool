@@ -10,6 +10,12 @@ const styles = theme => ({
   root: {
     width: "100%",
     backgroundColor: theme.palette.background.paper
+  },
+  openSelector: {
+    position: "sticky",
+    margin: theme.spacing(1),
+    top: 0,
+    zIndex: 99
   }
 });
 
@@ -23,7 +29,7 @@ class Report extends React.Component {
       level3: "",
       renderTree: false,
       unsureOnly: false,
-      verifiedCondition: 'all'
+      verifiedCondition: "all"
     };
   }
 
@@ -83,7 +89,12 @@ class Report extends React.Component {
     } = this.state;
     return (
       <div className={classes.root}>
-        <Button onClick={this.handleReportModalOpen}>
+        <Button
+          className={classes.openSelector}
+          variant="contained"
+          color="primary"
+          onClick={this.handleReportModalOpen}
+        >
           Open Report Selector
         </Button>
         <ReportModal
@@ -108,8 +119,8 @@ class Report extends React.Component {
             verifiedCondition={verifiedCondition}
           />
         ) : (
-          <div />
-        )}
+            <div />
+          )}
       </div>
     );
   }

@@ -29,7 +29,7 @@ const styles = theme => ({
     margin: '40px 180px',
   },
   form: {
-    width: "200px"
+    width: "10%"
   },
   center: {
     display: "flex",
@@ -59,34 +59,33 @@ const styles = theme => ({
     width: '50%',
   },
   button: {
-    marginTop: theme.spacing.unit,
-    marginRight: theme.spacing.unit
+    marginTop: theme.spacing(),
+    marginRight: theme.spacing()
   },
   actionsContainer: {
     flexDirection: "column",
     justifyContent: "left",
-    marginBottom: theme.spacing.unit * 2
+    marginBottom: theme.spacing(2)
   },
   resetContainer: {
-    padding: theme.spacing.unit * 3
+    padding: theme.spacing(3)
   },
   checkSelector: {
     maxHeight: "150px",
     overflow: "auto"
   },
-  hyperParamsInput: {
-    width: '190px',
-    marginRight: '10px',
+  videoSelector: {
+    width: "625px"
   },
-  epochText: {
-    position: 'relative',
-    top: '-15px'
+  hyperparametersForm: {
+    display: 'flex',
+    flexWrap: 'wrap',
   },
   textField: {
-    marginLeft: theme.spacing,
-    marginRight: theme.spacing,
+    marginLeft: theme.spacing(),
+    marginRight: theme.spacing(),
     width: 200,
-  },
+  }
 });
 
 class TrainModel extends Component {
@@ -158,7 +157,7 @@ class TrainModel extends Component {
     };
     let option = "trainmodel";
     axios
-      .get(`/api/modelTab/${option}`, config)
+      .get(`/api/models/${option}`, config)
       .then(res => {
         const info = res.data[0].info;
         this.setState({
@@ -179,7 +178,7 @@ class TrainModel extends Component {
         });
       })
       .catch(error => {
-        console.log("Error in get /api/modelTab");
+        console.log("Error in get /api/models");
         console.log(error);
         if (error.response) {
           console.log(error.response.data.detail);
@@ -248,7 +247,7 @@ class TrainModel extends Component {
       }
     };
     let response = await axios.get(
-      `/api/trainModel/concepts/` +
+      `/api/models/concepts/` +
       videosSelected + '/' + modelSelected,
       config
     )
@@ -303,6 +302,7 @@ class TrainModel extends Component {
   };
 
   selectUser = () => {
+    const { checkSelector } = this.props.classes;
     if (!this.state.usersSelected) {
       return (
         <div>Loading...</div>
@@ -311,7 +311,7 @@ class TrainModel extends Component {
     return (
       <FormControl
         component="fieldset"
-        className={this.props.classes.checkSelector}
+        className={checkSelector}
       >
         <FormLabel component="legend">
           Select Users Whose Annotations to Use
@@ -337,6 +337,7 @@ class TrainModel extends Component {
   };
 
   selectVideo = () => {
+    const { checkSelector, videoSelector } = this.props.classes;
     if (!this.state.videosSelected) {
       return (
         <div>Loading...</div>
@@ -345,7 +346,7 @@ class TrainModel extends Component {
     return (
       <FormControl
         component="fieldset"
-        className={this.props.classes.checkSelector}
+        className={`${checkSelector} ${videoSelector}`}
       >
         <FormLabel component="legend">Select Videos to Train With</FormLabel>
         <FormGroup>
@@ -364,15 +365,18 @@ class TrainModel extends Component {
                 label={video.id + " " + video.filename}
               >
               </FormControlLabel>
-              <IconButton style={{ float: 'right' }}>
-                <Description
-                  onClick={
-                    (event) =>
-                      this.openVideoMetadata(
-                        event,
-                        video,
-                      )
+              <IconButton 
+                onClick={
+                  (event) =>
+                    this.openVideoMetadata(
+                      event,
+                      video
+                    )
                   }
+                style={{ float: 'right' }}
+              >
+                <Description
+                  
                 />
               </IconButton>
 
@@ -420,29 +424,21 @@ class TrainModel extends Component {
 
   selectHyperparameters = () => {
     const classes = this.props.classes;
-    const label = (
-      <span className={classes.epochText}>
-        Number of epochs <br/>
-        (0 = Until Increased Loss)
-      </span>)
-
     return (
       <form className={classes.hyperparametersForm}>
         <TextField
           margin='normal'
           name='epochs'
-          label={label}
+          label='Number of epochs (0=Until Increased Loss)'
           value={this.state.epochs}
           onChange={this.handleChange}
-          className={classes.hyperParamsInput}
         />
         <TextField
           margin="normal"
           name='minImages'
-          label='Number of training images'
+          label='Number Training Images'
           value={this.state.minImages}
           onChange={this.handleChange}
-          className={classes.hyperParamsInput}
         />
       </form>
     )
@@ -531,7 +527,7 @@ class TrainModel extends Component {
     };
     // update SQL database
     axios
-      .put("/api/modelTab/trainmodel", body, config)
+      .put("/api/models/trainmodel", body, config)
       .then(res => {
         this.state.socket.emit("refresh trainmodel");
       })
@@ -617,7 +613,6 @@ class TrainModel extends Component {
                   <StepContent>
                     {this.getStepContent(index)}
                     <div className={classes.actionsContainer}>
-                      <div>
                         <Button
                           disabled={activeStep === 0}
                           onClick={this.handleBack}
@@ -654,7 +649,6 @@ class TrainModel extends Component {
                         >
                           Unselect All
                         </Button>
-                      </div>
                     </div>
                   </StepContent>
                 </Step>
