@@ -18,13 +18,7 @@ import Checkbox from '@material-ui/core/Checkbox';
 import GeneralMenu from "../Utilities/GeneralMenu";
 
 const styles = theme => ({
-  root: {
-    // float: 'right',
-    // padding: '10px'
-  },
   drawer: {
-    // height: '1000px',
-    // padding: '15px',
     width: "550px",
     overflow: "auto"
   },
