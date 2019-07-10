@@ -106,7 +106,7 @@ class ConceptCollection extends Component {
             });
             this.loadCollections();
           } catch (error) {
-            Swal.fire("", error, error);
+            Swal.fire("Error creating collection", "", "error");
           }
         }
       });

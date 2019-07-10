@@ -2046,6 +2046,30 @@ app.get(
 );
 
 app.patch(
+  `/api/annotations/tracking/:id`,
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    let queryText = `
+      UPDATE
+        annotations
+      SET
+        bad_tracking=true
+      WHERE
+        id=$1
+      RETURNING *
+    `;
+
+    try {
+      let updated = await psql.query(queryText, [req.params.id]);
+      res.json(updated.rows);
+    } catch (error) {
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
+)
+
+app.patch(
   `/api/annotationsVerify`,
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
