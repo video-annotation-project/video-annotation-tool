@@ -1,7 +1,7 @@
 import React from "react";
 import { Redirect, Route, Switch } from "react-router-dom";
 
-import Annotate from "./components/Annotate/Annotate.jsx";
+import Annotate from "./components/Annotate.jsx";
 import Concepts from "./components/SelectConcepts/Concepts.jsx";
 import CreateUser from "./components/CreateUser.jsx";
 import Home from "./components/Home.jsx";

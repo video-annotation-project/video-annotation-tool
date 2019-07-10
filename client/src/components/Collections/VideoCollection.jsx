@@ -8,7 +8,7 @@ import Slider from "@material-ui/core/Slider";
 import VideoList from "../Utilities/VideoList";
 import Swal from "sweetalert2";
 import CollectionList from "./CollectionVideoList.jsx";
-import Annotate from "../Annotate/Annotate.jsx"
+import Annotate from "../Annotate.jsx"
 
 const styles = theme => ({
   videoContainer: {

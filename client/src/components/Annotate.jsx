@@ -7,10 +7,10 @@ import { withStyles } from "@material-ui/core/styles";
 import Slider from "@material-ui/core/Slider";
 import Swal from "sweetalert2";
 
-import ConceptsSelected from "../Utilities/ConceptsSelected.jsx";
-import DialogModal from "../Utilities/DialogModal.jsx";
-import VideoList from "../Utilities/VideoList.jsx";
-import DragBoxContainer from "../Utilities/DragBoxContainer.jsx";
+import ConceptsSelected from "./Utilities/ConceptsSelected.jsx";
+import DialogModal from "./Utilities/DialogModal.jsx";
+import VideoList from "./Utilities/VideoList.jsx";
+import DragBoxContainer from "./Utilities/DragBoxContainer.jsx";
 
 
 const styles = theme => ({
