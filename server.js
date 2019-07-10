@@ -238,7 +238,7 @@ app.get(
   async (req, res) => {
     const queryText = `
       SELECT 
-        concepts.id, concepts.name
+        concepts.id, concepts.name, concepts.rank
       FROM (
         SELECT
           conceptid, count(*)
@@ -692,9 +692,9 @@ app.post(
   async (req, res) => {
     const queryText = `
       INSERT INTO 
-        concept_collection (name, description)
+        concept_collection (name, description, parent)
       VALUES
-        ($1, $2)
+        ($1, $2, 0)
       RETURNING *
     `;
     try {
