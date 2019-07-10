@@ -301,10 +301,27 @@ class ConceptCollection extends Component {
               })
             : ""}
         </List>
-        <Button className={classes.button} onClick={this.handleUndo}>
+        <Button
+          className={classes.button}
+          onClick={this.handleUndo}
+          disabled={
+            this.state.selectedCollection === "" ||
+            this.state.collections.filter(collection => {
+              return collection.collectionid === this.state.selectedCollection;
+            })[0].concepts === this.state.concepts ||
+            (!this.state.collections.filter(collection => {
+              return collection.collectionid === this.state.selectedCollection;
+            })[0].concepts[0].id &&
+              this.state.concepts.length === 0)
+          }
+        >
           Undo Changes
         </Button>
-        <Button className={classes.button} onClick={this.handleRemoveAll}>
+        <Button
+          className={classes.button}
+          onClick={this.handleRemoveAll}
+          disabled={this.state.concepts.length === 0}
+        >
           Remove All
         </Button>
         <Button
@@ -318,7 +335,16 @@ class ConceptCollection extends Component {
             });
             this.saveToCollection(this.state.selectedCollection, conceptids);
           }}
-          disabled={this.state.selectedCollection === ""}
+          disabled={
+            this.state.selectedCollection === "" ||
+            this.state.collections.filter(collection => {
+              return collection.collectionid === this.state.selectedCollection;
+            })[0].concepts === this.state.concepts ||
+            (!this.state.collections.filter(collection => {
+              return collection.collectionid === this.state.selectedCollection;
+            })[0].concepts[0].id &&
+              this.state.concepts.length === 0)
+          }
         >
           Save
         </Button>
