@@ -18,14 +18,11 @@ const psql = require("./db/simpleConnect");
 const AWS = require("aws-sdk");
 
 const awsS3 = require("s3");
-const { spawn } = require('child_process');
-
-
+const { spawn } = require("child_process");
 
 let jwtOptions = {};
 jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
 jwtOptions.secretOrKey = process.env.JWT_KEY;
-
 
 let currentTensorboardID = null;
 let currentTensorboardProcess = null;
@@ -308,88 +305,87 @@ app.get("/api/conceptImages/:id", async (req, res) => {
   }
 });
 
+app.post(
+  "/api/models/tensorboard/:id",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    let s3 = new AWS.S3();
+    const id = req.params.id;
 
-app.post("/api/models/tensorboard/:id", 
-  passport.authenticate("jwt", { session: false }), async (req, res) => {
-
-  let s3 = new AWS.S3();
-  const id = req.params.id;
-
-  // If other tensorboard servers are running, end them first
-  if (currentTensorboardID !== null){
-    try {
-      currentTensorboardProcess.kill();
-    } catch (err) {
-      if(err.code !== 'ESRCH'){
-        res.status(400).json(err);
+    // If other tensorboard servers are running, end them first
+    if (currentTensorboardID !== null) {
+      try {
+        currentTensorboardProcess.kill();
+      } catch (err) {
+        if (err.code !== "ESRCH") {
+          res.status(400).json(err);
+        }
       }
     }
-  }
 
-  var client = awsS3.createClient({
-    s3Options: {
-      accessKeyId: process.env.AWS_ACCESS_KEY,
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-    }
-  });
-
-  var downloader = client.downloadDir({
-    localDir: `logs/${id}/`,
-    deleteRemoved: true,
-    s3Params: {
-      Bucket: process.env.AWS_S3_BUCKET_NAME,
-      Prefix: process.env.AWS_S3_BUCKET_LOGS_FOLDER + `${id}`,
-    }
-  });
-
-  downloader.on('error', function(err) {
-    res.status(400).json(err);
-  });
-
-  downloader.on('end', function(data) {
-    const tensorboard = spawn(
-      `tensorboard`, [`--logdir=logs/${id}`, '--port=6008']);
-
-    tensorboard.stderr.on('data', (data) => {
-      if (!res.headersSent){
-        currentTensorboardID = id;
-        currentTensorboardProcess = tensorboard;
-        res.sendStatus(200);
+    var client = awsS3.createClient({
+      s3Options: {
+        accessKeyId: process.env.AWS_ACCESS_KEY,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
       }
     });
 
-    tensorboard.on('exit', (code, signal) => {
-      if (!res.headersSent){
-        res.sendStatus(200);
+    var downloader = client.downloadDir({
+      localDir: `logs/${id}/`,
+      deleteRemoved: true,
+      s3Params: {
+        Bucket: process.env.AWS_S3_BUCKET_NAME,
+        Prefix: process.env.AWS_S3_BUCKET_LOGS_FOLDER + `${id}`
       }
     });
 
-    tensorboard.on('error', (err) => {
-      if (!res.headersSent){
-        res.status(400).json(err);
-      }
+    downloader.on("error", function(err) {
+      res.status(400).json(err);
     });
-  });
-});
 
+    downloader.on("end", function(data) {
+      const tensorboard = spawn(`tensorboard`, [
+        `--logdir=logs/${id}`,
+        "--port=6008"
+      ]);
 
-app.get("/api/models/tensorboard/", async (req, res) => {
-    res.json({id: currentTensorboardID});
+      tensorboard.stderr.on("data", data => {
+        if (!res.headersSent) {
+          currentTensorboardID = id;
+          currentTensorboardProcess = tensorboard;
+          res.sendStatus(200);
+        }
+      });
+
+      tensorboard.on("exit", (code, signal) => {
+        if (!res.headersSent) {
+          res.sendStatus(200);
+        }
+      });
+
+      tensorboard.on("error", err => {
+        if (!res.headersSent) {
+          res.status(400).json(err);
+        }
+      });
+    });
   }
 );
 
+app.get("/api/models/tensorboard/", async (req, res) => {
+  res.json({ id: currentTensorboardID });
+});
 
 app.delete("/api/models/tensorboard/", async (req, res) => {
-  if (currentTensorboardID !== null){
+  if (currentTensorboardID !== null) {
     try {
-
       currentTensorboardProcess.kill();
       currentTensorboardProcess = null;
       currentTensorboardID = null;
 
       res.sendStatus(200);
     } catch (err) {
-      if (err.code !== 'ESRCH'){
+      if (err.code !== "ESRCH") {
         res.status(400).json(err);
       } else {
         res.sendStatus(200);
@@ -400,7 +396,6 @@ app.delete("/api/models/tensorboard/", async (req, res) => {
     res.sendStatus(200);
   }
 });
-
 
 app.get(
   "/api/conceptsSelected",
@@ -555,7 +550,10 @@ app.post(
       RETURNING *
     `;
     try {
-      let insert = await psql.query(queryText, [req.body.name, req.body.description]);
+      let insert = await psql.query(queryText, [
+        req.body.name,
+        req.body.description
+      ]);
       res.json({ value: JSON.stringify(insert.rows) });
     } catch (error) {
       res.status(400).json(error);
@@ -565,7 +563,7 @@ app.post(
 
 app.delete(
   "/api/videoCollection/:id",
-  passport.authenticate("jwt", {session: false}),
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const queryText = `
       DELETE FROM 
@@ -583,11 +581,11 @@ app.delete(
       res.status(500).json(error);
     }
   }
-)
+);
 
 app.post(
   "/api/videoCollection/:id",
-  passport.authenticate("jwt", {session: false}),
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     var params = [req.params.id];
     var queryText = `
@@ -596,8 +594,8 @@ app.post(
       VALUES
     `;
 
-    var i = 0
-    for (i = 0; i < req.body.videos.length; i++ ) {
+    var i = 0;
+    for (i = 0; i < req.body.videos.length; i++) {
       queryText += `($1, $${i + 2})`;
       if (i !== req.body.videos.length - 1) {
         queryText += `,`;
@@ -615,11 +613,11 @@ app.post(
       res.status(500).json(error);
     }
   }
-)
+);
 
 app.delete(
   "/api/videoCollection/removeVideos/:id",
-  passport.authenticate("jwt", {session: false}),
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     var params = [req.params.id];
     var queryText = `
@@ -629,14 +627,13 @@ app.delete(
         id=$1 AND (
     `;
 
-    var i = 0
-    for (i = 0; i < req.body.videos.length; i++ ) {
+    var i = 0;
+    for (i = 0; i < req.body.videos.length; i++) {
       queryText += `videoid=$${i + 2}`;
       if (i !== req.body.videos.length - 1) {
         queryText += ` OR `;
-      }
-      else {
-        queryText += `) `
+      } else {
+        queryText += `) `;
       }
       params.push(req.body.videos[i]);
     }
@@ -651,7 +648,7 @@ app.delete(
       res.status(500).json(error);
     }
   }
-)
+);
 
 app.get(
   "/api/conceptCollections",
@@ -659,21 +656,21 @@ app.get(
 
   async (req, res) => {
     let queryText = `
-    SELECT 
-      cc.id, cc.name, 
+    SELECT
+      cc.id, cc.name,
       cc.picture, cc.deleted_flag, cc.collectionid, cc.description,
-      json_agg((ci.conceptid, c.name, c.picture)) as concepts
-    FROM 
+      json_agg(json_build_object('id', ci.conceptid, 'name', c.name, 'picture', c.picture)) as concepts
+    FROM
       concept_collection cc
-    LEFT JOIN 
+    LEFT JOIN
       concept_intermediate ci
-    ON 
+    ON
       cc.collectionid = ci.collectionid
     LEFT JOIN
       concepts c
-    ON 
+    ON
       ci.conceptid = c.id
-    GROUP BY 
+    GROUP BY
       cc.id, cc.name, cc.picture, cc.deleted_flag, cc.collectionid, cc.description
     ORDER BY
       cc.name;
@@ -701,7 +698,10 @@ app.post(
       RETURNING *
     `;
     try {
-      let insert = await psql.query(queryText, [req.body.name, req.body.description]);
+      let insert = await psql.query(queryText, [
+        req.body.name,
+        req.body.description
+      ]);
       res.json({ value: JSON.stringify(insert.rows) });
     } catch (error) {
       res.status(400).json(error);
@@ -711,7 +711,7 @@ app.post(
 
 app.patch(
   "/api/conceptCollection/",
-  passport.authenticate("jwt", {session: false}),
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const queryText = `
       UPDATE 
@@ -731,39 +731,48 @@ app.patch(
       res.status(500).json(error);
     }
   }
-)
+);
 
 app.post(
   "/api/conceptCollection/:id",
-  passport.authenticate("jwt", {session: false}),
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    var params = [req.params.id];
-    var queryText = `
+    let params = [req.params.id];
+    let queryText = `
+      DELETE FROM
+        concept_intermediate 
+      WHERE 
+        collectionid=$1
+    `;
+    let queryText2 =
+      req.body.concepts.length === 0
+        ? ``
+        : `
       INSERT INTO 
         concept_intermediate (collectionid, conceptid)
       VALUES
     `;
 
-    var i = 0
-    for (i = 0; i < req.body.concepts.length; i++ ) {
-      queryText += `($1, $${i + 2})`;
+    for (let i = 0; i < req.body.concepts.length; i++) {
+      queryText2 += `($1, $${i + 2})`;
       if (i !== req.body.concepts.length - 1) {
-        queryText += `,`;
+        queryText2 += `,`;
       }
       params.push(req.body.concepts[i]);
     }
-    queryText += `RETURNING *`;
 
     try {
-      let added = await psql.query(queryText, params);
+      await psql.query(queryText, [req.params.id]);
+      let added = await psql.query(queryText2, params);
       if (added) {
         res.status(200).json(added);
       }
     } catch (error) {
+      console.log(error);
       res.status(500).json(error);
     }
   }
-)
+);
 
 app.delete(
   "/api/aivideos",
@@ -1732,7 +1741,7 @@ app.post(
               id=(SELECT max(id) FROM training_progress)`;
 
       await psql.query(queryText);
-      
+
       ec2.stopInstances(params, (err, data) => {
         if (err) console.log(err, err.stack);
       });

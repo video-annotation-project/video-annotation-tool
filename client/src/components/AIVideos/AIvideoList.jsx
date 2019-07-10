@@ -31,7 +31,7 @@ const styles = theme => ({
   }
 });
 
-class VideoList extends Component {
+class AIvideoList extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -201,8 +201,8 @@ class VideoList extends Component {
   }
 }
 
-VideoList.propTypes = {
+AIvideoList.propTypes = {
   classes: PropTypes.object.isRequired
 };
 
-export default withStyles(styles)(VideoList);
+export default withStyles(styles)(AIvideoList);

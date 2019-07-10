@@ -4,13 +4,13 @@ import io from "socket.io-client";
 import Button from "@material-ui/core/Button";
 import Typography from "@material-ui/core/Typography";
 import { withStyles } from "@material-ui/core/styles";
-import Slider from "@material-ui/lab/Slider";
+import Slider from "@material-ui/core/Slider";
 import Swal from "sweetalert2";
 
-import ConceptsSelected from "../Utilities/ConceptsSelected.jsx";
-import DialogModal from "../Utilities/DialogModal.jsx";
-import VideoList from "../Utilities/VideoList.jsx";
-import DragBoxContainer from "../Utilities/DragBoxContainer.jsx";
+import ConceptsSelected from "./Utilities/ConceptsSelected.jsx";
+import DialogModal from "./Utilities/DialogModal.jsx";
+import VideoList from "./Utilities/VideoList.jsx";
+import DragBoxContainer from "./Utilities/DragBoxContainer.jsx";
 
 
 const styles = theme => ({
@@ -80,7 +80,7 @@ class Annotate extends Component {
 
   componentDidMount = async () => {
     // add event listener for closing or reloading window
-    window.addEventListener("beforeunload", this.handleUnload);
+    window.addEventListener("beforeunload", Annotate.handleUnload);
 
     // add event listener for different key presses
     document.addEventListener("keydown", this.handleKeyDown);
@@ -106,11 +106,11 @@ class Annotate extends Component {
   componentWillUnmount = () => {
     this.updateCheckpoint(false, false);
     this.state.socket.disconnect();
-    window.removeEventListener("beforeunload", this.handleUnload);
+    window.removeEventListener("beforeunload", Annotate.handleUnload);
     document.removeEventListener("keydown", this.handleKeyDown);
   };
 
-  handleUnload = ev => {
+  static handleUnload = ev => {
     var videoElement = document.getElementById("video");
     if (!videoElement.paused) {
       ev.preventDefault();
@@ -124,25 +124,25 @@ class Annotate extends Component {
     }
     if (e.code === "Space") {
       e.preventDefault();
-      this.playPause();
+      Annotate.playPause();
     }
     if (e.code === "ArrowRight") {
       e.preventDefault();
-      this.skipVideoTime(1);
+      Annotate.skipVideoTime(1);
     }
     if (e.code === "ArrowLeft") {
       e.preventDefault();
-      this.skipVideoTime(-1);
+      Annotate.skipVideoTime(-1);
     }
   };
 
-  skipVideoTime = time => {
+  static skipVideoTime = time => {
     var videoElement = document.getElementById("video");
     var cTime = videoElement.currentTime;
     videoElement.currentTime = cTime + time;
   };
 
-  playPause = () => {
+  static playPause = () => {
     var videoElement = document.getElementById("video");
     if (videoElement.paused) {
       videoElement.play();
@@ -151,7 +151,7 @@ class Annotate extends Component {
     }
   };
 
-  toggleVideoControls = () => {
+  static toggleVideoControls = () => {
     var videoElement = document.getElementById("video");
     videoElement.controls = !videoElement.controls;
   };
@@ -530,7 +530,7 @@ class Annotate extends Component {
             color="primary"
             variant="contained"
             className={classes.button}
-            onClick={() => this.skipVideoTime(-5)}
+            onClick={() => Annotate.skipVideoTime(-5)}
           >
             -5 sec
           </Button>
@@ -538,7 +538,7 @@ class Annotate extends Component {
             color="primary"
             variant="contained"
             className={classes.button}
-            onClick={this.playPause}
+            onClick={Annotate.playPause}
           >
             Play/Pause
           </Button>
@@ -546,7 +546,7 @@ class Annotate extends Component {
             color="primary"
             variant="contained"
             className={classes.button}
-            onClick={() => this.skipVideoTime(5)}
+            onClick={() => Annotate.skipVideoTime(5)}
           >
             +5 sec
           </Button>
@@ -554,7 +554,7 @@ class Annotate extends Component {
             color="primary"
             variant="contained"
             className={classes.button}
-            onClick={() => this.toggleVideoControls()}
+            onClick={() => Annotate.toggleVideoControls()}
           >
             Toggle Controls
           </Button>
@@ -591,3 +591,4 @@ class Annotate extends Component {
 }
 
 export default withStyles(styles)(Annotate);
+

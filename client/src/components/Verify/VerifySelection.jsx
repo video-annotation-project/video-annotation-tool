@@ -14,7 +14,7 @@ import VerifySelectUnsure from "./VerifySelectUnsure";
 
 const styles = theme => ({
   button: {
-    marginTop: theme.spacing(),
+    marginTop: theme.spacing(2),
     marginRight: theme.spacing()
   },
   actionsContainer: {

@@ -140,10 +140,11 @@ class ViewModels extends Component {
                 </CustomTableCell>
                 <CustomTableCell>{model.videos ? model.videos.toString() : "NON"}</CustomTableCell>
                 <CustomTableCell>
-                  <IconButton aria-label="Delete">
-                    <DeleteIcon
-                      onClick={() => this.deleteModel(model)}
-                    />
+                  <IconButton 
+                    onClick={() => this.deleteModel(model)} 
+                    aria-label="Delete"
+                  >
+                    <DeleteIcon/>
                   </IconButton>
                 </CustomTableCell>
               </TableRow>

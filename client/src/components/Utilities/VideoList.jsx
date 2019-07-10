@@ -18,13 +18,7 @@ import Checkbox from '@material-ui/core/Checkbox';
 import GeneralMenu from "../Utilities/GeneralMenu";
 
 const styles = theme => ({
-  root: {
-    // float: 'right',
-    // padding: '10px'
-  },
   drawer: {
-    // height: '1000px',
-    // padding: '15px',
     width: "550px",
     overflow: "auto"
   },
@@ -80,7 +74,8 @@ class VideoList extends Component {
   };
 
 
-  handleChange = (name, videoid) => event => {
+  handleCheckbox = (name, videoid) => event => {
+    event.stopPropagation();
     var checkedVideos = this.state.checkedVideos;
     var index = checkedVideos.indexOf(videoid);
     if (event.target.checked &&
@@ -154,7 +149,7 @@ class VideoList extends Component {
                     {this.props.collection ? 
                       <Checkbox
                         checked={video.selected}
-                        onChange={this.handleChange(video.selected, video.id)}
+                        onClick={this.handleCheckbox(video.selected, video.id)}
                         value="selected"
                         color="primary"
                         inputProps={{
@@ -188,7 +183,7 @@ class VideoList extends Component {
                     {this.props.collection ? 
                       <Checkbox
                         checked={video.selected}
-                        onChange={this.handleChange(video.selected, video.id)}
+                        onClick={this.handleCheckbox(video.selected, video.id)}
                         value="selected"
                         color="primary"
                         inputProps={{
@@ -222,7 +217,7 @@ class VideoList extends Component {
                     {this.props.collection ? 
                       <Checkbox
                         checked={video.selected}
-                        onChange={this.handleChange(video.selected, video.id)}
+                        onClick={this.handleCheckbox(video.selected, video.id)}
                         value="selected"
                         color="primary"
                         inputProps={{
@@ -256,7 +251,7 @@ class VideoList extends Component {
                     {this.props.collection ? 
                       <Checkbox
                         checked={video.selected}
-                        onChange={this.handleChange(video.selected, video.id)}
+                        onClick={this.handleCheckbox(video.selected, video.id)}
                         value="selected"
                         color="primary"
                         inputProps={{

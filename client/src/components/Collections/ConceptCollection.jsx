@@ -14,6 +14,7 @@ import FormControl from "@material-ui/core/FormControl";
 import InputLabel from "@material-ui/core/InputLabel";
 import Select from "@material-ui/core/Select";
 import MenuItem from "@material-ui/core/MenuItem";
+import FormHelperText from "@material-ui/core/FormHelperText";
 
 import ConceptsSelected from "../Utilities/ConceptsSelected";
 
@@ -21,6 +22,9 @@ const styles = theme => ({
   button: {
     marginTop: theme.spacing(2),
     marginBottom: theme.spacing(2),
+    marginLeft: theme.spacing(2)
+  },
+  description: {
     marginLeft: theme.spacing(2)
   },
   formControl: {
@@ -40,7 +44,7 @@ class ConceptCollection extends Component {
     this.state = {
       collections: [],
       selectedCollection: "",
-      concepts: [],
+      concepts: []
     };
   }
 
@@ -55,10 +59,11 @@ class ConceptCollection extends Component {
       }
     };
     return axios.get("/api/conceptCollections", config).then(res => {
-      console.log(res.data);
       this.setState(
         {
-          collections: res.data
+          collections: res.data.filter(collection => {
+            return !collection.deleted_flag;
+          })
         },
         callback
       );
@@ -99,6 +104,7 @@ class ConceptCollection extends Component {
               title: "Collection Created!",
               confirmButtonText: "Lovely!"
             });
+            this.loadCollections();
           } catch (error) {
             Swal.fire("", error, error);
           }
@@ -135,6 +141,10 @@ class ConceptCollection extends Component {
           if (response.status) {
             Swal.fire("Deleted!", "Collection has been deleted.", "success");
             this.loadCollections();
+            this.setState({
+              selectedCollection: "",
+              concepts: []
+            });
           }
         } catch (error) {
           Swal.fire("ERROR deleting", result.value, "error");
@@ -157,9 +167,10 @@ class ConceptCollection extends Component {
         .post("/api/conceptCollection/" + id, body, config)
         .then(res => {
           Swal.fire({
-            title: "Inserted!",
+            title: "Saved!",
             confirmButtonText: "Lovely!"
           });
+          this.loadCollections();
         })
         .catch(error => {
           Swal.fire("Could not insert", "", "error");
@@ -170,10 +181,17 @@ class ConceptCollection extends Component {
   };
 
   handleConceptClick = concept => {
-    let concepts = Array.from(new Set(this.state.concepts.concat(concept)));
-    this.setState({
-      concepts: concepts
-    });
+    if (
+      this.state.concepts.filter(selectedConcept => {
+        return selectedConcept.id === concept.id;
+      }).length === 0
+    ) {
+      this.setState({
+        concepts: this.state.concepts.concat(
+          (({ id, name, picture }) => ({ id, name, picture }))(concept)
+        )
+      });
+    }
   };
 
   handleRemove = concept => {
@@ -191,11 +209,28 @@ class ConceptCollection extends Component {
     });
   };
 
+  handleUndo = () => {
+    let concepts = this.state.collections.filter(collection => {
+      return collection.collectionid === this.state.selectedCollection;
+    })[0].concepts;
+
+    this.setState({
+      concepts: !concepts[0].id ? [] : concepts
+    });
+  };
+
   handleChangeCollection = event => {
+    let currentCollection = this.state.collections.filter(collection => {
+      return collection.collectionid === event.target.value;
+    })[0];
+
     this.setState({
       selectedCollection: event.target.value,
+      concepts:
+        !currentCollection || !currentCollection.concepts[0].id
+          ? []
+          : currentCollection.concepts
     });
-    console.log(this.state.selectedCollection);
   };
 
   render() {
@@ -222,18 +257,32 @@ class ConceptCollection extends Component {
               );
             })}
           </Select>
+          {this.state.selectedCollection === "" ||
+          !this.state.collections.filter(collection => {
+            return collection.collectionid === this.state.selectedCollection;
+          })[0].description ? (
+            ""
+          ) : (
+            <FormHelperText>
+              {
+                this.state.collections.filter(collection => {
+                  return (
+                    collection.collectionid === this.state.selectedCollection
+                  );
+                })[0].description
+              }
+            </FormHelperText>
+          )}
         </FormControl>
         <div>
           <Button
             className={classes.button}
-            onClick={() => this.deleteCollection(4)}
+            onClick={() => this.deleteCollection(this.state.selectedCollection)}
+            disabled={this.state.selectedCollection === ""}
           >
-            Delete Concept Collection
+            Delete This Collection
           </Button>
-          <Button
-            className={classes.button}
-            onClick={() => this.createCollection()}
-          >
+          <Button className={classes.button} onClick={this.createCollection}>
             New Concept Collection
           </Button>
         </div>
@@ -243,11 +292,7 @@ class ConceptCollection extends Component {
                 return (
                   <ListItem key={concept.id}>
                     <Avatar src={`/api/conceptImages/${concept.id}`} />
-                    <ListItemText
-                      inset
-                      primary={concept.name}
-                      secondary={concept.id}
-                    />
+                    <ListItemText inset primary={concept.name} />
                     <IconButton onClick={() => this.handleRemove(concept)}>
                       <DeleteIcon />
                     </IconButton>
@@ -258,9 +303,24 @@ class ConceptCollection extends Component {
         </List>
         <Button
           className={classes.button}
-          onClick={() => {
-            this.handleRemoveAll();
-          }}
+          onClick={this.handleUndo}
+          disabled={
+            this.state.selectedCollection === "" ||
+            this.state.collections.filter(collection => {
+              return collection.collectionid === this.state.selectedCollection;
+            })[0].concepts === this.state.concepts ||
+            (!this.state.collections.filter(collection => {
+              return collection.collectionid === this.state.selectedCollection;
+            })[0].concepts[0].id &&
+              this.state.concepts.length === 0)
+          }
+        >
+          Undo Changes
+        </Button>
+        <Button
+          className={classes.button}
+          onClick={this.handleRemoveAll}
+          disabled={this.state.concepts.length === 0}
         >
           Remove All
         </Button>
@@ -268,7 +328,23 @@ class ConceptCollection extends Component {
           variant="contained"
           color="primary"
           className={classes.button}
-          onClick={() => this.saveToCollection(6, [10, 20, 30])}
+          onClick={() => {
+            let conceptids = [];
+            this.state.concepts.forEach(concept => {
+              conceptids.push(concept.id);
+            });
+            this.saveToCollection(this.state.selectedCollection, conceptids);
+          }}
+          disabled={
+            this.state.selectedCollection === "" ||
+            this.state.collections.filter(collection => {
+              return collection.collectionid === this.state.selectedCollection;
+            })[0].concepts === this.state.concepts ||
+            (!this.state.collections.filter(collection => {
+              return collection.collectionid === this.state.selectedCollection;
+            })[0].concepts[0].id &&
+              this.state.concepts.length === 0)
+          }
         >
           Save
         </Button>

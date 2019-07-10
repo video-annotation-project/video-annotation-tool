@@ -4,10 +4,11 @@ import io from "socket.io-client";
 import Button from "@material-ui/core/Button";
 import Typography from "@material-ui/core/Typography";
 import { withStyles } from "@material-ui/core/styles";
-import Slider from "@material-ui/lab/Slider";
+import Slider from "@material-ui/core/Slider";
 import VideoList from "../Utilities/VideoList";
 import Swal from "sweetalert2";
-import CollectionList from "./VideoList.jsx";
+import CollectionList from "./CollectionVideoList.jsx";
+import Annotate from "../Annotate.jsx"
 
 const styles = theme => ({
   videoContainer: {
@@ -62,12 +63,7 @@ class videoCollection extends Component {
     socket.on("refresh videos", this.loadVideos);
 
     this.state = {
-      collectionListOpen: false,
       currentVideo: null,
-      dialogMsg: null,
-      dialogOpen: false,
-      clickedConcept: null,
-      closeHandler: null,
       isLoaded: false,
       startedVideos: [],
       unwatchedVideos: [],
@@ -75,11 +71,7 @@ class videoCollection extends Component {
       inProgressVideos: [],
       videoPlaybackRate: 1.0,
       error: null,
-      socket: socket,
-      width: 0,
-      height: 0,
-      x: 0,
-      y: 0
+      socket: socket
     };
   }
 
@@ -89,6 +81,10 @@ class videoCollection extends Component {
 
     // add event listener for different key presses
     document.addEventListener("keydown", this.handleKeyDown);
+    this.handleUnload = Annotate.handleUnload;
+    this.skipVideoTime = Annotate.skipVideoTime;
+    this.playPause = Annotate.playPause;
+    this.toggleVideoControls = Annotate.toggleVideoControls;
 
     try {
       this.loadVideos(this.getCurrentVideo);
@@ -116,50 +112,22 @@ class videoCollection extends Component {
     document.removeEventListener("keydown", this.handleKeyDown);
   };
 
-  handleUnload = ev => {
-    var videoElement = document.getElementById("video");
-    if (!videoElement.paused) {
-      ev.preventDefault();
-      ev.returnValue = "Are you sure you want to close?";
-    }
-  };
-
   handleKeyDown = e => {
     if (e.target !== document.body) {
       return;
     }
     if (e.code === "Space") {
       e.preventDefault();
-      this.playPause();
+      Annotate.playPause();
     }
     if (e.code === "ArrowRight") {
       e.preventDefault();
-      this.skipVideoTime(1);
+      Annotate.skipVideoTime(1);
     }
     if (e.code === "ArrowLeft") {
       e.preventDefault();
-      this.skipVideoTime(-1);
+      Annotate.skipVideoTime(-1);
     }
-  };
-
-  skipVideoTime = time => {
-    var videoElement = document.getElementById("video");
-    var cTime = videoElement.currentTime;
-    videoElement.currentTime = cTime + time;
-  };
-
-  playPause = () => {
-    var videoElement = document.getElementById("video");
-    if (videoElement.paused) {
-      videoElement.play();
-    } else {
-      videoElement.pause();
-    }
-  };
-
-  toggleVideoControls = () => {
-    var videoElement = document.getElementById("video");
-    videoElement.controls = !videoElement.controls;
   };
 
   handleChangeSpeed = (event, value) => {
