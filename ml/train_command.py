@@ -113,7 +113,7 @@ for video_id in verifyVideos:
     con.commit()
 
 os.system('rm *.mp4')
-# cursor.execute("Update modeltab SET info =  '{\"activeStep\": 0, \"conceptsSelected\":[], \"epochs\":0, \"minImages\":0, \"modelSelected\":\"\",\"videosSelected\":[],\"usersSelected\":[]}' WHERE option = 'trainmodel'")
+cursor.execute("Update modeltab SET info =  '{\"activeStep\": 0, \"conceptsSelected\":[], \"epochs\":0, \"minImages\":0, \"modelSelected\":\"\",\"videosSelected\":[],\"usersSelected\":[]}' WHERE option = 'trainmodel'")
 con.commit()
 con.close()    
-#os.system("sudo shutdown -h")
+os.system("sudo shutdown -h")
