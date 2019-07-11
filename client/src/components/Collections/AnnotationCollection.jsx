@@ -2,17 +2,22 @@ import React, { Component } from "react";
 import axios from "axios";
 import PropTypes from "prop-types";
 import { withStyles } from "@material-ui/core/styles";
-
-import VerifySelectUser from "../Utilities/SelectUser.jsx";
-import VerifySelectVideo from "../Utilities/SelectVideo.jsx";
-import VerifySelectConcept from "../Utilities/SelectConcept.jsx";
-import VerifySelectSure from "../Utilities/SelectSure.jsx";
 import Stepper from "@material-ui/core/Stepper";
 import Step from "@material-ui/core/Step";
 import StepLabel from "@material-ui/core/StepLabel";
 import StepContent from "@material-ui/core/StepContent";
 import Button from "@material-ui/core/Button";
 import { Typography } from "@material-ui/core";
+
+import VerifySelectUser from "../Utilities/SelectUser.jsx";
+import VerifySelectVideo from "../Utilities/SelectVideo.jsx";
+import VerifySelectConcept from "../Utilities/SelectConcept.jsx";
+import VerifySelectSure from "../Utilities/SelectSure.jsx";
+import InputLabel from "@material-ui/core/InputLabel";
+import Select from "@material-ui/core/Select";
+import MenuItem from "@material-ui/core/MenuItem";
+import FormHelperText from "@material-ui/core/FormHelperText";
+import FormControl from "@material-ui/core/FormControl";
 
 const styles = theme => ({
   list: {
@@ -45,11 +50,21 @@ const styles = theme => ({
   },
   resetContainer: {
     padding: theme.spacing(3)
+  },
+  formControl: {
+    minWidth: 200,
+    marginTop: theme.spacing(2),
+    marginBottom: theme.spacing(2),
+    marginLeft: theme.spacing()
+  },
+  info: {
+    marginTop: theme.spacing(2),
+    marginLeft: theme.spacing()
   }
 });
 
 function getSteps() {
-  return ["Users", "Videos", "Concepts", "Sure", "Create Collection"];
+  return ["Users", "Videos", "Concepts", "Sure", "Collection"];
 }
 
 class AnnotationCollection extends Component {
@@ -62,10 +77,39 @@ class AnnotationCollection extends Component {
       selectedConcepts: ["-1"],
       selectedSure: false,
       annotations: [],
+      collections: [],
+      selectedCollection: "",
       error: null,
       activeStep: 0
     };
   }
+
+  componentDidMount() {
+    return this.loadCollections();
+  }
+
+  loadCollections = callback => {
+    const config = {
+      headers: {
+        Authorization: "Bearer " + localStorage.getItem("token")
+      }
+    };
+    return axios.get("/api/annotationCollections", config).then(res => {
+      console.log(res.data);
+      this.setState(
+        {
+          collections: res.data
+        },
+        callback
+      );
+    });
+  };
+
+  handleChangeCollection = event => {
+    this.setState({
+      selectedCollection: event.target.value
+    });
+  };
 
   getUsers = async () => {
     return axios
@@ -167,8 +211,9 @@ class AnnotationCollection extends Component {
       })
       .then(res => {
         this.setState({
-          annotations: res.data
+          annotations: res.data.map(annotation => annotation.id)
         });
+        console.log(this.state.annotations);
       })
       .catch(error => {
         this.setState({
@@ -257,6 +302,8 @@ class AnnotationCollection extends Component {
   };
 
   getStepForm = step => {
+    const classes = this.props.classes;
+
     switch (step) {
       case 0:
         return (
@@ -296,9 +343,52 @@ class AnnotationCollection extends Component {
       case 4:
         return (
           <React.Fragment>
-            <Typography>
+            <Typography className={classes.info}>
               Number of Annotations: {this.state.annotations.length}
             </Typography>
+            <FormControl className={classes.formControl}>
+              <InputLabel>Select collection</InputLabel>
+              <Select
+                value={this.state.selectedCollection}
+                onChange={this.handleChangeCollection}
+                autoWidth={true}
+              >
+                <MenuItem value="">Select collection</MenuItem>
+                {this.state.collections.map(collection => {
+                  return (
+                    <MenuItem key={collection.id} value={collection.id}>
+                      {collection.name}
+                    </MenuItem>
+                  );
+                })}
+              </Select>
+              {this.state.selectedCollection === "" ||
+              !this.state.collections.filter(collection => {
+                return collection.id === this.state.selectedCollection;
+              })[0].description ? (
+                ""
+              ) : (
+                <FormHelperText>
+                  {
+                    this.state.collections.filter(collection => {
+                      return collection.id === this.state.selectedCollection;
+                    })[0].description
+                  }
+                </FormHelperText>
+              )}
+            </FormControl>
+            <div>
+              <Button
+                className={classes.button}
+                onClick={() => this.deleteCollection(this.state.selectedCollection)}
+                disabled={this.state.selectedCollection === ""}
+              >
+                Delete This Collection
+              </Button>
+              <Button className={classes.button} onClick={this.createCollection}>
+                New Annotation Collection
+              </Button>
+            </div>
           </React.Fragment>
         );
       default:
@@ -345,8 +435,10 @@ class AnnotationCollection extends Component {
               <StepLabel>{label}</StepLabel>
               <StepContent>
                 {this.getStepForm(index)}
-                <div className={classes.actionsContainer}>
-                  <React.Fragment>
+                {activeStep === steps.length - 1 ? (
+                  ""
+                ) : (
+                  <div className={classes.actionsContainer}>
                     <Button
                       variant="contained"
                       onClick={this.resetState}
@@ -374,20 +466,14 @@ class AnnotationCollection extends Component {
                               await this.getAnnotations();
                               this.handleNext();
                             }
-                          : activeStep === steps.length - 1
-                          ? () => {
-                              console.log("Collection created");
-                            }
                           : this.handleNext
                       }
                       className={classes.button}
                     >
-                      {activeStep === steps.length - 1
-                        ? "Create Collection"
-                        : "Next"}
+                      Next
                     </Button>
-                  </React.Fragment>
-                </div>
+                  </div>
+                )}
               </StepContent>
             </Step>
           ))}

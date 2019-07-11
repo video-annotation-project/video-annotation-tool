@@ -530,6 +530,39 @@ app.get(
 );
 
 app.get(
+  "/api/annotationCollections",
+  passport.authenticate("jwt", { session: false }),
+
+  async (req, res) => {
+    let queryText = `
+      SELECT
+        ac.*,
+        array_agg(ai.annotationid) as annotations
+      FROM
+        annotation_collection ac
+      LEFT JOIN
+        annotation_intermediate ai
+      ON
+        ac.id = ai.id
+      LEFT JOIN
+        annotations a ON ai.annotationid=a.id
+      GROUP BY
+        ac.id
+      ORDER BY
+        ac.name
+    `;
+
+    try {
+      let annotationCollections = await psql.query(queryText);
+      res.json(annotationCollections.rows);
+    } catch (error) {
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
+);
+
+app.get(
   "/api/videoCollections",
   passport.authenticate("jwt", { session: false }),
 
