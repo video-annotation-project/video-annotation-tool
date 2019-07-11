@@ -42,7 +42,7 @@ const styles = theme => ({
     gridGap: theme.spacing(3)
   },
   button: {
-    marginTop: theme.spacing(2),
+    marginTop: theme.spacing(3),
     marginRight: theme.spacing()
   },
   actionsContainer: {
@@ -58,7 +58,8 @@ const styles = theme => ({
     marginLeft: theme.spacing()
   },
   info: {
-    marginTop: theme.spacing(2),
+    marginTop: theme.spacing(4),
+    marginBottom: theme.spacing(2),
     marginLeft: theme.spacing()
   }
 });
@@ -343,9 +344,6 @@ class AnnotationCollection extends Component {
       case 4:
         return (
           <React.Fragment>
-            <Typography className={classes.info}>
-              Number of Annotations: {this.state.annotations.length}
-            </Typography>
             <FormControl className={classes.formControl}>
               <InputLabel>Select collection</InputLabel>
               <Select
@@ -380,15 +378,17 @@ class AnnotationCollection extends Component {
             <div>
               <Button
                 className={classes.button}
-                onClick={() => this.deleteCollection(this.state.selectedCollection)}
                 disabled={this.state.selectedCollection === ""}
               >
                 Delete This Collection
               </Button>
-              <Button className={classes.button} onClick={this.createCollection}>
+              <Button className={classes.button}>
                 New Annotation Collection
               </Button>
             </div>
+            <Typography className={classes.info}>
+              Number of Annotations: {this.state.annotations.length}
+            </Typography>
           </React.Fragment>
         );
       default:
@@ -435,45 +435,46 @@ class AnnotationCollection extends Component {
               <StepLabel>{label}</StepLabel>
               <StepContent>
                 {this.getStepForm(index)}
-                {activeStep === steps.length - 1 ? (
-                  ""
-                ) : (
-                  <div className={classes.actionsContainer}>
-                    <Button
-                      variant="contained"
-                      onClick={this.resetState}
-                      className={classes.button}
-                    >
-                      Reset All
-                    </Button>
-                    <Button
-                      variant="contained"
-                      onClick={() => {
-                        this.handleBack(activeStep);
-                      }}
-                      className={classes.button}
-                      disabled={this.state.activeStep === 0}
-                    >
-                      Back
-                    </Button>
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      disabled={this.didNotSelect(index)}
-                      onClick={
-                        activeStep === steps.length - 2
-                          ? async () => {
-                              await this.getAnnotations();
-                              this.handleNext();
-                            }
-                          : this.handleNext
-                      }
-                      className={classes.button}
-                    >
-                      Next
-                    </Button>
-                  </div>
-                )}
+
+                <div className={classes.actionsContainer}>
+                  <Button
+                    variant="contained"
+                    onClick={this.resetState}
+                    className={classes.button}
+                  >
+                    Reset All
+                  </Button>
+                  <Button
+                    variant="contained"
+                    onClick={() => {
+                      this.handleBack(activeStep);
+                    }}
+                    className={classes.button}
+                    disabled={this.state.activeStep === 0}
+                  >
+                    Back
+                  </Button>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    disabled={this.didNotSelect(index)}
+                    onClick={
+                      activeStep === steps.length - 2
+                        ? async () => {
+                            await this.getAnnotations();
+                            this.handleNext();
+                          }
+                        : activeStep === steps.length - 1
+                        ? this.resetState
+                        : this.handleNext
+                    }
+                    className={classes.button}
+                  >
+                    {activeStep === steps.length - 1
+                      ? "Add to collection"
+                      : "Next"}
+                  </Button>
+                </div>
               </StepContent>
             </Step>
           ))}
