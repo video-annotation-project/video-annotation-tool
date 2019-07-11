@@ -12,6 +12,7 @@ import Step from "@material-ui/core/Step";
 import StepLabel from "@material-ui/core/StepLabel";
 import StepContent from "@material-ui/core/StepContent";
 import Button from "@material-ui/core/Button";
+import { Typography } from "@material-ui/core";
 
 const styles = theme => ({
   list: {
@@ -48,7 +49,7 @@ const styles = theme => ({
 });
 
 function getSteps() {
-  return ["Users", "Videos", "Concepts", "Sure"];
+  return ["Users", "Videos", "Concepts", "Sure", "Create Collection"];
 }
 
 class AnnotationCollection extends Component {
@@ -65,14 +66,6 @@ class AnnotationCollection extends Component {
       activeStep: 0
     };
   }
-
-  toggleSelection = async () => {
-    let annotations = await this.getAnnotations();
-    this.setState({
-      annotations: annotations
-    });
-    console.log(annotations);
-  };
 
   getUsers = async () => {
     return axios
@@ -172,7 +165,11 @@ class AnnotationCollection extends Component {
           selectedSure: this.state.selectedSure
         }
       })
-      .then(res => res.data)
+      .then(res => {
+        this.setState({
+          annotations: res.data
+        });
+      })
       .catch(error => {
         this.setState({
           error: error
@@ -296,6 +293,14 @@ class AnnotationCollection extends Component {
             handleChangeSwitch={this.handleChangeSwitch("selectedSure")}
           />
         );
+      case 4:
+        return (
+          <React.Fragment>
+            <Typography>
+              Number of Annotations: {this.state.annotations.length}
+            </Typography>
+          </React.Fragment>
+        );
       default:
         return "Unknown step";
     }
@@ -341,7 +346,7 @@ class AnnotationCollection extends Component {
               <StepContent>
                 {this.getStepForm(index)}
                 <div className={classes.actionsContainer}>
-                  <div>
+                  <React.Fragment>
                     <Button
                       variant="contained"
                       onClick={this.resetState}
@@ -364,15 +369,24 @@ class AnnotationCollection extends Component {
                       color="primary"
                       disabled={this.didNotSelect(index)}
                       onClick={
-                        activeStep === steps.length - 1
-                          ? this.toggleSelection
+                        activeStep === steps.length - 2
+                          ? async () => {
+                              await this.getAnnotations();
+                              this.handleNext();
+                            }
+                          : activeStep === steps.length - 1
+                          ? () => {
+                              console.log("Collection created");
+                            }
                           : this.handleNext
                       }
                       className={classes.button}
                     >
-                      {activeStep === steps.length - 1 ? "Finish" : "Next"}
+                      {activeStep === steps.length - 1
+                        ? "Create Collection"
+                        : "Next"}
                     </Button>
-                  </div>
+                  </React.Fragment>
                 </div>
               </StepContent>
             </Step>
