@@ -98,7 +98,7 @@ cursor.execute('''
     (model_user_id,info['modelSelected'],))
 
 # Start training job
-# train_model(concepts, info['usersSelected'], int(info['minImages']), int(info['epochs']), info['modelSelected'], info['videosSelected'], info['conceptsSelected'], download_data=True)
+train_model(concepts, info['usersSelected'], int(info['minImages']), int(info['epochs']), info['modelSelected'], info['videosSelected'], info['conceptsSelected'], download_data=True)
 
 # Run evaluate on all the videos in verifyVideos
 

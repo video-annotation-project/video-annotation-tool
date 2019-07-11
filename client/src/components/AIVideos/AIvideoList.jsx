@@ -69,7 +69,7 @@ class AIvideoList extends Component {
     }).then(async (result) => {
       if (result.value) {
         try {
-          await axios.delete("/api/aivideos", config);
+          await axios.delete("/api/videos/aivideos", config);
           Swal.fire(
             'Deleted!',
             'Video has been deleted.',
@@ -108,13 +108,13 @@ class AIvideoList extends Component {
       }
     };
     try {
-      var summary = await axios.get("/api/aivideos/summary/" + video.name, config)
+      var summary = await axios.get("/api/videos/aivideos/summary/" + video.name, config)
 
       if (summary) {
         return summary;
       }
     } catch (error) {
-        console.log("Error in summary.jsx get /api/aivideos/summary");
+        console.log("Error in summary.jsx get /api/videos/aivideos/summary");
         console.log(error.response.data);
     };
   };

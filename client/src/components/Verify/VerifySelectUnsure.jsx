@@ -35,7 +35,7 @@ class VerifySelectUnsure extends React.Component {
     const { classes, value, handleChangeSwitch } = this.props;
 
     return (
-      <>
+      <div>
         <Typography>Select unsure</Typography>
         <FormControl component="fieldset" className={classes.formControl}>
           <FormGroup>
@@ -53,7 +53,7 @@ class VerifySelectUnsure extends React.Component {
             />
           </FormGroup>
         </FormControl>
-      </>
+      </div>
     );
   }
 }

@@ -107,7 +107,7 @@ class VideoMetadata extends Component {
 
   updateVideoStatus = () => {
     const config = {
-      url: "/api/checkpoints/" + this.props.openedVideo.id,
+      url: "/api/videos/checkpoints/" + this.props.openedVideo.id,
       headers: {
         "Content-Type": "application/json",
         Authorization: "Bearer " + localStorage.getItem("token")

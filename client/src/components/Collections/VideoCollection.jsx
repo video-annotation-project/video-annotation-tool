@@ -148,7 +148,7 @@ class videoCollection extends Component {
         Authorization: "Bearer " + localStorage.getItem("token")
       }
     };
-    return axios.get("/api/videoCollections", config).then(res => {
+    return axios.get("/api/collections/videos", config).then(res => {
       this.setState(
         {
           collections: res.data
@@ -258,7 +258,7 @@ class videoCollection extends Component {
     };
     // update SQL database
     return axios
-      .put("/api/checkpoints/" + this.state.currentVideo.id, body, config)
+      .put("/api/videos/checkpoints/" + this.state.currentVideo.id, body, config)
       .then(res => {
         if (reloadVideos) {
           return this.loadVideos(doneClicked ? this.getCurrentVideo : null);
