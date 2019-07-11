@@ -2070,6 +2070,59 @@ app.get(
   }
 );
 
+app.get(
+  "/api/unverifiedAnnotationsByUserVideoConceptSure",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    const selectedUsers = req.query.selectedUsers;
+    const selectedVideos = req.query.selectedVideos;
+    const selectedConcepts = req.query.selectedConcepts;
+    const selectedSure = req.query.selectedSure;
+
+    let params = [];
+
+    let queryText = `
+      SELECT DISTINCT
+        a.*, c.name, u.username, v.filename
+      FROM 
+        annotations a
+      LEFT JOIN
+        concepts c ON c.id=conceptid
+      LEFT JOIN
+        users u ON u.id=userid
+      LEFT JOIN
+        videos v ON v.id=videoid
+      WHERE
+        a.verifiedby IS NULL
+    `;
+
+    if (!(selectedUsers.length === 1 && selectedUsers[0] === "-1")) {
+      queryText += ` AND a.userid::text=ANY($${params.length + 1})`;
+      params.push(selectedUsers);
+    }
+
+    if (!(selectedVideos.length === 1 && selectedVideos[0] === "-1")) {
+      queryText += ` AND a.videoid::text=ANY($${params.length + 1})`;
+      params.push(selectedVideos);
+    }
+
+    if (!(selectedConcepts.length === 1 && selectedConcepts[0] === "-1")) {
+      queryText += ` AND a.conceptid::text=ANY($${params.length + 1})`;
+      params.push(selectedConcepts);
+    }
+
+    if (selectedSure === "true") queryText += ` AND NOT unsure`;
+
+    try {
+      let concepts = await psql.query(queryText, params);
+      res.json(concepts.rows);
+    } catch (error) {
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
+);
+
 app.patch(
   `/api/annotations/tracking/:id`,
   passport.authenticate("jwt", { session: false }),

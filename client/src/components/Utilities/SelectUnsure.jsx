@@ -18,7 +18,7 @@ const styles = theme => ({
   }
 });
 
-class VerifySelectUnsure extends React.Component {
+class SelectUnsure extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -62,8 +62,8 @@ class VerifySelectUnsure extends React.Component {
   }
 }
 
-VerifySelectUnsure.propTypes = {
+SelectUnsure.propTypes = {
   classes: PropTypes.object.isRequired
 };
 
-export default withStyles(styles)(VerifySelectUnsure);
+export default withStyles(styles)(SelectUnsure);

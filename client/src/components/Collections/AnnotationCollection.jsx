@@ -2,18 +2,18 @@ import React, { Component } from "react";
 import axios from "axios";
 import PropTypes from "prop-types";
 import { withStyles } from "@material-ui/core/styles";
-import Paper from "@material-ui/core/Paper";
 
-import VerifySelection from "./VerifySelection.jsx";
-import VerifyAnnotations from "./VerifyAnnotations.jsx";
+import VerifySelectUser from "../Utilities/SelectUser.jsx";
+import VerifySelectVideo from "../Utilities/SelectVideo.jsx";
+import VerifySelectConcept from "../Utilities/SelectConcept.jsx";
+import VerifySelectSure from "../Utilities/SelectSure.jsx";
+import Stepper from "@material-ui/core/Stepper";
+import Step from "@material-ui/core/Step";
+import StepLabel from "@material-ui/core/StepLabel";
+import StepContent from "@material-ui/core/StepContent";
+import Button from "@material-ui/core/Button";
 
 const styles = theme => ({
-  button: {
-    margin: theme.spacing()
-  },
-  resetContainer: {
-    padding: theme.spacing(3)
-  },
   list: {
     width: "100%",
     backgroundColor: theme.palette.background.paper
@@ -35,38 +35,43 @@ const styles = theme => ({
     gridTemplateColumns: "repeat(12, 1fr)",
     gridGap: theme.spacing(3)
   },
-  paper: {
-    padding: theme.spacing(5)
+  button: {
+    marginTop: theme.spacing(2),
+    marginRight: theme.spacing()
+  },
+  actionsContainer: {
+    marginBottom: theme.spacing(2)
+  },
+  resetContainer: {
+    padding: theme.spacing(3)
   }
 });
 
-class Verify extends Component {
+function getSteps() {
+  return ["Users", "Videos", "Concepts", "Sure"];
+}
+
+class AnnotationCollection extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      selectionMounted: true,
       /* -1 represents select all */
       selectedUsers: [],
       selectedVideos: ["-1"],
       selectedConcepts: ["-1"],
-      selectedUnsure: false,
+      selectedSure: false,
       annotations: [],
       error: null,
-      index: 0
+      activeStep: 0
     };
   }
 
   toggleSelection = async () => {
-    let annotations = [];
-    if (!this.state.selectionMounted) {
-      this.resetState();
-    } else {
-      annotations = await this.getAnnotations();
-    }
+    let annotations = await this.getAnnotations();
     this.setState({
-      annotations: annotations,
-      selectionMounted: !this.state.selectionMounted
+      annotations: annotations
     });
+    console.log(annotations);
   };
 
   getUsers = async () => {
@@ -155,7 +160,7 @@ class Verify extends Component {
 
   getAnnotations = async () => {
     return axios
-      .get(`/api/unverifiedAnnotationsByUserVideoConceptUnsure/`, {
+      .get(`/api/unverifiedAnnotationsByUserVideoConceptSure/`, {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + localStorage.getItem("token")
@@ -164,7 +169,7 @@ class Verify extends Component {
           selectedUsers: this.state.selectedUsers,
           selectedVideos: this.state.selectedVideos,
           selectedConcepts: this.state.selectedConcepts,
-          selectedUnsure: this.state.selectedUnsure
+          selectedSure: this.state.selectedSure
         }
       })
       .then(res => res.data)
@@ -236,7 +241,7 @@ class Verify extends Component {
         return;
       case 3:
         this.setState({
-          selectedUnsure: false
+          selectedSure: false
         });
         return;
       default:
@@ -249,67 +254,137 @@ class Verify extends Component {
       selectedUsers: [],
       selectedVideos: ["-1"],
       selectedConcepts: ["-1"],
-      selectedUnsure: false,
-      index: 0
+      selectedSure: false,
+      activeStep: 0
     });
   };
 
-  handleNext = callback => {
-    this.setState(
-      {
-        index: this.state.index + 1
-      },
-      callback
-    );
+  getStepForm = step => {
+    switch (step) {
+      case 0:
+        return (
+          <VerifySelectUser
+            value={this.state.selectedUsers}
+            getUsers={this.getUsers}
+            selectUser={this.selectUser}
+            handleChangeList={this.handleChangeList("selectedUsers")}
+          />
+        );
+      case 1:
+        return (
+          <VerifySelectVideo
+            selectedVideos={this.state.selectedVideos}
+            getVideos={this.getVideos}
+            getVideoCollections={this.getVideoCollections}
+            handleChange={this.handleChange("selectedVideos")}
+            handleChangeList={this.handleChangeList("selectedVideos")}
+          />
+        );
+      case 2:
+        return (
+          <VerifySelectConcept
+            value={this.state.selectedConcepts}
+            getConcepts={this.getConcepts}
+            handleChangeList={this.handleChangeList("selectedConcepts")}
+          />
+        );
+      case 3:
+        return (
+          <VerifySelectSure
+            value={this.state.selectedSure}
+            getUnsure={this.getUnsure}
+            handleChangeSwitch={this.handleChangeSwitch("selectedSure")}
+          />
+        );
+      default:
+        return "Unknown step";
+    }
+  };
+
+  didNotSelect = step => {
+    switch (step) {
+      case 0:
+        return this.state.selectedUsers.length === 0;
+      case 1:
+        return this.state.selectedVideos.length === 0;
+      case 2:
+        return this.state.selectedConcepts.length === 0;
+      default:
+        return false;
+    }
+  };
+
+  handleNext = () => {
+    this.setState(state => ({
+      activeStep: state.activeStep + 1
+    }));
+  };
+
+  handleBack = step => {
+    this.resetStep(step);
+    this.setState({
+      activeStep: this.state.activeStep - 1
+    });
   };
 
   render() {
-    let selection = "";
-    if (this.state.selectionMounted) {
-      selection = (
-        <VerifySelection
-          selectedUsers={this.state.selectedUsers}
-          selectedVideos={this.state.selectedVideos}
-          selectedConcepts={this.state.selectedConcepts}
-          selectedUnsure={this.state.selectedUnsure}
-          getUsers={this.getUsers}
-          getVideos={this.getVideos}
-          getVideoCollections={this.getVideoCollections}
-          getConcepts={this.getConcepts}
-          getUnsure={this.getUnsure}
-          handleChangeSwitch={this.handleChangeSwitch}
-          handleChange={this.handleChange}
-          handleChangeList={this.handleChangeList}
-          resetStep={this.resetStep}
-          resetState={this.resetState}
-          toggleSelection={this.toggleSelection}
-          selectUser={this.selectUser}
-        />
-      );
-    } else {
-      selection = (
-        <Paper
-          square
-          elevation={0}
-          className={this.props.classes.resetContainer}
-        >
-          <VerifyAnnotations
-            annotation={this.state.annotations[this.state.index]}
-            index={this.state.index}
-            handleNext={this.handleNext}
-            toggleSelection={this.toggleSelection}
-            size={this.state.annotations.length}
-          />
-        </Paper>
-      );
-    }
+    const { activeStep } = this.state;
+    const { classes } = this.props;
+    const steps = getSteps();
 
-    return <React.Fragment>{selection}</React.Fragment>;
+    return (
+      <div>
+        <Stepper activeStep={activeStep} orientation="vertical">
+          {steps.map((label, index) => (
+            <Step key={label}>
+              <StepLabel>{label}</StepLabel>
+              <StepContent>
+                {this.getStepForm(index)}
+                <div className={classes.actionsContainer}>
+                  <div>
+                    <Button
+                      variant="contained"
+                      onClick={this.resetState}
+                      className={classes.button}
+                    >
+                      Reset All
+                    </Button>
+                    <Button
+                      variant="contained"
+                      onClick={() => {
+                        this.handleBack(activeStep);
+                      }}
+                      className={classes.button}
+                      disabled={this.state.activeStep === 0}
+                    >
+                      Back
+                    </Button>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      disabled={this.didNotSelect(index)}
+                      onClick={
+                        activeStep === steps.length - 1
+                          ? this.toggleSelection
+                          : this.handleNext
+                      }
+                      className={classes.button}
+                    >
+                      {activeStep === steps.length - 1 ? "Finish" : "Next"}
+                    </Button>
+                  </div>
+                </div>
+              </StepContent>
+            </Step>
+          ))}
+        </Stepper>
+      </div>
+    );
   }
 }
 
-Verify.propTypes = {
+AnnotationCollection.propTypes = {
   classes: PropTypes.object
 };
 
-export default withStyles(styles)(Verify);
+export default withStyles(styles)(AnnotationCollection);
