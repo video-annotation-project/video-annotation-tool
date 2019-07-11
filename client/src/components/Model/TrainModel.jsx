@@ -29,7 +29,9 @@ const styles = theme => ({
     margin: '40px 180px',
   },
   form: {
-    width: "10%"
+    marginBottom: theme.spacing(2),
+    marginLeft: theme.spacing(1),
+    minWidth: 150
   },
   center: {
     display: "flex",
