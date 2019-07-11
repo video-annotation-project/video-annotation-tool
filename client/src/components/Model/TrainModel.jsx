@@ -412,7 +412,7 @@ class TrainModel extends Component {
                   />
                 }
                 label={concept.name}
-              ></FormControlLabel>
+              />
             </div>
           ))}
         </FormGroup>
