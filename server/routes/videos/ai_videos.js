@@ -79,7 +79,7 @@ router.get("/summary/:name", passport.authenticate("jwt", { session: false }),
               conceptid, 
               videoid,
               sum(case when username  = $1 then 1 else 0 end) as count,
-              sum(case when username  <> $1 then 1 else 0 end) as notai
+              sum(case when username  <> $1 and username <> 'tracking' then 1 else 0 end) as notai
             FROM 
               annotations a 
             LEFT JOIN 
@@ -106,7 +106,7 @@ router.get("/summary/:name", passport.authenticate("jwt", { session: false }),
 
       res.json(summary.rows);
     } catch (error) {
-      console.log("Error in get /api/videos/summary/:videoid");
+      console.log("Error in get /api/videos/aivideos/summary/:videoid");
       console.log(error);
       res.status(500).json(error);
     }
