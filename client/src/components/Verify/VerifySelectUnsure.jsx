@@ -12,6 +12,9 @@ const styles = theme => ({
     marginTop: theme.spacing(2),
     maxHeight: "400px",
     overflow: "auto"
+  },
+  switch: {
+    marginLeft: theme.spacing(2)
   }
 });
 
@@ -42,6 +45,7 @@ class VerifySelectUnsure extends React.Component {
             <FormControlLabel
               control={
                 <Switch
+                  className={classes.switch}
                   checked={value}
                   onChange={handleChangeSwitch}
                   value="selectedUnsure"

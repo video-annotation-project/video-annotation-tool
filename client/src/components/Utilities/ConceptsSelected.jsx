@@ -58,6 +58,28 @@ class ConceptsSelected extends React.Component {
     };
   }
 
+  updateSearch = () => {
+    const config = {
+      headers: {
+        Authorization: "Bearer " + localStorage.getItem("token")
+      }
+    };
+    axios
+      .get(`/api/concepts`, config)
+      .then(res => {
+        this.setState({
+          concepts: res.data
+        });
+      })
+      .catch(error => {
+        console.log("Error in get /api/concepts");
+        console.log(error);
+        if (error.response) {
+          console.log(error.response.data.detail);
+        }
+      });
+  }
+
   getConceptsSelected = () => {
     axios
       .get("/api/conceptsSelected", {
@@ -88,6 +110,7 @@ class ConceptsSelected extends React.Component {
   };
 
   toggleSearchModal = boolean => {
+    this.updateSearch();
     this.setState({
       searchModalOpen: boolean
     });
@@ -297,6 +320,7 @@ class ConceptsSelected extends React.Component {
           inputHandler={this.selectConcept}
           open={this.state.searchModalOpen}
           handleClose={() => this.toggleSearchModal(false)}
+          concepts={this.state.concepts}
         />
       </div>
     );

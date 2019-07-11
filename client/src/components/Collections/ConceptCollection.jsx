@@ -24,6 +24,9 @@ const styles = theme => ({
     marginBottom: theme.spacing(2),
     marginLeft: theme.spacing(2)
   },
+  deleteButton: {
+    marginRight: "450px"
+  },
   description: {
     marginLeft: theme.spacing(2)
   },
@@ -106,7 +109,7 @@ class ConceptCollection extends Component {
             });
             this.loadCollections();
           } catch (error) {
-            Swal.fire("", error, error);
+            Swal.fire("Error creating collection", "", "error");
           }
         }
       });
@@ -293,7 +296,10 @@ class ConceptCollection extends Component {
                   <ListItem key={concept.id}>
                     <Avatar src={`/api/conceptImages/${concept.id}`} />
                     <ListItemText inset primary={concept.name} />
-                    <IconButton onClick={() => this.handleRemove(concept)}>
+                    <IconButton
+                      className={classes.deleteButton}
+                      onClick={() => this.handleRemove(concept)}
+                    >
                       <DeleteIcon />
                     </IconButton>
                   </ListItem>

@@ -221,7 +221,17 @@ app.get(
   "/api/concepts/:id",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    const queryText = `SELECT id, name FROM concepts WHERE concepts.parent=$1`;
+    const queryText = `
+      SELECT
+        *
+      FROM ONLY
+        concepts
+      NATURAL FULL JOIN
+        concept_collection
+      WHERE
+        deleted_flag IS NOT TRUE AND parent=$1
+    `;
+
     try {
       const concepts = await psql.query(queryText, [req.params.id]);
       res.json(concepts.rows);
@@ -238,7 +248,7 @@ app.get(
   async (req, res) => {
     const queryText = `
       SELECT 
-        concepts.id, concepts.name
+        concepts.id, concepts.name, concepts.rank
       FROM (
         SELECT
           conceptid, count(*)
@@ -269,10 +279,14 @@ app.get(
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const queryText = `
-      SELECT 
-        concepts.id, concepts.name
-      FROM 
+      SELECT
+        *
+      FROM ONLY
         concepts
+      NATURAL FULL JOIN
+        concept_collection
+      WHERE
+        deleted_flag IS NOT TRUE
       ORDER BY 
         name
     `;
@@ -402,12 +416,23 @@ app.get(
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const queryText = `
-      SELECT 
+      SELECT
         *
       FROM
-        profile, concepts
-      WHERE 
-        profile.userid=$1 AND concepts.id=profile.conceptId
+        profile
+      LEFT JOIN
+        (
+          SELECT
+            *
+          FROM ONLY
+            concepts
+          NATURAL FULL JOIN
+            concept_collection
+        ) AS concepts
+      ON
+        concepts.id=profile.conceptId
+      WHERE
+        profile.userid=$1 AND deleted_flag IS NOT TRUE
       ORDER BY
         profile.conceptidx, concepts.name
     `;
@@ -692,9 +717,9 @@ app.post(
   async (req, res) => {
     const queryText = `
       INSERT INTO 
-        concept_collection (name, description)
+        concept_collection (name, description, parent)
       VALUES
-        ($1, $2)
+        ($1, $2, 0)
       RETURNING *
     `;
     try {
@@ -1872,7 +1897,9 @@ app.get(
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const selectedUsers = req.query.selectedUsers;
-    let params = [selectedUsers];
+
+    let params = [];
+
     let queryText = `
       SELECT DISTINCT
         v.id, v.filename
@@ -1881,8 +1908,16 @@ app.get(
       JOIN 
         videos v ON v.id=a.videoid
       WHERE 
-        a.verifiedby IS NULL AND a.userid::text=ANY($1) ORDER BY v.id
+        a.verifiedby IS NULL
     `;
+
+    if (!(selectedUsers.length === 1 && selectedUsers[0] === "-1")) {
+      queryText += ` AND a.userid::text=ANY($${params.length + 1})`;
+      params.push(selectedUsers);
+    }
+
+    queryText += ` ORDER BY v.id`;
+
     try {
       let videos = await psql.query(queryText, params);
       res.json(videos.rows);
@@ -1898,7 +1933,8 @@ app.get(
   async (req, res) => {
     const selectedUsers = req.query.selectedUsers;
     const selectedVideos = req.query.selectedVideos;
-    let params = [selectedUsers];
+
+    let params = [];
 
     let queryText = `
       SELECT DISTINCT
@@ -1908,7 +1944,12 @@ app.get(
       LEFT JOIN 
         concepts c ON c.id=conceptid
       WHERE
-        a.verifiedby IS NULL AND a.userid::text=ANY($1)`;
+        a.verifiedby IS NULL`;
+
+    if (!(selectedUsers.length === 1 && selectedUsers[0] === "-1")) {
+      queryText += ` AND a.userid::text=ANY($${params.length + 1})`;
+      params.push(selectedUsers);
+    }
 
     if (!(selectedVideos.length === 1 && selectedVideos[0] === "-1")) {
       queryText += ` AND a.videoid::text=ANY($${params.length + 1})`;
@@ -1934,7 +1975,8 @@ app.get(
     const selectedVideos = req.query.selectedVideos;
     const selectedConcepts = req.query.selectedConcepts;
 
-    let params = [selectedUsers];
+    let params = [];
+
     let queryText = `
       SELECT DISTINCT
         a.unsure
@@ -1947,8 +1989,14 @@ app.get(
       LEFT JOIN 
         videos v ON v.id=videoid
       WHERE 
-        a.verifiedby IS NULL AND a.userid::text=ANY($1)
+        a.verifiedby IS NULL
     `;
+
+    if (!(selectedUsers.length === 1 && selectedUsers[0] === "-1")) {
+      queryText += ` AND a.userid::text=ANY($${params.length + 1})`;
+      params.push(selectedUsers);
+    }
+
     if (!(selectedVideos.length === 1 && selectedVideos[0] === "-1")) {
       queryText += ` AND a.videoid::text=ANY($${params.length + 1})`;
       params.push(selectedVideos);
@@ -1978,7 +2026,7 @@ app.get(
     const selectedConcepts = req.query.selectedConcepts;
     const selectedUnsure = req.query.selectedUnsure;
 
-    let params = [selectedUsers];
+    let params = [];
 
     let queryText = `
       SELECT DISTINCT
@@ -1992,8 +2040,14 @@ app.get(
       LEFT JOIN
         videos v ON v.id=videoid
       WHERE
-        a.verifiedby IS NULL AND a.userid::text=ANY($1)
+        a.verifiedby IS NULL
     `;
+
+    if (!(selectedUsers.length === 1 && selectedUsers[0] === "-1")) {
+      queryText += ` AND a.userid::text=ANY($${params.length + 1})`;
+      params.push(selectedUsers);
+    }
+
     if (!(selectedVideos.length === 1 && selectedVideos[0] === "-1")) {
       queryText += ` AND a.videoid::text=ANY($${params.length + 1})`;
       params.push(selectedVideos);
@@ -2015,6 +2069,30 @@ app.get(
     }
   }
 );
+
+app.patch(
+  `/api/annotations/tracking/:id`,
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    let queryText = `
+      UPDATE
+        annotations
+      SET
+        bad_tracking=true
+      WHERE
+        id=$1
+      RETURNING *
+    `;
+
+    try {
+      let updated = await psql.query(queryText, [req.params.id]);
+      res.json(updated.rows);
+    } catch (error) {
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
+)
 
 app.patch(
   `/api/annotationsVerify`,
