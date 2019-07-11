@@ -5,8 +5,6 @@ const io = require("socket.io")(server);
 
 const bodyParser = require("body-parser");
 const path = require("path");
-const psql = require("./db/simpleConnect");
-const passport = require("passport");
 
 const routes = require('./routes');
 
