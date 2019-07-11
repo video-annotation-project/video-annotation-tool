@@ -729,7 +729,12 @@ app.post(
       ]);
       res.json({ value: JSON.stringify(insert.rows) });
     } catch (error) {
-      res.status(400).json(error);
+      if (error.code === "23505") {
+        res.status(400).json(error);
+      } else {
+        res.status(500).json(error);
+        console.log(error);
+      }
     }
   }
 );
@@ -2145,7 +2150,7 @@ app.patch(
       res.status(500).json(error);
     }
   }
-)
+);
 
 app.patch(
   `/api/annotationsVerify`,

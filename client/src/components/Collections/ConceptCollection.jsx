@@ -109,7 +109,13 @@ class ConceptCollection extends Component {
             });
             this.loadCollections();
           } catch (error) {
-            Swal.fire("Error creating collection", "", "error");
+            Swal.fire(
+              "Error creating collection",
+              error.response.status === 400
+                ? "A collection with this name already exists"
+                : "",
+              "error"
+            );
           }
         }
       });
