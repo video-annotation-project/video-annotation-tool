@@ -52,7 +52,6 @@ class AnnotationFrame extends Component {
       .patch("/api/annotations", body, config)
       .then(res => {
         this.handleDialogClose();
-        let updatedAnnotation = res.data;
         this.props.updateAnnotations(
           this.state.clickedConcept.id,
           this.state.clickedConcept.name,

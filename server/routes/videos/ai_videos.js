@@ -42,7 +42,7 @@ router.delete("/", passport.authenticate("jwt", { session: false }),
           console.log(err);
           res.status(400).json(err);
         } else {
-          console.log(data);
+          console.log("Ai videos deleted");
         }
       });
 

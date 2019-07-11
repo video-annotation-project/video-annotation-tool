@@ -102,7 +102,7 @@ class ConceptCollection extends Component {
             }
           };
           try {
-            await axios.post("/api/conceptCollection", body, config);
+            await axios.post("/api/collections/concepts", body, config);
             Swal.fire({
               title: "Collection Created!",
               confirmButtonText: "Lovely!"
@@ -137,7 +137,7 @@ class ConceptCollection extends Component {
       if (result.value) {
         try {
           let response = await axios.patch(
-            "/api/conceptCollection/",
+            "/api/collections/concepts/",
             body,
             config
           );
@@ -167,7 +167,7 @@ class ConceptCollection extends Component {
     };
     try {
       axios
-        .post("/api/conceptCollection/" + id, body, config)
+        .post("/api/collections/concepts/" + id, body, config)
         .then(res => {
           Swal.fire({
             title: "Saved!",

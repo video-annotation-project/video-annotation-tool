@@ -71,7 +71,7 @@ router.get("/concepts", passport.authenticate("jwt", { session: false }),
       ON 
         a.conceptid=concepts.id
       ORDER BY 
-        a.count DESC
+        concepts.name
     `;
     try {
       const concepts = await psql.query(queryText);

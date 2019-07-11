@@ -91,7 +91,8 @@ class VerifyAnnotations extends Component {
       y: this.props.annotation.y1,
       width: this.props.annotation.x2 - this.props.annotation.x1,
       height: this.props.annotation.y2 - this.props.annotation.y1,
-      videoDialogOpen: false /* Needed for dialog component */
+      videoDialogOpen: false, /* Needed for dialog component */
+      drawDragBox: true
     };
   }
 
@@ -175,6 +176,7 @@ class VerifyAnnotations extends Component {
 
   resetState = () => {
     this.setState({
+      drawDragBox: true,
       disableVerify: false,
       concept: null,
       comment: this.props.annotation.comment,
@@ -185,6 +187,12 @@ class VerifyAnnotations extends Component {
       height: this.props.annotation.y2 - this.props.annotation.y1
     });
   };
+
+  toggleDragBox = () => {
+    this.setState({
+      drawDragBox: false
+    });
+  }
 
   nextAnnotation = () => {
     if (this.props.size === this.props.index + 1) {
@@ -418,7 +426,8 @@ class VerifyAnnotations extends Component {
               <DragBoxContainer
                 className={classes.img}
                 dragBox={classes.dragBox}
-                drawDragBox={true}
+                drawDragBox={this.state.drawDragBox}
+                toggleDragBox={this.toggleDragBox}
                 size={{
                   width: this.state.width,
                   height: this.state.height

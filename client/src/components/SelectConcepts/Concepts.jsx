@@ -61,7 +61,7 @@ class Concepts extends React.Component {
 
   changeConceptsSelected = async id => {
     const config = {
-      url: "/api/conceptsSelected",
+      url: "/api/users/concepts",
       headers: {
         "Content-Type": "application/json",
         Authorization: "Bearer " + localStorage.getItem("token")

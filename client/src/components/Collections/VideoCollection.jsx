@@ -195,7 +195,7 @@ class videoCollection extends Component {
       if (result.value) {
         try {
           let response = await axios.delete(
-            "/api/videoCollection/" + id,
+            "/api/collections/videos/" + id,
             config
           );
           if (response.status === 200) {
@@ -335,7 +335,7 @@ class videoCollection extends Component {
             }
           };
           try {
-            await axios.post("/api/videoCollection", body, config);
+            await axios.post("/api/collections/videos", body, config);
             Swal.fire({
               title: "Collection Created!",
               confirmButtonText: "Lovely!"
@@ -358,7 +358,7 @@ class videoCollection extends Component {
     };
     try {
       axios
-        .post("/api/videoCollection/" + id, body, config)
+        .post("/api/collections/videos/" + id, body, config)
         .then(res => {
           this.toggleDrawer();
           Swal.fire({

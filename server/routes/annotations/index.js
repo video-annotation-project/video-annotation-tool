@@ -166,12 +166,19 @@ router.delete("/", passport.authenticate("jwt", { session: false }),
 router.post("/images", passport.authenticate("jwt", { session: false }),
   (req, res) => {
     let s3 = new AWS.S3();
-    let key = process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + req.body.date;
-    if (req.body.box) {
-      key += "_box";
+    let key = process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER;
+    if (req.body.name) {
+      key += req.body.name;
+    } else {
+      key += req.body.date;
+      if (req.body.box) {
+        key += "_box";
+      }
+      key += ".png";
     }
+    
     const params = {
-      Key: key + ".png",
+      Key: key,
       Bucket: process.env.AWS_S3_BUCKET_NAME,
       ContentEncoding: "base64",
       ContentType: "image/png",
@@ -269,7 +276,6 @@ router.get("/unverified", passport.authenticate("jwt", { session: false }),
     queryText += orderBy;
 
     try {
-      console.log(queryText);
       let concepts = await psql.query(queryText, params);
       res.json(concepts.rows);
     } catch (error) {
@@ -403,7 +409,7 @@ let verifyAnnotation = async (req, res) => {
             console.log(err);
             res.status(400).json(err);
         } else {
-            console.log(data);
+            console.log("Deleted annotations");
         }
       }
     );
