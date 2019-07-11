@@ -61,7 +61,7 @@ class ConceptCollection extends Component {
         Authorization: "Bearer " + localStorage.getItem("token")
       }
     };
-    return axios.get("/api/conceptCollections", config).then(res => {
+    return axios.get("/api/collections/concepts", config).then(res => {
       this.setState(
         {
           collections: res.data.filter(collection => {
@@ -102,7 +102,7 @@ class ConceptCollection extends Component {
             }
           };
           try {
-            await axios.post("/api/conceptCollection", body, config);
+            await axios.post("/api/collections/concepts", body, config);
             Swal.fire({
               title: "Collection Created!",
               confirmButtonText: "Lovely!"
@@ -137,7 +137,7 @@ class ConceptCollection extends Component {
       if (result.value) {
         try {
           let response = await axios.patch(
-            "/api/conceptCollection/",
+            "/api/collections/concepts/",
             body,
             config
           );
@@ -167,7 +167,7 @@ class ConceptCollection extends Component {
     };
     try {
       axios
-        .post("/api/conceptCollection/" + id, body, config)
+        .post("/api/collections/concepts/" + id, body, config)
         .then(res => {
           Swal.fire({
             title: "Saved!",
@@ -294,7 +294,7 @@ class ConceptCollection extends Component {
             ? this.state.concepts.map(concept => {
                 return (
                   <ListItem key={concept.id}>
-                    <Avatar src={`/api/conceptImages/${concept.id}`} />
+                    <Avatar src={`/api/concepts/images/${concept.id}`} />
                     <ListItemText inset primary={concept.name} />
                     <IconButton
                       className={classes.deleteButton}

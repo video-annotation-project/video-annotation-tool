@@ -98,7 +98,7 @@ cursor.execute('''
     (model_user_id,info['modelSelected'],))
 
 # Start training job
-# train_model(concepts, info['usersSelected'], int(info['minImages']), int(info['epochs']), info['modelSelected'], info['videosSelected'], info['conceptsSelected'], download_data=True)
+train_model(concepts, info['usersSelected'], int(info['minImages']), int(info['epochs']), info['modelSelected'], info['videosSelected'], info['conceptsSelected'], download_data=True)
 
 # Run evaluate on all the videos in verifyVideos
 
@@ -113,7 +113,7 @@ for video_id in verifyVideos:
     con.commit()
 
 os.system('rm *.mp4')
-# cursor.execute("Update modeltab SET info =  '{\"activeStep\": 0, \"conceptsSelected\":[], \"epochs\":0, \"minImages\":0, \"modelSelected\":\"\",\"videosSelected\":[],\"usersSelected\":[]}' WHERE option = 'trainmodel'")
+cursor.execute("Update modeltab SET info =  '{\"activeStep\": 0, \"conceptsSelected\":[], \"epochs\":0, \"minImages\":0, \"modelSelected\":\"\",\"videosSelected\":[],\"usersSelected\":[]}' WHERE option = 'trainmodel'")
 con.commit()
 con.close()    
-#os.system("sudo shutdown -h")
+os.system("sudo shutdown -h")

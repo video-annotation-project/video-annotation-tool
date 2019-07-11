@@ -95,7 +95,7 @@ class ConceptsList extends React.Component {
               button
               onClick={() => this.handleConceptClick(concept.id)}
             >
-              <Avatar src={`/api/conceptImages/${concept.id}`} />
+              <Avatar src={`/api/concepts/images/${concept.id}`} />
               <ListItemText inset primary={concept.name} />
               {concept.expandable ? (
                 concept.expanded ? (

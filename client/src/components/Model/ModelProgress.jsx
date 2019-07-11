@@ -67,7 +67,7 @@ class ModelProgress extends Component {
       }
     };
     axios
-      .get(`/api/models/progress`, config)
+      .get(`/api/models/progress/train`, config)
       .then(res => {
         const progress = res.data[0];
 

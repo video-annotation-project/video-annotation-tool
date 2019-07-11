@@ -41,7 +41,7 @@ class ReportTree extends Component {
     });
     try {
       let treeData = await axios.get(
-        `/api/reportTreeData?` +
+        `api/annotations/treeData?` +
           `levelName=${this.state.levelName}&` +
           `queryConditions=${this.props.queryConditions}&` +
           `unsureOnly=${this.props.unsureOnly}&` +

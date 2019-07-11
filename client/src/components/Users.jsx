@@ -141,7 +141,7 @@ class Users extends Component {
 
   getAnnotationCount = async (userId, fromDate, toDate) => {
     const SPACE_CHAR = " ";
-    const url = "/api/users/annotationCount";
+    const url = "/api/users/annotations";
     const config = {
       headers: {
         "Content-Type": "application/json",

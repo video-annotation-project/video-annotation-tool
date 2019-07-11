@@ -53,7 +53,7 @@ class CreateUser extends Component {
       admin: this.state.admin
     };
     try {
-      let newUserInfo = await axios.post("/api/createUser", body, config);
+      let newUserInfo = await axios.post("/api/users", body, config);
       console.log(newUserInfo);
       Swal.fire("Created a new user: " + newUserInfo.data.user.username, 
       "", "success");

@@ -55,7 +55,7 @@ class Profile extends Component {
       newPassword2: newPassword2
     };
     axios
-      .post("/api/changePassword", body, config)
+      .patch("/api/users", body, config)
       .then(res => {
         Swal.fire("Password Changed!", "", "success");
         this.props.history.push("/");

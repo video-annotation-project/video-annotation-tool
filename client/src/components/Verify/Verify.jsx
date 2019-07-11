@@ -65,6 +65,7 @@ class Verify extends Component {
       this.resetState();
     } else {
       annotations = await this.getAnnotations();
+      console.log(annotations);
     }
     this.setState({
       annotations: annotations,
@@ -88,7 +89,7 @@ class Verify extends Component {
 
   getVideos = async () => {
     return axios
-      .get(`/api/unverifiedVideosByUser/`, {
+      .get(`/api/annotations/unverified`, {
         headers: { Authorization: "Bearer " + localStorage.getItem("token") },
         params: {
           selectedUsers: this.state.selectedUsers
@@ -104,7 +105,7 @@ class Verify extends Component {
 
   getVideoCollections = async () => {
     return axios
-      .get(`/api/videoCollections`, {
+      .get(`/api/collections/videos`, {
         headers: { Authorization: "Bearer " + localStorage.getItem("token") }
       })
       .then(res => res.data)
@@ -117,7 +118,7 @@ class Verify extends Component {
 
   getConcepts = async () => {
     return axios
-      .get(`/api/unverifiedConceptsByUserVideo/`, {
+      .get(`/api/annotations/unverified`, {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + localStorage.getItem("token")
@@ -137,7 +138,7 @@ class Verify extends Component {
 
   getUnsure = async () => {
     return axios
-      .get(`/api/unverifiedUnsureByUserVideoConcept`, {
+      .get(`/api/annotations/unverified`, {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + localStorage.getItem("token")
@@ -158,7 +159,7 @@ class Verify extends Component {
 
   getAnnotations = async () => {
     return axios
-      .get(`/api/unverifiedAnnotationsByUserVideoConceptUnsure/`, {
+      .get(`/api/annotations/unverified`, {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + localStorage.getItem("token")

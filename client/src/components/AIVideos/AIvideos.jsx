@@ -5,10 +5,10 @@ import io from "socket.io-client";
 import AIvideoList from "./AIvideoList.jsx";
 import DragBoxContainer from "../Utilities/DragBoxContainer.jsx";
 
+import Slider from "@material-ui/core/Slider";
 import Button from "@material-ui/core/Button";
 import Typography from "@material-ui/core/Typography";
 import { withStyles } from "@material-ui/core/styles";
-import { Slider } from "@material-ui/core";
 
 
 const styles = theme => ({
@@ -160,7 +160,7 @@ class Annotate extends Component {
         Authorization: "Bearer " + localStorage.getItem("token")
       }
     };
-    return axios.get("/api/aivideos", config).then(res => {
+    return axios.get("/api/videos/aivideos", config).then(res => {
       this.setState(
         {
           aiVideos: res.data.rows
