@@ -221,7 +221,17 @@ app.get(
   "/api/concepts/:id",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    const queryText = `SELECT id, name FROM concepts WHERE concepts.parent=$1`;
+    const queryText = `
+      SELECT
+        *
+      FROM ONLY
+        concepts
+      NATURAL FULL JOIN
+        concept_collection
+      WHERE
+        deleted_flag IS NOT TRUE AND parent=$1
+    `;
+
     try {
       const concepts = await psql.query(queryText, [req.params.id]);
       res.json(concepts.rows);
@@ -269,10 +279,14 @@ app.get(
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const queryText = `
-      SELECT 
-        concepts.id, concepts.name
-      FROM 
+      SELECT
+        *
+      FROM ONLY
         concepts
+      NATURAL FULL JOIN
+        concept_collection
+      WHERE
+        deleted_flag IS NOT TRUE
       ORDER BY 
         name
     `;
@@ -402,12 +416,23 @@ app.get(
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const queryText = `
-      SELECT 
+      SELECT
         *
       FROM
-        profile, concepts
-      WHERE 
-        profile.userid=$1 AND concepts.id=profile.conceptId
+        profile
+      LEFT JOIN
+        (
+          SELECT
+            *
+          FROM ONLY
+            concepts
+          NATURAL FULL JOIN
+            concept_collection
+        ) AS concepts
+      ON
+        concepts.id=profile.conceptId
+      WHERE
+        profile.userid=$1 AND deleted_flag IS NOT TRUE
       ORDER BY
         profile.conceptidx, concepts.name
     `;
