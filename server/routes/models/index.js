@@ -57,7 +57,7 @@ router.get("/concepts", passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const queryText = `
       SELECT 
-        concepts.id, concepts.name
+        concepts.id, concepts.name, concepts.rank
       FROM (
         SELECT
           conceptid, count(*)

@@ -234,7 +234,9 @@ class VerifyAnnotations extends Component {
       }
     };
     axios
-      .delete("/api/annotations", config)
+      .delete(
+        "/api/annotations", 
+        config)
       .then(res => {
         return res.data;
       })
@@ -637,22 +639,45 @@ VerifyAnnotations.propTypes = {
 
 export default withStyles(styles)(VerifyAnnotations);
 
-class VideoDialog extends React.Component {
+class VideoDialog extends Component {
   handleVideoDialogClose = () => {
     this.props.onClose();
   };
 
+  markTrackingAsBad = async () => {
+    const config = {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + localStorage.getItem("token")
+      }
+    };
+    const body = {};
+    try {
+      let response = await axios.patch(
+        `/api/annotations/tracking/${this.props.annotation.id}`,
+        body,
+        config
+      );
+      this.handleVideoDialogClose();
+      console.log(response);
+      
+      Swal.fire("Successfully Marked", "", "success");
+    } catch (error) {
+      this.handleVideoDialogClose();
+      Swal.fire("Error marking video as bad", "", "error");
+    }
+  };
+
   render() {
-    const { classes, onClose, selectedValue, open, ...other } = this.props;
+    const { classes, open } = this.props;
     return (
       <Dialog
         maxWidth={false}
         onClose={this.handleVideoDialogClose}
         aria-labelledby="video-dialog-title"
         open={open}
-        {...other}
       >
-        <DialogTitle id="video-dialog-title">Annotation Video</DialogTitle>
+        <DialogTitle id="video-dialog-title">Tracing Video</DialogTitle>
         <div>
           <video
             id="video"
@@ -669,6 +694,14 @@ class VideoDialog extends React.Component {
             Your browser does not support the video tag.
           </video>
         </div>
+        <Button
+            className={classes.button}
+            variant="contained"
+            color="secondary"
+            onClick={() => this.markTrackingAsBad()}
+        >
+            Mark as Bad Tracking Video
+        </Button>
       </Dialog>
     );
   }

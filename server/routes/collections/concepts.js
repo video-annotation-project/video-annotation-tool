@@ -39,9 +39,9 @@ router.post("/", passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const queryText = `
       INSERT INTO 
-        concept_collection (name, description)
+        concept_collection (name, description, parent)
       VALUES
-        ($1, $2)
+        ($1, $2, 0)
       RETURNING *
     `;
     try {

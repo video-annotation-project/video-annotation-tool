@@ -1,5 +1,4 @@
 import React, { Component } from "react";
-import axios from "axios";
 import Dialog from "@material-ui/core/Dialog";
 import DialogContent from "@material-ui/core/DialogContent";
 import DialogTitle from "@material-ui/core/DialogTitle";
@@ -31,30 +30,8 @@ class SearchModal extends Component {
     };
   }
 
-  componentDidMount = () => {
-    const config = {
-      headers: {
-        Authorization: "Bearer " + localStorage.getItem("token")
-      }
-    };
-    axios
-      .get(`/api/concepts`, config)
-      .then(res => {
-        this.setState({
-          concepts: res.data
-        });
-      })
-      .catch(error => {
-        console.log("Error in get /api/concepts");
-        console.log(error);
-        if (error.response) {
-          console.log(error.response.data.detail);
-        }
-      });
-  };
-
   getId = concept => {
-    const match = this.state.concepts.find(item => {
+    const match = this.props.concepts.find(item => {
       return item.name === concept;
     });
     return match ? match.id : null;
@@ -77,7 +54,7 @@ class SearchModal extends Component {
   };
 
   searchConcepts = search => {
-    const conceptsLikeSearch = this.state.concepts.filter(concept => {
+    const conceptsLikeSearch = this.props.concepts.filter(concept => {
       return concept.name.match(new RegExp(search, "i"));
     });
 
@@ -87,7 +64,8 @@ class SearchModal extends Component {
   };
 
   render() {
-    let { concepts, conceptsLikeSearch } = this.state;
+    let { conceptsLikeSearch } = this.state;
+    let { concepts } = this.props;
     const { classes } = this.props;
     if (!concepts) {
       return (

@@ -188,6 +188,27 @@ router.post("/images", passport.authenticate("jwt", { session: false }),
   }
 );
 
+router.patch(`/tracking/:id`, passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    let queryText = `
+      UPDATE
+        annotations
+      SET
+        bad_tracking=true
+      WHERE
+        id=$1
+      RETURNING *
+    `;
+
+    try {
+      let updated = await psql.query(queryText, [req.params.id]);
+      res.json(updated.rows);
+    } catch (error) {
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
+)
 
 router.get("/unverified", passport.authenticate("jwt", { session: false }),
   async (req, res) => {
@@ -197,18 +218,22 @@ router.get("/unverified", passport.authenticate("jwt", { session: false }),
     const selectedUnsure = req.query.selectedUnsure;
 
     let params = [];
-    let queryText = '';
+    let queryText = 'SELECT DISTINCT ';
+    let orderBy = '';
 
     if (selectedUsers && selectedVideos && selectedConcepts && selectedUnsure){
-      queryText += `SELECT DISTINCT a.*, c.name, u.username, v.filename `
+      queryText += `a.*, c.name, u.username, v.filename `;
+      orderBy = ' ORDER BY a.id';
     } else if (selectedUsers && selectedVideos && selectedConcepts){
-      queryText += `SELECT DISTINCT a.unsure `
+      queryText += `a.unsure `;
     } else if (selectedUsers && selectedVideos){
-      queryText += `SELECT DISTINCT c.* `
+      queryText += `c.* `;
+      orderBy = ' ORDER BY c.name';
     } else if (selectedUsers) {
-      queryText += `SELECT DISTINCT v.id, v.filename `
+      queryText += `v.id, v.filename `;
+      orderBy = ' ORDER BY v.id';
     } else {
-      res.status(400).json({error: 'Nothing selected.'})
+      res.status(400).json({error: 'Nothing selected.'});
     }
 
     queryText += `
@@ -241,7 +266,10 @@ router.get("/unverified", passport.authenticate("jwt", { session: false }),
 
     if (selectedUnsure === "true") queryText += ` AND unsure`;
 
+    queryText += orderBy;
+
     try {
+      console.log(queryText);
       let concepts = await psql.query(queryText, params);
       res.json(concepts.rows);
     } catch (error) {

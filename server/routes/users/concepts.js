@@ -6,16 +6,23 @@ const psql = require("../../db/simpleConnect");
 router.get("/", passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const queryText = `
-      SELECT 
+      SELECT
         *
       FROM
         profile
       LEFT JOIN
-        concepts
+        (
+          SELECT
+            *
+          FROM ONLY
+            concepts
+          NATURAL FULL JOIN
+            concept_collection
+        ) AS concepts
       ON
-    concepts.id=profile.conceptId
-      WHERE 
-        profile.userid=$1
+        concepts.id=profile.conceptId
+      WHERE
+        profile.userid=$1 AND deleted_flag IS NOT TRUE
       ORDER BY
         profile.conceptidx, concepts.name
     `;
