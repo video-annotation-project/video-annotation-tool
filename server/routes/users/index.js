@@ -134,7 +134,6 @@ router.patch("/", passport.authenticate("jwt", { session: false }),
  */
 router.post("/login", async function(req, res) {
   const { username, password } = req.body;
-  console.log(req.body);
   let queryPass = `
     SELECT 
       id, password, admin
