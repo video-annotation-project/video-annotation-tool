@@ -60,7 +60,6 @@ io.on("connection", socket => {
 
 // Express only serves static assets in production
 if (process.env.NODE_ENV === "production") {
-  console.log("HERE");
   app.use(express.static(path.join(__dirname, "../client", "build")));
   app.get("/*", (req, res) => {
     res.sendFile(path.join(__dirname, "../client", "build", "index.html"));
