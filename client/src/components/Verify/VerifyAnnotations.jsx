@@ -91,7 +91,8 @@ class VerifyAnnotations extends Component {
       y: this.props.annotation.y1,
       width: this.props.annotation.x2 - this.props.annotation.x1,
       height: this.props.annotation.y2 - this.props.annotation.y1,
-      videoDialogOpen: false /* Needed for dialog component */
+      videoDialogOpen: false, /* Needed for dialog component */
+      drawDragBox: true
     };
   }
 
@@ -147,11 +148,12 @@ class VerifyAnnotations extends Component {
 
   verifyAnnotation = async () => {
     const body = {
+      op: "verifyAnnotation",
       id: this.props.annotation.id,
-      conceptid: !this.state.concept ? null : this.state.concept.id,
+      conceptId: !this.state.concept ? null : this.state.concept.id,
       comment: this.state.comment,
       unsure: this.state.unsure,
-      oldconceptid: !this.state.concept ? null : this.props.annotation.conceptid
+      oldConceptId: !this.state.concept ? null : this.props.annotation.conceptid
     };
 
     const config = {
@@ -162,7 +164,7 @@ class VerifyAnnotations extends Component {
     };
 
     return axios
-      .patch(`/api/annotationsVerify/`, body, config)
+      .patch(`/api/annotations/`, body, config)
       .then(res => {
         this.nextAnnotation();
         return res.data;
@@ -174,6 +176,7 @@ class VerifyAnnotations extends Component {
 
   resetState = () => {
     this.setState({
+      drawDragBox: true,
       disableVerify: false,
       concept: null,
       comment: this.props.annotation.comment,
@@ -184,6 +187,12 @@ class VerifyAnnotations extends Component {
       height: this.props.annotation.y2 - this.props.annotation.y1
     });
   };
+
+  toggleDragBox = () => {
+    this.setState({
+      drawDragBox: false
+    });
+  }
 
   nextAnnotation = () => {
     if (this.props.size === this.props.index + 1) {
@@ -316,7 +325,7 @@ class VerifyAnnotations extends Component {
       name: this.props.annotation.imagewithbox
     };
     try {
-      axios.patch("/api/updateImageBox", body, config);
+      axios.post("/api/annotations/images", body, config);
     } catch {
       Swal.fire("ERR: uploading image", "", "error");
     }
@@ -324,6 +333,7 @@ class VerifyAnnotations extends Component {
 
   updateBox = (x1, y1, x2, y2, imageCord, dragBoxCord, imageElement) => {
     const body = {
+      op: 'updateBoundingBox',
       x1: x1,
       y1: y1,
       x2: x2,
@@ -340,7 +350,7 @@ class VerifyAnnotations extends Component {
         Authorization: "Bearer " + localStorage.getItem("token")
       }
     };
-    axios.patch(`/api/annotationsUpdateBox/`, body, config).catch(error => {
+    axios.patch(`/api/annotations/`, body, config).catch(error => {
       Swal.fire(error, "", "error");
     });
   };
@@ -416,7 +426,8 @@ class VerifyAnnotations extends Component {
               <DragBoxContainer
                 className={classes.img}
                 dragBox={classes.dragBox}
-                drawDragBox={true}
+                drawDragBox={this.state.drawDragBox}
+                toggleDragBox={this.toggleDragBox}
                 size={{
                   width: this.state.width,
                   height: this.state.height
@@ -517,7 +528,7 @@ class VerifyAnnotations extends Component {
               <Grid container direction="row" alignItems="center">
                 <Grid item>
                   <Avatar
-                    src={`/api/conceptImages/${
+                    src={`/api/concepts/images/${
                       !this.state.concept
                         ? annotation.conceptid
                         : this.state.concept.id

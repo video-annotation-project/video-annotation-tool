@@ -44,7 +44,7 @@ class Login extends Component {
       password: password
     };
     axios
-      .post("/api/login", body, {
+      .post("/api/users/login", body, {
         headers: { "Content-Type": "application/json" }
       })
       .then(res => {

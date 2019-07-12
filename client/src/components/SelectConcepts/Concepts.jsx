@@ -24,7 +24,7 @@ class Concepts extends React.Component {
 
   getConceptsSelected = async () => {
     return axios
-      .get("/api/conceptsSelected", {
+      .get("/api/concepts", {
         headers: { Authorization: "Bearer " + localStorage.getItem("token") }
       })
       .then(res => res.data)
@@ -61,7 +61,7 @@ class Concepts extends React.Component {
 
   changeConceptsSelected = async id => {
     const config = {
-      url: "/api/conceptsSelected",
+      url: "/api/users/concepts",
       headers: {
         "Content-Type": "application/json",
         Authorization: "Bearer " + localStorage.getItem("token")

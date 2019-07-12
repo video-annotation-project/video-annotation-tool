@@ -144,7 +144,7 @@ class CollectionVideoList extends Component {
     }).then(async result => {
       if (result.value) {
         try {
-          await axios.delete("/api/videoCollection/removeVideos/" + id, config);
+          await axios.delete("/api/collections/videos/" + id, config);
           Swal.fire("Deleted!", "Videos have been removed.", "success");
           this.props.loadCollections()
         } catch (error) {

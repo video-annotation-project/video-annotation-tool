@@ -127,6 +127,7 @@ class DragBoxContainer extends Component {
     this.setState({
       drawDragBox: false,
     });
+    this.props.toggleDragBox && this.props.toggleDragBox();
   }
 
   render(){
@@ -142,7 +143,7 @@ class DragBoxContainer extends Component {
           onPlay={(e) => this.removeDragBox()}>
           {this.props.children}
         </div>
-        {this.state.drawDragBox ?
+        {this.state.drawDragBox || this.props.drawDragBox ?
         <DragBox 
           name={this.state.boxCounter}
           size={this.props.size}

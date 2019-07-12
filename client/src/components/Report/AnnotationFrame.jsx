@@ -34,10 +34,13 @@ class AnnotationFrame extends Component {
 
   editAnnotation = (comment, unsure) => {
     const body = {
+      op: "verifyAnnotation",
       conceptId: this.state.clickedConcept.id,
+      oldConceptId: this.props.annotation.conceptId,
+      conceptName: this.state.clickedConcept.name,
       comment: comment,
       unsure: unsure,
-      id: this.props.annotation.id
+      id: this.props.annotation.id,
     };
     const config = {
       headers: {
@@ -49,12 +52,11 @@ class AnnotationFrame extends Component {
       .patch("/api/annotations", body, config)
       .then(res => {
         this.handleDialogClose();
-        let updatedAnnotation = res.data;
         this.props.updateAnnotations(
-          updatedAnnotation.id,
-          updatedAnnotation.name,
-          updatedAnnotation.comment,
-          updatedAnnotation.unsure
+          this.state.clickedConcept.id,
+          this.state.clickedConcept.name,
+          comment,
+          unsure
         );
       })
       .catch(error => {

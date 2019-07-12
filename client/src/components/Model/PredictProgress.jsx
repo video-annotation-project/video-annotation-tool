@@ -44,7 +44,7 @@ class PredictProgress extends Component {
       }
     };
     try {
-      let ret = await axios.get(`/api/models/predictProgress`, config);
+      let ret = await axios.get(`/api/models/progress/predict`, config);
       if (ret) {
         var data = ret.data;
         // console.log(data)

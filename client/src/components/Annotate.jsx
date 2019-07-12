@@ -235,7 +235,7 @@ class Annotate extends Component {
     };
     // update SQL database
     return axios
-      .put("/api/checkpoints/" + this.state.currentVideo.id, body, config)
+      .put("/api/videos/checkpoints/" + this.state.currentVideo.id, body, config)
       .then(res => {
         if (reloadVideos) {
           return this.loadVideos(doneClicked ? this.getCurrentVideo : null);
@@ -408,7 +408,7 @@ class Annotate extends Component {
       date: date,
       box: box
     };
-    return axios.post("/api/annotationImages", body, config).catch(error => {
+    return axios.post("/api/annotations/images", body, config).catch(error => {
       console.log(error);
     });
   };

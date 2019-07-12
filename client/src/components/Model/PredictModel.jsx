@@ -121,7 +121,7 @@ class PredictModel extends Component {
     };
     let option = "predictmodel";
     axios
-      .get(`/api/models/${option}`, config)
+      .get(`/api/models/train/${option}`, config)
       .then(res => {
         const info = res.data[0].info;
         this.setState({
@@ -304,7 +304,7 @@ class PredictModel extends Component {
     };
     // update SQL database
     axios
-      .put("/api/models/predictmodel", body, config)
+      .put("/api/models/train/predictmodel", body, config)
       .then(res => {
         this.state.socket.emit("refresh predictmodel");
       })
@@ -362,7 +362,7 @@ class PredictModel extends Component {
       command: command,
       modelInstanceId: "i-0f2287cb0fc621b6d"
     };
-    axios.post(`/api/modelInstance`, body, config).then(res => {
+    axios.post(`/api/models`, body, config).then(res => {
       console.log(res);
     });
   };

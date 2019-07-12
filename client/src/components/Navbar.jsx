@@ -22,7 +22,7 @@ class Navbar extends React.Component {
   }
 
   handleLogout = () => {
-    /* Annotate.jsx tries to PUT to /api/checkpoints when unmounted, so we redirect 
+    /* Annotate.jsx tries to PUT to /api/videos/checkpoints when unmounted, so we redirect 
     the web page before clearing authentication */
     /* In theory, nothing after the redirect statement should execute, which is a 
     problem. Luckily, it actually does execute via race condition. */

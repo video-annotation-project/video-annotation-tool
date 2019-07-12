@@ -116,7 +116,7 @@ class Summary extends React.Component {
                     this.props.summary.data.map(row => (
                       <TableRow key={row.id}>
                         <TableCell>
-                          <Avatar src={`/api/conceptImages/${row.id}`} />
+                          <Avatar src={`/api/concepts/images/${row.id}`} />
                         </TableCell>
                         <TableCell component="th" scope="row">
                           {row.name}
