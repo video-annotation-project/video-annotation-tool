@@ -62,7 +62,6 @@ class Verify extends Component {
       this.resetState();
     } else {
       annotations = await this.getAnnotations();
-      console.log(annotations);
     }
     this.setState({
       annotations: annotations,

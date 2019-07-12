@@ -8,16 +8,16 @@ import StepLabel from "@material-ui/core/StepLabel";
 import StepContent from "@material-ui/core/StepContent";
 import Button from "@material-ui/core/Button";
 import { Typography } from "@material-ui/core";
-
-import VerifySelectUser from "../Utilities/SelectUser.jsx";
-import VerifySelectVideo from "../Utilities/SelectVideo.jsx";
-import VerifySelectConcept from "../Utilities/SelectConcept.jsx";
-import VerifySelectSure from "../Utilities/SelectSure.jsx";
 import InputLabel from "@material-ui/core/InputLabel";
 import Select from "@material-ui/core/Select";
 import MenuItem from "@material-ui/core/MenuItem";
 import FormHelperText from "@material-ui/core/FormHelperText";
 import FormControl from "@material-ui/core/FormControl";
+
+import VerifySelectUser from "../Utilities/SelectUser.jsx";
+import VerifySelectVideo from "../Utilities/SelectVideo.jsx";
+import VerifySelectConcept from "../Utilities/SelectConcept.jsx";
+import VerifySelectUnsure from "../Utilities/SelectUnsure.jsx";
 
 const styles = theme => ({
   list: {
@@ -65,7 +65,7 @@ const styles = theme => ({
 });
 
 function getSteps() {
-  return ["Users", "Videos", "Concepts", "Sure", "Collection"];
+  return ["Users", "Videos", "Concepts", "Unsure", "Collection"];
 }
 
 class AnnotationCollection extends Component {
@@ -76,7 +76,7 @@ class AnnotationCollection extends Component {
       selectedUsers: [],
       selectedVideos: ["-1"],
       selectedConcepts: ["-1"],
-      selectedSure: false,
+      selectedUnsure: false,
       annotations: [],
       collections: [],
       selectedCollection: "",
@@ -95,7 +95,7 @@ class AnnotationCollection extends Component {
         Authorization: "Bearer " + localStorage.getItem("token")
       }
     };
-    return axios.get("/api/annotationCollections", config).then(res => {
+    return axios.get("/api/collections/annotations", config).then(res => {
       console.log(res.data);
       this.setState(
         {
@@ -128,7 +128,7 @@ class AnnotationCollection extends Component {
 
   getVideos = async () => {
     return axios
-      .get(`/api/unverifiedVideosByUser/`, {
+      .get(`/api/annotations/unverified`, {
         headers: { Authorization: "Bearer " + localStorage.getItem("token") },
         params: {
           selectedUsers: this.state.selectedUsers
@@ -144,7 +144,7 @@ class AnnotationCollection extends Component {
 
   getVideoCollections = async () => {
     return axios
-      .get(`/api/videoCollections`, {
+      .get(`/api/collections/videos`, {
         headers: { Authorization: "Bearer " + localStorage.getItem("token") }
       })
       .then(res => res.data)
@@ -157,7 +157,7 @@ class AnnotationCollection extends Component {
 
   getConcepts = async () => {
     return axios
-      .get(`/api/unverifiedConceptsByUserVideo/`, {
+      .get(`/api/annotations/unverified`, {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + localStorage.getItem("token")
@@ -177,7 +177,7 @@ class AnnotationCollection extends Component {
 
   getUnsure = async () => {
     return axios
-      .get(`/api/unverifiedUnsureByUserVideoConcept`, {
+      .get(`/api/annotations/unverified`, {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + localStorage.getItem("token")
@@ -198,7 +198,7 @@ class AnnotationCollection extends Component {
 
   getAnnotations = async () => {
     return axios
-      .get(`/api/unverifiedAnnotationsByUserVideoConceptSure/`, {
+      .get(`/api/annotations/unverified`, {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + localStorage.getItem("token")
@@ -207,7 +207,7 @@ class AnnotationCollection extends Component {
           selectedUsers: this.state.selectedUsers,
           selectedVideos: this.state.selectedVideos,
           selectedConcepts: this.state.selectedConcepts,
-          selectedSure: this.state.selectedSure
+          selectedUnsure: this.state.selectedUnsure
         }
       })
       .then(res => {
@@ -284,7 +284,7 @@ class AnnotationCollection extends Component {
         return;
       case 3:
         this.setState({
-          selectedSure: false
+          selectedUnsure: false
         });
         return;
       default:
@@ -297,7 +297,7 @@ class AnnotationCollection extends Component {
       selectedUsers: [],
       selectedVideos: ["-1"],
       selectedConcepts: ["-1"],
-      selectedSure: false,
+      selectedUnsure: false,
       activeStep: 0
     });
   };
@@ -335,10 +335,10 @@ class AnnotationCollection extends Component {
         );
       case 3:
         return (
-          <VerifySelectSure
-            value={this.state.selectedSure}
+          <VerifySelectUnsure
+            value={this.state.selectedUnsure}
             getUnsure={this.getUnsure}
-            handleChangeSwitch={this.handleChangeSwitch("selectedSure")}
+            handleChangeSwitch={this.handleChangeSwitch("selectedUnsure")}
           />
         );
       case 4:
