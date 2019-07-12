@@ -9,6 +9,23 @@ const setCookies = require('../../config/cookies')
 
 router.use('/concepts', require('./concepts'))
 
+/**
+ * @api {get} /api/users/ Request list of all users
+ * @apiName GetUsers
+ * @apiGroup users
+ *
+ *
+ * @apiSuccess {Object[]}          List of user information.
+ * @apiSuccess {Number}   id       ID of the user.
+ * @apiSuccess {String}   username Username of the user.
+ */
+ 
+/**
+* @swagger
+* /users:
+*    get:
+*      description: This should return all users
+*/
 router.get("/", passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     let queryText = `
@@ -35,6 +52,19 @@ router.get("/", passport.authenticate("jwt", { session: false }),
   }
 );
 
+/**
+ * @api {post} /api/users/ Create a new user
+ * @apiName PostUser
+ * @apiGroup users
+ *
+ *
+ * @apiSuccess {String}  message       "user created"
+ * @apiSuccess {Object}  user          Created user object
+ * @apiSuccess {Number}  user.id       User ID.
+ * @apiSuccess {Boolean} user.username Username.
+ * @apiSuccess {Boolean} user.password Password.
+ * @apiSuccess {Boolean} user.admin.   Is the user an admin.
+ */
 router.post("/", passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const queryText = `
@@ -42,8 +72,8 @@ router.post("/", passport.authenticate("jwt", { session: false }),
         users (username, password, admin)
       VALUES
         ($1, $2, $3) 
-      RETURNING *
-    `;
+      RETURNING *`;
+
     const saltRounds = 10;
     try {
       const hash = await bcrypt.hash(req.body.password, saltRounds);
@@ -56,6 +86,18 @@ router.post("/", passport.authenticate("jwt", { session: false }),
   }
 );
 
+/**
+ * @api {post} /api/users/ Update a users password
+ * @apiName ChangePassword
+ * @apiGroup users
+ *
+ * @apiParam {String} username The login username.
+ * @apiParam {String} password The login password.
+ *
+ * @apiSuccess {Number}  userid  ID of the user.
+ * @apiSuccess {String}  token   Athentication token for the user.
+ * @apiSuccess {Boolean} isAdmin Is the user an admin.
+ */
 router.patch("/", passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const { password, newPassword1, newPassword2 } = req.body;
@@ -78,8 +120,21 @@ router.patch("/", passport.authenticate("jwt", { session: false }),
   }
 );
 
+/**
+ * @api {post} /api/users/login Login as a user
+ * @apiName UserLogin
+ * @apiGroup users
+ *
+ * @apiParam {String} username The login username.
+ * @apiParam {String} password The login password.
+ *
+ * @apiSuccess {Number}  userid  ID of the user.
+ * @apiSuccess {String}  token   Athentication token for the user.
+ * @apiSuccess {Boolean} isAdmin Is the user an admin.
+ */
 router.post("/login", async function(req, res) {
   const { username, password } = req.body;
+  console.log(req.body);
   let queryPass = `
     SELECT 
       id, password, admin
@@ -115,6 +170,21 @@ router.post("/login", async function(req, res) {
   }
 });
 
+
+/**
+ * @api {post} /api/users/annotations Create a new user
+ * @apiName PostUser
+ * @apiGroup users
+ *
+ * @apiParam {String} id       The Users-ID.
+ * @apiParam {String} fromdate Start date of annotations.
+ * @apiParam {String} todate   End date of annotations.
+ *
+ * @apiSuccess {Object[]}          	  List of concept info
+ * @apiSuccess {Number}   conceptid   Concept ID of the annotation.
+ * @apiSuccess {String}   name        Name of the concept.
+ * @apiSuccess {Number}   total_count Amount of concept that have been annotated.
+ */
 router.get("/annotations", passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const userId = parseInt(req.query.userid);
@@ -148,24 +218,3 @@ router.get("/annotations", passport.authenticate("jwt", { session: false }),
 );
 
 module.exports = router;
-
-
-// figure out duplicate, probably needs to be deleted
-// router.get("/", passport.authenticate("jwt", { session: false }),
-//   async (req, res) => {
-//     const queryText = `
-//       SELECT DISTINCT 
-//         U.id, 
-//         U.username
-//       FROM 
-//         Users U`;
-//     try {
-//       let response = await psql.query(queryText);
-//       res.json(response.rows);
-//     } catch (error) {
-//       console.log("Error on GET /api/users: ");
-//       console.log(error);
-//       res.status(500).json(error);
-//     }
-//   }
-// );

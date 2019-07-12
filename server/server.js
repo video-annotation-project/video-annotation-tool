@@ -7,9 +7,23 @@ const bodyParser = require("body-parser");
 const path = require("path");
 
 const routes = require('./routes');
-
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpecs = require('./config/swagger');
 
 app.use(require('./config/passport').passport.initialize());
+
+var options = {
+  swaggerOptions: {
+    validatorUrl: null
+  }
+};
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
+
+app.get('/swagger.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(swaggerSpecs);
+});
 
 // parse application/x-www-form-urlencoded
 // for easier testing with Postman or plain HTML forms
