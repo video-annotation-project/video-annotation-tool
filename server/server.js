@@ -7,9 +7,23 @@ const bodyParser = require("body-parser");
 const path = require("path");
 
 const routes = require('./routes');
-
+// const swaggerUi = require('swagger-ui-express');
+// const swaggerSpecs = require('./config/swagger');
 
 app.use(require('./config/passport').passport.initialize());
+
+var options = {
+  swaggerOptions: {
+    validatorUrl: null
+  }
+};
+
+// app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
+
+// app.get('/swagger.json', (req, res) => {
+//   res.setHeader('Content-Type', 'application/json');
+//   res.send(swaggerSpecs);
+// });
 
 // parse application/x-www-form-urlencoded
 // for easier testing with Postman or plain HTML forms
@@ -20,6 +34,8 @@ app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
 
 app.set("port", process.env.PORT || 3001);
 
+// Connect all our routes to our application
+app.use('/api', routes);
 
 // This websocket sends a list of videos to the client that update in realtime
 io.on("connection", socket => {
@@ -50,8 +66,6 @@ if (process.env.NODE_ENV === "production") {
   });
 }
 
-//  Connect all our routes to our application
-app.use('/api', routes);
 
 app.use(function(req, res) {
    res.status(404).end();
