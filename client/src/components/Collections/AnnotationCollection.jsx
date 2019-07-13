@@ -17,7 +17,6 @@ import FormControl from "@material-ui/core/FormControl";
 import VerifySelectUser from "../Utilities/SelectUser.jsx";
 import VerifySelectVideo from "../Utilities/SelectVideo.jsx";
 import VerifySelectConcept from "../Utilities/SelectConcept.jsx";
-import VerifySelectUnsure from "../Utilities/SelectUnsure.jsx";
 import Swal from "sweetalert2";
 
 const styles = theme => ({
@@ -66,7 +65,7 @@ const styles = theme => ({
 });
 
 function getSteps() {
-  return ["Users", "Videos", "Concepts", "Unsure", "Collection"];
+  return ["Users", "Videos", "Concepts", "Collection"];
 }
 
 class AnnotationCollection extends Component {
@@ -77,7 +76,6 @@ class AnnotationCollection extends Component {
       selectedUsers: [],
       selectedVideos: ["-1"],
       selectedConcepts: ["-1"],
-      selectedUnsure: false,
       annotations: [],
       collections: [],
       selectedCollection: "",
@@ -284,27 +282,6 @@ class AnnotationCollection extends Component {
       });
   };
 
-  getUnsure = async () => {
-    return axios
-      .get(`/api/annotations/unverified`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + localStorage.getItem("token")
-        },
-        params: {
-          selectedUsers: this.state.selectedUsers,
-          selectedVideos: this.state.selectedVideos,
-          selectedConcepts: this.state.selectedConcepts
-        }
-      })
-      .then(res => res.data)
-      .catch(error => {
-        this.setState({
-          error: error
-        });
-      });
-  };
-
   getAnnotations = async () => {
     return axios
       .get(`/api/annotations/unverified`, {
@@ -316,14 +293,13 @@ class AnnotationCollection extends Component {
           selectedUsers: this.state.selectedUsers,
           selectedVideos: this.state.selectedVideos,
           selectedConcepts: this.state.selectedConcepts,
-          selectedUnsure: this.state.selectedUnsure
+          selectedUnsure: false
         }
       })
       .then(res => {
         this.setState({
           annotations: res.data.map(annotation => annotation.id)
         });
-        console.log(this.state.annotations);
       })
       .catch(error => {
         this.setState({
@@ -391,11 +367,6 @@ class AnnotationCollection extends Component {
           selectedConcepts: ["-1"]
         });
         return;
-      case 3:
-        this.setState({
-          selectedUnsure: false
-        });
-        return;
       default:
         return;
     }
@@ -406,7 +377,6 @@ class AnnotationCollection extends Component {
       selectedUsers: [],
       selectedVideos: ["-1"],
       selectedConcepts: ["-1"],
-      selectedUnsure: false,
       activeStep: 0
     });
   };
@@ -443,14 +413,6 @@ class AnnotationCollection extends Component {
           />
         );
       case 3:
-        return (
-          <VerifySelectUnsure
-            value={this.state.selectedUnsure}
-            getUnsure={this.getUnsure}
-            handleChangeSwitch={this.handleChangeSwitch("selectedUnsure")}
-          />
-        );
-      case 4:
         return (
           <React.Fragment>
             <FormControl className={classes.formControl}>
