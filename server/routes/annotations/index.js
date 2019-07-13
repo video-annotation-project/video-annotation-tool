@@ -21,8 +21,6 @@ router.get("/", passport.authenticate("jwt", { session: false }),
         annotations.userid NOT IN (17, 32)`;
     if (req.query.unsureOnly === "true") {
       queryPass +=` AND annotations.unsure = true`;
-    } else if (req.query.unsureOnly === "false") {
-      queryPass +=` AND annotations.unsure = false`;
     }
     if (req.query.verifiedCondition === "verified only") {
       queryPass += ` AND annotations.verifiedby IS NOT NULL`;
