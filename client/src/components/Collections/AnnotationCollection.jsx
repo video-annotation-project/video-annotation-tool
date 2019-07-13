@@ -18,6 +18,7 @@ import VerifySelectUser from "../Utilities/SelectUser.jsx";
 import VerifySelectVideo from "../Utilities/SelectVideo.jsx";
 import VerifySelectConcept from "../Utilities/SelectConcept.jsx";
 import VerifySelectUnsure from "../Utilities/SelectUnsure.jsx";
+import Swal from "sweetalert2";
 
 const styles = theme => ({
   list: {
@@ -110,6 +111,114 @@ class AnnotationCollection extends Component {
     this.setState({
       selectedCollection: event.target.value
     });
+  };
+
+  createAnnotationCollection = () => {
+    Swal.mixin({
+      confirmButtonText: "Next",
+      showCancelButton: true,
+      progressSteps: ["1", "2"]
+    })
+      .queue([
+        {
+          title: "Collection Name",
+          input: "text"
+        },
+        {
+          title: "Description",
+          input: "textarea"
+        }
+      ])
+      .then(async result => {
+        if (result.value) {
+          const body = {
+            name: result.value[0],
+            description: result.value[1]
+          };
+          const config = {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + localStorage.getItem("token")
+            }
+          };
+          try {
+            await axios.post("/api/collections/annotations", body, config);
+            Swal.fire({
+              title: "Collection Created!",
+              confirmButtonText: "Lovely!"
+            });
+            this.loadCollections();
+          } catch (error) {
+            Swal.fire("Error Creating Collection", "", "error");
+          }
+        }
+      });
+  };
+
+  deleteAnnotationCollection = async () => {
+    const config = {
+      headers: {
+        Authorization: "Bearer " + localStorage.getItem("token")
+      }
+    };
+    Swal.fire({
+      title: "Are you sure?",
+      text: "You won't be able to revert this!",
+      type: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, delete it!"
+    }).then(async result => {
+      if (result.value) {
+        try {
+          let response = await axios.delete(
+            "/api/collections/annotations/" + this.state.selectedCollection,
+            config
+          );
+          if (response.status === 200) {
+            Swal.fire("Deleted!", "Collection has been deleted.", "success");
+            this.loadCollections();
+            this.setState({
+              selectedCollection: ""
+            });
+          }
+        } catch (error) {
+          Swal.fire(error, "", "error");
+        }
+      }
+    });
+  };
+
+  insertAnnotationsToCollection = () => {
+    const config = {
+      headers: {
+        Authorization: "Bearer " + localStorage.getItem("token")
+      }
+    };
+    const body = {
+      annotations: this.state.annotations
+    };
+    try {
+      axios
+        .post(
+          "/api/collections/annotations/" + this.state.selectedCollection,
+          body,
+          config
+        )
+        .then(res => {
+          Swal.fire({
+            title: "Inserted!",
+            confirmButtonText: "Lovely!"
+          });
+        })
+        .catch(error => {
+          console.log(error);
+          Swal.fire("Could not insert", "", "error");
+        });
+    } catch (error) {
+      Swal.fire("Error inserting video", "", "error");
+    }
   };
 
   getUsers = async () => {
@@ -379,10 +488,14 @@ class AnnotationCollection extends Component {
               <Button
                 className={classes.button}
                 disabled={this.state.selectedCollection === ""}
+                onClick={this.deleteAnnotationCollection}
               >
                 Delete This Collection
               </Button>
-              <Button className={classes.button}>
+              <Button
+                className={classes.button}
+                onClick={this.createAnnotationCollection}
+              >
                 New Annotation Collection
               </Button>
             </div>
@@ -404,6 +517,8 @@ class AnnotationCollection extends Component {
         return this.state.selectedVideos.length === 0;
       case 2:
         return this.state.selectedConcepts.length === 0;
+      case 4:
+        return this.state.selectedCollection === ""
       default:
         return false;
     }
@@ -465,7 +580,7 @@ class AnnotationCollection extends Component {
                             this.handleNext();
                           }
                         : activeStep === steps.length - 1
-                        ? this.resetState
+                        ? this.insertAnnotationsToCollection
                         : this.handleNext
                     }
                     className={classes.button}
