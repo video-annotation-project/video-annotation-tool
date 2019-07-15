@@ -8,23 +8,28 @@ const jwtOptions = require('../../config/passport').jwtOptions
 const setCookies = require('../../config/cookies')
 
 router.use('/concepts', require('./concepts'))
-
-/**
- * @api {get} /api/users/ Request list of all users
- * @apiName GetUsers
- * @apiGroup users
- *
- *
- * @apiSuccess {Object[]}          List of user information.
- * @apiSuccess {Number}   id       ID of the user.
- * @apiSuccess {String}   username Username of the user.
- */
  
 /**
 * @swagger
-* /users:
-*    get:
-*      description: This should return all users
+* /api/users:
+*   get:
+*     summary: This should return all users
+*     tags:
+*       - users
+*     responses:
+*       '200':
+*         description: List of user information.
+*         schema:
+*           type: array
+*           items:
+*             type: object
+*             properties:
+*               id: 
+*                 type: integer
+*                 description: Id of the user
+*               username: 
+*                 type: string
+*                 description: Username of the user
 */
 router.get("/", passport.authenticate("jwt", { session: false }),
   async (req, res) => {
@@ -65,6 +70,7 @@ router.get("/", passport.authenticate("jwt", { session: false }),
  * @apiSuccess {Boolean} user.password Password.
  * @apiSuccess {Boolean} user.admin.   Is the user an admin.
  */
+
 router.post("/", passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const queryText = `
@@ -120,18 +126,41 @@ router.patch("/", passport.authenticate("jwt", { session: false }),
   }
 );
 
-/**
- * @api {post} /api/users/login Login as a user
- * @apiName UserLogin
- * @apiGroup users
- *
- * @apiParam {String} username The login username.
- * @apiParam {String} password The login password.
- *
- * @apiSuccess {Number}  userid  ID of the user.
- * @apiSuccess {String}  token   Athentication token for the user.
- * @apiSuccess {Boolean} isAdmin Is the user an admin.
- */
+ /**
+* @swagger
+* /api/users/login:
+*   post:
+*     summary: This should login a user
+*     tags:
+*       - users
+*     parameters:
+*       - in: body
+*         description: Username and password for login
+*         schema:
+*           type: object
+*           properties:
+*             username:
+*               description: Username to login with
+*               type: string
+*             password:
+*               description: Password to login with
+*               type: string
+*     responses:
+*       '200':
+*         description: Logged in user information
+*         schema:
+*           type: object
+*           properties:
+*             userid: 
+*               type: integer
+*               description: ID of the user
+*             token: 
+*               type: string
+*               description: Athentication token for the user
+*             isAdmin: 
+*               type: boolean
+*               description: Is the user an admin
+*/
 router.post("/login", async function(req, res) {
   const { username, password } = req.body;
   let queryPass = `
@@ -169,21 +198,45 @@ router.post("/login", async function(req, res) {
   }
 });
 
-
 /**
- * @api {post} /api/users/annotations Create a new user
- * @apiName PostUser
- * @apiGroup users
- *
- * @apiParam {String} id       The Users-ID.
- * @apiParam {String} fromdate Start date of annotations.
- * @apiParam {String} todate   End date of annotations.
- *
- * @apiSuccess {Object[]}          	  List of concept info
- * @apiSuccess {Number}   conceptid   Concept ID of the annotation.
- * @apiSuccess {String}   name        Name of the concept.
- * @apiSuccess {Number}   total_count Amount of concept that have been annotated.
- */
+* @swagger
+* /api/users/annotations:
+*   get:
+*     summary: This should return all of a users annotations for a specific date range
+*     tags:
+*       - users
+*     parameters:
+*       - in: query
+*         name: userid
+*         description: User id to get annotations from
+*         schema:
+*           type: integer
+*       - in: query
+*         name: fromdate
+*         description: Beginning of date range for annotations
+*         format: date
+*       - in: query
+*         name: todate
+*         format: date
+*         description: End of date range for annotations
+*     responses:
+*       '200':
+*         description: List of users annotations info
+*         schema:
+*           type: array
+*           items:
+*             type: object
+*             properties:
+*               conceptid: 
+*                 type: integer
+*                 description: Id of the concept
+*               name: 
+*                 type: string
+*                 description: Name of the concept
+*               total_count: 
+*                 type: integer
+*                 description: Amount of concept that have been annotated
+*/
 router.get("/annotations", passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const userId = parseInt(req.query.userid);

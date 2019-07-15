@@ -9,14 +9,32 @@ const swaggerDefinition = {
       description: 'Deep Sea Annotations API Documentation',
     },
   },
+  securityDefinitions: {
+    ApiKeyAuth: {
+      name: "Authorization",
+      type: "apiKey",
+      scheme: "Authorization",
+      in: "header"
+    }
+  },
+  "security": [
+    {
+      "ApiKeyAuth": []
+    }
+  ],
 }
 
 const options = {
   swaggerDefinition,
   // List of files to be processed.
-  apis: ['./server/routes/users/index.js'],
+  apis: ['./server/routes/**/*.js'],
+
+};
+
+var swaggerOptions = {
+  customCss: '.swagger-ui .topbar { display: none }',
 };
 
 const swaggerSpecs = swaggerJsdoc(options);
 
-module.exports = swaggerSpecs;
+module.exports = { swaggerSpecs, swaggerOptions };
