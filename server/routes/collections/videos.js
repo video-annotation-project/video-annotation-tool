@@ -1,11 +1,12 @@
-const router = require('express').Router();
+const router = require("express").Router();
 const passport = require("passport");
 const psql = require("../../db/simpleConnect");
 
-router.baseURL = "/collections/videos"
+router.baseURL = "/collections/videos";
 
-
-router.get("/", passport.authenticate("jwt", { session: false }),
+router.get(
+  "/",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     let queryText = `
       SELECT 
@@ -36,8 +37,9 @@ router.get("/", passport.authenticate("jwt", { session: false }),
   }
 );
 
-
-router.post("/", passport.authenticate("jwt", { session: false }),
+router.post(
+  "/",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const queryText = `
       INSERT INTO 
@@ -58,8 +60,9 @@ router.post("/", passport.authenticate("jwt", { session: false }),
   }
 );
 
-
-router.delete("/:id", passport.authenticate("jwt", { session: false }),
+router.delete(
+  "/:id",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const queryText = `
       DELETE FROM 
@@ -79,18 +82,18 @@ router.delete("/:id", passport.authenticate("jwt", { session: false }),
   }
 );
 
-
-router.post("/:id", passport.authenticate("jwt", { session: false }),
+router.post(
+  "/:id",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    var params = [req.params.id];
-    var queryText = `
+    let params = [req.params.id];
+    let queryText = `
       INSERT INTO 
         video_intermediate (id, videoid)
       VALUES
     `;
 
-    var i = 0;
-    for (i = 0; i < req.body.videos.length; i++) {
+    for (let i = 0; i < req.body.videos.length; i++) {
       queryText += `($1, $${i + 2})`;
       if (i !== req.body.videos.length - 1) {
         queryText += `,`;
@@ -110,8 +113,9 @@ router.post("/:id", passport.authenticate("jwt", { session: false }),
   }
 );
 
-
-router.delete("/:id", passport.authenticate("jwt", { session: false }),
+router.delete(
+  "/:id",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     var params = [req.params.id];
     var queryText = `

@@ -7,14 +7,14 @@ import StepLabel from "@material-ui/core/StepLabel";
 import StepContent from "@material-ui/core/StepContent";
 import Button from "@material-ui/core/Button";
 
-import VerifySelectUser from "./VerifySelectUser.jsx";
-import VerifySelectVideo from "./VerifySelectVideo.jsx";
-import VerifySelectConcept from "./VerifySelectConcept.jsx";
-import VerifySelectUnsure from "./VerifySelectUnsure";
+import VerifySelectUser from "../Utilities/SelectUser.jsx";
+import VerifySelectVideo from "../Utilities/SelectVideo.jsx";
+import VerifySelectConcept from "../Utilities/SelectConcept.jsx";
+import VerifySelectUnsure from "../Utilities/SelectUnsure";
 
 const styles = theme => ({
   button: {
-    marginTop: theme.spacing(2),
+    marginTop: theme.spacing(3),
     marginRight: theme.spacing()
   },
   actionsContainer: {

@@ -6,7 +6,6 @@ const AWS = require("aws-sdk");
 router.get("/", passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     let params = [];
-    //Build query string
     let queryPass = `
       SELECT
         annotations.id, annotations.comment, 

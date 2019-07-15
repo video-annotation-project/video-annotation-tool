@@ -18,7 +18,7 @@ const styles = theme => ({
   }
 });
 
-class VerifySelectConcept extends React.Component {
+class SelectConcept extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -95,8 +95,8 @@ class VerifySelectConcept extends React.Component {
   }
 }
 
-VerifySelectConcept.propTypes = {
+SelectConcept.propTypes = {
   classes: PropTypes.object.isRequired
 };
 
-export default withStyles(styles)(VerifySelectConcept);
+export default withStyles(styles)(SelectConcept);

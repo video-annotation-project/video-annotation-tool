@@ -30,7 +30,7 @@ const styles = theme => ({
   }
 });
 
-class VerifySelectVideo extends React.Component {
+class SelectVideo extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -136,8 +136,8 @@ class VerifySelectVideo extends React.Component {
   }
 }
 
-VerifySelectVideo.propTypes = {
+SelectVideo.propTypes = {
   classes: PropTypes.object.isRequired
 };
 
-export default withStyles(styles)(VerifySelectVideo);
+export default withStyles(styles)(SelectVideo);
