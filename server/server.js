@@ -8,11 +8,13 @@ const path = require("path");
 
 const routes = require('./routes');
 const swaggerUi = require('swagger-ui-express');
-const { swaggerSpecs, swaggerOptions } = require('./config/swagger');
+const swaggerOptions = require('./config/swagger');
+const expressSwagger = require('express-swagger-generator')(app);
 
 app.use(require('./config/passport').passport.initialize());
-// Swagger will display documentation at this url
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs, swaggerOptions));
+
+// Swagger will display documentation at the url /api-docs
+expressSwagger(swaggerOptions);
 
 // Allows us to view the auto-generated swagger.json
 app.get('/swagger.json', (req, res) => {
