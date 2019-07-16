@@ -186,7 +186,7 @@ router.patch("/", passport.authenticate("jwt", { session: false }),
 
 /**
  * @route DELETE /api/annotations
- * @group annotations
+ * @group annotations 
  * @summary Delete an annotation
  * @param {integer} id.body.required - Annotation ID
  * @returns {string} 200 - "delete"
@@ -253,7 +253,7 @@ router.delete("/", passport.authenticate("jwt", { session: false }),
 
 /**
  * @route POST /api/annotations/images
- * @group annotations
+ * @group annotations 
  * @summary Upload an annotation image to the S3 bucket
  * @param {string} name.body - Name of the annotation
  * @param {string} date.body - Date this image was annotated
@@ -301,7 +301,7 @@ router.post("/images", passport.authenticate("jwt", { session: false }),
 
 /**
  * @route PATCH /api/annotations/tracking/:id
- * @group annotations
+ * @group annotations 
  * @summary Mark a tracking annotation as bad
  * @param {string} id.url.required - ID of the tracking annotation
  * @returns {Array.<trackingInfo>} 200 - Changed tracking annotation IDs
@@ -331,7 +331,7 @@ router.patch(`/tracking/:id`, passport.authenticate("jwt", { session: false }),
 
 /**
  * @route GET /api/annotations/unverified
- * @group annotations
+ * @group annotations 
  * @summary Get unverified annotations
  * @param {Array.<integer>} selectedUsers.query - Get unverified from these user IDs
  * @param {Array.<integer>} selectedVideos.query - Get unverified from these video IDs
@@ -480,14 +480,14 @@ router.get(
  /**
  * @typedef treeData
  * @property {string} name - Name of the specific item in the current level
- * @property {integer} key - ID of the specific item in the current level
- * @property {integer} count - Count of the specific item in the current level
+ * @property {integer} key - ID of the specific item in the current level 
+ * @property {integer} count - Count of the specific item in the current level 
  * @property {boolean} expanded - Is the specific item in the current level expanded
  */
 
 /**
  * @route GET /api/annotations/treeData
- * @group annotations
+ * @group annotations 
  * @summary Get tree representation of annotations
  * @param {enum} levelName.query.required - Either "User", "Video", or "Concept"
  * @param {string} queryConditions.query - Conditions for the annotations query
