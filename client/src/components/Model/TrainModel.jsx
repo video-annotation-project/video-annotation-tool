@@ -46,7 +46,7 @@ const styles = theme => ({
     height: "560px"
   },
   stepper: {
-    display: "flex",
+    display: "block",
     flex: 1,
     flexDirection: "column",
     justifyContent: "left",
