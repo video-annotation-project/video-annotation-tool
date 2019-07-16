@@ -340,7 +340,7 @@ router.patch(`/tracking/:id`, passport.authenticate("jwt", { session: false }),
  * @returns {Array.<object>} 200 - Returns matching rows from database
  * @returns {Error} 500 - Unexpected database error
  */
-router.get("/unverified", passport.authenticate("jwt", { session: false }),
+router.get("/verified", passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const verifiedOnly = req.query.verifiedOnly;
     const selectedUsers = req.query.selectedUsers;
