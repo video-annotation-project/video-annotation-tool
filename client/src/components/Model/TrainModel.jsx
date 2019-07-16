@@ -535,7 +535,7 @@ class TrainModel extends Component {
     };
     // update SQL database
     axios
-      .put("/api/models/train/videos/", body, config)
+      .put("/api/models/train/trainmodel/", body, config)
       .then(res => {
         this.state.socket.emit("refresh trainmodel");
       })
@@ -600,7 +600,7 @@ class TrainModel extends Component {
       command: command,
       modelInstanceId: "i-011660b3e976035d8"
     };
-    axios.post(`/api/models`, body, config).then(res => {
+    axios.post(`/api/models/train`, body, config).then(res => {
       console.log(res);
     });
   };
