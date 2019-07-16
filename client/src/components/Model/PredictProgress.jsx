@@ -49,11 +49,18 @@ class PredictProgress extends Component {
         var data = ret.data;
         // console.log(data)
         var totalVideo = data.length;
-        this.setState({
-          videoProgress: ((1 / totalVideo) - 1) * 100,
-          data: ret.data,
-          running: true
-        });
+        if (data.length === 0) {
+          this.setState({
+            running: false
+          });
+        }
+        else {
+          this.setState({
+            videoProgress: ((1 / totalVideo) - 1) * 100,
+            data: ret.data,
+            running: true
+          });
+        }
       }
     } catch (error) {
       console.log(error);
@@ -111,7 +118,7 @@ class PredictProgress extends Component {
             ))}
           </div>
         ) : (
-          <h4>Not training</h4>
+          <h4>Not Predicting</h4>
         )}
       </div>
     );
