@@ -6,6 +6,32 @@ const AWS = require("aws-sdk");
 router.use('/checkpoints', require('./checkpoints'))
 router.use('/aivideos', require('./ai_videos'))
 
+
+/**
+ * @typedef video
+ * @property {integer} id - ID of the video
+ * @property {string} filename - Filename of the video
+ * @property {boolean} finished - Is the video done being annotated
+ * @property {timeinvideo} finished - Is the video done being annotated
+ * @property {string} timeinvideo - How far in seconds has the video been annotated
+ * @property {integer} count - How many annotations does this video have
+ */
+
+/**
+ * @typedef videoArray
+ * @property {Array.<video>} startedVideos - Videos that've been started
+ * @property {Array.<video>} unwatchedVideos - Videos that are unwatched
+ * @property {Array.<video>} watchedVideos - Videos that've been watched
+ * @property {Array.<video>} inProgressVideos - Videos that are in progress
+ */
+
+/**
+ * @route GET /api/videos
+ * @group videos 
+ * @summary Get a list of all videos, separated by progress
+ * @returns {videoArray.model} 200 - An object containing 4 arrays of videos separated based on progress
+ * @returns {Error} 500 - Unexpected database error
+ */
 router.get("/", passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     let userId = req.user.id;
@@ -90,12 +116,14 @@ router.get("/", passport.authenticate("jwt", { session: false }),
       const inProgressVideos = await psql.query(queryGlobalInProgress, [
         userId
       ]);
-      const videoData = [
-        startedVideos,
-        unwatchedVideos,
-        watchedVideos,
-        inProgressVideos
-      ];
+
+      const videoData = {
+        startedVideos: startedVideos.rows,
+        unwatchedVideos: unwatchedVideos.rows,
+        watchedVideos: watchedVideos.rows,
+        inProgressVideos: inProgressVideos.rows
+      };
+
       res.json(videoData);
     } catch (error) {
       console.log(error);

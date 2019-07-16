@@ -193,7 +193,7 @@ router.post("/login", async function(req, res) {
 });
 
  /**
- * @typedef annotation
+ * @typedef annotationInfo
  * @property {integer} conceptid - ID of concept
  * @property {string} name - Authentication token
  * @property {boolean} total_count - Number of annotations for this concept
@@ -206,7 +206,7 @@ router.post("/login", async function(req, res) {
  * @param {integer} userid.query.required - User id to get annotations
  * @param {string} fromdate.query.required - Beginning date of annotations
  * @param {string} todate.query.required - End date of annotations
- * @returns {Array.<annotation>} 200 - Logged in user info
+ * @returns {Array.<annotationInfo>} 200 - Logged in user info
  * @returns {Error} 500 - Unexpected database error
  */
 router.get("/annotations", passport.authenticate("jwt", { session: false }),
