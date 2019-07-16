@@ -132,8 +132,27 @@ router.get("/", passport.authenticate("jwt", { session: false }),
   }
 );
 
-
+// TODO: clean up this return body
 // summary getter ~KLS
+/**
+ * @typedef summary
+ * @property {integer} id - ID of the concept
+ * @property {string} name - Name of the concept
+ * @property {string} rank - Rank of the concept
+ * @property {integer} parent - Parent concept
+ * @property {string} picture - Concept picture filename
+ * @property {integer} conceptid - ID of the concept
+ * @property {integer} videoid - ID of the concept
+ * @property {string} count - Count of the concept in the video
+ */
+/**
+ * @route GET /api/videos/summary/:videoid
+ * @group videos 
+ * @summary Get a list of concepts in a video
+ * @param {integer} videoid.url.required - ID of the video to get the array from
+ * @returns {Array.<summary>} 200 - An array of concepts in the video
+ * @returns {Error} 500 - Unexpected database error
+ */
 router.get("/summary/:videoid", passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     let queryText = `
