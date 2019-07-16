@@ -291,15 +291,14 @@ class AnnotationCollection extends Component {
           "Content-Type": "application/json",
           Authorization: "Bearer " + localStorage.getItem("token")
         },
-        params: {          
+        params: {
           selectedUsers: this.state.selectedUsers,
           selectedVideos: this.state.selectedVideos,
-          selectedConcepts: this.state.selectedConcepts,
+          selectedConcepts: this.state.selectedConcepts
         }
       })
       .then(res => {
         console.log(res);
-        
         this.setState({
           annotationCount: res.data[0].annotationcount,
           trackingCount: res.data[0].trackingcount
@@ -470,8 +469,7 @@ class AnnotationCollection extends Component {
                 Number of Annotations: {this.state.annotationCount}
               </Typography>
               <Typography>
-                Number of Tracking Annotations:{" "}
-                {this.state.trackingCount}
+                Number of Tracking Annotations: {this.state.trackingCount}
               </Typography>
             </div>
           </React.Fragment>
@@ -481,7 +479,7 @@ class AnnotationCollection extends Component {
     }
   };
 
-  didNotSelect = step => {
+  checkButtonDisabled = step => {
     switch (step) {
       case 0:
         return this.state.selectedUsers.length === 0;
@@ -546,7 +544,7 @@ class AnnotationCollection extends Component {
                       <Button
                         variant="contained"
                         color="primary"
-                        disabled={this.didNotSelect(index)}
+                        disabled={this.checkButtonDisabled(index)}
                         onClick={() =>
                           this.insertAnnotationsToCollection("annotations")
                         }
@@ -558,7 +556,7 @@ class AnnotationCollection extends Component {
                         variant="contained"
                         color="primary"
                         disabled={
-                          this.didNotSelect(index) ||
+                          this.checkButtonDisabled(index) ||
                           this.state.trackingCount === 0
                         }
                         onClick={() =>
@@ -575,7 +573,7 @@ class AnnotationCollection extends Component {
                     <Button
                       variant="contained"
                       color="primary"
-                      disabled={this.didNotSelect(index)}
+                      disabled={this.checkButtonDisabled(index)}
                       onClick={
                         activeStep === steps.length - 2
                           ? async () => {

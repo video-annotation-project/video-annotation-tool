@@ -3,7 +3,6 @@ const passport = require("passport");
 const psql = require("../../db/simpleConnect");
 const AWS = require("aws-sdk");
 
-
 /**
  * @typedef annotation
  * @property {integer} id - ID of the annotation
@@ -30,8 +29,10 @@ const AWS = require("aws-sdk");
  * @returns {Error} 500 - Unexpected database error
  */
 
- // TODO: this endpoint is unsecure in its admin check, need to fix
-router.get("/", passport.authenticate("jwt", { session: false }),
+// TODO: this endpoint is unsecure in its admin check, need to fix
+router.get(
+  "/",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     let params = [];
     let queryPass = `
@@ -60,11 +61,15 @@ router.get("/", passport.authenticate("jwt", { session: false }),
       params.push(req.user.id);
     }
     // Adds query conditions from Report tree
-    if (req.query.queryConditions){
-      queryPass += req.query.queryConditions + ` ORDER BY annotations.timeinvideo`;
+    if (req.query.queryConditions) {
+      queryPass +=
+        req.query.queryConditions + ` ORDER BY annotations.timeinvideo`;
     }
     // Retrieves only selected 100 if queryLimit exists
-    if (req.query.queryLimit !== undefined && req.query.queryLimit !== "undefined") {
+    if (
+      req.query.queryLimit !== undefined &&
+      req.query.queryLimit !== "undefined"
+    ) {
       queryPass = queryPass + req.query.queryLimit;
     }
     try {
@@ -77,7 +82,7 @@ router.get("/", passport.authenticate("jwt", { session: false }),
   }
 );
 
- /**
+/**
  * @typedef annotationInsert
  * @property {string} message - "Annotated"
  * @property {string} value - Inserted row.
@@ -108,7 +113,9 @@ router.get("/", passport.authenticate("jwt", { session: false }),
  * @returns {annotationInsert.model} 200 - Message plus inserted annotation
  * @returns {Error} 500 - Unexpected database error
  */
-router.post("/", passport.authenticate("jwt", { session: false }),
+router.post(
+  "/",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     data = [
       req.user.id,
@@ -147,7 +154,7 @@ router.post("/", passport.authenticate("jwt", { session: false }),
       });
     } catch (error) {
       console.log(error);
-      res.status(500).json({error});
+      res.status(500).json({ error });
     }
   }
 );
@@ -171,28 +178,31 @@ router.post("/", passport.authenticate("jwt", { session: false }),
  * @returns {enum} 200 - Either "success" or []
  * @returns {Error} 500 - Unexpected database or S3 error
  */
-router.patch("/", passport.authenticate("jwt", { session: false }),
+router.patch(
+  "/",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-
-    if (req.body.op === "updateBoundingBox"){
-      updateBoundingBox(req, res)
-    } else if (req.body.op === "verifyAnnotation"){
-      verifyAnnotation(req, res)
+    if (req.body.op === "updateBoundingBox") {
+      updateBoundingBox(req, res);
+    } else if (req.body.op === "verifyAnnotation") {
+      verifyAnnotation(req, res);
     } else {
-      res.status(400).json({error: "Unrecognized patch operation."});
+      res.status(400).json({ error: "Unrecognized patch operation." });
     }
   }
 );
 
 /**
  * @route DELETE /api/annotations
- * @group annotations 
+ * @group annotations
  * @summary Delete an annotation
  * @param {integer} id.body.required - Annotation ID
  * @returns {string} 200 - "delete"
  * @returns {Error} 500 - Unexpected database or S3 error
  */
-router.delete("/", passport.authenticate("jwt", { session: false }),
+router.delete(
+  "/",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     let s3 = new AWS.S3();
     let queryText = `
@@ -246,14 +256,14 @@ router.delete("/", passport.authenticate("jwt", { session: false }),
   }
 );
 
- /**
+/**
  * @typedef imageMessage
  * @property {string} message - "successfully uploaded image to S3"
  */
 
 /**
  * @route POST /api/annotations/images
- * @group annotations 
+ * @group annotations
  * @summary Upload an annotation image to the S3 bucket
  * @param {string} name.body - Name of the annotation
  * @param {string} date.body - Date this image was annotated
@@ -262,7 +272,9 @@ router.delete("/", passport.authenticate("jwt", { session: false }),
  * @returns {imageMessage.model} 200 - Success message
  * @returns {Error} 500 - Unexpected S3 error
  */
-router.post("/images", passport.authenticate("jwt", { session: false }),
+router.post(
+  "/images",
+  passport.authenticate("jwt", { session: false }),
   (req, res) => {
     let s3 = new AWS.S3();
     let key = process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER;
@@ -275,7 +287,7 @@ router.post("/images", passport.authenticate("jwt", { session: false }),
       }
       key += ".png";
     }
-    
+
     const params = {
       Key: key,
       Bucket: process.env.AWS_S3_BUCKET_NAME,
@@ -286,7 +298,10 @@ router.post("/images", passport.authenticate("jwt", { session: false }),
     s3.putObject(params, (err, data) => {
       if (err) {
         console.log(err);
-        res.status(500).json(error).end();
+        res
+          .status(500)
+          .json(error)
+          .end();
       } else {
         res.json({ message: "successfully uploaded image to S3" });
       }
@@ -294,20 +309,22 @@ router.post("/images", passport.authenticate("jwt", { session: false }),
   }
 );
 
- /**
+/**
  * @typedef trackingInfo
  * @property {integer} id - ID of the changed annotation
  */
 
 /**
  * @route PATCH /api/annotations/tracking/:id
- * @group annotations 
+ * @group annotations
  * @summary Mark a tracking annotation as bad
  * @param {string} id.url.required - ID of the tracking annotation
  * @returns {Array.<trackingInfo>} 200 - Changed tracking annotation IDs
  * @returns {Error} 500 - Unexpected database error
  */
-router.patch(`/tracking/:id`, passport.authenticate("jwt", { session: false }),
+router.patch(
+  `/tracking/:id`,
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     let queryText = `
       UPDATE
@@ -327,11 +344,11 @@ router.patch(`/tracking/:id`, passport.authenticate("jwt", { session: false }),
       res.status(500).json(error);
     }
   }
-)
+);
 
 /**
  * @route GET /api/annotations/unverified
- * @group annotations 
+ * @group annotations
  * @summary Get unverified annotations
  * @param {Array.<integer>} selectedUsers.query - Get unverified from these user IDs
  * @param {Array.<integer>} selectedVideos.query - Get unverified from these video IDs
@@ -340,7 +357,9 @@ router.patch(`/tracking/:id`, passport.authenticate("jwt", { session: false }),
  * @returns {Array.<object>} 200 - Returns matching rows from database
  * @returns {Error} 500 - Unexpected database error
  */
-router.get("/verified", passport.authenticate("jwt", { session: false }),
+router.get(
+  "/verified",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const verifiedOnly = req.query.verifiedOnly;
     const selectedUsers = req.query.selectedUsers;
@@ -435,14 +454,24 @@ router.get(
         SUM(CASE WHEN userid!=32 THEN 1 ELSE 0 END) as annotationcount
       FROM annotations as A
     `;
-    if (!(req.query.selectedConcepts.length === 1 && req.query.selectedConcepts[0] === "-1")) {
-      if (params.length === 0 ) {
+    if (
+      !(
+        req.query.selectedConcepts.length === 1 &&
+        req.query.selectedConcepts[0] === "-1"
+      )
+    ) {
+      if (params.length === 0) {
         queryText += ` WHERE `;
       }
       params.push(req.query.selectedConcepts);
       queryText += ` conceptid::text = ANY($${params.length}) `;
     }
-    if (!(req.query.selectedVideos.length === 1 && req.query.selectedVideos[0] === "-1")) {
+    if (
+      !(
+        req.query.selectedVideos.length === 1 &&
+        req.query.selectedVideos[0] === "-1"
+      )
+    ) {
       if (params.length === 0) {
         queryText += ` WHERE `;
       } else {
@@ -451,7 +480,12 @@ router.get(
       params.push(req.query.selectedVideos);
       queryText += ` videoid::text = ANY($${params.length}) `;
     }
-    if (!(req.query.selectedUsers.length === 1 && req.query.selectedUsers[0] === "-1")) {
+    if (
+      !(
+        req.query.selectedUsers.length === 1 &&
+        req.query.selectedUsers[0] === "-1"
+      )
+    ) {
       if (params.length === 0) {
         queryText += ` WHERE `;
       } else {
@@ -477,17 +511,17 @@ router.get(
   }
 );
 
- /**
+/**
  * @typedef treeData
  * @property {string} name - Name of the specific item in the current level
- * @property {integer} key - ID of the specific item in the current level 
- * @property {integer} count - Count of the specific item in the current level 
+ * @property {integer} key - ID of the specific item in the current level
+ * @property {integer} count - Count of the specific item in the current level
  * @property {boolean} expanded - Is the specific item in the current level expanded
  */
 
 /**
  * @route GET /api/annotations/treeData
- * @group annotations 
+ * @group annotations
  * @summary Get tree representation of annotations
  * @param {enum} levelName.query.required - Either "User", "Video", or "Concept"
  * @param {string} queryConditions.query - Conditions for the annotations query
@@ -497,8 +531,10 @@ router.get(
  * @returns {Array.<treeData>} 200 - Returns matching annotations
  * @returns {Error} 500 - Unexpected database error
  */
- // TODO: fix admin check, what is expanded?
-router.get("/treeData", passport.authenticate("jwt", { session: false }),
+// TODO: fix admin check, what is expanded?
+router.get(
+  "/treeData",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     let params = [];
     let queryPass = selectLevelQuery(req.query.levelName);
@@ -612,14 +648,13 @@ let verifyAnnotation = async (req, res) => {
       }
     };
     await s3.deleteObjects(params, (err, data) => {
-        if (err) {
-          console.log(err);
-          res.status(500).json(err);
-        } else {
-          console.log("Deleted annotations");
-        }
+      if (err) {
+        console.log(err);
+        res.status(500).json(err);
+      } else {
+        console.log("Deleted annotations");
       }
-    );
+    });
     res.json("success");
   } catch (error) {
     console.log(error);
