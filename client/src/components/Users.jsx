@@ -285,6 +285,7 @@ class Users extends Component {
               <TableRow>
                 <TableCell>Species</TableCell>
                 <TableCell align="right">Total Annotated</TableCell>
+                <TableCell align="right">Total Verified</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>

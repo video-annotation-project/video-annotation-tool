@@ -424,6 +424,59 @@ router.get("/verified", passport.authenticate("jwt", { session: false }),
   }
 );
 
+router.get(
+  "/collection/counts",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    let params = [];
+    let queryText = `
+      SELECT 
+        SUM(CASE WHEN userid=32 THEN 1 ELSE 0 END) as trackingcount,
+        SUM(CASE WHEN userid!=32 THEN 1 ELSE 0 END) as annotationcount
+      FROM annotations as A
+    `;
+    if (!(req.query.selectedConcepts.length === 1 && req.query.selectedConcepts[0] === "-1")) {
+      if (params.length === 0 ) {
+        queryText += ` WHERE `;
+      }
+      params.push(req.query.selectedConcepts);
+      queryText += ` conceptid::text = ANY($${params.length}) `;
+    }
+    if (!(req.query.selectedVideos.length === 1 && req.query.selectedVideos[0] === "-1")) {
+      if (params.length === 0) {
+        queryText += ` WHERE `;
+      } else {
+        queryText += ` AND `;
+      }
+      params.push(req.query.selectedVideos);
+      queryText += ` videoid::text = ANY($${params.length}) `;
+    }
+    if (!(req.query.selectedUsers.length === 1 && req.query.selectedUsers[0] === "-1")) {
+      if (params.length === 0) {
+        queryText += ` WHERE `;
+      } else {
+        queryText += ` AND `;
+      }
+      params.push(req.query.selectedUsers);
+      queryText += `EXISTS ( 
+        SELECT id, userid 
+        FROM annotations 
+        WHERE id=originalid 
+        AND unsure = False
+        AND userid::text = ANY($${params.length}))`;
+    }
+    console.log(queryText);
+    console.log(params);
+    try {
+      let response = await psql.query(queryText, params);
+      res.json(response.rows);
+    } catch (error) {
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
+);
+
  /**
  * @typedef treeData
  * @property {string} name - Name of the specific item in the current level
