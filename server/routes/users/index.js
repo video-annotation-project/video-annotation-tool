@@ -209,7 +209,7 @@ router.get("/annotations", passport.authenticate("jwt", { session: false }),
       let response = await psql.query(queryText, data);
       res.json(response.rows);
     } catch (error) {
-      console.log("Error on GET /api/users/annotationCount");
+      console.log("Error on GET /api/users/annotations");
       console.log(error);
       res.status(500).json(error);
     }

@@ -85,9 +85,10 @@ class Verify extends Component {
 
   getVideos = async () => {
     return axios
-      .get(`/api/annotations/unverified`, {
+      .get(`/api/annotations/verified`, {
         headers: { Authorization: "Bearer " + localStorage.getItem("token") },
         params: {
+          verifiedOnly: "-1",
           selectedUsers: this.state.selectedUsers
         }
       })
@@ -114,12 +115,13 @@ class Verify extends Component {
 
   getConcepts = async () => {
     return axios
-      .get(`/api/annotations/unverified`, {
+      .get(`/api/annotations/verified`, {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + localStorage.getItem("token")
         },
         params: {
+          verifiedOnly: "-1",
           selectedUsers: this.state.selectedUsers,
           selectedVideos: this.state.selectedVideos
         }
@@ -134,12 +136,13 @@ class Verify extends Component {
 
   getUnsure = async () => {
     return axios
-      .get(`/api/annotations/unverified`, {
+      .get(`/api/annotations/verified`, {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + localStorage.getItem("token")
         },
         params: {
+          verifiedOnly: "-1",
           selectedUsers: this.state.selectedUsers,
           selectedVideos: this.state.selectedVideos,
           selectedConcepts: this.state.selectedConcepts
@@ -155,12 +158,13 @@ class Verify extends Component {
 
   getAnnotations = async () => {
     return axios
-      .get(`/api/annotations/unverified`, {
+      .get(`/api/annotations/verified`, {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + localStorage.getItem("token")
         },
         params: {
+          verifiedOnly: "-1",
           selectedUsers: this.state.selectedUsers,
           selectedVideos: this.state.selectedVideos,
           selectedConcepts: this.state.selectedConcepts,

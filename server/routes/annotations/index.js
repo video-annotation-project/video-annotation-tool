@@ -1,9 +1,11 @@
-const router = require('express').Router();
+const router = require("express").Router();
 const passport = require("passport");
 const psql = require("../../db/simpleConnect");
 const AWS = require("aws-sdk");
 
-router.get("/", passport.authenticate("jwt", { session: false }),
+router.get(
+  "/",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     let params = [];
     let queryPass = `
@@ -20,7 +22,7 @@ router.get("/", passport.authenticate("jwt", { session: false }),
       WHERE 
         annotations.userid NOT IN (17, 32)`;
     if (req.query.unsureOnly === "true") {
-      queryPass +=` AND annotations.unsure = true`;
+      queryPass += ` AND annotations.unsure = true`;
     }
     if (req.query.verifiedCondition === "verified only") {
       queryPass += ` AND annotations.verifiedby IS NOT NULL`;
@@ -48,7 +50,9 @@ router.get("/", passport.authenticate("jwt", { session: false }),
   }
 );
 
-router.post("/", passport.authenticate("jwt", { session: false }),
+router.post(
+  "/",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     data = [
       req.user.id,
@@ -87,27 +91,28 @@ router.post("/", passport.authenticate("jwt", { session: false }),
       });
     } catch (error) {
       console.log(error);
-      res.status(400).json({error});
+      res.status(400).json({ error });
     }
   }
 );
 
-
-router.patch("/", passport.authenticate("jwt", { session: false }),
+router.patch(
+  "/",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-
-    if (req.body.op === "updateBoundingBox"){
-      updateBoundingBox(req, res)
-    } else if (req.body.op === "verifyAnnotation"){
-      verifyAnnotation(req, res)
+    if (req.body.op === "updateBoundingBox") {
+      updateBoundingBox(req, res);
+    } else if (req.body.op === "verifyAnnotation") {
+      verifyAnnotation(req, res);
     } else {
-      res.status(400).json({error: "Unrecognized patch operation."});
+      res.status(400).json({ error: "Unrecognized patch operation." });
     }
   }
 );
 
-
-router.delete("/", passport.authenticate("jwt", { session: false }),
+router.delete(
+  "/",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     let s3 = new AWS.S3();
     let queryText = `
@@ -161,8 +166,9 @@ router.delete("/", passport.authenticate("jwt", { session: false }),
   }
 );
 
-
-router.post("/images", passport.authenticate("jwt", { session: false }),
+router.post(
+  "/images",
+  passport.authenticate("jwt", { session: false }),
   (req, res) => {
     let s3 = new AWS.S3();
     let key = process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER;
@@ -175,7 +181,7 @@ router.post("/images", passport.authenticate("jwt", { session: false }),
       }
       key += ".png";
     }
-    
+
     const params = {
       Key: key,
       Bucket: process.env.AWS_S3_BUCKET_NAME,
@@ -186,7 +192,10 @@ router.post("/images", passport.authenticate("jwt", { session: false }),
     s3.putObject(params, (err, data) => {
       if (err) {
         console.log(err);
-        res.status(400).json(error).end();
+        res
+          .status(400)
+          .json(error)
+          .end();
       } else {
         res.json({ message: "successfully uploaded image to S3" });
       }
@@ -194,7 +203,9 @@ router.post("/images", passport.authenticate("jwt", { session: false }),
   }
 );
 
-router.patch(`/tracking/:id`, passport.authenticate("jwt", { session: false }),
+router.patch(
+  `/tracking/:id`,
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     let queryText = `
       UPDATE
@@ -214,32 +225,35 @@ router.patch(`/tracking/:id`, passport.authenticate("jwt", { session: false }),
       res.status(500).json(error);
     }
   }
-)
+);
 
-router.get("/unverified", passport.authenticate("jwt", { session: false }),
+router.get(
+  "/verified",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
+    const verifiedOnly = req.query.verifiedOnly;
     const selectedUsers = req.query.selectedUsers;
     const selectedVideos = req.query.selectedVideos;
     const selectedConcepts = req.query.selectedConcepts;
     const selectedUnsure = req.query.selectedUnsure;
 
     let params = [];
-    let queryText = 'SELECT DISTINCT ';
-    let orderBy = '';
+    let queryText = "SELECT DISTINCT ";
+    let orderBy = "";
 
-    if (selectedUsers && selectedVideos && selectedConcepts && selectedUnsure){
+    if (selectedUsers && selectedVideos && selectedConcepts && selectedUnsure) {
       queryText += `a.*, c.name, u.username, v.filename `;
-      orderBy = ' ORDER BY a.id';
-    } else if (selectedUsers && selectedVideos && selectedConcepts){
+      orderBy = " ORDER BY a.id";
+    } else if (selectedUsers && selectedVideos && selectedConcepts) {
       queryText += `a.unsure `;
-    } else if (selectedUsers && selectedVideos){
+    } else if (selectedUsers && selectedVideos) {
       queryText += `c.* `;
-      orderBy = ' ORDER BY c.name';
+      orderBy = " ORDER BY c.name";
     } else if (selectedUsers) {
       queryText += `v.id, v.filename `;
-      orderBy = ' ORDER BY v.id';
+      orderBy = " ORDER BY v.id";
     } else {
-      res.status(400).json({error: 'Nothing selected.'});
+      res.status(400).json({ error: "Nothing selected." });
     }
 
     queryText += `
@@ -251,26 +265,41 @@ router.get("/unverified", passport.authenticate("jwt", { session: false }),
         users u ON u.id=userid
       LEFT JOIN
         videos v ON v.id=videoid
-      WHERE
-        a.verifiedby IS NULL
+      WHERE TRUE
     `;
 
-    if (selectedUsers && !(selectedUsers.length === 1 && selectedUsers[0] === "-1")) {
+    if (verifiedOnly === "1") {
+      queryText += ` AND a.verifiedby IS NOT NULL`;
+    } else if (verifiedOnly === "-1") {
+      queryText += ` AND a.verifiedby IS NULL`;
+    }
+
+    if (
+      selectedUsers &&
+      !(selectedUsers.length === 1 && selectedUsers[0] === "-1")
+    ) {
       queryText += ` AND a.userid::text=ANY($${params.length + 1})`;
       params.push(selectedUsers);
     }
 
-    if (selectedVideos && !(selectedVideos.length === 1 && selectedVideos[0] === "-1")) {
+    if (
+      selectedVideos &&
+      !(selectedVideos.length === 1 && selectedVideos[0] === "-1")
+    ) {
       queryText += ` AND a.videoid::text=ANY($${params.length + 1})`;
       params.push(selectedVideos);
     }
 
-    if (selectedConcepts && !(selectedConcepts.length === 1 && selectedConcepts[0] === "-1")) {
+    if (
+      selectedConcepts &&
+      !(selectedConcepts.length === 1 && selectedConcepts[0] === "-1")
+    ) {
       queryText += ` AND a.conceptid::text=ANY($${params.length + 1})`;
       params.push(selectedConcepts);
     }
 
     if (selectedUnsure === "true") queryText += ` AND unsure`;
+    else if (selectedUnsure === "not true") queryText += ` AND NOT unsure`;
 
     queryText += orderBy;
 
@@ -284,8 +313,62 @@ router.get("/unverified", passport.authenticate("jwt", { session: false }),
   }
 );
 
+router.get(
+  "/collection/counts",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    let params = [];
+    let queryText = `
+      SELECT 
+        SUM(CASE WHEN userid=32 THEN 1 ELSE 0 END) as trackingcount,
+        SUM(CASE WHEN userid!=32 THEN 1 ELSE 0 END) as annotationcount
+      FROM annotations as A
+    `;
+    if (!(req.query.selectedConcepts.length === 1 && req.query.selectedConcepts[0] === "-1")) {
+      if (params.length === 0 ) {
+        queryText += ` WHERE `;
+      }
+      params.push(req.query.selectedConcepts);
+      queryText += ` conceptid::text = ANY($${params.length}) `;
+    }
+    if (!(req.query.selectedVideos.length === 1 && req.query.selectedVideos[0] === "-1")) {
+      if (params.length === 0) {
+        queryText += ` WHERE `;
+      } else {
+        queryText += ` AND `;
+      }
+      params.push(req.query.selectedVideos);
+      queryText += ` videoid::text = ANY($${params.length}) `;
+    }
+    if (!(req.query.selectedUsers.length === 1 && req.query.selectedUsers[0] === "-1")) {
+      if (params.length === 0) {
+        queryText += ` WHERE `;
+      } else {
+        queryText += ` AND `;
+      }
+      params.push(req.query.selectedUsers);
+      queryText += `EXISTS ( 
+        SELECT id, userid 
+        FROM annotations 
+        WHERE id=originalid 
+        AND unsure = False
+        AND userid::text = ANY($${params.length}))`;
+    }
+    console.log(queryText);
+    console.log(params);
+    try {
+      let response = await psql.query(queryText, params);
+      res.json(response.rows);
+    } catch (error) {
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
+);
 
-router.get("/treeData", passport.authenticate("jwt", { session: false }),
+router.get(
+  "/treeData",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     let params = [];
     let queryPass = selectLevelQuery(req.query.levelName);
@@ -315,13 +398,11 @@ router.get("/treeData", passport.authenticate("jwt", { session: false }),
   }
 );
 
-
-
 let updateBoundingBox = async (req, res) => {
-    delete req.body.op;
+  delete req.body.op;
 
-    const params = Object.values(req.body);
-    const queryText = `
+  const params = Object.values(req.body);
+  const queryText = `
       UPDATE
         annotations 
       SET 
@@ -330,14 +411,14 @@ let updateBoundingBox = async (req, res) => {
       WHERE 
         id=$9
     `;
-    try {
-      let update = await psql.query(queryText, params);
-      res.json(update.rows);
-    } catch (error) {
-      console.log(error);
-      res.status(500).json(error);
-    }
-}
+  try {
+    let update = await psql.query(queryText, params);
+    res.json(update.rows);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json(error);
+  }
+};
 
 let verifyAnnotation = async (req, res) => {
   delete req.body.op;
@@ -386,16 +467,13 @@ let verifyAnnotation = async (req, res) => {
         Key: process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + element.image
       });
       Objects.push({
-        Key:
-          process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + element.imagewithbox
+        Key: process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + element.imagewithbox
       });
     });
     // add tracking video
     Objects.push({
       Key:
-        process.env.AWS_S3_BUCKET_VIDEOS_FOLDER +
-        req.body.id +
-        "_tracking.mp4"
+        process.env.AWS_S3_BUCKET_VIDEOS_FOLDER + req.body.id + "_tracking.mp4"
     });
     params = {
       Bucket: process.env.AWS_S3_BUCKET_NAME,
@@ -404,21 +482,19 @@ let verifyAnnotation = async (req, res) => {
       }
     };
     await s3.deleteObjects(params, (err, data) => {
-        if (err) {
-            console.log(err);
-            res.status(400).json(err);
-        } else {
-            console.log("Deleted annotations");
-        }
+      if (err) {
+        console.log(err);
+        res.status(400).json(err);
+      } else {
+        console.log("Deleted annotations");
       }
-    );
+    });
     res.json("success");
   } catch (error) {
     console.log(error);
     res.status(500).json(error);
   }
-}
-
+};
 
 let selectLevelQuery = level => {
   let queryPass = "";
@@ -459,7 +535,6 @@ let selectLevelQuery = level => {
 };
 
 module.exports = router;
-
 
 // in the future, this route as well as the /api/conceptImages route can
 // be circumvented by using cloudfront
@@ -523,4 +598,3 @@ module.exports = router;
 //     res.status(400).json(error);
 //   }
 // });
-

@@ -76,7 +76,8 @@ class AnnotationCollection extends Component {
       selectedUsers: [],
       selectedVideos: ["-1"],
       selectedConcepts: ["-1"],
-      annotations: [],
+      annotationCount: "",
+      trackingCount: "",
       collections: [],
       selectedCollection: "",
       error: null,
@@ -95,7 +96,6 @@ class AnnotationCollection extends Component {
       }
     };
     return axios.get("/api/collections/annotations", config).then(res => {
-      console.log(res.data);
       this.setState(
         {
           collections: res.data
@@ -188,14 +188,14 @@ class AnnotationCollection extends Component {
     });
   };
 
-  insertAnnotationsToCollection = () => {
+  insertAnnotationsToCollection = annotations => {
     const config = {
       headers: {
         Authorization: "Bearer " + localStorage.getItem("token")
       }
     };
     const body = {
-      annotations: this.state.annotations
+      annotations: this.state[annotations]
     };
     try {
       axios
@@ -235,9 +235,10 @@ class AnnotationCollection extends Component {
 
   getVideos = async () => {
     return axios
-      .get(`/api/annotations/unverified`, {
+      .get(`/api/annotations/verified`, {
         headers: { Authorization: "Bearer " + localStorage.getItem("token") },
         params: {
+          verifiedOnly: "0",
           selectedUsers: this.state.selectedUsers
         }
       })
@@ -264,12 +265,13 @@ class AnnotationCollection extends Component {
 
   getConcepts = async () => {
     return axios
-      .get(`/api/annotations/unverified`, {
+      .get(`/api/annotations/verified`, {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + localStorage.getItem("token")
         },
         params: {
+          verifiedOnly: "0",
           selectedUsers: this.state.selectedUsers,
           selectedVideos: this.state.selectedVideos
         }
@@ -284,21 +286,23 @@ class AnnotationCollection extends Component {
 
   getAnnotations = async () => {
     return axios
-      .get(`/api/annotations/unverified`, {
+      .get(`/api/annotations/collection/counts`, {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + localStorage.getItem("token")
         },
-        params: {
+        params: {          
           selectedUsers: this.state.selectedUsers,
           selectedVideos: this.state.selectedVideos,
           selectedConcepts: this.state.selectedConcepts,
-          selectedUnsure: false
         }
       })
       .then(res => {
+        console.log(res);
+        
         this.setState({
-          annotations: res.data.map(annotation => annotation.id)
+          annotationCount: res.data[0].annotationcount,
+          trackingCount: res.data[0].trackingcount
         });
       })
       .catch(error => {
@@ -461,9 +465,15 @@ class AnnotationCollection extends Component {
                 New Annotation Collection
               </Button>
             </div>
-            <Typography className={classes.info}>
-              Number of Annotations: {this.state.annotations.length}
-            </Typography>
+            <div className={classes.info}>
+              <Typography>
+                Number of Annotations: {this.state.annotationCount}
+              </Typography>
+              <Typography>
+                Number of Tracking Annotations:{" "}
+                {this.state.trackingCount}
+              </Typography>
+            </div>
           </React.Fragment>
         );
       default:
@@ -479,8 +489,8 @@ class AnnotationCollection extends Component {
         return this.state.selectedVideos.length === 0;
       case 2:
         return this.state.selectedConcepts.length === 0;
-      case 4:
-        return this.state.selectedCollection === ""
+      case 3:
+        return this.state.selectedCollection === "";
       default:
         return false;
     }
@@ -531,26 +541,54 @@ class AnnotationCollection extends Component {
                   >
                     Back
                   </Button>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    disabled={this.didNotSelect(index)}
-                    onClick={
-                      activeStep === steps.length - 2
-                        ? async () => {
-                            await this.getAnnotations();
-                            this.handleNext();
-                          }
-                        : activeStep === steps.length - 1
-                        ? this.insertAnnotationsToCollection
-                        : this.handleNext
-                    }
-                    className={classes.button}
-                  >
-                    {activeStep === steps.length - 1
-                      ? "Add to collection"
-                      : "Next"}
-                  </Button>
+                  {activeStep === steps.length - 1 ? (
+                    <React.Fragment>
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        disabled={this.didNotSelect(index)}
+                        onClick={() =>
+                          this.insertAnnotationsToCollection("annotations")
+                        }
+                        className={classes.button}
+                      >
+                        Add Annotations
+                      </Button>
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        disabled={
+                          this.didNotSelect(index) ||
+                          this.state.trackingCount === 0
+                        }
+                        onClick={() =>
+                          this.insertAnnotationsToCollection(
+                            "trackingAnnotations"
+                          )
+                        }
+                        className={classes.button}
+                      >
+                        Add Tracking Annotations
+                      </Button>
+                    </React.Fragment>
+                  ) : (
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      disabled={this.didNotSelect(index)}
+                      onClick={
+                        activeStep === steps.length - 2
+                          ? async () => {
+                              await this.getAnnotations();
+                              this.handleNext();
+                            }
+                          : this.handleNext
+                      }
+                      className={classes.button}
+                    >
+                      Next
+                    </Button>
+                  )}
                 </div>
               </StepContent>
             </Step>
