@@ -169,10 +169,10 @@ class PredictModel extends Component {
       }
     };
     axios.get(`/api/videos`, config).then(res => {
-      let [, unwatchedVideos, watchedVideos, inProgressVideos] = res.data;
-      const videos = unwatchedVideos.rows.concat(
-        watchedVideos.rows,
-        inProgressVideos.rows
+      let { unwatchedVideos, watchedVideos, inProgressVideos } = res.data;
+      const videos = unwatchedVideos.concat(
+        watchedVideos,
+        inProgressVideos
       );
       this.setState({
         videos: videos

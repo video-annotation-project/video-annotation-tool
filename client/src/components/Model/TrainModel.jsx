@@ -174,6 +174,7 @@ class TrainModel extends Component {
       .get(`/api/models/train/${option}`, config)
       .then(res => {
         const info = res.data[0].info;
+        console.log(info);
         this.setState(
           {
             activeStep: info.activeStep,

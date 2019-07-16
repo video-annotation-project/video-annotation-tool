@@ -3,6 +3,15 @@ const passport = require("passport");
 const psql = require("../../db/simpleConnect");
 const AWS = require("aws-sdk");
 
+/**
+ * @route POST /api/models/train
+ * @group models 
+ * @summary Start a training session
+ * @param {integer} modelInstanceId.body.required - ID of model instance to use
+ * @param {enum} command.body - "start" or "stop" (Start or stop training)
+ * @returns 200 - Succesfully started/stopped training
+ * @returns {Error} 500 - Unexpected server error
+ */
 router.post("/", passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     let ec2 = new AWS.EC2({ region: "us-west-1" });
@@ -31,6 +40,8 @@ router.post("/", passport.authenticate("jwt", { session: false }),
     }
   }
 );
+
+// TODO: figure out trainmodel then document this
 
 router.get("/:option", passport.authenticate("jwt", { session: false }),
   async (req, res) => {
