@@ -40,7 +40,6 @@ def evaluate_model(concepts, model_path,  min_examples, download_data=False):
     if download_data:
         folders = []
         folders.append(test_examples)
-        folders.append(img_folder)
         for dir in folders:
             if os.path.exists(dir):
                 shutil.rmtree(dir)

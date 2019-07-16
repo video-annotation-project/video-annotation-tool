@@ -26,6 +26,7 @@ router.get(
 
     try {
       let annotationCollections = await psql.query(queryText);
+      // console.log(annotationCollections.rows);
       res.json(annotationCollections.rows);
     } catch (error) {
       console.log(error);
@@ -117,6 +118,39 @@ router.post(
       let added = await psql.query(queryText, params);
       if (added) {
         res.status(200).json(added);
+      }
+    } catch (error) {
+      res.status(500).json(error);
+      console.log(error);
+    }
+  }
+);
+
+router.get("/train",
+  passport.authenticate("jwt", { session: false }),
+
+  async (req, res) => {
+    let queryText = `      
+      SELECT name, id, count(*), array_agg(conceptid) as ids, array_agg(conceptname) 
+      FROM
+      (SELECT ac.name, a.conceptid, ai.id, count(a.conceptid), c.name as conceptname
+      FROM annotation_collection ac
+      LEFT JOIN
+      annotation_intermediate ai
+      ON ac.id = ai.id
+      LEFT JOIN annotations a
+      ON ai.annotationid = a.id
+      LEFT JOIN concepts c
+      ON a.conceptid = c.id
+      WHERE a.conceptid IN (1629, 1210, 236, 383, 1133)
+      GROUP BY ac.name, a.conceptid, ai.id, c.name ) t
+      GROUP BY name, id
+    `;
+
+    try {
+      let data = await psql.query(queryText, req.body.conceptids);
+      if (data) {
+        res.status(200).json(data.rows);
       }
     } catch (error) {
       res.status(500).json(error);

@@ -28,7 +28,7 @@ router.get("/", passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const queryText = `
       SELECT 
-        m.name, m.timestamp, array_agg(c.name) concepts
+        m.name, m.timestamp, array_agg(c.name) concepts, array_agg(c.id) conceptsid
       FROM 
         (SELECT name, timestamp, UNNEST(concepts) concept FROM models) m
       JOIN 
