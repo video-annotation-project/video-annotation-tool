@@ -10,22 +10,25 @@ const setCookies = require('../../config/cookies')
 router.use('/concepts', require('./concepts'))
 
 /**
- * @api {get} /api/users/ Request list of all users
- * @apiName GetUsers
- * @apiGroup users
- *
- *
- * @apiSuccess {Object[]}          List of user information.
- * @apiSuccess {Number}   id       ID of the user.
- * @apiSuccess {String}   username Username of the user.
+ * @typedef Error
+ * @property {string} detail.required
  */
- 
+
+
 /**
-* @swagger
-* /users:
-*    get:
-*      description: This should return all users
-*/
+ * @typedef userInfo
+ * @property {integer} id - ID of user
+ * @property {string} username - username of user
+ */
+
+/**
+ * @route GET /api/users
+ * @group users 
+ * @summary Get a list of all users
+ * @param {string} noAi.query - Exclude tracking and ai users
+ * @returns {Array.<userInfo>} 200 - An array of user info
+ * @returns {Error} 500 - Unexpected database error
+ */
 router.get("/", passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     let queryText = `
@@ -52,18 +55,30 @@ router.get("/", passport.authenticate("jwt", { session: false }),
   }
 );
 
+
 /**
- * @api {post} /api/users/ Create a new user
- * @apiName PostUser
- * @apiGroup users
- *
- *
- * @apiSuccess {String}  message       "user created"
- * @apiSuccess {Object}  user          Created user object
- * @apiSuccess {Number}  user.id       User ID.
- * @apiSuccess {Boolean} user.username Username.
- * @apiSuccess {Boolean} user.password Password.
- * @apiSuccess {Boolean} user.admin.   Is the user an admin.
+ * @typedef user
+ * @property {integer} id - ID of created user
+ * @property {string} username - Username of created user
+ * @property {string} password - Password of created user
+ * @property {boolean} admin - Is the created user an admin
+ */
+
+/**
+ * @typedef userCreated
+ * @property {string} message - "user created"
+ * @property {user.model} id - ID of user
+ */
+
+/**
+ * @route POST /api/users
+ * @group users 
+ * @summary Create a new user
+ * @param {string} username.body.required - Username of new user
+ * @param {string} password.body.required - Password of new user
+ * @param {string} admin.body.required - Is the user an admin
+ * @returns {userCreated.model} 200 - Created user info
+ * @returns {Error} 500 - Unexpected database error
  */
 router.post("/", passport.authenticate("jwt", { session: false }),
   async (req, res) => {
@@ -81,22 +96,25 @@ router.post("/", passport.authenticate("jwt", { session: false }),
       const insertUser = await psql.query(queryText, data);
       res.json({ message: "user created", user: insertUser.rows[0] });
     } catch (error) {
-      res.status(400).json(error);
+      res.status(500).json(error);
     }
   }
 );
 
+ /**
+ * @typedef message
+ * @property {string} message - "Changed"
+ */
+
 /**
- * @api {post} /api/users/ Update a users password
- * @apiName ChangePassword
- * @apiGroup users
- *
- * @apiParam {String} username The login username.
- * @apiParam {String} password The login password.
- *
- * @apiSuccess {Number}  userid  ID of the user.
- * @apiSuccess {String}  token   Athentication token for the user.
- * @apiSuccess {Boolean} isAdmin Is the user an admin.
+ * @route PATCH /api/users
+ * @group users 
+ * @summary Change a user's password
+ * @param {string} password.body.required - Password of new user
+ * @param {string} newPassword1.body.required - Password of new user
+ * @param {string} newPassword2.body.required - Password of new user
+ * @returns {message.model} 200 - Success message
+ * @returns {Error} 500 - Unexpected database error
  */
 router.patch("/", passport.authenticate("jwt", { session: false }),
   async (req, res) => {
@@ -120,17 +138,22 @@ router.patch("/", passport.authenticate("jwt", { session: false }),
   }
 );
 
+ /**
+ * @typedef userLogin
+ * @property {integer} id - ID of logged in user
+ * @property {string} token - Authentication token
+ * @property {boolean} isAdmin - Is the logged in user an admin
+ */
+
 /**
- * @api {post} /api/users/login Login as a user
- * @apiName UserLogin
- * @apiGroup users
- *
- * @apiParam {String} username The login username.
- * @apiParam {String} password The login password.
- *
- * @apiSuccess {Number}  userid  ID of the user.
- * @apiSuccess {String}  token   Athentication token for the user.
- * @apiSuccess {Boolean} isAdmin Is the user an admin.
+ * @route POST /api/users/login
+ * @group users 
+ * @summary Log-in a user
+ * @param {string} username.body.required - Username of new user
+ * @param {string} password.body.required - Password of new user
+ * @returns {userLogin.model} 200 - Logged in user info
+ * @returns {Error.model} 400 - Error with login
+ * @returns {Error} 500 - Unexpected database error
  */
 router.post("/login", async function(req, res) {
   const { username, password } = req.body;
@@ -169,20 +192,22 @@ router.post("/login", async function(req, res) {
   }
 });
 
+ /**
+ * @typedef annotationInfo
+ * @property {integer} conceptid - ID of concept
+ * @property {string} name - Authentication token
+ * @property {boolean} total_count - Number of annotations for this concept
+ */
 
 /**
- * @api {post} /api/users/annotations Create a new user
- * @apiName PostUser
- * @apiGroup users
- *
- * @apiParam {String} id       The Users-ID.
- * @apiParam {String} fromdate Start date of annotations.
- * @apiParam {String} todate   End date of annotations.
- *
- * @apiSuccess {Object[]}          	  List of concept info
- * @apiSuccess {Number}   conceptid   Concept ID of the annotation.
- * @apiSuccess {String}   name        Name of the concept.
- * @apiSuccess {Number}   total_count Amount of concept that have been annotated.
+ * @route GET /api/users/annotaions
+ * @group users
+ * @summary Get a users annotations
+ * @param {integer} userid.query.required - User id to get annotations
+ * @param {string} fromdate.query.required - Beginning date of annotations
+ * @param {string} todate.query.required - End date of annotations
+ * @returns {Array.<annotationInfo>} 200 - Logged in user info
+ * @returns {Error} 500 - Unexpected database error
  */
 router.get("/annotations", passport.authenticate("jwt", { session: false }),
   async (req, res) => {

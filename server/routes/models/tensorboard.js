@@ -7,12 +7,31 @@ const { spawn } = require("child_process");
 let currentTensorboardID = null;
 let currentTensorboardProcess = null;
 
+/**
+ * @typedef tensorboard
+ * @property {integer} id - ID of currently running tensorboard process
+ */
+
+/**
+ * @route GET /api/models/tensorboard
+ * @group models 
+ * @summary Get the currently running tensorboard process
+ * @returns {tensorboard.model} 200 - Current running tensorboard process ID
+ * @returns {Error} 500 - Unexpected server error
+ */
 router.get("/", passport.authenticate("jwt", { session: false }), 
   async (req, res) => {
     res.json({ id: currentTensorboardID });
   }
 );
 
+/**
+ * @route DELETE /api/models/tensorboard
+ * @group models 
+ * @summary End the currently running tensorboard process
+ * @returns 200 - Successfully stopped tensorboard process
+ * @returns {Error} 400 - Unable to end process
+ */
 router.delete("/", passport.authenticate("jwt", { session: false }), 
   async (req, res) => {
     if (currentTensorboardID !== null) {
@@ -36,6 +55,15 @@ router.delete("/", passport.authenticate("jwt", { session: false }),
   }
 );
 
+
+/**
+ * @route POST /api/models/tensorboard
+ * @group models 
+ * @summary Start a tensorboard isntance for a specific training session
+ * @param {integer} id.url.required - ID of training session to load tensorboard logs from
+ * @returns 200 - Successfully started tensorboard
+ * @returns {Error} 400 - Unable to download tensorboard files or end previous running process
+ */
 router.post("/:id", passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     let s3 = new AWS.S3();

@@ -175,15 +175,12 @@ class Annotate extends Component {
       }
     };
     return axios.get("/api/videos", config).then(res => {
-      this.setState(
-        {
-          startedVideos: res.data[0].rows,
-          unwatchedVideos: res.data[1].rows,
-          watchedVideos: res.data[2].rows,
-          inProgressVideos: res.data[3].rows
-        },
-        callback
-      );
+      this.setState({
+        startedVideos: res.data.startedVideos,
+        unwatchedVideos: res.data.unwatchedVideos,
+        watchedVideos: res.data.watchedVideos,
+        inProgressVideos: res.data.inProgressVideos
+      }, callback);
     });
   };
 

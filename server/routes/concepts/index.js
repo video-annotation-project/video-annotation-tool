@@ -4,6 +4,20 @@ const psql = require("../../db/simpleConnect");
 const AWS = require("aws-sdk");
 
 // returns a list of concept names
+ /**
+ * @typedef conceptPatch
+ * @property {string} value - Stringified array representing the inserted row eg.
+ * "value": "[]"
+ */
+
+/**
+ * @route GET /api/concepts
+ * @group users
+ * @summary Get all concepts
+ * @param {Array.<concept>} conceptsSelected.body.required - New concept ids order
+ * @returns {conceptPatch.model} 200 - Values of updated rows
+ * @returns {Error} 500 - Unexpected database error
+ */
 router.get("/", passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const queryText = `
