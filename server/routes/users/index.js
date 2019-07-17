@@ -1,19 +1,18 @@
-const router = require('express').Router();
+const router = require("express").Router();
 const passport = require("passport");
 const psql = require("../../db/simpleConnect");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
-const jwtOptions = require('../../config/passport').jwtOptions
-const setCookies = require('../../config/cookies')
+const jwtOptions = require("../../config/passport").jwtOptions;
+const setCookies = require("../../config/cookies");
 
-router.use('/concepts', require('./concepts'))
+router.use("/concepts", require("./concepts"));
 
 /**
  * @typedef Error
  * @property {string} detail.required
  */
-
 
 /**
  * @typedef userInfo
@@ -23,13 +22,15 @@ router.use('/concepts', require('./concepts'))
 
 /**
  * @route GET /api/users
- * @group users 
+ * @group users
  * @summary Get a list of all users
  * @param {string} noAi.query - Exclude tracking and ai users
  * @returns {Array.<userInfo>} 200 - An array of user info
  * @returns {Error} 500 - Unexpected database error
  */
-router.get("/", passport.authenticate("jwt", { session: false }),
+router.get(
+  "/",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     let queryText = `
       SELECT DISTINCT 
@@ -55,7 +56,6 @@ router.get("/", passport.authenticate("jwt", { session: false }),
   }
 );
 
-
 /**
  * @typedef user
  * @property {integer} id - ID of created user
@@ -72,7 +72,7 @@ router.get("/", passport.authenticate("jwt", { session: false }),
 
 /**
  * @route POST /api/users
- * @group users 
+ * @group users
  * @summary Create a new user
  * @param {string} username.body.required - Username of new user
  * @param {string} password.body.required - Password of new user
@@ -80,7 +80,9 @@ router.get("/", passport.authenticate("jwt", { session: false }),
  * @returns {userCreated.model} 200 - Created user info
  * @returns {Error} 500 - Unexpected database error
  */
-router.post("/", passport.authenticate("jwt", { session: false }),
+router.post(
+  "/",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const queryText = `
       INSERT INTO 
@@ -101,14 +103,14 @@ router.post("/", passport.authenticate("jwt", { session: false }),
   }
 );
 
- /**
+/**
  * @typedef message
  * @property {string} message - "Changed"
  */
 
 /**
  * @route PATCH /api/users
- * @group users 
+ * @group users
  * @summary Change a user's password
  * @param {string} password.body.required - Password of new user
  * @param {string} newPassword1.body.required - Password of new user
@@ -116,7 +118,9 @@ router.post("/", passport.authenticate("jwt", { session: false }),
  * @returns {message.model} 200 - Success message
  * @returns {Error} 500 - Unexpected database error
  */
-router.patch("/", passport.authenticate("jwt", { session: false }),
+router.patch(
+  "/",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const { password, newPassword1, newPassword2 } = req.body;
     const username = req.user.username;
@@ -138,7 +142,7 @@ router.patch("/", passport.authenticate("jwt", { session: false }),
   }
 );
 
- /**
+/**
  * @typedef userLogin
  * @property {integer} id - ID of logged in user
  * @property {string} token - Authentication token
@@ -147,7 +151,7 @@ router.patch("/", passport.authenticate("jwt", { session: false }),
 
 /**
  * @route POST /api/users/login
- * @group users 
+ * @group users
  * @summary Log-in a user
  * @param {string} username.body.required - Username of new user
  * @param {string} password.body.required - Password of new user
@@ -192,7 +196,7 @@ router.post("/login", async function(req, res) {
   }
 });
 
- /**
+/**
  * @typedef annotationInfo
  * @property {integer} conceptid - ID of concept
  * @property {string} name - Authentication token
@@ -209,7 +213,9 @@ router.post("/login", async function(req, res) {
  * @returns {Array.<annotationInfo>} 200 - Logged in user info
  * @returns {Error} 500 - Unexpected database error
  */
-router.get("/annotations", passport.authenticate("jwt", { session: false }),
+router.get(
+  "/annotations",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const userId = parseInt(req.query.userid);
     const fromDate = req.query.fromdate;
@@ -221,20 +227,49 @@ router.get("/annotations", passport.authenticate("jwt", { session: false }),
     }
 
     const queryText = `
-      SELECT DISTINCT
-        A.conceptid, C.name, COUNT(A.conceptid) AS total_count
-      FROM 
-        annotations A
-      LEFT JOIN 
-        concepts C ON A.conceptid = C.id
-      WHERE 
-        A.userid = $1 AND (A.dateannotated BETWEEN $2 AND $3)
-      GROUP BY A.conceptid, C.name`;
+      SELECT 
+        conceptid,
+        name,
+        CASE WHEN verification_count IS NULL THEN
+          0 
+        ELSE 
+          verification_count END AS verification_count,
+        CASE WHEN annotation_count IS NULL THEN
+          0 
+        ELSE 
+          annotation_count END AS annotation_count
+      FROM
+        (
+          SELECT DISTINCT
+            A.conceptid, C.name, COUNT(A.conceptid) AS annotation_count
+          FROM
+            annotations A
+          LEFT JOIN
+            concepts C ON A.conceptid = C.id
+          WHERE
+            A.userid = $1 AND (A.dateannotated BETWEEN $2 AND $3)
+          GROUP BY A.conceptid, C.name
+        ) AS AC
+      NATURAL FULL JOIN 
+        (
+          SELECT DISTINCT
+            A.conceptid, C.name, COUNT(A.conceptid) AS verification_count
+          FROM
+            annotations A
+          LEFT JOIN
+            concepts C ON A.conceptid = C.id
+          WHERE
+            A.verifiedby = $1 AND (A.verifieddate BETWEEN $2 AND $3)
+          GROUP BY A.conceptid, C.name
+        ) VC
+      ORDER BY 
+        name
+    `;
     try {
       let response = await psql.query(queryText, data);
       res.json(response.rows);
     } catch (error) {
-      console.log("Error on GET /api/users/annotationCount");
+      console.log("Error on GET /api/users/annotations");
       console.log(error);
       res.status(500).json(error);
     }

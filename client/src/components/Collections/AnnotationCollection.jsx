@@ -13,11 +13,13 @@ import Select from "@material-ui/core/Select";
 import MenuItem from "@material-ui/core/MenuItem";
 import FormHelperText from "@material-ui/core/FormHelperText";
 import FormControl from "@material-ui/core/FormControl";
+import FormControlLabel from "@material-ui/core/FormControlLabel";
+import Switch from "@material-ui/core/Switch";
+import Swal from "sweetalert2";
 
 import VerifySelectUser from "../Utilities/SelectUser.jsx";
 import VerifySelectVideo from "../Utilities/SelectVideo.jsx";
 import VerifySelectConcept from "../Utilities/SelectConcept.jsx";
-import Swal from "sweetalert2";
 
 const styles = theme => ({
   list: {
@@ -76,9 +78,11 @@ class AnnotationCollection extends Component {
       selectedUsers: [],
       selectedVideos: ["-1"],
       selectedConcepts: ["-1"],
-      annotations: [],
+      annotationCount: "",
+      trackingCount: "",
       collections: [],
       selectedCollection: "",
+      includeTracking: false,
       error: null,
       activeStep: 0
     };
@@ -95,7 +99,6 @@ class AnnotationCollection extends Component {
       }
     };
     return axios.get("/api/collections/annotations", config).then(res => {
-      console.log(res.data);
       this.setState(
         {
           collections: res.data
@@ -188,14 +191,17 @@ class AnnotationCollection extends Component {
     });
   };
 
-  insertAnnotationsToCollection = () => {
+  insertAnnotationsToCollection = includeTracking => {
     const config = {
       headers: {
         Authorization: "Bearer " + localStorage.getItem("token")
       }
     };
     const body = {
-      annotations: this.state.annotations
+      selectedUsers: this.state.selectedUsers,
+      selectedVideos: this.state.selectedVideos,
+      selectedConcepts: this.state.selectedConcepts,
+      includeTracking: this.state.includeTracking
     };
     try {
       axios
@@ -235,9 +241,10 @@ class AnnotationCollection extends Component {
 
   getVideos = async () => {
     return axios
-      .get(`/api/annotations/unverified`, {
+      .get(`/api/annotations/verified`, {
         headers: { Authorization: "Bearer " + localStorage.getItem("token") },
         params: {
+          verifiedOnly: "0",
           selectedUsers: this.state.selectedUsers
         }
       })
@@ -264,12 +271,13 @@ class AnnotationCollection extends Component {
 
   getConcepts = async () => {
     return axios
-      .get(`/api/annotations/unverified`, {
+      .get(`/api/annotations/verified`, {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + localStorage.getItem("token")
         },
         params: {
+          verifiedOnly: "0",
           selectedUsers: this.state.selectedUsers,
           selectedVideos: this.state.selectedVideos
         }
@@ -284,7 +292,7 @@ class AnnotationCollection extends Component {
 
   getAnnotations = async () => {
     return axios
-      .get(`/api/annotations/unverified`, {
+      .get(`/api/annotations/collection/counts`, {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + localStorage.getItem("token")
@@ -292,13 +300,13 @@ class AnnotationCollection extends Component {
         params: {
           selectedUsers: this.state.selectedUsers,
           selectedVideos: this.state.selectedVideos,
-          selectedConcepts: this.state.selectedConcepts,
-          selectedUnsure: false
+          selectedConcepts: this.state.selectedConcepts
         }
       })
       .then(res => {
         this.setState({
-          annotations: res.data.map(annotation => annotation.id)
+          annotationCount: res.data[0].annotationcount,
+          trackingCount: res.data[0].trackingcount
         });
       })
       .catch(error => {
@@ -333,7 +341,7 @@ class AnnotationCollection extends Component {
           [type]: ["-1"]
         });
       } else {
-        if (this.state[type].length === 1 && this.state[type][0] === "-1") {
+        if (this.state[type][0] === "-1") {
           this.setState({
             [type]: [event.target.value]
           });
@@ -367,6 +375,11 @@ class AnnotationCollection extends Component {
           selectedConcepts: ["-1"]
         });
         return;
+      case 3:
+        this.setState({
+          includeTracking: false
+        });
+        return;
       default:
         return;
     }
@@ -377,6 +390,7 @@ class AnnotationCollection extends Component {
       selectedUsers: [],
       selectedVideos: ["-1"],
       selectedConcepts: ["-1"],
+      includeTracking: false,
       activeStep: 0
     });
   };
@@ -461,9 +475,26 @@ class AnnotationCollection extends Component {
                 New Annotation Collection
               </Button>
             </div>
-            <Typography className={classes.info}>
-              Number of Annotations: {this.state.annotations.length}
-            </Typography>
+            <div className={classes.info}>
+              <Typography>
+                Number of Annotations: {this.state.annotationCount}
+              </Typography>
+              <Typography>
+                Number of Tracking Annotations: {this.state.trackingCount}
+              </Typography>
+            </div>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={this.state.includeTracking}
+                  onChange={this.handleChangeSwitch("includeTracking")}
+                  value="includeTracking"
+                  color="primary"
+                  disabled={this.state.trackingCount === "0"}
+                />
+              }
+              label="Include tracking annotations"
+            />
           </React.Fragment>
         );
       default:
@@ -471,7 +502,7 @@ class AnnotationCollection extends Component {
     }
   };
 
-  didNotSelect = step => {
+  checkButtonDisabled = step => {
     switch (step) {
       case 0:
         return this.state.selectedUsers.length === 0;
@@ -479,8 +510,8 @@ class AnnotationCollection extends Component {
         return this.state.selectedVideos.length === 0;
       case 2:
         return this.state.selectedConcepts.length === 0;
-      case 4:
-        return this.state.selectedCollection === ""
+      case 3:
+        return this.state.selectedCollection === "";
       default:
         return false;
     }
@@ -531,26 +562,36 @@ class AnnotationCollection extends Component {
                   >
                     Back
                   </Button>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    disabled={this.didNotSelect(index)}
-                    onClick={
-                      activeStep === steps.length - 2
-                        ? async () => {
-                            await this.getAnnotations();
-                            this.handleNext();
-                          }
-                        : activeStep === steps.length - 1
-                        ? this.insertAnnotationsToCollection
-                        : this.handleNext
-                    }
-                    className={classes.button}
-                  >
-                    {activeStep === steps.length - 1
-                      ? "Add to collection"
-                      : "Next"}
-                  </Button>
+                  {activeStep === steps.length - 1 ? (
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      disabled={this.checkButtonDisabled(index)}
+                      onClick={() =>
+                        this.insertAnnotationsToCollection("annotations")
+                      }
+                      className={classes.button}
+                    >
+                      Add Annotations
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      disabled={this.checkButtonDisabled(index)}
+                      onClick={
+                        activeStep === steps.length - 2
+                          ? async () => {
+                              await this.getAnnotations();
+                              this.handleNext();
+                            }
+                          : this.handleNext
+                      }
+                      className={classes.button}
+                    >
+                      Next
+                    </Button>
+                  )}
                 </div>
               </StepContent>
             </Step>
