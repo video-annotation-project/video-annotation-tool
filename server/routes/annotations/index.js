@@ -404,26 +404,17 @@ router.get(
       queryText += ` AND a.verifiedby IS NULL`;
     }
 
-    if (
-      selectedUsers &&
-      !(selectedUsers.length === 1 && selectedUsers[0] === "-1")
-    ) {
+    if (selectedUsers && selectedUsers[0] !== "-1") {
       queryText += ` AND a.userid::text=ANY($${params.length + 1})`;
       params.push(selectedUsers);
     }
 
-    if (
-      selectedVideos &&
-      !(selectedVideos.length === 1 && selectedVideos[0] === "-1")
-    ) {
+    if (selectedVideos && selectedVideos[0] !== "-1") {
       queryText += ` AND a.videoid::text=ANY($${params.length + 1})`;
       params.push(selectedVideos);
     }
 
-    if (
-      selectedConcepts &&
-      !(selectedConcepts.length === 1 && selectedConcepts[0] === "-1")
-    ) {
+    if (selectedConcepts && selectedConcepts[0] !== "-1") {
       queryText += ` AND a.conceptid::text=ANY($${params.length + 1})`;
       params.push(selectedConcepts);
     }
@@ -454,24 +445,14 @@ router.get(
         SUM(CASE WHEN userid!=32 THEN 1 ELSE 0 END) as annotationcount
       FROM annotations as A
     `;
-    if (
-      !(
-        req.query.selectedConcepts.length === 1 &&
-        req.query.selectedConcepts[0] === "-1"
-      )
-    ) {
+    if (req.query.selectedConcepts[0] !== "-1") {
       if (params.length === 0) {
         queryText += ` WHERE `;
       }
       params.push(req.query.selectedConcepts);
       queryText += ` conceptid::text = ANY($${params.length}) `;
     }
-    if (
-      !(
-        req.query.selectedVideos.length === 1 &&
-        req.query.selectedVideos[0] === "-1"
-      )
-    ) {
+    if (req.query.selectedVideos[0] !== "-1") {
       if (params.length === 0) {
         queryText += ` WHERE `;
       } else {
@@ -480,12 +461,7 @@ router.get(
       params.push(req.query.selectedVideos);
       queryText += ` videoid::text = ANY($${params.length}) `;
     }
-    if (
-      !(
-        req.query.selectedUsers.length === 1 &&
-        req.query.selectedUsers[0] === "-1"
-      )
-    ) {
+    if (req.query.selectedUsers[0] !== "-1") {
       if (params.length === 0) {
         queryText += ` WHERE `;
       } else {
@@ -495,12 +471,10 @@ router.get(
       queryText += `EXISTS ( 
         SELECT id, userid 
         FROM annotations 
-        WHERE id=originalid 
+        WHERE id=A.originalid 
         AND unsure = False
         AND userid::text = ANY($${params.length}))`;
     }
-    console.log(queryText);
-    console.log(params);
     try {
       let response = await psql.query(queryText, params);
       res.json(response.rows);
@@ -651,8 +625,6 @@ let verifyAnnotation = async (req, res) => {
       if (err) {
         console.log(err);
         res.status(500).json(err);
-      } else {
-        console.log("Deleted annotations");
       }
     });
     res.json("success");

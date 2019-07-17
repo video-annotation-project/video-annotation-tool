@@ -26,7 +26,6 @@ router.get(
 
     try {
       let annotationCollections = await psql.query(queryText);
-      // console.log(annotationCollections.rows);
       res.json(annotationCollections.rows);
     } catch (error) {
       console.log(error);
@@ -88,18 +87,47 @@ router.post(
     let queryText = `      
     INSERT INTO
         annotation_intermediate (id, annotationid)
-      SELECT
-        id::INTEGER, annotationid::INTEGER
-      FROM
-        (VALUES
+    (
+      SELECT id, annotationid FROM (
+          SELECT
+            $1::INTEGER as id, A.id as annotationid
+          FROM
+            annotations A
     `;
 
-    for (let i = 0; i < req.body.annotations.length; i++) {
-      queryText += `($1, $${i + 2})`;
-      if (i !== req.body.annotations.length - 1) {
-        queryText += `, `;
+    if (req.body.selectedConcepts[0] !== "-1") {
+      queryText += ` WHERE `;
+      params.push(req.body.selectedConcepts);
+      queryText += ` conceptid::text = ANY($${params.length}) `;
+    }
+    if (req.body.selectedVideos[0] !== "-1") {
+      if (params.length === 1) {
+        queryText += ` WHERE `;
+      } else {
+        queryText += ` AND `;
       }
-      params.push(req.body.annotations[i]);
+      params.push(req.body.selectedVideos);
+      queryText += ` videoid::text = ANY($${params.length}) `;
+    }
+    if (req.body.selectedUsers[0] !== "-1") {
+      if (params.length === 1) {
+        queryText += ` WHERE `;
+      } else {
+        queryText += ` AND `;
+      }
+      params.push(req.body.selectedUsers);
+      if (req.body.includeTracking) {
+        queryText += `EXISTS ( 
+          SELECT id, userid 
+          FROM annotations 
+          WHERE id=A.originalid 
+          AND unsure = False
+          AND userid::text = ANY($${params.length}))`;
+      } else {
+        queryText += `
+          unsure = False
+          AND userid::text = ANY($${params.length})`;
+      }
     }
 
     queryText += `
@@ -111,7 +139,7 @@ router.post(
           FROM
             annotation_intermediate ai
           WHERE
-            ai.id = t.id::INTEGER AND ai.annotationid = t.annotationid::INTEGER)
+            ai.id = t.id::INTEGER AND ai.annotationid = t.annotationid::INTEGER))
     `;
 
     try {
@@ -126,7 +154,8 @@ router.post(
   }
 );
 
-router.get("/train",
+router.get(
+  "/train",
   passport.authenticate("jwt", { session: false }),
 
   async (req, res) => {

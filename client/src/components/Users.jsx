@@ -214,7 +214,6 @@ class Users extends Component {
     if (event) {
       const name = event.target.name;
       let value = new Date(event.target.value);
-
       if (name === "fromDate" && event.target.value === "") {
         value = new Date("1970-01-01T00:00:00");
       } else if (name === "toDate" && event.target.value === "") {

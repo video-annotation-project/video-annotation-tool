@@ -204,7 +204,7 @@ class Verify extends Component {
           [type]: ["-1"]
         });
       } else {
-        if (this.state[type].length === 1 && this.state[type][0] === "-1") {
+        if (this.state[type][0] === "-1") {
           this.setState({
             [type]: [event.target.value]
           });

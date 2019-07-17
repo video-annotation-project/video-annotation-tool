@@ -13,11 +13,13 @@ import Select from "@material-ui/core/Select";
 import MenuItem from "@material-ui/core/MenuItem";
 import FormHelperText from "@material-ui/core/FormHelperText";
 import FormControl from "@material-ui/core/FormControl";
+import FormControlLabel from "@material-ui/core/FormControlLabel";
+import Switch from "@material-ui/core/Switch";
+import Swal from "sweetalert2";
 
 import VerifySelectUser from "../Utilities/SelectUser.jsx";
 import VerifySelectVideo from "../Utilities/SelectVideo.jsx";
 import VerifySelectConcept from "../Utilities/SelectConcept.jsx";
-import Swal from "sweetalert2";
 
 const styles = theme => ({
   list: {
@@ -80,6 +82,7 @@ class AnnotationCollection extends Component {
       trackingCount: "",
       collections: [],
       selectedCollection: "",
+      includeTracking: false,
       error: null,
       activeStep: 0
     };
@@ -188,14 +191,17 @@ class AnnotationCollection extends Component {
     });
   };
 
-  insertAnnotationsToCollection = annotations => {
+  insertAnnotationsToCollection = includeTracking => {
     const config = {
       headers: {
         Authorization: "Bearer " + localStorage.getItem("token")
       }
     };
     const body = {
-      annotations: this.state[annotations]
+      selectedUsers: this.state.selectedUsers,
+      selectedVideos: this.state.selectedVideos,
+      selectedConcepts: this.state.selectedConcepts,
+      includeTracking: this.state.includeTracking
     };
     try {
       axios
@@ -298,7 +304,6 @@ class AnnotationCollection extends Component {
         }
       })
       .then(res => {
-        console.log(res);
         this.setState({
           annotationCount: res.data[0].annotationcount,
           trackingCount: res.data[0].trackingcount
@@ -336,7 +341,7 @@ class AnnotationCollection extends Component {
           [type]: ["-1"]
         });
       } else {
-        if (this.state[type].length === 1 && this.state[type][0] === "-1") {
+        if (this.state[type][0] === "-1") {
           this.setState({
             [type]: [event.target.value]
           });
@@ -370,6 +375,11 @@ class AnnotationCollection extends Component {
           selectedConcepts: ["-1"]
         });
         return;
+      case 3:
+        this.setState({
+          includeTracking: false
+        });
+        return;
       default:
         return;
     }
@@ -380,6 +390,7 @@ class AnnotationCollection extends Component {
       selectedUsers: [],
       selectedVideos: ["-1"],
       selectedConcepts: ["-1"],
+      includeTracking: false,
       activeStep: 0
     });
   };
@@ -472,6 +483,18 @@ class AnnotationCollection extends Component {
                 Number of Tracking Annotations: {this.state.trackingCount}
               </Typography>
             </div>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={this.state.includeTracking}
+                  onChange={this.handleChangeSwitch("includeTracking")}
+                  value="includeTracking"
+                  color="primary"
+                  disabled={this.state.trackingCount === "0"}
+                />
+              }
+              label="Include tracking annotations"
+            />
           </React.Fragment>
         );
       default:
@@ -540,35 +563,17 @@ class AnnotationCollection extends Component {
                     Back
                   </Button>
                   {activeStep === steps.length - 1 ? (
-                    <React.Fragment>
-                      <Button
-                        variant="contained"
-                        color="primary"
-                        disabled={this.checkButtonDisabled(index)}
-                        onClick={() =>
-                          this.insertAnnotationsToCollection("annotations")
-                        }
-                        className={classes.button}
-                      >
-                        Add Annotations
-                      </Button>
-                      <Button
-                        variant="contained"
-                        color="primary"
-                        disabled={
-                          this.checkButtonDisabled(index) ||
-                          this.state.trackingCount === 0
-                        }
-                        onClick={() =>
-                          this.insertAnnotationsToCollection(
-                            "trackingAnnotations"
-                          )
-                        }
-                        className={classes.button}
-                      >
-                        Add Tracking Annotations
-                      </Button>
-                    </React.Fragment>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      disabled={this.checkButtonDisabled(index)}
+                      onClick={() =>
+                        this.insertAnnotationsToCollection("annotations")
+                      }
+                      className={classes.button}
+                    >
+                      Add Annotations
+                    </Button>
                   ) : (
                     <Button
                       variant="contained"
