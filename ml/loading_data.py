@@ -125,7 +125,7 @@ def download_annotations(min_examples, collectionId, concepts, concept_map,
         FROM annotation_intermediate inter
         LEFT JOIN annotations a ON a.id=inter.annotationid
         LEFT JOIN videos ON videos.id=videoid
-        WHERE inter.id IN {str(tuple(collectionId))}
+        WHERE inter.id IN {str(list(collectionId)).replace('[', '(').replace(']', ')')}
     ''')
 
     selected, concept_count = select_annotations(annotations, min_examples, concepts)
