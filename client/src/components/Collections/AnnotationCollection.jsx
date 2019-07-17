@@ -21,7 +21,6 @@ import VerifySelectUser from "../Utilities/SelectUser.jsx";
 import VerifySelectVideo from "../Utilities/SelectVideo.jsx";
 import VerifySelectConcept from "../Utilities/SelectConcept.jsx";
 import ViewModels from "../Model/ViewModels.jsx";
-import Swal from "sweetalert2";
 
 const styles = theme => ({
   list: {
@@ -56,11 +55,6 @@ const styles = theme => ({
     marginBottom: theme.spacing(2),
     marginLeft: theme.spacing()
   },
-  info: {
-    marginTop: theme.spacing(4),
-    marginBottom: theme.spacing(2),
-    marginLeft: theme.spacing()
-  },
   stepper: {
     display: "block",
     flex: 1,
@@ -81,11 +75,11 @@ const styles = theme => ({
     flexDirection: "row",
     padding: "20px",
     height: "560px"
-  },
+  }
 });
 
 function getSteps() {
-  return ["Users", "Videos", "Concepts", "Collection"];
+  return ["Collections", "Users", "Videos", "Concepts", "Insert"];
 }
 
 class AnnotationCollection extends Component {
@@ -94,12 +88,12 @@ class AnnotationCollection extends Component {
     this.state = {
       /* -1 represents select all */
       selectedUsers: [],
+      selectedCollection: "",
       selectedVideos: ["-1"],
       selectedConcepts: ["-1"],
       annotationCount: "",
       trackingCount: "",
       collections: [],
-      selectedCollection: "",
       includeTracking: false,
       error: null,
       activeStep: 0
@@ -380,20 +374,25 @@ class AnnotationCollection extends Component {
     switch (step) {
       case 0:
         this.setState({
-          selectedUsers: []
+          selectedCollection: ""
         });
         return;
       case 1:
         this.setState({
-          selectedVideos: ["-1"]
+          selectedUsers: []
         });
         return;
       case 2:
         this.setState({
-          selectedConcepts: ["-1"]
+          selectedVideos: ["-1"]
         });
         return;
       case 3:
+        this.setState({
+          selectedConcepts: ["-1"]
+        });
+        return;
+      case 4:
         this.setState({
           includeTracking: false
         });
@@ -405,6 +404,7 @@ class AnnotationCollection extends Component {
 
   resetState = () => {
     this.setState({
+      selectedCollection: "",
       selectedUsers: [],
       selectedVideos: ["-1"],
       selectedConcepts: ["-1"],
@@ -415,55 +415,32 @@ class AnnotationCollection extends Component {
 
   showCollection = () => {
     let data = this.state.collections.find(col => {
-      return col.id === this.state.selectedCollection
+      return col.id === this.state.selectedCollection;
     });
     return (
       <React.Fragment>
         <h3>Collection Stats: {data.name}</h3>
         <Typography>
-          <b>Number of concepts:</b> {data.concepts.length}</Typography>
+          <b>Number of concepts:</b> {data.concepts.length}
+        </Typography>
         <Typography>
-          <b>Concepts:</b> {data.concepts.join(", ")}</Typography>
+          <b>Concepts:</b> {data.concepts.join(", ")}
+        </Typography>
         <Typography>
-          <b>Number of users:</b> {data.users.length}</Typography>
+          <b>Number of users:</b> {data.users.length}
+        </Typography>
         <Typography>
-          <b>Users:</b> {data.users.join(", ")}</Typography>
+          <b>Users:</b> {data.users.join(", ")}
+        </Typography>
       </React.Fragment>
     );
-  }
+  };
 
   getStepForm = step => {
     const classes = this.props.classes;
 
     switch (step) {
       case 0:
-        return (
-          <VerifySelectUser
-            value={this.state.selectedUsers}
-            getUsers={this.getUsers}
-            selectUser={this.selectUser}
-            handleChangeList={this.handleChangeList("selectedUsers")}
-          />
-        );
-      case 1:
-        return (
-          <VerifySelectVideo
-            selectedVideos={this.state.selectedVideos}
-            getVideos={this.getVideos}
-            getVideoCollections={this.getVideoCollections}
-            handleChange={this.handleChange("selectedVideos")}
-            handleChangeList={this.handleChangeList("selectedVideos")}
-          />
-        );
-      case 2:
-        return (
-          <VerifySelectConcept
-            value={this.state.selectedConcepts}
-            getConcepts={this.getConcepts}
-            handleChangeList={this.handleChangeList("selectedConcepts")}
-          />
-        );
-      case 3:
         return (
           <React.Fragment>
             <FormControl className={classes.formControl}>
@@ -512,14 +489,44 @@ class AnnotationCollection extends Component {
                 New Annotation Collection
               </Button>
             </div>
-            <div className={classes.info}>
-              <Typography>
-                Number of Annotations: {this.state.annotationCount}
-              </Typography>
-              <Typography>
-                Number of Tracking Annotations: {this.state.trackingCount}
-              </Typography>
-            </div>
+          </React.Fragment>
+        );
+      case 1:
+        return (
+          <VerifySelectUser
+            value={this.state.selectedUsers}
+            getUsers={this.getUsers}
+            selectUser={this.selectUser}
+            handleChangeList={this.handleChangeList("selectedUsers")}
+          />
+        );
+      case 2:
+        return (
+          <VerifySelectVideo
+            selectedVideos={this.state.selectedVideos}
+            getVideos={this.getVideos}
+            getVideoCollections={this.getVideoCollections}
+            handleChange={this.handleChange("selectedVideos")}
+            handleChangeList={this.handleChangeList("selectedVideos")}
+          />
+        );
+      case 3:
+        return (
+          <VerifySelectConcept
+            value={this.state.selectedConcepts}
+            getConcepts={this.getConcepts}
+            handleChangeList={this.handleChangeList("selectedConcepts")}
+          />
+        );
+      case 4:
+        return (
+          <React.Fragment>
+            <Typography>
+              Number of Annotations: {this.state.annotationCount}
+            </Typography>
+            <Typography>
+              Number of Tracking Annotations: {this.state.trackingCount}
+            </Typography>
             <FormControlLabel
               control={
                 <Switch
@@ -532,13 +539,12 @@ class AnnotationCollection extends Component {
               }
               label="Include tracking annotations"
             />
-            {this.state.selectedCollection ?
-              // this.state.collections.find(col => {
-              //   return col.id === this.state.selectedCollection;
-              // })
-              this.showCollection()
-              : ""
-            }
+            {this.state.selectedCollection
+              ? // this.state.collections.find(col => {
+                //   return col.id === this.state.selectedCollection;
+                // })
+                this.showCollection()
+              : ""}
           </React.Fragment>
         );
       default:
@@ -549,12 +555,14 @@ class AnnotationCollection extends Component {
   checkButtonDisabled = step => {
     switch (step) {
       case 0:
-        return this.state.selectedUsers.length === 0;
+        return this.state.selectedCollection === "";
       case 1:
-        return this.state.selectedVideos.length === 0;
+        return this.state.selectedUsers.length === 0;
       case 2:
-        return this.state.selectedConcepts.length === 0;
+        return this.state.selectedVideos.length === 0;
       case 3:
+        return this.state.selectedConcepts.length === 0;
+      case 4:
         return this.state.selectedCollection === "";
       default:
         return false;
@@ -581,7 +589,11 @@ class AnnotationCollection extends Component {
 
     return (
       <div className={classes.container}>
-        <Stepper activeStep={activeStep} orientation="vertical" className={classes.stepper}>
+        <Stepper
+          activeStep={activeStep}
+          orientation="vertical"
+          className={classes.stepper}
+        >
           {steps.map((label, index) => (
             <Step key={label}>
               <StepLabel>{label}</StepLabel>
@@ -596,16 +608,19 @@ class AnnotationCollection extends Component {
                   >
                     Reset All
                   </Button>
-                  <Button
-                    variant="contained"
-                    onClick={() => {
-                      this.handleBack(activeStep);
-                    }}
-                    className={classes.button}
-                    disabled={this.state.activeStep === 0}
-                  >
-                    Back
-                  </Button>
+                  {activeStep !== 0 ? (
+                    <Button
+                      variant="contained"
+                      onClick={() => {
+                        this.handleBack(activeStep);
+                      }}
+                      className={classes.button}
+                    >
+                      Back
+                    </Button>
+                  ) : (
+                    ""
+                  )}
                   {activeStep === steps.length - 1 ? (
                     <Button
                       variant="contained"
@@ -641,9 +656,7 @@ class AnnotationCollection extends Component {
             </Step>
           ))}
         </Stepper>
-        {activeStep === 2 ?
-        <ViewModels className={classes.models}/> : ""
-        }
+        {activeStep === 3 ? <ViewModels className={classes.models} /> : ""}
       </div>
     );
   }

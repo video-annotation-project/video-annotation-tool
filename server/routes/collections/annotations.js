@@ -162,13 +162,14 @@ router.post(
 
 router.get(
   "/train",
-router.get("/train/:id",
-  passport.authenticate("jwt", { session: false }),
+  router.get(
+    "/train/:id",
+    passport.authenticate("jwt", { session: false }),
 
-  async (req, res) => {
-    // console.log(req.params.id.split(","));
-    var params = "{"+req.params.id+"}";
-    let queryText = `      
+    async (req, res) => {
+      // console.log(req.params.id.split(","));
+      var params = "{" + req.params.id + "}";
+      let queryText = `      
       SELECT name, id, count(*), array_agg(conceptid) as ids, array_agg(conceptname) as concepts
       FROM
       (SELECT ac.name, a.conceptid, ai.id, count(a.conceptid), c.name as conceptname
@@ -185,16 +186,17 @@ router.get("/train/:id",
       GROUP BY name, id
     `;
 
-    try {
-      let data = await psql.query(queryText, [params]);
-      if (data) {
-        res.status(200).json(data.rows);
+      try {
+        let data = await psql.query(queryText, [params]);
+        if (data) {
+          res.status(200).json(data.rows);
+        }
+      } catch (error) {
+        res.status(500).json(error);
+        console.log(error);
       }
-    } catch (error) {
-      res.status(500).json(error);
-      console.log(error);
     }
-  }
+  )
 );
 
 module.exports = router;
