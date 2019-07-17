@@ -166,13 +166,13 @@ def train_model(concepts, model_name, collectionIds, min_examples,
     # )
 
     # Every epoch upload tensorboard logs to the S3 bucket
-    log_callback = TensorBoardLog(id_=tb_log_id, table_name=log_table_name)
+    # log_callback = TensorBoardLog(id_=tb_log_id, table_name=log_table_name)
 
-    tensorboard_callback = keras.callbacks.TensorBoard(
-        log_dir=f'./logs/{tb_log_id}', histogram_freq=0, batch_size=batch_size,
-        write_graph=True, write_grads=False, write_images=False,
-        embeddings_freq=0, embeddings_layer_names=None,
-        embeddings_metadata=None, embeddings_data=None, update_freq='epoch')
+    # tensorboard_callback = keras.callbacks.TensorBoard(
+    #     log_dir=f'./logs/{tb_log_id}', histogram_freq=0, batch_size=batch_size,
+    #     write_graph=True, write_grads=False, write_images=False,
+    #     embeddings_freq=0, embeddings_layer_names=None,
+    #     embeddings_metadata=None, embeddings_data=None, update_freq='epoch')
 
     # Every batch and epoch update a database table with the current progress
     progress_callback = Progress(
@@ -180,8 +180,7 @@ def train_model(concepts, model_name, collectionIds, min_examples,
     
     history = training_model.fit_generator(train_generator, 
         epochs=epochs, 
-        callbacks=[checkpoint, stopping,
-            tensorboard_callback, progress_callback, log_callback],
+        callbacks=[checkpoint, stopping, progress_callback], #, log_callback],
         validation_data=test_generator,
         verbose=2
     ).history
