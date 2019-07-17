@@ -130,7 +130,7 @@ class TrainModel extends Component {
       concepts: [],
       conceptsSelected: null,
       collections: [],
-      collectionSelected: null,
+      collectionsSelected: null,
       minImages: 5000,
       epochs: 0,
       activeStep: 0,
@@ -174,11 +174,10 @@ class TrainModel extends Component {
       .get(`/api/models/train/${option}`, config)
       .then(res => {
         const info = res.data[0].info;
-        console.log(info);
         this.setState(
           {
             activeStep: info.activeStep,
-            collectionSelected: info.collectionSelected,
+            collectionsSelected: info.collectionsSelected,
             // usersSelected: info.usersSelected,
             // videosSelected: info.videosSelected,
             // conceptsSelected: info.conceptsSelected,
@@ -186,7 +185,6 @@ class TrainModel extends Component {
             minImages: info.minImages,
             epochs: info.epochs
           },
-          // console.log(this.state),
           () => {
               this.loadCollectionlist();
             // if (info.videosSelected.length > 0) {
@@ -213,7 +211,6 @@ class TrainModel extends Component {
     axios
       .get(`/api/models`, config)
       .then(res => {
-        // console.log(res.data);
         this.setState({
           models: res.data },
         );
@@ -248,17 +245,16 @@ class TrainModel extends Component {
       }
     };
     axios.get(`/api/collections/annotations`, config).then(res => {
-      console.log(res.data);
       this.setState({
-        collections: res.data,
-        collectionSelected: []
+        collections: res.data
       },
       () => {
-        let data = this.state.models.find(model => {
-          return model.name === this.state.modelSelected;
-        })
-        // console.log(data);
-        this.filterCollection(data);
+        if (this.state.modelSelected) {
+          let data = this.state.models.find(model => {
+            return model.name === this.state.modelSelected;
+          })
+          this.filterCollection(data);
+        }
       }
       );
     });
@@ -312,6 +308,9 @@ class TrainModel extends Component {
   //Used to handle changes in the hyperparameters
   //and in the select model
   handleChange = event => {
+    if (event.target.name === "modelSelected") {
+      this.loadCollectionlist();
+    }
     this.setState({
       [event.target.name]: event.target.value
     });
@@ -384,7 +383,7 @@ class TrainModel extends Component {
 
   selectCollection = () => {
     const { checkSelector } = this.props.classes;
-    if (!this.state.collectionSelected) {
+    if (!this.state.collectionsSelected) {
       return <div>Loading...</div>;
     }
     return (
@@ -398,16 +397,16 @@ class TrainModel extends Component {
               <FormControlLabel
                 control={
                   <Checkbox
-                    onChange={this.checkboxSelect("collectionSelected", collection.id)}
+                    onChange={this.checkboxSelect("collectionsSelected", collection.id)}
                     color="primary"
-                    checked={this.state.collectionSelected.includes(collection.id)}
+                    checked={this.state.collectionsSelected.includes(collection.id)}
                     disabled={collection.disable}
                   />
                 }
                 label={<div>{collection.name} 
-                  {collection.concepts ?
+                  {collection.validConcepts ?
                   <Typography variant="subtitle2" gutterBottom color="secondary">
-                     {collection.concepts.array_agg.join(", ")}
+                     {collection.validConcepts.concepts.join(", ")}
                   </Typography> : ""}
                   </div>}
               />
@@ -592,7 +591,7 @@ class TrainModel extends Component {
     let info = {
       activeStep: this.state.activeStep,
       modelSelected: this.state.modelSelected,
-      collectionSelected: this.state.collectionSelected,
+      collectionsSelected: this.state.collectionsSelected,
       // usersSelected: this.state.usersSelected,
       // videosSelected: this.state.videosSelected,
       // conceptsSelected: this.state.conceptsSelected,
@@ -618,32 +617,29 @@ class TrainModel extends Component {
     const config = {
       headers: {
         Authorization: "Bearer " + localStorage.getItem("token")
-      },
-      data: {
-        conceptids: data.conceptsid
       }
+      // data: {
+      //   conceptids: data.conceptsid
+      // }
     };
     try {
-      let dataRet = await axios.get("/api/collections/annotations/train",
+      let dataRet = await axios.get(`/api/collections/annotations/train/${data.conceptsid}`,
         config
       );
       var conceptids = dataRet.data.map(col => col.id);
       dataRet = dataRet.data;
-      // console.log(dataRet);
       var filteredCol = this.state.collections;
       filteredCol.forEach(col => {
         if (!conceptids.includes(col.id)) {
           col.disable = true;
         }
         else{
-          // console.log(col.name);
           col.disable = false;
-          col.concepts = dataRet.find(col1 => {
+          col.validConcepts = dataRet.find(col1 => {
             return col1.id === col.id
           })  
         }
       });
-      // console.log(filteredCol);
       this.setState({
         collections: filteredCol
       })
@@ -717,12 +713,11 @@ class TrainModel extends Component {
     const steps = this.getSteps();
     const {
       videos,
-      collectionSelected,
+      collectionsSelected,
       modelSelected,
       activeStep,
       openedVideo
     } = this.state;
-    console.log(this.state.collections);
 
     if (!videos) {
       return <div>Loading...</div>;
@@ -756,7 +751,7 @@ class TrainModel extends Component {
                         className={classes.button}
                         disabled={
                           (activeStep === 0 && modelSelected === "") ||
-                          (activeStep === 1 && collectionSelected.length < 1)
+                          (activeStep === 1 && collectionsSelected.length < 1)
                           // (activeStep === 1 && usersSelected.length < 1) ||
                           // (activeStep === 2 && videosSelected.length < 1)
                         }

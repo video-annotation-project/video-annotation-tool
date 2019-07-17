@@ -7,6 +7,7 @@ import Typography from '@material-ui/core/Typography';
 import Paper from '@material-ui/core/Paper';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Button from '@material-ui/core/Button';
+import PredictProgress from "./PredictProgress";
 
 
 const styles = theme => ({
@@ -28,6 +29,14 @@ const styles = theme => ({
   },
   stopTraining: {
     marginTop: '20px',
+  },
+  progress: {
+    display: "flex",
+    flex: 1,
+    flexDirection: "column",
+    justifyContent: "right",
+    alignItems: "right",
+    width: "50%"
   },
 });
 
@@ -135,7 +144,11 @@ class ModelProgress extends Component {
 							value={this.state.batchProgress} 
 							color="secondary" />
 					</div>
-				: activeStep !== steps.length && (
+        : this.state.running && this.state.currentEpoch === this.state.maxEpoch ? 
+          <PredictProgress className = {classes.progress} />
+
+          :
+          activeStep !== steps.length && (
   				<Typography variant="subtitle2" gutterBottom>
             Not currently training
           </Typography>)

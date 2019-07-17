@@ -61,7 +61,7 @@ class SelectConcept extends React.Component {
                     key={concept.id}
                     value={concept.id.toString()}
                     control={<Checkbox color="primary" />}
-                    label={concept.name}
+                    label={<div>{concept.id + ". " + concept.name}</div>}
                     checked={this.props.value.includes(concept.id.toString())}
                   />
                 ))}
