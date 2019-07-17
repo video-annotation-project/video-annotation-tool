@@ -9,7 +9,6 @@ router.get(
     let queryText = `
     SELECT
       ac.*,
-      array_agg(ai.annotationid) as annotations,
       array_agg(DISTINCT c.name) as concepts,
       array_agg(DISTINCT u.username) as users
     FROM

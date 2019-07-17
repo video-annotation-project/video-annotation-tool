@@ -7,7 +7,7 @@ import Step from "@material-ui/core/Step";
 import StepLabel from "@material-ui/core/StepLabel";
 import StepContent from "@material-ui/core/StepContent";
 import Button from "@material-ui/core/Button";
-import { Typography } from "@material-ui/core";
+import { Grid, Typography } from "@material-ui/core";
 import InputLabel from "@material-ui/core/InputLabel";
 import Select from "@material-ui/core/Select";
 import MenuItem from "@material-ui/core/MenuItem";
@@ -20,7 +20,6 @@ import Swal from "sweetalert2";
 import VerifySelectUser from "../Utilities/SelectUser.jsx";
 import VerifySelectVideo from "../Utilities/SelectVideo.jsx";
 import VerifySelectConcept from "../Utilities/SelectConcept.jsx";
-import ViewModels from "../Model/ViewModels.jsx";
 
 const styles = theme => ({
   list: {
@@ -55,6 +54,9 @@ const styles = theme => ({
     marginBottom: theme.spacing(2),
     marginLeft: theme.spacing()
   },
+  collection: {
+    marginTop: theme.spacing()
+  },
   stepper: {
     display: "block",
     flex: 1,
@@ -75,11 +77,21 @@ const styles = theme => ({
     flexDirection: "row",
     padding: "20px",
     height: "560px"
+  },
+  stats1: {
+    marginTop: theme.spacing(),
+    marginLeft: theme.spacing(),
+    marginRight: theme.spacing(4)
+  },
+  stats2: {
+    marginLeft: theme.spacing(4),
+    marginRight: theme.spacing(4),
+    marginBottom: theme.spacing()
   }
 });
 
 function getSteps() {
-  return ["Collections", "Users", "Videos", "Concepts", "Insert"];
+  return ["Users", "Videos", "Concepts", "Insert"];
 }
 
 class AnnotationCollection extends Component {
@@ -227,6 +239,7 @@ class AnnotationCollection extends Component {
             title: "Inserted!",
             confirmButtonText: "Lovely!"
           });
+          this.loadCollections();
         })
         .catch(error => {
           console.log(error);
@@ -374,25 +387,20 @@ class AnnotationCollection extends Component {
     switch (step) {
       case 0:
         this.setState({
-          selectedCollection: ""
+          selectedUsers: []
         });
         return;
       case 1:
         this.setState({
-          selectedUsers: []
+          selectedVideos: ["-1"]
         });
         return;
       case 2:
         this.setState({
-          selectedVideos: ["-1"]
-        });
-        return;
-      case 3:
-        this.setState({
           selectedConcepts: ["-1"]
         });
         return;
-      case 4:
+      case 3:
         this.setState({
           includeTracking: false
         });
@@ -419,79 +427,25 @@ class AnnotationCollection extends Component {
     });
     return (
       <React.Fragment>
-        <h3>Collection Stats: {data.name}</h3>
-        <Typography>
-          <b>Number of concepts:</b> {data.concepts.length}
+        <Typography variant="subtitle1" className={this.props.classes.stats1}>
+          Concepts ({data.concepts.length}):
         </Typography>
-        <Typography>
-          <b>Concepts:</b> {data.concepts.join(", ")}
+        <Typography variant="subtitle1" className={this.props.classes.stats2}>
+          {data.concepts.join(", ")}
         </Typography>
-        <Typography>
-          <b>Number of users:</b> {data.users.length}
+        <Typography variant="subtitle1" className={this.props.classes.stats1}>
+          Users ({data.users.length}):
         </Typography>
-        <Typography>
-          <b>Users:</b> {data.users.join(", ")}
+        <Typography variant="subtitle1" className={this.props.classes.stats2}>
+          {data.users.join(", ")}
         </Typography>
       </React.Fragment>
     );
   };
 
   getStepForm = step => {
-    const classes = this.props.classes;
-
     switch (step) {
       case 0:
-        return (
-          <React.Fragment>
-            <FormControl className={classes.formControl}>
-              <InputLabel>Select collection</InputLabel>
-              <Select
-                value={this.state.selectedCollection}
-                onChange={this.handleChangeCollection}
-                autoWidth={true}
-              >
-                <MenuItem value="">Select collection</MenuItem>
-                {this.state.collections.map(collection => {
-                  return (
-                    <MenuItem key={collection.id} value={collection.id}>
-                      {collection.name}
-                    </MenuItem>
-                  );
-                })}
-              </Select>
-              {this.state.selectedCollection === "" ||
-              !this.state.collections.filter(collection => {
-                return collection.id === this.state.selectedCollection;
-              })[0].description ? (
-                ""
-              ) : (
-                <FormHelperText>
-                  {
-                    this.state.collections.filter(collection => {
-                      return collection.id === this.state.selectedCollection;
-                    })[0].description
-                  }
-                </FormHelperText>
-              )}
-            </FormControl>
-            <div>
-              <Button
-                className={classes.button}
-                disabled={this.state.selectedCollection === ""}
-                onClick={this.deleteAnnotationCollection}
-              >
-                Delete This Collection
-              </Button>
-              <Button
-                className={classes.button}
-                onClick={this.createAnnotationCollection}
-              >
-                New Annotation Collection
-              </Button>
-            </div>
-          </React.Fragment>
-        );
-      case 1:
         return (
           <VerifySelectUser
             value={this.state.selectedUsers}
@@ -500,7 +454,7 @@ class AnnotationCollection extends Component {
             handleChangeList={this.handleChangeList("selectedUsers")}
           />
         );
-      case 2:
+      case 1:
         return (
           <VerifySelectVideo
             selectedVideos={this.state.selectedVideos}
@@ -510,7 +464,7 @@ class AnnotationCollection extends Component {
             handleChangeList={this.handleChangeList("selectedVideos")}
           />
         );
-      case 3:
+      case 2:
         return (
           <VerifySelectConcept
             value={this.state.selectedConcepts}
@@ -518,7 +472,7 @@ class AnnotationCollection extends Component {
             handleChangeList={this.handleChangeList("selectedConcepts")}
           />
         );
-      case 4:
+      case 3:
         return (
           <React.Fragment>
             <Typography>
@@ -539,12 +493,6 @@ class AnnotationCollection extends Component {
               }
               label="Include tracking annotations"
             />
-            {this.state.selectedCollection
-              ? // this.state.collections.find(col => {
-                //   return col.id === this.state.selectedCollection;
-                // })
-                this.showCollection()
-              : ""}
           </React.Fragment>
         );
       default:
@@ -555,14 +503,12 @@ class AnnotationCollection extends Component {
   checkButtonDisabled = step => {
     switch (step) {
       case 0:
-        return this.state.selectedCollection === "";
-      case 1:
         return this.state.selectedUsers.length === 0;
-      case 2:
+      case 1:
         return this.state.selectedVideos.length === 0;
-      case 3:
+      case 2:
         return this.state.selectedConcepts.length === 0;
-      case 4:
+      case 3:
         return this.state.selectedCollection === "";
       default:
         return false;
@@ -588,76 +534,128 @@ class AnnotationCollection extends Component {
     const steps = getSteps();
 
     return (
-      <div className={classes.container}>
-        <Stepper
-          activeStep={activeStep}
-          orientation="vertical"
-          className={classes.stepper}
-        >
-          {steps.map((label, index) => (
-            <Step key={label}>
-              <StepLabel>{label}</StepLabel>
-              <StepContent>
-                {this.getStepForm(index)}
+      <Grid container spacing={5}>
+        <Grid item xs={6}>
+          <div className={classes.container}>
+            <Stepper
+              activeStep={activeStep}
+              orientation="vertical"
+              className={classes.stepper}
+            >
+              {steps.map((label, index) => (
+                <Step key={label}>
+                  <StepLabel>{label}</StepLabel>
+                  <StepContent>
+                    {this.getStepForm(index)}
 
-                <div className={classes.actionsContainer}>
-                  <Button
-                    variant="contained"
-                    onClick={this.resetState}
-                    className={classes.button}
-                  >
-                    Reset All
-                  </Button>
-                  {activeStep !== 0 ? (
-                    <Button
-                      variant="contained"
-                      onClick={() => {
-                        this.handleBack(activeStep);
-                      }}
-                      className={classes.button}
-                    >
-                      Back
-                    </Button>
-                  ) : (
-                    ""
-                  )}
-                  {activeStep === steps.length - 1 ? (
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      disabled={this.checkButtonDisabled(index)}
-                      onClick={() =>
-                        this.insertAnnotationsToCollection("annotations")
-                      }
-                      className={classes.button}
-                    >
-                      Add Annotations
-                    </Button>
-                  ) : (
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      disabled={this.checkButtonDisabled(index)}
-                      onClick={
-                        activeStep === steps.length - 2
-                          ? async () => {
-                              await this.getAnnotations();
-                              this.handleNext();
-                            }
-                          : this.handleNext
-                      }
-                      className={classes.button}
-                    >
-                      Next
-                    </Button>
-                  )}
-                </div>
-              </StepContent>
-            </Step>
-          ))}
-        </Stepper>
-        {activeStep === 3 ? <ViewModels className={classes.models} /> : ""}
-      </div>
+                    <div className={classes.actionsContainer}>
+                      <Button
+                        variant="contained"
+                        onClick={this.resetState}
+                        className={classes.button}
+                      >
+                        Reset All
+                      </Button>
+                      {activeStep !== 0 ? (
+                        <Button
+                          variant="contained"
+                          onClick={() => {
+                            this.handleBack(activeStep);
+                          }}
+                          className={classes.button}
+                        >
+                          Back
+                        </Button>
+                      ) : (
+                        ""
+                      )}
+                      {activeStep === steps.length - 1 ? (
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          disabled={this.checkButtonDisabled(index)}
+                          onClick={() =>
+                            this.insertAnnotationsToCollection("annotations")
+                          }
+                          className={classes.button}
+                        >
+                          Add Annotations
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          disabled={this.checkButtonDisabled(index)}
+                          onClick={
+                            activeStep === steps.length - 2
+                              ? async () => {
+                                  await this.getAnnotations();
+                                  this.handleNext();
+                                }
+                              : this.handleNext
+                          }
+                          className={classes.button}
+                        >
+                          Next
+                        </Button>
+                      )}
+                    </div>
+                  </StepContent>
+                </Step>
+              ))}
+            </Stepper>
+          </div>
+        </Grid>
+        <Grid item xs={6} className={classes.collection}>
+          <FormControl className={classes.formControl}>
+            <InputLabel>Select collection</InputLabel>
+            <Select
+              value={this.state.selectedCollection}
+              onChange={this.handleChangeCollection}
+              autoWidth={true}
+            >
+              <MenuItem value="">Select collection</MenuItem>
+              {this.state.collections.map(collection => {
+                return (
+                  <MenuItem key={collection.id} value={collection.id}>
+                    {collection.name}
+                  </MenuItem>
+                );
+              })}
+            </Select>
+            {this.state.selectedCollection === "" ||
+            !this.state.collections.filter(collection => {
+              return collection.id === this.state.selectedCollection;
+            })[0].description ? (
+              ""
+            ) : (
+              <FormHelperText>
+                {
+                  this.state.collections.filter(collection => {
+                    return collection.id === this.state.selectedCollection;
+                  })[0].description
+                }
+              </FormHelperText>
+            )}
+          </FormControl>
+          {this.state.selectedCollection ? this.showCollection() : ""}
+          <div>
+            <Button
+              className={classes.button}
+              disabled={this.state.selectedCollection === ""}
+              onClick={this.deleteAnnotationCollection}
+            >
+              Delete This Collection
+            </Button>
+            <Button
+              className={classes.button}
+              onClick={this.createAnnotationCollection}
+            >
+              New Annotation Collection
+            </Button>
+          </div>
+        </Grid>
+      </Grid>
     );
   }
 }
