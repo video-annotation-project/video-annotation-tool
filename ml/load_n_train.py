@@ -62,7 +62,8 @@ class custom(CSVGenerator):
         return inputs, targets
 
 
-def train_model(concepts, users, min_examples, epochs, model_name, videos, selected_concepts, download_data=True):
+def train_model(concepts, model_name, collectionIds, min_examples,
+                epochs, download_data=True):
 
     classmap = get_classmap(concepts)
     
@@ -79,7 +80,8 @@ def train_model(concepts, users, min_examples, epochs, model_name, videos, selec
         start = time.time()
         print("Starting Download.")
 
-        download_annotations(min_examples, concepts, selected_concepts, classmap, users, videos, img_folder, train_annot_file, valid_annot_file)
+        download_annotations(min_examples, collectionIds, concepts,
+                             classmap, img_folder, train_annot_file, valid_annot_file)
 
         end = time.time()
         print("Done Downloading Annotations: " + str((end - start)/60) + " minutes")
@@ -90,7 +92,8 @@ def train_model(concepts, users, min_examples, epochs, model_name, videos, selec
     start = time.time()
     print("Starting Training.")
 
-    # Suggested to initialize model on cpu before turning into a multi_gpu model to save gpu memory
+    # Suggested to initialize model on cpu before turning into a 
+    # multi_gpu model to save gpu memory
     with tf.device('/cpu:0'):
         model = models.backbone('resnet50').retinanet(num_classes=len(concepts))#modifier=freeze_model)
         model.load_weights(weights_path, by_name=True, skip_mismatch=True)
@@ -152,15 +155,15 @@ def train_model(concepts, users, min_examples, epochs, model_name, videos, selec
 
     # Initialize a log entry in the previous_runs table
     # TODO: put this in progress_callbacks.py, it makes more sense there
-    tb_log_id = create_log_entry(
-        table_name=log_table_name,
-        model_name=model_name,
-        users=users,
-        videos=videos,
-        min_examples=min_examples,
-        concepts=selected_concepts,
-        epochs=epochs
-    )
+    # tb_log_id = create_log_entry(
+    #     table_name=log_table_name,
+    #     model_name=model_name,
+    #     users=users,
+    #     videos=videos,
+    #     min_examples=min_examples,
+    #     concepts=selected_concepts,
+    #     epochs=epochs
+    # )
 
     # Every epoch upload tensorboard logs to the S3 bucket
     log_callback = TensorBoardLog(id_=tb_log_id, table_name=log_table_name)
@@ -172,11 +175,13 @@ def train_model(concepts, users, min_examples, epochs, model_name, videos, selec
         embeddings_metadata=None, embeddings_data=None, update_freq='epoch')
 
     # Every batch and epoch update a database table with the current progress
-    progress_callback = Progress(steps_per_epoch=len(train_generator), num_epochs=epochs)
+    progress_callback = Progress(
+        steps_per_epoch=len(train_generator), num_epochs=epochs)
     
     history = training_model.fit_generator(train_generator, 
         epochs=epochs, 
-        callbacks=[checkpoint, stopping, tensorboard_callback, progress_callback, log_callback],
+        callbacks=[checkpoint, stopping,
+            tensorboard_callback, progress_callback, log_callback],
         validation_data=test_generator,
         verbose=2
     ).history
@@ -191,9 +196,8 @@ def train_model(concepts, users, min_examples, epochs, model_name, videos, selec
 
 if __name__ == '__main__':
     epochs = 1
-    users = [6]
     min_examples = 1
-    concepts = [383]
-    model_name = "jake_test"
-    videos = [8]
-    train_model(concepts, users, min_examples, epochs, model_name, videos, concepts, download_data=True)
+    model_name = "test"
+    collectionId = 15
+    train_model(concepts, model_name, collectionId, min_examples,
+                epochs, download_data=True)

@@ -8,9 +8,6 @@ import VerifySelection from "./VerifySelection.jsx";
 import VerifyAnnotations from "./VerifyAnnotations.jsx";
 
 const styles = theme => ({
-  root: {
-    width: "90%"
-  },
   button: {
     margin: theme.spacing()
   },
@@ -65,7 +62,6 @@ class Verify extends Component {
       this.resetState();
     } else {
       annotations = await this.getAnnotations();
-      console.log(annotations);
     }
     this.setState({
       annotations: annotations,

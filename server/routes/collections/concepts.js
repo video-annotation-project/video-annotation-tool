@@ -1,8 +1,10 @@
-const router = require('express').Router();
+const router = require("express").Router();
 const passport = require("passport");
 const psql = require("../../db/simpleConnect");
 
-router.get("/", passport.authenticate("jwt", { session: false }),
+router.get(
+  "/",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     let queryText = `
     SELECT
@@ -35,7 +37,9 @@ router.get("/", passport.authenticate("jwt", { session: false }),
   }
 );
 
-router.post("/", passport.authenticate("jwt", { session: false }),
+router.post(
+  "/",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const queryText = `
       INSERT INTO 
@@ -56,7 +60,9 @@ router.post("/", passport.authenticate("jwt", { session: false }),
   }
 );
 
-router.patch("/", passport.authenticate("jwt", { session: false }),
+router.patch(
+  "/",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const queryText = `
       UPDATE 
@@ -78,7 +84,9 @@ router.patch("/", passport.authenticate("jwt", { session: false }),
   }
 );
 
-router.post("/:id", passport.authenticate("jwt", { session: false }),
+router.post(
+  "/:id",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     let params = [req.params.id];
     let queryText = `
@@ -116,6 +124,5 @@ router.post("/:id", passport.authenticate("jwt", { session: false }),
     }
   }
 );
-
 
 module.exports = router;
