@@ -308,9 +308,6 @@ class TrainModel extends Component {
   //Used to handle changes in the hyperparameters
   //and in the select model
   handleChange = event => {
-    if (event.target.name === "modelSelected") {
-      this.loadCollectionlist();
-    }
     this.setState({
       [event.target.name]: event.target.value
     });
@@ -386,7 +383,6 @@ class TrainModel extends Component {
     if (!this.state.collectionsSelected) {
       return <div>Loading...</div>;
     }
-    console.log(this.state.collections);
     return (
       <FormControl component="fieldset" className={checkSelector}>
         <FormLabel component="legend">
@@ -618,13 +614,10 @@ class TrainModel extends Component {
     const config = {
       headers: {
         Authorization: "Bearer " + localStorage.getItem("token")
-      },
-      data: {
-        conceptids: data.conceptsid
       }
     };
     try {
-      let dataRet = await axios.get("/api/collections/annotations/train",
+      let dataRet = await axios.get(`/api/collections/annotations/train/${data.conceptsid}`,
         config
       );
       var conceptids = dataRet.data.map(col => col.id);
@@ -654,10 +647,6 @@ class TrainModel extends Component {
     if (this.state.activeStep === 1) {
       this.loadCollectionlist();
     }
-    // After Model and videos have been selected load available concepts
-    // if (this.state.activeStep === 2) {
-    //   await this.loadConceptList();
-    // }
     this.setState(
       state => ({
         activeStep: state.activeStep + 1

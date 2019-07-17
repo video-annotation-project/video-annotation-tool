@@ -132,10 +132,12 @@ router.post(
   }
 );
 
-router.get("/train",
+router.get("/train/:id",
   passport.authenticate("jwt", { session: false }),
 
   async (req, res) => {
+    // console.log(req.params.id.split(","));
+    var params = "{"+req.params.id+"}";
     let queryText = `      
       SELECT name, id, count(*), array_agg(conceptid) as ids, array_agg(conceptname) as concepts
       FROM
@@ -148,13 +150,13 @@ router.get("/train",
       ON ai.annotationid = a.id
       LEFT JOIN concepts c
       ON a.conceptid = c.id
-      WHERE a.conceptid IN (1629, 1210, 236, 383, 1133)
+      WHERE a.conceptid = ANY( $1::int[] )
       GROUP BY ac.name, a.conceptid, ai.id, c.name ) t
       GROUP BY name, id
     `;
 
     try {
-      let data = await psql.query(queryText, req.body.conceptids);
+      let data = await psql.query(queryText, [params]);
       if (data) {
         res.status(200).json(data.rows);
       }
