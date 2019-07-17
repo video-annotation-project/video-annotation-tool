@@ -386,6 +386,7 @@ class TrainModel extends Component {
     if (!this.state.collectionsSelected) {
       return <div>Loading...</div>;
     }
+    console.log(this.state.collections);
     return (
       <FormControl component="fieldset" className={checkSelector}>
         <FormLabel component="legend">
@@ -404,9 +405,9 @@ class TrainModel extends Component {
                   />
                 }
                 label={<div>{collection.name} 
-                  {collection.concepts ?
+                  {collection.validConcepts ?
                   <Typography variant="subtitle2" gutterBottom color="secondary">
-                     {collection.concepts.array_agg.join(", ")}
+                     {collection.validConcepts.concepts.join(", ")}
                   </Typography> : ""}
                   </div>}
               />
@@ -635,7 +636,7 @@ class TrainModel extends Component {
         }
         else{
           col.disable = false;
-          col.concepts = dataRet.find(col1 => {
+          col.validConcepts = dataRet.find(col1 => {
             return col1.id === col.id
           })  
         }

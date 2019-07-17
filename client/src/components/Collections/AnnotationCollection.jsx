@@ -113,7 +113,6 @@ class AnnotationCollection extends Component {
       }
     };
     return axios.get("/api/collections/annotations", config).then(res => {
-      console.log(res.data);
       this.setState(
         {
           collections: res.data
@@ -403,7 +402,6 @@ class AnnotationCollection extends Component {
     let data = this.state.collections.find(col => {
       return col.id === this.state.selectedCollection
     });
-    console.log(data);
     return (
       <React.Fragment>
         <h3>Collection Stats: {data.name}</h3>
@@ -549,7 +547,6 @@ class AnnotationCollection extends Component {
     const { activeStep } = this.state;
     const { classes } = this.props;
     const steps = getSteps();
-    console.log(this.state.collections);
 
     return (
       <div className={classes.container}>

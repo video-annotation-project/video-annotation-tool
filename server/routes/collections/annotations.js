@@ -137,7 +137,7 @@ router.get("/train",
 
   async (req, res) => {
     let queryText = `      
-      SELECT name, id, count(*), array_agg(conceptid) as ids, array_agg(conceptname) 
+      SELECT name, id, count(*), array_agg(conceptid) as ids, array_agg(conceptname) as concepts
       FROM
       (SELECT ac.name, a.conceptid, ai.id, count(a.conceptid), c.name as conceptname
       FROM annotation_collection ac
