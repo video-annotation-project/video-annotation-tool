@@ -17,6 +17,8 @@ import FormControl from "@material-ui/core/FormControl";
 import VerifySelectUser from "../Utilities/SelectUser.jsx";
 import VerifySelectVideo from "../Utilities/SelectVideo.jsx";
 import VerifySelectConcept from "../Utilities/SelectConcept.jsx";
+
+import ViewModels from "../Model/ViewModels.jsx";
 import Swal from "sweetalert2";
 
 const styles = theme => ({
@@ -35,11 +37,6 @@ const styles = theme => ({
     padding: theme.spacing(3),
     width: "1280px",
     height: "720px"
-  },
-  container: {
-    display: "grid",
-    gridTemplateColumns: "repeat(12, 1fr)",
-    gridGap: theme.spacing(3)
   },
   button: {
     marginTop: theme.spacing(3),
@@ -61,7 +58,28 @@ const styles = theme => ({
     marginTop: theme.spacing(4),
     marginBottom: theme.spacing(2),
     marginLeft: theme.spacing()
-  }
+  },
+  stepper: {
+    display: "block",
+    flex: 1,
+    flexDirection: "column",
+    justifyContent: "left",
+    width: "70%"
+  },
+  models: {
+    display: "flex",
+    flex: 1,
+    flexDirection: "column",
+    justifyContent: "right",
+    alignItems: "right",
+    width: "30%"
+  },
+  container: {
+    display: "flex",
+    flexDirection: "row",
+    padding: "20px",
+    height: "560px"
+  },
 });
 
 function getSteps() {
@@ -381,6 +399,26 @@ class AnnotationCollection extends Component {
     });
   };
 
+  showCollection = () => {
+    let data = this.state.collections.find(col => {
+      return col.id === this.state.selectedCollection
+    });
+    console.log(data);
+    return (
+      <React.Fragment>
+        <h3>Collection Stats: {data.name}</h3>
+        <Typography>
+          <b>Number of concepts:</b> {data.concepts.length}</Typography>
+        <Typography>
+          <b>Concepts:</b> {data.concepts.join(", ")}</Typography>
+        <Typography>
+          <b>Number of users:</b> {data.users.length}</Typography>
+        <Typography>
+          <b>Users:</b> {data.users.join(", ")}</Typography>
+      </React.Fragment>
+    );
+  }
+
   getStepForm = step => {
     const classes = this.props.classes;
 
@@ -464,6 +502,14 @@ class AnnotationCollection extends Component {
             <Typography className={classes.info}>
               Number of Annotations: {this.state.annotations.length}
             </Typography>
+            <br/>
+            {this.state.selectedCollection ?
+              // this.state.collections.find(col => {
+              //   return col.id === this.state.selectedCollection;
+              // })
+              this.showCollection()
+              : ""
+            }
           </React.Fragment>
         );
       default:
@@ -503,10 +549,11 @@ class AnnotationCollection extends Component {
     const { activeStep } = this.state;
     const { classes } = this.props;
     const steps = getSteps();
+    console.log(this.state.collections);
 
     return (
-      <div>
-        <Stepper activeStep={activeStep} orientation="vertical">
+      <div className={classes.container}>
+        <Stepper activeStep={activeStep} orientation="vertical" className={classes.stepper}>
           {steps.map((label, index) => (
             <Step key={label}>
               <StepLabel>{label}</StepLabel>
@@ -556,6 +603,9 @@ class AnnotationCollection extends Component {
             </Step>
           ))}
         </Stepper>
+        {activeStep === 2 ?
+        <ViewModels className={classes.models}/> : ""
+        }
       </div>
     );
   }
