@@ -404,9 +404,9 @@ class VerifyAnnotations extends Component {
 
   getStatus = flag => {
     switch (flag) {
-      case -1:
+      case false:
         return "Bad Tracking";
-      case 1:
+      case true:
         return "Good Tracking";
       default:
         return "Tracking Not Verified";
@@ -433,6 +433,9 @@ class VerifyAnnotations extends Component {
         trackingStatus: flag
       })
       Swal.fire("Successfully Marked", "", "success");
+      if (this.props.tracking) {
+        this.nextAnnotation();
+      }
     } catch (error) {
       Swal.fire("Error marking video as bad", "", "error");
     }
@@ -488,7 +491,7 @@ class VerifyAnnotations extends Component {
                     className={classes.button}
                     variant="contained"
                     color="primary"
-                    onClick={() => this.markTracking(1)}
+                    onClick={() => this.markTracking(true)}
                   >
                     Mark as Good Tracking Video
                   </Button>
@@ -496,7 +499,7 @@ class VerifyAnnotations extends Component {
                     className={classes.button}
                     variant="contained"
                     color="secondary"
-                    onClick={() => this.markTracking(-1)}
+                    onClick={() => this.markTracking(false)}
                   >
                     Mark as Bad Tracking Video
                   </Button>
@@ -505,7 +508,7 @@ class VerifyAnnotations extends Component {
                     variant="contained"
                     onClick={this.nextAnnotation}
                   >
-                    Next
+                    {this.props.tracking ? "Ignore" : "Next"}
                   </Button>
                   {this.state.videoDialogOpen ? 
                     <IconButton

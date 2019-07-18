@@ -39,7 +39,6 @@ router.get(
   }
 );
 
-
 router.post(
   "/",
   passport.authenticate("jwt", { session: false }),
@@ -162,41 +161,38 @@ router.post(
 
 router.get(
   "/train",
-  router.get(
-    "/train/:id",
-    passport.authenticate("jwt", { session: false }),
+  passport.authenticate("jwt", { session: false }),
 
-    async (req, res) => {
-      // console.log(req.params.id.split(","));
-      var params = "{" + req.params.id + "}";
-      let queryText = `      
-      SELECT name, id, count(*), array_agg(conceptid) as ids, array_agg(conceptname) as concepts
+  async (req, res) => {
+    var params = "{"+req.query.ids+"}";
+    let queryText = `      
+      SELECT 
+        name, id, count(*), array_agg(conceptid) as ids, array_agg(conceptname) as concepts
       FROM
-      (SELECT ac.name, a.conceptid, ai.id, count(a.conceptid), c.name as conceptname
-      FROM annotation_collection ac
+        (SELECT ac.name, a.conceptid, ai.id, count(a.conceptid), c.name as conceptname
+      FROM 
+        annotation_collection ac
       LEFT JOIN
-      annotation_intermediate ai
-      ON ac.id = ai.id
-      LEFT JOIN annotations a
-      ON ai.annotationid = a.id
-      LEFT JOIN concepts c
-      ON a.conceptid = c.id
-      WHERE a.conceptid = ANY( $1::int[] )
+        annotation_intermediate ai ON ac.id = ai.id
+      LEFT JOIN 
+        annotations a ON ai.annotationid = a.id
+      LEFT JOIN concepts c ON a.conceptid = c.id
+      WHERE 
+        a.conceptid = ANY( $1::int[] )
       GROUP BY ac.name, a.conceptid, ai.id, c.name ) t
       GROUP BY name, id
     `;
 
-      try {
-        let data = await psql.query(queryText, [params]);
-        if (data) {
-          res.status(200).json(data.rows);
-        }
-      } catch (error) {
-        res.status(500).json(error);
-        console.log(error);
+    try {
+      let data = await psql.query(queryText, [params]);
+      if (data) {
+        res.status(200).json(data.rows);
       }
+    } catch (error) {
+      res.status(500).json(error);
+      console.log(error);
     }
-  )
+  }
 );
 
 module.exports = router;
