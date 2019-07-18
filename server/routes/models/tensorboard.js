@@ -66,7 +66,6 @@ router.delete("/", passport.authenticate("jwt", { session: false }),
  */
 router.post("/:id", passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    let s3 = new AWS.S3();
     const id = req.params.id;
 
     // If other tensorboard servers are running, end them first

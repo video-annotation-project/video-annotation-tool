@@ -217,6 +217,7 @@ class TrainModel extends Component {
     axios.get(`/api/collections/annotations`, config).then(res => {
       this.setState({
         collections: res.data,
+        collectionsSelected: [],
       }, () => {
         if (this.state.modelSelected){
           let data = this.state.models.find(model => {
@@ -231,9 +232,6 @@ class TrainModel extends Component {
   //Used to handle changes in the hyperparameters
   //and in the select model
   handleChange = event => {
-    if (event.target.name === "modelSelected"){
-      this.loadCollectionlist();
-    }
     this.setState({
       [event.target.name]: event.target.value
     });
@@ -297,9 +295,9 @@ class TrainModel extends Component {
                   />
                 }
                 label={<div>{collection.name} 
-                  {collection.concepts ?
+                  {collection.validConcepts ?
                   <Typography variant="subtitle2" gutterBottom color="secondary">
-                     {collection.concepts.array_agg.join(", ")}
+                     {collection.validConcepts.concepts.join(", ")}
                   </Typography> : ""}
                   </div>}
               />
@@ -428,18 +426,14 @@ class TrainModel extends Component {
     const config = {
       headers: {
         Authorization: "Bearer " + localStorage.getItem("token")
-      },
-      data: {
-        conceptids: data.conceptsid
       }
     };
     try {
-      let dataRet = await axios.get("/api/collections/annotations/train",
+      let dataRet = await axios.get(`/api/collections/annotations/train/${data.conceptsid}`,
         config
       );
       var conceptids = dataRet.data.map(col => col.id);
       dataRet = dataRet.data;
-
       var filteredCol = this.state.collections;
       filteredCol.forEach(col => {
         if (!conceptids.includes(col.id)) {
@@ -447,7 +441,7 @@ class TrainModel extends Component {
         }
         else{
           col.disable = false;
-          col.concepts = dataRet.find(col1 => {
+          col.validConcepts = dataRet.find(col1 => {
             return col1.id === col.id
           })  
         }
@@ -462,14 +456,9 @@ class TrainModel extends Component {
 
   handleNext = async () => {
     // After users have been selected load user videos
-    if (this.state.activeStep === 1) {
+    if (this.state.activeStep === 0) {
       this.loadCollectionlist();
     }
-    // After Model and videos have been selected load available concepts
-    // if (this.state.activeStep === 2) {
-    //   await this.loadConceptList();
-    // }
-    console.log(this.state);
     this.setState(
       state => ({
         activeStep: state.activeStep + 1
@@ -525,6 +514,7 @@ class TrainModel extends Component {
     const { classes } = this.props;
     const steps = this.getSteps();
     const {
+      videos,
       collectionsSelected,
       modelSelected,
       activeStep,

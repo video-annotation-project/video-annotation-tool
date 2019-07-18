@@ -61,7 +61,6 @@ def select_annotations(annotations, min_examples, concepts):
 
     group_frame = annotations.groupby(['videoid', 'frame_num'], sort=False)
     group_frame = [df for _, df in group_frame]
-    random.shuffle(group_frame) # Shuffle BEFORE the sort
 
     ai_id = queryDB("SELECT id FROM users WHERE username='tracking'").id[0]
     # Give priority to frames with least amount of tracking annotations
@@ -141,10 +140,11 @@ def download_annotations(min_examples, collectionId, concepts, concept_map,
     for frame in selected:
         # Get image for first annotation in frame
         first = frame.iloc[0]
-        image = str(first['image'])
-        if ".png" not in image:
-           image += ".png"
-        img_location = img_folder + "/" + image
+        video_id = first['videoid']
+        frame_num = first['frame_num']
+        image = f'{videoid}_{frame_num}.png'
+
+        save_location = img_folder + "/" + image
 
         # Check if image already exists in image folder
         if image not in existing_images:
@@ -152,7 +152,7 @@ def download_annotations(min_examples, collectionId, concepts, concept_map,
                 # try to download image. 
                 obj = client.get_object(Bucket=S3_BUCKET, Key= SRC_IMG_FOLDER + str(first['image']))
                 img = Image.open(obj['Body'])
-                img.save(img_location)
+                img.save(save_location)
             except:
                 print("Failed to load image:" + str(first['image']))
                 failed_to_load_images.append(str(first['id']))

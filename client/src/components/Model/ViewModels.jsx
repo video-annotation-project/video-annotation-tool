@@ -118,6 +118,7 @@ class ViewModels extends Component {
               <CustomTableCell>Name</CustomTableCell>
               <CustomTableCell align="right">Date Created</CustomTableCell>
               <CustomTableCell>Concepts</CustomTableCell>
+              <CustomTableCell>ConceptIDs</CustomTableCell>
               <CustomTableCell>Verification Videos</CustomTableCell>
               <CustomTableCell>Delete</CustomTableCell>
             </TableRow>
@@ -133,6 +134,9 @@ class ViewModels extends Component {
                 </CustomTableCell>
                 <CustomTableCell align="right">
                   {model.concepts.toString()}
+                </CustomTableCell>
+                <CustomTableCell align="right">
+                  {model.conceptsid.toString()}
                 </CustomTableCell>
                 <CustomTableCell>{model.videos ? model.videos.toString() : "NON"}</CustomTableCell>
                 <CustomTableCell>
