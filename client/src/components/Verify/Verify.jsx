@@ -48,8 +48,8 @@ class Verify extends Component {
       selectionMounted: true,
       /* -1 represents select all */
       selectedUsers: [],
-      selectedVideos: ["-1"],
-      selectedConcepts: ["-1"],
+      selectedVideos: [],
+      selectedConcepts: [],
       selectedUnsure: false,
       selectedTrackingFirst: false,
       annotations: [],
@@ -240,12 +240,12 @@ class Verify extends Component {
         return;
       case 1:
         this.setState({
-          selectedVideos: ["-1"]
+          selectedVideos: []
         });
         return;
       case 2:
         this.setState({
-          selectedConcepts: ["-1"]
+          selectedConcepts: []
         });
         return;
       case 3:
@@ -262,8 +262,8 @@ class Verify extends Component {
   resetState = (callback) => {
     this.setState({
       selectedUsers: [],
-      selectedVideos: ["-1"],
-      selectedConcepts: ["-1"],
+      selectedVideos: [],
+      selectedConcepts: [],
       selectedUnsure: false,
       selectedTrackingFirst: false,
       index: 0

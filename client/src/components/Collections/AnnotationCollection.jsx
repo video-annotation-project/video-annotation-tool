@@ -101,8 +101,8 @@ class AnnotationCollection extends Component {
       /* -1 represents select all */
       selectedUsers: [],
       selectedCollection: "",
-      selectedVideos: ["-1"],
-      selectedConcepts: ["-1"],
+      selectedVideos: [],
+      selectedConcepts: [],
       annotationCount: "",
       trackingCount: "",
       collections: [],
@@ -392,12 +392,12 @@ class AnnotationCollection extends Component {
         return;
       case 1:
         this.setState({
-          selectedVideos: ["-1"]
+          selectedVideos: []
         });
         return;
       case 2:
         this.setState({
-          selectedConcepts: ["-1"]
+          selectedConcepts: []
         });
         return;
       case 3:
@@ -414,8 +414,8 @@ class AnnotationCollection extends Component {
     this.setState({
       selectedCollection: "",
       selectedUsers: [],
-      selectedVideos: ["-1"],
-      selectedConcepts: ["-1"],
+      selectedVideos: [],
+      selectedConcepts: [],
       includeTracking: false,
       activeStep: 0
     });
