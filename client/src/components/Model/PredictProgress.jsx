@@ -48,7 +48,7 @@ class PredictProgress extends Component {
       if (ret) {
         var data = ret.data;
         // console.log(data)
-        var totalVideo = data.length;
+        var totalVideos = data.length;
         if (data.length === 0) {
           this.setState({
             running: false
@@ -56,7 +56,7 @@ class PredictProgress extends Component {
         }
         else {
           this.setState({
-            videoProgress: ((1 / totalVideo) - 1) * 100,
+            totalVideos: totalVideos,
             data: ret.data,
             running: true
           });
@@ -79,7 +79,8 @@ class PredictProgress extends Component {
 
   getProgress = (framenum, totalframe, status) => {
     var totalSteps = 3;
-    var progress = (status * (100 / totalSteps)) + (framenum / totalframe) * (100 / totalSteps);
+    // var progress = (status * (100 / totalSteps)) + (framenum / totalframe) * (100 / totalSteps);
+    var progress = framenum / totalframe * 100;
     // console.log(progress);
     return progress;
   }
@@ -97,13 +98,8 @@ class PredictProgress extends Component {
         {this.state.running ? (
           <div>
             <h4 className={classes.progressText}>
-              Videos Completed: {this.state.videoProgress}%
+              {this.state.totalVideos} to predict
             </h4>
-            <LinearProgress
-              className={classes.progressBar}
-              variant="determinate"
-              value={this.state.videoProgress}
-            />
             {this.state.data.map(row => (
               <div key={row.videoid}>
                 <h4 className={classes.progressText}>Videoid: {row.videoid}</h4>

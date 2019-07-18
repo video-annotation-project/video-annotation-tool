@@ -32,9 +32,7 @@ router.post("/", passport.authenticate("jwt", { session: false }),
             UPDATE 
               predict_progress
             SET 
-              running = False
-            WHERE
-              id=(SELECT max(id) FROM predict_progress)`;
+              running = False`;
 
       await psql.query(trainingStop);
       await psql.query(predictStop);
