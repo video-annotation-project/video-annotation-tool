@@ -6,6 +6,7 @@ import Paper from "@material-ui/core/Paper";
 
 import VerifySelection from "./VerifySelection.jsx";
 import VerifyAnnotations from "./VerifyAnnotations.jsx";
+import { Button, Typography } from "@material-ui/core";
 
 const styles = theme => ({
   button: {
@@ -50,6 +51,7 @@ class Verify extends Component {
       selectedVideos: ["-1"],
       selectedConcepts: ["-1"],
       selectedUnsure: false,
+      selectedTrackingFirst: false,
       annotations: [],
       error: null,
       index: 0
@@ -62,11 +64,18 @@ class Verify extends Component {
       this.resetState();
     } else {
       annotations = await this.getAnnotations();
+      if (annotations.length < 1){
+        this.setState({
+          noAnnotations: true,
+          selectionMounted: !this.state.selectionMounted
+        })
+      } else {
+        this.setState({
+          annotations: annotations,
+          selectionMounted: !this.state.selectionMounted
+        });
+      }
     }
-    this.setState({
-      annotations: annotations,
-      selectionMounted: !this.state.selectionMounted
-    });
   };
 
   getUsers = async () => {
@@ -168,7 +177,8 @@ class Verify extends Component {
           selectedUsers: this.state.selectedUsers,
           selectedVideos: this.state.selectedVideos,
           selectedConcepts: this.state.selectedConcepts,
-          selectedUnsure: this.state.selectedUnsure
+          selectedUnsure: this.state.selectedUnsure,
+          selectedTrackingFirst: this.state.selectedTrackingFirst
         }
       })
       .then(res => res.data)
@@ -240,7 +250,8 @@ class Verify extends Component {
         return;
       case 3:
         this.setState({
-          selectedUnsure: false
+          selectedUnsure: false,
+          selectedTrackingFirst: false
         });
         return;
       default:
@@ -248,14 +259,17 @@ class Verify extends Component {
     }
   };
 
-  resetState = () => {
+  resetState = (callback) => {
     this.setState({
       selectedUsers: [],
       selectedVideos: ["-1"],
       selectedConcepts: ["-1"],
       selectedUnsure: false,
+      selectedTrackingFirst: false,
       index: 0
-    });
+    },
+    callback
+    );
   };
 
   handleNext = callback => {
@@ -276,6 +290,7 @@ class Verify extends Component {
           selectedVideos={this.state.selectedVideos}
           selectedConcepts={this.state.selectedConcepts}
           selectedUnsure={this.state.selectedUnsure}
+          selectedTrackingFirst={this.state.selectedTrackingFirst}
           getUsers={this.getUsers}
           getVideos={this.getVideos}
           getVideoCollections={this.getVideoCollections}
@@ -290,6 +305,28 @@ class Verify extends Component {
           selectUser={this.selectUser}
         />
       );
+    } else if (this.state.noAnnotations){
+      selection = (
+        <Paper
+        square
+        elevation={0}
+        className={this.props.classes.resetContainer}
+        >
+          <Typography>
+          All Tracking Videos Verified
+          </Typography>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => this.resetState(this.setState({
+              selectionMounted: !this.state.selectionMounted,
+              noAnnotations: false
+            }))}
+          >
+            Reset
+          </Button>
+        </Paper>
+      )
     } else {
       selection = (
         <Paper
@@ -303,6 +340,7 @@ class Verify extends Component {
             handleNext={this.handleNext}
             toggleSelection={this.toggleSelection}
             size={this.state.annotations.length}
+            tracking={this.state.selectedTrackingFirst}
           />
         </Paper>
       );
