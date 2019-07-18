@@ -171,9 +171,6 @@ class TrainModel extends Component {
             modelSelected: info.modelSelected,
             minImages: info.minImages,
             epochs: info.epochs
-          },
-          () => {
-              this.loadCollectionlist();
           }
         );
       })
@@ -215,27 +212,16 @@ class TrainModel extends Component {
       }
     };
     axios.get(`/api/collections/annotations`, config).then(res => {
-      this.setState({
-        collections: res.data,
-        annotationCollections: []
-      },
-      () => {
-        if (this.state.modelSelected) {
-          let data = this.state.models.find(model => {
-            return model.name === this.state.modelSelected;
-          })
-          this.filterCollection(data);
-        }
-      });
+      let selectedModelTuple = this.state.models.find(model => {
+        return model.name === this.state.modelSelected;
+      })
+      this.filterCollection(selectedModelTuple, res.data);
     });
   };
 
   //Used to handle changes in the hyperparameters
   //and in the select model
   handleChange = event => {
-    // if (event.target.name === "modelSelected") {
-    //   this.loadCollectionlist();
-    // }
     this.setState({
       [event.target.name]: event.target.value
     });
@@ -426,14 +412,11 @@ class TrainModel extends Component {
       });
   };
 
-  filterCollection = async (data) => {
+  filterCollection = async (data, collections) => {
     const config = {
       headers: {
         Authorization: "Bearer " + localStorage.getItem("token")
       }
-      // data: {
-      //   conceptids: data.conceptsid
-      // }
     };
     try {
       let dataRet = await axios.get(`/api/collections/annotations/train?ids=${data.conceptsid}`,
@@ -441,7 +424,7 @@ class TrainModel extends Component {
       );
       var conceptids = dataRet.data.map(col => col.id);
       dataRet = dataRet.data;
-      var filteredCol = this.state.collections;
+      var filteredCol = collections;
       filteredCol.forEach(col => {
         if (!conceptids.includes(col.id)) {
           col.disable = true;
