@@ -287,7 +287,7 @@ class TrainModel extends Component {
           Select Annotation Collection to Use
         </FormLabel>
         <FormGroup>
-          {this.state.collections.map(collection => (
+          {this.state.collections.sort((a, b) => a.validConcepts ? -1 : 1).map(collection => (
             <div key={collection.id}>
               <FormControlLabel
                 control={

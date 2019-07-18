@@ -56,6 +56,11 @@ class DragBoxContainer extends Component {
 
   resetDragBox = async (e) => {
     e.preventDefault();
+
+    if (this.state.disableDraw){
+      return;
+    }
+
     var video = e.target;
     var dim = video.getBoundingClientRect();
     var x = e.clientX - dim.left;
@@ -71,6 +76,7 @@ class DragBoxContainer extends Component {
       dragBoxHeight: 0,
       mouseDown: true,
       disabledMouse: true,
+      disableDraw: false,
     }, 
     () => {
       this.props.onResize && this.props.onResize(e, 
@@ -84,6 +90,7 @@ class DragBoxContainer extends Component {
 
   drawDragBox = (e) => {
     e.preventDefault();
+
     if (this.state.mouseDown){
       var video = e.target;
       var dim = video.getBoundingClientRect();
@@ -113,6 +120,10 @@ class DragBoxContainer extends Component {
   createDragBox = (e) => {
     e.preventDefault();
 
+    if (this.state.disableDraw){
+      return;
+    }
+
     var boxLargeEnough = this.state.dragBoxWidth > 25 
       && this.state.dragBoxHeight > 25;
 
@@ -140,7 +151,8 @@ class DragBoxContainer extends Component {
           onMouseDown={(e) => this.resetDragBox(e)}
           onMouseMove={(e) => this.drawDragBox(e)}
           onMouseUp={(e) => this.createDragBox(e)}
-          onPlay={(e) => this.removeDragBox()}>
+          onPlay={(e) => { this.setState({ disableDraw: true }); this.removeDragBox()}}
+          onPause={(e) => this.setState({ disableDraw: false })}>
           {this.props.children}
         </div>
         {this.state.drawDragBox || this.props.drawDragBox ?
