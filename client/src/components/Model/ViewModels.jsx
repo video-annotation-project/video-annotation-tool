@@ -19,23 +19,19 @@ const CustomTableCell = withStyles(theme => ({
   },
   body: {
     fontSize: 14
-  }
+  },
 }))(TableCell);
 
 const styles = theme => ({
   root: {
-    //width: '100%',
-    marginTop: theme.spacing(3)
-    //overflowX: 'auto',
-  },
-  table: {
-    width: 200
+    margins: 'auto',
+    padding: '20px 12%',
   },
   row: {
     "&:nth-of-type(odd)": {
       backgroundColor: theme.palette.background.default
     }
-  }
+  },
 });
 
 class ViewModels extends Component {

@@ -92,7 +92,7 @@ cursor.execute('''
     (model_user_id,info['modelSelected'],))
 
 # Start training job
-train_model(concepts, info['modelSelected'], info['collectionsSelected'], 
+train_model(concepts, info['modelSelected'], info['annotationCollections'], 
            int(info['minImages']), int(info['epochs']), download_data=True)
 
 

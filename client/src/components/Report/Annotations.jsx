@@ -67,7 +67,6 @@ class Annotations extends Component {
         `/api/annotations?` +
         `queryConditions=${this.props.queryConditions}&` +
         `unsureOnly=${this.props.unsureOnly}&` +
-        `admin=${localStorage.getItem("admin")}&` +
         `verifiedCondition=${this.props.verifiedCondition}&` +
         `queryLimit=${this.props.queryLimit}`,
         config

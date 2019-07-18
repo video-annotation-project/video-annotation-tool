@@ -20,7 +20,7 @@ router.post("/", passport.authenticate("jwt", { session: false }),
       InstanceIds: [req.body.modelInstanceId]
     };
     if (req.body.command === "stop") {
-      const queryText = `
+      const trainingStop = `
             UPDATE 
               training_progress
             SET 
@@ -28,7 +28,14 @@ router.post("/", passport.authenticate("jwt", { session: false }),
             WHERE
               id=(SELECT max(id) FROM training_progress)`;
 
-      await psql.query(queryText);
+      const predictStop = `
+            UPDATE 
+              predict_progress
+            SET 
+              running = False`;
+
+      await psql.query(trainingStop);
+      await psql.query(predictStop);
 
       ec2.stopInstances(params, (err, data) => {
         if (err) console.log(err, err.stack);
