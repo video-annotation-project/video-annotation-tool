@@ -246,7 +246,8 @@ class TrainModel extends Component {
     };
     axios.get(`/api/collections/annotations`, config).then(res => {
       this.setState({
-        collections: res.data
+        collections: res.data,
+        collectionsSelected: []
       },
       () => {
         if (this.state.modelSelected) {
@@ -308,9 +309,9 @@ class TrainModel extends Component {
   //Used to handle changes in the hyperparameters
   //and in the select model
   handleChange = event => {
-    if (event.target.name === "modelSelected") {
-      this.loadCollectionlist();
-    }
+    // if (event.target.name === "modelSelected") {
+    //   this.loadCollectionlist();
+    // }
     this.setState({
       [event.target.name]: event.target.value
     });
@@ -640,7 +641,7 @@ class TrainModel extends Component {
           })  
         }
       });
-      this.setState({
+      await this.setState({
         collections: filteredCol
       })
     } catch (error) {
@@ -650,7 +651,7 @@ class TrainModel extends Component {
 
   handleNext = async () => {
     // After users have been selected load user videos
-    if (this.state.activeStep === 1) {
+    if (this.state.activeStep === 0) {
       this.loadCollectionlist();
     }
     // After Model and videos have been selected load available concepts

@@ -315,14 +315,14 @@ router.patch(`/tracking/:id`, passport.authenticate("jwt", { session: false }),
       UPDATE
         annotations
       SET
-        bad_tracking=true
+        tracking_flag=$1
       WHERE
-        id=$1
+        id=$2
       RETURNING id
     `;
 
     try {
-      let updated = await psql.query(queryText, [req.params.id]);
+      let updated = await psql.query(queryText, [req.body.flag ,req.params.id]);
       res.json(updated.rows);
     } catch (error) {
       console.log(error);
@@ -348,6 +348,7 @@ router.get("/unverified", passport.authenticate("jwt", { session: false }),
     const selectedVideos = req.query.selectedVideos;
     const selectedConcepts = req.query.selectedConcepts;
     const selectedUnsure = req.query.selectedUnsure;
+    const selectedTrackingFirst = req.query.selectedTrackingFirst;
 
     let params = [];
     let queryText = 'SELECT DISTINCT ';
@@ -378,11 +379,10 @@ router.get("/unverified", passport.authenticate("jwt", { session: false }),
       LEFT JOIN
         videos v ON v.id=videoid
       WHERE
-        a.verifiedby IS NULL
     `;
 
     if (selectedUsers && !(selectedUsers.length === 1 && selectedUsers[0] === "-1")) {
-      queryText += ` AND a.userid::text=ANY($${params.length + 1})`;
+      queryText += ` a.userid::text=ANY($${params.length + 1})`;
       params.push(selectedUsers);
     }
 
@@ -397,6 +397,13 @@ router.get("/unverified", passport.authenticate("jwt", { session: false }),
     }
 
     if (selectedUnsure === "true") queryText += ` AND unsure`;
+
+    if (selectedTrackingFirst === "true") {
+      queryText += ` AND a.verifiedby IS NOT NULL AND a.tracking_flag IS NULL`
+    }
+    else {
+      queryText += ` AND a.verifiedby IS NULL`
+    }
 
     queryText += orderBy;
 
