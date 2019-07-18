@@ -18,7 +18,7 @@ const styles = theme => ({
   }
 });
 
-class VerifySelectConcept extends React.Component {
+class SelectConcept extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -61,7 +61,7 @@ class VerifySelectConcept extends React.Component {
                     key={concept.id}
                     value={concept.id.toString()}
                     control={<Checkbox color="primary" />}
-                    label={concept.name}
+                    label={<div>{concept.id + ". " + concept.name}</div>}
                     checked={this.props.value.includes(concept.id.toString())}
                   />
                 ))}
@@ -95,8 +95,8 @@ class VerifySelectConcept extends React.Component {
   }
 }
 
-VerifySelectConcept.propTypes = {
+SelectConcept.propTypes = {
   classes: PropTypes.object.isRequired
 };
 
-export default withStyles(styles)(VerifySelectConcept);
+export default withStyles(styles)(SelectConcept);

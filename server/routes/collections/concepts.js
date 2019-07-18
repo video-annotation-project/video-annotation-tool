@@ -1,8 +1,10 @@
-const router = require('express').Router();
+const router = require("express").Router();
 const passport = require("passport");
 const psql = require("../../db/simpleConnect");
 
-router.get("/", passport.authenticate("jwt", { session: false }),
+router.get(
+  "/",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     let queryText = `
     SELECT
@@ -35,7 +37,9 @@ router.get("/", passport.authenticate("jwt", { session: false }),
   }
 );
 
-router.post("/", passport.authenticate("jwt", { session: false }),
+router.post(
+  "/",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const queryText = `
       INSERT INTO 
@@ -56,7 +60,9 @@ router.post("/", passport.authenticate("jwt", { session: false }),
   }
 );
 
-router.patch("/", passport.authenticate("jwt", { session: false }),
+router.patch(
+  "/",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const queryText = `
       UPDATE 
@@ -78,7 +84,9 @@ router.patch("/", passport.authenticate("jwt", { session: false }),
   }
 );
 
-router.post("/:id", passport.authenticate("jwt", { session: false }),
+router.post(
+  "/:id",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     let params = [req.params.id];
     let queryText = `
@@ -93,19 +101,15 @@ router.post("/:id", passport.authenticate("jwt", { session: false }),
         : `
       INSERT INTO 
         concept_intermediate (collectionid, conceptid)
-      VALUES
+      SELECT
+        $1::INTEGER collectionid, *
+      FROM
+        UNNEST($2::INTEGER[])
     `;
 
-    for (let i = 0; i < req.body.concepts.length; i++) {
-      queryText2 += `($1, $${i + 2})`;
-      if (i !== req.body.concepts.length - 1) {
-        queryText2 += `,`;
-      }
-      params.push(req.body.concepts[i]);
-    }
-
     try {
-      await psql.query(queryText, [req.params.id]);
+      await psql.query(queryText, params);
+      params.push(req.body.concepts);
       let added = await psql.query(queryText2, params);
       if (added) {
         res.status(200).json(added);
@@ -116,6 +120,5 @@ router.post("/:id", passport.authenticate("jwt", { session: false }),
     }
   }
 );
-
 
 module.exports = router;

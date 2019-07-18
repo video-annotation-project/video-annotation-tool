@@ -3,7 +3,6 @@ import Button from "@material-ui/core/Button";
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 
-
 const GeneralMenu = (props) => {
   const [anchorEl, setAnchorEl] = React.useState(null);
   const color = props.color ? props.color : "inherit"
@@ -33,6 +32,7 @@ const GeneralMenu = (props) => {
       </Button>
       <Menu
         id="simple-menu"
+        style={{ top: "30px" }}
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={handleClose}

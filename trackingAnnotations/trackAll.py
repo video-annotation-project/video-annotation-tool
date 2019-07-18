@@ -23,11 +23,23 @@ DB_HOST = os.getenv("DB_HOST")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 
+config_path = "../config.json"
+with open(config_path) as config_buffer:    
+    config = json.loads(config_buffer.read())['ml']
+
+tracking_users = config['tracking_users']
+
 while True:
     con = connect(database=DB_NAME, host=DB_HOST, user=DB_USER, password=DB_PASSWORD)
     cursor = con.cursor()
     # get annotations from test
-    cursor.execute("SELECT * FROM annotations WHERE originalid is NULL")
+    cursor.execute(f'''
+        SELECT * 
+        FROM annotations 
+        WHERE originalid is NULL
+        AND userid in {str(tuple(tracking_users))}
+    ''')
+              
     rows = cursor.fetchall()
 
     processes = []

@@ -34,7 +34,6 @@ DB_HOST = os.getenv("DB_HOST")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 
-
 con = connect(
     database=DB_NAME, host=DB_HOST, user=DB_USER, password=DB_PASSWORD)
 cursor = con.cursor()
@@ -51,9 +50,6 @@ cursor.execute("SELECT * FROM MODELTAB WHERE option='trainmodel'")
 row = cursor.fetchone()
 info = row[1]
 
-# if info['activeStep'] != 5:
-#     exit()
-
 try:
 	s3.download_file(
         S3_BUCKET, S3_WEIGHTS_FOLDER + str(info['modelSelected']) + '.h5',
@@ -61,8 +57,6 @@ try:
 except:
 	s3.download_file(
         S3_BUCKET, S3_WEIGHTS_FOLDER + default_weights, weights_path)
-
-
 
 cursor.execute('''
     SELECT *
@@ -74,10 +68,10 @@ verifyVideos = model[3]
 
 #Delete old model user
 if (model[4] != 'None'):
-    cursor.execute('''
-        DELETE FROM users
-        WHERE id=%s''',
-        (model[4],))
+     cursor.execute('''
+         DELETE FROM users
+         WHERE id=%s''',
+         (model[4],))
 
 user_model = model[0] + "-" + time.ctime() 
 # username example: testV2-Fri Jun 28 11:58:37 2019
@@ -98,22 +92,29 @@ cursor.execute('''
     (model_user_id,info['modelSelected'],))
 
 # Start training job
-train_model(concepts, info['usersSelected'], int(info['minImages']), int(info['epochs']), info['modelSelected'], info['videosSelected'], info['conceptsSelected'], download_data=True)
+train_model(concepts, info['modelSelected'], info['annotationCollections'], 
+           int(info['minImages']), int(info['epochs']), download_data=True)
 
-# Run evaluate on all the videos in verifyVideos
 
-
+# Run verifyVideos in parallel
 # with Pool(processes = 2) as p:
 #     p.starmap(evaluate, map(lambda video: (video, user_model, concepts), verifyVideos))
-for video_id in verifyVideos:
+
+# Run evaluate on all the videos in verifyVideos
+for video_id in verifyVideos: # Using for loop due to memory issues
     evaluate(video_id, user_model, concepts)
     cursor.execute('''
         DELETE FROM predict_progress
         ''')
-    con.commit()
 
 os.system('rm *.mp4')
-cursor.execute("Update modeltab SET info =  '{\"activeStep\": 0, \"conceptsSelected\":[], \"epochs\":0, \"minImages\":0, \"modelSelected\":\"\",\"videosSelected\":[],\"usersSelected\":[]}' WHERE option = 'trainmodel'")
+cursor.execute('''
+    Update modeltab 
+    SET info =  '{
+        \"activeStep\": 0, \"modelSelected\":\"\", \"annotationCollections\":[],
+        \"epochs\":0, \"minImages\":0}' 
+    WHERE option = 'trainmodel'
+''')
 con.commit()
 con.close()    
 os.system("sudo shutdown -h")

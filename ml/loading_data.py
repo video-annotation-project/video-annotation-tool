@@ -51,17 +51,16 @@ def queryDB(query, params=None):
     return result
 
 
-def select_annotations(annotations, min_examples, selected_concepts):
+def select_annotations(annotations, min_examples, concepts):
     # speed.update_annotation_speed()
     selected = []
     concept_count = {}
 
-    for concept in selected_concepts:
+    for concept in concepts:
         concept_count[concept] = 0
 
     group_frame = annotations.groupby(['videoid', 'frame_num'], sort=False)
     group_frame = [df for _, df in group_frame]
-    random.shuffle(group_frame) # Shuffle BEFORE the sort
 
     ai_id = queryDB("SELECT id FROM users WHERE username='tracking'").id[0]
     # Give priority to frames with least amount of tracking annotations
@@ -103,20 +102,15 @@ def select_annotations(annotations, min_examples, selected_concepts):
 #   train_annot_file: name of training annotation csv
 #   valid_annot_file: name of validation annotations csv
 #   split: fraction of annotation images that willbe used for training (rest used in validation)
-def download_annotations(min_examples, concepts, selected_concepts, concept_map, users, 
-    videos, img_folder, train_annot_file, valid_annot_file, split=.8):
+def download_annotations(min_examples, collectionId, concepts, concept_map, 
+                         img_folder, train_annot_file, valid_annot_file, split=.8):
 
     # Variable that represents all images already in the image folder
     existing_images = set(os.listdir(img_folder))
     
-    # Get all annotations for given concepts (and child concepts) making sure that any tracking annotations originated from good users
-    users = "\'" +  ','.join(str(e) for e in users) + "\'"
-    videos = "\'" + ','.join(str(e) for e in videos) + "\'"
-    str_concepts = "\'" + ','.join(str(e) for e in selected_concepts) + "\'"
-
     # To-do: change to prepared statement
-    annotations = queryDB(
-        f'''SELECT 
+    annotations = queryDB(f'''
+        SELECT
               A.id,
               image,
               userid,
@@ -126,25 +120,16 @@ def download_annotations(min_examples, concepts, selected_concepts, concept_map,
               conceptid,
               x1, x2, y1, y2,
               speed,
-              fps*timeinvideo as frame_num
-            FROM annotations as A
-            LEFT JOIN videos ON videos.id=videoid
-            WHERE conceptid::text = ANY(string_to_array({str_concepts},','))
-            AND videoid::text = ANY(string_to_array({videos},','))
-            AND EXISTS ( 
-                SELECT id, userid 
-                FROM annotations 
-                WHERE id=originalid 
-                AND unsure = False
-                AND userid::text = ANY(string_to_array({users},',')))
-            ''')
+              ROUND(fps*timeinvideo) as frame_num
+        FROM annotation_intermediate inter
+        LEFT JOIN annotations a ON a.id=inter.annotationid
+        LEFT JOIN videos ON videos.id=videoid
+        WHERE inter.id IN {str(list(collectionId)).replace('[', '(').replace(']', ')')}
+    ''')
 
-    
-    # Returns
+    selected, concept_count = select_annotations(annotations, min_examples, concepts)
     # selected - list of frames (frame is a group of annotations at same frame)
     # concept_count - dictionary of conceptid and number of annotations within selected
-
-    selected, concept_count = select_annotations(annotations, min_examples, selected_concepts)
     print("Concept counts: " + str(concept_count))
     print("Number of images: " + str(len(selected)))
         
@@ -155,9 +140,10 @@ def download_annotations(min_examples, concepts, selected_concepts, concept_map,
     for frame in selected:
         # Get image for first annotation in frame
         first = frame.iloc[0]
-        image = str(first['image'])
-        if ".png" not in image:
-           image += ".png"
+        video_id = first['videoid']
+        frame_num = first['frame_num']
+        image = f'{video_id}_{int(frame_num)}.png'
+
         img_location = img_folder + "/" + image
 
         # Check if image already exists in image folder

@@ -7,11 +7,28 @@ router.use('/progress', require('./progress'))
 router.use('/tensorboard', require('./tensorboard'))
 router.use('/train', require('./train'))
 
+
+// TODO: add delete model
+
+ /**
+ * @typedef model
+ * @property {string} name - Name of the model
+ * @property {string} timestamp - Date the model was created
+ * @property {Array.<string>} concepts - List of concept names the model was trained using
+ */
+
+/**
+ * @route GET /api/models
+ * @group models 
+ * @summary Get a list of all models
+ * @returns {Array.<model>} 200 - List of models
+ * @returns {Error} 500 - Unexpected database error
+ */
 router.get("/", passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const queryText = `
       SELECT 
-        m.name, m.timestamp, array_agg(c.name) concepts
+        m.name, m.timestamp, array_agg(c.name) concepts, array_agg(c.id) conceptsid
       FROM 
         (SELECT name, timestamp, UNNEST(concepts) concept FROM models) m
       JOIN 
@@ -29,6 +46,27 @@ router.get("/", passport.authenticate("jwt", { session: false }),
   }
 );
 
+
+// TODO: does userid work?
+ /**
+ * @typedef modelCreated
+ * @property {string} name - Name of the model
+ * @property {string} timestamp - Date the model was created
+ * @property {Array.<integer>} concepts - List of concept IDs the model was trained using
+ * @property {Array.<integer>} verificationvideos - List of videos used for verification of the model
+ * @property {Array.<integer>} userid - ID of user who created the model
+ */
+
+/**
+ * @route POST /api/models
+ * @group models 
+ * @summary Create a new model
+ * @param {string} name.body.required - Name of the model to be created
+ * @param {Array.<integer>} concepts.body.required - Concept IDs to train the model with
+ * @param {Array.<integer>} videos.body.required - Video IDs to train the model with
+ * @returns {Array.<modelCreated>} 200 - List containing the created model
+ * @returns {Error} 500 - Unexpected database error
+ */
 router.post("/", passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const queryText = `
@@ -52,7 +90,22 @@ router.post("/", passport.authenticate("jwt", { session: false }),
   }
 );
 
-// returns a list of concept names that have annotations
+
+// TODO: this should probably be under api/concepts/
+ /**
+ * @typedef modelConcept
+ * @property {integer} id - ID of the concept
+ * @property {string} name - Name of the concept
+ * @property {string} rank - Rank of the concept
+ */
+
+/**
+ * @route POST /api/models/concepts
+ * @group models 
+ * @summary Get a list of concept names that have annotations
+ * @returns {Array.<modelConcept>} 200 - List of concepts with annotations
+ * @returns {Error} 500 - Unexpected database error
+ */
 router.get("/concepts", passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const queryText = `
@@ -82,6 +135,26 @@ router.get("/concepts", passport.authenticate("jwt", { session: false }),
   }
 );
 
+ /**
+ * @typedef modelRun
+ * @property {integer} id - ID of the training session
+ * @property {string} model_name - Name of the model used in the session
+ * @property {string} start_train - Start time of the training session
+ * @property {string} end_train - End time of the training session
+ * @property {integer} epoch - Number of epochs the training used
+ * @property {integer} min_examples - Number of images the training used
+ * @property {Array.<integer>} concepts - Concept names used to train with
+ * @property {Array.<string>} users - User names with annotations used in training
+ */
+ 
+/**
+ * @route GET /api/models/runs
+ * @group models 
+ * @summary Get a list of previous training sessions
+ * @returns {Array.<modelRun>} 200 - List of concepts with annotations
+ * @returns {Error} 500 - Unexpected database error
+ */
+
 router.get("/runs", passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const queryText = `
@@ -104,6 +177,76 @@ router.get("/runs", passport.authenticate("jwt", { session: false }),
     } catch (error) {
       console.log(error);
       res.status(500).json(error);
+    }
+  }
+);
+
+router.delete(
+  "/",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    let s3 = new AWS.S3();
+    let deleteModel = `
+      DELETE FROM
+        models
+      WHERE
+        name=$1
+      RETURNING *`;
+    let deleteModelUser = `
+      DELETE FROM
+        users  
+      WHERE
+        username LIKE $1
+      RETURNING *
+    `;
+    let deleteModelVideos = `
+      DELETE FROM
+        ai_videos  
+      WHERE
+        name LIKE $1
+      RETURNING *
+    `;
+
+    try {
+      var arg = req.body.model.name + '-%';
+      await psql.query(deleteModel, [req.body.model.name]);
+      await psql.query(deleteModelUser, [arg]);
+
+      arg = '%_' + arg;
+      let modelVideosRes = await psql.query(deleteModelVideos, [arg]);
+
+      //These are the s3 object we will be deleting
+      let Objects = [];
+
+      if (modelVideosRes.rows.length > 0) {
+        modelVideosRes.rows.forEach(element => {
+          Objects.push({
+            Key: process.env.AWS_S3_BUCKET_AIVIDEOS_FOLDER + element.name
+          });
+        });
+
+        let params = {
+          Bucket: process.env.AWS_S3_BUCKET_NAME,
+          Delete: {
+            Objects: Objects
+          }
+        };
+        console.log(params);
+        let s3Res = await s3.deleteObjects(params,
+          (err, data) => {
+            if (err) {
+              console.log(err);
+              res.status(500).json(err);
+            } else {
+              console.log(data);
+            }
+          });
+      }
+
+      res.json("deleted");
+    } catch (error) {
+      console.log(error);
+      res.status(400).json(error);
     }
   }
 );

@@ -159,7 +159,7 @@ class CreateModel extends Component {
     };
     axios.get(`/api/videos`, config).then(res => {
       this.setState({
-        videos: res.data[2].rows
+        videos: res.data.watchedVideos
       });
     });
   };

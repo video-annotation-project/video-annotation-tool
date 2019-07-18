@@ -6,6 +6,32 @@ const AWS = require("aws-sdk");
 router.use('/checkpoints', require('./checkpoints'))
 router.use('/aivideos', require('./ai_videos'))
 
+
+/**
+ * @typedef video
+ * @property {integer} id - ID of the video
+ * @property {string} filename - Filename of the video
+ * @property {boolean} finished - Is the video done being annotated
+ * @property {timeinvideo} finished - Is the video done being annotated
+ * @property {string} timeinvideo - How far in seconds has the video been annotated
+ * @property {integer} count - How many annotations does this video have
+ */
+
+/**
+ * @typedef videoArray
+ * @property {Array.<video>} startedVideos - Videos that've been started
+ * @property {Array.<video>} unwatchedVideos - Videos that are unwatched
+ * @property {Array.<video>} watchedVideos - Videos that've been watched
+ * @property {Array.<video>} inProgressVideos - Videos that are in progress
+ */
+
+/**
+ * @route GET /api/videos
+ * @group videos 
+ * @summary Get a list of all videos, separated by progress
+ * @returns {videoArray.model} 200 - An object containing 4 arrays of videos separated based on progress
+ * @returns {Error} 500 - Unexpected database error
+ */
 router.get("/", passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     let userId = req.user.id;
@@ -90,12 +116,14 @@ router.get("/", passport.authenticate("jwt", { session: false }),
       const inProgressVideos = await psql.query(queryGlobalInProgress, [
         userId
       ]);
-      const videoData = [
-        startedVideos,
-        unwatchedVideos,
-        watchedVideos,
-        inProgressVideos
-      ];
+
+      const videoData = {
+        startedVideos: startedVideos.rows,
+        unwatchedVideos: unwatchedVideos.rows,
+        watchedVideos: watchedVideos.rows,
+        inProgressVideos: inProgressVideos.rows
+      };
+
       res.json(videoData);
     } catch (error) {
       console.log(error);
@@ -104,8 +132,27 @@ router.get("/", passport.authenticate("jwt", { session: false }),
   }
 );
 
-
+// TODO: clean up this return body
 // summary getter ~KLS
+/**
+ * @typedef summary
+ * @property {integer} id - ID of the concept
+ * @property {string} name - Name of the concept
+ * @property {string} rank - Rank of the concept
+ * @property {integer} parent - Parent concept
+ * @property {string} picture - Concept picture filename
+ * @property {integer} conceptid - ID of the concept
+ * @property {integer} videoid - ID of the concept
+ * @property {string} count - Count of the concept in the video
+ */
+/**
+ * @route GET /api/videos/summary/:videoid
+ * @group videos 
+ * @summary Get a list of concepts in a video
+ * @param {integer} videoid.url.required - ID of the video to get the array from
+ * @returns {Array.<summary>} 200 - An array of concepts in the video
+ * @returns {Error} 500 - Unexpected database error
+ */
 router.get("/summary/:videoid", passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     let queryText = `
@@ -184,56 +231,3 @@ router.get("/:videoid", passport.authenticate("jwt", { session: false }),
 );
 
 module.exports = router;
-
-
-// router.get('/api/videos/Y7Ek6tndnA/:name', (req, res) => {
-//   var s3 = new AWS.S3();
-//   const mimetype = 'video/mp4';
-//   const file = process.env.AWS_S3_BUCKET_VIDEOS_FOLDER + req.params.name;
-//   const cache = 0;
-//   s3.listObjectsV2({
-//     Bucket: process.env.AWS_S3_BUCKET_NAME,
-//     MaxKeys: 1, Prefix: file
-//   }, (err, data) => {
-//     if (err) {
-//       return res.sendStatus(404);
-//     }
-//     if (!data.Contents[0]){
-//       return res.redirect('/api/videos/Y7Ek6tndnA/error.mp4');
-//     }
-//     if (req != null && req.headers.range != null) {
-//       var range = req.headers.range;
-//       var bytes = range.replace(/bytes=/, '').split('-');
-//       var start = parseInt(bytes[0], 10);
-//       var total = data.Contents[0].Size;
-//       var end = bytes[1] ? parseInt(bytes[1], 10) : total - 1;
-//       var chunksize = (end - start) + 1;
-//
-//       res.writeHead(206, {
-//         'Content-Range'  : 'bytes ' + start + '-' + end + '/' + total,
-//         'Accept-Ranges'  : 'bytes',
-//         'Content-Length' : chunksize,
-//         'Last-Modified'  : data.Contents[0].LastModified,
-//         'Content-Type'   : mimetype
-//       });
-//       s3.getObject({
-//         Bucket: process.env.AWS_S3_BUCKET_NAME,
-//         Key: file, Range: range
-//       }).createReadStream().pipe(res);
-//     }
-//     else
-//     {
-//       res.writeHead(200,
-//       {
-//         'Cache-Control' : 'max-age=' + cache + ', private',
-//         'Content-Length': data.Contents[0].Size,
-//         'Last-Modified' : data.Contents[0].LastModified,
-//         'Content-Type'  : mimetype
-//       });
-//       s3.getObject({
-//         Bucket: process.env.AWS_S3_BUCKET_NAME,
-//         Key: file
-//       }).createReadStream().pipe(res);
-//     }
-//   });
-// });

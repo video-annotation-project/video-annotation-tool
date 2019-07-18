@@ -3,6 +3,15 @@ const passport = require("passport");
 const psql = require("../../db/simpleConnect");
 const AWS = require("aws-sdk");
 
+/**
+ * @route POST /api/models/train
+ * @group models 
+ * @summary Start a training session
+ * @param {integer} modelInstanceId.body.required - ID of model instance to use
+ * @param {enum} command.body - "start" or "stop" (Start or stop training)
+ * @returns 200 - Succesfully started/stopped training
+ * @returns {Error} 500 - Unexpected server error
+ */
 router.post("/", passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     let ec2 = new AWS.EC2({ region: "us-west-1" });
@@ -11,7 +20,7 @@ router.post("/", passport.authenticate("jwt", { session: false }),
       InstanceIds: [req.body.modelInstanceId]
     };
     if (req.body.command === "stop") {
-      const queryText = `
+      const trainingStop = `
             UPDATE 
               training_progress
             SET 
@@ -19,7 +28,14 @@ router.post("/", passport.authenticate("jwt", { session: false }),
             WHERE
               id=(SELECT max(id) FROM training_progress)`;
 
-      await psql.query(queryText);
+      const predictStop = `
+            UPDATE 
+              predict_progress
+            SET 
+              running = False`;
+
+      await psql.query(trainingStop);
+      await psql.query(predictStop);
 
       ec2.stopInstances(params, (err, data) => {
         if (err) console.log(err, err.stack);
@@ -31,6 +47,8 @@ router.post("/", passport.authenticate("jwt", { session: false }),
     }
   }
 );
+
+// TODO: figure out trainmodel then document this
 
 router.get("/:option", passport.authenticate("jwt", { session: false }),
   async (req, res) => {

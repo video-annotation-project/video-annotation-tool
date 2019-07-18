@@ -7,28 +7,24 @@ const bodyParser = require("body-parser");
 const path = require("path");
 
 const routes = require('./routes');
-// const swaggerUi = require('swagger-ui-express');
-// const swaggerSpecs = require('./config/swagger');
+const swaggerUi = require('swagger-ui-express');
+const swaggerOptions = require('./config/swagger');
+const expressSwagger = require('express-swagger-generator')(app);
 
 app.use(require('./config/passport').passport.initialize());
 
-var options = {
-  swaggerOptions: {
-    validatorUrl: null
-  }
-};
+// Swagger will display documentation at the url /api-docs
+expressSwagger(swaggerOptions);
 
-// app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
-
-// app.get('/swagger.json', (req, res) => {
-//   res.setHeader('Content-Type', 'application/json');
-//   res.send(swaggerSpecs);
-// });
+// Allows us to view the auto-generated swagger.json
+app.get('/swagger.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(swaggerSpecs);
+});
 
 // parse application/x-www-form-urlencoded
 // for easier testing with Postman or plain HTML forms
 // parse application/json - needs higher limit for passing img for annotation
-
 app.use(bodyParser.json({ limit: "50mb" }));
 app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
 
@@ -66,7 +62,7 @@ if (process.env.NODE_ENV === "production") {
   });
 }
 
-
+// No endpoint found, 404
 app.use(function(req, res) {
    res.status(404).end();
 });

@@ -47,7 +47,7 @@ const styles = theme => ({
     padding: theme.spacing(3)
   },
   videoForm: {
-    maxHeight: "150px",
+    maxHeight: "400px",
     overflow: "auto",
     width: "630px"
   }
@@ -169,11 +169,8 @@ class PredictModel extends Component {
       }
     };
     axios.get(`/api/videos`, config).then(res => {
-      let [, unwatchedVideos, watchedVideos, inProgressVideos] = res.data;
-      const videos = unwatchedVideos.rows.concat(
-        watchedVideos.rows,
-        inProgressVideos.rows
-      );
+      let { unwatchedVideos, watchedVideos, inProgressVideos } = res.data;
+      const videos = unwatchedVideos.concat(watchedVideos, inProgressVideos);
       this.setState({
         videos: videos
       });
@@ -226,9 +223,7 @@ class PredictModel extends Component {
       >
         <FormGroup>
           {this.state.videos.map(video => (
-            <div 
-              key={video.filename}
-            >
+            <div key={video.filename}>
               <Radio
                 name="videoSelected"
                 color="primary"
@@ -237,16 +232,15 @@ class PredictModel extends Component {
                 onChange={this.handleSelect}
               />
               {video.filename}
-              <IconButton 
+              <IconButton
                 onClick={event => this.openVideoMetadata(event, video)}
                 style={{ float: "right" }}
               >
-                <Description/>
+                <Description />
               </IconButton>
             </div>
           ))}
         </FormGroup>
-
       </FormControl>
     );
   };
@@ -384,9 +378,7 @@ class PredictModel extends Component {
     return (
       <div className={classes.root}>
         <div className={classes.center}>
-          <Typography variant="h6">
-            Run a trained model on video(s)
-          </Typography>
+          <Typography variant="h6">Run a trained model on video(s)</Typography>
           <br />
         </div>
         <Stepper activeStep={activeStep} orientation="vertical">
