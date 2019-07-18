@@ -101,19 +101,15 @@ router.post(
         : `
       INSERT INTO 
         concept_intermediate (collectionid, conceptid)
-      VALUES
+      SELECT
+        $1::INTEGER collectionid, *
+      FROM
+        UNNEST($2::INTEGER[])
     `;
 
-    for (let i = 0; i < req.body.concepts.length; i++) {
-      queryText2 += `($1, $${i + 2})`;
-      if (i !== req.body.concepts.length - 1) {
-        queryText2 += `,`;
-      }
-      params.push(req.body.concepts[i]);
-    }
-
     try {
-      await psql.query(queryText, [req.params.id]);
+      await psql.query(queryText, params);
+      params.push(req.body.concepts);
       let added = await psql.query(queryText2, params);
       if (added) {
         res.status(200).json(added);

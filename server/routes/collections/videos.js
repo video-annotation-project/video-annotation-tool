@@ -86,63 +86,41 @@ router.post(
   "/:id",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    let params = [req.params.id];
+    let params = [req.params.id, req.body.videos];
     let queryText = `
       INSERT INTO 
         video_intermediate (id, videoid)
-      VALUES
+      SELECT
+        $1::INTEGER id, *
+      FROM
+        UNNEST($2::INTEGER[])
     `;
-
-    for (let i = 0; i < req.body.videos.length; i++) {
-      queryText += `($1, $${i + 2})`;
-      if (i !== req.body.videos.length - 1) {
-        queryText += `,`;
-      }
-      params.push(req.body.videos[i]);
-    }
-    queryText += `RETURNING *`;
-
     try {
-      let added = await psql.query(queryText, params);
-      if (added) {
-        res.status(200).json(added);
-      }
+      await psql.query(queryText, params);
+      res.sendStatus(200);
     } catch (error) {
+      console.log(error);
       res.status(500).json(error);
     }
   }
 );
 
 router.delete(
-  "/:id",
+  "/elements/:id",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    var params = [req.params.id];
+    var params = [req.params.id, req.body.videos];
     var queryText = `
       DELETE FROM 
         video_intermediate
       WHERE
-        id=$1 AND (
+        id=$1 AND videoid=ANY($2)
     `;
-
-    var i = 0;
-    for (i = 0; i < req.body.videos.length; i++) {
-      queryText += `videoid=$${i + 2}`;
-      if (i !== req.body.videos.length - 1) {
-        queryText += ` OR `;
-      } else {
-        queryText += `) `;
-      }
-      params.push(req.body.videos[i]);
-    }
-    queryText += ` RETURNING *`;
-
     try {
-      let removed = await psql.query(queryText, params);
-      if (removed) {
-        res.json(removed);
-      }
+      await psql.query(queryText, params);
+      res.sendStatus(200);
     } catch (error) {
+      console.log(error);
       res.status(500).json(error);
     }
   }
