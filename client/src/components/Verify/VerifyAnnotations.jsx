@@ -25,13 +25,6 @@ const styles = theme => ({
   button: {
     margin: theme.spacing()
   },
-  item: {
-    display: "inline",
-    paddingTop: 0,
-    width: "1300px",
-    height: "730px",
-    paddingLeft: 0
-  },
   img: {
     top: "50px"
   },
@@ -468,21 +461,22 @@ class VerifyAnnotations extends Component {
           <React.Fragment>
             {this.props.tracking || this.state.videoDialogOpen ? (
               <div>
-                <video
-                  id="video"
-                  width="800"
-                  height="450"
-                  className={classes.item}
-                  src={
-                    "https://cdn.deepseaannotations.com/videos/" +
-                    annotation.id +
-                    "_tracking.mp4"
-                  }
-                  type="video/mp4"
-                  controls
-                >
-                  Your browser does not support the video tag.
-                </video>
+                <DragBoxContainer>
+                  <video
+                    id="video"
+                    width="1300"
+                    height="730"
+                    src={
+                      "https://cdn.deepseaannotations.com/videos/" +
+                      annotation.id +
+                      "_tracking.mp4"
+                    }
+                    type="video/mp4"
+                    controls
+                  >
+                    Your browser does not support the video tag.
+                  </video>
+                </DragBoxContainer>
                 <div
                   className={classes.buttonsContainer1}
                   style={{ width: annotation.videowidth / 2 }}
