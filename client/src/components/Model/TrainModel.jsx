@@ -436,7 +436,7 @@ class TrainModel extends Component {
       // }
     };
     try {
-      let dataRet = await axios.get(`/api/collections/annotations/train/${data.conceptsid}`,
+      let dataRet = await axios.get(`/api/collections/annotations/train?ids=${data.conceptsid}`,
         config
       );
       var conceptids = dataRet.data.map(col => col.id);
