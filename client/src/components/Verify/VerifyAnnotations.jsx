@@ -199,6 +199,9 @@ class VerifyAnnotations extends Component {
   };
 
   nextAnnotation = () => {
+    this.setState({
+      trackingStatus: null
+    })
     if (this.props.size === this.props.index + 1) {
       this.setState({
         end: true
