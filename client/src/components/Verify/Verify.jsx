@@ -173,7 +173,7 @@ class Verify extends Component {
           Authorization: "Bearer " + localStorage.getItem("token")
         },
         params: {
-          verifiedOnly: "-1",
+          verifiedOnly: this.state.selectedTrackingFirst ? "1" : "-1",
           selectedUsers: this.state.selectedUsers,
           selectedVideos: this.state.selectedVideos,
           selectedConcepts: this.state.selectedConcepts,

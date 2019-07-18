@@ -308,7 +308,7 @@ class Users extends Component {
             Total Annotations: {annotationTotal}
           </h3>
           <h3 style={{ float: "right" }}>
-            Total Verification: {verificationTotal}
+            Total Verifications: {verificationTotal}
           </h3>
         </div>
       </div>
