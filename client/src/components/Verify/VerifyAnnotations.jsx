@@ -26,7 +26,9 @@ const styles = theme => ({
     margin: theme.spacing()
   },
   img: {
-    top: "50px"
+    top: "50px",
+    width: "1600px",
+    height: "900px"
   },
   container: {
     display: "grid",
@@ -523,11 +525,9 @@ class VerifyAnnotations extends Component {
                   keyName="r, d, i, v"
                   onKeyDown={this.handleKeyDown.bind(this)}
                 / >
-                <div 
-                  style={{width: annotation.videowidth,
-                  height: annotation.videoheight}}>
+                <div>
                   <DragBoxContainer
-                    classes={classes.img}
+                    className={classes.img}
                     dragBox={classes.dragBox}
                     drawDragBox={this.state.drawDragBox}
                     toggleDragBox={this.toggleDragBox}
