@@ -31,7 +31,7 @@ class Concepts extends React.Component {
       .then(conceptsSelectedList => {
         let conceptsSelectedObj = {};
         conceptsSelectedList.forEach(concept => {
-          conceptsSelectedObj[concept.conceptid] = true;
+          conceptsSelectedObj[concept.id] = true;
         });
         return conceptsSelectedObj;
       })
@@ -82,7 +82,6 @@ class Concepts extends React.Component {
       })
       .catch(error => {
         console.log(error);
-        console.log(JSON.parse(JSON.stringify(error)));
         if (!error.response) {
           return;
         }
