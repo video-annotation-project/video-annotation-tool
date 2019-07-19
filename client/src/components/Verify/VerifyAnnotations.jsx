@@ -26,7 +26,9 @@ const styles = theme => ({
     margin: theme.spacing()
   },
   img: {
-    top: "50px"
+    top: "50px",
+    width: "1600px",
+    height: "900px"
   },
   container: {
     display: "grid",
