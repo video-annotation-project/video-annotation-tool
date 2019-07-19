@@ -27,8 +27,6 @@ const styles = theme => ({
   },
   img: {
     top: "50px",
-    width: "1600px",
-    height: "900px"
   },
   container: {
     display: "grid",
