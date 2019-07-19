@@ -135,24 +135,6 @@ class Annotate extends Component {
     }
   }
 
-  // handleKeyDown = e => {
-  //   if (e.target !== document.body) {
-  //     return;
-  //   }
-  //   if (e.code === "Space") {
-  //     e.preventDefault();
-  //     Annotate.playPause();
-  //   }
-  //   if (e.code === "ArrowRight") {
-  //     e.preventDefault();
-  //     Annotate.skipVideoTime(1);
-  //   }
-  //   if (e.code === "ArrowLeft") {
-  //     e.preventDefault();
-  //     Annotate.skipVideoTime(-1);
-  //   }
-  // };
-
   static skipVideoTime = time => {
     var videoElement = document.getElementById("video");
     var cTime = videoElement.currentTime;
