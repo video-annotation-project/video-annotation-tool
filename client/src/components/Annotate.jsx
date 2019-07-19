@@ -448,7 +448,7 @@ class Annotate extends Component {
         <Hotkeys
           keyName="space, right, left"
           onKeyDown={this.handleKeyDown.bind(this)}
-        / >
+        />
         <ConceptsSelected handleConceptClick={this.handleConceptClick} />
         <VideoList
           handleVideoClick={this.handleVideoClick}
