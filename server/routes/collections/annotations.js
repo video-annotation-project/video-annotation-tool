@@ -164,7 +164,7 @@ router.get(
   passport.authenticate("jwt", { session: false }),
 
   async (req, res) => {
-    var params = "{"+req.query.ids+"}";
+    var params = "{" + req.query.ids + "}";
     let queryText = `      
       SELECT 
         name, id, count(*), array_agg(conceptid) as ids, array_agg(conceptname) as concepts
