@@ -159,6 +159,14 @@ router.post(
   }
 );
 
+/**
+ * @route GET /api/collections/annotations/train
+ * @group collections
+ * @summary Get a list of annotation collections that relates to model concepts id
+ * @param {string} ids.query - conceptids from model
+ * @returns {Array.<userInfo>} 200 - An array of annotation collections
+ * @returns {Error} 500 - Unexpected database error
+ */
 router.get(
   "/train",
   passport.authenticate("jwt", { session: false }),
