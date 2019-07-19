@@ -3,6 +3,19 @@ const passport = require("passport");
 const psql = require("../../db/simpleConnect");
 const AWS = require("aws-sdk");
 
+ /**
+ * @typedef ai_video
+ * @property {integer} id - id of the video
+ * @property {string} name - the name of the video following videoid_nameofmodel.mp4
+ */
+
+/**
+ * @route GET /api/videos/ai_videos
+ * @group ai_videos
+ * @summary Get a list of all ai_videos
+ * @returns {Array.<ai_video>} 200 - List of ai videos
+ * @returns {Error} 500 - Unexpected database error
+ */
 router.get("/",passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     let queryText = `SELECT * FROM ai_videos`;
@@ -16,6 +29,14 @@ router.get("/",passport.authenticate("jwt", { session: false }),
   }
 );
 
+/**
+ * @route DELETE /api/videos/ai_videos
+ * @group ai_videos
+ * @summary Delete an ai_video
+ * @param {ai_video} video.body.required - ai video
+ * @returns {string} 200 - "deleted"
+ * @returns {Error} 500 - Unexpected database or S3 error
+ */
 router.delete("/", passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     let s3 = new AWS.S3();
@@ -58,6 +79,27 @@ router.delete("/", passport.authenticate("jwt", { session: false }),
   }
 );
 
+/**
+ * @typedef ai_summary
+ * @property {integer} id - ID of the concept
+ * @property {string} name - Name of the concept
+ * @property {string} rank - Rank of the concept
+ * @property {integer} parent - Parent concept
+ * @property {string} picture - Concept picture filename
+ * @property {integer} conceptid - ID of the concept
+ * @property {integer} videoid - ID of the concept
+ * @property {string} count - Count of ai annotations in the ai video
+ * @property {string} notai - Count of human annotations in the ai video
+ */
+
+/**
+ * @route GET /api/videos/ai_videos/summary/:name
+ * @group ai_videos
+ * @summary Get a list of concepts in an ai_video
+ * @param {string} name.url.required - name of the video
+ * @returns {Array.<ai_summary>} 200 - An array of concepts in the ai video
+ * @returns {Error} 500 - Unexpected database error
+ */
 router.get("/summary/:name", passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     let params = [];
@@ -103,7 +145,6 @@ router.get("/summary/:name", passport.authenticate("jwt", { session: false }),
     `;
     try {
       const summary = await psql.query(queryText, params);
-
       res.json(summary.rows);
     } catch (error) {
       console.log("Error in get /api/videos/aivideos/summary/:videoid");
