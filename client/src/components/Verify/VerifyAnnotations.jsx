@@ -527,7 +527,7 @@ class VerifyAnnotations extends Component {
                   style={{width: annotation.videowidth,
                   height: annotation.videoheight}}>
                   <DragBoxContainer
-                    className={classes.img}
+                    classes={classes.img}
                     dragBox={classes.dragBox}
                     drawDragBox={this.state.drawDragBox}
                     toggleDragBox={this.toggleDragBox}
