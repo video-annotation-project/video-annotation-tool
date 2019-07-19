@@ -7,8 +7,6 @@ import Button from "@material-ui/core/Button";
 import OndemandVideo from "@material-ui/icons/OndemandVideo";
 import Photo from "@material-ui/icons/Photo";
 import IconButton from "@material-ui/core/IconButton";
-// import DialogTitle from "@material-ui/core/DialogTitle";
-// import Dialog from "@material-ui/core/Dialog";
 import blue from "@material-ui/core/colors/blue";
 import { MuiThemeProvider, createMuiTheme } from "@material-ui/core/styles";
 import Description from "@material-ui/icons/Description";
