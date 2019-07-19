@@ -52,7 +52,7 @@ class SelectVideo extends React.Component {
   };
 
   render() {
-    const { classes, selectedVideos } = this.props;
+    const { classes, value } = this.props;
 
     return (
       <Grid container spacing={5}>
@@ -61,7 +61,7 @@ class SelectVideo extends React.Component {
           <FormControl className={classes.formControl}>
             <FormGroup
               className={classes.group}
-              value={selectedVideos}
+              value={value}
               onChange={this.props.handleChangeList}
             >
               {!this.state.loaded ? (
@@ -75,7 +75,7 @@ class SelectVideo extends React.Component {
                     value={"-1"}
                     control={<Checkbox color="primary" />}
                     label="All videos"
-                    checked={selectedVideos.includes("-1")}
+                    checked={value.includes("-1")}
                   />
                   {this.state.videos.map(video => (
                     <FormControlLabel
@@ -83,7 +83,7 @@ class SelectVideo extends React.Component {
                       value={video.id.toString()}
                       control={<Checkbox color="primary" />}
                       label={video.id + " " + video.filename}
-                      checked={selectedVideos.includes(video.id.toString())}
+                      checked={value.includes(video.id.toString())}
                     />
                   ))}
                 </React.Fragment>
@@ -92,7 +92,7 @@ class SelectVideo extends React.Component {
           </FormControl>
         </Grid>
         <Grid item>
-          <Typography>Select video collections</Typography>
+          <Typography>Select video collection</Typography>
           <List className={classes.list}>
             {this.state.videoCollections.map(videoCollection => (
               <ListItem key={videoCollection.id}>

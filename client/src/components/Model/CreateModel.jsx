@@ -70,6 +70,7 @@ class CreateModel extends Component {
       modelName: "",
       models: [],
       concepts: [],
+      conceptCollections: [],
       conceptsSelected: [],
       videos: [],
       videoCollections: [],
@@ -99,6 +100,7 @@ class CreateModel extends Component {
   componentDidMount = () => {
     this.loadExistingModels();
     this.loadConcepts();
+    this.loadConceptCollections();
     this.loadVideoList();
     this.loadVideoCollections();
   };
@@ -151,6 +153,23 @@ class CreateModel extends Component {
       });
   };
 
+  loadConceptCollections = async () => {
+    return axios
+      .get(`/api/collections/concepts`, {
+        headers: { Authorization: "Bearer " + localStorage.getItem("token") }
+      })
+      .then(res => {
+        this.setState({
+          conceptCollections: res.data
+        });
+      })
+      .catch(error => {
+        this.setState({
+          error: error
+        });
+      });
+  };
+
   loadVideoList = () => {
     const config = {
       headers: {
@@ -187,10 +206,9 @@ class CreateModel extends Component {
     });
   };
 
-  handleChangeVideos = value => {
-    console.log(this.state.videosSelected);
+  handleChangeCollection = type => value => {
     this.setState({
-      videosSelected: value
+      [type]: value
     });
   };
 
@@ -260,33 +278,51 @@ class CreateModel extends Component {
         </Grid>
         <Grid item>
           <FormLabel component="legend">
-            Select species collections to train with
+            Select species collection to test model
           </FormLabel>
-          <FormControl component="fieldset" className={classes.checkSelector}>
-            <FormGroup className={classes.group}>
-              {this.state.concepts
-                .filter(concept => !concept.rank)
-                .map(concept => (
-                  <div key={concept.name}>
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          onChange={this.checkboxSelect(
-                            "conceptsSelected",
-                            concept.id
-                          )}
-                          color="primary"
-                          checked={this.state.conceptsSelected.includes(
-                            concept.id
-                          )}
-                        />
-                      }
-                      label={concept.id + " " + concept.name}
-                    />
+          <List className={classes.list}>
+            {this.state.conceptCollections.map(conceptCollection => (
+              <ListItem key={conceptCollection.id}>
+                <Tooltip
+                  title={
+                    !conceptCollection.description
+                      ? ""
+                      : conceptCollection.description
+                  }
+                  placement="bottom-start"
+                >
+                  <div>
+                    <Button
+                      className={classes.collectionButton}
+                      variant="outlined"
+                      value={conceptCollection.id}
+                      disabled={!conceptCollection.conceptids[0]}
+                      onClick={() => {
+                        if (conceptCollection.conceptids[0]) {
+                          let conceptids = [];
+                          this.state.concepts.forEach(concept => {
+                            if (
+                              conceptCollection.conceptids.includes(concept.id)
+                            ) {
+                              conceptids.push(concept.id);
+                            }
+                          });
+                          this.handleChangeCollection("conceptsSelected")(
+                            conceptids
+                          );
+                        }
+                      }}
+                    >
+                      {conceptCollection.name +
+                        (!conceptCollection.conceptids[0]
+                          ? " (No concepts)"
+                          : "")}
+                    </Button>
                   </div>
-                ))}
-            </FormGroup>
-          </FormControl>
+                </Tooltip>
+              </ListItem>
+            ))}
+          </List>
         </Grid>
       </Grid>
     );
@@ -376,7 +412,9 @@ class CreateModel extends Component {
                               videoids.push(video.id);
                             }
                           });
-                          this.handleChangeVideos(videoids);
+                          this.handleChangeCollection("videosSelected")(
+                            videoids
+                          );
                         }
                       }}
                     >
