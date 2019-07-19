@@ -10,6 +10,7 @@ import Button from "@material-ui/core/Button";
 import Typography from "@material-ui/core/Typography";
 import { withStyles } from "@material-ui/core/styles";
 
+import Hotkeys from 'react-hot-keys';
 
 const styles = theme => ({
   videoContainer: {
@@ -67,8 +68,6 @@ class Annotate extends Component {
     // add event listener for closing or reloading window
     window.addEventListener("beforeunload", this.handleUnload);
 
-    // add event listener for different key presses
-    document.addEventListener("keydown", this.handleKeyDown);
 
     try {
       this.loadVideos(this.getCurrentVideo);
@@ -92,7 +91,6 @@ class Annotate extends Component {
     // this.updateCheckpoint(false, false);
     this.state.socket.disconnect();
     window.removeEventListener("beforeunload", this.handleUnload);
-    document.removeEventListener("keydown", this.handleKeyDown);
   };
 
   handleUnload = ev => {
@@ -103,23 +101,22 @@ class Annotate extends Component {
     }
   };
 
-  handleKeyDown = e => {
-    if (e.target !== document.body) {
-      return;
+  handleKeyDown = (keyName, e, handle) => {
+    e.preventDefault();
+    switch (keyName) {
+      case "space":
+        this.playPause();
+        break;
+      case "right":
+        this.skipVideoTime(1);
+        break;
+      case "left":
+        this.skipVideoTime(-1);
+        break;
+      default:
+        return;
     }
-    if (e.code === "Space") {
-      e.preventDefault();
-      this.playPause();
-    }
-    if (e.code === "ArrowRight") {
-      e.preventDefault();
-      this.skipVideoTime(1);
-    }
-    if (e.code === "ArrowLeft") {
-      e.preventDefault();
-      this.skipVideoTime(-1);
-    }
-  };
+  }
 
   skipVideoTime = time => {
     var videoElement = document.getElementById("video");
@@ -129,7 +126,6 @@ class Annotate extends Component {
 
   playPause = () => {
     var videoElement = document.getElementById("video");
-    console.log(videoElement);
     if (videoElement.paused) {
       videoElement.play();
     } else {
@@ -213,6 +209,10 @@ class Annotate extends Component {
     }
     return (
       <React.Fragment>
+        <Hotkeys
+          keyName="space, right, left"
+          onKeyDown={this.handleKeyDown.bind(this)}
+        / >
         <AIvideoList
           handleVideoClick={this.handleVideoClick}
           aiVideos={this.state.aiVideos}

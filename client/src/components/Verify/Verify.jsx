@@ -61,7 +61,10 @@ class Verify extends Component {
   toggleSelection = async () => {
     let annotations = [];
     if (!this.state.selectionMounted) {
-      this.resetState();
+      this.resetState(this.setState({
+        selectionMounted: !this.state.selectionMounted,
+        noAnnotations: false
+      }))
     } else {
       annotations = await this.getAnnotations();
       if (annotations.length < 1){

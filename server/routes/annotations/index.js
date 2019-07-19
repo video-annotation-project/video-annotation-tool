@@ -52,7 +52,7 @@ router.get("/", passport.authenticate("jwt", { session: false }),
     } else if (req.query.verifiedCondition === "unverified only") {
       queryPass += ` AND annotations.verifiedby IS NULL`;
     }
-    if (req.user.admin !== "true") {
+    if (!req.user.admin) {
       queryPass += ` AND annotations.userid = $1`;
       params.push(req.user.id);
     }
@@ -512,6 +512,7 @@ router.get("/treeData", passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     let params = [];
     let queryPass = selectLevelQuery(req.query.levelName);
+
     if (req.query.queryConditions) {
       queryPass = queryPass + req.query.queryConditions;
     }
@@ -523,7 +524,7 @@ router.get("/treeData", passport.authenticate("jwt", { session: false }),
     } else if (req.query.verifiedCondition === "unverified only") {
       queryPass = queryPass + ` AND annotations.verifiedby IS NULL`;
     }
-    if (req.user.admin !== "true") {
+    if (!req.user.admin) {
       queryPass = queryPass + ` AND annotations.userid = $1`;
       params.push(req.user.id);
     }
