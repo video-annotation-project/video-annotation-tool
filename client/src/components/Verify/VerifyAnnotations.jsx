@@ -21,6 +21,8 @@ import ConceptsSelected from "../Utilities/ConceptsSelected";
 import DragBoxContainer from "../Utilities/DragBoxContainer.jsx";
 import VideoMetadata from "../Utilities/VideoMetadata.jsx";
 
+import Hotkeys from 'react-hot-keys';
+
 const styles = theme => ({
   button: {
     margin: theme.spacing()
@@ -99,11 +101,11 @@ class VerifyAnnotations extends Component {
         onBeforeOpen: () => {
           Swal.showLoading();
         },
-        onClose: () => {
-          /* we removed the eventListener before displaying the loading modal to prevent double submissions 
-            Once the loading modal closes, we add it back. */
-          document.addEventListener("keydown", this.handleKeyDown);
-        }
+        // onClose: () => {
+        //   /* we removed the eventListener before displaying the loading modal to prevent double submissions 
+        //     Once the loading modal closes, we add it back. */
+        //   document.addEventListener("keydown", this.handleKeyDown);
+        // }
       });
     }
   };
@@ -113,31 +115,25 @@ class VerifyAnnotations extends Component {
     this.displayLoading();
   };
 
-  componentWillUnmount = () => {
-    document.removeEventListener("keydown", this.handleKeyDown);
-  };
+  // componentWillUnmount = () => {
+  //   document.removeEventListener("keydown", this.handleKeyDown);
+  // };
 
   // keyboard shortcuts for verifying annotations
-  handleKeyDown = e => {
-    // if the user is actually trying to type something, then don't interpret it as a keyboard shorcut
+  handleKeyDown = (keyName, e, handle) => {
+    e.preventDefault();
     if (e.target !== document.body) {
       return;
-    }
-    if (e.code === "KeyR") {
+    } else if (keyName === "r") {
       // reset shortcut
       this.resetState();
-      return;
-    }
-    // we remove the event listener to prevent double submissions
-    // we will add it back once the next annotation has loaded
-    document.removeEventListener("keydown", this.handleKeyDown);
-    if (e.code === "KeyD") {
+    } else if (keyName === "d") {
       // delete shortcut
       this.handleDelete();
-    } else if (e.code === "KeyI") {
+    } else if (keyName === "i") {
       // ignore shortcut
       this.nextAnnotation();
-    } else if (e.code === "KeyV") {
+    } else if (keyName === "v") {
       // Verify shortcut
       this.handleVerifyClick();
     }
@@ -535,6 +531,10 @@ class VerifyAnnotations extends Component {
               </div>
             ) : (
               <div>
+                <Hotkeys
+                  keyName="r, d, i, v"
+                  onKeyDown={this.handleKeyDown.bind(this)}
+                / >
                 <div>
                   <DragBoxContainer
                     className={classes.img}

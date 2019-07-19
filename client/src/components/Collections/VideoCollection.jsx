@@ -10,6 +10,8 @@ import Swal from "sweetalert2";
 import CollectionList from "./CollectionVideoList.jsx";
 import Annotate from "../Annotate.jsx"
 
+import Hotkeys from 'react-hot-keys';
+
 const styles = theme => ({
   videoContainer: {
     top: "50px",
@@ -79,8 +81,6 @@ class videoCollection extends Component {
     // add event listener for closing or reloading window
     window.addEventListener("beforeunload", this.handleUnload);
 
-    // add event listener for different key presses
-    document.addEventListener("keydown", this.handleKeyDown);
     this.handleUnload = Annotate.handleUnload;
     this.skipVideoTime = Annotate.skipVideoTime;
     this.playPause = Annotate.playPause;
@@ -109,24 +109,22 @@ class videoCollection extends Component {
     this.updateCheckpoint(false, false);
     this.state.socket.disconnect();
     window.removeEventListener("beforeunload", this.handleUnload);
-    document.removeEventListener("keydown", this.handleKeyDown);
   };
 
-  handleKeyDown = e => {
-    if (e.target !== document.body) {
-      return;
-    }
-    if (e.code === "Space") {
-      e.preventDefault();
-      Annotate.playPause();
-    }
-    if (e.code === "ArrowRight") {
-      e.preventDefault();
-      Annotate.skipVideoTime(1);
-    }
-    if (e.code === "ArrowLeft") {
-      e.preventDefault();
-      Annotate.skipVideoTime(-1);
+  handleKeyDown = (keyName, e, handle) => {
+    e.preventDefault();
+    switch (keyName) {
+      case "space":
+        Annotate.playPause();
+        break;
+      case "right":
+        Annotate.skipVideoTime(1);
+        break;
+      case "left":
+        Annotate.skipVideoTime(-1);
+        break;
+      default:
+        return;
     }
   };
 
@@ -397,6 +395,10 @@ class videoCollection extends Component {
     }
     return (
       <React.Fragment>
+        <Hotkeys
+          keyName="space, right, left"
+          onKeyDown={this.handleKeyDown.bind(this)}
+        / >
         <CollectionList
           collType="video"
           data={this.state.collections}
