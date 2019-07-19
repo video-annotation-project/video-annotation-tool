@@ -101,11 +101,6 @@ class VerifyAnnotations extends Component {
         onBeforeOpen: () => {
           Swal.showLoading();
         },
-        // onClose: () => {
-        //   /* we removed the eventListener before displaying the loading modal to prevent double submissions 
-        //     Once the loading modal closes, we add it back. */
-        //   document.addEventListener("keydown", this.handleKeyDown);
-        // }
       });
     }
   };
@@ -115,11 +110,6 @@ class VerifyAnnotations extends Component {
     this.displayLoading();
   };
 
-  // componentWillUnmount = () => {
-  //   document.removeEventListener("keydown", this.handleKeyDown);
-  // };
-
-  // keyboard shortcuts for verifying annotations
   handleKeyDown = (keyName, e, handle) => {
     e.preventDefault();
     if (e.target !== document.body) {
@@ -770,104 +760,3 @@ VerifyAnnotations.propTypes = {
 };
 
 export default withStyles(styles)(VerifyAnnotations);
-
-// class VideoDialog extends Component {
-//   handleVideoDialogClose = () => {
-//     this.props.onClose();
-//   };
-
-//   getStatus = flag => {
-//     switch (flag) {
-//       case -1:
-//         return "Bad Tracking";
-//       case 1:
-//         return "Good Tracking";
-//       default:
-//         return "Tracking Not Verified";
-//     }
-//   };
-
-//   markTracking = async flag => {
-//     const config = {
-//       headers: {
-//         "Content-Type": "application/json",
-//         Authorization: "Bearer " + localStorage.getItem("token")
-//       }
-//     };
-//     const body = {
-//       flag: flag
-//     };
-//     try {
-//       let response = await axios.patch(
-//         `/api/annotations/tracking/${this.props.annotation.id}`,
-//         body,
-//         config
-//       );
-//       this.handleVideoDialogClose();
-//       console.log(response);
-
-//       Swal.fire("Successfully Marked", "", "success");
-//     } catch (error) {
-//       this.handleVideoDialogClose();
-//       Swal.fire("Error marking video as bad", "", "error");
-//     }
-//   };
-
-//   render() {
-//     const { classes, open } = this.props;
-//     return (
-//       <Dialog
-//         maxWidth={false}
-//         onClose={this.handleVideoDialogClose}
-//         aria-labelledby="video-dialog-title"
-//         open={open}
-//       >
-//         <DialogTitle id="video-dialog-title">Tracing Video</DialogTitle>
-//         <div>
-//           <video
-//             id="video"
-//             width="800"
-//             height="450"
-//             src={
-//               "https://cdn.deepseaannotations.com/videos/" +
-//               this.props.annotation.id +
-//               "_tracking.mp4"
-//             }
-//             type="video/mp4"
-//             controls
-//           >
-//             Your browser does not support the video tag.
-//           </video>
-//           <Button
-//             className={classes.button}
-//             variant="contained"
-//             color="primary"
-//             onClick={() => this.markTracking(1)}
-//           >
-//             Mark as Good Tracking Video
-//           </Button>
-//           <Button
-//             className={classes.button}
-//             variant="contained"
-//             color="secondary"
-//             onClick={() => this.markTracking(-1)}
-//           >
-//             Mark as Bad Tracking Video
-//           </Button>
-//           <Typography variant="subtitle1" className={classes.button}>
-//             <b>Status: </b>{" "}
-//             {this.getStatus(this.props.annotation.tracking_flag)}
-//           </Typography>
-//         </div>
-//       </Dialog>
-//     );
-//   }
-// }
-
-// VideoDialog.propTypes = {
-//   classes: PropTypes.object.isRequired,
-//   onClose: PropTypes.func,
-//   selectedValue: PropTypes.string
-// };
-
-// const VideoDialogWrapped = withStyles(styles)(VideoDialog);
