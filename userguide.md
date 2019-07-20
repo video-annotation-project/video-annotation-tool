@@ -7,8 +7,15 @@ Our own app used for deep sea annotations is live [here](https://www.deepseaanno
 # Table of Contents
 
 - [Installation](#installation)
+  - [Environment](#environment)
+  - [Setting up your AWS account](#setting-up-your-aws-account)
+  - [S3 Bucket](#s3-bucket)
+  - [EC2 Instances](#ec2-instances)
+  - [RDS Database](#rds-database)
+  - [Linking your AWS and DB accounts](#linking-your-aws-and-db-accounts)
+  - [Elastic Beanstalk](#elastic-beanstalk)
 - [Development](#development)
-- [Config Explanation](#config-explantation)
+- [Config Explanation](#config-explanation)
 - [Api Documentation](#api-documentation)
 
 ## Installation
