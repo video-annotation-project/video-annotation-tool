@@ -19,7 +19,7 @@ Our own app used for deep sea annotations is live [here](https://www.deepseaanno
 - [Api Documentation](#api-documentation)
 
 ## Installation
-### Envrionment
+### Environment
 To set up the project environment, run the following commands.
 ```
 git clone git@github.com:ishaanj1/video-annotation-tool.git
