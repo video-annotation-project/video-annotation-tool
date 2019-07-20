@@ -438,9 +438,7 @@ class AnnotationCollection extends Component {
     let data = this.state.collections.find(col => {
       return col.id === this.state.selectedCollection;
     });
-    if (!data.concepts[0] || !data.users[0]) {
-      return;
-    } else {
+    if (data.concepts[0] && data.users[0]) {
       return (
         <React.Fragment>
           <Typography variant="subtitle1" className={this.props.classes.stats1}>
