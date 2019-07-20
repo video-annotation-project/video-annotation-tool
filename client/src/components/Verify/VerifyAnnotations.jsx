@@ -522,7 +522,7 @@ class VerifyAnnotations extends Component {
                 <Hotkeys
                   keyName="r, d, i, v"
                   onKeyDown={this.handleKeyDown.bind(this)}
-                / >
+                />
                 <div
                   style={{
                     width: annotation.videowidth,

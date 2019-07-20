@@ -7,10 +7,10 @@ import StepLabel from "@material-ui/core/StepLabel";
 import StepContent from "@material-ui/core/StepContent";
 import Button from "@material-ui/core/Button";
 
-import VerifySelectUser from "../Utilities/SelectUser.jsx";
-import VerifySelectVideo from "../Utilities/SelectVideo.jsx";
-import VerifySelectConcept from "../Utilities/SelectConcept.jsx";
-import VerifySelectUnsure from "../Utilities/SelectUnsure";
+import SelectUser from "../Utilities/SelectUser.jsx";
+import SelectVideo from "../Utilities/SelectVideo.jsx";
+import SelectConcept from "../Utilities/SelectConcept.jsx";
+import SelectUnsure from "../Utilities/SelectUnsure";
 
 import FormGroup from "@material-ui/core/FormGroup";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
@@ -56,7 +56,7 @@ class VerifySelection extends React.Component {
     switch (step) {
       case 0:
         return (
-          <VerifySelectUser
+          <SelectUser
             value={this.props.selectedUsers}
             getUsers={this.props.getUsers}
             selectUser={this.props.selectUser}
@@ -65,7 +65,7 @@ class VerifySelection extends React.Component {
         );
       case 1:
         return (
-          <VerifySelectVideo
+          <SelectVideo
             value={this.props.selectedVideos}
             getVideos={this.props.getVideos}
             getVideoCollections={this.props.getVideoCollections}
@@ -75,7 +75,7 @@ class VerifySelection extends React.Component {
         );
       case 2:
         return (
-          <VerifySelectConcept
+          <SelectConcept
             value={this.props.selectedConcepts}
             getConcepts={this.props.getConcepts}
             getConceptCollections={this.props.getConceptCollections}
@@ -86,7 +86,7 @@ class VerifySelection extends React.Component {
       case 3:
         return (
           <div>
-            <VerifySelectUnsure
+            <SelectUnsure
               value={this.props.selectedUnsure}
               getUnsure={this.props.getUnsure}
               handleChangeSwitch={this.props.handleChangeSwitch(
