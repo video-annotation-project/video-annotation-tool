@@ -1,10 +1,10 @@
-const router = require('express').Router();
+const router = require("express").Router();
 const passport = require("passport");
 const psql = require("../../db/simpleConnect");
 const AWS = require("aws-sdk");
 
 // returns a list of concept names
- /**
+/**
  * @typedef conceptPatch
  * @property {string} value - Stringified array representing the inserted row eg.
  * "value": "[]"
@@ -18,19 +18,26 @@ const AWS = require("aws-sdk");
  * @returns {conceptPatch.model} 200 - Values of updated rows
  * @returns {Error} 500 - Unexpected database error
  */
-router.get("/", passport.authenticate("jwt", { session: false }),
+router.get(
+  "/",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
+    // const queryText = `
+    //   SELECT
+    //     *
+    //   FROM ONLY
+    //     concepts
+    //   NATURAL FULL JOIN
+    //     concept_collection
+    //   WHERE
+    //     deleted_flag IS NOT TRUE
+    //   ORDER BY
+    //     name
+    // `;
     const queryText = `
-      SELECT
-        *
-      FROM ONLY
-        concepts
-      NATURAL FULL JOIN
-        concept_collection
-      WHERE
-        deleted_flag IS NOT TRUE
-      ORDER BY 
-        name
+      SELECT *
+      FROM concepts
+      ORDER BY name
     `;
     try {
       const concepts = await psql.query(queryText);
@@ -41,17 +48,22 @@ router.get("/", passport.authenticate("jwt", { session: false }),
   }
 );
 
-router.get("/:id", passport.authenticate("jwt", { session: false }),
+router.get(
+  "/:id",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
+    //   FROM ONLY
+    //   concepts
+    // NATURAL FULL JOIN
+    //   concept_collection
+    // WHERE
+    //   deleted_flag IS NOT TRUE AND
     const queryText = `
       SELECT
         *
-      FROM ONLY
-        concepts
-      NATURAL FULL JOIN
-        concept_collection
+      FROM concepts
       WHERE
-        deleted_flag IS NOT TRUE AND parent=$1
+      parent=$1
     `;
     try {
       const concepts = await psql.query(queryText, [req.params.id]);
@@ -74,7 +86,9 @@ router.get("/images/:id", async (req, res) => {
       Bucket: process.env.AWS_S3_BUCKET_NAME,
       Key: process.env.AWS_S3_BUCKET_CONCEPTS_FOLDER + `${picture}`
     };
-    s3.getObject(params).createReadStream().pipe(res);
+    s3.getObject(params)
+      .createReadStream()
+      .pipe(res);
   } catch (error) {
     res.status(400).json(error);
   }

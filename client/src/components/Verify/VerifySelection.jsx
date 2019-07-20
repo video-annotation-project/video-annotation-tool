@@ -28,7 +28,7 @@ const styles = theme => ({
   },
   resetContainer: {
     padding: theme.spacing(3)
-  },  
+  },
   formControl: {
     marginTop: theme.spacing(2),
     maxHeight: "400px",
@@ -66,7 +66,7 @@ class VerifySelection extends React.Component {
       case 1:
         return (
           <VerifySelectVideo
-            selectedVideos={this.props.selectedVideos}
+            value={this.props.selectedVideos}
             getVideos={this.props.getVideos}
             getVideoCollections={this.props.getVideoCollections}
             handleChange={this.props.handleChange("selectedVideos")}
@@ -78,36 +78,42 @@ class VerifySelection extends React.Component {
           <VerifySelectConcept
             value={this.props.selectedConcepts}
             getConcepts={this.props.getConcepts}
+            getConceptCollections={this.props.getConceptCollections}
+            handleChange={this.props.handleChange("selectedConcepts")}
             handleChangeList={this.props.handleChangeList("selectedConcepts")}
           />
         );
       case 3:
         return (
           <div>
-          <VerifySelectUnsure
-            value={this.props.selectedUnsure}
-            getUnsure={this.props.getUnsure}
-            handleChangeSwitch={this.props.handleChangeSwitch("selectedUnsure")}
-          />
-          <div>
-            <Typography>Select Video First</Typography>
-            <FormControl component="fieldset" className={classes.formControl}>
-              <FormGroup>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      className={classes.switch}
-                      checked={this.props.selectedTrackingFirst}
-                      onChange={this.props.handleChangeSwitch("selectedTrackingFirst")}
-                      value="selectedTrackingFirst"
-                      color="primary"
-                    />
-                  }
-                  label="Tracking Video Verification"
-                />
-              </FormGroup>
-            </FormControl>
-          </div>
+            <VerifySelectUnsure
+              value={this.props.selectedUnsure}
+              getUnsure={this.props.getUnsure}
+              handleChangeSwitch={this.props.handleChangeSwitch(
+                "selectedUnsure"
+              )}
+            />
+            <div>
+              <Typography>Select Video First</Typography>
+              <FormControl component="fieldset" className={classes.formControl}>
+                <FormGroup>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        className={classes.switch}
+                        checked={this.props.selectedTrackingFirst}
+                        onChange={this.props.handleChangeSwitch(
+                          "selectedTrackingFirst"
+                        )}
+                        value="selectedTrackingFirst"
+                        color="primary"
+                      />
+                    }
+                    label="Tracking Video Verification"
+                  />
+                </FormGroup>
+              </FormControl>
+            </div>
           </div>
         );
       default:

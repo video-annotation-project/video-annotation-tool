@@ -62,11 +62,11 @@ class ConceptCollection extends Component {
       }
     };
     return axios.get("/api/collections/concepts", config).then(res => {
+      console.log(res.data);
+
       this.setState(
         {
-          collections: res.data.filter(collection => {
-            return !collection.deleted_flag;
-          })
+          collections: res.data
         },
         callback
       );
@@ -107,7 +107,13 @@ class ConceptCollection extends Component {
               title: "Collection Created!",
               confirmButtonText: "Lovely!"
             });
-            this.loadCollections();
+            await this.loadCollections();
+            let colCreated = this.state.collections.find(
+              col => col.name === result.value[0]
+            );
+            this.setState({
+              selectedCollection: colCreated.id
+            });
           } catch (error) {
             Swal.fire(
               "Error creating collection",
@@ -128,9 +134,6 @@ class ConceptCollection extends Component {
         Authorization: "Bearer " + localStorage.getItem("token")
       }
     };
-    const body = {
-      id: id
-    };
     Swal.fire({
       title: "Are you sure?",
       text: "You won't be able to revert this!",
@@ -142,14 +145,14 @@ class ConceptCollection extends Component {
     }).then(async result => {
       if (result.value) {
         try {
-          let response = await axios.patch(
-            "/api/collections/concepts/",
-            body,
+          let response = await axios.delete(
+            `/api/collections/concepts/${id}`,
             config
           );
           if (response.status) {
             Swal.fire("Deleted!", "Collection has been deleted.", "success");
             this.loadCollections();
+
             this.setState({
               selectedCollection: "",
               concepts: []
@@ -220,7 +223,7 @@ class ConceptCollection extends Component {
 
   handleUndo = () => {
     let concepts = this.state.collections.filter(collection => {
-      return collection.collectionid === this.state.selectedCollection;
+      return collection.id === this.state.selectedCollection;
     })[0].concepts;
 
     this.setState({
@@ -230,7 +233,7 @@ class ConceptCollection extends Component {
 
   handleChangeCollection = event => {
     let currentCollection = this.state.collections.filter(collection => {
-      return collection.collectionid === event.target.value;
+      return collection.id === event.target.value;
     })[0];
 
     this.setState({
@@ -257,10 +260,7 @@ class ConceptCollection extends Component {
             <MenuItem value="">Select collection</MenuItem>
             {this.state.collections.map(collection => {
               return (
-                <MenuItem
-                  key={collection.collectionid}
-                  value={collection.collectionid}
-                >
+                <MenuItem key={collection.id} value={collection.id}>
                   {collection.name}
                 </MenuItem>
               );
@@ -268,16 +268,14 @@ class ConceptCollection extends Component {
           </Select>
           {this.state.selectedCollection === "" ||
           !this.state.collections.filter(collection => {
-            return collection.collectionid === this.state.selectedCollection;
+            return collection.id === this.state.selectedCollection;
           })[0].description ? (
             ""
           ) : (
             <FormHelperText>
               {
                 this.state.collections.filter(collection => {
-                  return (
-                    collection.collectionid === this.state.selectedCollection
-                  );
+                  return collection.id === this.state.selectedCollection;
                 })[0].description
               }
             </FormHelperText>
@@ -319,10 +317,10 @@ class ConceptCollection extends Component {
           disabled={
             this.state.selectedCollection === "" ||
             this.state.collections.filter(collection => {
-              return collection.collectionid === this.state.selectedCollection;
+              return collection.id === this.state.selectedCollection;
             })[0].concepts === this.state.concepts ||
             (!this.state.collections.filter(collection => {
-              return collection.collectionid === this.state.selectedCollection;
+              return collection.id === this.state.selectedCollection;
             })[0].concepts[0].id &&
               this.state.concepts.length === 0)
           }
@@ -350,10 +348,10 @@ class ConceptCollection extends Component {
           disabled={
             this.state.selectedCollection === "" ||
             this.state.collections.filter(collection => {
-              return collection.collectionid === this.state.selectedCollection;
+              return collection.id === this.state.selectedCollection;
             })[0].concepts === this.state.concepts ||
             (!this.state.collections.filter(collection => {
-              return collection.collectionid === this.state.selectedCollection;
+              return collection.id === this.state.selectedCollection;
             })[0].concepts[0].id &&
               this.state.concepts.length === 0)
           }

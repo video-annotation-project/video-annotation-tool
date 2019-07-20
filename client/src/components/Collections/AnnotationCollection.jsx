@@ -315,6 +315,19 @@ class AnnotationCollection extends Component {
       });
   };
 
+  getConceptCollections = async () => {
+    return axios
+      .get(`/api/collections/concepts`, {
+        headers: { Authorization: "Bearer " + localStorage.getItem("token") }
+      })
+      .then(res => res.data)
+      .catch(error => {
+        this.setState({
+          error: error
+        });
+      });
+  };
+
   getAnnotations = async () => {
     return axios
       .get(`/api/annotations/collection/counts`, {
@@ -457,7 +470,7 @@ class AnnotationCollection extends Component {
       case 1:
         return (
           <VerifySelectVideo
-            selectedVideos={this.state.selectedVideos}
+            value={this.state.selectedVideos}
             getVideos={this.getVideos}
             getVideoCollections={this.getVideoCollections}
             handleChange={this.handleChange("selectedVideos")}
@@ -469,6 +482,8 @@ class AnnotationCollection extends Component {
           <VerifySelectConcept
             value={this.state.selectedConcepts}
             getConcepts={this.getConcepts}
+            getConceptCollections={this.getConceptCollections}
+            handleChange={this.handleChange("selectedConcepts")}
             handleChangeList={this.handleChangeList("selectedConcepts")}
           />
         );
