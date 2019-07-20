@@ -4,6 +4,13 @@ Video Annotation Tool is a web app with a NodeJS back end and a ReactJS front en
 
 Our own app used for deep sea annotations is live [here](https://www.deepseaannotations.com/).
 
+# Table of Contents
+
+- [Installation](#installation)
+- [Development](#development)
+- [Config Explanation](#config-explantation)
+- [Api Documentation](#api-documentation)
+
 ## Installation
 ### Envrionment
 To set up the project environment, run the following commands.
@@ -142,3 +149,6 @@ You can run ``` npm start ``` (in the root of the project) to start the developm
          "resized_video_height" : 480,
          "max_seconds_back" : <seconds backwards in the video each new object is tracked (rec: 5)>
 ```
+
+## Api Documentation
+Our Api Documentation can be found [here](https://www.deepseaannotations.com/api-docs).
