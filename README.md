@@ -17,7 +17,7 @@ Our own app used for deep sea annotations is live [here](https://www.deepseaanno
 - [Development](#development)
 - [Config Explanation](#config-explanation)
 - [Api Documentation](#api-documentation)
-- [Coding/Style Guide](#coding/style-guide)
+- [Coding Style Guide](#coding-style-guide)
 - [Configuring Tensorboard](#configuring-tensorboard)
 
 ## Installation
@@ -164,7 +164,7 @@ You can run ``` npm start ``` (in the root of the project) to start the developm
 ## Api Documentation
 Our Api Documentation can be found [here](https://www.deepseaannotations.com/api-docs).
 
-## Coding/Style guide
+## Coding Style guide
 * All code should have a purpose (unnecessary/redundant code introduces bugs and
   confuses people)
 * Coding style should be consistent. This includes:
