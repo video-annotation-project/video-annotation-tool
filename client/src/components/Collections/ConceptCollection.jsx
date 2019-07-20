@@ -110,7 +110,8 @@ class ConceptCollection extends Component {
               col => col.name === result.value[0]
             );
             this.setState({
-              selectedCollection: colCreated.id
+              selectedCollection: colCreated.id,
+              concepts: []
             });
           } catch (error) {
             Swal.fire(
