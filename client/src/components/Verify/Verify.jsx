@@ -1,12 +1,12 @@
-import React, { Component } from "react";
-import axios from "axios";
-import PropTypes from "prop-types";
-import { withStyles } from "@material-ui/core/styles";
-import Paper from "@material-ui/core/Paper";
+import React, { Component } from 'react';
+import axios from 'axios';
+import PropTypes from 'prop-types';
+import { withStyles } from '@material-ui/core/styles';
+import Paper from '@material-ui/core/Paper';
 
-import VerifySelection from "./VerifySelection.jsx";
-import VerifyAnnotations from "./VerifyAnnotations.jsx";
-import { Button, Typography } from "@material-ui/core";
+import VerifySelection from './VerifySelection.jsx';
+import VerifyAnnotations from './VerifyAnnotations.jsx';
+import { Button, Typography } from '@material-ui/core';
 
 const styles = theme => ({
   button: {
@@ -16,24 +16,24 @@ const styles = theme => ({
     padding: theme.spacing(3)
   },
   list: {
-    width: "100%",
+    width: '100%',
     backgroundColor: theme.palette.background.paper
   },
   item: {
-    display: "inline",
+    display: 'inline',
     paddingTop: 0,
-    width: "1300px",
-    height: "730px",
+    width: '1300px',
+    height: '730px',
     paddingLeft: 0
   },
   img: {
     padding: theme.spacing(3),
-    width: "1280px",
-    height: "720px"
+    width: '1280px',
+    height: '720px'
   },
   container: {
-    display: "grid",
-    gridTemplateColumns: "repeat(12, 1fr)",
+    display: 'grid',
+    gridTemplateColumns: 'repeat(12, 1fr)',
     gridGap: theme.spacing(3)
   },
   paper: {
@@ -86,7 +86,7 @@ class Verify extends Component {
   getUsers = async () => {
     return axios
       .get(`/api/users?noAi=true`, {
-        headers: { Authorization: "Bearer " + localStorage.getItem("token") }
+        headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
       })
       .then(res => res.data)
       .catch(error => {
@@ -100,9 +100,9 @@ class Verify extends Component {
   getVideos = async () => {
     return axios
       .get(`/api/annotations/verified`, {
-        headers: { Authorization: "Bearer " + localStorage.getItem("token") },
+        headers: { Authorization: 'Bearer ' + localStorage.getItem('token') },
         params: {
-          verifiedOnly: "-1",
+          verifiedOnly: '-1',
           selectedUsers: this.state.selectedUsers
         }
       })
@@ -117,7 +117,7 @@ class Verify extends Component {
   getVideoCollections = async () => {
     return axios
       .get(`/api/collections/videos`, {
-        headers: { Authorization: "Bearer " + localStorage.getItem("token") }
+        headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
       })
       .then(res => res.data)
       .catch(error => {
@@ -131,11 +131,11 @@ class Verify extends Component {
     return axios
       .get(`/api/annotations/verified`, {
         headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + localStorage.getItem("token")
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + localStorage.getItem('token')
         },
         params: {
-          verifiedOnly: "-1",
+          verifiedOnly: '-1',
           selectedUsers: this.state.selectedUsers,
           selectedVideos: this.state.selectedVideos
         }
@@ -151,7 +151,7 @@ class Verify extends Component {
   getConceptCollections = async () => {
     return axios
       .get(`/api/collections/concepts`, {
-        headers: { Authorization: "Bearer " + localStorage.getItem("token") }
+        headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
       })
       .then(res => res.data)
       .catch(error => {
@@ -165,11 +165,11 @@ class Verify extends Component {
     return axios
       .get(`/api/annotations/verified`, {
         headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + localStorage.getItem("token")
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + localStorage.getItem('token')
         },
         params: {
-          verifiedOnly: "-1",
+          verifiedOnly: '-1',
           selectedUsers: this.state.selectedUsers,
           selectedVideos: this.state.selectedVideos,
           selectedConcepts: this.state.selectedConcepts
@@ -187,11 +187,11 @@ class Verify extends Component {
     return axios
       .get(`/api/annotations/verified`, {
         headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + localStorage.getItem("token")
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + localStorage.getItem('token')
         },
         params: {
-          verifiedOnly: this.state.selectedTrackingFirst ? "1" : "-1",
+          verifiedOnly: this.state.selectedTrackingFirst ? '1' : '-1',
           selectedUsers: this.state.selectedUsers,
           selectedVideos: this.state.selectedVideos,
           selectedConcepts: this.state.selectedConcepts,
@@ -227,12 +227,12 @@ class Verify extends Component {
 
   handleChangeList = type => event => {
     if (!this.state[type].includes(event.target.value)) {
-      if (event.target.value === "-1") {
+      if (event.target.value === '-1') {
         this.setState({
-          [type]: ["-1"]
+          [type]: ['-1']
         });
       } else {
-        if (this.state[type][0] === "-1") {
+        if (this.state[type][0] === '-1') {
           this.setState({
             [type]: [event.target.value]
           });
@@ -301,7 +301,7 @@ class Verify extends Component {
   };
 
   render() {
-    let selection = "";
+    let selection = '';
     if (this.state.selectionMounted) {
       selection = (
         <VerifySelection
