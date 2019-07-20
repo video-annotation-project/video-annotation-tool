@@ -315,6 +315,19 @@ class AnnotationCollection extends Component {
       });
   };
 
+  getConceptCollections = async () => {
+    return axios
+      .get(`/api/collections/concepts`, {
+        headers: { Authorization: "Bearer " + localStorage.getItem("token") }
+      })
+      .then(res => res.data)
+      .catch(error => {
+        this.setState({
+          error: error
+        });
+      });
+  };
+
   getAnnotations = async () => {
     return axios
       .get(`/api/annotations/collection/counts`, {
@@ -425,22 +438,24 @@ class AnnotationCollection extends Component {
     let data = this.state.collections.find(col => {
       return col.id === this.state.selectedCollection;
     });
-    return (
-      <React.Fragment>
-        <Typography variant="subtitle1" className={this.props.classes.stats1}>
-          Concepts ({data.concepts.length}):
-        </Typography>
-        <Typography variant="subtitle1" className={this.props.classes.stats2}>
-          {data.concepts.join(", ")}
-        </Typography>
-        <Typography variant="subtitle1" className={this.props.classes.stats1}>
-          Users ({data.users.length}):
-        </Typography>
-        <Typography variant="subtitle1" className={this.props.classes.stats2}>
-          {data.users.join(", ")}
-        </Typography>
-      </React.Fragment>
-    );
+    if (data.concepts[0] && data.users[0]) {
+      return (
+        <React.Fragment>
+          <Typography variant="subtitle1" className={this.props.classes.stats1}>
+            Concepts ({data.concepts.length}):
+          </Typography>
+          <Typography variant="subtitle1" className={this.props.classes.stats2}>
+            {data.concepts.join(", ")}
+          </Typography>
+          <Typography variant="subtitle1" className={this.props.classes.stats1}>
+            Users ({data.users.length}):
+          </Typography>
+          <Typography variant="subtitle1" className={this.props.classes.stats2}>
+            {data.users.join(", ")}
+          </Typography>
+        </React.Fragment>
+      );
+    }
   };
 
   getStepForm = step => {
@@ -457,7 +472,7 @@ class AnnotationCollection extends Component {
       case 1:
         return (
           <VerifySelectVideo
-            selectedVideos={this.state.selectedVideos}
+            value={this.state.selectedVideos}
             getVideos={this.getVideos}
             getVideoCollections={this.getVideoCollections}
             handleChange={this.handleChange("selectedVideos")}
@@ -469,6 +484,8 @@ class AnnotationCollection extends Component {
           <VerifySelectConcept
             value={this.state.selectedConcepts}
             getConcepts={this.getConcepts}
+            getConceptCollections={this.getConceptCollections}
+            handleChange={this.handleChange("selectedConcepts")}
             handleChangeList={this.handleChangeList("selectedConcepts")}
           />
         );

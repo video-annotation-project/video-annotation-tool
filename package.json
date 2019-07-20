@@ -6,22 +6,22 @@
     "node": ">=8.10"
   },
   "dependencies": {
-    "aws-sdk": "^2.418.0",
+    "aws-sdk": "^2.496.0",
     "babel-cli": "^6.26.0",
     "babel-core": "6.14.0",
-    "bcrypt": "^3.0.4",
-    "body-parser": "^1.18.3",
+    "bcrypt": "^3.0.6",
+    "body-parser": "^1.19.0",
     "braces": "^2.3.2",
     "concurrently": "^3.1.0",
     "dotenv": "^6.2.0",
-    "express": "^4.16.3",
+    "express": "^4.17.1",
     "express-swagger-generator": "^1.1.15",
     "json-decycle": "^1.0.0",
-    "jsonwebtoken": "^8.5.0",
-    "lodash": "^4.17.13",
+    "jsonwebtoken": "^8.5.1",
+    "lodash": "^4.17.15",
     "passport": "^0.4.0",
     "passport-jwt": "^4.0.0",
-    "pg": "^7.8.2",
+    "pg": "^7.11.0",
     "s3": "^4.4.0",
     "socket.io": "^2.2.0",
     "swagger-ui-express": "^4.0.7"
@@ -34,7 +34,7 @@
     "lint": "eslint ."
   },
   "devDependencies": {
-    "@babel/core": "^7.4.4",
-    "@babel/node": "^7.2.2"
+    "@babel/core": "^7.5.5",
+    "@babel/node": "^7.5.5"
   }
 }
