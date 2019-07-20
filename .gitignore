@@ -12,7 +12,6 @@ logs/
 # private info in here
 # includes DB_HOST url, which has a dev and a production version
 .env
-*.env
 
 # Elastic Beanstalk Files
 .elasticbeanstalk/*
