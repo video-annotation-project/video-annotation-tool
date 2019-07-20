@@ -26,11 +26,7 @@ const styles = theme => ({
     margin: theme.spacing()
   },
   img: {
-<<<<<<< HEAD
-    top: "50px",
-=======
     top: "50px"
->>>>>>> 02a6e4f5a46f22aa6d43258b98f8072ed49544c4
   },
   container: {
     display: "grid",
