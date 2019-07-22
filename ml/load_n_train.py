@@ -62,7 +62,7 @@ class custom(CSVGenerator):
         return inputs, targets
 
 
-def train_model(concepts, model_name, collectionIds, min_examples,
+def train_model(concepts, model_name, collection_ids, min_examples,
                 epochs, download_data=True):
 
     classmap = get_classmap(concepts)
@@ -80,7 +80,7 @@ def train_model(concepts, model_name, collectionIds, min_examples,
         start = time.time()
         print("Starting Download.")
 
-        download_annotations(min_examples, collectionIds, concepts,
+        download_annotations(min_examples, collection_ids, concepts,
                              classmap, img_folder, train_annot_file, valid_annot_file)
 
         end = time.time()
@@ -113,26 +113,13 @@ def train_model(concepts, model_name, collectionIds, min_examples,
         },
         optimizer=keras.optimizers.adam(lr=1e-5, clipnorm=0.001)
     )
-    
-    # transform_generator = random_transform_generator(
-    #     min_rotation=-0.1,
-    #     max_rotation=0.1,
-    #     min_translation=(-0.1, -0.1),
-    #     max_translation=(0.1, 0.1),
-    #     min_shear=-0.1,
-    #     max_shear=0.1,
-    #     min_scaling=(0.9, 0.9),
-    #     max_scaling=(1.1, 1.1),
-    #     flip_x_chance=0.5,
-    #     flip_y_chance=0.5,
-    # )
-    
+
     temp = pd.DataFrame(list(zip(classmap.values(), classmap.keys())))
     temp.to_csv('classmap.csv',index=False, header=False)
+
     train_generator = custom(
         train_annot_file,
         'classmap.csv',
-        # transform_generator=transform_generator,
         batch_size = batch_size
     )
 
@@ -151,28 +138,19 @@ def train_model(concepts, model_name, collectionIds, min_examples,
     #stopping: stops training if val_loss stops improving
     stopping = EarlyStopping(monitor='val_loss', min_delta=0, patience=10)
 
-    log_table_name = 'previous_runs'
-
-    # Initialize a log entry in the previous_runs table
-    # TODO: put this in progress_callbacks.py, it makes more sense there
-    # tb_log_id = create_log_entry(
-    #     table_name=log_table_name,
-    #     model_name=model_name,
-    #     users=users,
-    #     videos=videos,
-    #     min_examples=min_examples,
-    #     concepts=selected_concepts,
-    #     epochs=epochs
-    # )
-
     # Every epoch upload tensorboard logs to the S3 bucket
-    # log_callback = TensorBoardLog(id_=tb_log_id, table_name=log_table_name)
+    log_callback = TensorBoardLog(
+        model_name=model_name,
+        min_examples=min_examples,
+        epochs=epochs,
+        collection_ids=collection_ids
+    )
 
-    # tensorboard_callback = keras.callbacks.TensorBoard(
-    #     log_dir=f'./logs/{tb_log_id}', histogram_freq=0, batch_size=batch_size,
-    #     write_graph=True, write_grads=False, write_images=False,
-    #     embeddings_freq=0, embeddings_layer_names=None,
-    #     embeddings_metadata=None, embeddings_data=None, update_freq='epoch')
+    tensorboard_callback = keras.callbacks.TensorBoard(
+        log_dir=f'./logs/{log_callback.id}', histogram_freq=0, batch_size=batch_size,
+        write_graph=True, write_grads=False, write_images=False,
+        embeddings_freq=0, embeddings_layer_names=None,
+        embeddings_metadata=None, embeddings_data=None, update_freq='epoch')
 
     # Every batch and epoch update a database table with the current progress
     progress_callback = Progress(
