@@ -438,22 +438,24 @@ class AnnotationCollection extends Component {
     let data = this.state.collections.find(col => {
       return col.id === this.state.selectedCollection;
     });
-    return (
-      <React.Fragment>
-        <Typography variant="subtitle1" className={this.props.classes.stats1}>
-          Concepts ({data.concepts.length}):
-        </Typography>
-        <Typography variant="subtitle1" className={this.props.classes.stats2}>
-          {data.concepts.join(", ")}
-        </Typography>
-        <Typography variant="subtitle1" className={this.props.classes.stats1}>
-          Users ({data.users.length}):
-        </Typography>
-        <Typography variant="subtitle1" className={this.props.classes.stats2}>
-          {data.users.join(", ")}
-        </Typography>
-      </React.Fragment>
-    );
+    if (data.concepts[0] && data.users[0]) {
+      return (
+        <React.Fragment>
+          <Typography variant="subtitle1" className={this.props.classes.stats1}>
+            Concepts ({data.concepts.length}):
+          </Typography>
+          <Typography variant="subtitle1" className={this.props.classes.stats2}>
+            {data.concepts.join(", ")}
+          </Typography>
+          <Typography variant="subtitle1" className={this.props.classes.stats1}>
+            Users ({data.users.length}):
+          </Typography>
+          <Typography variant="subtitle1" className={this.props.classes.stats2}>
+            {data.users.join(", ")}
+          </Typography>
+        </React.Fragment>
+      );
+    }
   };
 
   getStepForm = step => {
