@@ -159,12 +159,20 @@ router.post(
   }
 );
 
+/**
+ * @route GET /api/collections/annotations/train
+ * @group collections
+ * @summary Get a list of annotation collections that relates to model concepts id
+ * @param {string} ids.query - conceptids from model
+ * @returns {Array.<userInfo>} 200 - An array of annotation collections
+ * @returns {Error} 500 - Unexpected database error
+ */
 router.get(
   "/train",
   passport.authenticate("jwt", { session: false }),
 
   async (req, res) => {
-    var params = "{"+req.query.ids+"}";
+    var params = "{" + req.query.ids + "}";
     let queryText = `      
       SELECT 
         name, id, count(*), array_agg(conceptid) as ids, array_agg(conceptname) as concepts

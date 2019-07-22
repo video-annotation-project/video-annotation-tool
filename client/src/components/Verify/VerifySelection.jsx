@@ -1,22 +1,21 @@
-import React from "react";
-import PropTypes from "prop-types";
-import { withStyles } from "@material-ui/core/styles";
-import Stepper from "@material-ui/core/Stepper";
-import Step from "@material-ui/core/Step";
-import StepLabel from "@material-ui/core/StepLabel";
-import StepContent from "@material-ui/core/StepContent";
-import Button from "@material-ui/core/Button";
+import React from 'react';
+import PropTypes from 'prop-types';
+import { withStyles } from '@material-ui/core/styles';
+import Stepper from '@material-ui/core/Stepper';
+import Step from '@material-ui/core/Step';
+import StepLabel from '@material-ui/core/StepLabel';
+import StepContent from '@material-ui/core/StepContent';
+import Button from '@material-ui/core/Button';
+import FormGroup from '@material-ui/core/FormGroup';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Switch from '@material-ui/core/Switch';
+import FormControl from '@material-ui/core/FormControl';
+import Typography from '@material-ui/core/Typography';
 
-import VerifySelectUser from "../Utilities/SelectUser.jsx";
-import VerifySelectVideo from "../Utilities/SelectVideo.jsx";
-import VerifySelectConcept from "../Utilities/SelectConcept.jsx";
-import VerifySelectUnsure from "../Utilities/SelectUnsure";
-
-import FormGroup from "@material-ui/core/FormGroup";
-import FormControlLabel from "@material-ui/core/FormControlLabel";
-import Switch from "@material-ui/core/Switch";
-import FormControl from "@material-ui/core/FormControl";
-import Typography from "@material-ui/core/Typography";
+import SelectUser from '../Utilities/SelectUser.jsx';
+import SelectVideo from '../Utilities/SelectVideo.jsx';
+import SelectConcept from '../Utilities/SelectConcept.jsx';
+import SelectUnsure from '../Utilities/SelectUnsure';
 
 const styles = theme => ({
   button: {
@@ -28,11 +27,11 @@ const styles = theme => ({
   },
   resetContainer: {
     padding: theme.spacing(3)
-  },  
+  },
   formControl: {
     marginTop: theme.spacing(2),
-    maxHeight: "400px",
-    overflow: "auto"
+    maxHeight: '400px',
+    overflow: 'auto'
   },
   switch: {
     marginLeft: theme.spacing(2)
@@ -40,7 +39,7 @@ const styles = theme => ({
 });
 
 function getSteps() {
-  return ["Users", "Videos", "Concepts", "Unsure"];
+  return ['Users', 'Videos', 'Concepts', 'Unsure'];
 }
 
 class VerifySelection extends React.Component {
@@ -56,62 +55,68 @@ class VerifySelection extends React.Component {
     switch (step) {
       case 0:
         return (
-          <VerifySelectUser
+          <SelectUser
             value={this.props.selectedUsers}
             getUsers={this.props.getUsers}
             selectUser={this.props.selectUser}
-            handleChangeList={this.props.handleChangeList("selectedUsers")}
+            handleChangeList={this.props.handleChangeList('selectedUsers')}
           />
         );
       case 1:
         return (
-          <VerifySelectVideo
-            selectedVideos={this.props.selectedVideos}
+          <SelectVideo
+            value={this.props.selectedVideos}
             getVideos={this.props.getVideos}
             getVideoCollections={this.props.getVideoCollections}
-            handleChange={this.props.handleChange("selectedVideos")}
-            handleChangeList={this.props.handleChangeList("selectedVideos")}
+            handleChange={this.props.handleChange('selectedVideos')}
+            handleChangeList={this.props.handleChangeList('selectedVideos')}
           />
         );
       case 2:
         return (
-          <VerifySelectConcept
+          <SelectConcept
             value={this.props.selectedConcepts}
             getConcepts={this.props.getConcepts}
-            handleChangeList={this.props.handleChangeList("selectedConcepts")}
+            getConceptCollections={this.props.getConceptCollections}
+            handleChange={this.props.handleChange('selectedConcepts')}
+            handleChangeList={this.props.handleChangeList('selectedConcepts')}
           />
         );
       case 3:
         return (
           <div>
-          <VerifySelectUnsure
-            value={this.props.selectedUnsure}
-            getUnsure={this.props.getUnsure}
-            handleChangeSwitch={this.props.handleChangeSwitch("selectedUnsure")}
-          />
-          <div>
-            <Typography>Select Video First</Typography>
-            <FormControl component="fieldset" className={classes.formControl}>
-              <FormGroup>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      className={classes.switch}
-                      checked={this.props.selectedTrackingFirst}
-                      onChange={this.props.handleChangeSwitch("selectedTrackingFirst")}
-                      value="selectedTrackingFirst"
-                      color="primary"
-                    />
-                  }
-                  label="Tracking Video Verification"
-                />
-              </FormGroup>
-            </FormControl>
-          </div>
+            <SelectUnsure
+              value={this.props.selectedUnsure}
+              getUnsure={this.props.getUnsure}
+              handleChangeSwitch={this.props.handleChangeSwitch(
+                'selectedUnsure'
+              )}
+            />
+            <div>
+              <Typography>Select Video First</Typography>
+              <FormControl component="fieldset" className={classes.formControl}>
+                <FormGroup>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        className={classes.switch}
+                        checked={this.props.selectedTrackingFirst}
+                        onChange={this.props.handleChangeSwitch(
+                          'selectedTrackingFirst'
+                        )}
+                        value="selectedTrackingFirst"
+                        color="primary"
+                      />
+                    }
+                    label="Tracking Video Verification"
+                  />
+                </FormGroup>
+              </FormControl>
+            </div>
           </div>
         );
       default:
-        return "Unknown step";
+        return 'Unknown step';
     }
   };
 
@@ -191,7 +196,7 @@ class VerifySelection extends React.Component {
                       }
                       className={classes.button}
                     >
-                      {activeStep === steps.length - 1 ? "Finish" : "Next"}
+                      {activeStep === steps.length - 1 ? 'Finish' : 'Next'}
                     </Button>
                   </div>
                 </div>

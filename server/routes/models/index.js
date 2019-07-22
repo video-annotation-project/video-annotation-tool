@@ -8,8 +8,6 @@ router.use('/tensorboard', require('./tensorboard'))
 router.use('/train', require('./train'))
 
 
-// TODO: add delete model
-
  /**
  * @typedef model
  * @property {string} name - Name of the model
@@ -181,6 +179,15 @@ router.get("/runs", passport.authenticate("jwt", { session: false }),
   }
 );
 
+
+/**
+ * @route DELETE /api/models
+ * @group models
+ * @summary Delete a model
+ * @param {string} name.body.required - model name
+ * @returns {string} 200 - "deleted"
+ * @returns {Error} 500 - Unexpected database or S3 error
+ */
 router.delete(
   "/",
   passport.authenticate("jwt", { session: false }),
@@ -246,7 +253,7 @@ router.delete(
       res.json("deleted");
     } catch (error) {
       console.log(error);
-      res.status(400).json(error);
+      res.status(500).json(error);
     }
   }
 );

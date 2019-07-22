@@ -143,7 +143,7 @@ router.get("/", passport.authenticate("jwt", { session: false }),
  * @property {string} picture - Concept picture filename
  * @property {integer} conceptid - ID of the concept
  * @property {integer} videoid - ID of the concept
- * @property {string} count - Count of the concept in the video
+ * @property {string} count - Count of the annotations of the concept in the video
  */
 /**
  * @route GET /api/videos/summary/:videoid
