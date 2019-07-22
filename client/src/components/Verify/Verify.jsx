@@ -47,6 +47,7 @@ class Verify extends Component {
     this.state = {
       selectionMounted: true,
       /* -1 represents select all */
+      selectedAnnotationCollections: [],
       selectedUsers: [],
       selectedVideos: [],
       selectedConcepts: [],
@@ -68,7 +69,12 @@ class Verify extends Component {
         })
       );
     } else {
-      annotations = await this.getAnnotations();
+      if (this.state.selectedAnnotationCollections.length) {
+        annotations = await this.getAnnotationsFromCollection();
+      }
+      else {
+        annotations = await this.getAnnotations();
+      }
       if (annotations.length < 1) {
         this.setState({
           noAnnotations: true,
@@ -81,6 +87,36 @@ class Verify extends Component {
         });
       }
     }
+  };
+
+  getAnnotationCollections = async () => {
+    return axios
+      .get(`/api/collections/annotations`, {
+        headers: {
+          Authorization: "Bearer " + localStorage.getItem("token")
+        }
+      })
+      .then(res => res.data)
+      .catch(error => {
+        console.log(error);
+        this.setState({
+          error: error
+        })
+      })
+  };
+
+  getAnnotationsFromCollection = async () => {
+    return axios
+      .get(`/api/annotations/collections?collectionids=${this.state.selectedAnnotationCollections}`, {
+        headers: { Authorization: "Bearer " + localStorage.getItem("token") }
+      })
+      .then(res => res.data)
+      .catch(error => {
+        console.log(error);
+        this.setState({
+          error: error
+        });
+      });
   };
 
   getUsers = async () => {
@@ -253,20 +289,25 @@ class Verify extends Component {
     switch (step) {
       case 0:
         this.setState({
-          selectedUsers: []
+          selectedAnnotationCollections: []
         });
         return;
       case 1:
         this.setState({
-          selectedVideos: []
+          selectedUsers: []
         });
         return;
       case 2:
         this.setState({
-          selectedConcepts: []
+          selectedVideos: []
         });
         return;
       case 3:
+        this.setState({
+          selectedConcepts: []
+        });
+        return;
+      case 4:
         this.setState({
           selectedUnsure: false,
           selectedTrackingFirst: false
@@ -280,6 +321,7 @@ class Verify extends Component {
   resetState = callback => {
     this.setState(
       {
+        selectedAnnotationCollections: [],
         selectedUsers: [],
         selectedVideos: [],
         selectedConcepts: [],
@@ -305,11 +347,14 @@ class Verify extends Component {
     if (this.state.selectionMounted) {
       selection = (
         <VerifySelection
+          selectedAnnotationCollections={this.state.selectedAnnotationCollections}
           selectedUsers={this.state.selectedUsers}
           selectedVideos={this.state.selectedVideos}
           selectedConcepts={this.state.selectedConcepts}
           selectedUnsure={this.state.selectedUnsure}
           selectedTrackingFirst={this.state.selectedTrackingFirst}
+          getAnnotationCollections={this.getAnnotationCollections}
+          getAnnotationsFromCollection={this.getAnnotationsFromCollection}
           getUsers={this.getUsers}
           getVideos={this.getVideos}
           getVideoCollections={this.getVideoCollections}
