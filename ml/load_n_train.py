@@ -119,7 +119,6 @@ def train_model(concepts, model_name, collection_ids, min_examples,
     collection_generator = CollectionGenerator(
         collection_ids=collection_ids,
         min_examples=min_examples,
-        concepts=concepts,
         classmap=classmap
     )
 
