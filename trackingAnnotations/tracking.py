@@ -12,6 +12,7 @@ import uuid
 import sys
 import math
 from fix_offset import fix_offset
+import json
 
 #Load environment variables
 load_dotenv(dotenv_path="../.env")
@@ -29,11 +30,15 @@ DB_HOST = os.getenv("DB_HOST")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 
+config_path = "../config.json"
+with open(config_path) as config_buffer:    
+    config = json.loads(config_buffer.read())['ml']
+
 # video/image properties
-LENGTH = 8000 # length of video in milliseconds
-IMAGES_PER_SEC = 10
-VIDEO_WIDTH = 1280
-VIDEO_HEIGHT = 720
+LENGTH = config['tracking_vid_length'] # length of video in milliseconds
+IMAGES_PER_SEC = config['frames_between_predictions']
+VIDEO_WIDTH = config['resized_video_width']
+VIDEO_HEIGHT = config['resized_video_height']
 
 # initialize a dictionary that maps strings to their corresponding
 # OpenCV object tracker implementations
@@ -162,8 +167,6 @@ def track_annotation(original):
 
    con = connect(database=DB_NAME, host=DB_HOST, user=DB_USER, password=DB_PASSWORD)
    cursor = con.cursor()
-
-   original = cursor.execute("SELECT * from annotations where id=%d",(original.id,)).fetchone()
    
    #get TRACKING userid
    cursor.execute("SELECT id FROM users WHERE username=%s", ("tracking",))
@@ -193,7 +196,7 @@ def track_annotation(original):
       check, vid = cap.read()
       vid = imutils.resize(vid, width=VIDEO_WIDTH, height=VIDEO_HEIGHT)
       frame_list.append(vid)
-      curr = int(cap.get(0))
+      curr = cap.get(0)
    cap.release()
 
    # initialize vars for getting frames after annotation
