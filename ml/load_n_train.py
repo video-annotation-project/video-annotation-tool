@@ -23,7 +23,7 @@ from keras_retinanet.callbacks import RedirectModel
 from tensorflow.python.client import device_lib
 from dotenv import load_dotenv
 
-from s3_generator import S3Generator
+from s3_generator import CollectionGenerator
 from loading_data import download_annotations
 from loading_data import queryDB, get_classmap
 from progress_callbacks import Progress
@@ -58,9 +58,9 @@ def _create_model(num_classes):
     gpus = len([i for i in device_lib.list_local_devices() if i.device_type == 'GPU'])
 
     if gpus > 1:
-        training_model = multi_gpu_model(model, gpus=gpus)
-    else:
-        training_model = model
+        return  multi_gpu_model(model, gpus=gpus)
+
+    return  model
 
 
 def _get_callbacks(model_name, min_examples, epochs, collection_ids, steps_per_epoch):

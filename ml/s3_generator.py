@@ -1,27 +1,40 @@
 import os
 import random
+import json
 from multiprocessing import Process
 
-import psycopg2
 import boto3
 import pandas as pd
 import numpy as np
+from psycopg2 import connect
 from keras_retinanet.preprocessing.csv_generator import Generator
 from keras_retinanet.utils.image import read_image_bgr
 from six import raise_from
 from PIL import Image
+from dotenv import load_dotenv
 
+            
+config_path = "../config.json"
+load_dotenv(dotenv_path="../.env")
+
+with open(config_path) as config_buffer:    
+    config = json.loads(config_buffer.read())['ml']
+    
+# Connect to database
+DB_NAME = os.getenv("DB_NAME")
+DB_HOST = os.getenv("DB_HOST")
+DB_USER = os.getenv("DB_USER")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
 
 def _query(query, params=None):
     """
     Execture a SQL query
     Returns resulting rows
     """
-    conn = psycopg2.connect(database=DB_NAME,
+    conn = connect(database=DB_NAME,
                         user=DB_USER,
                         password=DB_PASSWORD,
-                        host=DB_HOST,
-                        port="5432")
+                        host=DB_HOST)
     result = pd.read_sql_query(query, conn, params=params)
     conn.close()
     return result
@@ -50,12 +63,13 @@ class CollectionGenerator(object):
 
         selected_frames, concept_counts = self._select_annotations(collection_ids, min_examples, concepts)
         self.selected_frames = selected_frames
+        self.concepts = concepts
 
         # Shuffle selected frames so that training/testing set are different each run
         random.shuffle(self.selected_frames)
 
         num_frames = len(self.selected_frames)
-        split_index = num_frames * validation_split
+        split_index = int(num_frames * validation_split)
 
         # Split our data into training and testing sets, based on validation_split
         self.training_set = self.selected_frames[0:split_index]
@@ -73,6 +87,7 @@ class CollectionGenerator(object):
                 selected_frames=self.training_set,
                 image_folder=image_folder,
                 image_extension=image_extension,
+                concepts=self.concepts,
                 **kwargs
             )
         elif subset in ['validation', 'testing']:
@@ -80,6 +95,7 @@ class CollectionGenerator(object):
                 selected_frames=self.testing_set,
                 image_folder=image_folder,
                 image_extension=image_extension,
+                concepts=self.concepts,
                 **kwargs
             )
         else:
@@ -91,7 +107,7 @@ class CollectionGenerator(object):
         selected = []
         concept_count = {}
 
-        annotations = self._get_annotations(collection_ids)
+        annotations = CollectionGenerator._get_annotations(collection_ids)
 
         for concept in concepts:
             concept_count[concept] = 0
@@ -135,7 +151,7 @@ class CollectionGenerator(object):
     def _get_annotations(collection_ids):
         # Query that gets all annotations for given concepts (and child concepts) 
         # making sure that any tracking annotations originated from good users
-        annotations = queryDB(r'''
+        annotations_query = r'''
             SELECT
                   A.id,
                   image,
@@ -151,14 +167,14 @@ class CollectionGenerator(object):
             LEFT JOIN annotations a ON a.id=inter.annotationid
             LEFT JOIN videos ON videos.id=videoid
             WHERE inter.id IN (%s)
-        ''')
+        '''
 
-        return _query(annotations_query, (','.join(str(id_)) for id_ in collection_ids))
+        return _query(annotations_query, [','.join((str(id_) for id_ in collection_ids))] )
 
 
 class S3Generator(Generator):
 
-    def __init__(self, selected_frames, image_folder, image_extension='.png', **kwargs):
+    def __init__(self, concepts, selected_frames, image_folder, image_extension='.png', **kwargs):
 
         self.image_folder = image_folder
 
@@ -167,9 +183,8 @@ class S3Generator(Generator):
         self.selected_frames = selected_frames
         self.downloaded_images =  set(os.listdir(image_folder))
 
-        self.concept_counts = concept_counts
         self.image_extension = image_extension
-        self.classes = set(concept_counts)
+        self.classes = concepts
 
         self.labels = {}
         for key, value in self.classes.items():

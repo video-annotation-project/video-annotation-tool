@@ -106,7 +106,7 @@ class TensorBoardLog(keras.callbacks.Callback):
             aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
             aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'))
 
-        self.id = _create_log_entry(
+        self.id = self._create_log_entry(
             model_name=model_name,
             min_examples=min_examples,
             epochs=epochs,
