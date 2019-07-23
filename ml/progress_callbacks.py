@@ -84,14 +84,6 @@ class TensorBoardLog(keras.callbacks.Callback):
 
         self.table_name = 'previous_runs'
 
-        self.id = _create_log_entry(
-            table_name=self.table_name, 
-            model_name=model_name,
-            min_examples=min_examples,
-            epochs=epochs,
-            collection_ids=collection_ids
-        )
-
         config_path = "../config.json"
         load_dotenv(dotenv_path="../.env")
 
@@ -114,8 +106,12 @@ class TensorBoardLog(keras.callbacks.Callback):
             aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
             aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'))
 
-        self._create_log_entry(self.table_name, model_name, min_examples, epochs, collectionIds)
-
+        self.id = _create_log_entry(
+            model_name=model_name,
+            min_examples=min_examples,
+            epochs=epochs,
+            collection_ids=collection_ids
+        )
 
 
     def on_train_begin(self, logs={}):
@@ -165,12 +161,12 @@ class TensorBoardLog(keras.callbacks.Callback):
         return
 
 
-    def _create_log_entry(table_name, model_name, min_examples, epochs, collection_ids):
+    def _create_log_entry(model_name, min_examples, epochs, collection_ids):
         self.cursor.execute(
-            f"""INSERT INTO {table_name} 
+            f"""INSERT INTO {self.table_name} 
                     (model_name, epochs, min_examples, collection_ids) 
                 VALUES 
-                    (%s, %s, %s, %s, %s, %s) RETURNING id""",
+                    (%s, %s, %s, %s) RETURNING id""",
             (model_name, epochs, min_examples, collection_ids))
 
         log_id = self.cursor.fetchone()[0]

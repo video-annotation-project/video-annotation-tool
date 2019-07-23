@@ -12,8 +12,11 @@ from six import raise_from
 from PIL import Image
 
 
-# SQL queries to the database
 def _query(query, params=None):
+    """
+    Execture a SQL query
+    Returns resulting rows
+    """
     conn = psycopg2.connect(database=DB_NAME,
                         user=DB_USER,
                         password=DB_PASSWORD,
@@ -37,52 +40,99 @@ def _parse(value, function, fmt):
         raise_from(ValueError(fmt.format(e)), None)
 
 
-def _select_annotations(collection_ids, min_examples, selected_concepts):
-    selected = []
-    concept_count = {}
+class CollectionGenerator(object):
 
-    annotations = _get_annotations(collection_ids)
+    def __init__(self, 
+                 collection_ids, 
+                 concepts, 
+                 min_examples,
+                 validation_split=0.8):
 
-    for concept in selected_concepts:
-        concept_count[concept] = 0
+        selected_frames, concept_counts = self._select_annotations(collection_ids, min_examples, concepts)
+        self.selected_frames = selected_frames
 
-    group_frame = annotations.groupby(['videoid', 'frame_num'], sort=False)
-    group_frame = [df for _, df in group_frame]
-    random.shuffle(group_frame) # Shuffle BEFORE the sort
+        # Shuffle selected frames so that training/testing set are different each run
+        random.shuffle(self.selected_frames)
 
-    ai_id = _query("SELECT id FROM users WHERE username='tracking'").id[0]
-    
-    # Give priority to frames with least amount of tracking annotations
-    # And lower speed
-    sort_lambda = lambda df : (list(df['userid']).count(ai_id), df.speed.mean())
-    group_frame.sort(key=sort_lambda)
+        num_frames = len(self.selected_frames)
+        split_index = num_frames * validation_split
 
-    # Selects images that we'll use (each group has annotations for an image)
-    for frame in group_frame:
-        # Check if we have min number of images already
-        if not any(v < min_examples for v in concept_count.values()):
-            break
+        # Split our data into training and testing sets, based on validation_split
+        self.training_set = self.selected_frames[0:split_index]
+        self.testing_set = self.selected_frames[split_index:]
+
+
+    def flow_from_s3(self, 
+                     image_folder,
+                     image_extension='.png',
+                     subset='training',
+                     **kwargs):
+
+        if subset == 'training':
+            return S3Generator(
+                selected_frames=self.training_set,
+                image_folder=image_folder,
+                image_extension=image_extension,
+                **kwargs
+            )
+        elif subset in ['validation', 'testing']:
+            return S3Generator(
+                selected_frames=self.testing_set,
+                image_folder=image_folder,
+                image_extension=image_extension,
+                **kwargs
+            )
+        else:
+            raise ValueError('Subset parameter must be either "training" or "validation"/"testing".')
+
+
+    @staticmethod
+    def _select_annotations(collection_ids, min_examples, concepts):
+        selected = []
+        concept_count = {}
+
+        annotations = self._get_annotations(collection_ids)
+
+        for concept in concepts:
+            concept_count[concept] = 0
+
+        group_frame = annotations.groupby(['videoid', 'frame_num'], sort=False)
+        group_frame = [df for _, df in group_frame]
+
+        ai_id = _query("SELECT id FROM users WHERE username='tracking'").id[0]
         
-        in_annot = []
-        for index, row in frame.iterrows():
-            concept_count[row['conceptid']] += 1
-            in_annot.append(row['conceptid'])
+        # Give priority to frames with least amount of tracking annotations
+        # And lower speed
+        sort_lambda = lambda df : (list(df['userid']).count(ai_id), df.speed.mean())
+        group_frame.sort(key=sort_lambda)
 
-        # Checks if frame has only concept we have too many of
-        if any(v > min_examples for v in concept_count.values()):
-            # Gets all concepts that we have too many of
-            excess = list({key:value for (key,value) in concept_count.items() if value > min_examples})
-            # Don't save the annotation if it doens't include concept that we need more of
-            if set(excess) >= set(in_annot):
-                for a in in_annot:
-                    concept_count[a] -= 1
-                continue
-        selected.append(frame)
+        # Selects images that we'll use (each group has annotations for an image)
+        for frame in group_frame:
+            # Check if we have min number of images already
+            if not any(v < min_examples for v in concept_count.values()):
+                break
+            
+            in_annot = []
+            for index, row in frame.iterrows():
+                concept_count[row['conceptid']] += 1
+                in_annot.append(row['conceptid'])
 
-    return selected, concept_count
+            # Checks if frame has only concept we have too many of
+            if any(v > min_examples for v in concept_count.values()):
+                # Gets all concepts that we have too many of
+                excess = list({key:value for (key,value) in concept_count.items() if value > min_examples})
+                # Don't save the annotation if it doens't include concept that we need more of
+                if set(excess) >= set(in_annot):
+                    for a in in_annot:
+                        concept_count[a] -= 1
+                    continue
+            selected.append(frame)
+
+        return selected, concept_count
 
 
-def _get_annotations(collection_ids):
+    @staticmethod
+    def _get_annotations(collection_ids):
     # Query that gets all annotations for given concepts (and child concepts) 
     # making sure that any tracking annotations originated from good users
     annotations = queryDB(r'''
@@ -108,14 +158,7 @@ def _get_annotations(collection_ids):
 
 class S3Generator(Generator):
 
-    def __init__(self, classes, image_folder, collection_ids, image_extension='.png', **kwargs):
-        users = "\'" +  ','.join(str(e) for e in users) + "\'"
-        videos = "\'" + ','.join(str(e) for e in videos) + "\'"
-        str_concepts = "\'" + ','.join(str(e) for e in selected_concepts) + "\'"
-
-
-        selected_frames, concept_counts = _select_annotations(collection_ids, min_examples, selected_concepts)
-        print(f'Training {len(concept_counts)} concepts on {len(selected)} images.')
+    def __init__(self, selected_frames, image_folder, image_extension='.png', **kwargs):
 
         self.image_folder = image_folder
 
@@ -225,7 +268,6 @@ class S3Generator(Generator):
         return annotations
 
 
-
     def _connect_s3():
         load_dotenv(dotenv_path="../.env")
         S3_BUCKET = os.getenv('AWS_S3_BUCKET_NAME')
@@ -272,8 +314,9 @@ class S3Generator(Generator):
             return None
 
 
-    def _read_annotations(self, classes):
-        """ Read annotations from the csv_reader.
+    def _read_annotations(self):
+        """ Read annotations from our selected frames.
+            Selected frames are DataFrames.
         """
         result = OrderedDict()
         for frame in self.selected_frames:
