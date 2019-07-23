@@ -153,7 +153,7 @@ class CollectionGenerator(object):
             WHERE inter.id IN (%s)
         ''')
 
-        return _query(annotations_query, (','.join(str(id_)) for id_ in collection_ids)))
+        return _query(annotations_query, (','.join(str(id_)) for id_ in collection_ids))
 
 
 class S3Generator(Generator):
