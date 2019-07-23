@@ -153,7 +153,7 @@ class CollectionGenerator(object):
             WHERE inter.id IN (%s)
         ''')
 
-        return _query(annotations_query, (','.join(str(id_)) for id_ in collection_ids)))
+        return _query(annotations_query, (','.join(str(id_)) for id_ in collection_ids))
 
 
 class S3Generator(Generator):
@@ -254,7 +254,7 @@ class S3Generator(Generator):
         """
         image = self.selected_frames[image_index].iloc[0]
         annotations = {'labels': np.empty((0,)), 'bboxes': np.empty((0, 4))}
-        image_name = f'{image['videoid']}_{image['frame_num']}'
+        image_name = f'{image["videoid"]}_{image["frame_num"]}'
 
         for idx, annot in enumerate(self.image_data[image_name]):
             annotations['labels'] = np.concatenate((annotations['labels'], [annot['class']]))
@@ -305,7 +305,7 @@ class S3Generator(Generator):
             obj = self.client.get_object(Bucket=S3_BUCKET, Key=SRC_IMG_FOLDER + image_name)
             obj_image = Image.open(obj['Body'])
 
-            new_image_name = f'{image['videoid']}_{image['frame_num']}'
+            new_image_name = f'{image["videoid"]}_{image["frame_num"]}'
             return new_image_name
         except:
             print(f'Failed to download {image_name}.')
@@ -322,7 +322,7 @@ class S3Generator(Generator):
         for frame in self.selected_frames:
             for i in range(num_annotations):
                 image = frame_group.iloc[i]
-                image_file = f'{image['videoid']}_{image['frame_num']}'
+                image_file = f'{image["videoid"]}_{image["frame_num"]}'
                 class_id = image['conceptid']
 
                 x1 = image['x1']

@@ -3,9 +3,9 @@ import time
 
 def timer(task_name):
     def decorator(function):
-		@functools.wraps(func)
+       @functools.wraps(func)
         def wrapper(*args, **kwargs):
-    		print(f'Starting {task_name}')
+                print(f'Starting {task_name}')
 	        start_time = time.perf_counter()
 	        value = func(*args, **kwargs)
 	        end_time = time.perf_counter()
