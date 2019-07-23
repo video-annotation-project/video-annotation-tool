@@ -71,8 +71,7 @@ class Verify extends Component {
     } else {
       if (this.state.selectedAnnotationCollections.length) {
         annotations = await this.getAnnotationsFromCollection();
-      }
-      else {
+      } else {
         annotations = await this.getAnnotations();
       }
       if (annotations.length < 1) {
@@ -93,7 +92,7 @@ class Verify extends Component {
     return axios
       .get(`/api/collections/annotations`, {
         headers: {
-          Authorization: "Bearer " + localStorage.getItem("token")
+          Authorization: 'Bearer ' + localStorage.getItem('token')
         }
       })
       .then(res => res.data)
@@ -101,15 +100,18 @@ class Verify extends Component {
         console.log(error);
         this.setState({
           error: error
-        })
-      })
+        });
+      });
   };
 
   getAnnotationsFromCollection = async () => {
     return axios
-      .get(`/api/annotations/collections?collectionids=${this.state.selectedAnnotationCollections}`, {
-        headers: { Authorization: "Bearer " + localStorage.getItem("token") }
-      })
+      .get(
+        `/api/annotations/collections?collectionids=${this.state.selectedAnnotationCollections}`,
+        {
+          headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
+        }
+      )
       .then(res => res.data)
       .catch(error => {
         console.log(error);
@@ -347,7 +349,9 @@ class Verify extends Component {
     if (this.state.selectionMounted) {
       selection = (
         <VerifySelection
-          selectedAnnotationCollections={this.state.selectedAnnotationCollections}
+          selectedAnnotationCollections={
+            this.state.selectedAnnotationCollections
+          }
           selectedUsers={this.state.selectedUsers}
           selectedVideos={this.state.selectedVideos}
           selectedConcepts={this.state.selectedConcepts}

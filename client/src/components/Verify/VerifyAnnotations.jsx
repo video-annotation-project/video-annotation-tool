@@ -21,7 +21,6 @@ import VideoMetadata from '../Utilities/VideoMetadata.jsx';
 
 import Hotkeys from 'react-hot-keys';
 
-
 const styles = theme => ({
   button: {
     margin: theme.spacing()

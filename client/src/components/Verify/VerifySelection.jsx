@@ -16,7 +16,7 @@ import SelectUser from '../Utilities/SelectUser.jsx';
 import SelectVideo from '../Utilities/SelectVideo.jsx';
 import SelectConcept from '../Utilities/SelectConcept.jsx';
 import SelectUnsure from '../Utilities/SelectUnsure';
-import VerifyAnnotationCollection from "../Utilities/SelectAnnotationCollection.jsx";
+import VerifyAnnotationCollection from '../Utilities/SelectAnnotationCollection.jsx';
 
 const styles = theme => ({
   button: {
@@ -40,7 +40,7 @@ const styles = theme => ({
 });
 
 function getSteps() {
-  return ["Annotation Collections", "Users", "Videos", "Concepts", "Unsure"];
+  return ['Annotation Collections', 'Users', 'Videos', 'Concepts', 'Unsure'];
 }
 
 class VerifySelection extends React.Component {
@@ -59,8 +59,12 @@ class VerifySelection extends React.Component {
           <VerifyAnnotationCollection
             value={this.props.selectedAnnotationCollections}
             getAnnotationCollections={this.props.getAnnotationCollections}
-            selectedAnnotationCollections={this.props.selectedAnnotationCollections}
-            handleChangeList={this.props.handleChangeList("selectedAnnotationCollections")}
+            selectedAnnotationCollections={
+              this.props.selectedAnnotationCollections
+            }
+            handleChangeList={this.props.handleChangeList(
+              'selectedAnnotationCollections'
+            )}
           />
         );
       case 1:
@@ -197,32 +201,37 @@ class VerifySelection extends React.Component {
                     >
                       Back
                     </Button>
-                    {activeStep === 0 && this.props.selectedAnnotationCollections.length !== 0 ?
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      onClick={this.props.toggleSelection}
-                      className={classes.button}
-                    >
-                      Skip To Annotations Verify
-                    </Button> :
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      disabled={this.didNotSelect(index)}
-                      onClick={
-                        activeStep === steps.length - 1
-                          ? this.props.toggleSelection
-                          : this.handleNext
-                      }
-                      className={classes.button}
-                    >
-                      {activeStep === steps.length - 1 ? "Finish" :
-                        activeStep === 0 && this.props.selectedAnnotationCollections.length === 0 ?
-                        "Skip this step" :
-                        "Next"}
-                    </Button>
-                    }
+                    {activeStep === 0 &&
+                    this.props.selectedAnnotationCollections.length !== 0 ? (
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={this.props.toggleSelection}
+                        className={classes.button}
+                      >
+                        Skip To Annotations Verify
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        disabled={this.didNotSelect(index)}
+                        onClick={
+                          activeStep === steps.length - 1
+                            ? this.props.toggleSelection
+                            : this.handleNext
+                        }
+                        className={classes.button}
+                      >
+                        {activeStep === steps.length - 1
+                          ? 'Finish'
+                          : activeStep === 0 &&
+                            this.props.selectedAnnotationCollections.length ===
+                              0
+                          ? 'Skip this step'
+                          : 'Next'}
+                      </Button>
+                    )}
                   </div>
                 </div>
               </StepContent>

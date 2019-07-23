@@ -186,7 +186,7 @@ router.post(
       params.push(req.body.selectedConcepts);
 
       queryText1 += ` conceptid::text = ANY($${params.length}) `;
-      queryText2 += ` WHERE id = ANY($${params.length})`
+      queryText2 += ` WHERE id = ANY($${params.length})`;
     }
 
     queryText1 += `
@@ -235,7 +235,7 @@ router.get(
   passport.authenticate("jwt", { session: false }),
 
   async (req, res) => {
-    var params = "{" + req.query.ids + "}";
+    let params = "{" + req.query.ids + "}";
     let queryText = `      
       SELECT 
         name, id, count(*), array_agg(conceptid) as ids, array_agg(conceptname) as concepts
