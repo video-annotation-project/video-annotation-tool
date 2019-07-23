@@ -106,6 +106,7 @@ def train_model(concepts, model_name, collection_ids, min_examples,
                 epochs, download_data=True):
 
     model = _create_model(len(concepts))
+    classmap = get_classmap(concepts)
 
     model.compile(
         loss={
@@ -118,7 +119,8 @@ def train_model(concepts, model_name, collection_ids, min_examples,
     collection_generator = CollectionGenerator(
         collection_ids=collection_ids,
         min_examples=min_examples,
-        concepts=concepts
+        concepts=concepts,
+        classmap=classmap
     )
 
     train_generator = collection_generator.flow_from_s3(

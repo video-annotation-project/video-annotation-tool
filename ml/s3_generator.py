@@ -57,13 +57,13 @@ class CollectionGenerator(object):
 
     def __init__(self, 
                  collection_ids, 
-                 concepts, 
+                 classmap, 
                  min_examples,
                  validation_split=0.8):
 
-        selected_frames, concept_counts = self._select_annotations(collection_ids, min_examples, concepts)
+        self.classmap = classmap
+        selected_frames, concept_counts = self._select_annotations(collection_ids, min_examples, list(classmap))
         self.selected_frames = selected_frames
-        self.concepts = concepts
 
         # Shuffle selected frames so that training/testing set are different each run
         random.shuffle(self.selected_frames)
@@ -87,7 +87,7 @@ class CollectionGenerator(object):
                 selected_frames=self.training_set,
                 image_folder=image_folder,
                 image_extension=image_extension,
-                concepts=self.concepts,
+                classes=self.classmap,
                 **kwargs
             )
         elif subset in ['validation', 'testing']:
@@ -95,7 +95,7 @@ class CollectionGenerator(object):
                 selected_frames=self.testing_set,
                 image_folder=image_folder,
                 image_extension=image_extension,
-                concepts=self.concepts,
+                classes=self.classmap,
                 **kwargs
             )
         else:
@@ -174,7 +174,7 @@ class CollectionGenerator(object):
 
 class S3Generator(Generator):
 
-    def __init__(self, concepts, selected_frames, image_folder, image_extension='.png', **kwargs):
+    def __init__(self, classes, selected_frames, image_folder, image_extension='.png', **kwargs):
 
         self.image_folder = image_folder
 
@@ -184,7 +184,7 @@ class S3Generator(Generator):
         self.downloaded_images =  set(os.listdir(image_folder))
 
         self.image_extension = image_extension
-        self.classes = concepts
+        self.classes = classes
 
         self.labels = {}
         for key, value in self.classes.items():
@@ -364,7 +364,7 @@ class S3Generator(Generator):
                     raise ValueError('line {}: y2 ({}) must be higher than y1 ({})'.format(line, y2, y1))
 
                 # check if the current class name is correctly present
-                if class_id not in self.classes:
+                if class_id not in set(self.labels):
                     raise ValueError('line {}: unknown class id: \'{}\' (classes: {})'.format(line, class_id, class_ids))
 
                 result[image_file].append({'x1': x1, 'x2': x2, 'y1': y1, 'y2': y2, 'class': class_id})
