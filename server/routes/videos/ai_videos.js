@@ -35,7 +35,7 @@ router.get("/metrics",passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const params = {
       Bucket: process.env.AWS_S3_BUCKET_NAME,
-      Key: process.env.AWS_S3_BUCKET_METRICS_FOLDER + req.query.filename
+      Key: process.env.AWS_S3_BUCKET_METRICS_FOLDER + req.query.filename.replace('mp4', 'csv')
     };
     const S3 = new AWS.S3();
     try { 
