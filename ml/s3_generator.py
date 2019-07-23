@@ -133,27 +133,27 @@ class CollectionGenerator(object):
 
     @staticmethod
     def _get_annotations(collection_ids):
-    # Query that gets all annotations for given concepts (and child concepts) 
-    # making sure that any tracking annotations originated from good users
-    annotations = queryDB(r'''
-        SELECT
-              A.id,
-              image,
-              userid,
-              videoid,
-              videowidth,
-              videoheight,
-              conceptid,
-              x1, x2, y1, y2,
-              speed,
-              ROUND(fps * timeinvideo) as frame_num
-        FROM annotation_intermediate inter
-        LEFT JOIN annotations a ON a.id=inter.annotationid
-        LEFT JOIN videos ON videos.id=videoid
-        WHERE inter.id IN (%s)
-    ''')
+        # Query that gets all annotations for given concepts (and child concepts) 
+        # making sure that any tracking annotations originated from good users
+        annotations = queryDB(r'''
+            SELECT
+                  A.id,
+                  image,
+                  userid,
+                  videoid,
+                  videowidth,
+                  videoheight,
+                  conceptid,
+                  x1, x2, y1, y2,
+                  speed,
+                  ROUND(fps * timeinvideo) as frame_num
+            FROM annotation_intermediate inter
+            LEFT JOIN annotations a ON a.id=inter.annotationid
+            LEFT JOIN videos ON videos.id=videoid
+            WHERE inter.id IN (%s)
+        ''')
 
-    return _query(annotations_query, (','.join(str(id_)) for id_ in collection_ids)))
+        return _query(annotations_query, (','.join(str(id_)) for id_ in collection_ids)))
 
 
 class S3Generator(Generator):
