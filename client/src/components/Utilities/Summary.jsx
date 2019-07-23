@@ -94,8 +94,10 @@ class Summary extends React.Component {
           onClose={this.props.handleClose}
         >
           <div className={classes.paper}>
-            <Paper style={{ maxHeight: 400, overflow: "auto" }}>
             {this.props.metrics ? 
+              <div>
+              <Typography variant="h5" color="primary">Prediction Metrics</Typography>
+              <Paper style={{ maxHeight: 400, overflow: "auto" }}>
               <Table className={classes.table}> 
               <TableHead>
                 <TableRow>
@@ -115,17 +117,13 @@ class Summary extends React.Component {
                 {this.props.metrics ? (
                   this.props.metrics.map(row => (
                     <TableRow key={row.conceptid}>
-                      <TableCell>
-                        {row.conceptid}
-                      </TableCell>
-                      <TableCell component="th" scope="row">
-                        {row.TP}
-                      </TableCell>
+                      <TableCell>{row.conceptid}</TableCell>
+                      <TableCell>{row.TP}</TableCell>
                       <TableCell>{row.FP}</TableCell>
                       <TableCell>{row.FN}</TableCell>
-                      <TableCell>{row.Precision}</TableCell>
-                      <TableCell>{row.Recall}</TableCell>
-                      <TableCell>{row.F1}</TableCell>
+                      <TableCell>{parseFloat(row.Precision).toFixed(3)}</TableCell>
+                      <TableCell>{parseFloat(row.Recall).toFixed(3)}</TableCell>
+                      <TableCell>{parseFloat(row.F1).toFixed(3)}</TableCell>
                       <TableCell>{row.pred_num}</TableCell>
                       <TableCell>{row.true_num}</TableCell>
                       <TableCell>{row.count_accuracy}</TableCell>
@@ -138,8 +136,13 @@ class Summary extends React.Component {
                 )}
               </TableBody>
             </Table>
+            </Paper>
+            </div>
+
               : ""
             }
+              <Typography variant="h5" color="primary">Summary Table</Typography>
+              <Paper style={{ maxHeight: 400, overflow: "auto" }}>
               <Table className={classes.table}> 
                 <TableHead>
                   <TableRow>
