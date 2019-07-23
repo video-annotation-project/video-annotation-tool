@@ -55,7 +55,7 @@ class Profile extends Component {
       newPassword2: newPassword2
     };
     axios
-      .post("/api/changePassword", body, config)
+      .patch("/api/users", body, config)
       .then(res => {
         Swal.fire("Password Changed!", "", "success");
         this.props.history.push("/");
@@ -72,7 +72,7 @@ class Profile extends Component {
     const { classes } = this.props;
     return (
       <div className={classes.root}>
-        <Typography variant="display1">Change Password</Typography>
+        <Typography variant="h4">Change Password</Typography>
         <br />
         <form onSubmit={this.handleSubmit}>
           <TextField

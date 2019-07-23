@@ -12,6 +12,7 @@ import Button from "@material-ui/core/Button";
 import Paper from "@material-ui/core/Paper";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import { FormControl } from "@material-ui/core";
+import FormGroup from "@material-ui/core/FormGroup";
 import InputLabel from "@material-ui/core/InputLabel";
 import Select from "@material-ui/core/Select";
 import MenuItem from "@material-ui/core/MenuItem";
@@ -23,6 +24,7 @@ import VideoMetadata from "../Utilities/VideoMetadata.jsx";
 
 const styles = theme => ({
   root: {
+    marginTop: 10,
     width: "90%"
   },
   form: {
@@ -35,19 +37,19 @@ const styles = theme => ({
     alignItems: "center"
   },
   button: {
-    marginTop: theme.spacing.unit,
-    marginRight: theme.spacing.unit
+    marginTop: theme.spacing(),
+    marginRight: theme.spacing()
   },
   actionsContainer: {
-    marginBottom: theme.spacing.unit * 2
+    marginBottom: theme.spacing(2)
   },
   resetContainer: {
-    padding: theme.spacing.unit * 3
+    padding: theme.spacing(3)
   },
-  videoSelector: {
-    width: "50%",
-    height: "500px",
-    overflow: "auto"
+  videoForm: {
+    maxHeight: "400px",
+    overflow: "auto",
+    width: "630px"
   }
 });
 
@@ -119,7 +121,7 @@ class PredictModel extends Component {
     };
     let option = "predictmodel";
     axios
-      .get(`/api/modelTab/${option}`, config)
+      .get(`/api/models/train/${option}`, config)
       .then(res => {
         const info = res.data[0].info;
         this.setState({
@@ -130,7 +132,7 @@ class PredictModel extends Component {
         });
       })
       .catch(error => {
-        console.log("Error in get /api/modelTab");
+        console.log("Error in get /api/models");
         console.log(error);
         if (error.response) {
           console.log(error.response.data.detail);
@@ -167,11 +169,8 @@ class PredictModel extends Component {
       }
     };
     axios.get(`/api/videos`, config).then(res => {
-      let [, unwatchedVideos, watchedVideos, inProgressVideos] = res.data;
-      const videos = unwatchedVideos.rows.concat(
-        watchedVideos.rows,
-        inProgressVideos.rows
-      );
+      let { unwatchedVideos, watchedVideos, inProgressVideos } = res.data;
+      const videos = unwatchedVideos.concat(watchedVideos, inProgressVideos);
       this.setState({
         videos: videos
       });
@@ -220,25 +219,28 @@ class PredictModel extends Component {
     return (
       <FormControl
         component="fieldset"
-        className={this.props.classes.videoSelector}
+        className={this.props.classes.videoForm}
       >
-        {this.state.videos.map(video => (
-          <div key={video.filename}>
-            <Radio
-              name="videoSelected"
-              color="default"
-              checked={this.state.videoSelected === video.id.toString()}
-              value={video.id.toString()}
-              onChange={this.handleSelect}
-            />
-            {video.filename}
-            <IconButton style={{ float: "right" }}>
-              <Description
-                onClick={event => this.openVideoMetadata(event, video)}
+        <FormGroup>
+          {this.state.videos.map(video => (
+            <div key={video.filename}>
+              <Radio
+                name="videoSelected"
+                color="primary"
+                checked={this.state.videoSelected === video.id.toString()}
+                value={video.id.toString()}
+                onChange={this.handleSelect}
               />
-            </IconButton>
-          </div>
-        ))}
+              {video.filename}
+              <IconButton
+                onClick={event => this.openVideoMetadata(event, video)}
+                style={{ float: "right" }}
+              >
+                <Description />
+              </IconButton>
+            </div>
+          ))}
+        </FormGroup>
       </FormControl>
     );
   };
@@ -296,7 +298,7 @@ class PredictModel extends Component {
     };
     // update SQL database
     axios
-      .put("/api/modelTab/predictmodel", body, config)
+      .put("/api/models/train/predictmodel", body, config)
       .then(res => {
         this.state.socket.emit("refresh predictmodel");
       })
@@ -354,7 +356,7 @@ class PredictModel extends Component {
       command: command,
       modelInstanceId: "i-0f2287cb0fc621b6d"
     };
-    axios.post(`/api/modelInstance`, body, config).then(res => {
+    axios.post(`/api/models`, body, config).then(res => {
       console.log(res);
     });
   };
@@ -376,9 +378,7 @@ class PredictModel extends Component {
     return (
       <div className={classes.root}>
         <div className={classes.center}>
-          <Typography variant="display1">
-            Run a trained model on video(s)
-          </Typography>
+          <Typography variant="h6">Run a trained model on video(s)</Typography>
           <br />
         </div>
         <Stepper activeStep={activeStep} orientation="vertical">

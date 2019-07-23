@@ -3,17 +3,41 @@ import axios from "axios";
 
 import { withStyles } from "@material-ui/core/styles";
 import LinearProgress from '@material-ui/core/LinearProgress';
+import Typography from '@material-ui/core/Typography';
+import Paper from '@material-ui/core/Paper';
+import CircularProgress from '@material-ui/core/CircularProgress';
+import Button from '@material-ui/core/Button';
+import PredictProgress from './PredictProgress';
+
 
 const styles = theme => ({
 	trainStatus: {
-		marginBottom: 0,
+    marginTop: '20px',
+    marginBottom: '5px',
 	},
 	progressBar: {
 		height: '8px',
+    width: '82%',
 	},
 	progressText: {
-		marginBottom: '5px',
+    marginTop: '20px',
+		marginBottom: '8px',
 	},
+  button: {
+    marginBottom: '30px',
+    marginLeft: '20px',
+  },
+  stopTraining: {
+    marginTop: '20px',
+  },
+  progress: {
+    display: "flex",
+    flex: 1,
+    flexDirection: "column",
+    justifyContent: "right",
+    alignItems: "right",
+    width: "50%"
+  },
 });
 
 class ModelProgress extends Component {
@@ -28,6 +52,7 @@ class ModelProgress extends Component {
           maxEpoch: 0,
           stepsPerEpoch: 0,
           progress: 0,
+          doneTraining: false,
 	    };
 
 	    this.loadProgressInfo();
@@ -43,13 +68,16 @@ class ModelProgress extends Component {
 	}
 
   loadProgressInfo = () => {
+    if (this.props.activeStep < 3){
+      return;
+    }
     const config = {
       headers: {
         Authorization: "Bearer " + localStorage.getItem("token")
       }
     };
     axios
-      .get(`/api/modelTab/progress`, config)
+      .get(`/api/models/progress/train`, config)
       .then(res => {
         const progress = res.data[0];
 
@@ -64,7 +92,7 @@ class ModelProgress extends Component {
         });
       })
       .catch(error => {
-        console.log("Error in get /api/modelTab");
+        console.log("Error in get /api/models");
         console.log(error);
         if (error.response) {
           console.log(error.response.data.detail);
@@ -74,20 +102,43 @@ class ModelProgress extends Component {
 
   render(){
     const { classes } = this.props;
+    const { activeStep, steps } = this.props;
 
     return (
       <div className={this.props.className}>
-      	<h3 className={classes.trainStatus}> Training Status: </h3>
-      	{this.state.running ? 
+      	<Typography variant="h6" gutterBottom className={classes.trainStatus}>
+          Training Status
+        </Typography>
+        {activeStep >= steps.length && (
+          <Paper square elevation={0} className={classes.resetContainer}>
+            <Typography variant="subtitle2" gutterBottom>
+              Model has started training...
+            </Typography>
+            <div className={classes.stopTraining}>
+              <CircularProgress />
+              <Button onClick={this.props.handleStop} className={classes.button}>
+                Stop
+              </Button>
+            </div>
+          </Paper>
+        )}
+      	{
+          this.state.running && activeStep === steps.length ? 
       		<div>
-      			<h4 className={classes.progressText} >Epoch: {this.state.currentEpoch} / {this.state.maxEpoch}</h4>
+      			<Typography
+              variant="body1" gutterBottom 
+              className={classes.progressText} >Epoch: {this.state.currentEpoch} / {this.state.maxEpoch}
+            </Typography>
 						<LinearProgress 
 							disableShrink 
 							className={classes.progressBar} 
 							variant="determinate" 
 							value={this.state.epochProgress} 
 						/>
-      			<h4 className={classes.progressText} >Batch: {this.state.currentBatch} / {this.state.stepsPerEpoch}</h4>
+      			<Typography 
+              variant="body1" gutterBottom 
+              className={classes.progressText}> Batch: {this.state.currentBatch} / {this.state.stepsPerEpoch}
+            </Typography>
 						<LinearProgress 
 							disableShrink 
 							className={classes.progressBar} 
@@ -95,8 +146,14 @@ class ModelProgress extends Component {
 							value={this.state.batchProgress} 
 							color="secondary" />
 					</div>
-				:
-					<h4>Not training</h4>
+				: activeStep === steps.length  
+            && !this.state.running && this.state.currentEpoch === this.state.maxEpoch 
+            && this.state.currentBatch === this.state.stepsPerEpoch 
+        ? <PredictProgress className={classes.progress}/>
+        : activeStep !== steps.length && (
+  				<Typography variant="subtitle2" gutterBottom>
+            Not currently training
+          </Typography>)
 				}
       </div>
     )

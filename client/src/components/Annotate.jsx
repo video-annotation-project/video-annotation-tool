@@ -4,14 +4,15 @@ import io from "socket.io-client";
 import Button from "@material-ui/core/Button";
 import Typography from "@material-ui/core/Typography";
 import { withStyles } from "@material-ui/core/styles";
-import Slider from "@material-ui/lab/Slider";
+import Slider from "@material-ui/core/Slider";
 import Swal from "sweetalert2";
 
-import ConceptsSelected from "../Utilities/ConceptsSelected.jsx";
-import DialogModal from "../Utilities/DialogModal.jsx";
-import VideoList from "./VideoList.jsx";
-import DragBoxContainer from "../Utilities/DragBoxContainer.jsx";
+import ConceptsSelected from "./Utilities/ConceptsSelected.jsx";
+import DialogModal from "./Utilities/DialogModal.jsx";
+import VideoList from "./Utilities/VideoList.jsx";
+import DragBoxContainer from "./Utilities/DragBoxContainer.jsx";
 
+import Hotkeys from 'react-hot-keys';
 
 const styles = theme => ({
   videoContainer: {
@@ -63,7 +64,6 @@ class Annotate extends Component {
       dialogMsg: null,
       dialogOpen: false,
       clickedConcept: null,
-      closeHandler: null,
       isLoaded: false,
       startedVideos: [],
       unwatchedVideos: [],
@@ -81,10 +81,10 @@ class Annotate extends Component {
 
   componentDidMount = async () => {
     // add event listener for closing or reloading window
-    window.addEventListener("beforeunload", this.handleUnload);
+    window.addEventListener("beforeunload", Annotate.handleUnload);
 
-    // add event listener for different key presses
-    document.addEventListener("keydown", this.handleKeyDown);
+    // // add event listener for different key presses
+    // document.addEventListener("keydown", this.handleKeyDown);
 
     try {
       this.loadVideos(this.getCurrentVideo);
@@ -107,11 +107,10 @@ class Annotate extends Component {
   componentWillUnmount = () => {
     this.updateCheckpoint(false, false);
     this.state.socket.disconnect();
-    window.removeEventListener("beforeunload", this.handleUnload);
-    document.removeEventListener("keydown", this.handleKeyDown);
+    window.removeEventListener("beforeunload", Annotate.handleUnload);
   };
 
-  handleUnload = ev => {
+  static handleUnload = ev => {
     var videoElement = document.getElementById("video");
     if (!videoElement.paused) {
       ev.preventDefault();
@@ -119,31 +118,30 @@ class Annotate extends Component {
     }
   };
 
-  handleKeyDown = e => {
-    if (e.target !== document.body) {
-      return;
+  handleKeyDown = (keyName, e, handle) => {
+    e.preventDefault();
+    switch (keyName) {
+      case "space":
+        Annotate.playPause();
+        break;
+      case "right":
+        Annotate.skipVideoTime(1);
+        break;
+      case "left":
+        Annotate.skipVideoTime(-1);
+        break;
+      default:
+        return;
     }
-    if (e.code === "Space") {
-      e.preventDefault();
-      this.playPause();
-    }
-    if (e.code === "ArrowRight") {
-      e.preventDefault();
-      this.skipVideoTime(1);
-    }
-    if (e.code === "ArrowLeft") {
-      e.preventDefault();
-      this.skipVideoTime(-1);
-    }
-  };
+  }
 
-  skipVideoTime = time => {
+  static skipVideoTime = time => {
     var videoElement = document.getElementById("video");
     var cTime = videoElement.currentTime;
     videoElement.currentTime = cTime + time;
   };
 
-  playPause = () => {
+  static playPause = () => {
     var videoElement = document.getElementById("video");
     if (videoElement.paused) {
       videoElement.play();
@@ -152,7 +150,7 @@ class Annotate extends Component {
     }
   };
 
-  toggleVideoControls = () => {
+  static toggleVideoControls = () => {
     var videoElement = document.getElementById("video");
     videoElement.controls = !videoElement.controls;
   };
@@ -176,15 +174,12 @@ class Annotate extends Component {
       }
     };
     return axios.get("/api/videos", config).then(res => {
-      this.setState(
-        {
-          startedVideos: res.data[0].rows,
-          unwatchedVideos: res.data[1].rows,
-          watchedVideos: res.data[2].rows,
-          inProgressVideos: res.data[3].rows
-        },
-        callback
-      );
+      this.setState({
+        startedVideos: res.data.startedVideos,
+        unwatchedVideos: res.data.unwatchedVideos,
+        watchedVideos: res.data.watchedVideos,
+        inProgressVideos: res.data.inProgressVideos
+      }, callback);
     });
   };
 
@@ -236,7 +231,7 @@ class Annotate extends Component {
     };
     // update SQL database
     return axios
-      .put("/api/checkpoints/" + this.state.currentVideo.id, body, config)
+      .put("/api/videos/checkpoints/" + this.state.currentVideo.id, body, config)
       .then(res => {
         if (reloadVideos) {
           return this.loadVideos(doneClicked ? this.getCurrentVideo : null);
@@ -409,7 +404,7 @@ class Annotate extends Component {
       date: date,
       box: box
     };
-    return axios.post("/api/annotationImages", body, config).catch(error => {
+    return axios.post("/api/annotations/images", body, config).catch(error => {
       console.log(error);
     });
   };
@@ -428,7 +423,6 @@ class Annotate extends Component {
         " seconds",
       dialogOpen: true,
       clickedConcept: concept,
-      closeHandler: this.handleDialogClose
     });
   };
 
@@ -451,6 +445,10 @@ class Annotate extends Component {
     }
     return (
       <React.Fragment>
+        <Hotkeys
+          keyName="space, right, left"
+          onKeyDown={this.handleKeyDown.bind(this)}
+        />
         <ConceptsSelected handleConceptClick={this.handleConceptClick} />
         <VideoList
           handleVideoClick={this.handleVideoClick}
@@ -511,7 +509,7 @@ class Annotate extends Component {
             <Slider
               style={{
                 width: 200,
-                marginTop: 10
+                marginTop: 0
               }}
               value={this.state.videoPlaybackRate}
               min={0}
@@ -520,48 +518,49 @@ class Annotate extends Component {
               onChange={this.handleChangeSpeed}
             />
             <Typography
+              color='textSecondary'
               style={{
-                marginTop: 20
+                marginTop: 0
               }}
             >
               Play Rate: {this.state.videoPlaybackRate}
             </Typography>
           </div>
           <Button
-            variant="contained"
             color="primary"
+            variant="contained"
             className={classes.button}
-            onClick={() => this.skipVideoTime(-5)}
+            onClick={() => Annotate.skipVideoTime(-5)}
           >
             -5 sec
           </Button>
           <Button
-            variant="contained"
             color="primary"
+            variant="contained"
             className={classes.button}
-            onClick={this.playPause}
+            onClick={Annotate.playPause}
           >
             Play/Pause
           </Button>
           <Button
-            variant="contained"
             color="primary"
+            variant="contained"
             className={classes.button}
-            onClick={() => this.skipVideoTime(5)}
+            onClick={() => Annotate.skipVideoTime(5)}
           >
             +5 sec
           </Button>
           <Button
-            variant="contained"
             color="primary"
+            variant="contained"
             className={classes.button}
-            onClick={() => this.toggleVideoControls()}
+            onClick={() => Annotate.toggleVideoControls()}
           >
             Toggle Controls
           </Button>
           <Button
-            variant="contained"
             color="primary"
+            variant="contained"
             className={classes.button}
             onClick={() => this.handleDoneClick()}
           >
@@ -583,7 +582,7 @@ class Annotate extends Component {
               double submission bug, by implicitly reducing the transition time
               of DialogModal to zero. */
             }
-            handleClose={this.state.closeHandler}
+            handleClose={this.handleDialogClose}
           />
         )}
       </React.Fragment>
@@ -592,3 +591,4 @@ class Annotate extends Component {
 }
 
 export default withStyles(styles)(Annotate);
+

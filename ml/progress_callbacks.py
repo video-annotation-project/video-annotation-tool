@@ -7,14 +7,6 @@ import boto3
 from psycopg2 import connect
 from dotenv import load_dotenv
 
-# CREATE TABLE training_progress (
-#     id serial PRIMARY KEY,
-#     running bool,
-#     curr_epoch integer,
-#     max_epoch integer,
-#     curr_batch integer,
-#     steps_per_epoch integer
-# );
 
 class Progress(keras.callbacks.Callback):
 
@@ -91,7 +83,7 @@ class TensorBoardLog(keras.callbacks.Callback):
     def __init__(self, id_, table_name):
 
         self.id = id_
-        self.table_name = 'training_progress'
+        self.table_name = table_name
 
         config_path = "../config.json"
         load_dotenv(dotenv_path="../.env")
@@ -120,7 +112,7 @@ class TensorBoardLog(keras.callbacks.Callback):
     def on_train_begin(self, logs={}):
         self.cursor.execute(
         f"""UPDATE 
-                {table_name} 
+                {self.table_name} 
             SET
                 start_train=%s 
             WHERE 
@@ -133,7 +125,7 @@ class TensorBoardLog(keras.callbacks.Callback):
     def on_train_end(self, logs={}):
         self.cursor.execute(
         f"""UPDATE 
-                {table_name} 
+                {self.table_name} 
             SET
                 end_train=%s 
             WHERE 

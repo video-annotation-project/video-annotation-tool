@@ -6,6 +6,9 @@ client/build
 .idea/
 .DS_Store
 
+# Log files are downloaded automatically, ignore the folder
+logs/
+
 # private info in here
 # includes DB_HOST url, which has a dev and a production version
 .env
@@ -22,3 +25,4 @@ client/build
 # Soe files
 *.pem
 kls.pgsql
+KLS-py

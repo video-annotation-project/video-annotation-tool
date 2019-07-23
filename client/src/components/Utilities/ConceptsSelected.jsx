@@ -9,7 +9,8 @@ import { ChevronRight, Close } from "@material-ui/icons";
 import SearchModal from "./SearchModal.jsx";
 
 const styles = theme => ({
-  root: {},
+  root: {
+  },
   extendDrawerButton: {
     float: "right",
     marginTop: "5px"
@@ -57,9 +58,31 @@ class ConceptsSelected extends React.Component {
     };
   }
 
+  updateSearch = () => {
+    const config = {
+      headers: {
+        Authorization: "Bearer " + localStorage.getItem("token")
+      }
+    };
+    axios
+      .get(`/api/concepts`, config)
+      .then(res => {
+        this.setState({
+          concepts: res.data
+        });
+      })
+      .catch(error => {
+        console.log("Error in get /api/concepts");
+        console.log(error);
+        if (error.response) {
+          console.log(error.response.data.detail);
+        }
+      });
+  }
+
   getConceptsSelected = () => {
     axios
-      .get("/api/conceptsSelected", {
+      .get("/api/users/concepts", {
         headers: { Authorization: "Bearer " + localStorage.getItem("token") }
       })
       .then(res => {
@@ -87,6 +110,7 @@ class ConceptsSelected extends React.Component {
   };
 
   toggleSearchModal = boolean => {
+    this.updateSearch();
     this.setState({
       searchModalOpen: boolean
     });
@@ -104,7 +128,7 @@ class ConceptsSelected extends React.Component {
       }
     };
     axios
-      .post("/api/conceptsSelected", body, config)
+      .post("/api/users/concepts", body, config)
       .then(async res => {
         this.toggleSearchModal(false);
         this.getConceptsSelected();
@@ -130,7 +154,7 @@ class ConceptsSelected extends React.Component {
       }
     };
     axios
-      .delete("/api/conceptsSelected", config)
+      .delete("/api/users/concepts", config)
       .then(async res => {
         this.getConceptsSelected();
       })
@@ -185,7 +209,7 @@ class ConceptsSelected extends React.Component {
       }
     };
     axios
-      .patch("/api/conceptsSelected", body, config)
+      .patch("/api/users/concepts", body, config)
       .then(async res => {})
       .catch(error => {
         console.log(error);
@@ -255,7 +279,7 @@ class ConceptsSelected extends React.Component {
                 {concept.name}
                 <br />
                 <img
-                  src={"/api/conceptImages/" + concept.id}
+                  src={"/api/concepts/images/" + concept.id}
                   alt="Could not be downloaded"
                   height="50"
                   width="50"
@@ -296,6 +320,7 @@ class ConceptsSelected extends React.Component {
           inputHandler={this.selectConcept}
           open={this.state.searchModalOpen}
           handleClose={() => this.toggleSearchModal(false)}
+          concepts={this.state.concepts}
         />
       </div>
     );

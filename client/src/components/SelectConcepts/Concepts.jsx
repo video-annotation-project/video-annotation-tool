@@ -24,14 +24,14 @@ class Concepts extends React.Component {
 
   getConceptsSelected = async () => {
     return axios
-      .get("/api/conceptsSelected", {
+      .get("/api/users/concepts", {
         headers: { Authorization: "Bearer " + localStorage.getItem("token") }
       })
       .then(res => res.data)
       .then(conceptsSelectedList => {
         let conceptsSelectedObj = {};
         conceptsSelectedList.forEach(concept => {
-          conceptsSelectedObj[concept.conceptid] = true;
+          conceptsSelectedObj[concept.id] = true;
         });
         return conceptsSelectedObj;
       })
@@ -61,7 +61,7 @@ class Concepts extends React.Component {
 
   changeConceptsSelected = async id => {
     const config = {
-      url: "/api/conceptsSelected",
+      url: "/api/users/concepts",
       headers: {
         "Content-Type": "application/json",
         Authorization: "Bearer " + localStorage.getItem("token")
@@ -82,7 +82,6 @@ class Concepts extends React.Component {
       })
       .catch(error => {
         console.log(error);
-        console.log(JSON.parse(JSON.stringify(error)));
         if (!error.response) {
           return;
         }

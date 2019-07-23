@@ -53,7 +53,7 @@ class CreateUser extends Component {
       admin: this.state.admin
     };
     try {
-      let newUserInfo = await axios.post("/api/createUser", body, config);
+      let newUserInfo = await axios.post("/api/users", body, config);
       console.log(newUserInfo);
       Swal.fire("Created a new user: " + newUserInfo.data.user.username, 
       "", "success");
@@ -75,7 +75,7 @@ class CreateUser extends Component {
     const { classes } = this.props;
     return (
       <div className={classes.root}>
-        <Typography variant="display1">Create New User</Typography>
+        <Typography variant="h4">Create New User</Typography>
         <br />
         <form onSubmit={this.handleSubmit}>
           {/* <div>username</div> */}

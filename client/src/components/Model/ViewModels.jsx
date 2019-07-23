@@ -19,23 +19,19 @@ const CustomTableCell = withStyles(theme => ({
   },
   body: {
     fontSize: 14
-  }
+  },
 }))(TableCell);
 
 const styles = theme => ({
   root: {
-    //width: '100%',
-    marginTop: theme.spacing.unit * 3
-    //overflowX: 'auto',
-  },
-  table: {
-    width: 200
+    margins: 'auto',
+    padding: '20px 12%',
   },
   row: {
     "&:nth-of-type(odd)": {
       backgroundColor: theme.palette.background.default
     }
-  }
+  },
 });
 
 class ViewModels extends Component {
@@ -122,6 +118,7 @@ class ViewModels extends Component {
               <CustomTableCell>Name</CustomTableCell>
               <CustomTableCell align="right">Date Created</CustomTableCell>
               <CustomTableCell>Concepts</CustomTableCell>
+              <CustomTableCell>ConceptIDs</CustomTableCell>
               <CustomTableCell>Verification Videos</CustomTableCell>
               <CustomTableCell>Delete</CustomTableCell>
             </TableRow>
@@ -138,12 +135,16 @@ class ViewModels extends Component {
                 <CustomTableCell align="right">
                   {model.concepts.toString()}
                 </CustomTableCell>
+                <CustomTableCell align="right">
+                  {model.conceptsid.toString()}
+                </CustomTableCell>
                 <CustomTableCell>{model.videos ? model.videos.toString() : "NON"}</CustomTableCell>
                 <CustomTableCell>
-                  <IconButton aria-label="Delete">
-                    <DeleteIcon
-                      onClick={() => this.deleteModel(model)}
-                    />
+                  <IconButton 
+                    onClick={() => this.deleteModel(model)} 
+                    aria-label="Delete"
+                  >
+                    <DeleteIcon/>
                   </IconButton>
                 </CustomTableCell>
               </TableRow>

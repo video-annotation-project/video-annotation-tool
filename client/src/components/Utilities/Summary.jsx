@@ -16,10 +16,10 @@ import Typography from "@material-ui/core/Typography";
 const styles = theme => ({
   paper: {
     position: "absolute",
-    width: theme.spacing.unit * 100,
+    width: theme.spacing(100),
     backgroundColor: theme.palette.background.paper,
     boxShadow: theme.shadows[5],
-    padding: theme.spacing.unit * 4,
+    padding: theme.spacing(4),
     outline: "none",
     transform: "translate(-50%, -50%)",
     top: "50%",
@@ -27,7 +27,7 @@ const styles = theme => ({
   },
   root: {
     width: "100%",
-    marginTop: theme.spacing.unit * 3,
+    marginTop: theme.spacing(3),
     overflowX: "auto"
   },
   table: {
@@ -116,7 +116,7 @@ class Summary extends React.Component {
                     this.props.summary.data.map(row => (
                       <TableRow key={row.id}>
                         <TableCell>
-                          <Avatar src={`/api/conceptImages/${row.id}`} />
+                          <Avatar src={`/api/concepts/images/${row.id}`} />
                         </TableCell>
                         <TableCell component="th" scope="row">
                           {row.name}

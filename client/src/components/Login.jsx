@@ -44,7 +44,7 @@ class Login extends Component {
       password: password
     };
     axios
-      .post("/api/login", body, {
+      .post("/api/users/login", body, {
         headers: { "Content-Type": "application/json" }
       })
       .then(res => {
@@ -56,7 +56,7 @@ class Login extends Component {
         if (res.data.isAdmin) {
           localStorage.setItem("admin", res.data.isAdmin);
         }
-        this.props.history.push("/");
+        window.location.replace("/");
       })
       .catch(error => {
         console.log(error);
@@ -76,7 +76,7 @@ class Login extends Component {
     const { classes } = this.props;
     return (
       <div className={classes.root}>
-        <Typography variant="display1">Login</Typography>
+        <Typography variant="h4">Login</Typography>
         <br />
         <form onSubmit={this.handleSubmit}>
           <TextField

@@ -22,11 +22,11 @@ const styles = theme => ({
     flexWrap: "wrap"
   },
   formControl: {
-    margin: theme.spacing.unit,
+    margin: theme.spacing(),
     minWidth: 120
   },
   selectEmpty: {
-    marginTop: theme.spacing.unit * 2
+    marginTop: theme.spacing(2)
   }
 });
 
@@ -34,7 +34,7 @@ class Users extends Component {
   state = {
     selectedUser: "",
     users: [],
-    annotationCount: [],
+    counts: [],
     fromDate: {
       date: null,
       localeISOString: "",
@@ -139,9 +139,9 @@ class Users extends Component {
     }
   };
 
-  getAnnotationCount = async (userId, fromDate, toDate) => {
+  getCounts = async (userId, fromDate, toDate) => {
     const SPACE_CHAR = " ";
-    const url = "/api/users/annotationCount";
+    const url = "/api/users/annotations";
     const config = {
       headers: {
         "Content-Type": "application/json",
@@ -156,19 +156,21 @@ class Users extends Component {
 
     const data = await axios.get(url, config);
     if (data.status === STATUS_SUCESS_CODE) {
-      this.setState({ annotationCount: data.data });
+      this.setState({ counts: data.data });
     }
   };
 
   /**
    * Gets the total annotations from all species annotated
    */
-  getTotalAnnotations = () => {
-    let total = 0;
-    this.state.annotationCount.forEach(annotation => {
-      total += parseInt(annotation.total_count);
+  getTotalCount = () => {
+    let annotationTotal = 0;
+    let verificationTotal = 0;
+    this.state.counts.forEach(row => {
+      annotationTotal += parseInt(row.annotation_count);
+      verificationTotal += parseInt(row.verification_count);
     });
-    return total;
+    return [annotationTotal, verificationTotal];
   };
 
   renderUserSelectOptions = () => {
@@ -179,13 +181,14 @@ class Users extends Component {
     ));
   };
 
-  renderAnnotationCount = () => {
-    return this.state.annotationCount.map(row => (
+  renderCounts = () => {
+    return this.state.counts.map(row => (
       <TableRow key={row.conceptid}>
         <TableCell component="th" scope="row">
           {row.name}
         </TableCell>
-        <TableCell align="right">{row.total_count}</TableCell>
+        <TableCell align="right">{row.annotation_count}</TableCell>
+        <TableCell align="right">{row.verification_count}</TableCell>
       </TableRow>
     ));
   };
@@ -196,9 +199,9 @@ class Users extends Component {
       if (selectedUser) {
         this.setState({ selectedUser: selectedUser });
         let user = this.state.users.find(user => {
-          return user.username === selectedUser
-        })
-        this.getAnnotationCount(
+          return user.username === selectedUser;
+        });
+        this.getCounts(
           user.id,
           this.state.fromDate.ISOString,
           this.state.toDate.ISOString
@@ -209,17 +212,23 @@ class Users extends Component {
 
   handleDateChange = event => {
     if (event) {
-      const value = new Date(event.target.value);
       const name = event.target.name;
+      let value = new Date(event.target.value);
+      if (name === "fromDate" && event.target.value === "") {
+        value = new Date("1970-01-01T00:00:00");
+      } else if (name === "toDate" && event.target.value === "") {
+        value = new Date();
+      }
+
       const newDate = this.formatDate(value);
 
       this.setState({ [name]: newDate });
       let selectedUser = this.state.selectedUser;
       if (selectedUser) {
         let user = this.state.users.find(user => {
-          return user.username === selectedUser
-        })
-        this.getAnnotationCount(
+          return user.username === selectedUser;
+        });
+        this.getCounts(
           user.id,
           name === "fromDate"
             ? newDate.ISOString
@@ -232,10 +241,11 @@ class Users extends Component {
 
   render() {
     const { classes } = this.props;
+    let [annotationTotal, verificationTotal] = this.getTotalCount();
     return (
       <div className="users body-container">
         <h2>Users</h2>
-        <Grid container alignItems="baseline" wrap="nowrap" spacing={32}>
+        <Grid container alignItems="center" wrap="nowrap">
           <Grid item>
             <FormControl className={classes.formControl}>
               <InputLabel>User</InputLabel>
@@ -256,6 +266,7 @@ class Users extends Component {
               label="From"
               type="datetime-local"
               name="fromDate"
+              className={classes.formControl}
               defaultValue={this.state.fromDate.localeISOString}
               onChange={this.handleDateChange}
               InputLabelProps={{
@@ -269,6 +280,7 @@ class Users extends Component {
               label="To"
               type="datetime-local"
               name="toDate"
+              className={classes.formControl}
               defaultValue={this.state.toDate.localeISOString}
               onChange={this.handleDateChange}
               InputLabelProps={{
@@ -278,19 +290,27 @@ class Users extends Component {
           </Grid>
         </Grid>
         <Paper>
-          <Table id="annotationCountTable">
+          <Table id="CountsTable">
             <TableHead>
               <TableRow>
                 <TableCell>Species</TableCell>
                 <TableCell align="right">Total Annotated</TableCell>
+                <TableCell align="right">Total Verified</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {this.state.annotationCount ? this.renderAnnotationCount() : null}
+              {this.state.counts ? this.renderCounts() : null}
             </TableBody>
           </Table>
         </Paper>
-        <h3>Total Annotations: {this.getTotalAnnotations()}</h3>
+        <div style={{ clear: "both" }}>
+          <h3 style={{ float: "left" }}>
+            Total Annotations: {annotationTotal}
+          </h3>
+          <h3 style={{ float: "right" }}>
+            Total Verifications: {verificationTotal}
+          </h3>
+        </div>
       </div>
     );
   }

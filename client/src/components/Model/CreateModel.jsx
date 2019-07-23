@@ -6,8 +6,8 @@ import StepLabel from "@material-ui/core/StepLabel";
 import StepContent from "@material-ui/core/StepContent";
 import Button from "@material-ui/core/Button";
 import Paper from "@material-ui/core/Paper";
-import TextField from '@material-ui/core/TextField';
-import { FormControl } from "@material-ui/core";
+import TextField from "@material-ui/core/TextField";
+import { FormControl, Grid } from "@material-ui/core";
 import FormGroup from "@material-ui/core/FormGroup";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import FormLabel from "@material-ui/core/FormLabel";
@@ -21,33 +21,45 @@ import VideoMetadata from "../Utilities/VideoMetadata.jsx";
 import Typography from "@material-ui/core/Typography";
 import { withStyles } from "@material-ui/core/styles";
 import Swal from "sweetalert2";
+import ListItem from "@material-ui/core/ListItem";
+import Tooltip from "@material-ui/core/Tooltip";
+import List from "@material-ui/core/List";
 
 const styles = theme => ({
-  root: {
-    width: "90%",
-  },
   checkSelector: {
-    maxHeight: "150px",
+    marginTop: theme.spacing(2),
+    maxHeight: "400px",
     overflow: "auto"
   },
+  list: {
+    marginTop: theme.spacing(2),
+    overflow: "auto",
+    maxHeight: (400 - theme.spacing(2)).toString() + "px"
+  },
   textField: {
-    marginLeft: theme.spacing,
-    marginRight: theme.spacing,
-    width: 200,
+    marginLeft: theme.spacing(),
+    marginRight: theme.spacing(),
+    width: 200
   },
   actionsContainer: {
-    marginBottom: theme.spacing.unit * 2
+    marginBottom: theme.spacing(2)
   },
   button: {
-    marginTop: theme.spacing.unit,
-    marginRight: theme.spacing.unit
+    marginTop: theme.spacing(2),
+    marginRight: theme.spacing()
+  },
+  collectionButton: {
+    textTransform: "none"
   },
   resetContainer: {
-    padding: theme.spacing.unit * 3
+    padding: theme.spacing(3)
   },
   ModelNameForm: {
-    display: 'flex',
-    flexWrap: 'wrap',
+    display: "flex",
+    flexWrap: "wrap"
+  },
+  group: {
+    marginLeft: 15
   }
 });
 
@@ -55,24 +67,22 @@ class CreateModel extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      modelName: '',
+      modelName: "",
       models: [],
       concepts: [],
+      conceptCollections: [],
       conceptsSelected: [],
       videos: [],
+      videoCollections: [],
       videosSelected: [],
       activeStep: 0,
-      openedVideo: null,
+      openedVideo: null
     };
   }
 
   getSteps = () => {
-    return [
-      'Name model',
-      'Select species',
-      'Select test videos'
-   ];
-  }
+    return ["Name model", "Select species", "Select test videos"];
+  };
 
   getStepContent = step => {
     switch (step) {
@@ -90,7 +100,9 @@ class CreateModel extends Component {
   componentDidMount = () => {
     this.loadExistingModels();
     this.loadConcepts();
+    this.loadConceptCollections();
     this.loadVideoList();
+    this.loadVideoCollections();
   };
 
   loadExistingModels = () => {
@@ -102,10 +114,10 @@ class CreateModel extends Component {
     axios
       .get(`/api/models`, config)
       .then(res => {
-        let models = []
+        let models = [];
         res.data.forEach(model => {
           models.push(model.name);
-        })
+        });
         this.setState({
           models: models
         });
@@ -126,7 +138,7 @@ class CreateModel extends Component {
       }
     };
     axios
-      .get(`/api/concepts`, config)
+      .get(`/api/models/concepts`, config)
       .then(res => {
         this.setState({
           concepts: res.data
@@ -139,7 +151,24 @@ class CreateModel extends Component {
           console.log(error.response.data.detail);
         }
       });
-  }
+  };
+
+  loadConceptCollections = async () => {
+    return axios
+      .get(`/api/collections/concepts`, {
+        headers: { Authorization: "Bearer " + localStorage.getItem("token") }
+      })
+      .then(res => {
+        this.setState({
+          conceptCollections: res.data
+        });
+      })
+      .catch(error => {
+        this.setState({
+          error: error
+        });
+      });
+  };
 
   loadVideoList = () => {
     const config = {
@@ -147,14 +176,28 @@ class CreateModel extends Component {
         Authorization: "Bearer " + localStorage.getItem("token")
       }
     };
-    axios.get(
-      `/api/videos`,
-      config
-    ).then(res => {
+    axios.get(`/api/videos`, config).then(res => {
       this.setState({
-        videos: res.data[2].rows
+        videos: res.data.watchedVideos
       });
     });
+  };
+
+  loadVideoCollections = async () => {
+    return axios
+      .get(`/api/collections/videos`, {
+        headers: { Authorization: "Bearer " + localStorage.getItem("token") }
+      })
+      .then(res => {
+        this.setState({
+          videoCollections: res.data
+        });
+      })
+      .catch(error => {
+        this.setState({
+          error: error
+        });
+      });
   };
 
   handleChange = event => {
@@ -163,24 +206,27 @@ class CreateModel extends Component {
     });
   };
 
+  handleChangeCollection = type => value => {
+    this.setState({
+      [type]: value
+    });
+  };
+
   nameModel = () => {
     const classes = this.props.classes;
     return (
-      <form 
-        className={classes.ModelNameForm}
-        onSubmit={this.handleNext}
-      >
+      <form className={classes.ModelNameForm} onSubmit={this.handleNext}>
         <TextField
-          margin='normal'
-          name='modelName'
-          label='Model Name'
+          margin="normal"
+          name="modelName"
+          label="Model Name"
           value={this.state.modelName}
           onChange={this.handleChange}
           autoFocus={true}
         />
       </form>
-    )
-  }
+    );
+  };
 
   //Handle concept checkbox selections
   checkboxSelect = (stateName, id) => event => {
@@ -198,88 +244,195 @@ class CreateModel extends Component {
   selectConcepts = () => {
     const classes = this.props.classes;
     if (!this.state.concepts) {
-      return (
-        <div>Loading...</div>
-      )
+      return <div>Loading...</div>;
     }
     return (
-      <FormControl
-        component="fieldset"
-        className={classes.checkSelector}
-      >
-        <FormLabel component="legend">Select Species to Train With</FormLabel>
-        <FormGroup>
-          {this.state.concepts.map(concept => (
-            <div key={concept.name}>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    onChange={this.checkboxSelect('conceptsSelected', concept.id)}
-                    color='primary'
-                    checked={
-                      this.state.conceptsSelected.includes(concept.id)
-                    }
-                  />
-                }
-                label={concept.name}
-              >
-              </FormControlLabel>
-            </div>
-          ))}
-        </FormGroup>
-      </FormControl>
-    )
-  }
+      <Grid container spacing={5}>
+        <Grid item>
+          <FormLabel component="legend">Select species to train with</FormLabel>
+          <FormControl component="fieldset" className={classes.checkSelector}>
+            <FormGroup className={classes.group}>
+              {this.state.concepts
+                .filter(concept => concept.rank)
+                .map(concept => (
+                  <div key={concept.name}>
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          onChange={this.checkboxSelect(
+                            "conceptsSelected",
+                            concept.id
+                          )}
+                          color="primary"
+                          checked={this.state.conceptsSelected.includes(
+                            concept.id
+                          )}
+                        />
+                      }
+                      label={concept.id + " " + concept.name}
+                    />
+                  </div>
+                ))}
+            </FormGroup>
+          </FormControl>
+        </Grid>
+        <Grid item>
+          <FormLabel component="legend">
+            Select species collection to test model
+          </FormLabel>
+          <List className={classes.list}>
+            {this.state.conceptCollections.map(conceptCollection => (
+              <ListItem key={conceptCollection.id}>
+                <Tooltip
+                  title={
+                    !conceptCollection.description
+                      ? ""
+                      : conceptCollection.description
+                  }
+                  placement="bottom-start"
+                >
+                  <div>
+                    <Button
+                      className={classes.collectionButton}
+                      variant="outlined"
+                      value={conceptCollection.id}
+                      disabled={!conceptCollection.conceptids[0]}
+                      onClick={() => {
+                        if (conceptCollection.conceptids[0]) {
+                          let conceptids = [];
+                          this.state.concepts.forEach(concept => {
+                            if (
+                              conceptCollection.conceptids.includes(concept.id)
+                            ) {
+                              conceptids.push(concept.id);
+                            }
+                          });
+                          this.handleChangeCollection("conceptsSelected")(
+                            conceptids
+                          );
+                        }
+                      }}
+                    >
+                      {conceptCollection.name +
+                        (!conceptCollection.conceptids[0]
+                          ? " (No concepts)"
+                          : "")}
+                    </Button>
+                  </div>
+                </Tooltip>
+              </ListItem>
+            ))}
+          </List>
+        </Grid>
+      </Grid>
+    );
+  };
+
+  //Methods for video meta data
+  openVideoMetadata = (event, video) => {
+    event.stopPropagation();
+    this.setState({
+      openedVideo: video
+    });
+  };
+
+  closeVideoMetadata = () => {
+    this.setState({
+      openedVideo: null
+    });
+  };
 
   selectVideo = () => {
+    const classes = this.props.classes;
+
     if (!this.state.videos) {
-      return <div>Loading...</div>
+      return <div>Loading...</div>;
     }
     return (
-      <FormControl
-        component="fieldset"
-        className={this.props.classes.checkSelector}
-      >
-        <FormLabel component="legend">Select Videos to Test Model</FormLabel>
-        <FormGroup>
-          {this.state.videos.map(video => (
-            <div key={video.filename}>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    onChange={this.checkboxSelect('videosSelected', video.id)}
-                    color='primary'
-                    checked={
-                      this.state.videosSelected.includes(video.id)
+      <Grid container spacing={5}>
+        <Grid item>
+          <FormLabel component="legend">Select videos to test model</FormLabel>
+          <FormControl
+            component="fieldset"
+            className={this.props.classes.checkSelector}
+          >
+            <FormGroup className={classes.group}>
+              {this.state.videos.map(video => (
+                <div key={video.filename}>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        onChange={this.checkboxSelect(
+                          "videosSelected",
+                          video.id
+                        )}
+                        color="primary"
+                        checked={this.state.videosSelected.includes(video.id)}
+                      />
                     }
+                    label={video.id + " " + video.filename}
                   />
-                }
-                label={video.id + " " + video.filename}
-              >
-              </FormControlLabel>
-              <IconButton style={{ float: 'right' }}>
-                <Description
-                  onClick={
-                    (event) =>
-                      this.openVideoMetadata(
-                        event,
-                        video,
-                      )
+                  <IconButton
+                    onClick={event => this.openVideoMetadata(event, video)}
+                    style={{ float: "right" }}
+                  >
+                    <Description />
+                  </IconButton>
+                </div>
+              ))}
+            </FormGroup>
+          </FormControl>
+        </Grid>
+        <Grid item>
+          <FormLabel component="legend">
+            Select video collections to test model
+          </FormLabel>
+          <List className={classes.list}>
+            {this.state.videoCollections.map(videoCollection => (
+              <ListItem key={videoCollection.id}>
+                <Tooltip
+                  title={
+                    !videoCollection.description
+                      ? ""
+                      : videoCollection.description
                   }
-                />
-              </IconButton>
-
-            </div>
-          ))}
-        </FormGroup>
-      </FormControl>
+                  placement="bottom-start"
+                >
+                  <div>
+                    <Button
+                      className={classes.collectionButton}
+                      variant="outlined"
+                      value={videoCollection.id}
+                      disabled={!videoCollection.videoids[0]}
+                      onClick={() => {
+                        if (videoCollection.videoids[0]) {
+                          let videoids = [];
+                          this.state.videos.forEach(video => {
+                            if (videoCollection.videoids.includes(video.id)) {
+                              videoids.push(video.id);
+                            }
+                          });
+                          this.handleChangeCollection("videosSelected")(
+                            videoids
+                          );
+                        }
+                      }}
+                    >
+                      {videoCollection.name +
+                        (!videoCollection.videoids[0] ? " (No Videos)" : "")}
+                    </Button>
+                  </div>
+                </Tooltip>
+              </ListItem>
+            ))}
+          </List>
+        </Grid>
+      </Grid>
     );
   };
 
   postModel = async () => {
-    const {
-      modelName, conceptsSelected, videosSelected
-    } = this.state;
+    const { modelName, conceptsSelected, videosSelected } = this.state;
     const config = {
       headers: {
         Authorization: "Bearer " + localStorage.getItem("token")
@@ -302,13 +455,12 @@ class CreateModel extends Component {
   };
 
   handleNext = event => {
-    event.preventDefault()
+    event.preventDefault();
     // If step = 0 then need to check
     // If model name exists
     if (this.state.activeStep === 0) {
-      if (this.state.models.includes(
-        this.state.modelName)) {
-        Swal.fire('Model Already Exists', '', "info");
+      if (this.state.models.includes(this.state.modelName)) {
+        Swal.fire("Model Already Exists", "", "info");
         return;
       }
     }
@@ -331,7 +483,7 @@ class CreateModel extends Component {
   handleReset = () => {
     this.setState({
       activeStep: 0,
-      modelName: '',
+      modelName: "",
       conceptsSelected: []
     });
   };
@@ -339,7 +491,7 @@ class CreateModel extends Component {
   render() {
     const { classes } = this.props;
     const steps = this.getSteps();
-    const { 
+    const {
       models,
       activeStep,
       modelName,
@@ -378,7 +530,9 @@ class CreateModel extends Component {
                         (activeStep === 2 && videosSelected.length < 1)
                       }
                     >
-                      {activeStep === steps.length - 1 ? "Create Model" : "Next"}
+                      {activeStep === steps.length - 1
+                        ? "Create Model"
+                        : "Next"}
                     </Button>
                   </div>
                 </div>

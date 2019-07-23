@@ -5,6 +5,7 @@ import AppBar from "@material-ui/core/AppBar";
 import Button from "@material-ui/core/Button";
 import Toolbar from "@material-ui/core/Toolbar";
 import Typography from "@material-ui/core/Typography";
+import GeneralMenu from "./Utilities/GeneralMenu";
 
 const styles = {
   flex: {
@@ -12,15 +13,16 @@ const styles = {
   }
 };
 
-
 class Navbar extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {};
+    this.state = {
+      modelTabOpen: false
+    };
   }
 
   handleLogout = () => {
-    /* Annotate.jsx tries to PUT to /api/checkpoints when unmounted, so we redirect 
+    /* Annotate.jsx tries to PUT to /api/videos/checkpoints when unmounted, so we redirect 
     the web page before clearing authentication */
     /* In theory, nothing after the redirect statement should execute, which is a 
     problem. Luckily, it actually does execute via race condition. */
@@ -28,12 +30,25 @@ class Navbar extends React.Component {
     localStorage.clear();
   };
 
+  handleModelTab = () => {
+    this.setState({ modelTabOpen: !this.state.modelTabOpen });
+  };
+
+  closeModelTab = () => {
+    this.setState({ modelTabOpen: false });
+  };
+
   render() {
     const { classes } = this.props;
+    let accountItems = [{ name: "Profile", link: "/account/profile" }];
+    if (localStorage.getItem("admin")) {
+      accountItems.push({ name: "Create User", link: "/account/createUser" });
+    }
+
     return (
       <AppBar position="static">
         <Toolbar>
-          <Typography variant="title" color="inherit" className={classes.flex}>
+          <Typography variant="button" color="inherit" className={classes.flex}>
             Video Annotation Tool
           </Typography>
           <Button color="inherit" component={Link} to="/">
@@ -41,56 +56,54 @@ class Navbar extends React.Component {
           </Button>
           {localStorage.getItem("isAuthed") ? (
             <React.Fragment>
+              <Button color="inherit" component={Link} to="/concepts">
+                Select Concepts
+              </Button>
+              <GeneralMenu
+                name={"Collections"}
+                Link={Link}
+                items={[
+                  { name: "Annotations", link: "/collection/annotations" },
+                  { name: "Concepts", link: "/collection/concepts" },
+                  { name: "Videos", link: "/collection/videos" }
+                ]}
+              />
+              <GeneralMenu
+                name={"Annotate"}
+                Link={Link}
+                items={[
+                  { name: "Videos", link: "/annotate/videos" },
+                  { name: "Verify", link: "/annotate/verify" }
+                ]}
+              />
+              <Button color="inherit" component={Link} to="/report">
+                Report
+              </Button>
               {localStorage.getItem("admin") ? (
                 <React.Fragment>
-                  <Button color="inherit" component={Link} to="/concepts">
-                    Select Concepts
-                  </Button>
-                  <Button color="inherit" component={Link} to="/annotate">
-                    Annotate Videos
-                  </Button>
+                  <GeneralMenu
+                    name={"Models"}
+                    Link={Link}
+                    items={[
+                      { name: "Create Model", link: "/models/create" },
+                      { name: "View Models", link: "/models/view" },
+                      { name: "Train Models", link: "/models/train" },
+                      { name: "Predict Models", link: "/models/predict" },
+                      { name: "Previous Models", link: "/models/runs" }
+                    ]}
+                  />
                   <Button color="inherit" component={Link} to="/aivideos">
                     AI Videos
-                  </Button>
-                  <Button color="inherit" component={Link} to="/report">
-                    Report
-                  </Button>
-                  <Button color="inherit" component={Link} to="/createUser">
-                    Create User
-                  </Button>
-                  <Button color="inherit" component={Link} to="/models">
-                    Models
                   </Button>
                   <Button color="inherit" component={Link} to="/users">
                     Users
                   </Button>
                 </React.Fragment>
               ) : (
-                <React.Fragment>
-                  <Button color="inherit" component={Link} to="/concepts">
-                    Select Concepts
-                  </Button>
-                  <Button color="inherit" component={Link} to="/annotate">
-                    Annotate Videos
-                  </Button>
-                  <Button color="inherit" component={Link} to="/report">
-                    {" "}
-                    Report{" "}
-                  </Button>
-                </React.Fragment>
+                ""
               )}
-              <Button color="inherit" component={Link} to="/verify">
-                Verify
-              </Button>
-              <Button color="inherit" component={Link} to="/profile">
-                Account
-              </Button>
-              <Button
-                color="inherit"
-                // component={Link}
-                // to="/"
-                onClick={this.handleLogout}
-              >
+              <GeneralMenu name={"Account"} Link={Link} items={accountItems} />
+              <Button color="inherit" onClick={this.handleLogout}>
                 Logout
               </Button>
             </React.Fragment>

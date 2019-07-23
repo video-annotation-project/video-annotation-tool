@@ -1,8 +1,7 @@
 import React, { Component } from "react";
 import axios from "axios";
-import TextField from '@material-ui/core/TextField';
-import io from "socket.io-client"
-import Typography from "@material-ui/core/Typography";
+import TextField from "@material-ui/core/TextField";
+import io from "socket.io-client";
 import { withStyles } from "@material-ui/core/styles";
 import PropTypes from "prop-types";
 import Stepper from "@material-ui/core/Stepper";
@@ -11,7 +10,6 @@ import StepLabel from "@material-ui/core/StepLabel";
 import StepContent from "@material-ui/core/StepContent";
 import Button from "@material-ui/core/Button";
 import Paper from "@material-ui/core/Paper";
-import CircularProgress from "@material-ui/core/CircularProgress";
 import { FormControl } from "@material-ui/core";
 import InputLabel from "@material-ui/core/InputLabel";
 import Select from "@material-ui/core/Select";
@@ -20,18 +18,18 @@ import FormGroup from "@material-ui/core/FormGroup";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import FormLabel from "@material-ui/core/FormLabel";
 import Checkbox from "@material-ui/core/Checkbox";
-import IconButton from "@material-ui/core/IconButton";
-import Description from "@material-ui/icons/Description";
 import ModelProgress from "./ModelProgress.jsx";
 import VideoMetadata from "../Utilities/VideoMetadata.jsx";
-
+import Typography from '@material-ui/core/Typography';
 
 const styles = theme => ({
   root: {
-    width: "90%"
+    margin: "40px 180px"
   },
   form: {
-    width: "10%"
+    marginBottom: theme.spacing(2),
+    marginLeft: theme.spacing(1),
+    minWidth: 150
   },
   center: {
     display: "flex",
@@ -42,14 +40,15 @@ const styles = theme => ({
   container: {
     display: "flex",
     flexDirection: "row",
-    width: "100%",
+    padding: "20px",
+    height: "560px"
   },
   stepper: {
-    display: "flex",
+    display: "block",
     flex: 1,
     flexDirection: "column",
     justifyContent: "left",
-    width: '50%',
+    width: "50%"
   },
   progress: {
     display: "flex",
@@ -57,32 +56,43 @@ const styles = theme => ({
     flexDirection: "column",
     justifyContent: "right",
     alignItems: "right",
-    width: '50%',
+    width: "50%"
   },
   button: {
-    marginTop: theme.spacing.unit,
-    marginRight: theme.spacing.unit
+    marginTop: theme.spacing(),
+    marginRight: theme.spacing()
   },
   actionsContainer: {
     flexDirection: "column",
     justifyContent: "left",
-    marginBottom: theme.spacing.unit * 2
+    marginBottom: theme.spacing(2)
   },
   resetContainer: {
-    padding: theme.spacing.unit * 3
+    padding: theme.spacing(3)
   },
   checkSelector: {
     maxHeight: "150px",
     overflow: "auto"
   },
+  videoSelector: {
+    width: "625px"
+  },
   hyperparametersForm: {
-    display: 'flex',
-    flexWrap: 'wrap',
+    display: "flex",
+    flexWrap: "wrap"
   },
   textField: {
-    marginLeft: theme.spacing,
-    marginRight: theme.spacing,
-    width: 200,
+    marginLeft: theme.spacing(),
+    marginRight: theme.spacing(),
+    width: 200
+  },
+  epochText: {
+    position: "relative",
+    top: "-15px"
+  },
+  hyperParamsInput: {
+    width: "190ox",
+    marginRight: "10px"
   }
 });
 
@@ -109,14 +119,10 @@ class TrainModel extends Component {
     socket.on("refresh trainmodel", this.loadOptionInfo);
 
     this.state = {
-      videos: [],
-      videosSelected: null,
-      users: [],
-      usersSelected: null,
       models: [],
       modelSelected: null,
-      concepts: [],
-      conceptsSelected: null,
+      collections: [],
+      annotationCollections: [],
       minImages: 5000,
       epochs: 0,
       activeStep: 0,
@@ -141,42 +147,35 @@ class TrainModel extends Component {
     });
   };
 
-  componentDidMount = () => {
+  componentDidMount = async () => {
     this.loadOptionInfo();
     this.loadExistingModels();
-    this.loadUserList();
-  }
+  };
+
 
   loadOptionInfo = () => {
     const config = {
-      headers: {
+      headers:{
         Authorization: "Bearer " + localStorage.getItem("token")
       }
     };
     let option = "trainmodel";
     axios
-      .get(`/api/modelTab/${option}`, config)
+      .get(`/api/models/train/${option}`, config)
       .then(res => {
         const info = res.data[0].info;
-        this.setState({
-          activeStep: info.activeStep,
-          usersSelected: info.usersSelected,
-          videosSelected: info.videosSelected,
-          conceptsSelected: info.conceptsSelected,
-          modelSelected: info.modelSelected,
-          minImages: info.minImages,
-          epochs: info.epochs
-        }, () => {
-          if (info.usersSelected.length > 0) {
-            this.loadVideoList();
+        this.setState(
+          {
+            activeStep: info.activeStep,
+            annotationCollections: info.annotationCollections,
+            modelSelected: info.modelSelected,
+            minImages: info.minImages,
+            epochs: info.epochs
           }
-          if (info.videosSelected.length > 0) {
-            this.loadConceptList();
-          }
-        });
+        );
       })
       .catch(error => {
-        console.log("Error in get /api/modelTab");
+        console.log("Error in get /api/models");
         console.log(error);
         if (error.response) {
           console.log(error.response.data.detail);
@@ -194,8 +193,8 @@ class TrainModel extends Component {
       .get(`/api/models`, config)
       .then(res => {
         this.setState({
-          models: res.data
-        });
+          models: res.data },
+        );
       })
       .catch(error => {
         console.log("Error in get /api/models");
@@ -206,53 +205,19 @@ class TrainModel extends Component {
       });
   };
 
-  loadUserList = () => {
-    const config = {
-      headers: {
-        'Authorization': 'Bearer ' + localStorage.getItem('token')
-      }
-    }
-    axios.get(`/api/users`, config).then(res => {
-      this.setState({
-        users: res.data
-      });
-    })
-  }
-
-  loadVideoList = () => {
+  loadCollectionlist = () => {
     const config = {
       headers: {
         Authorization: "Bearer " + localStorage.getItem("token")
       }
     };
-    axios.get(
-      `/api/videos/trainModel/` +
-       this.state.usersSelected + `/` +
-       this.state.modelSelected,
-      config
-    ).then(res => {
-      this.setState({
-        videos: res.data
-      });
+    axios.get(`/api/collections/annotations`, config).then(res => {
+      let selectedModelTuple = this.state.models.find(model => {
+        return model.name === this.state.modelSelected;
+      })
+      this.filterCollection(selectedModelTuple, res.data);
     });
   };
-
-  loadConceptList = async () => {
-    const { videosSelected, modelSelected } = this.state;
-    const config = {
-      headers: {
-        Authorization: "Bearer " + localStorage.getItem("token")
-      }
-    };
-    let response = await axios.get(
-      `/api/trainModel/concepts/` +
-      videosSelected + '/' + modelSelected,
-      config
-    )
-    this.setState({
-      concepts: response.data
-    });
-  }
 
   //Used to handle changes in the hyperparameters
   //and in the select model
@@ -264,9 +229,7 @@ class TrainModel extends Component {
 
   selectModel = () => {
     if (this.state.modelSelected === null) {
-      return (
-        <div>Loading...</div>
-      )
+      return <div>Loading...</div>;
     }
     return (
       <FormControl className={this.props.classes.form}>
@@ -299,32 +262,34 @@ class TrainModel extends Component {
     });
   };
 
-  selectUser = () => {
-    if (!this.state.usersSelected) {
-      return (
-        <div>Loading...</div>
-      )
+  selectCollection = () => {
+    const { checkSelector } = this.props.classes;
+    if (!this.state.annotationCollections) {
+      return <div>Loading...</div>;
     }
     return (
-      <FormControl
-        component="fieldset"
-        className={this.props.classes.checkSelector}
-      >
+      <FormControl component="fieldset" className={checkSelector}>
         <FormLabel component="legend">
-          Select Users Whose Annotations to Use
+          Select Annotation Collection to Use
         </FormLabel>
         <FormGroup>
-          {this.state.users.map(user => (
-            <div key={user.id}>
+          {this.state.collections.sort((a, b) => a.validConcepts ? -1 : 1).map(collection => (
+            <div key={collection.id}>
               <FormControlLabel
                 control={
                   <Checkbox
-                    onChange={this.checkboxSelect('usersSelected', user.id)}
+                    onChange={this.checkboxSelect("annotationCollections", collection.id)}
                     color="primary"
-                    checked={this.state.usersSelected.includes(user.id)}
+                    checked={this.state.annotationCollections.includes(collection.id)}
+                    disabled={collection.disable}
                   />
                 }
-                label={user.username}
+                label={<div>{collection.name} 
+                  {collection.validConcepts ?
+                  <Typography variant="subtitle2" gutterBottom color="secondary">
+                     {collection.validConcepts.concepts.join(", ")}
+                  </Typography> : ""}
+                  </div>}
               />
             </div>
           ))}
@@ -333,131 +298,52 @@ class TrainModel extends Component {
     );
   };
 
-  selectVideo = () => {
-    if (!this.state.videosSelected) {
-      return (
-        <div>Loading...</div>
-      )
-    }
-    return (
-      <FormControl
-        component="fieldset"
-        className={this.props.classes.checkSelector}
-      >
-        <FormLabel component="legend">Select Videos to Train With</FormLabel>
-        <FormGroup>
-          {this.state.videos.map(video => (
-            <div key={video.filename}>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    onChange={this.checkboxSelect('videosSelected', video.id)}
-                    color='primary'
-                    checked={
-                      this.state.videosSelected.includes(video.id)
-                    }
-                  />
-                }
-                label={video.id + " " + video.filename}
-              >
-              </FormControlLabel>
-              <IconButton style={{ float: 'right' }}>
-                <Description
-                  onClick={
-                    (event) =>
-                      this.openVideoMetadata(
-                        event,
-                        video,
-                      )
-                  }
-                />
-              </IconButton>
-
-            </div>
-          ))}
-        </FormGroup>
-      </FormControl>
-    );
-  };
-
-  selectConcepts = () => {
-    const classes = this.props.classes;
-    if (!this.state.conceptsSelected) {
-      return (<div>Loading...</div>)
-    }
-
-    return (
-      <FormControl
-        component="fieldset"
-        className={classes.checkSelector}
-      >
-        <FormLabel component="legend">Select Species to Train With</FormLabel>
-        <FormGroup>
-          {this.state.concepts.map(concept => (
-            <div key={concept.name}>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    onChange={this.checkboxSelect('conceptsSelected', concept.id)}
-                    color='primary'
-                    checked={
-                      this.state.conceptsSelected.includes(concept.id)
-                    }
-                  />
-                }
-                label={concept.name}
-              >
-              </FormControlLabel>
-            </div>
-          ))}
-        </FormGroup>
-      </FormControl>
-    )
-  }
 
   selectHyperparameters = () => {
     const classes = this.props.classes;
+    const label = (
+      <span className={classes.epochText}>
+        Number of epochs <br />
+        (0 = Until Increased Loss)
+      </span>
+    );
+
     return (
       <form className={classes.hyperparametersForm}>
         <TextField
-          margin='normal'
-          name='epochs'
-          label='Number of epochs (0=Until Increased Loss)'
+          margin="normal"
+          name="epochs"
+          label={label}
           value={this.state.epochs}
           onChange={this.handleChange}
+          className={classes.hyperParamsInput}
         />
         <TextField
           margin="normal"
-          name='minImages'
-          label='Number Training Images'
+          name="minImages"
+          label="Number of training images"
           value={this.state.minImages}
           onChange={this.handleChange}
         />
       </form>
-    )
-  }
+    );
+  };
 
   getSteps = () => {
     return [
-      'Select model',
-      'Select users',
-      'Select videos',
-      'Select species',
-      'Select hyperparameters'
+      "Select model",
+      "Select annotation collection",
+      "Select hyperparameters"
     ];
-  }
+  };
 
   getStepContent = step => {
     switch (step) {
       case 0:
         return this.selectModel();
       case 1:
-        return this.selectUser();
+        return this.selectCollection();
       case 2:
-        return this.selectVideo();
-      case 3:
-        return this.selectConcepts();
-      case 4:
         return this.selectHyperparameters();
       default:
         return "Unknown step";
@@ -467,39 +353,37 @@ class TrainModel extends Component {
   getStepState = step => {
     switch (step) {
       case 0:
-        return 'models';
+        return "models";
       case 1:
-        return 'users';
-      case 2:
-        return 'videos';
-      case 3:
-        return 'concepts';
+        return "collections";
       default:
-        return 'NAN';
+        return undefined;
     }
-  }
+  };
 
   handleSelectAll = () => {
     const stateName = this.getStepState(this.state.activeStep);
     const data = this.state[stateName];
-    const dataSelected = JSON.parse(JSON.stringify(
-      this.state[stateName + "Selected"]));
+    const dataSelected = JSON.parse(
+      JSON.stringify(this.state[stateName + "Selected"])
+    );
     data.forEach(row => {
       if (!dataSelected.includes(row.id)) {
         dataSelected.push(row.id);
       }
     });
     this.setState({
-      [stateName+"Selected"]: dataSelected
+      [stateName + "Selected"]: dataSelected
     });
-  }
+  };
 
   handleUnselectAll = () => {
     const stateName = this.getStepState(this.state.activeStep);
     this.setState({
-      [stateName+"Selected"]: []
+      [stateName + "Selected"]: []
     });
-  }
+  };
+  
   updateBackendInfo = () => {
     const config = {
       headers: {
@@ -509,9 +393,7 @@ class TrainModel extends Component {
     let info = {
       activeStep: this.state.activeStep,
       modelSelected: this.state.modelSelected,
-      usersSelected: this.state.usersSelected,
-      videosSelected: this.state.videosSelected,
-      conceptsSelected: this.state.conceptsSelected,
+      annotationCollections: this.state.annotationCollections,
       epochs: this.state.epochs,
       minImages: this.state.minImages
     };
@@ -520,7 +402,7 @@ class TrainModel extends Component {
     };
     // update SQL database
     axios
-      .put("/api/modelTab/trainmodel", body, config)
+      .put("/api/models/train/trainmodel/", body, config)
       .then(res => {
         this.state.socket.emit("refresh trainmodel");
       })
@@ -530,43 +412,84 @@ class TrainModel extends Component {
       });
   };
 
+  filterCollection = async (data, collections) => {
+    const config = {
+      headers: {
+        Authorization: "Bearer " + localStorage.getItem("token")
+      }
+    };
+    try {
+      let dataRet = await axios.get(`/api/collections/annotations/train?ids=${data.conceptsid}`,
+        config
+      );
+      var conceptids = dataRet.data.map(col => col.id);
+      dataRet = dataRet.data;
+      var filteredCol = collections;
+      filteredCol.forEach(col => {
+        if (!conceptids.includes(col.id)) {
+          col.disable = true;
+        }
+        else{
+          col.disable = false;
+          col.validConcepts = dataRet.find(col1 => {
+            return col1.id === col.id
+          })  
+        }
+      });
+      await this.setState({
+        collections: filteredCol
+      })
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
   handleNext = async () => {
     // After users have been selected load user videos
-    if (this.state.activeStep === 1) {
-      this.loadVideoList();
+    if (this.state.activeStep === 0) {
+      this.loadCollectionlist();
     }
     // After Model and videos have been selected load available concepts
-    if (this.state.activeStep === 2) {
-      await this.loadConceptList();
-    }
-    this.setState(state => ({
-      activeStep: state.activeStep + 1
-    }), () => {
-      if (this.state.activeStep === 5) {
-        this.postModelInstance('start');
+    // if (this.state.activeStep === 2) {
+    //   await this.loadConceptList();
+    // }
+    this.setState(
+      state => ({
+        activeStep: state.activeStep + 1
+      }),
+      () => {
+        if (this.state.activeStep === 3) {
+          this.postModelInstance("start");
+        }
+        this.updateBackendInfo();
       }
-      this.updateBackendInfo();
-    });
+    );
   };
 
   handleBack = () => {
-    this.setState(state => ({
-      activeStep: state.activeStep - 1
-    }), () => {
-      this.updateBackendInfo();
-    });
+    this.setState(
+      state => ({
+        activeStep: state.activeStep - 1
+      }),
+      () => {
+        this.updateBackendInfo();
+      }
+    );
   };
 
   handleStop = () => {
-    this.setState({
-      activeStep: 0
-    }, () => {
-      this.updateBackendInfo();
-      this.postModelInstance('stop');
-    });
+    this.setState(
+      {
+        activeStep: 0
+      },
+      () => {
+        this.updateBackendInfo();
+        this.postModelInstance("stop");
+      }
+    );
   };
 
-  postModelInstance = (command) => {
+  postModelInstance = command => {
     const config = {
       headers: {
         Authorization: "Bearer " + localStorage.getItem("token")
@@ -574,43 +497,38 @@ class TrainModel extends Component {
     };
     const body = {
       command: command,
-      modelInstanceId: 'i-011660b3e976035d8'
+      modelInstanceId: "i-011660b3e976035d8"
     };
-    axios.post(`/api/modelInstance`, body, config).then(res => {
+    axios.post(`/api/models/train`, body, config).then(res => {
       console.log(res);
     });
-  }
+  };
 
   render() {
     const { classes } = this.props;
     const steps = this.getSteps();
     const {
-      videos,
-      videosSelected,
-      usersSelected,
+      annotationCollections,
       modelSelected,
       activeStep,
       openedVideo
     } = this.state;
-    if (!videos) {
-      return <div>Loading...</div>;
-    }
+
     return (
       <div className={classes.root}>
-        <div className={classes.center}>
-          <h1 style={{ color: "red" }}>This page is still in progress</h1>
-          <Typography variant="display1">Train a model on video(s)</Typography>
-          <br />
-        </div>
-        <div className={classes.container}>
-          <Stepper className={classes.stepper} activeStep={activeStep} orientation="vertical">
-            {steps.map((label, index) => (
-              <Step key={label}>
-                <StepLabel>{label}</StepLabel>
-                <StepContent>
-                  {this.getStepContent(index)}
-                  <div className={classes.actionsContainer}>
-                    <div>
+        <Paper square>
+          <div className={classes.container}>
+            <Stepper
+              className={classes.stepper}
+              activeStep={activeStep}
+              orientation="vertical"
+            >
+              {steps.map((label, index) => (
+                <Step key={label}>
+                  <StepLabel>{label}</StepLabel>
+                  <StepContent>
+                    {this.getStepContent(index)}
+                    <div className={classes.actionsContainer}>
                       <Button
                         disabled={activeStep === 0}
                         onClick={this.handleBack}
@@ -625,45 +543,38 @@ class TrainModel extends Component {
                         className={classes.button}
                         disabled={
                           (activeStep === 0 && modelSelected === "") ||
-                          (activeStep === 1 && usersSelected.length < 1) ||
-                          (activeStep === 2 && videosSelected.length < 1)
+                          (activeStep === 1 && annotationCollections.length < 1)
                         }
                       >
-                        {activeStep === steps.length - 1 ? "Train Model" : "Next"}
+                        {activeStep === steps.length - 1
+                          ? "Train Model"
+                          : "Next"}
                       </Button>
                       <Button
                         onClick={this.handleSelectAll}
-                        disabled={
-                          activeStep === 0 || activeStep === 4
-                        }
+                        disabled={activeStep === 0 || activeStep === 4}
                       >
                         Select All
                       </Button>
                       <Button
                         onClick={this.handleUnselectAll}
-                        disabled={
-                          activeStep === 0 || activeStep === 4
-                        }
+                        disabled={activeStep === 0 || activeStep === 4}
                       >
                         Unselect All
                       </Button>
                     </div>
-                  </div>
-                </StepContent>
-              </Step>
-            ))}
-          </Stepper>
-          <ModelProgress className={classes.progress}/>
-        </div>
-        {activeStep === steps.length && (
-          <Paper square elevation={0} className={classes.resetContainer}>
-            <Typography>Model is training...</Typography>
-            <CircularProgress />
-            <Button onClick={this.handleStop} className={classes.button}>
-              Stop
-            </Button>
-          </Paper>
-        )}
+                  </StepContent>
+                </Step>
+              ))}
+            </Stepper>
+            <ModelProgress
+              className={classes.progress}
+              activeStep={activeStep}
+              steps={steps}
+              handleStop={this.handleStop}
+            />
+          </div>
+        </Paper>
         {this.state.openedVideo && (
           <VideoMetadata
             open={

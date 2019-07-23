@@ -25,27 +25,22 @@ class AnnotationFrame extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      image: null,
-      isLoaded: false,
       error: null,
-      width: null,
-      height: null,
       dialogMsg: null,
       dialogOpen: false,
       clickedConcept: null,
-      closeHandler: null
     };
   }
 
   editAnnotation = (comment, unsure) => {
-    if (comment === "") {
-      comment = this.props.annotation.comment;
-    }
     const body = {
+      op: "verifyAnnotation",
       conceptId: this.state.clickedConcept.id,
+      oldConceptId: this.props.annotation.conceptId,
+      conceptName: this.state.clickedConcept.name,
       comment: comment,
       unsure: unsure,
-      id: this.props.annotation.id
+      id: this.props.annotation.id,
     };
     const config = {
       headers: {
@@ -57,12 +52,11 @@ class AnnotationFrame extends Component {
       .patch("/api/annotations", body, config)
       .then(res => {
         this.handleDialogClose();
-        let updatedAnnotation = res.data;
         this.props.updateAnnotations(
-          updatedAnnotation.id,
-          updatedAnnotation.name,
-          updatedAnnotation.comment,
-          updatedAnnotation.unsure
+          this.state.clickedConcept.id,
+          this.state.clickedConcept.name,
+          comment,
+          unsure
         );
       })
       .catch(error => {
@@ -88,13 +82,17 @@ class AnnotationFrame extends Component {
         "Switch " + this.props.annotation.name + " to " + concept.name + "?",
       dialogOpen: true,
       clickedConcept: concept,
-      closeHandler: this.handleDialogClose
     });
   };
 
   render() {
-    const { error } = this.state;
+    const {
+      error,
+      dialogMsg,
+      dialogOpen
+    } = this.state;
     const { classes } = this.props;
+    const { unsure, comment, imagewithbox } = this.props.annotation;
     if (error) {
       return <div>Error: {error}</div>;
     }
@@ -102,12 +100,13 @@ class AnnotationFrame extends Component {
       <React.Fragment>
         <DialogModal
           title={"Confirm Annotation Edit"}
-          message={this.state.dialogMsg}
-          comment={""}
+          message={dialogMsg}
+          comment={comment}
+          unsure={unsure}
           placeholder={"Comments"}
           inputHandler={this.editAnnotation}
-          open={this.state.dialogOpen}
-          handleClose={this.state.closeHandler}
+          open={dialogOpen}
+          handleClose={this.handleDialogClose}
         />
         <ConceptsSelected handleConceptClick={this.handleConceptClick} />
         <ListItem className={classes.item}>
@@ -115,8 +114,7 @@ class AnnotationFrame extends Component {
             className={classes.img}
             id="imageId"
             src={
-              "https://cdn.deepseaannotations.com/test/" +
-              this.props.annotation.imagewithbox
+              "https://cdn.deepseaannotations.com/test/" + imagewithbox
             }
             alt="error"
           />

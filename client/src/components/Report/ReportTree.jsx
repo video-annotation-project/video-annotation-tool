@@ -15,7 +15,7 @@ import Annotations from "./Annotations.jsx";
 const styles = theme => ({
   root: {
     backgroundColor: theme.palette.background.paper,
-    paddingLeft: theme.spacing.unit * 2
+    paddingLeft: theme.spacing(2)
   }
 });
 
@@ -41,7 +41,7 @@ class ReportTree extends Component {
     });
     try {
       let treeData = await axios.get(
-        `/api/reportTreeData?` +
+        `api/annotations/treeData?` +
           `levelName=${this.state.levelName}&` +
           `queryConditions=${this.props.queryConditions}&` +
           `unsureOnly=${this.props.unsureOnly}&` +

@@ -14,20 +14,21 @@ import Description from "@material-ui/icons/Description";
 
 import VideoMetadata from "../Utilities/VideoMetadata.jsx";
 
+import Checkbox from '@material-ui/core/Checkbox';
+import GeneralMenu from "../Utilities/GeneralMenu";
+
 const styles = theme => ({
-  root: {
-    // float: 'right',
-    // padding: '10px'
-  },
   drawer: {
-    // height: '1000px',
-    // padding: '15px',
     width: "550px",
     overflow: "auto"
   },
   toggleButton: {
     marginTop: "5px"
-  }
+  },
+  addButton: {
+    marginTop: "10px",
+    marginLeft: "20px"
+  },
 });
 
 class VideoList extends Component {
@@ -39,11 +40,20 @@ class VideoList extends Component {
       unwatchedListOpen: false,
       watchedListOpen: false,
       inProgressListOpen: false,
-      openedVideo: null
+      openedVideo: null,
+      checkedVideos: []
     };
   }
 
   toggle = list => {
+    if (list === "videoListOpen") {
+      if (this.props.collection) {
+        this.props.loadCollections();
+      }
+      this.setState({
+        checkedVideos: []
+      })
+    }
     this.setState({
       [list]: !this.state[list]
     });
@@ -63,6 +73,31 @@ class VideoList extends Component {
     });
   };
 
+
+  handleCheckbox = (name, videoid) => event => {
+    event.stopPropagation();
+    var checkedVideos = this.state.checkedVideos;
+    var index = checkedVideos.indexOf(videoid);
+    if (event.target.checked &&
+      !checkedVideos.includes(videoid)
+      ) {
+      checkedVideos.push(videoid);
+    }
+    else if (!event.target.checked) {
+      checkedVideos.splice(index, 1);
+    }
+    this.setState({
+      ...this.state, 
+      [name]: event.target.checked,
+      checkedVideos: checkedVideos
+    });
+  }
+
+  handleInsert = id => {
+    this.toggle("videoListOpen");
+    this.props.insertToCollection(id, this.state.checkedVideos)
+  }
+
   render() {
     const {
       classes,
@@ -79,6 +114,7 @@ class VideoList extends Component {
       inProgressListOpen,
       openedVideo
     } = this.state;
+
 
     return (
       <div className={classes.root}>
@@ -102,7 +138,7 @@ class VideoList extends Component {
               {startedListOpen ? <ExpandLess /> : <ExpandMore />}
             </ListItem>
             <Collapse in={startedListOpen} timeout="auto" unmountOnExit>
-              <List component="div" disablePadding>
+              <List disablePadding>
                 {startedVideos.map(video => (
                   <ListItem
                     button
@@ -110,11 +146,22 @@ class VideoList extends Component {
                     style={video.count > 1 ? { backgroundColor: "red" } : {}}
                     onClick={() => handleVideoClick(video, "startedVideos")}
                   >
+                    {this.props.collection ? 
+                      <Checkbox
+                        checked={video.selected}
+                        onClick={this.handleCheckbox(video.selected, video.id)}
+                        value="selected"
+                        color="primary"
+                        inputProps={{
+                          'aria-label': 'secondary checkbox',
+                        }}
+                      /> : ""
+                    }
                     <ListItemText primary={video.id + ". " + video.filename} />
-                    <IconButton>
-                      <Description
-                        onClick={event => this.openVideoMetadata(event, video)}
-                      />
+                    <IconButton
+                      onClick={event => this.openVideoMetadata(event, video)}
+                    >
+                      <Description/>
                     </IconButton>
                   </ListItem>
                 ))}
@@ -133,11 +180,22 @@ class VideoList extends Component {
                     key={video.id}
                     onClick={() => handleVideoClick(video, "unwatchedVideos")}
                   >
+                    {this.props.collection ? 
+                      <Checkbox
+                        checked={video.selected}
+                        onClick={this.handleCheckbox(video.selected, video.id)}
+                        value="selected"
+                        color="primary"
+                        inputProps={{
+                          'aria-label': 'secondary checkbox',
+                        }}
+                      /> : ""
+                    }
                     <ListItemText primary={video.id + ". " + video.filename} />
-                    <IconButton>
-                      <Description
-                        onClick={event => this.openVideoMetadata(event, video)}
-                      />
+                    <IconButton
+                      onClick={event => this.openVideoMetadata(event, video)}
+                    >
+                      <Description/>
                     </IconButton>
                   </ListItem>
                 ))}
@@ -156,11 +214,22 @@ class VideoList extends Component {
                     key={video.id}
                     onClick={() => handleVideoClick(video, "watchedVideos")}
                   >
+                    {this.props.collection ? 
+                      <Checkbox
+                        checked={video.selected}
+                        onClick={this.handleCheckbox(video.selected, video.id)}
+                        value="selected"
+                        color="primary"
+                        inputProps={{
+                          'aria-label': 'secondary checkbox',
+                        }}
+                      /> : ""
+                    }
                     <ListItemText primary={video.id + ". " + video.filename} />
-                    <IconButton>
-                      <Description
-                        onClick={event => this.openVideoMetadata(event, video)}
-                      />
+                    <IconButton
+                      onClick={event => this.openVideoMetadata(event, video)}
+                    >
+                      <Description/>
                     </IconButton>
                   </ListItem>
                 ))}
@@ -179,16 +248,54 @@ class VideoList extends Component {
                     key={video.id}
                     onClick={() => handleVideoClick(video, "inProgressVideos")}
                   >
+                    {this.props.collection ? 
+                      <Checkbox
+                        checked={video.selected}
+                        onClick={this.handleCheckbox(video.selected, video.id)}
+                        value="selected"
+                        color="primary"
+                        inputProps={{
+                          'aria-label': 'secondary checkbox',
+                        }}
+                      /> : ""
+                    }                    
                     <ListItemText primary={video.id + ". " + video.filename} />
-                    <IconButton>
-                      <Description
-                        onClick={event => this.openVideoMetadata(event, video)}
-                      />
+                    <IconButton
+                      onClick={event => this.openVideoMetadata(event, video)}
+                    >
+                      <Description/>
                     </IconButton>
                   </ListItem>
                 ))}
               </List>
             </Collapse>
+             
+            {this.props.collection ? 
+              this.state.checkedVideos[0] ? 
+              <div className={classes.addButton}>
+              <GeneralMenu
+                name={"Add to collection"}
+                variant="contained"
+                color="primary"
+                handleInsert={this.handleInsert}
+                Link={false}
+                items={
+                  this.props.data
+                }
+              />
+              </div>
+              : 
+              <Button
+                disabled
+                variant="contained"
+                color="primary"
+                className={classes.addButton}
+              >
+                Add to collection
+              </Button>
+              :
+              ""
+            }
           </div>
         </Drawer>
         {this.state.openedVideo && (

@@ -6,16 +6,14 @@ import Paper from "@material-ui/core/Paper";
 
 import VerifySelection from "./VerifySelection.jsx";
 import VerifyAnnotations from "./VerifyAnnotations.jsx";
+import { Button, Typography } from "@material-ui/core";
 
 const styles = theme => ({
-  root: {
-    width: "90%"
-  },
   button: {
-    margin: theme.spacing.unit
+    margin: theme.spacing()
   },
   resetContainer: {
-    padding: theme.spacing.unit * 3
+    padding: theme.spacing(3)
   },
   list: {
     width: "100%",
@@ -29,17 +27,17 @@ const styles = theme => ({
     paddingLeft: 0
   },
   img: {
-    padding: theme.spacing.unit * 3,
+    padding: theme.spacing(3),
     width: "1280px",
     height: "720px"
   },
   container: {
     display: "grid",
     gridTemplateColumns: "repeat(12, 1fr)",
-    gridGap: `${theme.spacing.unit * 3}px`
+    gridGap: theme.spacing(3)
   },
   paper: {
-    padding: theme.spacing.unit * 5
+    padding: theme.spacing(5)
   }
 });
 
@@ -49,10 +47,12 @@ class Verify extends Component {
     this.state = {
       selectionMounted: true,
       /* -1 represents select all */
+      selectedAnnotationCollections: [],
       selectedUsers: [],
-      selectedVideos: ["-1"],
-      selectedConcepts: ["-1"],
+      selectedVideos: [],
+      selectedConcepts: [],
       selectedUnsure: false,
+      selectedTrackingFirst: false,
       annotations: [],
       error: null,
       index: 0
@@ -62,14 +62,61 @@ class Verify extends Component {
   toggleSelection = async () => {
     let annotations = [];
     if (!this.state.selectionMounted) {
-      this.resetState();
+      this.resetState(
+        this.setState({
+          selectionMounted: !this.state.selectionMounted,
+          noAnnotations: false
+        })
+      );
     } else {
-      annotations = await this.getAnnotations();
+      if (this.state.selectedAnnotationCollections.length) {
+        annotations = await this.getAnnotationsFromCollection();
+      }
+      else {
+        annotations = await this.getAnnotations();
+      }
+      if (annotations.length < 1) {
+        this.setState({
+          noAnnotations: true,
+          selectionMounted: !this.state.selectionMounted
+        });
+      } else {
+        this.setState({
+          annotations: annotations,
+          selectionMounted: !this.state.selectionMounted
+        });
+      }
     }
-    this.setState({
-      annotations: annotations,
-      selectionMounted: !this.state.selectionMounted
-    });
+  };
+
+  getAnnotationCollections = async () => {
+    return axios
+      .get(`/api/collections/annotations`, {
+        headers: {
+          Authorization: "Bearer " + localStorage.getItem("token")
+        }
+      })
+      .then(res => res.data)
+      .catch(error => {
+        console.log(error);
+        this.setState({
+          error: error
+        })
+      })
+  };
+
+  getAnnotationsFromCollection = async () => {
+    return axios
+      .get(`/api/annotations/collections?collectionids=${this.state.selectedAnnotationCollections}`, {
+        headers: { Authorization: "Bearer " + localStorage.getItem("token") }
+      })
+      .then(res => res.data)
+      .catch(error => {
+        console.log(error);
+        this.setState({
+          error: error
+        });
+      });
   };
 
   getUsers = async () => {
@@ -79,6 +126,7 @@ class Verify extends Component {
       })
       .then(res => res.data)
       .catch(error => {
+        console.log(error);
         this.setState({
           error: error
         });
@@ -87,9 +135,10 @@ class Verify extends Component {
 
   getVideos = async () => {
     return axios
-      .get(`/api/unverifiedVideosByUser/`, {
+      .get(`/api/annotations/verified`, {
         headers: { Authorization: "Bearer " + localStorage.getItem("token") },
         params: {
+          verifiedOnly: "-1",
           selectedUsers: this.state.selectedUsers
         }
       })
@@ -101,14 +150,28 @@ class Verify extends Component {
       });
   };
 
+  getVideoCollections = async () => {
+    return axios
+      .get(`/api/collections/videos`, {
+        headers: { Authorization: "Bearer " + localStorage.getItem("token") }
+      })
+      .then(res => res.data)
+      .catch(error => {
+        this.setState({
+          error: error
+        });
+      });
+  };
+
   getConcepts = async () => {
     return axios
-      .get(`/api/unverifiedConceptsByUserVideo/`, {
+      .get(`/api/annotations/verified`, {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + localStorage.getItem("token")
         },
         params: {
+          verifiedOnly: "-1",
           selectedUsers: this.state.selectedUsers,
           selectedVideos: this.state.selectedVideos
         }
@@ -121,39 +184,31 @@ class Verify extends Component {
       });
   };
 
-  getUnsure = async () => {
+  getConceptCollections = async () => {
     return axios
-        .get(`/api/unverifiedUnsureByUserVideoConcept`, {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: "Bearer " + localStorage.getItem("token")
-          },
-          params: {
-            selectedUsers: this.state.selectedUsers,
-            selectedVideos: this.state.selectedVideos,
-            selectedConcepts: this.state.selectedConcepts
-          }
-        })
-        .then(res => res.data)
-        .catch(error => {
-          this.setState({
-            error: error
-          });
+      .get(`/api/collections/concepts`, {
+        headers: { Authorization: "Bearer " + localStorage.getItem("token") }
+      })
+      .then(res => res.data)
+      .catch(error => {
+        this.setState({
+          error: error
         });
+      });
   };
 
-  getAnnotations = async () => {
+  getUnsure = async () => {
     return axios
-      .get(`/api/unverifiedAnnotationsByUserVideoConceptUnsure/`, {
+      .get(`/api/annotations/verified`, {
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + localStorage.getItem("token")
         },
         params: {
+          verifiedOnly: "-1",
           selectedUsers: this.state.selectedUsers,
           selectedVideos: this.state.selectedVideos,
-          selectedConcepts: this.state.selectedConcepts,
-          selectedUnsure: this.state.selectedUnsure
+          selectedConcepts: this.state.selectedConcepts
         }
       })
       .then(res => res.data)
@@ -164,17 +219,47 @@ class Verify extends Component {
       });
   };
 
-  selectUser = (user) => {
-      this.setState({
-          selectedUsers: this.state.selectedUsers.concat(user)
+  getAnnotations = async () => {
+    return axios
+      .get(`/api/annotations/verified`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + localStorage.getItem("token")
+        },
+        params: {
+          verifiedOnly: this.state.selectedTrackingFirst ? "1" : "-1",
+          selectedUsers: this.state.selectedUsers,
+          selectedVideos: this.state.selectedVideos,
+          selectedConcepts: this.state.selectedConcepts,
+          selectedUnsure: this.state.selectedUnsure,
+          selectedTrackingFirst: this.state.selectedTrackingFirst
+        }
+      })
+      .then(res => res.data)
+      .catch(error => {
+        this.setState({
+          error: error
+        });
       });
+  };
+
+  selectUser = user => {
+    this.setState({
+      selectedUsers: this.state.selectedUsers.concat(user)
+    });
+  };
+
+  handleChange = type => value => {
+    this.setState({
+      [type]: value
+    });
   };
 
   handleChangeSwitch = type => event => {
     this.setState({
       [type]: event.target.checked
-    })
-  }
+    });
+  };
 
   handleChangeList = type => event => {
     if (!this.state[type].includes(event.target.value)) {
@@ -183,7 +268,7 @@ class Verify extends Component {
           [type]: ["-1"]
         });
       } else {
-        if (this.state[type].length === 1 && this.state[type][0] === "-1") {
+        if (this.state[type][0] === "-1") {
           this.setState({
             [type]: [event.target.value]
           });
@@ -200,14 +285,52 @@ class Verify extends Component {
     }
   };
 
-  resetState = () => {
-    this.setState({
-      selectedUsers: [],
-      selectedVideos: ["-1"],
-      selectedConcepts: ["-1"],
-      selectedUnsure: false,
-      index: 0
-    });
+  resetStep = step => {
+    switch (step) {
+      case 0:
+        this.setState({
+          selectedAnnotationCollections: []
+        });
+        return;
+      case 1:
+        this.setState({
+          selectedUsers: []
+        });
+        return;
+      case 2:
+        this.setState({
+          selectedVideos: []
+        });
+        return;
+      case 3:
+        this.setState({
+          selectedConcepts: []
+        });
+        return;
+      case 4:
+        this.setState({
+          selectedUnsure: false,
+          selectedTrackingFirst: false
+        });
+        return;
+      default:
+        return;
+    }
+  };
+
+  resetState = callback => {
+    this.setState(
+      {
+        selectedAnnotationCollections: [],
+        selectedUsers: [],
+        selectedVideos: [],
+        selectedConcepts: [],
+        selectedUnsure: false,
+        selectedTrackingFirst: false,
+        index: 0
+      },
+      callback
+    );
   };
 
   handleNext = callback => {
@@ -224,20 +347,52 @@ class Verify extends Component {
     if (this.state.selectionMounted) {
       selection = (
         <VerifySelection
+          selectedAnnotationCollections={this.state.selectedAnnotationCollections}
           selectedUsers={this.state.selectedUsers}
           selectedVideos={this.state.selectedVideos}
           selectedConcepts={this.state.selectedConcepts}
           selectedUnsure={this.state.selectedUnsure}
+          selectedTrackingFirst={this.state.selectedTrackingFirst}
+          getAnnotationCollections={this.getAnnotationCollections}
+          getAnnotationsFromCollection={this.getAnnotationsFromCollection}
           getUsers={this.getUsers}
           getVideos={this.getVideos}
+          getVideoCollections={this.getVideoCollections}
           getConcepts={this.getConcepts}
+          getConceptCollections={this.getConceptCollections}
           getUnsure={this.getUnsure}
           handleChangeSwitch={this.handleChangeSwitch}
+          handleChange={this.handleChange}
           handleChangeList={this.handleChangeList}
+          resetStep={this.resetStep}
           resetState={this.resetState}
           toggleSelection={this.toggleSelection}
           selectUser={this.selectUser}
         />
+      );
+    } else if (this.state.noAnnotations) {
+      selection = (
+        <Paper
+          square
+          elevation={0}
+          className={this.props.classes.resetContainer}
+        >
+          <Typography>All Tracking Videos Verified</Typography>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() =>
+              this.resetState(
+                this.setState({
+                  selectionMounted: !this.state.selectionMounted,
+                  noAnnotations: false
+                })
+              )
+            }
+          >
+            Reset
+          </Button>
+        </Paper>
       );
     } else {
       selection = (
@@ -252,6 +407,7 @@ class Verify extends Component {
             handleNext={this.handleNext}
             toggleSelection={this.toggleSelection}
             size={this.state.annotations.length}
+            tracking={this.state.selectedTrackingFirst}
           />
         </Paper>
       );
