@@ -95,7 +95,52 @@ class Summary extends React.Component {
         >
           <div className={classes.paper}>
             <Paper style={{ maxHeight: 400, overflow: "auto" }}>
-              <Table className={classes.table}>
+            {this.props.metrics ? 
+              <Table className={classes.table}> 
+              <TableHead>
+                <TableRow>
+                  <TableCell>ConceptId</TableCell>
+                  <TableCell>TP</TableCell>
+                  <TableCell>FP</TableCell>
+                  <TableCell>FN</TableCell>
+                  <TableCell>Precision</TableCell>
+                  <TableCell>Recall</TableCell>
+                  <TableCell>F1</TableCell>
+                  <TableCell>pred_num</TableCell>
+                  <TableCell>true_num</TableCell>
+                  <TableCell>count_accuracy</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {this.props.metrics ? (
+                  this.props.metrics.map(row => (
+                    <TableRow key={row.conceptid}>
+                      <TableCell>
+                        {row.conceptid}
+                      </TableCell>
+                      <TableCell component="th" scope="row">
+                        {row.TP}
+                      </TableCell>
+                      <TableCell>{row.FP}</TableCell>
+                      <TableCell>{row.FN}</TableCell>
+                      <TableCell>{row.Precision}</TableCell>
+                      <TableCell>{row.Recall}</TableCell>
+                      <TableCell>{row.F1}</TableCell>
+                      <TableCell>{row.pred_num}</TableCell>
+                      <TableCell>{row.true_num}</TableCell>
+                      <TableCell>{row.count_accuracy}</TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow key={1}>
+                    <TableCell>''</TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+              : ""
+            }
+              <Table className={classes.table}> 
                 <TableHead>
                   <TableRow>
                     <TableCell>Picture</TableCell>
