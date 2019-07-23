@@ -38,7 +38,8 @@ class AIvideoList extends Component {
       aiListOpen: false,
       openedVideo: null,
       descriptionOpen: false,
-      summary: null
+      summary: null,
+      metrics: null
     };
   }
 
@@ -88,17 +89,36 @@ class AIvideoList extends Component {
 
     this.setState({
       descriptionOpen: true,
-      summary: await this.getSummary(video)
+      summary: await this.getSummary(video),
+      metrics: await this.getMetrics(video)
     });
   };
 
   closeVideoSummary = () => {
     this.setState({
       descriptionOpen: false,
-      summary: null
+      summary: null,
+      metrics: null
     });
   };
 
+  getMetrics = async video => {
+    const config = {
+      headers: {
+        Authorization: "Bearer " + localStorage.getItem("token")
+      }
+    };
+    try {
+      let metrics = await axios.get(`/api/videos/aivideos/metrics?filename=${video.name}`, config);
+      console.log(metrics.data);
+      if (metrics) {
+        return metrics.data;
+      }
+    } catch (error) {
+      console.log("Error in summary.jsx get /api/videos/aivideos/metrics");
+      console.log(error.response.data);
+    }
+  }
 
   getSummary = async video => {
     const config = {
@@ -194,6 +214,7 @@ class AIvideoList extends Component {
               handleClose={this.closeVideoSummary}
               summary={this.state.summary}
               aiSummary={true}
+              metrics={this.state.metrics}
             />
           )}
       </div>
