@@ -161,7 +161,7 @@ class TensorBoardLog(keras.callbacks.Callback):
         return
 
 
-    def _create_log_entry(model_name, min_examples, epochs, collection_ids):
+    def _create_log_entry(self, model_name, min_examples, epochs, collection_ids):
         self.cursor.execute(
             f"""INSERT INTO {self.table_name} 
                     (model_name, epochs, min_examples, collection_ids) 

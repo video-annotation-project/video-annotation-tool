@@ -1,7 +1,7 @@
 import os
 import random
 import json
-from multiprocessing import Process
+from collections import OrderedDict
 
 import boto3
 import pandas as pd
@@ -25,6 +25,8 @@ DB_NAME = os.getenv("DB_NAME")
 DB_HOST = os.getenv("DB_HOST")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
+S3_BUCKET = os.getenv('AWS_S3_BUCKET_NAME')
+SRC_IMG_FOLDER = os.getenv('AWS_S3_BUCKET_ANNOTATIONS_FOLDER')
 
 def _query(query, params=None):
     """
@@ -53,17 +55,32 @@ def _parse(value, function, fmt):
         raise_from(ValueError(fmt.format(e)), None)
 
 
+
+
+def _get_classmap(classes):
+    """
+    Initializes the classmap of classes names to training id's.
+    (these id's don't represent the conceptid's from our database)
+    """
+    classmap = []
+
+    classes = _query(f"select id, name from concepts where id = ANY(ARRAY{classes})")
+    classmap =  pd.Series(classes.id.values, index=classes.name).to_dict()
+
+    return classmap
+
+
 class CollectionGenerator(object):
 
     def __init__(self, 
                  collection_ids, 
-                 classmap, 
+                 classes, 
                  min_examples,
                  validation_split=0.8):
 
-        self.classmap = classmap
-        selected_frames, concept_counts = self._select_annotations(collection_ids, min_examples, list(classmap))
+        selected_frames, concept_counts = self._select_annotations(collection_ids, min_examples, classes)
         self.selected_frames = selected_frames
+        self.classmap = _get_classmap(classes)
 
         # Shuffle selected frames so that training/testing set are different each run
         random.shuffle(self.selected_frames)
@@ -169,7 +186,7 @@ class CollectionGenerator(object):
             WHERE inter.id IN (%s)
         '''
 
-        return _query(annotations_query, [','.join((str(id_) for id_ in collection_ids))] )
+        return _query(annotations_query, [','.join((str(id_) for id_ in collection_ids))])
 
 
 class S3Generator(Generator):
@@ -180,8 +197,13 @@ class S3Generator(Generator):
 
         # We initalize selected_frames to hold all possible annotation iamges.
         # Then, downloaded_images will hold those that have already been downloaded
-        self.selected_frames = selected_frames
+        self.selected_annotations = pd.concat(selected_frames).reset_index()
+        self.selected_annotations['save_name'] = self.selected_annotations.apply(
+            lambda row: f'{row["videoid"]}_{int(row["frame_num"])}', 
+        axis=1)
+
         self.downloaded_images =  set(os.listdir(image_folder))
+        self.failed_download_images = set()
 
         self.image_extension = image_extension
         self.classes = classes
@@ -192,11 +214,7 @@ class S3Generator(Generator):
 
         self._connect_s3()
 
-        self.image_data = _read_annotations()
-
-        # Download images in the background while training is happening.
-        download_process = Process(target=self._download_images)
-        download_process.start()
+        self.image_data = self._read_annotations()
 
         super(S3Generator, self).__init__(**kwargs)
 
@@ -204,7 +222,7 @@ class S3Generator(Generator):
     def size(self):
         """ Size of the dataset.
         """
-        return len(self.selected)
+        return len(self.selected_annotations.index)
 
 
     def num_classes(self):
@@ -240,7 +258,7 @@ class S3Generator(Generator):
     def image_aspect_ratio(self, image_index):
         """ Compute the aspect ratio for an image with image_index.
         """
-        image = self.selected[image_index].iloc[0]
+        image = self.selected_annotations.iloc[image_index]
         image_width = image['videowidth']
         image_height = image['videoheight']
 
@@ -250,26 +268,28 @@ class S3Generator(Generator):
     def load_image(self, image_index):
         """ Load an image at the image_index.
         """
-        image = self.selected_frames[image_index].iloc[0]
+        image = self.selected_annotations.iloc[image_index]
+        saved_image_name = image['save_name']
 
-        if image not in self.downloaded_images:
+        if saved_image_name not in self.downloaded_images:
             self._download_image(image)
 
-        return read_image_bgr(self.image_path(image))
+        return read_image_bgr(self.image_path(image_index))
 
 
-    def image_path(self):
+    def image_path(self, image_index):
         """ Returns the image path for image_index.
         """
-        return os.path.join(self.image_folder, self.image_names[image_index])
+        image_name = self.selected_annotations.iloc[image_index]['save_name']
+        return os.path.join(self.image_folder, image_name + self.image_extension)
 
 
     def load_annotations(self, image_index):
         """ Load annotations for an image_index.
         """
-        image = self.selected_frames[image_index].iloc[0]
+        image = self.selected_annotations.iloc[image_index]
         annotations = {'labels': np.empty((0,)), 'bboxes': np.empty((0, 4))}
-        image_name = f'{image["videoid"]}_{image["frame_num"]}'
+        image_name = imagei['save_name']
 
         for idx, annot in enumerate(self.image_data[image_name]):
             annotations['labels'] = np.concatenate((annotations['labels'], [annot['class']]))
@@ -283,50 +303,40 @@ class S3Generator(Generator):
         return annotations
 
 
-    def _connect_s3():
-        load_dotenv(dotenv_path="../.env")
-        S3_BUCKET = os.getenv('AWS_S3_BUCKET_NAME')
-        SRC_IMG_FOLDER = os.getenv('AWS_S3_BUCKET_ANNOTATIONS_FOLDER')
-        DB_NAME = os.getenv("DB_NAME")
-        DB_HOST = os.getenv("DB_HOST")
-        DB_USER = os.getenv("DB_USER")
-        DB_PASSWORD = os.getenv("DB_PASSWORD")
-
+    def _connect_s3(self):
+        aws_key = os.getenv('AWS_ACCESS_KEY_ID')
         self.client = boto3.client('s3',
-            aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
+            aws_access_key_id=aws_key,
             aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'))
 
 
-    def _download_images():
-        for frame in self.selected_frames:
-            frame_group = self.selected_frames[frame_index]
-            num_annotations = len(frame_group.index)
+    def _download_images(self):
+        for image in self.selected_annotations:
+            saved_image_name = f'{image["videoid"]}_{int(image["frame_num"])}'
 
-            for i in range(num_annotations):
-                image = frame_group.iloc[i]
-                saved_image_name = self._download_image(image)
+            # Some images are downloaded on-demand from the training process,
+            # if that's the case just move on to the next image
+            if saved_image_name in self.downloaded_images:
+                continue
 
-                if saved_image_name:
-                    break
-            # Else clause means we successfully downloaded an image for this frame.
-            else:
+            # If we successfully download the image, add it to our downloaded images set.
+            if self._download_image(image):
                 self.downloaded_images.add(saved_image_name)
 
 
-    def _download_image(image):
+    def _download_image(self, image):
         image_name = str(image['image'])
         try:
-            # try to download image. 
             obj = self.client.get_object(Bucket=S3_BUCKET, Key=SRC_IMG_FOLDER + image_name)
             obj_image = Image.open(obj['Body'])
+        
+            if self.image_extension not in image_name:
+                image_name += self.image_extension
 
-            new_image_name = f'{image["videoid"]}_{image["frame_num"]}'
-            return new_image_name
+            obj_image.save()
         except:
             print(f'Failed to download {image_name}.')
-            self.failed_download_images.append(image['id'])
-        
-            return None
+            self.failed_download_images.add(image_name)
 
 
     def _read_annotations(self):
@@ -334,40 +344,38 @@ class S3Generator(Generator):
             Selected frames are DataFrames.
         """
         result = OrderedDict()
-        for frame in self.selected_frames:
-            for i in range(num_annotations):
-                image = frame_group.iloc[i]
-                image_file = f'{image["videoid"]}_{image["frame_num"]}'
-                class_id = image['conceptid']
+        for _, image in self.selected_annotations.iterrows():
+            image_file = image['save_name']
+            class_name = self.labels[image['conceptid']]
 
-                x1 = image['x1']
-                x2 = image['x2']
-                y1 = image['y1'] 
-                y2 = image['y2']
+            x1 = image['x1']
+            x2 = image['x2']
+            y1 = image['y1']
+            y2 = image['y2']
 
-                if image_file not in result:
-                    result[img_file] = []
+            if image_file not in result:
+                result[image_file] = []
 
-                # If a row contains only an image path, it's an image without annotations.
-                if (x1, y1, x2, y2, class_name) == ('', '', '', '', ''):
-                    continue
+            x1 = _parse(x1, int, 'malformed x1: {{}}')
+            y1 = _parse(y1, int, 'malformed y1: {{}}')
+            x2 = _parse(x2, int, 'malformed x2: {{}}')
+            y2 = _parse(y2, int, 'malformed y2: {{}}')
 
-                x1 = _parse(x1, int, 'line {}: malformed x1: {{}}'.format(line))
-                y1 = _parse(y1, int, 'line {}: malformed y1: {{}}'.format(line))
-                x2 = _parse(x2, int, 'line {}: malformed x2: {{}}'.format(line))
-                y2 = _parse(y2, int, 'line {}: malformed y2: {{}}'.format(line))
+            # If a row contains only an image path, it's an image without annotations.
+            if (x1, y1, x2, y2, class_name) == ('', '', '', '', ''):
+                continue
 
-                # Check that the bounding box is valid.
-                if x2 <= x1:
-                    raise ValueError('line {}: x2 ({}) must be higher than x1 ({})'.format(line, x2, x1))
-                if y2 <= y1:
-                    raise ValueError('line {}: y2 ({}) must be higher than y1 ({})'.format(line, y2, y1))
+            # Check that the bounding box is valid.
+            if x2 <= x1:
+                raise ValueError('x2 ({}) must be higher than x1 ({})'.format(x2, x1))
+            if y2 <= y1:
+                raise ValueError('y2 ({}) must be higher than y1 ({})'.format(y2, y1))
 
-                # check if the current class name is correctly present
-                if class_id not in set(self.labels):
-                    raise ValueError('line {}: unknown class id: \'{}\' (classes: {})'.format(line, class_id, class_ids))
+            # check if the current class name is correctly present
+            if class_name not in set(self.classes):
+                raise ValueError('unknown class name: \'{}\' (classes: {})'.format(class_name, set(self.classes)))
 
-                result[image_file].append({'x1': x1, 'x2': x2, 'y1': y1, 'y2': y2, 'class': class_id})
+            result[image_file].append({'x1': x1, 'x2': x2, 'y1': y1, 'y2': y2, 'class': class_name})
         return result            
 
 

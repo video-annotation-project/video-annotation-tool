@@ -63,7 +63,7 @@ def _create_model(num_classes):
     return  model
 
 
-def _get_callbacks(model_name, min_examples, epochs, collection_ids, steps_per_epoch):
+def _get_callbacks(model, model_name, min_examples, epochs, collection_ids, steps_per_epoch):
     # Save models that are improvements
     checkpoint = ModelCheckpoint(WEIGHTS_PATH, monitor='val_loss', save_best_only=True)
     checkpoint = RedirectModel(checkpoint, model)
@@ -119,7 +119,7 @@ def train_model(concepts, model_name, collection_ids, min_examples,
     collection_generator = CollectionGenerator(
         collection_ids=collection_ids,
         min_examples=min_examples,
-        classmap=classmap
+        classes=concepts
     )
 
     train_generator = collection_generator.flow_from_s3(
@@ -135,6 +135,7 @@ def train_model(concepts, model_name, collection_ids, min_examples,
     )
 
     callbacks = _get_callbacks(
+        model=model,
         model_name=model_name,
         collection_ids=collection_ids,
         min_examples=min_examples,
