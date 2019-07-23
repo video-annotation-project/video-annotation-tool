@@ -3,6 +3,8 @@ const passport = require("passport");
 const psql = require("../../db/simpleConnect");
 const AWS = require("aws-sdk");
 
+const csv = require('csvtojson');
+
  /**
  * @typedef ai_video
  * @property {integer} id - id of the video
@@ -23,6 +25,27 @@ router.get("/",passport.authenticate("jwt", { session: false }),
       let ai_videos = await psql.query(queryText);
       res.json(ai_videos);
     } catch (error) {
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
+);
+
+router.get("/metrics",passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    const params = {
+      Bucket: process.env.AWS_S3_BUCKET_NAME,
+      Key: process.env.AWS_S3_BUCKET_METRICS_FOLDER + req.query.filename
+    };
+    const S3 = new AWS.S3();
+    try {
+      const stream = S3.getObject(params).createReadStream();
+
+      // convert csv file (stream) to JSON format data
+      const json = await csv().fromStream(stream);
+      // console.log(json);
+      res.json(json);
+    } catch (error){
       console.log(error);
       res.status(500).json(error);
     }

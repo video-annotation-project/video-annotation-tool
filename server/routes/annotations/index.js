@@ -78,6 +78,32 @@ router.get("/", passport.authenticate("jwt", { session: false }),
   }
 );
 
+router.get("/collections", passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    var params = "{"+req.query.collectionids+"}";
+    let queryText = `
+      SELECT
+        a.*
+      FROM
+        annotation_intermediate ai
+      LEFT JOIN
+        annotations a
+      ON
+        a.id=ai.annotationid
+      WHERE
+        ai.id = ANY($1::int[]);
+    `;
+
+    try {
+      const annotations = await psql.query(queryText, [params]);
+      res.json(annotations.rows);
+    } catch (error) {
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
+);
+
 /**
  * @typedef annotationInsert
  * @property {string} message - "Annotated"
