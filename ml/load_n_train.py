@@ -180,7 +180,7 @@ def train_model(concepts, model_name, collectionIds, min_examples,
     
     history = training_model.fit_generator(train_generator, 
         epochs=epochs, 
-        callbacks=[checkpoint, stopping, progress_callback], #, log_callback],
+        callbacks=[checkpoint, stopping, progress_callback, tensorboard_callback, log_callback],
         validation_data=test_generator,
         verbose=2
     ).history

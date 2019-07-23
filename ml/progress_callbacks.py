@@ -80,10 +80,9 @@ class Progress(keras.callbacks.Callback):
 
 class TensorBoardLog(keras.callbacks.Callback):
 
-    def __init__(self, id_, table_name):
+    def __init__(self, model_name, min_examples, epochs, collection_ids):
 
-        self.id = id_
-        self.table_name = table_name
+        self.table_name = 'previous_runs'
 
         config_path = "../config.json"
         load_dotenv(dotenv_path="../.env")
@@ -107,6 +106,12 @@ class TensorBoardLog(keras.callbacks.Callback):
             aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
             aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'))
 
+        self.id = _create_log_entry(
+            model_name=model_name,
+            min_examples=min_examples,
+            epochs=epochs,
+            collection_ids=collection_ids
+        )
 
 
     def on_train_begin(self, logs={}):
@@ -154,6 +159,22 @@ class TensorBoardLog(keras.callbacks.Callback):
 
     def on_batch_end(self, batch, logs={}):
         return
+
+
+    def _create_log_entry(self, model_name, min_examples, epochs, collection_ids):
+        self.cursor.execute(
+            f"""INSERT INTO {self.table_name} 
+                    (model_name, epochs, min_examples, collection_ids) 
+                VALUES 
+                    (%s, %s, %s, %s, %s, %s) RETURNING id""",
+            (model_name, epochs, min_examples, collection_ids))
+
+        log_id = self.cursor.fetchone()[0]
+        self.connection.commit()
+
+        print("Inserted into previous_runs")
+        return log_id
+
 
 # Testing
 if __name__ == '__main__':
