@@ -89,53 +89,107 @@ router.post(
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     let params = [parseInt(req.params.id)];
-    let queryText = `      
-    INSERT INTO
-        annotation_intermediate (id, annotationid)
-    (
-      SELECT id, annotationid FROM (
-          SELECT
-            $1::INTEGER as id, A.id as annotationid
-          FROM
-            annotations A
+
+    let queryText1 = `      
+      INSERT INTO
+          annotation_intermediate (id, annotationid)
+      (
+        SELECT id, annotationid FROM (
+            SELECT
+              $1::INTEGER as id, A.id as annotationid
+            FROM
+              annotations A
     `;
 
-    if (req.body.selectedConcepts[0] !== "-1") {
-      queryText += ` WHERE `;
-      params.push(req.body.selectedConcepts);
-      queryText += ` conceptid::text = ANY($${params.length}) `;
-    }
-    if (req.body.selectedVideos[0] !== "-1") {
-      if (params.length === 1) {
-        queryText += ` WHERE `;
-      } else {
-        queryText += ` AND `;
-      }
-      params.push(req.body.selectedVideos);
-      queryText += ` videoid::text = ANY($${params.length}) `;
-    }
+    let queryText2 = `
+      UPDATE
+        annotation_collection
+      SET
+        users = (
+          SELECT
+            array_agg(DISTINCT u)
+          FROM unnest(users || (
+            SELECT
+              array_agg(username)
+            FROM
+              users 
+    `;
+
     if (req.body.selectedUsers[0] !== "-1") {
       if (params.length === 1) {
-        queryText += ` WHERE `;
+        queryText1 += ` WHERE `;
       } else {
-        queryText += ` AND `;
+        queryText1 += ` AND `;
       }
+
       params.push(req.body.selectedUsers);
+
       if (req.body.includeTracking) {
-        queryText += `EXISTS ( 
+        queryText1 += `EXISTS ( 
           SELECT id, userid 
           FROM annotations 
           WHERE id=A.originalid 
           AND unsure = False
           AND userid::text = ANY($${params.length}))`;
       } else {
-        queryText += `
+        queryText1 += `
           unsure = False
           AND userid::text = ANY($${params.length})`;
       }
+
+      queryText2 += ` WHERE id = ANY($${params.length})`;
     }
 
-    queryText += `
+    queryText2 += `
+      )) u),
+      videos = (
+        SELECT
+          array_agg(DISTINCT v)
+        FROM unnest(videos || (
+          SELECT
+             array_agg(id)
+          FROM
+             videos
+    `;
+
+    if (req.body.selectedVideos[0] !== "-1") {
+      if (params.length === 1) {
+        queryText1 += ` WHERE `;
+      } else {
+        queryText1 += ` AND `;
+      }
+
+      params.push(req.body.selectedVideos);
+
+      queryText1 += ` videoid::text = ANY($${params.length}) `;
+      queryText2 += ` WHERE id = ANY($${params.length})`;
+    }
+
+    queryText2 += `
+      )) v),
+      concepts = (
+        SELECT
+            array_agg(DISTINCT u)
+        FROM unnest(concepts || (
+            SELECT
+              array_agg(name)
+            FROM
+              concepts
+    `;
+
+    if (req.body.selectedConcepts[0] !== "-1") {
+      if (params.length === 1) {
+        queryText1 += ` WHERE `;
+      } else {
+        queryText1 += ` AND `;
+      }
+      params.push(req.body.selectedConcepts);
+
+      queryText1 += ` conceptid::text = ANY($${params.length}) `;
+      queryText2 += ` WHERE id = ANY($${params.length})`
+    }
+
+    queryText1 += `
         ) as t(id, annotationid)
       WHERE
         NOT EXISTS (
@@ -147,9 +201,18 @@ router.post(
             ai.id = t.id::INTEGER AND ai.annotationid = t.annotationid::INTEGER))
     `;
 
+    queryText2 += ` )) u)`;
+
+    if (req.body.includeTracking) {
+      queryText2 += `, tracking = TRUE`;
+    }
+
+    queryText2 += ` WHERE id=$1`;
+
     try {
-      let added = await psql.query(queryText, params);
+      let added = await psql.query(queryText1, params);
       if (added) {
+        await psql.query(queryText2, params);
         res.status(200).json(added);
       }
     } catch (error) {

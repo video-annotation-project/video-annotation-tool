@@ -425,7 +425,6 @@ class AnnotationCollection extends Component {
 
   resetState = () => {
     this.setState({
-      selectedCollection: "",
       selectedUsers: [],
       selectedVideos: [],
       selectedConcepts: [],
