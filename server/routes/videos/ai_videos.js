@@ -3,6 +3,8 @@ const passport = require("passport");
 const psql = require("../../db/simpleConnect");
 const AWS = require("aws-sdk");
 
+const csv = require('csvtojson');
+
  /**
  * @typedef ai_video
  * @property {integer} id - id of the video
@@ -26,6 +28,41 @@ router.get("/",passport.authenticate("jwt", { session: false }),
       console.log(error);
       res.status(500).json(error);
     }
+  }
+);
+
+router.get("/metrics",passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    const params = {
+      Bucket: process.env.AWS_S3_BUCKET_NAME,
+      Key: process.env.AWS_S3_BUCKET_METRICS_FOLDER + req.query.filename
+    };
+    const S3 = new AWS.S3();
+    try { 
+      const headCode = await S3.headObject(params).promise();
+      const steam = await S3.getObject(params).createReadStream(); 
+      const json = await csv().fromStream(steam);
+      res.json(json);
+      // Do something with signedUrl
+    } catch (error) {
+      console.log(error);
+      res.status(error.statusCode).json(error);
+    }
+    // S3.headObject(params, (err, metadata) => {  
+    //   if (err && err.code === 'NotFound') {  
+    //     res.status(404).json("file not found");
+    //   } else {  
+    //     const stream = S3.getSignedUrl('getObject', params, (err, data) => {
+    //       if (err) {
+    //         console.log(err);
+    //         res.status(500).json(err);
+    //       }}).createReadStream(); 
+    //     // convert csv file (stream) to JSON format data
+    //     const json = csv().fromStream(stream);
+    //     // console.log(json);
+    //     res.json(json);
+    //   }
+    // });
   }
 );
 

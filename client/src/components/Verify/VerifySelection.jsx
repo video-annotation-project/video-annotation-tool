@@ -16,6 +16,7 @@ import SelectUser from '../Utilities/SelectUser.jsx';
 import SelectVideo from '../Utilities/SelectVideo.jsx';
 import SelectConcept from '../Utilities/SelectConcept.jsx';
 import SelectUnsure from '../Utilities/SelectUnsure';
+import VerifyAnnotationCollection from "../Utilities/SelectAnnotationCollection.jsx";
 
 const styles = theme => ({
   button: {
@@ -39,7 +40,7 @@ const styles = theme => ({
 });
 
 function getSteps() {
-  return ['Users', 'Videos', 'Concepts', 'Unsure'];
+  return ["Annotation Collections", "Users", "Videos", "Concepts", "Unsure"];
 }
 
 class VerifySelection extends React.Component {
@@ -55,6 +56,15 @@ class VerifySelection extends React.Component {
     switch (step) {
       case 0:
         return (
+          <VerifyAnnotationCollection
+            value={this.props.selectedAnnotationCollections}
+            getAnnotationCollections={this.props.getAnnotationCollections}
+            selectedAnnotationCollections={this.props.selectedAnnotationCollections}
+            handleChangeList={this.props.handleChangeList("selectedAnnotationCollections")}
+          />
+        );
+      case 1:
+        return (
           <SelectUser
             value={this.props.selectedUsers}
             getUsers={this.props.getUsers}
@@ -62,7 +72,7 @@ class VerifySelection extends React.Component {
             handleChangeList={this.props.handleChangeList('selectedUsers')}
           />
         );
-      case 1:
+      case 2:
         return (
           <SelectVideo
             value={this.props.selectedVideos}
@@ -72,7 +82,7 @@ class VerifySelection extends React.Component {
             handleChangeList={this.props.handleChangeList('selectedVideos')}
           />
         );
-      case 2:
+      case 3:
         return (
           <SelectConcept
             value={this.props.selectedConcepts}
@@ -82,7 +92,7 @@ class VerifySelection extends React.Component {
             handleChangeList={this.props.handleChangeList('selectedConcepts')}
           />
         );
-      case 3:
+      case 4:
         return (
           <div>
             <SelectUnsure
@@ -123,10 +133,12 @@ class VerifySelection extends React.Component {
   didNotSelect = step => {
     switch (step) {
       case 0:
-        return this.props.selectedUsers.length === 0;
+        return false;
       case 1:
-        return this.props.selectedVideos.length === 0;
+        return this.props.selectedUsers.length === 0;
       case 2:
+        return this.props.selectedVideos.length === 0;
+      case 3:
         return this.props.selectedConcepts.length === 0;
       default:
         return false;
@@ -185,6 +197,15 @@ class VerifySelection extends React.Component {
                     >
                       Back
                     </Button>
+                    {activeStep === 0 && this.props.selectedAnnotationCollections.length !== 0 ?
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={this.props.toggleSelection}
+                      className={classes.button}
+                    >
+                      Skip To Annotations Verify
+                    </Button> :
                     <Button
                       variant="contained"
                       color="primary"
@@ -196,8 +217,12 @@ class VerifySelection extends React.Component {
                       }
                       className={classes.button}
                     >
-                      {activeStep === steps.length - 1 ? 'Finish' : 'Next'}
+                      {activeStep === steps.length - 1 ? "Finish" :
+                        activeStep === 0 && this.props.selectedAnnotationCollections.length === 0 ?
+                        "Skip this step" :
+                        "Next"}
                     </Button>
+                    }
                   </div>
                 </div>
               </StepContent>
