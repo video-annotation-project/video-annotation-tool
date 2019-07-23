@@ -53,17 +53,34 @@ def _parse(value, function, fmt):
         raise_from(ValueError(fmt.format(e)), None)
 
 
+
+
+def _get_classmap(classes):
+    """
+    Initializes the classmap of classes names to training id's.
+    (these id's don't represent the conceptid's from our database)
+    """
+    classmap = []
+    classes_param = [','.join((str(id_) for id_ in classes))] 
+
+    classes = _query("select name from concepts where id IN (%s)", concepts_param)
+    print(classes)
+
+    return classmap
+
+
+
 class CollectionGenerator(object):
 
     def __init__(self, 
                  collection_ids, 
-                 classmap, 
+                 classes, 
                  min_examples,
                  validation_split=0.8):
 
-        self.classmap = classmap
-        selected_frames, concept_counts = self._select_annotations(collection_ids, min_examples, list(classmap))
+        selected_frames, concept_counts = self._select_annotations(collection_ids, min_examples, classes)
         self.selected_frames = selected_frames
+        self.classmap = _get_classmap(classes)
 
         # Shuffle selected frames so that training/testing set are different each run
         random.shuffle(self.selected_frames)
@@ -169,7 +186,7 @@ class CollectionGenerator(object):
             WHERE inter.id IN (%s)
         '''
 
-        return _query(annotations_query, [','.join((str(id_) for id_ in collection_ids))] )
+        return _query(annotations_query, [','.join((str(id_) for id_ in collection_ids))])
 
 
 class S3Generator(Generator):
