@@ -125,7 +125,8 @@ def resize(row):
     row.videoheight = new_height
     return row
 
-def predict_on_video(videoid, model_weights, concepts, filename, upload_annotations=False, userid=None):
+def predict_on_video(videoid, model_weights, concepts, filename,
+                     upload_annotations=False, userid=None):
     # Connect to db
     con = psycopg2.connect(database = DB_NAME,
                     user = DB_USER,
@@ -242,7 +243,12 @@ def predict_frames(video_frames, fps, model, videoid, con):
         # update tracking for currently tracked objects
         for obj in currently_tracked_objects:
             success = obj.update(frame, frame_num)
-            if not success:
+            temp = list(currently_tracked_objects)
+            temp.remove(obj)
+            detection = (obj.box, 0, 0)
+            match, matched_object = does_match_existing_tracked_object(
+                detection, temp)
+            if match or not success:
                 annotations.append(obj.annotations)
                 currently_tracked_objects.remove(obj)
                 # Check if there is a matching prediction if the tracking fails?
@@ -252,15 +258,19 @@ def predict_frames(video_frames, fps, model, videoid, con):
         if frame_num % NUM_FRAMES == 0:
             detections = get_predictions(frame, model)
             for detection in detections:
-                match, matched_object = does_match_existing_tracked_object(detection, currently_tracked_objects)
+                match, matched_object = does_match_existing_tracked_object(
+                    detection, currently_tracked_objects)
                 if match:
                     matched_object.reinit(detection, frame, frame_num)
                 else:
                     tracked_object = Tracked_object(detection, frame, frame_num)
-                    prev_annotations, matched_obj_id = track_backwards(video_frames, frame_num, detection, tracked_object.id, fps, pd.concat(annotations))
+                    prev_annotations, matched_obj_id = track_backwards(
+                        video_frames, frame_num, detection,
+                        tracked_object.id, fps, pd.concat(annotations))
                     if matched_obj_id:
                         tracked_object.change_id(matched_obj_id)
-                    tracked_object.annotations = tracked_object.annotations.append(prev_annotations)
+                    tracked_object.annotations = tracked_object\
+                        .annotations.append(prev_annotations)
                     currently_tracked_objects.append(tracked_object)
     
     for obj in currently_tracked_objects:
@@ -389,7 +399,10 @@ def generate_video(filename, frames, fps, results,
     results = results.append(annotations)
     # Cast frame_num to int (prevent indexing errors)
     results.frame_num = results.frame_num.astype('int')
+    # Classmap maps concept id to concept name
     classmap = get_classmap(concepts)
+    # make a dictionary mapping conceptid to count (init 0)
+    conceptsCounts = {concept : 0 for concept in concepts}
     total_length = len(results)
     one_percent_length = int(total_length/100)
     for pred_index, res in enumerate(results.itertuples()):
@@ -399,14 +412,16 @@ def generate_video(filename, frames, fps, results,
 
         x1, y1, x2, y2 = int(res.x1), int(res.y1), int(res.x2), int(res.y2)
         if res.confidence:
+            conceptsCounts[concepts.index(res.label)] += 1
             cv2.rectangle(frames[res.frame_num], (x1, y1), (x2, y2), (0, 255, 0), 2)
             cv2.putText(
-                frames[res.frame_num], str(res.confidence),
+                frames[res.frame_num], str(round(res.confidence, 3)),
                 (x1, y1+10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
-            cv2.putText(frames[res.frame_num], str(res.objectid), (x1, y2), 
-                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+            cv2.putText(
+                frames[res.frame_num], conceptsCounts[concepts.index(res.label)],
+                (x1, y2), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
         else:
-            cv2.rectangle(frames[res.frame_num], (x1, y1), (x2, y2), (255, 0, 0), 2)
+            cv2.rectangle(frames[res.frame_num], (x1, y1), (x2, y2), (0, 0, 255), 2)
         cv2.putText(
             frames[res.frame_num], classmap[concepts.index(res.label)],
             (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
