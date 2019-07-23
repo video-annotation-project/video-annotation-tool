@@ -342,7 +342,6 @@ class AnnotationCollection extends Component {
         }
       })
       .then(res => {
-        console.log(res.data);
         this.setState({
           annotationCount: res.data[0].annotationcount,
           trackingCount: res.data[0].trackingcount
@@ -438,9 +437,21 @@ class AnnotationCollection extends Component {
     let data = this.state.collections.find(col => {
       return col.id === this.state.selectedCollection;
     });
-    if (data.concepts[0] && data.users[0]) {
+    if (data.users[0]) {
       return (
         <React.Fragment>
+          <Typography variant="subtitle1" className={this.props.classes.stats1}>
+            Users ({data.users.length}):
+          </Typography>
+          <Typography variant="subtitle1" className={this.props.classes.stats2}>
+            {data.users.join(', ')}
+          </Typography>
+          <Typography variant="subtitle1" className={this.props.classes.stats1}>
+            Videos ({data.videos.length}):
+          </Typography>
+          <Typography variant="subtitle1" className={this.props.classes.stats2}>
+            {data.videos.join(', ')}
+          </Typography>
           <Typography variant="subtitle1" className={this.props.classes.stats1}>
             Concepts ({data.concepts.length}):
           </Typography>
@@ -448,12 +459,15 @@ class AnnotationCollection extends Component {
             {data.concepts.join(', ')}
           </Typography>
           <Typography variant="subtitle1" className={this.props.classes.stats1}>
-            Users ({data.users.length}):
-          </Typography>
-          <Typography variant="subtitle1" className={this.props.classes.stats2}>
-            {data.users.join(', ')}
+            Contains tracking: {data.tracking ? 'True' : 'False'}
           </Typography>
         </React.Fragment>
+      );
+    } else {
+      return (
+        <Typography variant="subtitle1" className={this.props.classes.stats1}>
+          No annotations
+        </Typography>
       );
     }
   };

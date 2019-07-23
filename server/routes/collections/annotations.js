@@ -8,23 +8,9 @@ router.get(
   async (req, res) => {
     let queryText = `
     SELECT
-      ac.*,
-      array_agg(DISTINCT c.name) as concepts,
-      array_agg(DISTINCT u.username) as users
+      ac.*
     FROM
       annotation_collection ac
-    LEFT JOIN
-      annotation_intermediate ai
-    ON
-      ac.id = ai.id
-    LEFT JOIN
-      annotations a ON ai.annotationid=a.id
-    LEFT JOIN
-      users u ON a.userid=u.id
-    LEFT JOIN
-      concepts c ON a.conceptid=c.id
-    GROUP BY
-      ac.id
     ORDER BY
       ac.name
     `;
