@@ -552,8 +552,8 @@ class AnnotationCollection extends Component {
     const steps = getSteps();
 
     return (
-      <Grid container spacing={5}>
-        <Grid item xs={6}>
+      <Grid container spacing={1}>
+        <Grid item xs={9}>
           <div className={classes.container}>
             <Stepper
               activeStep={activeStep}
@@ -624,7 +624,7 @@ class AnnotationCollection extends Component {
             </Stepper>
           </div>
         </Grid>
-        <Grid item xs={6} className={classes.collection}>
+        <Grid item xs={3} className={classes.collection}>
           <FormControl className={classes.formControl}>
             <InputLabel>Select collection</InputLabel>
             <Select
