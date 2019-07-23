@@ -73,7 +73,6 @@ class Summary extends React.Component {
   render() {
     const { classes } = this.props;
     var start, end, dist, depth;
-    console.log(this.props.metrics);
 
     if (this.props.gpsstart && this.props.gpsstop) {
       start = {

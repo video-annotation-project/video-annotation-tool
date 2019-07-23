@@ -110,7 +110,6 @@ class AIvideoList extends Component {
     };
     try {
       let metrics = await axios.get(`/api/videos/aivideos/metrics?filename=${video.name}`, config);
-      console.log(metrics.data);
       if (metrics) {
         return metrics.data;
       }
