@@ -473,9 +473,13 @@ router.get(
     let params = [];
     let good_users = 
     let queryText = `
-      SELECT 
-        SUM(CASE WHEN userid=32 THEN 1 ELSE 0 END) as trackingcount,
-        SUM(CASE WHEN userid!=32 THEN 1 ELSE 0 END) as annotationcount
+      SELECT
+        coalesce(
+          SUM(CASE WHEN userid=32 THEN 1 ELSE 0 END), 0
+        ) as trackingcount,
+        coalesce(
+          SUM(CASE WHEN userid!=32 THEN 1 ELSE 0 END), 0
+        ) as annotationcount
       FROM annotations as A
     `;
     if (req.query.selectedConcepts[0] !== "-1") {
@@ -508,6 +512,9 @@ router.get(
         AND unsure = False
         AND userid::text = ANY($${params.length}))`;
     }
+    console.log(queryText);
+    console.log(params);
+
     try {
       let response = await psql.query(queryText, params);
       res.json(response.rows);
