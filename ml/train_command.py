@@ -67,29 +67,29 @@ concepts = model[2]
 verifyVideos = model[3]
 
 #Delete old model user
-if (model[4] != 'None'):
-     cursor.execute('''
-         DELETE FROM users
-         WHERE id=%s''',
-         (model[4],))
+# if (model[4] != 'None'):
+#      cursor.execute('''
+#          DELETE FROM users
+#          WHERE id=%s''',
+#          (model[4],))
 
 user_model = model[0] + "-" + time.ctime() 
 # username example: testV2-Fri Jun 28 11:58:37 2019
 # insert into users
-cursor.execute('''
-    INSERT INTO users (username, password, admin) 
-    VALUES (%s, 0, null) 
-    RETURNING *''',
-    (user_model,))
-model_user_id = int(cursor.fetchone()[0])
+# cursor.execute('''
+#     INSERT INTO users (username, password, admin) 
+#     VALUES (%s, 0, null) 
+#     RETURNING *''',
+#     (user_model,))
+# model_user_id = int(cursor.fetchone()[0])
 
 # update models
-cursor.execute('''
-    UPDATE models 
-    SET userid=%s
-    WHERE name=%s
-    RETURNING *''',
-    (model_user_id,info['modelSelected'],))
+# cursor.execute('''
+#     UPDATE models 
+#     SET userid=%s
+#     WHERE name=%s
+#     RETURNING *''',
+#     (model_user_id, info['modelSelected'],))
 
 # Start training job
 train_model(concepts, info['modelSelected'], info['annotationCollections'], 
