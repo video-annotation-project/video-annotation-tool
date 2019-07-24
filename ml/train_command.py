@@ -1,7 +1,7 @@
 from psycopg2 import connect
 import os
 from dotenv import load_dotenv
-from load_n_train import train_model
+from train import train_model
 import boto3
 import json
 import time
