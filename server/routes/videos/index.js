@@ -1,7 +1,6 @@
 const router = require('express').Router();
 const passport = require("passport");
 const psql = require("../../db/simpleConnect");
-const AWS = require("aws-sdk");
 
 var data = require('../../../config.json');
 

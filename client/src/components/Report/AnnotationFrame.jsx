@@ -69,6 +69,7 @@ class AnnotationFrame extends Component {
   };
 
   handleDialogClose = () => {
+    this.props.loadAnnotations();
     this.setState({
       dialogOpen: false,
       dialogMsg: null,

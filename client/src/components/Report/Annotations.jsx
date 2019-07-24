@@ -56,7 +56,11 @@ class Annotations extends Component {
     };
   }
 
-  componentDidMount = async () => {
+  componentDidMount() {
+    this.loadAnnotations();
+  }
+
+  loadAnnotations = async () => {
     const config = {
       headers: {
         Authorization: "Bearer " + localStorage.getItem("token")
@@ -250,6 +254,7 @@ class Annotations extends Component {
                 ) : (
                     <AnnotationFrame
                       annotation={annotation}
+                      loadAnnotations={this.loadAnnotations}
                       updateAnnotations={this.updateAnnotations}
                     />
                   )}
