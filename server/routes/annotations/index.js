@@ -471,7 +471,7 @@ router.get(
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     let params = [];
-    let good_users = configData.ml.tracking_users.filter(x => req.query.selectedUsers.includes(x));
+    let good_users = configData.ml.tracking_users.filter(x => req.query.selectedUsers.includes(x.toString()));
     console.log(good_users);
     let queryText = `
       SELECT
