@@ -101,30 +101,28 @@ router.post(
               users 
     `;
 
-    if (req.body.selectedUsers[0] !== "-1") {
-      if (params.length === 1) {
-        queryText1 += ` WHERE `;
-      } else {
-        queryText1 += ` AND `;
-      }
+    if (params.length === 1) {
+      queryText1 += ` WHERE `;
+    } else {
+      queryText1 += ` AND `;
+    }
 
-      params.push(req.body.selectedUsers);
+    params.push(req.body.selectedUsers);
 
-      if (req.body.includeTracking) {
-        queryText1 += `EXISTS ( 
+    if (req.body.includeTracking) {
+      queryText1 += `EXISTS ( 
           SELECT id, userid 
           FROM annotations 
           WHERE id=A.originalid 
           AND unsure = False
           AND userid::text = ANY($${params.length}))`;
-      } else {
-        queryText1 += `
+    } else {
+      queryText1 += `
           unsure = False
           AND userid::text = ANY($${params.length})`;
-      }
-
-      queryText2 += ` WHERE id = ANY($${params.length})`;
     }
+
+    queryText2 += ` WHERE id = ANY($${params.length})`;
 
     queryText2 += `
       )) u),
@@ -138,18 +136,16 @@ router.post(
              videos
     `;
 
-    if (req.body.selectedVideos[0] !== "-1") {
-      if (params.length === 1) {
-        queryText1 += ` WHERE `;
-      } else {
-        queryText1 += ` AND `;
-      }
-
-      params.push(req.body.selectedVideos);
-
-      queryText1 += ` videoid::text = ANY($${params.length}) `;
-      queryText2 += ` WHERE id = ANY($${params.length})`;
+    if (params.length === 1) {
+      queryText1 += ` WHERE `;
+    } else {
+      queryText1 += ` AND `;
     }
+
+    params.push(req.body.selectedVideos);
+
+    queryText1 += ` videoid::text = ANY($${params.length}) `;
+    queryText2 += ` WHERE id = ANY($${params.length})`;
 
     queryText2 += `
       )) v),
@@ -163,17 +159,15 @@ router.post(
               concepts
     `;
 
-    if (req.body.selectedConcepts[0] !== "-1") {
-      if (params.length === 1) {
-        queryText1 += ` WHERE `;
-      } else {
-        queryText1 += ` AND `;
-      }
-      params.push(req.body.selectedConcepts);
-
-      queryText1 += ` conceptid::text = ANY($${params.length}) `;
-      queryText2 += ` WHERE id = ANY($${params.length})`;
+    if (params.length === 1) {
+      queryText1 += ` WHERE `;
+    } else {
+      queryText1 += ` AND `;
     }
+    params.push(req.body.selectedConcepts);
+
+    queryText1 += ` conceptid::text = ANY($${params.length}) `;
+    queryText2 += ` WHERE id = ANY($${params.length})`;
 
     queryText1 += `
         ) as t(id, annotationid)
