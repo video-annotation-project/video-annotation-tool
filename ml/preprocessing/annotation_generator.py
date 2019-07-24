@@ -21,7 +21,7 @@ load_dotenv(dotenv_path="../.env")
 with open(config_path) as config_buffer:    
     config = json.loads(config_buffer.read())['ml']
     
-# Connect to database
+# Database and S3 constants
 DB_NAME = os.getenv("DB_NAME")
 DB_HOST = os.getenv("DB_HOST")
 DB_USER = os.getenv("DB_USER")
@@ -29,7 +29,9 @@ DB_PASSWORD = os.getenv("DB_PASSWORD")
 S3_BUCKET = os.getenv('AWS_S3_BUCKET_NAME')
 SRC_IMG_FOLDER = os.getenv('AWS_S3_BUCKET_ANNOTATIONS_FOLDER')
 
+# Without this the program will crash
 ImageFile.LOAD_TRUNCATED_IMAGES = True
+
 
 def _query(query, params=None):
     """
@@ -59,9 +61,12 @@ def _parse(value, function, fmt):
 
 
 def _atomic_file_exists(file_path):
+    """
+    Atomically check if a file exists, returning a boolean
+    """
     try:
         # This file open is atomic. This avoids race conditions when multiple processes are running.
-        # This happens when workers > 1 and multiprocessing = True in the fit_generator
+        # This race condition only happens when workers > 1 and multiprocessing = True in the fit_generator
         fd = os.open(file_path, os.O_CREAT | os.O_EXCL) 
         os.close(fd)
         return False
@@ -82,7 +87,20 @@ def _get_classmap(classes):
     return classmap
 
 
-class CollectionGenerator(object):
+def _bound_coordinates(first, curr):
+    x_ratio = (curr['videowidth'] / first['videowidth'])
+    y_ratio = (curr['videoheight'] / first['videoheight'])
+
+    x1 = min(max(int(curr['x1'] / x_ratio), 0), int(first['videowidth']))
+    x2 = min(max(int(curr['x2'] / x_ratio), 0), int(first['videowidth']))
+
+    y1 = min(max(int(curr['y1'] / y_ratio), 0), int(first['videoheight']))
+    y2 = min(max(int(curr['y2'] / y_ratio), 0), int(first['videoheight']))
+
+    return x1, x2, y1, y2
+
+
+class AnnotationGenerator(object):
 
     def __init__(self, 
                  collection_ids, 
@@ -107,7 +125,7 @@ class CollectionGenerator(object):
 
 
     def flow_from_s3(self, 
-                     image_folder,
+                     image_folder='',
                      image_extension='.png',
                      subset='training',
                      **kwargs):
@@ -130,7 +148,7 @@ class CollectionGenerator(object):
                 **kwargs
             )
         else:
-            raise ValueError('Subset parameter must be either "training" or "validation"/"testing".')
+            raise ValueError('subset parameter must be either "training" or "validation"/"testing"')
 
 
     @staticmethod
@@ -167,20 +185,7 @@ class CollectionGenerator(object):
                 concept_count[row['conceptid']] += 1
                 in_annot.append(row['conceptid'])
 
-                if int(row['videowidth']) != int(first['videowidth']):
-                   x_ratio = (row['videowidth'] / first['videowidth'])
-                   y_ratio = (row['videoheight'] / first['videoheight'])
-                   x1 = min(max(int(row['x1'] / x_ratio), 0), int(first['videowidth']))
-                   y1 = min(max(int(row['y1'] / y_ratio), 0), int(first['videoheight']))
-                   x2 = min(max(int(row['x2'] / x_ratio), 0), int(first['videowidth']))
-                   y2 = min(max(int(row['y2'] / y_ratio), 0), int(first['videoheight']))
-                else:
-                   x1 = min(max(int(row['x1']),0), int(row['videowidth']))
-                   y1 = min(max(int(row['y1']),0), int(row['videoheight']))
-                   x2 = min(max(int(row['x2']),0), int(row['videowidth']))
-                   y2 = min(max(int(row['y2']),0), int(row['videoheight']))
-                if (y1 == y2) or (x1==x2):
-                    raise ValueError('Invalid bounding box in {first[image]}')
+                x1, x2, y1, y2 = _bound_coordinates(first, row)
 
                 frame.at[i, 'x1'] = x1
                 frame.at[i, 'x2'] = x2
@@ -232,13 +237,18 @@ class S3Generator(Generator):
 
         self.image_folder = image_folder
 
-        # We initalize selected_frames to hold all possible annotation iamges.
+        # We initalize selected_annotations to hold all possible annotation iamges.
         # Then, downloaded_images will hold those that have already been downloaded
         self.selected_annotations = pd.concat(selected_frames).reset_index()
+
+        # Go ahead and add a column with the file name we'll save the images as
+        # We use videoid + frame_num as this ensures that we never download
+        # the same frame in a video twice, even if it has multiple annotations
         self.selected_annotations['save_name'] = self.selected_annotations.apply(
             lambda row: f'{row["videoid"]}_{int(row["frame_num"])}', 
         axis=1)
 
+        # Make a set of all images that've already been downloaded
         self.downloaded_images = set(os.listdir(image_folder))
 
         self.image_extension = image_extension
@@ -322,8 +332,11 @@ class S3Generator(Generator):
         annotations = {'labels': np.empty((0,)), 'bboxes': np.empty((0, 4))}
         image_name = image['save_name']
 
+        # Add all bounding boxes and annotations to the annotations dict for a particular image
         for idx, annot in enumerate(self.image_data[image_name]):
-            annotations['labels'] = np.concatenate((annotations['labels'], [self.name_to_label(annot['class'])]))
+            annotations['labels'] = np.concatenate((annotations['labels'], 
+                [self.name_to_label(annot['class'])]))
+
             annotations['bboxes'] = np.concatenate((annotations['bboxes'], [[
                 float(annot['x1']),
                 float(annot['y1']),
@@ -345,8 +358,9 @@ class S3Generator(Generator):
         try:
             obj = self.client.get_object(Bucket=S3_BUCKET, Key=SRC_IMG_FOLDER + image_name)
             obj_image = Image.open(obj['Body'])
+        # ClientError is the exception class for a KeyNotFound error
         except ClientError:
-            raise IOError(f'File {SRC_IMG_FOLDER}{image_name} not found in S3 bucket.')
+            raise IOError(f'file {SRC_IMG_FOLDER}{image_name} not found in S3 bucket')
     
         # Some files have a file extension, some don't. Let's fix that.
         if self.image_extension not in image_name:
@@ -354,19 +368,21 @@ class S3Generator(Generator):
 
         image_path = self.image_path(image_index)
 
-        # Atmoically check if the file has already been opened.
+        # Atomically check if the file has already been opened.
         # If we're good, save it
         if not _atomic_file_exists(image_path):
             obj_image.save(image_path)
         else:
-            # THe file exists, lets make sure it's done downloading.
-            # Spin while the file exists, but has no content
+            # The file exists, lets make sure it's done downloading.
+            # We spin while the file exists, but has no content
             while os.path.getsize(image_path) == 0:
                 pass
 
 
     def _read_annotations(self):
         """ Read annotations from our selected annotations.
+            Returns a dictionary mapping video frames (unique frame images)
+            to bounding boxes and coordinates.
         """
         result = OrderedDict()
 
@@ -385,7 +401,7 @@ class S3Generator(Generator):
             if image_file not in result:
                 result[image_file] = []
 
-            # Safely parse all string numbers into integers
+            # Safely parse all string coordinates into integers
             x1 = _parse(x1, int, 'malformed x1: {{}}')
             y1 = _parse(y1, int, 'malformed y1: {{}}')
             x2 = _parse(x2, int, 'malformed x2: {{}}')
@@ -401,12 +417,11 @@ class S3Generator(Generator):
             if y2 <= y1:
                 raise ValueError('y2 ({}) must be higher than y1 ({})'.format(y2, y1))
 
-            # check if the current class name is correctly present
+            # Check if the current class name is correctly present
             if class_name not in self.classes:
                 raise ValueError('unknown class name: \'{}\' (classes: {})'.format(class_name, set(self.classes)))
 
             result[image_file].append({'x1': x1, 'x2': x2, 'y1': y1, 'y2': y2, 'class': class_name})
-
         return result            
 
 

@@ -1,8 +1,8 @@
 import os
-from dotenv import load_dotenv
 import json
 import shutil
-from loading_data import queryDB, get_classmap
+
+from dotenv import load_dotenv
 from loading_data import download_annotations
 import pandas as pd
 from keras_retinanet import models
@@ -33,7 +33,7 @@ good_users = config['biologist_users']
 '''
     Evaluates the model using testing data, printing out an F1 score as well as optimal confidence thresholds for each concept
 '''
-def evaluate_model(concepts, model_path,  min_examples, download_data=False):
+def evaluate_model(concepts, model_path, min_examples, download_data=False):
 
     classmap = get_classmap(concepts)
 

@@ -11,25 +11,21 @@ import tensorflow as tf
 import skimage as sk
 import numpy as np
 import boto3
+from dotenv import load_dotenv
+from tensorflow.python.client import device_lib
 from keras_retinanet import models
 from keras_retinanet import losses
-from keras_retinanet.preprocessing.csv_generator import CSVGenerator
 from keras_retinanet.utils.transform import random_transform_generator
 from keras_retinanet.utils.model import freeze as freeze_model
 from keras.utils import multi_gpu_model
 from keras.callbacks import ModelCheckpoint, EarlyStopping
 from keras_retinanet.models.retinanet import retinanet_bbox
 from keras_retinanet.callbacks import RedirectModel
-from tensorflow.python.client import device_lib
-from dotenv import load_dotenv
 
-from s3_generator import CollectionGenerator
-from loading_data import download_annotations
-from loading_data import queryDB, get_classmap
-from progress_callbacks import Progress
-from progress_callbacks import TensorBoardLog
-from tensorboard_logs import create_log_entry
 from utils.timer import timer
+from preprocessing.annotation_generator import AnnotationGenerator
+from callbacks.progress import Progress
+from callbacks.tensorboard import TensorboardLog
 
 
 config_path = "../config.json"
@@ -72,7 +68,7 @@ def _get_callbacks(model, model_name, min_examples, epochs, collection_ids, step
     stopping = EarlyStopping(monitor='val_loss', min_delta=0, patience=10)
 
     # Every epoch upload tensorboard logs to the S3 bucket
-    log_callback = TensorBoardLog(
+    log_callback = TensorboardLog(
         model_name=model_name,
         min_examples=min_examples,
         epochs=epochs,
@@ -93,12 +89,11 @@ def _get_callbacks(model, model_name, min_examples, epochs, collection_ids, step
     return [checkpoint, stopping, progress_callback, log_callback, tensorboard_callback]
 
 
-#TODO: finish exception
 def _upload_weights(model_name):
     try:
         s3.upload_file(WEIGHTS_PATH, S3_BUCKET, S3_BUCKET_WEIGHTS_FOLDER + model_name+".h5") 
     except:
-        pass
+        raise IOError('Unable to upload weights to S3 bucket.')
 
 
 @timer("training")
