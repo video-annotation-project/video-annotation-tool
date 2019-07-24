@@ -132,27 +132,51 @@ class CollectionGenerator(object):
         for concept in concepts:
             concept_count[concept] = 0
 
-        group_frame = annotations.groupby(['videoid', 'frame_num'], sort=False)
-        group_frame = [df for _, df in group_frame]
+        frame_groups = annotations.groupby(['videoid', 'frame_num'], sort=False)
+        frame_groups = [df for _, df in frame_groups]
 
         ai_id = _query("SELECT id FROM users WHERE username='tracking'").id[0]
         
         # Give priority to frames with least amount of tracking annotations
         # And lower speed
         sort_lambda = lambda df : (list(df['userid']).count(ai_id), df.speed.mean())
-        group_frame.sort(key=sort_lambda)
+        frame_groups.sort(key=sort_lambda)
 
         # Selects images that we'll use (each group has annotations for an image)
-        for frame in group_frame:
+        for frame in frame_groups:
             # Check if we have min number of images already
             if not any(v < min_examples for v in concept_count.values()):
                 break
+
+            first = frame.iloc[0]
             
             in_annot = []
-            for index, row in frame.iterrows():
+            for i, row in frame.iterrows():
                 concept_count[row['conceptid']] += 1
                 in_annot.append(row['conceptid'])
 
+                if int(row['videowidth']) != int(first['videowidth'])):
+                   x_ratio = (row['videowidth'] / first['videowidth'])
+                   y_ratio = (row['videoheight'] / first['videoheight'])
+                   x1 = min(max(int(row['x1'] / x_ratio), 0), int(first['videowidth']))
+                   y1 = min(max(int(row['y1'] / y_ratio), 0), int(first['videoheight']))
+                   x2 = min(max(int(row['x2'] / x_ratio), 0), int(first['videowidth']))
+                   y2 = min(max(int(row['y2'] / y_ratio), 0), int(first['videoheight']))
+                else:
+                   x1 = min(max(int(row['x1']),0), int(row['videowidth']))
+                   y1 = min(max(int(row['y1']),0), int(row['videoheight']))
+                   x2 = min(max(int(row['x2']),0), int(row['videowidth']))
+                   y2 = min(max(int(row['y2']),0), int(row['videoheight']))
+                if (y1 == y2) or (x1==x2):
+                    raise ValueError('Invalid bounding box in {first[image]}')
+
+                print(frame)
+                frame.at[i, 'x1'] = x1
+                frame.at[i, 'x2'] = x2
+                frame.at[i, 'y1'] = y1
+                frame.at[i, 'y2'] = y2
+                print(frame)
+                    
             # Checks if frame has only concept we have too many of
             if any(v > min_examples for v in concept_count.values()):
                 # Gets all concepts that we have too many of
@@ -345,8 +369,6 @@ class S3Generator(Generator):
             if image_file not in result:
                 result[image_file] = []
 
-            x1, x2, y2, y1 = _get_coordinates()
-
             x1 = _parse(x1, int, 'malformed x1: {{}}')
             y1 = _parse(y1, int, 'malformed y1: {{}}')
             x2 = _parse(x2, int, 'malformed x2: {{}}')
@@ -367,7 +389,17 @@ class S3Generator(Generator):
                 raise ValueError('unknown class name: \'{}\' (classes: {})'.format(class_name, set(self.classes)))
 
             result[image_file].append({'x1': x1, 'x2': x2, 'y1': y1, 'y2': y2, 'class': class_name})
+
+        _resize_bb_bounds(result)
         return result            
+
+
+
+
+
+
+
+
 
 
 
