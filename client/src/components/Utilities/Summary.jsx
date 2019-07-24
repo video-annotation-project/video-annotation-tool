@@ -62,7 +62,12 @@ class Summary extends React.Component {
   };
 
   setDecimal = data => {
-    return parseFloat(data).toFixed(5);
+    if (data === ""){
+      return '0.0';
+    } else if (Number.isInteger(parseFloat(data))) {
+      return data;
+    }
+    return parseFloat(data).toFixed(3);
   };
 
   render() {
@@ -121,12 +126,12 @@ class Summary extends React.Component {
                       <TableCell>{row.TP}</TableCell>
                       <TableCell>{row.FP}</TableCell>
                       <TableCell>{row.FN}</TableCell>
-                      <TableCell>{parseFloat(row.Precision).toFixed(3)}</TableCell>
-                      <TableCell>{parseFloat(row.Recall).toFixed(3)}</TableCell>
-                      <TableCell>{parseFloat(row.F1).toFixed(3)}</TableCell>
-                      <TableCell>{row.pred_num}</TableCell>
-                      <TableCell>{row.true_num}</TableCell>
-                      <TableCell>{row.count_accuracy}</TableCell>
+                      <TableCell>{this.setDecimal(row.Precision)}</TableCell>
+                      <TableCell>{this.setDecimal(row.Recall)}</TableCell>
+                      <TableCell>{this.setDecimal(row.F1)}</TableCell>
+                      <TableCell>{this.setDecimal(row.pred_num)}</TableCell>
+                      <TableCell>{this.setDecimal(row.true_num)}</TableCell>
+                      <TableCell>{this.setDecimal(row.count_accuracy)}</TableCell>
                     </TableRow>
                   ))
                 ) : (
