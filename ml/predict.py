@@ -420,25 +420,25 @@ def generate_video(filename, frames, fps, results,
     for pred_index, res in enumerate(results.itertuples()):
         if pred_index % one_percent_length == 0:
             upload_predict_progress(pred_index, video_id, con, total_length, 2)
-
         x1, y1, x2, y2 = int(res.x1), int(res.y1), int(res.x2), int(res.y2)
-        if not pd.isna(res.confidence):
+        # boxText init to concept name
+        boxText = classmap[concepts.index(res.label)] 
+        if pd.isna(res.confidence): # No confidence means user annotation
+            # Draws a (human) red box Note: opencv color is BGR
+            cv2.rectangle(frames[res.frame_num], (x1, y1), (x2, y2), (0, 0, 255), 2)
+        else: # if confidence exists -> AI annotation
+            # Keeps count of concepts
             if (res.objectid not in seenObjects):
                 conceptsCounts[res.label] += 1
                 seenObjects.append(res.objectid)
+            # Draw a (AI) green box
             cv2.rectangle(frames[res.frame_num], (x1, y1), (x2, y2), (0, 255, 0), 2)
-            cv2.putText(
-                frames[res.frame_num], str(round(res.confidence, 3)),
-                (x1, y1+10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
-            cv2.putText(
-                frames[res.frame_num], str(conceptsCounts[res.label]),
-                (x1, y2), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
-        else:
-            cv2.rectangle(frames[res.frame_num], (x1, y1), (x2, y2), (0, 0, 255), 2)
+            # boxText = count concept-name (confidence) e.g. "1 Starfish (0.5)"
+            boxText = str(conceptsCounts[res.label]) + " " + boxText + \
+              " (" + str(round(res.confidence, 3)) + ")"
         cv2.putText(
-            frames[res.frame_num], classmap[concepts.index(res.label)],
-            (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
-
+            frames[res.frame_num], boxText,
+            (x1-5, y2+10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
     save_video(filename, frames, fps, cursor, con)
 
 
