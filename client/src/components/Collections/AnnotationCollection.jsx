@@ -386,8 +386,6 @@ class AnnotationCollection extends Component {
 
 
   handleSelectAll = (data, dataSelected, stepInfo) => {
-    console.log(data);
-    console.log(dataSelected);
     var selected = dataSelected;
     data.forEach(row => {
       if (row.id) {
