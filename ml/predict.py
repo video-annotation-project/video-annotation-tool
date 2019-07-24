@@ -7,6 +7,7 @@ import numpy as np
 import argparse
 import copy
 import os
+import subprocess
 import boto3
 import keras
 import pandas as pd
@@ -140,11 +141,13 @@ def predict_on_video(videoid, model_weights, concepts, filename,
         SELECT * 
         FROM videos 
         WHERE id ={videoid}''').iloc[0].filename
-    print("Loading Video.")
+    printing_with_time("Loading Video.")
     frames, fps = get_video_frames(vid_filename, videoid, con)
     original_frames = copy.deepcopy(frames)
+    printing_with_time("After DeepCopy.")
 
     # Get biologist annotations for video
+    printing_with_time("Before database query")
     annotations = queryDB(
         f'''
         SELECT 
@@ -160,22 +163,23 @@ def predict_on_video(videoid, model_weights, concepts, filename,
           videoid={videoid} AND
           userid in {str(tuple(good_users))} AND
           conceptid in {str(tuple(concepts))}''')
+    printing_with_time("After database query")
     
-    print("Resizing annotations.")
+    printing_with_time("Resizing annotations.")
     annotations = annotations.apply(resize, axis=1)
     annotations = annotations.drop(['videowidth','videoheight'], axis=1)
-    print("Done resizing annotations.")
+    printing_with_time("Done resizing annotations.")
 
-    print("Initializing Model")
+    printing_with_time("Initializing Model")
     model = init_model(model_weights)
     
-    print("Predicting")
+    printing_with_time("Predicting")
     results, frames = predict_frames(frames, fps, model, videoid, con)
     results = propagate_conceptids(results, concepts)
     results = length_limit_objects(results, MIN_FRAMES_THRESH)
-    print("Generating Video") # interweb human annotations and predictions
+    printing_with_time("Generating Video") # interweb human annotations and predictions
     generate_video(
-        filename, copy.deepcopy(original_frames),
+        filename, frames,
         fps, results, concepts, videoid, annotations, cursor, con)
     if upload_annotations:
         # filter results down to middle frames
@@ -187,7 +191,7 @@ def predict_on_video(videoid, model_weights, concepts, filename,
                 RESIZED_HEIGHT, RESIZED_WIDTH, userid, fps), axis=1)
         con.commit()
         con.close()
-    print("Done generating")
+    printing_with_time("Done generating ")
     return results, fps, original_frames, annotations
 
 def get_video_frames(vid_filename, videoid, con):
@@ -202,7 +206,7 @@ def get_video_frames(vid_filename, videoid, con):
     length = int(vid.get(cv2.CAP_PROP_FRAME_COUNT))
     while not vid.isOpened():
         continue
-    print("Successfully opened video.")
+    printing_with_time("Successfully opened video.")
     check = True
     frame_counter = 0
     one_percent_length = int(length/100)
@@ -217,7 +221,7 @@ def get_video_frames(vid_filename, videoid, con):
         frames.append(frame)
         frame_counter += 1 
     vid.release()
-    print("Done resizing video.")
+    printing_with_time("Done resizing video.")
     return frames,fps
 
 def init_model(model_path):
@@ -316,10 +320,14 @@ def compute_IOU(A, B):
     intersection = intersect_width * intersect_height
     return intersection / (area_A + area_B - intersection)
 
-# get tracking annotations before first model prediction for object - max_time_back seconds
+# get tracking annotations before first prediction for object 
+# - max_time_back seconds
 # skipping original frame annotation, already saved in object initialization
-def track_backwards(video_frames, frame_num, detection, object_id, fps, old_annotations):
-    annotations = pd.DataFrame(columns=['x1','y1','x2','y2','label', 'confidence', 'objectid','frame_num'])
+def track_backwards(video_frames, frame_num, detection,
+                    object_id, fps, old_annotations):
+    annotations = pd.DataFrame(
+        columns=[
+            'x1','y1','x2','y2','label', 'confidence', 'objectid','frame_num'])
     (x1, y1, x2, y2) = detection[0]
     box = (x1, y1, (x2-x1), (y2-y1))
     frame = video_frames[frame_num]
@@ -334,8 +342,10 @@ def track_backwards(video_frames, frame_num, detection, object_id, fps, old_anno
         success, box = tracker.update(frame)
         if success:
             annotation = make_annotation(box, object_id, frame_num)
-            prev_frame_annotations = old_annotations[old_annotations['frame_num'] == frame_num]
-            matched_obj_id = match_old_annotations(prev_frame_annotations, pd.Series(annotation))
+            prev_frame_annotations = old_annotations[
+                old_annotations['frame_num'] == frame_num]
+            matched_obj_id = match_old_annotations(
+                prev_frame_annotations, pd.Series(annotation))
             if matched_obj_id:
                 annotations['objectid'] = matched_obj_id
                 return annotations, matched_obj_id
@@ -371,7 +381,8 @@ def make_annotation(box, object_id, frame_num):
     annotation['frame_num'] = frame_num
     return annotation
 
-# Given a list of annotations(some with or without labels/confidence scores) for multiple objects choose a label for each object
+# Given a list of annotations(some with or without labels/confidence scores)
+# for multiple objects choose a label for each object
 def propagate_conceptids(annotations, concepts):
     label = None
     objects = annotations.groupby(['objectid'])
@@ -405,20 +416,22 @@ def generate_video(filename, frames, fps, results,
     conceptsCounts = {concept : 0 for concept in concepts}
     total_length = len(results)
     one_percent_length = int(total_length/100)
+    seenObjects = []
     for pred_index, res in enumerate(results.itertuples()):
-
         if pred_index % one_percent_length == 0:
             upload_predict_progress(pred_index, video_id, con, total_length, 2)
 
         x1, y1, x2, y2 = int(res.x1), int(res.y1), int(res.x2), int(res.y2)
-        if res.confidence:
-            conceptsCounts[concepts.index(res.label)] += 1
+        if not pd.isna(res.confidence):
+            if (res.objectid not in seenObjects):
+                conceptsCounts[res.label] += 1
+                seenObjects.append(res.objectid)
             cv2.rectangle(frames[res.frame_num], (x1, y1), (x2, y2), (0, 255, 0), 2)
             cv2.putText(
                 frames[res.frame_num], str(round(res.confidence, 3)),
                 (x1, y1+10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
             cv2.putText(
-                frames[res.frame_num], conceptsCounts[concepts.index(res.label)],
+                frames[res.frame_num], str(conceptsCounts[res.label]),
                 (x1, y2), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
         else:
             cv2.rectangle(frames[res.frame_num], (x1, y1), (x2, y2), (0, 0, 255), 2)
@@ -438,17 +451,22 @@ def save_video(filename, frames, fps, cursor, con):
     
     # convert to mp4 and upload to s3 and db
     # requires temp so original not overwritten
+    printing_with_time("Before converting ")
     converted_file = 'temp.mp4'
+    
     # Convert file so we can stream on s3
-    os.system(f'ffmpeg -i \'{filename}\' -codec:v libx264 -y {converted_file}')
-    # upload video..
+    temp = ['ffmpeg', '-loglevel', '0', '-i', filename,
+        '-codec:v', 'libx264', '-y', converted_file]
+    subprocess.call(temp)
+    # upload video to s3
     s3.upload_file(
         converted_file, S3_BUCKET,
-        AWS_S3_BUCKET_AIVIDEOS_FOLDER +  filename,
+        AWS_S3_BUCKET_AIVIDEOS_FOLDER + filename,
         ExtraArgs={'ContentType':'video/mp4'})
     # remove files once uploaded
     os.system('rm \'' + filename + '\'')
     os.system('rm ' + converted_file)
+    printing_with_time("after removing the videos")
     
     # add the entry to ai_videos
     cursor.execute('''
@@ -473,7 +491,8 @@ def get_final_predictions(results):
     middle_frames.columns = results.columns
     return middle_frames
 
-def handle_annotation(cursor, prediction, frames, videoid, videoheight, videowidth, userid, fps):
+def handle_annotation(cursor, prediction, frames, videoid, videoheight,
+                      videowidth, userid, fps):
     frame = frames[int(prediction.frame_num)]
     frame_w_box = get_boxed_image(
         *prediction.loc[['x1','x2','y1','y2']], copy.deepcopy(frame))
@@ -522,7 +541,8 @@ Arguments:
 count - frame of video (or index of annotation) being processed
 videoid - video being processed
 con - sql connection
-total_count - total number of frames in the video (or number of predictions + annotations)
+total_count - total number of frames in the video 
+    (or number of predictions + annotations)
 status - Indicates whether processing video or drawing annotation boxes
 '''
 def upload_predict_progress(count, videoid, con, total_count, status):
@@ -554,6 +574,9 @@ def upload_predict_progress(count, videoid, con, total_count, status):
         (count, videoid,)
     )
     con.commit()
+
+def printing_with_time(text):
+    print(text + " " + str(datetime.datetime.now()))
 
 
 if __name__ == '__main__':

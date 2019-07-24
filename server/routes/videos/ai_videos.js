@@ -95,7 +95,7 @@ router.delete("/", passport.authenticate("jwt", { session: false }),
           Objects: Objects
         }
       };
-      let s3Res = await s3.deleteObjects(params, (err, data) => {
+      s3.deleteObjects(params, (err, data) => {
         if (err) {
           console.log(err);
           res.status(400).json(err);
