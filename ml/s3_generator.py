@@ -58,15 +58,14 @@ def _parse(value, function, fmt):
         raise_from(ValueError(fmt.format(e)), None)
 
 
-def _atomic_file_exists(file_path):
+def _atomic_file_open(file_path):
     try:
         # This file open is atomic. This avoids race conditions when multiple processes are running.
         # This happens when workers > 1 and multiprocessing = True in the fit_generator
         fd = os.open(file_path, os.O_CREAT | os.O_EXCL) 
-        os.close(fd)
-        return False
+        return fd
     except FileExistsError:
-        return True
+        return None
 
 
 def _get_classmap(classes):
@@ -349,8 +348,11 @@ class S3Generator(Generator):
 
         image_path = self.image_path(image_index)
 
-        if not _atomic_file_exists(image_path):
-            obj_image.save(image_path)
+        image_fd = _atomic_file_open(image_path)
+        if image_fd:
+            image_format = self.image_extension.replace('.', '')
+            with os.fdopen(image_fd, 'w') as image_file:
+                obj_image.save(image_file, image_format)
         else:
             # THe file exists, lets make sure it's done downloading.
             # Spin while the file exists, but has no content
