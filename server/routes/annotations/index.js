@@ -3,6 +3,8 @@ const passport = require("passport");
 const psql = require("../../db/simpleConnect");
 const AWS = require("aws-sdk");
 
+var configData = require('../../../config.json');
+
 /**
  * @typedef annotation
  * @property {integer} id - ID of the annotation
@@ -469,6 +471,7 @@ router.get(
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     let params = [];
+    let good_users = 
     let queryText = `
       SELECT 
         SUM(CASE WHEN userid=32 THEN 1 ELSE 0 END) as trackingcount,
