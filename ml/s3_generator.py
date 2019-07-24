@@ -73,6 +73,9 @@ def _get_classmap(classes):
     """
     Initializes the classmap of each class's database IDs to training IDs
     """
+
+    # Keras requires that the mapping IDs correspond to the index number of the class.
+    # So we create that mapping (dictionary)
     classes = _query(f"select id from concepts where id = ANY(ARRAY{classes})")
     classmap = pd.Series(classes.index, index=classes.id).to_dict()
 
@@ -140,6 +143,7 @@ class CollectionGenerator(object):
         for concept in concepts:
             concept_count[concept] = 0
 
+        # This grouping ensure that we can view all annotations for a single image
         frame_groups = annotations.groupby(['videoid', 'frame_num'], sort=False)
         frame_groups = [df for _, df in frame_groups]
 
@@ -344,11 +348,14 @@ class S3Generator(Generator):
         except ClientError:
             raise IOError(f'File {SRC_IMG_FOLDER}{image_name} not found in S3 bucket.')
     
+        # Some files have a file extension, some don't. Let's fix that.
         if self.image_extension not in image_name:
             image_name += self.image_extension
 
         image_path = self.image_path(image_index)
 
+        # Atmoically check if the file has already been opened.
+        # If we're good, save it
         if not _atomic_file_exists(image_path):
             obj_image.save(image_path)
         else:
@@ -358,7 +365,6 @@ class S3Generator(Generator):
                 pass
 
 
-
     def _read_annotations(self):
         """ Read annotations from our selected annotations.
         """
@@ -366,8 +372,11 @@ class S3Generator(Generator):
 
         for _, image in self.selected_annotations.iterrows():
             image_file = image['save_name']
+            # We treat the database ID as the class name.
             class_name = image['conceptid']
-
+            
+            # We already augmented these when creating our annotations df
+            # So, we can just directly assign the coordinates.
             x1 = image['x1']
             x2 = image['x2']
             y1 = image['y1']
@@ -376,6 +385,7 @@ class S3Generator(Generator):
             if image_file not in result:
                 result[image_file] = []
 
+            # Safely parse all string numbers into integers
             x1 = _parse(x1, int, 'malformed x1: {{}}')
             y1 = _parse(y1, int, 'malformed y1: {{}}')
             x2 = _parse(x2, int, 'malformed x2: {{}}')
