@@ -51,11 +51,20 @@ class SelectConcept extends React.Component {
 
   render() {
     const { classes, value, handleChangeList } = this.props;
+    const { concepts } = this.state;
 
     return (
       <Grid container spacing={5}>
         <Grid item>
           <Typography>Select concepts</Typography>
+          <div>
+            <Button color="primary"
+                onClick={()=>{this.props.handleSelectAll(concepts, value, "selectedConcepts")}}
+              >Select All</Button>
+            <Button color="primary"
+                onClick={()=>{this.props.handleUnselectAll("selectedConcepts")}}
+              >Unselect All</Button>
+          </div>
           <FormControl component="fieldset" className={classes.formControl}>
             <FormGroup
               className={classes.group}
