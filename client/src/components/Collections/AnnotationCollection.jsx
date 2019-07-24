@@ -98,7 +98,6 @@ class AnnotationCollection extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      /* -1 represents select all */
       selectedUsers: [],
       selectedCollection: '',
       selectedVideos: [],
@@ -375,21 +374,9 @@ class AnnotationCollection extends Component {
 
   handleChangeList = type => event => {
     if (!this.state[type].includes(event.target.value)) {
-      if (event.target.value === '-1') {
-        this.setState({
-          [type]: ['-1']
-        });
-      } else {
-        if (this.state[type][0] === '-1') {
-          this.setState({
-            [type]: [event.target.value]
-          });
-        } else {
-          this.setState({
-            [type]: this.state[type].concat(event.target.value)
-          });
-        }
-      }
+      this.setState({
+        [type]: this.state[type].concat(event.target.value)
+      });
     } else {
       this.setState({
         [type]: this.state[type].filter(typeid => typeid !== event.target.value)

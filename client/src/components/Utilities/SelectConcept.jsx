@@ -1,32 +1,32 @@
-import React from "react";
-import PropTypes from "prop-types";
-import { withStyles } from "@material-ui/core/styles";
-import FormGroup from "@material-ui/core/FormGroup";
-import FormControlLabel from "@material-ui/core/FormControlLabel";
-import FormControl from "@material-ui/core/FormControl";
-import { Checkbox, Grid } from "@material-ui/core";
-import Typography from "@material-ui/core/Typography";
-import Button from "@material-ui/core/Button";
-import ListItem from "@material-ui/core/ListItem";
-import List from "@material-ui/core/List";
-import Tooltip from "@material-ui/core/Tooltip";
+import React from 'react';
+import PropTypes from 'prop-types';
+import { withStyles } from '@material-ui/core/styles';
+import FormGroup from '@material-ui/core/FormGroup';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import FormControl from '@material-ui/core/FormControl';
+import { Checkbox, Grid } from '@material-ui/core';
+import Typography from '@material-ui/core/Typography';
+import Button from '@material-ui/core/Button';
+import ListItem from '@material-ui/core/ListItem';
+import List from '@material-ui/core/List';
+import Tooltip from '@material-ui/core/Tooltip';
 
 const styles = theme => ({
   button: {
-    textTransform: "none"
+    textTransform: 'none'
   },
   formControl: {
     marginTop: theme.spacing(2),
-    maxHeight: "400px",
-    overflow: "auto"
+    maxHeight: '400px',
+    overflow: 'auto'
   },
   group: {
     marginLeft: 15
   },
   list: {
     marginTop: theme.spacing(2),
-    overflow: "auto",
-    maxHeight: (400 - theme.spacing(2)).toString() + "px"
+    overflow: 'auto',
+    maxHeight: (400 - theme.spacing(2)).toString() + 'px'
   }
 });
 
@@ -62,13 +62,6 @@ class SelectConcept extends React.Component {
               value={value}
               onChange={handleChangeList}
             >
-              <FormControlLabel
-                key={-1}
-                value={"-1"}
-                control={<Checkbox color="primary" />}
-                label="All concepts"
-                checked={this.props.value.includes("-1")}
-              />
               {this.state.concepts
                 .filter(concept => concept.rank)
                 .map(concept => (
@@ -76,7 +69,7 @@ class SelectConcept extends React.Component {
                     key={concept.id}
                     value={concept.id.toString()}
                     control={<Checkbox color="primary" />}
-                    label={<div>{concept.id + ". " + concept.name}</div>}
+                    label={<div>{concept.id + '. ' + concept.name}</div>}
                     checked={this.props.value.includes(concept.id.toString())}
                   />
                 ))}
@@ -91,7 +84,7 @@ class SelectConcept extends React.Component {
                 <Tooltip
                   title={
                     !conceptCollection.description
-                      ? ""
+                      ? ''
                       : conceptCollection.description
                   }
                   placement="bottom-start"
@@ -118,8 +111,8 @@ class SelectConcept extends React.Component {
                     >
                       {conceptCollection.name +
                         (!conceptCollection.conceptids[0]
-                          ? " (No Concepts)"
-                          : "")}
+                          ? ' (No Concepts)'
+                          : '')}
                     </Button>
                   </div>
                 </Tooltip>

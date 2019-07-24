@@ -1,18 +1,17 @@
-import React from "react";
-import PropTypes from "prop-types";
-import { withStyles } from "@material-ui/core/styles";
-import FormControlLabel from "@material-ui/core/FormControlLabel";
-import FormControl from "@material-ui/core/FormControl";
-import FormGroup from "@material-ui/core/FormGroup";
-import { Checkbox } from "@material-ui/core";
-import Typography from "@material-ui/core/Typography";
-
+import React from 'react';
+import PropTypes from 'prop-types';
+import { withStyles } from '@material-ui/core/styles';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import FormControl from '@material-ui/core/FormControl';
+import FormGroup from '@material-ui/core/FormGroup';
+import { Checkbox } from '@material-ui/core';
+import Typography from '@material-ui/core/Typography';
 
 const styles = theme => ({
   formControl: {
     marginTop: theme.spacing(2),
-    maxHeight: "400px",
-    overflow: "auto"
+    maxHeight: '400px',
+    overflow: 'auto'
   },
   group: {
     marginLeft: 15
@@ -38,9 +37,7 @@ class SelectAnnotationCollection extends React.Component {
   render() {
     const { classes, value, handleChangeList } = this.props;
     if (!this.state.collections) {
-        return (
-            <div>Loading...</div>
-        )
+      return <div>Loading...</div>;
     }
 
     return (
@@ -53,13 +50,6 @@ class SelectAnnotationCollection extends React.Component {
             value={value}
             onChange={handleChangeList}
           >
-            {/* <FormControlLabel
-              key={-1}
-              value={"-1"}
-              control={<Checkbox color="primary" />}
-              label="All collections"
-              checked={value.includes("-1")}
-            /> */}
             {this.state.collections.map(collection => (
               <FormControlLabel
                 key={collection.id}

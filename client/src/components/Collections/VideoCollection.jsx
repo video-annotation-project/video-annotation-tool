@@ -398,7 +398,7 @@ class videoCollection extends Component {
         <Hotkeys
           keyName="space, right, left"
           onKeyDown={this.handleKeyDown.bind(this)}
-        / >
+        />
         <CollectionList
           collType="video"
           data={this.state.collections}

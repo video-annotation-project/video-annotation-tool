@@ -46,7 +46,6 @@ class Verify extends Component {
     super(props);
     this.state = {
       selectionMounted: true,
-      /* -1 represents select all */
       selectedAnnotationCollections: [],
       selectedUsers: [],
       selectedVideos: [],
@@ -265,21 +264,9 @@ class Verify extends Component {
 
   handleChangeList = type => event => {
     if (!this.state[type].includes(event.target.value)) {
-      if (event.target.value === '-1') {
-        this.setState({
-          [type]: ['-1']
-        });
-      } else {
-        if (this.state[type][0] === '-1') {
-          this.setState({
-            [type]: [event.target.value]
-          });
-        } else {
-          this.setState({
-            [type]: this.state[type].concat(event.target.value)
-          });
-        }
-      }
+      this.setState({
+        [type]: this.state[type].concat(event.target.value)
+      });
     } else {
       this.setState({
         [type]: this.state[type].filter(typeid => typeid !== event.target.value)

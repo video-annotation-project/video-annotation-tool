@@ -70,13 +70,6 @@ class SelectVideo extends React.Component {
                 <Typography>No videos for current selection</Typography>
               ) : (
                 <React.Fragment>
-                  <FormControlLabel
-                    key={-1}
-                    value={"-1"}
-                    control={<Checkbox color="primary" />}
-                    label="All videos"
-                    checked={value.includes("-1")}
-                  />
                   {this.state.videos.map(video => (
                     <FormControlLabel
                       key={video.id}
