@@ -51,6 +51,30 @@ class VerifySelection extends React.Component {
     };
   }
 
+  handleSelectAll = (data, dataSelected, stepInfo) => {
+    console.log(data);
+    console.log(dataSelected);
+    var selected = dataSelected;
+    data.forEach(row => {
+      if (row.id) {
+        if (!selected.includes(row.id.toString())) {
+          selected.push(row.id.toString());
+        }
+      }
+    });
+    this.setState({
+      [stepInfo]: selected
+    });
+  };
+
+  handleUnselectAll = stepInfo => {
+    console.log("this is called")
+    console.log(this.state);
+    this.setState({
+      [stepInfo]: []
+    });
+  };
+
   getStepForm = step => {
     const { classes } = this.props;
     switch (step) {
@@ -74,6 +98,8 @@ class VerifySelection extends React.Component {
             getUsers={this.props.getUsers}
             selectUser={this.props.selectUser}
             handleChangeList={this.props.handleChangeList('selectedUsers')}
+            handleSelectAll={this.handleSelectAll}
+            handleUnselectAll={this.handleUnselectAll}
           />
         );
       case 2:
@@ -84,6 +110,8 @@ class VerifySelection extends React.Component {
             getVideoCollections={this.props.getVideoCollections}
             handleChange={this.props.handleChange('selectedVideos')}
             handleChangeList={this.props.handleChangeList('selectedVideos')}
+            handleSelectAll={this.handleSelectAll}
+            handleUnselectAll={this.handleUnselectAll}
           />
         );
       case 3:
@@ -94,6 +122,8 @@ class VerifySelection extends React.Component {
             getConceptCollections={this.props.getConceptCollections}
             handleChange={this.props.handleChange('selectedConcepts')}
             handleChangeList={this.props.handleChangeList('selectedConcepts')}
+            handleSelectAll={this.handleSelectAll}
+            handleUnselectAll={this.handleUnselectAll}
           />
         );
       case 4:

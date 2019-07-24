@@ -384,6 +384,29 @@ class AnnotationCollection extends Component {
     }
   };
 
+
+  handleSelectAll = (data, dataSelected, stepInfo) => {
+    console.log(data);
+    console.log(dataSelected);
+    var selected = dataSelected;
+    data.forEach(row => {
+      if (row.id) {
+        if (!selected.includes(row.id.toString())) {
+          selected.push(row.id.toString());
+        }
+      }
+    });
+    this.setState({
+      [stepInfo]: selected
+    });
+  };
+
+  handleUnselectAll = stepInfo => {
+    this.setState({
+      [stepInfo]: []
+    });
+  };
+
   resetStep = step => {
     switch (step) {
       case 0:
@@ -469,6 +492,8 @@ class AnnotationCollection extends Component {
             getUsers={this.getUsers}
             selectUser={this.selectUser}
             handleChangeList={this.handleChangeList('selectedUsers')}
+            handleSelectAll={this.handleSelectAll}
+            handleUnselectAll={this.handleUnselectAll}
           />
         );
       case 1:
@@ -479,6 +504,8 @@ class AnnotationCollection extends Component {
             getVideoCollections={this.getVideoCollections}
             handleChange={this.handleChange('selectedVideos')}
             handleChangeList={this.handleChangeList('selectedVideos')}
+            handleSelectAll={this.handleSelectAll}
+            handleUnselectAll={this.handleUnselectAll}
           />
         );
       case 2:
@@ -489,6 +516,8 @@ class AnnotationCollection extends Component {
             getConceptCollections={this.getConceptCollections}
             handleChange={this.handleChange('selectedConcepts')}
             handleChangeList={this.handleChangeList('selectedConcepts')}
+            handleSelectAll={this.handleSelectAll}
+            handleUnselectAll={this.handleUnselectAll}
           />
         );
       case 3:

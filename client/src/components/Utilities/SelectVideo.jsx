@@ -53,11 +53,20 @@ class SelectVideo extends React.Component {
 
   render() {
     const { classes, value } = this.props;
+    const { videos } = this.state;
 
     return (
       <Grid container spacing={5}>
         <Grid item>
           <Typography>Select videos</Typography>
+          <div>
+            <Button color="primary"
+                onClick={()=>{this.props.handleSelectAll(videos, value, "selectedVideos")}}
+              >Select All</Button>
+            <Button color="primary"
+                onClick={()=>{this.props.handleUnselectAll("selectedVideos")}}
+              >Unselect All</Button>
+          </div>
           <FormControl className={classes.formControl}>
             <FormGroup
               className={classes.group}

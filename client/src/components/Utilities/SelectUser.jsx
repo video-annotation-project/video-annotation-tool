@@ -4,7 +4,7 @@ import { withStyles } from '@material-ui/core/styles';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import FormControl from '@material-ui/core/FormControl';
 import FormGroup from '@material-ui/core/FormGroup';
-import { Checkbox } from '@material-ui/core';
+import { Checkbox, Button } from '@material-ui/core';
 import Typography from '@material-ui/core/Typography';
 
 const styles = theme => ({
@@ -42,10 +42,19 @@ class SelectUser extends React.Component {
 
   render() {
     const { classes, value, handleChangeList } = this.props;
+    const { users } = this.state;
 
     return (
       <>
         <Typography>Select users</Typography>
+        <div>
+        <Button color="primary"
+            onClick={()=>{this.props.handleSelectAll(users, value, "selectedUsers")}}
+          >Select All</Button>
+        <Button color="primary"
+            onClick={()=>{this.props.handleUnselectAll("selectedUsers")}}
+          >Unselect All</Button>
+        </div>
         <FormControl component="fieldset" className={classes.formControl}>
           <FormGroup
             name="user"
