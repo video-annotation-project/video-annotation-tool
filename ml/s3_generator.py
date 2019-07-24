@@ -6,11 +6,12 @@ from collections import OrderedDict
 import boto3
 import pandas as pd
 import numpy as np
+from botocore.exceptions import ClientError
 from psycopg2 import connect
 from keras_retinanet.preprocessing.csv_generator import Generator
 from keras_retinanet.utils.image import read_image_bgr
 from six import raise_from
-from PIL import Image
+from PIL import Image, ImageFile
 from dotenv import load_dotenv
 
             
@@ -27,6 +28,8 @@ DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 S3_BUCKET = os.getenv('AWS_S3_BUCKET_NAME')
 SRC_IMG_FOLDER = os.getenv('AWS_S3_BUCKET_ANNOTATIONS_FOLDER')
+
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 def _query(query, params=None):
     """
@@ -59,8 +62,8 @@ def _parse(value, function, fmt):
 
 def _get_classmap(classes):
     """
-    Initializes the classmap of classes names to training id's.
-    (these id's don't represent the conceptid's from our database)
+    Initializes the classmap of classes names to training IDs
+    These IDs are the same as the concept ids in the database.
     """
     classmap = []
 
@@ -208,6 +211,7 @@ class S3Generator(Generator):
         self.image_extension = image_extension
         self.classes = classes
 
+
         self.labels = {}
         for key, value in self.classes.items():
             self.labels[value] = key
@@ -268,12 +272,7 @@ class S3Generator(Generator):
     def load_image(self, image_index):
         """ Load an image at the image_index.
         """
-        image = self.selected_annotations.iloc[image_index]
-        saved_image_name = image['save_name']
-
-        if saved_image_name not in self.downloaded_images:
-            self._download_image(image)
-
+        self._download_image(image_index)
         return read_image_bgr(self.image_path(image_index))
 
 
@@ -289,10 +288,10 @@ class S3Generator(Generator):
         """
         image = self.selected_annotations.iloc[image_index]
         annotations = {'labels': np.empty((0,)), 'bboxes': np.empty((0, 4))}
-        image_name = imagei['save_name']
+        image_name = image['save_name']
 
         for idx, annot in enumerate(self.image_data[image_name]):
-            annotations['labels'] = np.concatenate((annotations['labels'], [annot['class']]))
+            annotations['labels'] = np.concatenate((annotations['labels'], [self.name_to_label(annot['class'])]))
             annotations['bboxes'] = np.concatenate((annotations['bboxes'], [[
                 float(annot['x1']),
                 float(annot['y1']),
@@ -310,38 +309,28 @@ class S3Generator(Generator):
             aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'))
 
 
-    def _download_images(self):
-        for image in self.selected_annotations:
-            saved_image_name = f'{image["videoid"]}_{int(image["frame_num"])}'
+    def _download_image(self, image_index):
+        image = self.selected_annotations.iloc[image_index]
+        saved_image_name = image['save_name']
 
-            # Some images are downloaded on-demand from the training process,
-            # if that's the case just move on to the next image
-            if saved_image_name in self.downloaded_images:
-                continue
+        if saved_image_name in self.downloaded_images:
+            return
 
-            # If we successfully download the image, add it to our downloaded images set.
-            if self._download_image(image):
-                self.downloaded_images.add(saved_image_name)
-
-
-    def _download_image(self, image):
         image_name = str(image['image'])
         try:
             obj = self.client.get_object(Bucket=S3_BUCKET, Key=SRC_IMG_FOLDER + image_name)
             obj_image = Image.open(obj['Body'])
-        
+    
             if self.image_extension not in image_name:
                 image_name += self.image_extension
 
-            obj_image.save()
-        except:
-            print(f'Failed to download {image_name}.')
-            self.failed_download_images.add(image_name)
+            obj_image.save(self.image_path(image_index))
+        except ClientError:
+            raise IOError(f'File {SRC_IMG_FOLDER}{image_name} not found in S3 bucket.')
 
 
     def _read_annotations(self):
-        """ Read annotations from our selected frames.
-            Selected frames are DataFrames.
+        """ Read annotations from our selected annotations.
         """
         result = OrderedDict()
         for _, image in self.selected_annotations.iterrows():
@@ -355,6 +344,8 @@ class S3Generator(Generator):
 
             if image_file not in result:
                 result[image_file] = []
+
+            x1, x2, y2, y1 = _get_coordinates()
 
             x1 = _parse(x1, int, 'malformed x1: {{}}')
             y1 = _parse(y1, int, 'malformed y1: {{}}')
@@ -372,7 +363,7 @@ class S3Generator(Generator):
                 raise ValueError('y2 ({}) must be higher than y1 ({})'.format(y2, y1))
 
             # check if the current class name is correctly present
-            if class_name not in set(self.classes):
+            if class_name not in self.classes:
                 raise ValueError('unknown class name: \'{}\' (classes: {})'.format(class_name, set(self.classes)))
 
             result[image_file].append({'x1': x1, 'x2': x2, 'y1': y1, 'y2': y2, 'class': class_name})
