@@ -1,23 +1,22 @@
-import React from "react";
-import PropTypes from "prop-types";
-import { withStyles } from "@material-ui/core/styles";
-import Stepper from "@material-ui/core/Stepper";
-import Step from "@material-ui/core/Step";
-import StepLabel from "@material-ui/core/StepLabel";
-import StepContent from "@material-ui/core/StepContent";
-import Button from "@material-ui/core/Button";
+import React from 'react';
+import PropTypes from 'prop-types';
+import { withStyles } from '@material-ui/core/styles';
+import Stepper from '@material-ui/core/Stepper';
+import Step from '@material-ui/core/Step';
+import StepLabel from '@material-ui/core/StepLabel';
+import StepContent from '@material-ui/core/StepContent';
+import Button from '@material-ui/core/Button';
+import FormGroup from '@material-ui/core/FormGroup';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Switch from '@material-ui/core/Switch';
+import FormControl from '@material-ui/core/FormControl';
+import Typography from '@material-ui/core/Typography';
 
-import VerifyAnnotationCollection from "../Utilities/SelectAnnotationCollection.jsx";
-import VerifySelectUser from "../Utilities/SelectUser.jsx";
-import VerifySelectVideo from "../Utilities/SelectVideo.jsx";
-import VerifySelectConcept from "../Utilities/SelectConcept.jsx";
-import VerifySelectUnsure from "../Utilities/SelectUnsure";
-
-import FormGroup from "@material-ui/core/FormGroup";
-import FormControlLabel from "@material-ui/core/FormControlLabel";
-import Switch from "@material-ui/core/Switch";
-import FormControl from "@material-ui/core/FormControl";
-import Typography from "@material-ui/core/Typography";
+import SelectUser from '../Utilities/SelectUser.jsx';
+import SelectVideo from '../Utilities/SelectVideo.jsx';
+import SelectConcept from '../Utilities/SelectConcept.jsx';
+import SelectUnsure from '../Utilities/SelectUnsure';
+import VerifyAnnotationCollection from '../Utilities/SelectAnnotationCollection.jsx';
 
 const styles = theme => ({
   button: {
@@ -32,8 +31,8 @@ const styles = theme => ({
   },
   formControl: {
     marginTop: theme.spacing(2),
-    maxHeight: "400px",
-    overflow: "auto"
+    maxHeight: '400px',
+    overflow: 'auto'
   },
   switch: {
     marginLeft: theme.spacing(2)
@@ -41,7 +40,7 @@ const styles = theme => ({
 });
 
 function getSteps() {
-  return ["Annotation Collections", "Users", "Videos", "Concepts", "Unsure"];
+  return ['Annotation Collections', 'Users', 'Videos', 'Concepts', 'Unsure'];
 }
 
 class VerifySelection extends React.Component {
@@ -60,47 +59,51 @@ class VerifySelection extends React.Component {
           <VerifyAnnotationCollection
             value={this.props.selectedAnnotationCollections}
             getAnnotationCollections={this.props.getAnnotationCollections}
-            selectedAnnotationCollections={this.props.selectedAnnotationCollections}
-            handleChangeList={this.props.handleChangeList("selectedAnnotationCollections")}
+            selectedAnnotationCollections={
+              this.props.selectedAnnotationCollections
+            }
+            handleChangeList={this.props.handleChangeList(
+              'selectedAnnotationCollections'
+            )}
           />
         );
       case 1:
         return (
-          <VerifySelectUser
+          <SelectUser
             value={this.props.selectedUsers}
             getUsers={this.props.getUsers}
             selectUser={this.props.selectUser}
-            handleChangeList={this.props.handleChangeList("selectedUsers")}
+            handleChangeList={this.props.handleChangeList('selectedUsers')}
           />
         );
       case 2:
         return (
-          <VerifySelectVideo
+          <SelectVideo
             value={this.props.selectedVideos}
             getVideos={this.props.getVideos}
             getVideoCollections={this.props.getVideoCollections}
-            handleChange={this.props.handleChange("selectedVideos")}
-            handleChangeList={this.props.handleChangeList("selectedVideos")}
+            handleChange={this.props.handleChange('selectedVideos')}
+            handleChangeList={this.props.handleChangeList('selectedVideos')}
           />
         );
       case 3:
         return (
-          <VerifySelectConcept
+          <SelectConcept
             value={this.props.selectedConcepts}
             getConcepts={this.props.getConcepts}
             getConceptCollections={this.props.getConceptCollections}
-            handleChange={this.props.handleChange("selectedConcepts")}
-            handleChangeList={this.props.handleChangeList("selectedConcepts")}
+            handleChange={this.props.handleChange('selectedConcepts')}
+            handleChangeList={this.props.handleChangeList('selectedConcepts')}
           />
         );
       case 4:
         return (
           <div>
-            <VerifySelectUnsure
+            <SelectUnsure
               value={this.props.selectedUnsure}
               getUnsure={this.props.getUnsure}
               handleChangeSwitch={this.props.handleChangeSwitch(
-                "selectedUnsure"
+                'selectedUnsure'
               )}
             />
             <div>
@@ -113,7 +116,7 @@ class VerifySelection extends React.Component {
                         className={classes.switch}
                         checked={this.props.selectedTrackingFirst}
                         onChange={this.props.handleChangeSwitch(
-                          "selectedTrackingFirst"
+                          'selectedTrackingFirst'
                         )}
                         value="selectedTrackingFirst"
                         color="primary"
@@ -127,7 +130,7 @@ class VerifySelection extends React.Component {
           </div>
         );
       default:
-        return "Unknown step";
+        return 'Unknown step';
     }
   };
 
@@ -198,32 +201,37 @@ class VerifySelection extends React.Component {
                     >
                       Back
                     </Button>
-                    {activeStep === 0 && this.props.selectedAnnotationCollections.length !== 0 ? 
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      onClick={this.props.toggleSelection}
-                      className={classes.button}
-                    >
-                      Skip To Annotations Verify
-                    </Button> :
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      disabled={this.didNotSelect(index)}
-                      onClick={
-                        activeStep === steps.length - 1
-                          ? this.props.toggleSelection
-                          : this.handleNext
-                      }
-                      className={classes.button}
-                    >
-                      {activeStep === steps.length - 1 ? "Finish" :
-                        activeStep === 0 && this.props.selectedAnnotationCollections.length === 0 ? 
-                        "Skip this step" :
-                        "Next"}
-                    </Button>
-                    }
+                    {activeStep === 0 &&
+                    this.props.selectedAnnotationCollections.length !== 0 ? (
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={this.props.toggleSelection}
+                        className={classes.button}
+                      >
+                        Skip To Annotations Verify
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        disabled={this.didNotSelect(index)}
+                        onClick={
+                          activeStep === steps.length - 1
+                            ? this.props.toggleSelection
+                            : this.handleNext
+                        }
+                        className={classes.button}
+                      >
+                        {activeStep === steps.length - 1
+                          ? 'Finish'
+                          : activeStep === 0 &&
+                            this.props.selectedAnnotationCollections.length ===
+                              0
+                          ? 'Skip this step'
+                          : 'Next'}
+                      </Button>
+                    )}
                   </div>
                 </div>
               </StepContent>
