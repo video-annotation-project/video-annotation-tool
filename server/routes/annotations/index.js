@@ -472,7 +472,7 @@ router.get(
   async (req, res) => {
     let params = [];
     let good_users = configData.ml.tracking_users.filter(x => req.query.selectedUsers.includes(x));
-    console.log(good_users);
+
     let queryText = `
       SELECT
         coalesce(
@@ -517,8 +517,6 @@ router.get(
         queryText += `userid::text = ANY($${params.length})`;
       }
     }
-    console.log(queryText);
-    console.log(params);
 
     try {
       let response = await psql.query(queryText, params);
