@@ -1,14 +1,16 @@
+import os
+import copy
 import json
+
+import cv2
 import numpy as np
 import pandas as pd
-import cv2
-import copy
-import os
 import boto3
 from dotenv import load_dotenv
-from loading_data import queryDB
 from psycopg2 import connect
+
 import predict
+
 
 config_path = '../config.json'
 with open(config_path) as config_buffer:
