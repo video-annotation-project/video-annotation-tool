@@ -273,6 +273,26 @@ class Verify extends Component {
       });
     }
   };
+  handleSelectAll = (data, dataSelected, stepInfo) => {
+    var selected = dataSelected;
+    data.forEach(row => {
+      if (row.id) {
+        if (!selected.includes(row.id.toString())) {
+          selected.push(row.id.toString());
+        }
+      }
+    });
+    this.setState({
+      [stepInfo]: selected
+    });
+  };
+
+  handleUnselectAll = stepInfo => {
+    this.setState({
+      [stepInfo]: []
+    });
+  };
+
 
   resetStep = step => {
     switch (step) {
@@ -359,6 +379,8 @@ class Verify extends Component {
           resetState={this.resetState}
           toggleSelection={this.toggleSelection}
           selectUser={this.selectUser}
+          handleSelectAll={this.handleSelectAll}
+          handleUnselectAll={this.handleUnselectAll}
         />
       );
     } else if (this.state.noAnnotations) {
