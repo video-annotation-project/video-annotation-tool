@@ -58,17 +58,23 @@ def _parse(value, function, fmt):
         raise_from(ValueError(fmt.format(e)), None)
 
 
+def _atomic_file_exists(file_path):
+    try:
+        # This file open is atomic. This avoids race conditions when multiple processes are running.
+        # This happens when workers > 1 and multiprocessing = True in the fit_generator
+        fd = os.open(file_path, os.O_CREAT | os.O_EXCL) 
+        os.close(fd)
+        return False
+    except FileExistsError:
+        return True
 
 
 def _get_classmap(classes):
     """
-    Initializes the classmap of classes names to training IDs
-    These IDs are the same as the concept ids in the database.
+    Initializes the classmap of each class's database IDs to training IDs
     """
-    classmap = []
-
-    classes = _query(f"select id, name from concepts where id = ANY(ARRAY{classes})")
-    classmap =  pd.Series(classes.id.values, index=classes.name).to_dict()
+    classes = _query(f"select id from concepts where id = ANY(ARRAY{classes})")
+    classmap = pd.Series(classes.index, index=classes.id).to_dict()
 
     return classmap
 
@@ -81,6 +87,7 @@ class CollectionGenerator(object):
                  min_examples,
                  validation_split=0.8):
 
+        # Start with a list of all possible annotations, grouped by frame in video
         selected_frames, concept_counts = self._select_annotations(collection_ids, min_examples, classes)
         self.selected_frames = selected_frames
         self.classmap = _get_classmap(classes)
@@ -102,6 +109,7 @@ class CollectionGenerator(object):
                      subset='training',
                      **kwargs):
 
+        # Depending on subset, return either a training or testing generator
         if subset == 'training':
             return S3Generator(
                 selected_frames=self.training_set,
@@ -155,7 +163,7 @@ class CollectionGenerator(object):
                 concept_count[row['conceptid']] += 1
                 in_annot.append(row['conceptid'])
 
-                if int(row['videowidth']) != int(first['videowidth'])):
+                if int(row['videowidth']) != int(first['videowidth']):
                    x_ratio = (row['videowidth'] / first['videowidth'])
                    y_ratio = (row['videoheight'] / first['videoheight'])
                    x1 = min(max(int(row['x1'] / x_ratio), 0), int(first['videowidth']))
@@ -170,12 +178,10 @@ class CollectionGenerator(object):
                 if (y1 == y2) or (x1==x2):
                     raise ValueError('Invalid bounding box in {first[image]}')
 
-                print(frame)
                 frame.at[i, 'x1'] = x1
                 frame.at[i, 'x2'] = x2
                 frame.at[i, 'y1'] = y1
                 frame.at[i, 'y2'] = y2
-                print(frame)
                     
             # Checks if frame has only concept we have too many of
             if any(v > min_examples for v in concept_count.values()):
@@ -229,13 +235,12 @@ class S3Generator(Generator):
             lambda row: f'{row["videoid"]}_{int(row["frame_num"])}', 
         axis=1)
 
-        self.downloaded_images =  set(os.listdir(image_folder))
-        self.failed_download_images = set()
+        self.downloaded_images = set(os.listdir(image_folder))
 
         self.image_extension = image_extension
         self.classes = classes
-
-
+        
+        # Make a reverse dictionary so that we can lookup the other way
         self.labels = {}
         for key, value in self.classes.items():
             self.labels[value] = key
@@ -243,7 +248,6 @@ class S3Generator(Generator):
         self._connect_s3()
 
         self.image_data = self._read_annotations()
-
         super(S3Generator, self).__init__(**kwargs)
 
 
@@ -326,16 +330,9 @@ class S3Generator(Generator):
         return annotations
 
 
-    def _connect_s3(self):
-        aws_key = os.getenv('AWS_ACCESS_KEY_ID')
-        self.client = boto3.client('s3',
-            aws_access_key_id=aws_key,
-            aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'))
-
-
     def _download_image(self, image_index):
         image = self.selected_annotations.iloc[image_index]
-        saved_image_name = image['save_name']
+        saved_image_name = image['save_name'] + self.image_extension
 
         if saved_image_name in self.downloaded_images:
             return
@@ -344,22 +341,32 @@ class S3Generator(Generator):
         try:
             obj = self.client.get_object(Bucket=S3_BUCKET, Key=SRC_IMG_FOLDER + image_name)
             obj_image = Image.open(obj['Body'])
-    
-            if self.image_extension not in image_name:
-                image_name += self.image_extension
-
-            obj_image.save(self.image_path(image_index))
         except ClientError:
             raise IOError(f'File {SRC_IMG_FOLDER}{image_name} not found in S3 bucket.')
+    
+        if self.image_extension not in image_name:
+            image_name += self.image_extension
+
+        image_path = self.image_path(image_index)
+
+        if not _atomic_file_exists(image_path):
+            obj_image.save(image_path)
+        else:
+            # THe file exists, lets make sure it's done downloading.
+            # Spin while the file exists, but has no content
+            while os.path.getsize(image_path) == 0:
+                pass
+
 
 
     def _read_annotations(self):
         """ Read annotations from our selected annotations.
         """
         result = OrderedDict()
+
         for _, image in self.selected_annotations.iterrows():
             image_file = image['save_name']
-            class_name = self.labels[image['conceptid']]
+            class_name = image['conceptid']
 
             x1 = image['x1']
             x2 = image['x2']
@@ -390,8 +397,15 @@ class S3Generator(Generator):
 
             result[image_file].append({'x1': x1, 'x2': x2, 'y1': y1, 'y2': y2, 'class': class_name})
 
-        _resize_bb_bounds(result)
         return result            
+
+
+    def _connect_s3(self):
+        aws_key = os.getenv('AWS_ACCESS_KEY_ID')
+        self.client = boto3.client('s3',
+            aws_access_key_id=aws_key,
+            aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'))
+
 
 
 

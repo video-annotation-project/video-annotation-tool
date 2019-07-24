@@ -147,6 +147,8 @@ def train_model(concepts, model_name, collection_ids, min_examples,
         epochs=epochs, 
         callbacks=callbacks,
         validation_data=test_generator,
+        use_multiprocessing=True,
+        workers=16,
         verbose=2
     ).history
 
