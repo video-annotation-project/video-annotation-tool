@@ -13,13 +13,12 @@ import Description from '@material-ui/icons/Description';
 import Avatar from '@material-ui/core/Avatar';
 import Grid from '@material-ui/core/Grid';
 import Swal from 'sweetalert2';
+import Hotkeys from 'react-hot-keys';
 
 import DialogModal from '../Utilities/DialogModal';
 import ConceptsSelected from '../Utilities/ConceptsSelected';
 import DragBoxContainer from '../Utilities/DragBoxContainer.jsx';
 import VideoMetadata from '../Utilities/VideoMetadata.jsx';
-
-import Hotkeys from 'react-hot-keys';
 
 const styles = theme => ({
   button: {
@@ -599,26 +598,15 @@ class VerifyAnnotations extends Component {
                   >
                     Ignore
                   </Button>
-                  {this.state.disableVerify !== true ? (
-                    <Button
-                      className={classes.button}
-                      variant="contained"
-                      color="primary"
-                      onClick={this.handleVerifyClick}
-                    >
-                      Verify
-                    </Button>
-                  ) : (
-                    <Button
-                      className={classes.button}
-                      variant="contained"
-                      color="primary"
-                      onClick={this.handleVerifyClick}
-                      disabled
-                    >
-                      Verify
-                    </Button>
-                  )}
+                  <Button
+                    className={classes.button}
+                    variant="contained"
+                    color="primary"
+                    onClick={this.handleVerifyClick}
+                    disabled={this.state.disableVerify}
+                  >
+                    Verify
+                  </Button>
                   {!this.state.videoDialogOpen ? (
                     <IconButton
                       onClick={this.videoDialogToggle}

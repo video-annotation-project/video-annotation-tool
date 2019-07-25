@@ -1,32 +1,36 @@
-import React from "react";
-import PropTypes from "prop-types";
-import { withStyles } from "@material-ui/core/styles";
-import Checkbox from "@material-ui/core/Checkbox";
-import FormGroup from "@material-ui/core/FormGroup";
-import FormControlLabel from "@material-ui/core/FormControlLabel";
-import FormControl from "@material-ui/core/FormControl";
-import { Grid, Typography } from "@material-ui/core";
-import Button from "@material-ui/core/Button";
-import ListItem from "@material-ui/core/ListItem";
-import List from "@material-ui/core/List";
-import Tooltip from "@material-ui/core/Tooltip";
+import React from 'react';
+import PropTypes from 'prop-types';
+import { withStyles } from '@material-ui/core/styles';
+import Checkbox from '@material-ui/core/Checkbox';
+import FormGroup from '@material-ui/core/FormGroup';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import FormControl from '@material-ui/core/FormControl';
+import { Grid, Typography } from '@material-ui/core';
+import Button from '@material-ui/core/Button';
+import ListItem from '@material-ui/core/ListItem';
+import List from '@material-ui/core/List';
+import Tooltip from '@material-ui/core/Tooltip';
 
 const styles = theme => ({
-  button: {
-    textTransform: "none"
+  collection: {
+    textTransform: 'none'
   },
   formControl: {
-    marginTop: theme.spacing(2),
-    maxHeight: "400px",
-    overflow: "auto"
+    marginTop: theme.spacing(1.5),
+    maxHeight: '280px',
+    overflow: 'auto'
   },
   group: {
     marginLeft: 15
   },
+  button: {
+    marginTop: theme.spacing(2),
+    marginLeft: theme.spacing()
+  },
   list: {
     marginTop: theme.spacing(2),
-    overflow: "auto",
-    maxHeight: (400 - theme.spacing(2)).toString() + "px"
+    overflow: 'auto',
+    maxHeight: (280 + theme.spacing(4)).toString() + 'px'
   }
 });
 
@@ -60,12 +64,24 @@ class SelectVideo extends React.Component {
         <Grid item>
           <Typography>Select videos</Typography>
           <div>
-            <Button color="primary"
-                onClick={()=>{this.props.handleSelectAll(videos, value, "selectedVideos")}}
-              >Select All</Button>
-            <Button color="primary"
-                onClick={()=>{this.props.handleUnselectAll("selectedVideos")}}
-              >Unselect All</Button>
+            <Button
+              className={classes.button}
+              color="primary"
+              onClick={() => {
+                this.props.handleSelectAll(videos, value, 'selectedVideos');
+              }}
+            >
+              Select All
+            </Button>
+            <Button
+              className={classes.button}
+              color="primary"
+              onClick={() => {
+                this.props.handleUnselectAll('selectedVideos');
+              }}
+            >
+              Unselect All
+            </Button>
           </div>
           <FormControl className={classes.formControl}>
             <FormGroup
@@ -84,7 +100,7 @@ class SelectVideo extends React.Component {
                       key={video.id}
                       value={video.id.toString()}
                       control={<Checkbox color="primary" />}
-                      label={video.id + " " + video.filename}
+                      label={video.id + ' ' + video.filename}
                       checked={value.includes(video.id.toString())}
                     />
                   ))}
@@ -101,14 +117,14 @@ class SelectVideo extends React.Component {
                 <Tooltip
                   title={
                     !videoCollection.description
-                      ? ""
+                      ? ''
                       : videoCollection.description
                   }
                   placement="bottom-start"
                 >
                   <div>
                     <Button
-                      className={classes.button}
+                      className={classes.collection}
                       variant="outlined"
                       value={videoCollection.id.toString()}
                       disabled={!videoCollection.videoids[0]}
@@ -125,7 +141,7 @@ class SelectVideo extends React.Component {
                       }}
                     >
                       {videoCollection.name +
-                        (!videoCollection.videoids[0] ? " (No Videos)" : "")}
+                        (!videoCollection.videoids[0] ? ' (No Videos)' : '')}
                     </Button>
                   </div>
                 </Tooltip>
