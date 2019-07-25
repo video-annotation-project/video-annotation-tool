@@ -300,7 +300,7 @@ class ConceptCollection extends Component {
             ? this.state.concepts.map(concept => {
                 return (
                   <ListItem key={concept.id}>
-                    <Avatar src={`/api/concepts/images/${concept.id}`} />
+                    <Avatar src={`https://cdn.deepseaannotations.com/concept_images/${concept.picture}`} />
                     <ListItemText inset primary={concept.name} />
                     <IconButton
                       className={classes.deleteButton}

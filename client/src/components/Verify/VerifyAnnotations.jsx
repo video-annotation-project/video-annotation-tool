@@ -243,7 +243,7 @@ class VerifyAnnotations extends Component {
     };
     axios
       .delete(
-        "/api/annotations", 
+        "/api/annotations",
         config)
       .then(res => {
         return res.data;
@@ -269,10 +269,10 @@ class VerifyAnnotations extends Component {
       if (
         Math.abs(
           annotation.x1 -
-            x1 +
-            (annotation.y1 - y1) +
-            (annotation.x2 - x2) +
-            (annotation.y2 - y2)
+          x1 +
+          (annotation.y1 - y1) +
+          (annotation.x2 - x2) +
+          (annotation.y2 - y2)
         ) > 0.1 &&
         annotation.image
       ) {
@@ -503,22 +503,22 @@ class VerifyAnnotations extends Component {
                   Verify
                 </Button>
               ) : (
-                <Button
-                  className={classes.button}
-                  variant="contained"
-                  color="primary"
-                  onClick={this.handleVerifyClick}
-                  disabled
-                >
-                  Verify
+                  <Button
+                    className={classes.button}
+                    variant="contained"
+                    color="primary"
+                    onClick={this.handleVerifyClick}
+                    disabled
+                  >
+                    Verify
                 </Button>
-              )}
+                )}
 
               <IconButton
                 onClick={this.videoDialogToggle}
                 aria-label="OnDemandVideo"
               >
-                <OndemandVideo/>
+                <OndemandVideo />
               </IconButton>
             </div>
             <div
@@ -528,11 +528,11 @@ class VerifyAnnotations extends Component {
               <Grid container direction="row" alignItems="center">
                 <Grid item>
                   <Avatar
-                    src={`/api/concepts/images/${
+                    src={`https://cdn.deepseaannotations.com/concept_images/${
                       !this.state.concept
-                        ? annotation.conceptid
-                        : this.state.concept.id
-                    }`}
+                        ? annotation.picture
+                        : this.state.concept.picture
+                      }`}
                   />
                 </Grid>
                 <Grid item>
@@ -546,20 +546,21 @@ class VerifyAnnotations extends Component {
                   <ConceptsSelected
                     handleConceptClick={this.handleConceptClick}
                   />
-                  <VideoDialogWrapped
-                    annotation={annotation}
-                    open={this.state.videoDialogOpen}
-                    onClose={this.videoDialogToggle}
-                  />
+                  {/* <VideoDialogWrapped
+                        annotation={annotation}
+                        open={this.state.videoDialogOpen}
+                        onClose={this.videoDialogToggle}
+                      /> */}
                 </Grid>
               </Grid>
+              <br />
+              <br />
+              <br />
+              <br />
+              <br />
+              <br />
             </div>
-            <br />
-            <br />
-            <br />
-            <br />
-            <br />
-            <br />
+            )}
             <div>
               <Typography className={classes.paper} variant="h5">
                 Annotation #{annotation.id}
@@ -571,7 +572,7 @@ class VerifyAnnotations extends Component {
                     this.openVideoMetadata(event, { id: annotation.videoid })
                   }
                 >
-                  <Description style={{ fontSize: 20 }}/>
+                  <Description style={{ fontSize: 20 }} />
                 </IconButton>
               </Typography>
               <Typography className={classes.paper} variant="body2">
@@ -592,8 +593,8 @@ class VerifyAnnotations extends Component {
                   Comment: {this.state.comment}
                 </Typography>
               ) : (
-                ""
-              )}
+                  ""
+                )}
               {this.state.unsure !== null ? (
                 <Typography className={classes.paper} variant="body2">
                   Unsure:{" "}
@@ -603,23 +604,23 @@ class VerifyAnnotations extends Component {
                     .toUpperCase() + this.state.unsure.toString().slice(1)}
                 </Typography>
               ) : (
-                ""
-              )}
+                  ""
+                )}
             </div>
           </React.Fragment>
         ) : (
-          <React.Fragment>
-            <Typography className={classes.paper}>Finished</Typography>
-            <Button
-              className={classes.button}
-              variant="contained"
-              color="primary"
-              onClick={this.props.toggleSelection}
-            >
-              Filter Annotations
+            <React.Fragment>
+              <Typography className={classes.paper}>Finished</Typography>
+              <Button
+                className={classes.button}
+                variant="contained"
+                color="primary"
+                onClick={this.props.toggleSelection}
+              >
+                Filter Annotations
             </Button>
-          </React.Fragment>
-        )}
+            </React.Fragment>
+          )}
         {this.state.openedVideo && (
           <VideoMetadata
             open={
@@ -669,7 +670,7 @@ class VideoDialog extends Component {
       );
       this.handleVideoDialogClose();
       console.log(response);
-      
+
       Swal.fire("Successfully Marked", "", "success");
     } catch (error) {
       this.handleVideoDialogClose();
@@ -704,12 +705,12 @@ class VideoDialog extends Component {
           </video>
         </div>
         <Button
-            className={classes.button}
-            variant="contained"
-            color="secondary"
-            onClick={() => this.markTrackingAsBad()}
+          className={classes.button}
+          variant="contained"
+          color="secondary"
+          onClick={() => this.markTrackingAsBad()}
         >
-            Mark as Bad Tracking Video
+          Mark as Bad Tracking Video
         </Button>
       </Dialog>
     );
