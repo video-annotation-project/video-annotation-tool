@@ -6,11 +6,11 @@ import boto3
 import json
 import time
 from evaluate_prediction_vid import evaluate
-from multiprocessing import Pool
+
 
 config_path = "../config.json"
 load_dotenv(dotenv_path="../.env")
-with open(config_path) as config_buffer:    
+with open(config_path) as config_buffer:
     config = json.loads(config_buffer.read())['ml']
 
 weights_path = config['weights_path']
@@ -20,9 +20,13 @@ default_weights = config['default_weights']
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 S3_BUCKET = os.getenv('AWS_S3_BUCKET_NAME')
+
 s3 = boto3.client(
-    's3', aws_access_key_id = AWS_ACCESS_KEY_ID,
-     aws_secret_access_key = AWS_SECRET_ACCESS_KEY)
+    's3',
+    aws_access_key_id=AWS_ACCESS_KEY_ID,
+    aws_secret_access_key=AWS_SECRET_ACCESS_KEY
+)
+
 S3_ANNOTATION_FOLDER = os.getenv("AWS_S3_BUCKET_ANNOTATIONS_FOLDER")
 S3_VIDEO_FOLDER = os.getenv('AWS_S3_BUCKET_VIDEOS_FOLDER')
 S3_TRACKING_FOLDER = os.getenv("AWS_S3_BUCKET_TRACKING_FOLDER")
@@ -51,49 +55,50 @@ row = cursor.fetchone()
 info = row[1]
 
 try:
-	s3.download_file(
+    s3.download_file(
         S3_BUCKET, S3_WEIGHTS_FOLDER + str(info['modelSelected']) + '.h5',
         weights_path)
 except:
-	s3.download_file(
+    s3.download_file(
         S3_BUCKET, S3_WEIGHTS_FOLDER + default_weights, weights_path)
 
 cursor.execute('''
     SELECT *
     FROM MODELS
-    WHERE name=%s''',(info['modelSelected'],))
+    WHERE name=%s''', (info['modelSelected'],))
 model = cursor.fetchone()
 concepts = model[2]
 verifyVideos = model[3]
 
-#Delete old model user
+# Delete old model user
 if (model[4] != 'None'):
-     cursor.execute('''
+    cursor.execute('''
          DELETE FROM users
          WHERE id=%s''',
-         (model[4],))
+                   (model[4],))
 
-user_model = model[0] + "-" + time.ctime() 
+user_model = model[0] + "-" + time.ctime()
 # username example: testV2-Fri Jun 28 11:58:37 2019
 # insert into users
 cursor.execute('''
-    INSERT INTO users (username, password, admin) 
-    VALUES (%s, 0, null) 
+    INSERT INTO users (username, password, admin)
+    VALUES (%s, 0, null)
     RETURNING *''',
-    (user_model,))
+               (user_model,))
+
 model_user_id = int(cursor.fetchone()[0])
 
 # update models
 cursor.execute('''
-    UPDATE models 
+    UPDATE models
     SET userid=%s
     WHERE name=%s
     RETURNING *''',
-    (model_user_id,info['modelSelected'],))
+               (model_user_id, info['modelSelected'],))
 
 # Start training job
-train_model(concepts, info['modelSelected'], info['annotationCollections'], 
-           int(info['minImages']), int(info['epochs']), download_data=True)
+train_model(concepts, info['modelSelected'], info['annotationCollections'],
+            int(info['minImages']), int(info['epochs']), download_data=True)
 
 
 # Run verifyVideos in parallel
@@ -101,7 +106,7 @@ train_model(concepts, info['modelSelected'], info['annotationCollections'],
 #     p.starmap(evaluate, map(lambda video: (video, user_model, concepts), verifyVideos))
 
 # Run evaluate on all the videos in verifyVideos
-for video_id in verifyVideos: # Using for loop due to memory issues
+for video_id in verifyVideos:  # Using for loop due to memory issues
     evaluate(video_id, user_model, concepts)
     cursor.execute('''
         DELETE FROM predict_progress
@@ -109,12 +114,13 @@ for video_id in verifyVideos: # Using for loop due to memory issues
 
 os.system('rm *.mp4')
 cursor.execute('''
-    Update modeltab 
+    Update modeltab
     SET info =  '{
         \"activeStep\": 0, \"modelSelected\":\"\", \"annotationCollections\":[],
-        \"epochs\":0, \"minImages\":0}' 
+        \"epochs\":0, \"minImages\":0}'
     WHERE option = 'trainmodel'
 ''')
+
 con.commit()
-con.close()    
+con.close()
 os.system("sudo shutdown -h")

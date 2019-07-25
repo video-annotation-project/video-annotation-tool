@@ -1,50 +1,28 @@
 import os
 import random
-import json
 from collections import OrderedDict
 
 import boto3
 import pandas as pd
 import numpy as np
-from botocore.exceptions import ClientError
-from psycopg2 import connect
-from keras_retinanet.preprocessing.csv_generator import Generator
-from keras_retinanet.utils.image import read_image_bgr
+from dotenv import load_dotenv
 from six import raise_from
 from PIL import Image, ImageFile
-from dotenv import load_dotenv
+from botocore.exceptions import ClientError
+from keras_retinanet.preprocessing.csv_generator import Generator
+from keras_retinanet.utils.image import read_image_bgr
 
-            
-config_path = "../config.json"
+from utils.query import query
+
+
 load_dotenv(dotenv_path="../.env")
 
-with open(config_path) as config_buffer:    
-    config = json.loads(config_buffer.read())['ml']
-    
-# Database and S3 constants
-DB_NAME = os.getenv("DB_NAME")
-DB_HOST = os.getenv("DB_HOST")
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
+# S3 constants
 S3_BUCKET = os.getenv('AWS_S3_BUCKET_NAME')
 SRC_IMG_FOLDER = os.getenv('AWS_S3_BUCKET_ANNOTATIONS_FOLDER')
 
 # Without this the program will crash
 ImageFile.LOAD_TRUNCATED_IMAGES = True
-
-
-def _query(query, params=None):
-    """
-    Execture a SQL query
-    Returns resulting rows
-    """
-    conn = connect(database=DB_NAME,
-                        user=DB_USER,
-                        password=DB_PASSWORD,
-                        host=DB_HOST)
-    result = pd.read_sql_query(query, conn, params=params)
-    conn.close()
-    return result
 
 
 def _parse(value, function, fmt):
@@ -62,12 +40,13 @@ def _parse(value, function, fmt):
 
 def _atomic_file_exists(file_path):
     """
-    Atomically check if a file exists, returning a boolean
+    Atomically check if a file exists
+    Returns a boolean representing if the file exists
     """
     try:
         # This file open is atomic. This avoids race conditions when multiple processes are running.
         # This race condition only happens when workers > 1 and multiprocessing = True in the fit_generator
-        fd = os.open(file_path, os.O_CREAT | os.O_EXCL) 
+        fd = os.open(file_path, os.O_CREAT | os.O_EXCL)
         os.close(fd)
         return False
     except FileExistsError:
@@ -81,8 +60,7 @@ def _get_classmap(classes):
 
     # Keras requires that the mapping IDs correspond to the index number of the class.
     # So we create that mapping (dictionary)
-    classes = _query(f"select id from concepts where id = ANY(ARRAY{classes})")
-    classmap = pd.Series(classes.index, index=classes.id).to_dict()
+    classmap = {index: class_ for index, class_ in enumerate(classes)}
 
     return classmap
 
@@ -102,9 +80,9 @@ def _bound_coordinates(first, curr):
 
 class AnnotationGenerator(object):
 
-    def __init__(self, 
-                 collection_ids, 
-                 classes, 
+    def __init__(self,
+                 collection_ids,
+                 classes,
                  min_examples,
                  validation_split=0.8):
 
@@ -123,8 +101,7 @@ class AnnotationGenerator(object):
         self.training_set = self.selected_frames[0:split_index]
         self.testing_set = self.selected_frames[split_index:]
 
-
-    def flow_from_s3(self, 
+    def flow_from_s3(self,
                      image_folder='',
                      image_extension='.png',
                      subset='training',
@@ -150,13 +127,12 @@ class AnnotationGenerator(object):
         else:
             raise ValueError('subset parameter must be either "training" or "validation"/"testing"')
 
-
     @staticmethod
     def _select_annotations(collection_ids, min_examples, concepts):
         selected = []
         concept_count = {}
 
-        annotations = CollectionGenerator._get_annotations(collection_ids)
+        annotations = AnnotationGenerator._get_annotations(collection_ids)
 
         for concept in concepts:
             concept_count[concept] = 0
@@ -165,12 +141,11 @@ class AnnotationGenerator(object):
         frame_groups = annotations.groupby(['videoid', 'frame_num'], sort=False)
         frame_groups = [df for _, df in frame_groups]
 
-        ai_id = _query("SELECT id FROM users WHERE username='tracking'").id[0]
-        
+        ai_id = query("SELECT id FROM users WHERE username='tracking'").id[0]
+
         # Give priority to frames with least amount of tracking annotations
         # And lower speed
-        sort_lambda = lambda df : (list(df['userid']).count(ai_id), df.speed.mean())
-        frame_groups.sort(key=sort_lambda)
+        frame_groups.sort(key=lambda df: (list(df['userid']).count(ai_id), df.speed.mean()))
 
         # Selects images that we'll use (each group has annotations for an image)
         for frame in frame_groups:
@@ -179,7 +154,7 @@ class AnnotationGenerator(object):
                 break
 
             first = frame.iloc[0]
-            
+
             in_annot = []
             for i, row in frame.iterrows():
                 concept_count[row['conceptid']] += 1
@@ -191,11 +166,11 @@ class AnnotationGenerator(object):
                 frame.at[i, 'x2'] = x2
                 frame.at[i, 'y1'] = y1
                 frame.at[i, 'y2'] = y2
-                    
+
             # Checks if frame has only concept we have too many of
             if any(v > min_examples for v in concept_count.values()):
                 # Gets all concepts that we have too many of
-                excess = list({key:value for (key,value) in concept_count.items() if value > min_examples})
+                excess = list({key: value for (key, value) in concept_count.items() if value > min_examples})
                 # Don't save the annotation if it doens't include concept that we need more of
                 if set(excess) >= set(in_annot):
                     for a in in_annot:
@@ -205,10 +180,9 @@ class AnnotationGenerator(object):
 
         return selected, concept_count
 
-
     @staticmethod
     def _get_annotations(collection_ids):
-        # Query that gets all annotations for given concepts (and child concepts) 
+        # Query that gets all annotations for given concepts (and child concepts)
         # making sure that any tracking annotations originated from good users
         annotations_query = r'''
             SELECT
@@ -228,7 +202,7 @@ class AnnotationGenerator(object):
             WHERE inter.id IN (%s)
         '''
 
-        return _query(annotations_query, [','.join((str(id_) for id_ in collection_ids))])
+        return query(annotations_query, [','.join((str(id_) for id_ in collection_ids))])
 
 
 class S3Generator(Generator):
@@ -245,15 +219,15 @@ class S3Generator(Generator):
         # We use videoid + frame_num as this ensures that we never download
         # the same frame in a video twice, even if it has multiple annotations
         self.selected_annotations['save_name'] = self.selected_annotations.apply(
-            lambda row: f'{row["videoid"]}_{int(row["frame_num"])}', 
-        axis=1)
+            lambda row: f'{row["videoid"]}_{int(row["frame_num"])}',
+            axis=1)
 
         # Make a set of all images that've already been downloaded
         self.downloaded_images = set(os.listdir(image_folder))
 
         self.image_extension = image_extension
         self.classes = classes
-        
+
         # Make a reverse dictionary so that we can lookup the other way
         self.labels = {}
         for key, value in self.classes.items():
@@ -264,42 +238,35 @@ class S3Generator(Generator):
         self.image_data = self._read_annotations()
         super(S3Generator, self).__init__(**kwargs)
 
-
     def size(self):
         """ Size of the dataset.
         """
         return len(self.selected_annotations.index)
-
 
     def num_classes(self):
         """ Number of classes in the dataset.
         """
         return len(self.classes)
 
-
     def has_label(self, label):
         """ Return True if label is a known label.
         """
         return label in self.labels
-
 
     def has_name(self, name):
         """ Returns True if name is a known class.
         """
         return name in self.classes
 
-
     def name_to_label(self, name):
         """ Map name to label.
         """
         return self.classes[name]
 
-
     def label_to_name(self, label):
         """ Map label to name.
         """
         return self.labels[label]
-
 
     def image_aspect_ratio(self, image_index):
         """ Compute the aspect ratio for an image with image_index.
@@ -310,20 +277,17 @@ class S3Generator(Generator):
 
         return float(image_width) / float(image_height)
 
-
     def load_image(self, image_index):
         """ Load an image at the image_index.
         """
         self._download_image(image_index)
         return read_image_bgr(self.image_path(image_index))
 
-
     def image_path(self, image_index):
         """ Returns the image path for image_index.
         """
         image_name = self.selected_annotations.iloc[image_index]['save_name']
         return os.path.join(self.image_folder, image_name + self.image_extension)
-
 
     def load_annotations(self, image_index):
         """ Load annotations for an image_index.
@@ -334,8 +298,8 @@ class S3Generator(Generator):
 
         # Add all bounding boxes and annotations to the annotations dict for a particular image
         for idx, annot in enumerate(self.image_data[image_name]):
-            annotations['labels'] = np.concatenate((annotations['labels'], 
-                [self.name_to_label(annot['class'])]))
+            annotations['labels'] = np.concatenate((annotations['labels'],
+                                                    [self.name_to_label(annot['class'])]))
 
             annotations['bboxes'] = np.concatenate((annotations['bboxes'], [[
                 float(annot['x1']),
@@ -345,7 +309,6 @@ class S3Generator(Generator):
             ]]))
 
         return annotations
-
 
     def _download_image(self, image_index):
         image = self.selected_annotations.iloc[image_index]
@@ -361,7 +324,7 @@ class S3Generator(Generator):
         # ClientError is the exception class for a KeyNotFound error
         except ClientError:
             raise IOError(f'file {SRC_IMG_FOLDER}{image_name} not found in S3 bucket')
-    
+
         # Some files have a file extension, some don't. Let's fix that.
         if self.image_extension not in image_name:
             image_name += self.image_extension
@@ -378,7 +341,6 @@ class S3Generator(Generator):
             while os.path.getsize(image_path) == 0:
                 pass
 
-
     def _read_annotations(self):
         """ Read annotations from our selected annotations.
             Returns a dictionary mapping video frames (unique frame images)
@@ -390,7 +352,7 @@ class S3Generator(Generator):
             image_file = image['save_name']
             # We treat the database ID as the class name.
             class_name = image['conceptid']
-            
+
             # We already augmented these when creating our annotations df
             # So, we can just directly assign the coordinates.
             x1 = image['x1']
@@ -422,24 +384,12 @@ class S3Generator(Generator):
                 raise ValueError('unknown class name: \'{}\' (classes: {})'.format(class_name, set(self.classes)))
 
             result[image_file].append({'x1': x1, 'x2': x2, 'y1': y1, 'y2': y2, 'class': class_name})
-        return result            
-
+        return result
 
     def _connect_s3(self):
         aws_key = os.getenv('AWS_ACCESS_KEY_ID')
-        self.client = boto3.client('s3',
+        self.client = boto3.client(
+            's3',
             aws_access_key_id=aws_key,
-            aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'))
-
-
-
-
-
-
-
-
-
-
-
-
-
+            aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY')
+        )
