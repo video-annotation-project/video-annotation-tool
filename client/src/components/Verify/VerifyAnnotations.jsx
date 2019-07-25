@@ -1,7 +1,11 @@
 import React, { Component } from 'react';
 import axios from 'axios';
 import PropTypes from 'prop-types';
-import { withStyles , MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
+import {
+  withStyles,
+  MuiThemeProvider,
+  createMuiTheme
+} from '@material-ui/core/styles';
 import { Typography } from '@material-ui/core';
 import Button from '@material-ui/core/Button';
 import OndemandVideo from '@material-ui/icons/OndemandVideo';
@@ -17,8 +21,8 @@ import Hotkeys from 'react-hot-keys';
 
 import DialogModal from '../Utilities/DialogModal';
 import ConceptsSelected from '../Utilities/ConceptsSelected';
-import DragBoxContainer from '../Utilities/DragBoxContainer.jsx';
-import VideoMetadata from '../Utilities/VideoMetadata.jsx';
+import DragBoxContainer from '../Utilities/DragBoxContainer';
+import VideoMetadata from '../Utilities/VideoMetadata';
 
 const styles = theme => ({
   button: {
@@ -110,7 +114,6 @@ class VerifyAnnotations extends Component {
   handleKeyDown = (keyName, e, handle) => {
     e.preventDefault();
     if (e.target !== document.body) {
-      
     } else if (keyName === 'r') {
       // reset shortcut
       this.resetState();
@@ -139,7 +142,7 @@ class VerifyAnnotations extends Component {
     const config = {
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${  localStorage.getItem('token')}`
+        Authorization: `Bearer ${localStorage.getItem('token')}`
       }
     };
 
@@ -198,8 +201,7 @@ class VerifyAnnotations extends Component {
 
   handleConceptClick = concept => {
     this.setState({
-      conceptDialogMsg:
-        `Switch ${  this.props.annotation.name  } to ${  concept.name  }?`,
+      conceptDialogMsg: `Switch ${this.props.annotation.name} to ${concept.name}?`,
       conceptDialogOpen: true,
       clickedConcept:
         this.props.annotation.conceptid === concept.id ? null : concept
@@ -218,7 +220,7 @@ class VerifyAnnotations extends Component {
     const config = {
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${  localStorage.getItem('token')}`
+        Authorization: `Bearer ${localStorage.getItem('token')}`
       },
       data: {
         id: this.props.annotation.id
@@ -244,7 +246,7 @@ class VerifyAnnotations extends Component {
     const x2 = this.state.x + parseInt(this.state.width, 0);
     const y2 = this.state.y + parseInt(this.state.height, 0);
 
-    const {annotation} = this.props;
+    const { annotation } = this.props;
 
     try {
       if (
@@ -298,7 +300,7 @@ class VerifyAnnotations extends Component {
     const config = {
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${  localStorage.getItem('token')}`
+        Authorization: `Bearer ${localStorage.getItem('token')}`
       }
     };
     const body = {
@@ -328,7 +330,7 @@ class VerifyAnnotations extends Component {
     const config = {
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${  localStorage.getItem('token')}`
+        Authorization: `Bearer ${localStorage.getItem('token')}`
       }
     };
     axios.patch(`/api/annotations/`, body, config).catch(error => {
@@ -393,7 +395,7 @@ class VerifyAnnotations extends Component {
     const config = {
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${  localStorage.getItem('token')}`
+        Authorization: `Bearer ${localStorage.getItem('token')}`
       }
     };
     const body = {
@@ -420,7 +422,7 @@ class VerifyAnnotations extends Component {
   render() {
     const { classes } = this.props;
     const { unsure } = this.state;
-    const {annotation} = this.props;
+    const { annotation } = this.props;
 
     if (this.state.x === null) {
       return <div>Loading...</div>;
@@ -449,11 +451,7 @@ class VerifyAnnotations extends Component {
                     id="video"
                     width="1300"
                     height="730"
-                    src={
-                      `https://cdn.deepseaannotations.com/videos/${ 
-                      annotation.id 
-                      }_tracking.mp4`
-                    }
+                    src={`https://cdn.deepseaannotations.com/videos/${annotation.id}_tracking.mp4`}
                     type="video/mp4"
                     controls
                   >
@@ -554,10 +552,7 @@ class VerifyAnnotations extends Component {
                       onLoad={Swal.close}
                       onError={this.handleErrImage}
                       className={classes.img}
-                      src={
-                        `https://cdn.deepseaannotations.com/test/${ 
-                        annotation.image}`
-                      }
+                      src={`https://cdn.deepseaannotations.com/test/${annotation.image}`}
                       alt="error"
                       crossOrigin="use-credentials"
                       style={{
@@ -664,7 +659,7 @@ class VerifyAnnotations extends Component {
                 Annotation #{annotation.id}
               </Typography>
               <Typography className={classes.paper} variant="body2">
-                Video: {`${annotation.videoid  } ${  annotation.filename}`}
+                Video: {`${annotation.videoid} ${annotation.filename}`}
                 <IconButton
                   onClick={event =>
                     this.openVideoMetadata(event, { id: annotation.videoid })
