@@ -1,17 +1,17 @@
-import React from "react";
-import PropTypes from "prop-types";
-import { withStyles } from "@material-ui/core/styles";
-import FormGroup from "@material-ui/core/FormGroup";
-import FormControlLabel from "@material-ui/core/FormControlLabel";
-import Switch from "@material-ui/core/Switch";
-import FormControl from "@material-ui/core/FormControl";
-import Typography from "@material-ui/core/Typography";
+import React from 'react';
+import PropTypes from 'prop-types';
+import { withStyles } from '@material-ui/core/styles';
+import FormGroup from '@material-ui/core/FormGroup';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Switch from '@material-ui/core/Switch';
+import FormControl from '@material-ui/core/FormControl';
+import Typography from '@material-ui/core/Typography';
 
 const styles = theme => ({
   formControl: {
     marginTop: theme.spacing(2),
-    maxHeight: "400px",
-    overflow: "auto"
+    maxHeight: '400px',
+    overflow: 'auto'
   },
   switch: {
     marginLeft: theme.spacing(2)
