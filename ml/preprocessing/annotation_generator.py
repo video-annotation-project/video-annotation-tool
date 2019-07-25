@@ -5,21 +5,15 @@ from collections import OrderedDict
 import boto3
 import pandas as pd
 import numpy as np
-from dotenv import load_dotenv
 from six import raise_from
 from PIL import Image, ImageFile
 from botocore.exceptions import ClientError
 from keras_retinanet.preprocessing.csv_generator import Generator
 from keras_retinanet.utils.image import read_image_bgr
 
+import config
 from utils.query import query
 
-
-load_dotenv(dotenv_path="../.env")
-
-# S3 constants
-S3_BUCKET = os.getenv('AWS_S3_BUCKET_NAME')
-SRC_IMG_FOLDER = os.getenv('AWS_S3_BUCKET_ANNOTATIONS_FOLDER')
 
 # Without this the program will crash
 ImageFile.LOAD_TRUNCATED_IMAGES = True
@@ -60,7 +54,8 @@ def get_classmap(classes):
 
     # Keras requires that the mapping IDs correspond to the index number of the class.
     # So we create that mapping (dictionary)
-    classmap = {index: class_ for index, class_ in enumerate(classes)}
+    class_id_name = query(f"select id, name from concepts where id = ANY(ARRAY{classes})")
+    classmap = class_id_name.to_dict('index')
 
     return classmap
 
@@ -186,19 +181,22 @@ class AnnotationGenerator(object):
         # making sure that any tracking annotations originated from good users
         annotations_query = r'''
             SELECT
-                  A.id,
-                  image,
-                  userid,
-                  videoid,
-                  videowidth,
-                  videoheight,
-                  conceptid,
-                  x1, x2, y1, y2,
-                  speed,
-                  ROUND(fps * timeinvideo) as frame_num
-            FROM annotation_intermediate inter
-            LEFT JOIN annotations a ON a.id=inter.annotationid
-            LEFT JOIN videos ON videos.id=videoid
+                A.id,
+                image,
+                userid,
+                videoid,
+                videowidth,
+                videoheight,
+                conceptid,
+                x1, x2, y1, y2,
+                speed,
+                ROUND(fps * timeinvideo) as frame_num
+            FROM
+                annotation_intermediate inter
+            LEFT JOIN
+                annotations a ON a.id=inter.annotationid
+            LEFT JOIN
+                videos ON videos.id=videoid
             WHERE inter.id IN (%s)
         '''
 
@@ -220,7 +218,8 @@ class S3Generator(Generator):
         # the same frame in a video twice, even if it has multiple annotations
         self.selected_annotations['save_name'] = self.selected_annotations.apply(
             lambda row: f'{row["videoid"]}_{int(row["frame_num"])}',
-            axis=1)
+            axis=1
+        )
 
         # Make a set of all images that've already been downloaded
         self.downloaded_images = set(os.listdir(image_folder))
@@ -231,7 +230,7 @@ class S3Generator(Generator):
         # Make a reverse dictionary so that we can lookup the other way
         self.labels = {}
         for key, value in self.classes.items():
-            self.labels[value] = key
+            self.labels[value['id']] = key
 
         self._connect_s3()
 
@@ -261,7 +260,7 @@ class S3Generator(Generator):
     def name_to_label(self, name):
         """ Map name to label.
         """
-        return self.classes[name]
+        return self.classes[name]['id']
 
     def label_to_name(self, label):
         """ Map label to name.
@@ -319,11 +318,11 @@ class S3Generator(Generator):
 
         image_name = str(image['image'])
         try:
-            obj = self.client.get_object(Bucket=S3_BUCKET, Key=SRC_IMG_FOLDER + image_name)
+            obj = self.client.get_object(Bucket=config.S3_BUCKET, Key=config.SRC_IMG_FOLDER + image_name)
             obj_image = Image.open(obj['Body'])
         # ClientError is the exception class for a KeyNotFound error
         except ClientError:
-            raise IOError(f'file {SRC_IMG_FOLDER}{image_name} not found in S3 bucket')
+            raise IOError(f'file {config.SRC_IMG_FOLDER}{image_name} not found in S3 bucket')
 
         # Some files have a file extension, some don't. Let's fix that.
         if self.image_extension not in image_name:
@@ -355,10 +354,7 @@ class S3Generator(Generator):
 
             # We already augmented these when creating our annotations df
             # So, we can just directly assign the coordinates.
-            x1 = image['x1']
-            x2 = image['x2']
-            y1 = image['y1']
-            y2 = image['y2']
+            x1, x2, y1, y2 = image[['x1', 'x2', 'y1', 'y2']].values
 
             if image_file not in result:
                 result[image_file] = []

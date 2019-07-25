@@ -1,11 +1,7 @@
-import json
-import os
-
 import keras
 import tensorflow as tf
 import boto3
 import multiprocessing
-from dotenv import load_dotenv
 from tensorflow.python.client import device_lib
 from keras_retinanet import models
 from keras_retinanet import losses
@@ -13,35 +9,30 @@ from keras.utils import multi_gpu_model
 from keras.callbacks import ModelCheckpoint, EarlyStopping
 from keras_retinanet.callbacks import RedirectModel
 
+import config
 from utils.timer import timer
+from utils.evaluate import evaluate_class_thresholds
 from preprocessing.annotation_generator import AnnotationGenerator
 from callbacks.progress import Progress
 from callbacks.tensorboard import TensorboardLog
 
 
-config_path = "../config.json"
-load_dotenv(dotenv_path="../.env")
-with open(config_path) as config_buffer:
-    config = json.loads(config_buffer.read())['ml']
-
-IMAGE_FOLDER = config['image_folder']
-BATCH_SIZE = config['batch_size']
-WEIGHTS_PATH = config['weights_path']
-
-AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
-AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
-S3_BUCKET = os.getenv('AWS_S3_BUCKET_NAME')
-S3_BUCKET_WEIGHTS_FOLDER = os.getenv('AWS_S3_BUCKET_WEIGHTS_FOLDER')
-
-s3 = boto3.client('s3', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
+s3 = boto3.client(
+    's3',
+    aws_access_key_id=config.AWS_ACCESS_KEY_ID,
+    aws_secret_access_key=config.AWS_SECRET_ACCESS_KEY
+)
 
 
-def _create_model(num_classes):
+def _initilize_model(num_classes):
+    """Initilze our model to train with
+    """
+
     # Suggested to initialize model on cpu before turning into a
     # multi_gpu model to save gpu memory
     with tf.device('/cpu:0'):
         model = models.backbone('resnet50').retinanet(num_classes=num_classes)
-        model.load_weights(WEIGHTS_PATH, by_name=True, skip_mismatch=True)
+        model.load_weights(config.WEIGHTS_PATH, by_name=True, skip_mismatch=True)
 
     gpus = len([i for i in device_lib.list_local_devices() if i.device_type == 'GPU'])
 
@@ -56,11 +47,15 @@ def _get_callbacks(model,
                    epochs,
                    collection_ids,
                    steps_per_epoch):
+    """ Returns a list of callbacks to use while training.
+    """
+
     # Save models that are improvements
-    checkpoint = ModelCheckpoint(WEIGHTS_PATH,
-                                 monitor='val_loss',
-                                 save_best_only=True
-                                 )
+    checkpoint = ModelCheckpoint(
+        config.WEIGHTS_PATH,
+        monitor='val_loss',
+        save_best_only=True
+    )
 
     checkpoint = RedirectModel(checkpoint, model)
 
@@ -78,7 +73,7 @@ def _get_callbacks(model,
     # Save tensorboard logs to appropriate folder
     tensorboard_callback = keras.callbacks.TensorBoard(
         log_dir=f'./logs/{log_callback.id}',
-        batch_size=BATCH_SIZE,
+        batch_size=config.BATCH_SIZE,
     )
 
     # Every batch and epoch update a database table with the current progress
@@ -91,18 +86,34 @@ def _get_callbacks(model,
 
 
 def _upload_weights(model_name):
-    s3.upload_file(WEIGHTS_PATH, S3_BUCKET, S3_BUCKET_WEIGHTS_FOLDER + model_name + ".h5")
+    """ Upload model weights to s3 bucket
+    """
+    s3.upload_file(
+        config.WEIGHTS_PATH,
+        config.S3_BUCKET,
+        config.S3_BUCKET_WEIGHTS_FOLDER + model_name + ".h5"
+    )
 
 
 def _get_num_workers():
+    """ Returns the number of cores on this machine.
+        1 worker per core should give us maximum preformance.
+    """
     return multiprocessing.cpu_count()
 
 
 @timer("training")
-def train_model(concepts, model_name, collection_ids, min_examples,
-                epochs, download_data=True):
+def train_model(concepts,
+                model_name,
+                collection_ids,
+                min_examples,
+                epochs,
+                download_data=True):
+    """ Trains the model, uploads its weights, and determines best
+        confidence thresholds for predicting
+    """
 
-    model = _create_model(len(concepts))
+    model = _initilize_model(len(concepts))
     num_workers = _get_num_workers()
 
     model.compile(
@@ -120,15 +131,15 @@ def train_model(concepts, model_name, collection_ids, min_examples,
     )
 
     train_generator = collection_generator.flow_from_s3(
-        image_folder=IMAGE_FOLDER,
+        image_folder=config.IMAGE_FOLDER,
         subset='training',
-        batch_size=BATCH_SIZE
+        batch_size=config.BATCH_SIZE
     )
 
     test_generator = collection_generator.flow_from_s3(
-        image_folder=IMAGE_FOLDER,
+        image_folder=config.IMAGE_FOLDER,
         subset='validation',
-        batch_size=BATCH_SIZE
+        batch_size=config.BATCH_SIZE
     )
 
     callbacks = _get_callbacks(
@@ -150,4 +161,8 @@ def train_model(concepts, model_name, collection_ids, min_examples,
         verbose=2
     )
 
+    # Upload the weights file to the S3 bucket
     _upload_weights(model_name)
+
+    # Evaluate the best confidence thresholds for the model
+    evaluate_class_thresholds(test_generator)
