@@ -401,7 +401,7 @@ router.get(
     let orderBy = "";
 
     if (selectedUsers && selectedVideos && selectedConcepts && selectedUnsure) {
-      queryText += `a.*, c.name, u.username, v.filename `;
+      queryText += `a.*, c.name, c.picture, u.username, v.filename `;
       orderBy = " ORDER BY a.id";
     } else if (selectedUsers && selectedVideos && selectedConcepts) {
       queryText += `a.unsure `;

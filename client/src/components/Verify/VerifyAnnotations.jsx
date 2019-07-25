@@ -250,10 +250,10 @@ class VerifyAnnotations extends Component {
       if (
         Math.abs(
           annotation.x1 -
-            x1 +
-            (annotation.y1 - y1) +
-            (annotation.x2 - x2) +
-            (annotation.y2 - y2)
+          x1 +
+          (annotation.y1 - y1) +
+          (annotation.x2 - x2) +
+          (annotation.y2 - y2)
         ) > 0.1 &&
         annotation.image
       ) {
@@ -487,16 +487,15 @@ class VerifyAnnotations extends Component {
                   >
                     {this.props.tracking ? 'Ignore' : 'Next'}
                   </Button>
-                  {this.state.videoDialogOpen ? (
+                  {this.state.videoDialogOpen ?
                     <IconButton
                       onClick={this.videoDialogToggle}
                       aria-label="Photo"
                     >
                       <Photo />
                     </IconButton>
-                  ) : (
-                    ''
-                  )}
+                    : ""
+                  }
                 </div>
                 <br />
                 <br />
@@ -506,10 +505,11 @@ class VerifyAnnotations extends Component {
                 <br />
                 <div>
                   <Typography variant="subtitle1" className={classes.button}>
-                    <b>Status: </b>{' '}
-                    {!this.state.trackingStatus
-                      ? this.getStatus(this.props.annotation.tracking_flag)
-                      : this.getStatus(this.state.trackingStatus)}
+                    <b>Status: </b>{" "}
+                    {!this.state.trackingStatus ?
+                      this.getStatus(this.props.annotation.tracking_flag) :
+                      this.getStatus(this.state.trackingStatus)
+                    }
                   </Typography>
                   <Typography className={classes.paper}>
                     {this.props.index + 1} of {this.props.size}
@@ -582,7 +582,7 @@ class VerifyAnnotations extends Component {
                       onClick={this.handleDelete}
                     >
                       Delete
-                    </Button>
+                  </Button>
                   </MuiThemeProvider>
                   <Button
                     className={classes.button}
@@ -621,7 +621,7 @@ class VerifyAnnotations extends Component {
                     >
                       <Photo />
                     </IconButton>
-                  )}
+                )}
                 </div>
                 <div
                   className={classes.buttonsContainer2}
@@ -630,11 +630,11 @@ class VerifyAnnotations extends Component {
                   <Grid container direction="row" alignItems="center">
                     <Grid item>
                       <Avatar
-                        src={`/api/concepts/images/${
+                        src={`https://cdn.deepseaannotations.com/concept_images/${
                           !this.state.concept
-                            ? annotation.conceptid
-                            : this.state.concept.id
-                        }`}
+                            ? annotation.picture
+                            : this.state.concept.picture
+                          }`}
                       />
                     </Grid>
                     <Grid item>
@@ -648,22 +648,17 @@ class VerifyAnnotations extends Component {
                       <ConceptsSelected
                         handleConceptClick={this.handleConceptClick}
                       />
-                      {/* <VideoDialogWrapped
-                        annotation={annotation}
-                        open={this.state.videoDialogOpen}
-                        onClose={this.videoDialogToggle}
-                      /> */}
                     </Grid>
                   </Grid>
-                </div>
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
               </div>
-            )}
+              <br />
+              <br />
+              <br />
+              <br />
+              <br />
+              <br />
+            </div>
+           )}
             <div>
               <Typography className={classes.paper} variant="h5">
                 Annotation #{annotation.id}
@@ -711,43 +706,43 @@ class VerifyAnnotations extends Component {
               )}
             </div>
           </React.Fragment>
-        ) : (
-          <React.Fragment>
-            <Typography className={classes.paper}>Finished</Typography>
-            <Button
-              className={classes.button}
-              variant="contained"
-              color="primary"
-              onClick={this.props.toggleSelection}
-            >
-              Filter Annotations
+              ) : (
+            <React.Fragment>
+              <Typography className={classes.paper}>Finished</Typography>
+              <Button
+                className={classes.button}
+                variant="contained"
+                color="primary"
+                onClick={this.props.toggleSelection}
+              >
+                Filter Annotations
             </Button>
-          </React.Fragment>
-        )}
+            </React.Fragment>
+            )}
         {this.state.openedVideo && (
-          <VideoMetadata
-            open={
-              true /* The VideoMetadata 'openness' is controlled through
+              <VideoMetadata
+                open={
+                  true /* The VideoMetadata 'openness' is controlled through
               boolean logic rather than by passing in a letiable as an
               attribute. This is to force VideoMetadata to unmount when it 
               closes so that its state is reset. This also prevents the 
               accidental double submission bug, by implicitly reducing 
               the transition time of VideoMetadata to zero. */
-            }
-            handleClose={this.closeVideoMetadata}
-            openedVideo={this.state.openedVideo}
-            socket={this.props.socket}
-            loadVideos={this.props.loadVideos}
-            model={false}
-          />
-        )}
-      </React.Fragment>
-    );
-  }
-}
+                }
+                handleClose={this.closeVideoMetadata}
+                openedVideo={this.state.openedVideo}
+                socket={this.props.socket}
+                loadVideos={this.props.loadVideos}
+                model={false}
+              />
+            )}
+          </React.Fragment>
+        );
+        }
+      }
 
 VerifyAnnotations.propTypes = {
-  classes: PropTypes.object
-};
+          classes: PropTypes.object
+    };
 
 export default withStyles(styles)(VerifyAnnotations);
