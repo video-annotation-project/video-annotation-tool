@@ -53,7 +53,7 @@ def _atomic_file_exists(file_path):
         return True
 
 
-def _get_classmap(classes):
+def get_classmap(classes):
     """
     Initializes the classmap of each class's database IDs to training IDs
     """
@@ -89,7 +89,7 @@ class AnnotationGenerator(object):
         # Start with a list of all possible annotations, grouped by frame in video
         selected_frames, concept_counts = self._select_annotations(collection_ids, min_examples, classes)
         self.selected_frames = selected_frames
-        self.classmap = _get_classmap(classes)
+        self.classmap = get_classmap(classes)
 
         # Shuffle selected frames so that training/testing set are different each run
         random.shuffle(self.selected_frames)
