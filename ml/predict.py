@@ -1,18 +1,22 @@
-from dotenv import load_dotenv
-from keras_retinanet.models import convert_model
-from keras_retinanet.models import load_model
-import cv2
-import json
-import numpy as np
 import copy
 import os
+import json
+
+import cv2
+import numpy as np
 import boto3
 import pandas as pd
 import uuid
-from psycopg2 import connect
-from loading_data import queryDB, get_classmap
 import psycopg2
 import datetime
+from dotenv import load_dotenv
+from keras_retinanet.models import convert_model
+from keras_retinanet.models import load_model
+from psycopg2 import connect
+
+from preprocessing.annotation_generator import get_classmap
+from utils.query import query
+
 
 # Load environment variables
 load_dotenv(dotenv_path="../.env")
@@ -145,7 +149,7 @@ def predict_on_video(videoid, model_weights, concepts, filename, upload_annotati
     cursor = con.cursor()
 
     # Get the video filename
-    vid_filename = queryDB(f'''
+    vid_filename = query(f'''
         SELECT *
         FROM videos
         WHERE id ={videoid}''').iloc[0].filename
@@ -154,7 +158,7 @@ def predict_on_video(videoid, model_weights, concepts, filename, upload_annotati
     original_frames = copy.deepcopy(frames)
 
     # Get biologist annotations for video
-    annotations = queryDB(
+    annotations = query(
         f'''
         SELECT
           x1, y1, x2, y2,
@@ -185,7 +189,7 @@ def predict_on_video(videoid, model_weights, concepts, filename, upload_annotati
 
     # Interweb human annotations and predictions
     print("Generating Video")
-    
+
     generate_video(
         filename, copy.deepcopy(original_frames),
         fps, results, concepts, videoid, annotations, cursor, con)
