@@ -12,6 +12,12 @@ import VerifySelectVideo from "../Utilities/SelectVideo.jsx";
 import VerifySelectConcept from "../Utilities/SelectConcept.jsx";
 import VerifySelectUnsure from "../Utilities/SelectUnsure";
 
+import FormGroup from "@material-ui/core/FormGroup";
+import FormControlLabel from "@material-ui/core/FormControlLabel";
+import Switch from "@material-ui/core/Switch";
+import FormControl from "@material-ui/core/FormControl";
+import Typography from "@material-ui/core/Typography";
+
 const styles = theme => ({
   button: {
     marginTop: theme.spacing(3),
@@ -22,6 +28,14 @@ const styles = theme => ({
   },
   resetContainer: {
     padding: theme.spacing(3)
+  },
+  formControl: {
+    marginTop: theme.spacing(2),
+    maxHeight: "400px",
+    overflow: "auto"
+  },
+  switch: {
+    marginLeft: theme.spacing(2)
   }
 });
 
@@ -38,6 +52,7 @@ class VerifySelection extends React.Component {
   }
 
   getStepForm = step => {
+    const { classes } = this.props;
     switch (step) {
       case 0:
         return (
@@ -51,7 +66,7 @@ class VerifySelection extends React.Component {
       case 1:
         return (
           <VerifySelectVideo
-            selectedVideos={this.props.selectedVideos}
+            value={this.props.selectedVideos}
             getVideos={this.props.getVideos}
             getVideoCollections={this.props.getVideoCollections}
             handleChange={this.props.handleChange("selectedVideos")}
@@ -63,16 +78,43 @@ class VerifySelection extends React.Component {
           <VerifySelectConcept
             value={this.props.selectedConcepts}
             getConcepts={this.props.getConcepts}
+            getConceptCollections={this.props.getConceptCollections}
+            handleChange={this.props.handleChange("selectedConcepts")}
             handleChangeList={this.props.handleChangeList("selectedConcepts")}
           />
         );
       case 3:
         return (
-          <VerifySelectUnsure
-            value={this.props.selectedUnsure}
-            getUnsure={this.props.getUnsure}
-            handleChangeSwitch={this.props.handleChangeSwitch("selectedUnsure")}
-          />
+          <div>
+            <VerifySelectUnsure
+              value={this.props.selectedUnsure}
+              getUnsure={this.props.getUnsure}
+              handleChangeSwitch={this.props.handleChangeSwitch(
+                "selectedUnsure"
+              )}
+            />
+            <div>
+              <Typography>Select Video First</Typography>
+              <FormControl component="fieldset" className={classes.formControl}>
+                <FormGroup>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        className={classes.switch}
+                        checked={this.props.selectedTrackingFirst}
+                        onChange={this.props.handleChangeSwitch(
+                          "selectedTrackingFirst"
+                        )}
+                        value="selectedTrackingFirst"
+                        color="primary"
+                      />
+                    }
+                    label="Tracking Video Verification"
+                  />
+                </FormGroup>
+              </FormControl>
+            </div>
+          </div>
         );
       default:
         return "Unknown step";

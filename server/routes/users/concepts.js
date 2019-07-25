@@ -1,8 +1,8 @@
-const router = require('express').Router();
+const router = require("express").Router();
 const passport = require("passport");
 const psql = require("../../db/simpleConnect");
 
- /**
+/**
  * @typedef concept
  * @property {integer} id - ID of the concept
  * @property {integer} userid - ID of the user
@@ -24,7 +24,9 @@ const psql = require("../../db/simpleConnect");
  * @returns {Array.<concept>} 200 - Logged in user's selected concepts
  * @returns {Error} 500 - Unexpected database error
  */
-router.get("/", passport.authenticate("jwt", { session: false }),
+router.get(
+  "/",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const queryText = `
       SELECT
@@ -32,18 +34,9 @@ router.get("/", passport.authenticate("jwt", { session: false }),
       FROM
         profile
       LEFT JOIN
-        (
-          SELECT
-            *
-          FROM ONLY
-            concepts
-          NATURAL FULL JOIN
-            concept_collection
-        ) AS concepts
-      ON
-        concepts.id=profile.conceptId
+        concepts ON concepts.id=profile.conceptid
       WHERE
-        profile.userid=$1 AND deleted_flag IS NOT TRUE
+        profile.userid=$1
       ORDER BY
         profile.conceptidx, concepts.name
     `;
@@ -57,7 +50,7 @@ router.get("/", passport.authenticate("jwt", { session: false }),
   }
 );
 
- /**
+/**
  * @typedef conceptInsert
  * @property {string} value - Stringified array representing the inserted row eg.
  * "[{\"id\":284,\"userid\":4,\"conceptid\":100,\"conceptidx\":0}]"
@@ -71,7 +64,9 @@ router.get("/", passport.authenticate("jwt", { session: false }),
  * @returns {conceptInsert.model} 200 - Values of inserted row
  * @returns {Error} 500 - Unexpected database error
  */
-router.post("/", passport.authenticate("jwt", { session: false }),
+router.post(
+  "/",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const queryText = `
       INSERT INTO 
@@ -89,7 +84,7 @@ router.post("/", passport.authenticate("jwt", { session: false }),
   }
 );
 
- /**
+/**
  * @typedef conceptDelete
  * @property {string} value - Stringified array representing the inserted row eg.
  * "value": "[{\"id\":284,\"userid\":4,\"conceptid\":100,\"conceptidx\":0}]"
@@ -103,7 +98,9 @@ router.post("/", passport.authenticate("jwt", { session: false }),
  * @returns {conceptDelete.model} 200 - Values of deleted rows
  * @returns {Error} 500 - Unexpected database error
  */
-router.delete("/", passport.authenticate("jwt", { session: false }),
+router.delete(
+  "/",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     let queryText = `
       DELETE FROM
@@ -122,7 +119,7 @@ router.delete("/", passport.authenticate("jwt", { session: false }),
   }
 );
 
- /**
+/**
  * @typedef conceptPatch
  * @property {string} value - Stringified array representing the inserted row eg.
  * "value": "[]"
@@ -136,7 +133,9 @@ router.delete("/", passport.authenticate("jwt", { session: false }),
  * @returns {conceptPatch.model} 200 - Values of updated rows
  * @returns {Error} 500 - Unexpected database error
  */
-router.patch("/", passport.authenticate("jwt", { session: false }),
+router.patch(
+  "/",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const conceptsSelected = JSON.stringify(req.body.conceptsSelected);
     const queryText = `

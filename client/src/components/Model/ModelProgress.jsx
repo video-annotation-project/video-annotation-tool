@@ -7,7 +7,7 @@ import Typography from '@material-ui/core/Typography';
 import Paper from '@material-ui/core/Paper';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Button from '@material-ui/core/Button';
-import PredictProgress from "./PredictProgress";
+import PredictProgress from './PredictProgress';
 
 
 const styles = theme => ({
@@ -52,6 +52,7 @@ class ModelProgress extends Component {
           maxEpoch: 0,
           stepsPerEpoch: 0,
           progress: 0,
+          doneTraining: false,
 	    };
 
 	    this.loadProgressInfo();
@@ -67,7 +68,7 @@ class ModelProgress extends Component {
 	}
 
   loadProgressInfo = () => {
-    if (this.props.activeStep < 5){
+    if (this.props.activeStep < 3){
       return;
     }
     const config = {
@@ -121,7 +122,8 @@ class ModelProgress extends Component {
             </div>
           </Paper>
         )}
-      	{this.state.running && activeStep === steps.length ? 
+      	{
+          this.state.running && activeStep === steps.length ? 
       		<div>
       			<Typography
               variant="body1" gutterBottom 
@@ -144,11 +146,11 @@ class ModelProgress extends Component {
 							value={this.state.batchProgress} 
 							color="secondary" />
 					</div>
-        : this.state.running && this.state.currentEpoch === this.state.maxEpoch ? 
-          <PredictProgress className = {classes.progress} />
-
-          :
-          activeStep !== steps.length && (
+				: activeStep === steps.length  
+            && !this.state.running && this.state.currentEpoch === this.state.maxEpoch 
+            && this.state.currentBatch === this.state.stepsPerEpoch 
+        ? <PredictProgress className={classes.progress}/>
+        : activeStep !== steps.length && (
   				<Typography variant="subtitle2" gutterBottom>
             Not currently training
           </Typography>)

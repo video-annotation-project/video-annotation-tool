@@ -190,8 +190,6 @@ def train_model(concepts, model_name, collectionIds, min_examples,
     end = time.time()
     print("Done Training Model: " + str((end - start)/60) + " minutes")
 
-    os.system("sudo shutdown -h")
-
 
 if __name__ == '__main__':
     epochs = 1

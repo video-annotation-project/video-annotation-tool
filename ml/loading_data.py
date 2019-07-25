@@ -61,7 +61,6 @@ def select_annotations(annotations, min_examples, concepts):
 
     group_frame = annotations.groupby(['videoid', 'frame_num'], sort=False)
     group_frame = [df for _, df in group_frame]
-    random.shuffle(group_frame) # Shuffle BEFORE the sort
 
     ai_id = queryDB("SELECT id FROM users WHERE username='tracking'").id[0]
     # Give priority to frames with least amount of tracking annotations
@@ -121,7 +120,7 @@ def download_annotations(min_examples, collectionId, concepts, concept_map,
               conceptid,
               x1, x2, y1, y2,
               speed,
-              fps*timeinvideo as frame_num
+              ROUND(fps*timeinvideo) as frame_num
         FROM annotation_intermediate inter
         LEFT JOIN annotations a ON a.id=inter.annotationid
         LEFT JOIN videos ON videos.id=videoid
@@ -141,9 +140,10 @@ def download_annotations(min_examples, collectionId, concepts, concept_map,
     for frame in selected:
         # Get image for first annotation in frame
         first = frame.iloc[0]
-        image = str(first['image'])
-        if ".png" not in image:
-           image += ".png"
+        video_id = first['videoid']
+        frame_num = first['frame_num']
+        image = f'{video_id}_{int(frame_num)}.png'
+
         img_location = img_folder + "/" + image
 
         # Check if image already exists in image folder

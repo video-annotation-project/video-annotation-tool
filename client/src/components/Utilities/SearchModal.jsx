@@ -67,6 +67,7 @@ class SearchModal extends Component {
     let { conceptsLikeSearch } = this.state;
     let { concepts } = this.props;
     const { classes } = this.props;
+
     if (!concepts) {
       return (
         <Dialog open={this.props.open} onClose={this.handleClose}>
@@ -74,6 +75,7 @@ class SearchModal extends Component {
         </Dialog>
       );
     }
+    
     return (
       <div>
         <Dialog

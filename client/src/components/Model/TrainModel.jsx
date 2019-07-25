@@ -18,8 +18,6 @@ import FormGroup from "@material-ui/core/FormGroup";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import FormLabel from "@material-ui/core/FormLabel";
 import Checkbox from "@material-ui/core/Checkbox";
-// import IconButton from "@material-ui/core/IconButton";
-// import Description from "@material-ui/icons/Description";
 import ModelProgress from "./ModelProgress.jsx";
 import VideoMetadata from "../Utilities/VideoMetadata.jsx";
 import Typography from '@material-ui/core/Typography';
@@ -121,16 +119,10 @@ class TrainModel extends Component {
     socket.on("refresh trainmodel", this.loadOptionInfo);
 
     this.state = {
-      videos: [],
-      videosSelected: null,
-      users: [],
-      usersSelected: null,
       models: [],
       modelSelected: null,
-      concepts: [],
-      conceptsSelected: null,
       collections: [],
-      collectionSelected: null,
+      annotationCollections: [],
       minImages: 5000,
       epochs: 0,
       activeStep: 0,
@@ -158,14 +150,12 @@ class TrainModel extends Component {
   componentDidMount = async () => {
     this.loadOptionInfo();
     this.loadExistingModels();
-    // this.loadUserList();
-    // this.loadCollectionlist();
   };
 
 
   loadOptionInfo = () => {
     const config = {
-      headers: {
+      headers:{
         Authorization: "Bearer " + localStorage.getItem("token")
       }
     };
@@ -174,24 +164,13 @@ class TrainModel extends Component {
       .get(`/api/models/train/${option}`, config)
       .then(res => {
         const info = res.data[0].info;
-        console.log(info);
         this.setState(
           {
             activeStep: info.activeStep,
-            collectionSelected: info.collectionSelected,
-            // usersSelected: info.usersSelected,
-            // videosSelected: info.videosSelected,
-            // conceptsSelected: info.conceptsSelected,
+            annotationCollections: info.annotationCollections,
             modelSelected: info.modelSelected,
             minImages: info.minImages,
             epochs: info.epochs
-          },
-          // console.log(this.state),
-          () => {
-              this.loadCollectionlist();
-            // if (info.videosSelected.length > 0) {
-            //   this.loadConceptList();
-            // }
           }
         );
       })
@@ -213,7 +192,6 @@ class TrainModel extends Component {
     axios
       .get(`/api/models`, config)
       .then(res => {
-        // console.log(res.data);
         this.setState({
           models: res.data },
         );
@@ -227,20 +205,6 @@ class TrainModel extends Component {
       });
   };
 
-
-  // loadUserList = () => {
-  //   const config = {
-  //     headers: {
-  //       Authorization: "Bearer " + localStorage.getItem("token")
-  //     }
-  //   };
-  //   axios.get(`/api/users`, config).then(res => {
-  //     this.setState({
-  //       users: res.data
-  //     });
-  //   });
-  // };
-
   loadCollectionlist = () => {
     const config = {
       headers: {
@@ -248,66 +212,12 @@ class TrainModel extends Component {
       }
     };
     axios.get(`/api/collections/annotations`, config).then(res => {
-      console.log(res.data);
-      this.setState({
-        collections: res.data,
-        collectionSelected: []
-      },
-      () => {
-        let data = this.state.models.find(model => {
-          return model.name === this.state.modelSelected;
-        })
-        // console.log(data);
-        this.filterCollection(data);
-      }
-      );
+      let selectedModelTuple = this.state.models.find(model => {
+        return model.name === this.state.modelSelected;
+      })
+      this.filterCollection(selectedModelTuple, res.data);
     });
   };
-
-  // loadVideoList = () => {
-  //   const config = {
-  //     headers: {
-  //       Authorization: "Bearer " + localStorage.getItem("token")
-  //     }
-  //   };
-  //   axios
-  //     .get(
-  //       `/api/models/train/videos/` +
-  //         this.state.usersSelected +
-  //         `/` +
-  //         this.state.modelSelected,
-  //       config
-  //     )
-  //     .then(res => {
-  //       let videoids = res.data.map(vid => vid.id);
-  //       this.setState({
-  //         videos: res.data,
-  //         videosSelected: this.state.videosSelected.filter(id =>
-  //           videoids.includes(id)
-  //         )
-  //       });
-  //     });
-  // };
-
-  // loadConceptList = async () => {
-  //   const { videosSelected, modelSelected } = this.state;
-  //   const config = {
-  //     headers: {
-  //       Authorization: "Bearer " + localStorage.getItem("token")
-  //     }
-  //   };
-  //   let response = await axios.get(
-  //     `/api/models/train/concepts/` + videosSelected + "/" + modelSelected,
-  //     config
-  //   );
-  //   let conceptids = response.data.map(concept => concept.id);
-  //   this.setState({
-  //     concepts: response.data,
-  //     conceptsSelected: this.state.conceptsSelected.filter(id =>
-  //       conceptids.includes(id)
-  //     )
-  //   });
-  // };
 
   //Used to handle changes in the hyperparameters
   //and in the select model
@@ -352,39 +262,9 @@ class TrainModel extends Component {
     });
   };
 
-  // selectUser = () => {
-  //   const { checkSelector } = this.props.classes;
-  //   if (!this.state.usersSelected) {
-  //     return <div>Loading...</div>;
-  //   }
-  //   return (
-  //     <FormControl component="fieldset" className={checkSelector}>
-  //       <FormLabel component="legend">
-  //         Select Users Whose Annotations to Use
-  //       </FormLabel>
-  //       <FormGroup>
-  //         {this.state.users.map(user => (
-  //           <div key={user.id}>
-  //             <FormControlLabel
-  //               control={
-  //                 <Checkbox
-  //                   onChange={this.checkboxSelect("usersSelected", user.id)}
-  //                   color="primary"
-  //                   checked={this.state.usersSelected.includes(user.id)}
-  //                 />
-  //               }
-  //               label={user.username}
-  //             />
-  //           </div>
-  //         ))}
-  //       </FormGroup>
-  //     </FormControl>
-  //   );
-  // };
-
   selectCollection = () => {
     const { checkSelector } = this.props.classes;
-    if (!this.state.collectionSelected) {
+    if (!this.state.annotationCollections) {
       return <div>Loading...</div>;
     }
     return (
@@ -393,21 +273,21 @@ class TrainModel extends Component {
           Select Annotation Collection to Use
         </FormLabel>
         <FormGroup>
-          {this.state.collections.map(collection => (
+          {this.state.collections.sort((a, b) => a.validConcepts ? -1 : 1).map(collection => (
             <div key={collection.id}>
               <FormControlLabel
                 control={
                   <Checkbox
-                    onChange={this.checkboxSelect("collectionSelected", collection.id)}
+                    onChange={this.checkboxSelect("annotationCollections", collection.id)}
                     color="primary"
-                    checked={this.state.collectionSelected.includes(collection.id)}
+                    checked={this.state.annotationCollections.includes(collection.id)}
                     disabled={collection.disable}
                   />
                 }
                 label={<div>{collection.name} 
-                  {collection.concepts ?
+                  {collection.validConcepts ?
                   <Typography variant="subtitle2" gutterBottom color="secondary">
-                     {collection.concepts.array_agg.join(", ")}
+                     {collection.validConcepts.concepts.join(", ")}
                   </Typography> : ""}
                   </div>}
               />
@@ -418,74 +298,6 @@ class TrainModel extends Component {
     );
   };
 
-  // selectVideo = () => {
-  //   const { checkSelector, videoSelector } = this.props.classes;
-  //   if (!this.state.videosSelected) {
-  //     return <div>Loading...</div>;
-  //   }
-  //   return (
-  //     <FormControl
-  //       component="fieldset"
-  //       className={`${checkSelector} ${videoSelector}`}
-  //     >
-  //       <FormLabel component="legend">Select Videos to Train With</FormLabel>
-  //       <FormGroup>
-  //         {this.state.videos.map(video => (
-  //           <div key={video.filename}>
-  //             <FormControlLabel
-  //               control={
-  //                 <Checkbox
-  //                   onChange={this.checkboxSelect("videosSelected", video.id)}
-  //                   color="primary"
-  //                   checked={this.state.videosSelected.includes(video.id)}
-  //                 />
-  //               }
-  //               label={video.id + " " + video.filename}
-  //             ></FormControlLabel>
-  //             <IconButton
-  //               onClick={event => this.openVideoMetadata(event, video)}
-  //               style={{ float: "right" }}
-  //             >
-  //               <Description />
-  //             </IconButton>
-  //           </div>
-  //         ))}
-  //       </FormGroup>
-  //     </FormControl>
-  //   );
-  // };
-
-  // selectConcepts = () => {
-  //   const classes = this.props.classes;
-  //   if (!this.state.conceptsSelected) {
-  //     return <div>Loading...</div>;
-  //   }
-
-  //   return (
-  //     <FormControl component="fieldset" className={classes.checkSelector}>
-  //       <FormLabel component="legend">Select Species to Train With</FormLabel>
-  //       <FormGroup>
-  //         {this.state.concepts.map(concept => (
-  //           <div key={concept.name}>
-  //             <FormControlLabel
-  //               control={
-  //                 <Checkbox
-  //                   onChange={this.checkboxSelect(
-  //                     "conceptsSelected",
-  //                     concept.id
-  //                   )}
-  //                   color="primary"
-  //                   checked={this.state.conceptsSelected.includes(concept.id)}
-  //                 />
-  //               }
-  //               label={concept.name}
-  //             />
-  //           </div>
-  //         ))}
-  //       </FormGroup>
-  //     </FormControl>
-  //   );
-  // };
 
   selectHyperparameters = () => {
     const classes = this.props.classes;
@@ -521,9 +333,6 @@ class TrainModel extends Component {
     return [
       "Select model",
       "Select annotation collection",
-      // "Select users",
-      // "Select videos",
-      // "Select species",
       "Select hyperparameters"
     ];
   };
@@ -534,10 +343,6 @@ class TrainModel extends Component {
         return this.selectModel();
       case 1:
         return this.selectCollection();
-      // case 2:
-      //   return this.selectVideo();
-      // case 3:
-      //   return this.selectConcepts();
       case 2:
         return this.selectHyperparameters();
       default:
@@ -551,12 +356,8 @@ class TrainModel extends Component {
         return "models";
       case 1:
         return "collections";
-      // case 2:
-      //   return "videos";
-      // case 3:
-      //   return "concepts";
       default:
-        return "NAN";
+        return undefined;
     }
   };
 
@@ -592,10 +393,7 @@ class TrainModel extends Component {
     let info = {
       activeStep: this.state.activeStep,
       modelSelected: this.state.modelSelected,
-      collectionSelected: this.state.collectionSelected,
-      // usersSelected: this.state.usersSelected,
-      // videosSelected: this.state.videosSelected,
-      // conceptsSelected: this.state.conceptsSelected,
+      annotationCollections: this.state.annotationCollections,
       epochs: this.state.epochs,
       minImages: this.state.minImages
     };
@@ -604,7 +402,7 @@ class TrainModel extends Component {
     };
     // update SQL database
     axios
-      .put(`/api/models/train/${"trainmodel"}`, body, config)
+      .put("/api/models/train/trainmodel/", body, config)
       .then(res => {
         this.state.socket.emit("refresh trainmodel");
       })
@@ -614,37 +412,31 @@ class TrainModel extends Component {
       });
   };
 
-  filterCollection = async (data) => {
+  filterCollection = async (data, collections) => {
     const config = {
       headers: {
         Authorization: "Bearer " + localStorage.getItem("token")
-      },
-      data: {
-        conceptids: data.conceptsid
       }
     };
     try {
-      let dataRet = await axios.get("/api/collections/annotations/train",
+      let dataRet = await axios.get(`/api/collections/annotations/train?ids=${data.conceptsid}`,
         config
       );
       var conceptids = dataRet.data.map(col => col.id);
       dataRet = dataRet.data;
-      // console.log(dataRet);
-      var filteredCol = this.state.collections;
+      var filteredCol = collections;
       filteredCol.forEach(col => {
         if (!conceptids.includes(col.id)) {
           col.disable = true;
         }
         else{
-          // console.log(col.name);
           col.disable = false;
-          col.concepts = dataRet.find(col1 => {
+          col.validConcepts = dataRet.find(col1 => {
             return col1.id === col.id
           })  
         }
       });
-      // console.log(filteredCol);
-      this.setState({
+      await this.setState({
         collections: filteredCol
       })
     } catch (error) {
@@ -654,7 +446,7 @@ class TrainModel extends Component {
 
   handleNext = async () => {
     // After users have been selected load user videos
-    if (this.state.activeStep === 1) {
+    if (this.state.activeStep === 0) {
       this.loadCollectionlist();
     }
     // After Model and videos have been selected load available concepts
@@ -707,7 +499,7 @@ class TrainModel extends Component {
       command: command,
       modelInstanceId: "i-011660b3e976035d8"
     };
-    axios.post(`/api/models`, body, config).then(res => {
+    axios.post(`/api/models/train`, body, config).then(res => {
       console.log(res);
     });
   };
@@ -716,17 +508,12 @@ class TrainModel extends Component {
     const { classes } = this.props;
     const steps = this.getSteps();
     const {
-      videos,
-      collectionSelected,
+      annotationCollections,
       modelSelected,
       activeStep,
       openedVideo
     } = this.state;
-    console.log(this.state.collections);
 
-    if (!videos) {
-      return <div>Loading...</div>;
-    }
     return (
       <div className={classes.root}>
         <Paper square>
@@ -756,9 +543,7 @@ class TrainModel extends Component {
                         className={classes.button}
                         disabled={
                           (activeStep === 0 && modelSelected === "") ||
-                          (activeStep === 1 && collectionSelected.length < 1)
-                          // (activeStep === 1 && usersSelected.length < 1) ||
-                          // (activeStep === 2 && videosSelected.length < 1)
+                          (activeStep === 1 && annotationCollections.length < 1)
                         }
                       >
                         {activeStep === steps.length - 1

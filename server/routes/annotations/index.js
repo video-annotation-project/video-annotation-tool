@@ -28,11 +28,7 @@ const AWS = require("aws-sdk");
  * @returns {Array.<annotation>} 200 - An array of annotations
  * @returns {Error} 500 - Unexpected database error
  */
-
-// TODO: this endpoint is unsecure in its admin check, need to fix
-router.get(
-  "/",
-  passport.authenticate("jwt", { session: false }),
+router.get("/", passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     let params = [];
     let queryPass = `
@@ -56,7 +52,7 @@ router.get(
     } else if (req.query.verifiedCondition === "unverified only") {
       queryPass += ` AND annotations.verifiedby IS NULL`;
     }
-    if (req.query.admin !== "true") {
+    if (!req.user.admin) {
       queryPass += ` AND annotations.userid = $1`;
       params.push(req.user.id);
     }
@@ -330,14 +326,14 @@ router.patch(
       UPDATE
         annotations
       SET
-        bad_tracking=true
+        tracking_flag=$1
       WHERE
-        id=$1
+        id=$2
       RETURNING id
     `;
 
     try {
-      let updated = await psql.query(queryText, [req.params.id]);
+      let updated = await psql.query(queryText, [req.body.flag ,req.params.id]);
       res.json(updated.rows);
     } catch (error) {
       console.log(error);
@@ -366,6 +362,7 @@ router.get(
     const selectedVideos = req.query.selectedVideos;
     const selectedConcepts = req.query.selectedConcepts;
     const selectedUnsure = req.query.selectedUnsure;
+    const selectedTrackingFirst = req.query.selectedTrackingFirst;
 
     let params = [];
     let queryText = "SELECT DISTINCT ";
@@ -421,6 +418,13 @@ router.get(
 
     if (selectedUnsure === "true") queryText += ` AND unsure`;
     else if (selectedUnsure === "not true") queryText += ` AND NOT unsure`;
+
+    if (selectedTrackingFirst === "true") {
+      queryText += ` AND a.verifiedby IS NOT NULL AND a.tracking_flag IS NULL`
+    }
+    else {
+      queryText += ` AND a.verifiedby IS NULL`
+    }
 
     queryText += orderBy;
 
@@ -488,9 +492,9 @@ router.get(
 /**
  * @typedef treeData
  * @property {string} name - Name of the specific item in the current level
- * @property {integer} key - ID of the specific item in the current level
- * @property {integer} count - Count of the specific item in the current level
- * @property {boolean} expanded - Is the specific item in the current level expanded
+ * @property {integer} key - ID of the specific item in the current level 
+ * @property {integer} count - Count of the specific item in the current level 
+ * @property {boolean} expanded - Always "false", used by react to control expansion
  */
 
 /**
@@ -501,17 +505,14 @@ router.get(
  * @param {string} queryConditions.query - Conditions for the annotations query
  * @param {boolean} unsureOnly.query - Get annotations that are marked as unsure
  * @param {enum} verifiedCondition.query - "All", "Unverified Only", or "Verified Only"
- * @param {boolean} admin.query - Is the user an admin
  * @returns {Array.<treeData>} 200 - Returns matching annotations
  * @returns {Error} 500 - Unexpected database error
  */
-// TODO: fix admin check, what is expanded?
-router.get(
-  "/treeData",
-  passport.authenticate("jwt", { session: false }),
+router.get("/treeData", passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     let params = [];
     let queryPass = selectLevelQuery(req.query.levelName);
+
     if (req.query.queryConditions) {
       queryPass = queryPass + req.query.queryConditions;
     }
@@ -523,7 +524,7 @@ router.get(
     } else if (req.query.verifiedCondition === "unverified only") {
       queryPass = queryPass + ` AND annotations.verifiedby IS NULL`;
     }
-    if (req.query.admin !== "true") {
+    if (!req.user.admin) {
       queryPass = queryPass + ` AND annotations.userid = $1`;
       params.push(req.user.id);
     }
