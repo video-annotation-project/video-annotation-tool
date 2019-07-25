@@ -19,7 +19,7 @@ from keras_retinanet.models import load_model
 
 config_path = "../config.json"
 load_dotenv(dotenv_path="../.env")
-with open(config_path) as config_buffer:    
+with open(config_path) as config_buffer:
     config = json.loads(config_buffer.read())['ml']
 
 train_annot_file = config['train_annot_file']
@@ -30,11 +30,11 @@ batch_size = config['batch_size']
 good_users = config['biologist_users']
 
 
-'''
-    Evaluates the model using testing data, printing out an F1 score as well as optimal confidence thresholds for each concept
-'''
-def evaluate_model(concepts, model_path, min_examples, download_data=False):
-
+def evaluate_model(generator):
+    '''
+    Evaluates the model using testing data, 
+    printing out an F1 score as well as optimal confidence thresholds for each concept
+    '''
     classmap = get_classmap(concepts)
 
     if download_data:
@@ -44,7 +44,8 @@ def evaluate_model(concepts, model_path, min_examples, download_data=False):
             if os.path.exists(dir):
                 shutil.rmtree(dir)
             os.makedirs(dir)
-        download_annotations(min_examples, concepts, classmap, good_users, img_folder, train_annot_file, valid_annot_file, split=0)
+        download_annotations(min_examples, concepts, classmap, good_users,
+                             img_folder, train_annot_file, valid_annot_file, split=0)
 
     '''
     Initializing model for eval
@@ -53,7 +54,7 @@ def evaluate_model(concepts, model_path, min_examples, download_data=False):
     model = convert_model(model)
 
     temp = pd.DataFrame(list(zip(classmap.values(), classmap.keys())))
-    temp.to_csv('classmap.csv',index=False, header=False)
+    temp.to_csv('classmap.csv', index=False, header=False)
     test_generator = CSVGenerator(
         valid_annot_file,
         'classmap.csv',
@@ -71,21 +72,21 @@ def evaluate_model(concepts, model_path, min_examples, download_data=False):
         print("")
         total_f1 += f1
 
-    print("Average F1: " + str(total_f1/len(best_f1)))
+    print("Average F1: " + str(total_f1 / len(best_f1)))
     print("Find evaluation examples in: " + test_examples)
     '''
     average_precisions = evaluate(test_generator, model, save_path=test_examples)
 
     for concept, (ap, instances) in average_precisions.items():
         print(classmap[concept] +": " + str(ap) + " with " + str(instances) + " instances")
-        
+
     print("Find evaluation examples in: " + test_examples)
     '''
+
 
 if __name__ == '__main__':
     min_examples = 1000
     concepts = [1629, 1210, 236, 383, 1133]
     model_path = 'current_weights.h5'
 
-    evaluate_model(concepts, model_path,  min_examples, download_data=False)
-
+    evaluate_model(concepts, model_path, min_examples, download_data=False)
