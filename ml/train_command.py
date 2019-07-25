@@ -100,7 +100,6 @@ user_model = model[0] + "-" + time.ctime()
 train_model(concepts, info['modelSelected'], info['annotationCollections'],
             int(info['minImages']), int(info['epochs']), download_data=True)
 
-
 # Run verifyVideos in parallel
 # with Pool(processes = 2) as p:
 #     p.starmap(evaluate, map(lambda video: (video, user_model, concepts), verifyVideos))

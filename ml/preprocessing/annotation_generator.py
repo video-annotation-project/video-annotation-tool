@@ -60,7 +60,7 @@ def get_classmap(classes):
 
     # Keras requires that the mapping IDs correspond to the index number of the class.
     # So we create that mapping (dictionary)
-    classmap = {index: class_ for index, class_ in enumerate(classes)}
+    classmap = {class_: index for index, class_ in enumerate(classes)}
 
     return classmap
 
