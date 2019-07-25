@@ -1,7 +1,10 @@
 import os
 
 import pandas as pd
+from dotenv import load_dotenv
 from psycopg2 import connect
+
+load_dotenv(dotenv_path="../.env")
 
 DB_NAME = os.getenv("DB_NAME")
 DB_HOST = os.getenv("DB_HOST")
