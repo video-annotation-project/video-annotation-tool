@@ -106,9 +106,7 @@ class Verify extends Component {
   getAnnotationsFromCollection = async () => {
     return axios
       .get(
-        `/api/annotations/collections?collectionids=${
-          this.state.selectedAnnotationCollections
-        }`,
+        `/api/annotations/collections?collectionids=${this.state.selectedAnnotationCollections}`,
         {
           headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
         }

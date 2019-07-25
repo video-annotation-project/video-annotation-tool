@@ -341,7 +341,6 @@ class AnnotationCollection extends Component {
         }
       })
       .then(res => {
-        console.log(res.data);
         this.setState({
           annotationCount: res.data[0].annotationcount,
           trackingCount: res.data[0].trackingcount
@@ -383,7 +382,6 @@ class AnnotationCollection extends Component {
       });
     }
   };
-
 
   handleSelectAll = (data, dataSelected, stepInfo) => {
     var selected = dataSelected;
