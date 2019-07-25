@@ -24,5 +24,4 @@ logs/
 
 # Soe files
 *.pem
-kls.pgsql
-KLS-py
+KLS
