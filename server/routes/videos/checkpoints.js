@@ -1,9 +1,10 @@
 const router = require('express').Router();
-const passport = require("passport");
-const psql = require("../../db/simpleConnect");
+const passport = require('passport');
+const psql = require('../../db/simpleConnect');
 
-
-router.delete("/:videoid", passport.authenticate("jwt", { session: false }),
+router.delete(
+  '/:videoid',
+  passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     const userid = req.user.id;
     const videoid = req.params.videoid;
@@ -16,7 +17,7 @@ router.delete("/:videoid", passport.authenticate("jwt", { session: false }),
      `;
     try {
       await psql.query(queryText, [userid, videoid]);
-      res.json({ message: "unwatched" });
+      res.json({ message: 'unwatched' });
     } catch (error) {
       console.log(error);
       res.status(500).json(error);
@@ -24,7 +25,9 @@ router.delete("/:videoid", passport.authenticate("jwt", { session: false }),
   }
 );
 
-router.put("/:videoid", passport.authenticate("jwt", { session: false }),
+router.put(
+  '/:videoid',
+  passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     const videoid = req.params.videoid;
     const { timeinvideo, finished } = req.body;
@@ -43,7 +46,7 @@ router.put("/:videoid", passport.authenticate("jwt", { session: false }),
     try {
       const updateRes = await psql.query(queryText, data);
       if (updateRes.rowCount > 0) {
-        res.json({ message: "updated" });
+        res.json({ message: 'updated' });
         return;
       }
       // User has no checkpoint for this video
@@ -54,7 +57,7 @@ router.put("/:videoid", passport.authenticate("jwt", { session: false }),
           ($1, $2, $3, $4, current_timestamp)
        `;
       let insertRes = await psql.query(queryText, data);
-      res.json({ message: "updated" });
+      res.sendStatus(200);
     } catch (error) {
       console.log(error);
       res.status(500).json(error);
@@ -63,4 +66,3 @@ router.put("/:videoid", passport.authenticate("jwt", { session: false }),
 );
 
 module.exports = router;
-
