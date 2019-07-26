@@ -426,6 +426,14 @@ class Annotate extends Component {
     });
   };
 
+  handleDialogClose = () => {
+    this.setState({
+      dialogOpen: false,
+      dialogMsg: null,
+      clickedConcept: null
+    });
+  };
+
   render() {
     const { classes } = this.props;
     const {
