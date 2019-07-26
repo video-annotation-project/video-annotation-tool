@@ -1,63 +1,88 @@
-import React, { Component } from "react";
-import axios from "axios";
-import io from "socket.io-client";
-import Button from "@material-ui/core/Button";
-import Typography from "@material-ui/core/Typography";
-import { withStyles } from "@material-ui/core/styles";
-import Slider from "@material-ui/core/Slider";
-import Swal from "sweetalert2";
-
-import ConceptsSelected from "./Utilities/ConceptsSelected.jsx";
-import DialogModal from "./Utilities/DialogModal.jsx";
-import VideoList from "./Utilities/VideoList.jsx";
-import DragBoxContainer from "./Utilities/DragBoxContainer.jsx";
+import React, { Component } from 'react';
+import axios from 'axios';
+import io from 'socket.io-client';
+import Button from '@material-ui/core/Button';
+import Typography from '@material-ui/core/Typography';
+import { withStyles } from '@material-ui/core/styles';
+import Slider from '@material-ui/core/Slider';
+import Swal from 'sweetalert2';
 
 import Hotkeys from 'react-hot-keys';
+import ConceptsSelected from './Utilities/ConceptsSelected';
+import DialogModal from './Utilities/DialogModal';
+import VideoList from './Utilities/VideoList';
+import DragBoxContainer from './Utilities/DragBoxContainer';
 
-const styles = theme => ({
+const styles = () => ({
   videoContainer: {
-    top: "50px",
-    width: "1600px",
-    height: "900px"
+    top: '50px',
+    width: '1600px',
+    height: '900px'
   },
   dragBox: {
-    margin: "0px",
-    backgroundColor: "transparent",
-    border: "2px coral solid",
-    borderStyle: "ridge"
+    margin: '0px',
+    backgroundColor: 'transparent',
+    border: '2px coral solid',
+    borderStyle: 'ridge'
   },
   button: {
-    marginTop: "10px",
-    marginLeft: "20px",
-    marginBottom: "10px"
+    marginTop: '10px',
+    marginLeft: '20px',
+    marginBottom: '10px'
   }
 });
 
-
 class Annotate extends Component {
+  static handleUnload = ev => {
+    const videoElement = document.getElementById('video');
+    if (!videoElement.paused) {
+      ev.preventDefault();
+      ev.returnValue = 'Are you sure you want to close?';
+    }
+  };
+
+  static skipVideoTime = time => {
+    const videoElement = document.getElementById('video');
+    const cTime = videoElement.currentTime;
+    videoElement.currentTime = cTime + time;
+  };
+
+  static playPause = () => {
+    const videoElement = document.getElementById('video');
+    if (videoElement.paused) {
+      videoElement.play();
+    } else {
+      videoElement.pause();
+    }
+  };
+
+  static toggleVideoControls = () => {
+    const videoElement = document.getElementById('video');
+    videoElement.controls = !videoElement.controls;
+  };
+
   constructor(props) {
     super(props);
-
     // here we do a manual conditional proxy because React won't do it for us
     let socket;
-    if (window.location.origin === "http://localhost:3000") {
-      console.log("manually proxying socket");
-      socket = io("http://localhost:3001");
+    if (window.location.origin === 'http://localhost:3000') {
+      console.log('manually proxying socket');
+      socket = io('http://localhost:3001');
     } else {
       socket = io();
     }
     // const socket = io({transports: ['polling, websocket']});
 
-    socket.on("connect", () => {
-      console.log("socket connected!");
+    socket.on('connect', () => {
+      console.log('socket connected!');
     });
-    socket.on("reconnect_attempt", attemptNumber => {
-      console.log("reconnect attempt", attemptNumber);
+    socket.on('reconnect_attempt', attemptNumber => {
+      console.log('reconnect attempt', attemptNumber);
     });
-    socket.on("disconnect", reason => {
+    socket.on('disconnect', reason => {
       console.log(reason);
     });
-    socket.on("refresh videos", this.loadVideos);
+    socket.on('refresh videos', this.loadVideos);
 
     this.state = {
       currentVideo: null,
@@ -71,17 +96,17 @@ class Annotate extends Component {
       inProgressVideos: [],
       videoPlaybackRate: 1.0,
       error: null,
-      socket: socket,
+      socket,
       width: 0,
       height: 0,
       x: 0,
-      y: 0,
+      y: 0
     };
   }
 
   componentDidMount = async () => {
     // add event listener for closing or reloading window
-    window.addEventListener("beforeunload", Annotate.handleUnload);
+    window.addEventListener('beforeunload', Annotate.handleUnload);
 
     // // add event listener for different key presses
     // document.addEventListener("keydown", this.handleKeyDown);
@@ -94,8 +119,8 @@ class Annotate extends Component {
       if (!error.response) {
         return;
       }
-      let errMsg =
-        error.response.data.detail || error.response.data.message || "Error";
+      const errMsg =
+        error.response.data.detail || error.response.data.message || 'Error';
       console.log(errMsg);
       this.setState({
         isLoaded: true,
@@ -105,54 +130,26 @@ class Annotate extends Component {
   };
 
   componentWillUnmount = () => {
+    const { socket } = this.state;
     this.updateCheckpoint(false, false);
-    this.state.socket.disconnect();
-    window.removeEventListener("beforeunload", Annotate.handleUnload);
+    socket.disconnect();
+    window.removeEventListener('beforeunload', Annotate.handleUnload);
   };
 
-  static handleUnload = ev => {
-    var videoElement = document.getElementById("video");
-    if (!videoElement.paused) {
-      ev.preventDefault();
-      ev.returnValue = "Are you sure you want to close?";
-    }
-  };
-
-  handleKeyDown = (keyName, e, handle) => {
+  handleKeyDown = (keyName, e) => {
     e.preventDefault();
     switch (keyName) {
-      case "space":
+      case 'space':
         Annotate.playPause();
         break;
-      case "right":
+      case 'right':
         Annotate.skipVideoTime(1);
         break;
-      case "left":
+      case 'left':
         Annotate.skipVideoTime(-1);
         break;
       default:
-        return;
     }
-  }
-
-  static skipVideoTime = time => {
-    var videoElement = document.getElementById("video");
-    var cTime = videoElement.currentTime;
-    videoElement.currentTime = cTime + time;
-  };
-
-  static playPause = () => {
-    var videoElement = document.getElementById("video");
-    if (videoElement.paused) {
-      videoElement.play();
-    } else {
-      videoElement.pause();
-    }
-  };
-
-  static toggleVideoControls = () => {
-    var videoElement = document.getElementById("video");
-    videoElement.controls = !videoElement.controls;
   };
 
   handleChangeSpeed = (event, value) => {
@@ -161,8 +158,9 @@ class Annotate extends Component {
         videoPlaybackRate: Math.round(value * 10) / 10
       },
       () => {
-        const videoElement = document.getElementById("video");
-        videoElement.playbackRate = this.state.videoPlaybackRate;
+        const { videoPlaybackRate } = this.state;
+        const videoElement = document.getElementById('video');
+        videoElement.playbackRate = videoPlaybackRate;
       }
     );
   };
@@ -170,48 +168,54 @@ class Annotate extends Component {
   loadVideos = callback => {
     const config = {
       headers: {
-        Authorization: "Bearer " + localStorage.getItem("token")
+        Authorization: `Bearer ${localStorage.getItem('token')}`
       }
     };
-    return axios.get("/api/videos", config).then(res => {
-      this.setState({
-        startedVideos: res.data.startedVideos,
-        unwatchedVideos: res.data.unwatchedVideos,
-        watchedVideos: res.data.watchedVideos,
-        inProgressVideos: res.data.inProgressVideos
-      }, callback);
+    return axios.get('/api/videos', config).then(res => {
+      this.setState(
+        {
+          startedVideos: res.data.startedVideos,
+          unwatchedVideos: res.data.unwatchedVideos,
+          watchedVideos: res.data.watchedVideos,
+          inProgressVideos: res.data.inProgressVideos
+        },
+        callback
+      );
     });
   };
 
   getCurrentVideo = () => {
+    const { startedVideos, unwatchedVideos } = this.state;
     // if user does not have a video to be played, return default video 1
     let currentVideo = {
       id: 1,
-      filename: "DocRicketts-0569_20131213T224337Z_00-00-01-00TC_h264.mp4",
+      filename: 'DocRicketts-0569_20131213T224337Z_00-00-01-00TC_h264.mp4',
       timeinvideo: 0,
       finished: true
     };
-    if (this.state.startedVideos.length > 0) {
+    if (startedVideos.length > 0) {
       // currentVideo is the first item in startedVideos
-      currentVideo = this.state.startedVideos[0];
-    } else if (this.state.unwatchedVideos.length > 0) {
+      [currentVideo] = startedVideos;
+    } else if (unwatchedVideos.length > 0) {
       // currentVideo is the first item in unwatchedVideos
-      currentVideo = this.state.unwatchedVideos[0];
+      [currentVideo] = unwatchedVideos;
     }
     this.setState(
       {
-        currentVideo: currentVideo,
+        currentVideo,
         isLoaded: true
       },
       () => {
-        var videoElement = document.getElementById("video");
-        videoElement.currentTime = this.state.currentVideo.timeinvideo;
+        ({ currentVideo } = this.state);
+        const videoElement = document.getElementById('video');
+        videoElement.currentTime = currentVideo.timeinvideo;
         this.updateCheckpoint(false, true);
       }
     );
   };
 
   updateCheckpoint = (doneClicked, reloadVideos) => {
+    const { currentVideo } = this.state;
     /*
       when the checkpoint for a video is updated, there are three places that
       need to reflect this: this.state.currentVideo, the videos list, and the 
@@ -221,30 +225,31 @@ class Annotate extends Component {
     */
     const config = {
       headers: {
-        Authorization: "Bearer " + localStorage.getItem("token")
+        Authorization: `Bearer ${localStorage.getItem('token')}`
       }
     };
-    let videoElement = document.getElementById("video");
+    const videoElement = document.getElementById('video');
     const body = {
       timeinvideo: videoElement.currentTime,
-      finished: doneClicked || this.state.currentVideo.finished
+      finished: doneClicked || currentVideo.finished
     };
     // update SQL database
     return axios
-      .put("/api/videos/checkpoints/" + this.state.currentVideo.id, body, config)
-      .then(res => {
+      .put(`/api/videos/checkpoints/${currentVideo.id}`, body, config)
+      .then(() => {
         if (reloadVideos) {
-          return this.loadVideos(doneClicked ? this.getCurrentVideo : null);
+          this.loadVideos(doneClicked ? this.getCurrentVideo : null);
         }
       })
       .catch(error => {
+        console.log('Error in put api/videos/checkpoints');
         console.log(error);
         console.log(JSON.parse(JSON.stringify(error)));
         if (!error.response) {
           return;
         }
-        let errMsg =
-          error.response.data.detail || error.response.data.message || "Error";
+        const errMsg =
+          error.response.data.detail || error.response.data.message || 'Error';
         console.log(errMsg);
         this.setState({
           error: errMsg
@@ -253,39 +258,36 @@ class Annotate extends Component {
   };
 
   handleDoneClick = async () => {
+    const { socket } = this.state;
     // update video checkpoint to watched
     await this.updateCheckpoint(true, true);
-    this.state.socket.emit("refresh videos");
+    socket.emit('refresh videos');
   };
 
-  handleVideoClick = async (clickedVideo, videoListName) => {
-    await this.updateCheckpoint(false, true);
+  handleVideoClick = async clickedVideo => {
+    const { socket, currentVideo } = this.state;
+    socket.emit('refresh videos');
     this.setState(
       {
         currentVideo: clickedVideo
       },
       async () => {
-        var videoElement = document.getElementById("video");
-        videoElement.currentTime = this.state.currentVideo.timeinvideo;
+        const videoElement = document.getElementById('video');
+        videoElement.currentTime = currentVideo.timeinvideo;
         await this.updateCheckpoint(false, true);
-        this.state.socket.emit("refresh videos");
+        socket.emit('refresh videos');
       }
     );
-    /*
-    We need to be careful when a video from watchedVideos is played by the user.
-    It creates the possibility of creating duplicate checkpoints for the same
-    video, as watchedVideos is a global list.
-    At some point we could let users change watchedVideos into unwatchedVideos.
-    */
   };
 
   postAnnotation = (comment, unsure) => {
-    var videoElement = document.getElementById("video");
-    var cTime = videoElement.currentTime;
+    const { x, y, width, height, clickedConcept, currentVideo } = this.state;
+    const videoElement = document.getElementById('video');
+    const cTime = videoElement.currentTime;
 
-    var dragBox = document.getElementById("dragBox");
+    const dragBox = document.getElementById('dragBox');
 
-    if (dragBox === null){
+    if (dragBox === null) {
       Swal.fire({
         title: 'Error',
         text: 'No bounding box exists.',
@@ -295,53 +297,52 @@ class Annotate extends Component {
       return;
     }
 
-    var dragBoxCord = dragBox.getBoundingClientRect();
+    const dragBoxCord = dragBox.getBoundingClientRect();
 
-    var vidCord = videoElement.getBoundingClientRect();
+    const vidCord = videoElement.getBoundingClientRect();
 
-
-    //Make video image
-    var canvas = document.createElement("canvas");
+    // Make video image
+    const canvas = document.createElement('canvas');
     canvas.height = vidCord.height;
     canvas.width = vidCord.width;
-    var ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext('2d');
     ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-    var videoImage = new Image();
-    videoImage.setAttribute("crossOrigin", "use-credentials");
+    const videoImage = new window.Image();
+    videoImage.setAttribute('crossOrigin', 'use-credentials');
     videoImage.src = canvas.toDataURL(1.0);
 
     // Bouding box coordinates
-    var x1 = Math.max(this.state.x, 0);
-    var y1 = Math.max(this.state.y, 0);
-    var x2 = Math.min(x1 + parseInt(this.state.width,0), 1599);
-    var y2 = Math.min(y1 + parseInt(this.state.height,0), 899);
-    
-    //draw video with and without bounding box to canvas and save as img
-    var date = Date.now().toString();
+    const x1 = Math.max(x, 0);
+    const y1 = Math.max(y, 0);
+    const x2 = Math.min(x1 + parseInt(width, 0), 1599);
+    const y2 = Math.min(y1 + parseInt(height, 0), 899);
+
+    // draw video with and without bounding box to canvas and save as img
+    const date = Date.now().toString();
 
     const body = {
-      conceptId: this.state.clickedConcept.id,
-      videoId: this.state.currentVideo.id,
+      conceptId: clickedConcept.id,
+      videoId: currentVideo.id,
       timeinvideo: cTime,
-      x1: x1,
-      y1: y1,
-      x2: x2,
-      y2: y2,
+      x1,
+      y1,
+      x2,
+      y2,
       videoWidth: 1600,
       videoHeight: 900,
       image: date,
-      imagewithbox: date + "_box",
-      comment: comment,
-      unsure: unsure
+      imagewithbox: `${date}_box`,
+      comment,
+      unsure
     };
     const config = {
       headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + localStorage.getItem("token")
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`
       }
     };
     axios
-      .post("/api/annotations", body, config)
+      .post('/api/annotations', body, config)
       .then(async res => {
         console.log(res.data.message);
         this.handleDialogClose();
@@ -361,8 +362,8 @@ class Annotate extends Component {
         if (!error.response) {
           return;
         }
-        let errMsg =
-          error.response.data.detail || error.response.data.message || "Error";
+        const errMsg =
+          error.response.data.detail || error.response.data.message || 'Error';
         console.log(errMsg);
         this.setState({
           error: errMsg
@@ -380,8 +381,8 @@ class Annotate extends Component {
     y1
   ) => {
     this.uploadImage(videoImage, date, false);
-    ctx.lineWidth = "2";
-    ctx.strokeStyle = "coral";
+    ctx.lineWidth = '2';
+    ctx.strokeStyle = 'coral';
     ctx.rect(x1, y1, dragBoxCord.width, dragBoxCord.height);
     ctx.stroke();
     videoImage.src = canvas.toDataURL(1.0);
@@ -389,40 +390,37 @@ class Annotate extends Component {
   };
 
   uploadImage = (img, date, box) => {
-    let buf = new Buffer(
-      img.src.replace(/^data:image\/\w+;base64,/, ""),
-      "base64"
+    const buf = Buffer.from(
+      img.src.replace(/^data:image\/\w+;base64,/, ''),
+      'base64'
     );
     const config = {
       headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + localStorage.getItem("token")
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`
       }
     };
     const body = {
-      buf: buf,
-      date: date,
-      box: box
+      buf,
+      date,
+      box
     };
-    return axios.post("/api/annotations/images", body, config).catch(error => {
+    return axios.post('/api/annotations/images', body, config).catch(error => {
       console.log(error);
     });
   };
 
   handleConceptClick = concept => {
-    var videoElement = document.getElementById("video");
+    const { currentVideo } = this.state;
+    const videoElement = document.getElementById('video');
     this.setState({
-      dialogMsg:
-        concept.name +
-        " in video " +
-        this.state.currentVideo.filename +
-        " at time " +
-        Math.floor(videoElement.currentTime / 60) +
-        " minutes " +
-        (videoElement.currentTime % 60) +
-        " seconds",
+      dialogMsg: `${concept.name} in video ${
+        currentVideo.filename
+      } at time ${Math.floor(
+        videoElement.currentTime / 60
+      )} minutes ${videoElement.currentTime % 60} seconds`,
       dialogOpen: true,
-      clickedConcept: concept,
+      clickedConcept: concept
     });
   };
 
@@ -436,7 +434,23 @@ class Annotate extends Component {
 
   render() {
     const { classes } = this.props;
-    const { isLoaded, error, socket } = this.state;
+    const {
+      isLoaded,
+      error,
+      socket,
+      currentVideo,
+      startedVideos,
+      unwatchedVideos,
+      watchedVideos,
+      inProgressVideos,
+      videoPlaybackRate,
+      width,
+      height,
+      x,
+      y,
+      dialogOpen,
+      dialogMsg
+    } = this.state;
     if (!isLoaded) {
       return <div>Loading...</div>;
     }
@@ -445,38 +459,31 @@ class Annotate extends Component {
     }
     return (
       <React.Fragment>
-        <Hotkeys
-          keyName="space, right, left"
-          onKeyDown={this.handleKeyDown.bind(this)}
-        />
+        <Hotkeys keyName="space, right, left" onKeyDown={this.handleKeyDown} />
         <ConceptsSelected handleConceptClick={this.handleConceptClick} />
         <VideoList
           handleVideoClick={this.handleVideoClick}
-          startedVideos={this.state.startedVideos}
-          unwatchedVideos={this.state.unwatchedVideos}
-          watchedVideos={this.state.watchedVideos}
-          inProgressVideos={this.state.inProgressVideos}
+          startedVideos={startedVideos}
+          unwatchedVideos={unwatchedVideos}
+          watchedVideos={watchedVideos}
+          inProgressVideos={inProgressVideos}
           socket={socket}
           loadVideos={this.loadVideos}
         />
         <div>
-          {this.state.currentVideo.id + " " + this.state.currentVideo.filename}
-          <DragBoxContainer 
-            className={classes.videoContainer} 
+          {`${currentVideo.id} ${currentVideo.filename}`}
+          <DragBoxContainer
+            className={classes.videoContainer}
             dragBox={classes.dragBox}
             drawDragBox={false}
-
             size={{
-              width: this.state.width,
-              height: this.state.height
+              width,
+              height
             }}
-            
-            position={{ x: this.state.x, y: this.state.y }}
-
+            position={{ x, y }}
             onDragStop={(e, d) => {
               this.setState({ x: d.x, y: d.y });
             }}
-
             onResize={(e, direction, ref, delta, position) => {
               this.setState({
                 width: ref.style.width,
@@ -490,9 +497,8 @@ class Annotate extends Component {
               id="video"
               width="1600"
               height="900"
-              src={'https://cdn.deepseaannotations.com/videos/' +
-                this.state.currentVideo.filename}
-              type='video/mp4'
+              src={`https://cdn.deepseaannotations.com/videos/${currentVideo.filename}`}
+              type="video/mp4"
               crossOrigin="use-credentials"
             >
               Your browser does not support the video tag.
@@ -500,10 +506,10 @@ class Annotate extends Component {
           </DragBoxContainer>
           <div
             style={{
-              marginTop: "10px",
-              marginLeft: "20px",
-              marginBottom: "10px",
-              float: "left"
+              marginTop: '10px',
+              marginLeft: '20px',
+              marginBottom: '10px',
+              float: 'left'
             }}
           >
             <Slider
@@ -511,19 +517,19 @@ class Annotate extends Component {
                 width: 200,
                 marginTop: 0
               }}
-              value={this.state.videoPlaybackRate}
+              value={videoPlaybackRate}
               min={0}
               max={4}
               step={0.1}
               onChange={this.handleChangeSpeed}
             />
             <Typography
-              color='textSecondary'
+              color="textSecondary"
               style={{
                 marginTop: 0
               }}
             >
-              Play Rate: {this.state.videoPlaybackRate}
+              Play Rate: {videoPlaybackRate}
             </Typography>
           </div>
           <Button
@@ -567,21 +573,14 @@ class Annotate extends Component {
             Done
           </Button>
         </div>
-        {this.state.dialogOpen && (
+        {dialogOpen && (
           <DialogModal
-            title={"Confirm Annotation"}
-            message={this.state.dialogMsg}
-            placeholder={"Comments"}
-            comment={""}
+            title="Confirm Annotation"
+            message={dialogMsg}
+            placeholder="Comments"
+            comment=""
             inputHandler={this.postAnnotation}
-            open={
-              true /* The DialogModal 'openness' is controlled through
-              boolean logic rather than by passing in a variable as an
-              attribute. This is to force DialogModal to unmount when it closes
-              so that its state is reset. This also prevents the accidental
-              double submission bug, by implicitly reducing the transition time
-              of DialogModal to zero. */
-            }
+            open
             handleClose={this.handleDialogClose}
           />
         )}
@@ -591,4 +590,3 @@ class Annotate extends Component {
 }
 
 export default withStyles(styles)(Annotate);
-

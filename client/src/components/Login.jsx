@@ -21,9 +21,7 @@ class Login extends Component {
     super(props);
     this.state = {
       username: '',
-      password: '',
-      errorMsg: null,
-      open: false //For error modal box
+      password: ''
     };
   }
 
@@ -40,8 +38,8 @@ class Login extends Component {
       return;
     }
     const body = {
-      username: username,
-      password: password
+      username,
+      password
     };
     axios
       .post('/api/users/login', body, {
@@ -52,7 +50,7 @@ class Login extends Component {
         localStorage.setItem('userid', res.data.userid);
         localStorage.setItem('username', username);
         localStorage.setItem('token', res.data.token);
-        //Add code for isAdmin
+        // Add code for isAdmin
         if (res.data.isAdmin) {
           localStorage.setItem('admin', res.data.isAdmin);
         }
@@ -67,13 +65,9 @@ class Login extends Component {
       });
   };
 
-  //Code for closing modal
-  handleClose = () => {
-    this.setState({ open: false });
-  };
-
   render() {
     const { classes } = this.props;
+    const { username, password } = this.state;
     return (
       <div className={classes.root}>
         <Typography variant="h4">Login</Typography>
@@ -83,7 +77,7 @@ class Login extends Component {
             name="username"
             label="User Name"
             type="text"
-            value={this.state.username}
+            value={username}
             onChange={this.handleChange}
             margin="normal"
             required
@@ -93,7 +87,7 @@ class Login extends Component {
             name="password"
             label="Password"
             type="password"
-            value={this.state.password}
+            value={password}
             onChange={this.handleChange}
             margin="normal"
             required

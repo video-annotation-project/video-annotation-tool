@@ -1,13 +1,13 @@
-const router = require("express").Router();
-const passport = require("passport");
-const psql = require("../../db/simpleConnect");
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
+const router = require('express').Router();
+const passport = require('passport');
+const psql = require('../../db/simpleConnect');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
-const jwtOptions = require("../../config/passport").jwtOptions;
-const setCookies = require("../../config/cookies");
+const jwtOptions = require('../../config/passport').jwtOptions;
+const setCookies = require('../../config/cookies');
 
-router.use("/concepts", require("./concepts"));
+router.use('/concepts', require('./concepts'));
 
 /**
  * @typedef Error
@@ -29,8 +29,8 @@ router.use("/concepts", require("./concepts"));
  * @returns {Error} 500 - Unexpected database error
  */
 router.get(
-  "/",
-  passport.authenticate("jwt", { session: false }),
+  '/',
+  passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     let queryText = `
       SELECT DISTINCT 
@@ -41,7 +41,7 @@ router.get(
         annotations a ON a.userid=u.id
     `;
 
-    if (req.query.noAi === "true") {
+    if (req.query.noAi === 'true') {
       queryText += ` WHERE u.username NOT IN ('tracking', 'ai')`;
     }
 
@@ -81,8 +81,8 @@ router.get(
  * @returns {Error} 500 - Unexpected database error
  */
 router.post(
-  "/",
-  passport.authenticate("jwt", { session: false }),
+  '/',
+  passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     const queryText = `
       INSERT INTO 
@@ -96,7 +96,7 @@ router.post(
       const hash = await bcrypt.hash(req.body.password, saltRounds);
       const data = [req.body.username, hash, req.body.admin];
       const insertUser = await psql.query(queryText, data);
-      res.json({ message: "user created", user: insertUser.rows[0] });
+      res.json({ message: 'user created', user: insertUser.rows[0] });
     } catch (error) {
       res.status(500).json(error);
     }
@@ -119,8 +119,8 @@ router.post(
  * @returns {Error} 500 - Unexpected database error
  */
 router.patch(
-  "/",
-  passport.authenticate("jwt", { session: false }),
+  '/',
+  passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     const { password, newPassword1, newPassword2 } = req.body;
     const username = req.user.username;
@@ -128,14 +128,14 @@ router.patch(
     try {
       const currentPass = await psql.query(queryPass, [username]);
       if (!(await bcrypt.compare(password, currentPass.rows[0].password))) {
-        res.status(400).json({ detail: "Wrong Password!" });
+        res.status(400).json({ detail: 'Wrong Password!' });
         return;
       }
       const saltRounds = 10;
       const hash = await bcrypt.hash(newPassword1, saltRounds);
       let queryUpdate = `UPDATE users SET password=$1 WHERE username=$2`;
       await psql.query(queryUpdate, [hash, username]);
-      res.json({ message: "Changed" });
+      res.sendStatus(200);
     } catch (error) {
       res.status(500).json(error);
     }
@@ -159,7 +159,7 @@ router.patch(
  * @returns {Error.model} 400 - Error with login
  * @returns {Error} 500 - Unexpected database error
  */
-router.post("/login", async function(req, res) {
+router.post('/login', async function(req, res) {
   const { username, password } = req.body;
   let queryPass = `
     SELECT 
@@ -172,11 +172,11 @@ router.post("/login", async function(req, res) {
   try {
     const user = await psql.query(queryPass, [username]);
     if (user.rowCount === 0) {
-      res.status(400).json({ detail: "No username found" });
+      res.status(400).json({ detail: 'No username found' });
       return;
     }
     if (!(await bcrypt.compare(password, user.rows[0].password))) {
-      res.status(400).json({ detail: "wrong password" });
+      res.status(400).json({ detail: 'wrong password' });
       return;
     }
     const payload = { id: user.rows[0].id };
@@ -188,7 +188,7 @@ router.post("/login", async function(req, res) {
       isAdmin: user.rows[0].admin
     });
   } catch (error) {
-    console.log("Error in post /api/login");
+    console.log('Error in post /api/login');
 
     console.log(error);
 
@@ -214,8 +214,8 @@ router.post("/login", async function(req, res) {
  * @returns {Error} 500 - Unexpected database error
  */
 router.get(
-  "/annotations",
-  passport.authenticate("jwt", { session: false }),
+  '/annotations',
+  passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     const userId = parseInt(req.query.userid);
     const fromDate = req.query.fromdate;
@@ -269,7 +269,7 @@ router.get(
       let response = await psql.query(queryText, data);
       res.json(response.rows);
     } catch (error) {
-      console.log("Error on GET /api/users/annotations");
+      console.log('Error on GET /api/users/annotations');
       console.log(error);
       res.status(500).json(error);
     }

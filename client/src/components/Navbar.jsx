@@ -1,11 +1,11 @@
-import React from "react";
-import { Link } from "react-router-dom";
-import { withStyles } from "@material-ui/core/styles";
-import AppBar from "@material-ui/core/AppBar";
-import Button from "@material-ui/core/Button";
-import Toolbar from "@material-ui/core/Toolbar";
-import Typography from "@material-ui/core/Typography";
-import GeneralMenu from "./Utilities/GeneralMenu";
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { withStyles } from '@material-ui/core/styles';
+import AppBar from '@material-ui/core/AppBar';
+import Button from '@material-ui/core/Button';
+import Toolbar from '@material-ui/core/Toolbar';
+import Typography from '@material-ui/core/Typography';
+import GeneralMenu from './Utilities/GeneralMenu';
 
 const styles = {
   flex: {
@@ -26,12 +26,14 @@ class Navbar extends React.Component {
     the web page before clearing authentication */
     /* In theory, nothing after the redirect statement should execute, which is a 
     problem. Luckily, it actually does execute via race condition. */
-    window.location.replace("/");
+    window.location.replace('/');
     localStorage.clear();
   };
 
   handleModelTab = () => {
-    this.setState({ modelTabOpen: !this.state.modelTabOpen });
+    this.setState(prevState => ({
+      modelTabOpen: !prevState.modelTabOpen
+    }));
   };
 
   closeModelTab = () => {
@@ -40,9 +42,9 @@ class Navbar extends React.Component {
 
   render() {
     const { classes } = this.props;
-    let accountItems = [{ name: "Profile", link: "/account/profile" }];
-    if (localStorage.getItem("admin")) {
-      accountItems.push({ name: "Create User", link: "/account/createUser" });
+    const accountItems = [{ name: 'Profile', link: '/account/profile' }];
+    if (localStorage.getItem('admin')) {
+      accountItems.push({ name: 'Create User', link: '/account/createUser' });
     }
 
     return (
@@ -54,42 +56,42 @@ class Navbar extends React.Component {
           <Button color="inherit" component={Link} to="/">
             Home
           </Button>
-          {localStorage.getItem("isAuthed") ? (
+          {localStorage.getItem('isAuthed') ? (
             <React.Fragment>
               <Button color="inherit" component={Link} to="/concepts">
                 Select Concepts
               </Button>
               <GeneralMenu
-                name={"Collections"}
+                name="Collections"
                 Link={Link}
                 items={[
-                  { name: "Annotations", link: "/collection/annotations" },
-                  { name: "Concepts", link: "/collection/concepts" },
-                  { name: "Videos", link: "/collection/videos" }
+                  { name: 'Annotations', link: '/collection/annotations' },
+                  { name: 'Concepts', link: '/collection/concepts' },
+                  { name: 'Videos', link: '/collection/videos' }
                 ]}
               />
               <GeneralMenu
-                name={"Annotate"}
+                name="Annotate"
                 Link={Link}
                 items={[
-                  { name: "Videos", link: "/annotate/videos" },
-                  { name: "Verify", link: "/annotate/verify" }
+                  { name: 'Videos', link: '/annotate/videos' },
+                  { name: 'Verify', link: '/annotate/verify' }
                 ]}
               />
               <Button color="inherit" component={Link} to="/report">
                 Report
               </Button>
-              {localStorage.getItem("admin") ? (
+              {localStorage.getItem('admin') ? (
                 <React.Fragment>
                   <GeneralMenu
-                    name={"Models"}
+                    name="Models"
                     Link={Link}
                     items={[
-                      { name: "Create Model", link: "/models/create" },
-                      { name: "View Models", link: "/models/view" },
-                      { name: "Train Models", link: "/models/train" },
-                      { name: "Predict Models", link: "/models/predict" },
-                      { name: "Previous Models", link: "/models/runs" }
+                      { name: 'Create Model', link: '/models/create' },
+                      { name: 'View Models', link: '/models/view' },
+                      { name: 'Train Models', link: '/models/train' },
+                      { name: 'Predict Models', link: '/models/predict' },
+                      { name: 'Previous Models', link: '/models/runs' }
                     ]}
                   />
                   <Button color="inherit" component={Link} to="/aivideos">
@@ -100,9 +102,9 @@ class Navbar extends React.Component {
                   </Button>
                 </React.Fragment>
               ) : (
-                ""
+                ''
               )}
-              <GeneralMenu name={"Account"} Link={Link} items={accountItems} />
+              <GeneralMenu name="Account" Link={Link} items={accountItems} />
               <Button color="inherit" onClick={this.handleLogout}>
                 Logout
               </Button>
