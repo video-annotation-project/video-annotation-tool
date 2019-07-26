@@ -1,12 +1,11 @@
 import React, { Component } from 'react';
 import axios from 'axios';
-import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Paper from '@material-ui/core/Paper';
-
-import VerifySelection from './VerifySelection.jsx';
-import VerifyAnnotations from './VerifyAnnotations.jsx';
 import { Button, Typography } from '@material-ui/core';
+
+import VerifySelection from './VerifySelection';
+import VerifyAnnotations from './VerifyAnnotations';
 
 const styles = theme => ({
   button: {
@@ -53,22 +52,23 @@ class Verify extends Component {
       selectedUnsure: false,
       selectedTrackingFirst: false,
       annotations: [],
-      error: null,
       index: 0
     };
   }
 
   toggleSelection = async () => {
+    const { selectionMounted, selectedAnnotationCollections } = this.state;
+
     let annotations = [];
-    if (!this.state.selectionMounted) {
+    if (!selectionMounted) {
       this.resetState(
         this.setState({
-          selectionMounted: !this.state.selectionMounted,
+          selectionMounted: !selectionMounted,
           noAnnotations: false
         })
       );
     } else {
-      if (this.state.selectedAnnotationCollections.length) {
+      if (selectedAnnotationCollections.length) {
         annotations = await this.getAnnotationsFromCollection();
       } else {
         annotations = await this.getAnnotations();
@@ -76,12 +76,12 @@ class Verify extends Component {
       if (annotations.length < 1) {
         this.setState({
           noAnnotations: true,
-          selectionMounted: !this.state.selectionMounted
+          selectionMounted: !selectionMounted
         });
       } else {
         this.setState({
-          annotations: annotations,
-          selectionMounted: !this.state.selectionMounted
+          annotations,
+          selectionMounted: !selectionMounted
         });
       }
     }
@@ -91,162 +91,158 @@ class Verify extends Component {
     return axios
       .get(`/api/collections/annotations`, {
         headers: {
-          Authorization: 'Bearer ' + localStorage.getItem('token')
+          Authorization: `Bearer ${localStorage.getItem('token')}`
         }
       })
       .then(res => res.data)
       .catch(error => {
         console.log(error);
-        this.setState({
-          error: error
-        });
       });
   };
 
   getAnnotationsFromCollection = async () => {
+    const { selectedAnnotationCollections } = this.state;
+
     return axios
       .get(
-        `/api/annotations/collections?collectionids=${this.state.selectedAnnotationCollections}`,
+        `/api/annotations/collections?collectionids=${selectedAnnotationCollections}`,
         {
-          headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         }
       )
       .then(res => res.data)
       .catch(error => {
         console.log(error);
-        this.setState({
-          error: error
-        });
       });
   };
 
   getUsers = async () => {
     return axios
       .get(`/api/users?noAi=true`, {
-        headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       })
       .then(res => res.data)
       .catch(error => {
         console.log(error);
-        this.setState({
-          error: error
-        });
       });
   };
 
   getVideos = async () => {
+    const { selectedUsers } = this.state;
+
     return axios
       .get(`/api/annotations/verified`, {
-        headers: { Authorization: 'Bearer ' + localStorage.getItem('token') },
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
         params: {
           verifiedOnly: '-1',
-          selectedUsers: this.state.selectedUsers
+          selectedUsers
         }
       })
       .then(res => res.data)
       .catch(error => {
-        this.setState({
-          error: error
-        });
+        console.log(error);
       });
   };
 
   getVideoCollections = async () => {
     return axios
       .get(`/api/collections/videos`, {
-        headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       })
       .then(res => res.data)
       .catch(error => {
-        this.setState({
-          error: error
-        });
+        console.log(error);
       });
   };
 
   getConcepts = async () => {
+    const { selectedUsers, selectedVideos } = this.state;
+
     return axios
       .get(`/api/annotations/verified`, {
         headers: {
           'Content-Type': 'application/json',
-          Authorization: 'Bearer ' + localStorage.getItem('token')
+          Authorization: `Bearer ${localStorage.getItem('token')}`
         },
         params: {
           verifiedOnly: '-1',
-          selectedUsers: this.state.selectedUsers,
-          selectedVideos: this.state.selectedVideos
+          selectedUsers,
+          selectedVideos
         }
       })
       .then(res => res.data)
       .catch(error => {
-        this.setState({
-          error: error
-        });
+        console.log(error);
       });
   };
 
   getConceptCollections = async () => {
     return axios
       .get(`/api/collections/concepts`, {
-        headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       })
       .then(res => res.data)
       .catch(error => {
-        this.setState({
-          error: error
-        });
+        console.log(error);
       });
   };
 
   getUnsure = async () => {
+    const { selectedUsers, selectedVideos, selectedConcepts } = this.state;
+
     return axios
       .get(`/api/annotations/verified`, {
         headers: {
           'Content-Type': 'application/json',
-          Authorization: 'Bearer ' + localStorage.getItem('token')
+          Authorization: `Bearer ${localStorage.getItem('token')}`
         },
         params: {
           verifiedOnly: '-1',
-          selectedUsers: this.state.selectedUsers,
-          selectedVideos: this.state.selectedVideos,
-          selectedConcepts: this.state.selectedConcepts
+          selectedUsers,
+          selectedVideos,
+          selectedConcepts
         }
       })
       .then(res => res.data)
       .catch(error => {
-        this.setState({
-          error: error
-        });
+        console.log(error);
       });
   };
 
   getAnnotations = async () => {
+    const {
+      selectedTrackingFirst,
+      selectedUsers,
+      selectedVideos,
+      selectedConcepts,
+      selectedUnsure
+    } = this.state;
+
     return axios
       .get(`/api/annotations/verified`, {
         headers: {
           'Content-Type': 'application/json',
-          Authorization: 'Bearer ' + localStorage.getItem('token')
+          Authorization: `Bearer ${localStorage.getItem('token')}`
         },
         params: {
-          verifiedOnly: this.state.selectedTrackingFirst ? '1' : '-1',
-          selectedUsers: this.state.selectedUsers,
-          selectedVideos: this.state.selectedVideos,
-          selectedConcepts: this.state.selectedConcepts,
-          selectedUnsure: this.state.selectedUnsure,
-          selectedTrackingFirst: this.state.selectedTrackingFirst
+          verifiedOnly: selectedTrackingFirst ? '1' : '-1',
+          selectedUsers,
+          selectedVideos,
+          selectedConcepts,
+          selectedUnsure,
+          selectedTrackingFirst
         }
       })
       .then(res => res.data)
       .catch(error => {
-        this.setState({
-          error: error
-        });
+        console.log(error);
       });
   };
 
   selectUser = user => {
+    const { selectedUsers } = this.state;
     this.setState({
-      selectedUsers: this.state.selectedUsers.concat(user)
+      selectedUsers: selectedUsers.concat(user)
     });
   };
 
@@ -262,19 +258,20 @@ class Verify extends Component {
     });
   };
 
-  handleChangeList = type => event => {
-    if (!this.state[type].includes(event.target.value)) {
+  handleChangeList = (stateVariable, type) => event => {
+    if (!stateVariable.includes(event.target.value)) {
       this.setState({
-        [type]: this.state[type].concat(event.target.value)
+        [type]: stateVariable.concat(event.target.value)
       });
     } else {
       this.setState({
-        [type]: this.state[type].filter(typeid => typeid !== event.target.value)
+        [type]: stateVariable.filter(typeid => typeid !== event.target.value)
       });
     }
   };
+
   handleSelectAll = (data, dataSelected, stepInfo) => {
-    var selected = dataSelected;
+    const selected = dataSelected;
     data.forEach(row => {
       if (row.id) {
         if (!selected.includes(row.id.toString())) {
@@ -320,9 +317,8 @@ class Verify extends Component {
           selectedUnsure: false,
           selectedTrackingFirst: false
         });
-        return;
+        break;
       default:
-        return;
     }
   };
 
@@ -342,27 +338,40 @@ class Verify extends Component {
   };
 
   handleNext = callback => {
+    const { index } = this.state;
     this.setState(
       {
-        index: this.state.index + 1
+        index: index + 1
       },
       callback
     );
   };
 
   render() {
+    const { classes } = this.props;
+    const {
+      selectionMounted,
+      selectedAnnotationCollections,
+      selectedUsers,
+      selectedVideos,
+      selectedConcepts,
+      selectedUnsure,
+      selectedTrackingFirst,
+      noAnnotations,
+      annotations,
+      index
+    } = this.state;
+
     let selection = '';
-    if (this.state.selectionMounted) {
+    if (selectionMounted) {
       selection = (
         <VerifySelection
-          selectedAnnotationCollections={
-            this.state.selectedAnnotationCollections
-          }
-          selectedUsers={this.state.selectedUsers}
-          selectedVideos={this.state.selectedVideos}
-          selectedConcepts={this.state.selectedConcepts}
-          selectedUnsure={this.state.selectedUnsure}
-          selectedTrackingFirst={this.state.selectedTrackingFirst}
+          selectedAnnotationCollections={selectedAnnotationCollections}
+          selectedUsers={selectedUsers}
+          selectedVideos={selectedVideos}
+          selectedConcepts={selectedConcepts}
+          selectedUnsure={selectedUnsure}
+          selectedTrackingFirst={selectedTrackingFirst}
           getAnnotationCollections={this.getAnnotationCollections}
           getAnnotationsFromCollection={this.getAnnotationsFromCollection}
           getUsers={this.getUsers}
@@ -382,13 +391,9 @@ class Verify extends Component {
           handleUnselectAll={this.handleUnselectAll}
         />
       );
-    } else if (this.state.noAnnotations) {
+    } else if (noAnnotations) {
       selection = (
-        <Paper
-          square
-          elevation={0}
-          className={this.props.classes.resetContainer}
-        >
+        <Paper square elevation={0} className={classes.resetContainer}>
           <Typography>All Tracking Videos Verified</Typography>
           <Button
             variant="contained"
@@ -396,7 +401,7 @@ class Verify extends Component {
             onClick={() =>
               this.resetState(
                 this.setState({
-                  selectionMounted: !this.state.selectionMounted,
+                  selectionMounted: !selectionMounted,
                   noAnnotations: false
                 })
               )
@@ -408,18 +413,14 @@ class Verify extends Component {
       );
     } else {
       selection = (
-        <Paper
-          square
-          elevation={0}
-          className={this.props.classes.resetContainer}
-        >
+        <Paper square elevation={0} className={classes.resetContainer}>
           <VerifyAnnotations
-            annotation={this.state.annotations[this.state.index]}
-            index={this.state.index}
+            annotation={annotations[index]}
+            index={index}
             handleNext={this.handleNext}
             toggleSelection={this.toggleSelection}
-            size={this.state.annotations.length}
-            tracking={this.state.selectedTrackingFirst}
+            size={annotations.length}
+            tracking={selectedTrackingFirst}
           />
         </Paper>
       );
@@ -428,9 +429,5 @@ class Verify extends Component {
     return <React.Fragment>{selection}</React.Fragment>;
   }
 }
-
-Verify.propTypes = {
-  classes: PropTypes.object
-};
 
 export default withStyles(styles)(Verify);

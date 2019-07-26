@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import PropTypes from 'prop-types';
 import Button from '@material-ui/core/Button';
 import Drawer from '@material-ui/core/Drawer';
 import List from '@material-ui/core/List';
@@ -16,13 +15,7 @@ import Swal from 'sweetalert2';
 import Summary from '../Utilities/Summary';
 
 const styles = () => ({
-  root: {
-    // float: 'right',
-    // padding: '10px'
-  },
   drawer: {
-    // height: '1000px',
-    // padding: '15px',
     width: '550px',
     overflow: 'auto'
   },
@@ -35,8 +28,6 @@ class AIvideoList extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      // aiListOpen: false,
-      // openedVideo: null,
       descriptionOpen: false,
       summary: null,
       metrics: null
@@ -105,19 +96,21 @@ class AIvideoList extends Component {
         Authorization: `Bearer ${localStorage.getItem('token')}`
       }
     };
+    let ret;
     try {
       const metrics = await axios.get(
         `/api/videos/aivideos/metrics?filename=${video.name}`,
         config
       );
       if (metrics) {
-        return metrics.data;
+        ret = metrics.data;
       }
     } catch (error) {
       console.error('Error in summary.jsx get /api/videos/aivideos/metrics');
       console.error(error.response.data);
-      return error;
+      ret = error.response;
     }
+    return ret;
   };
 
   getSummary = async video => {
@@ -127,6 +120,7 @@ class AIvideoList extends Component {
         Authorization: `Bearer ${localStorage.getItem('token')}`
       }
     };
+    let ret;
     try {
       const summary = await axios.get(
         `/api/videos/aivideos/summary/${video.name}`,
@@ -134,12 +128,14 @@ class AIvideoList extends Component {
       );
 
       if (summary) {
-        return summary;
+        ret = summary;
       }
     } catch (error) {
       console.log('Error in summary.jsx get /api/videos/aivideos/summary');
       console.log(error.response.data);
+      ret = error.response;
     }
+    return ret;
   };
 
   // // Methods for video meta data
@@ -158,6 +154,7 @@ class AIvideoList extends Component {
 
   render() {
     const { classes, handleVideoClick, aiVideos } = this.props;
+    const { videoListOpen, descriptionOpen, summary, metrics } = this.state;
 
     return (
       <div className={classes.root}>
@@ -172,7 +169,7 @@ class AIvideoList extends Component {
 
         <Drawer
           anchor="left"
-          open={this.state.videoListOpen}
+          open={videoListOpen}
           onClose={() => this.toggle('videoListOpen')}
         >
           <div className={classes.drawer}>
@@ -200,22 +197,18 @@ class AIvideoList extends Component {
             </List>
           </div>
         </Drawer>
-        {this.state.descriptionOpen && (
+        {descriptionOpen && (
           <Summary
             open
             handleClose={this.closeVideoSummary}
-            summary={this.state.summary}
+            summary={summary}
             aiSummary
-            metrics={this.state.metrics}
+            metrics={metrics}
           />
         )}
       </div>
     );
   }
 }
-
-AIvideoList.propTypes = {
-  classes: PropTypes.object.isRequired
-};
 
 export default withStyles(styles)(AIvideoList);

@@ -63,6 +63,7 @@ class VerifySelection extends React.Component {
               this.props.selectedAnnotationCollections
             }
             handleChangeList={this.props.handleChangeList(
+              this.props.selectedAnnotationCollections,
               'selectedAnnotationCollections'
             )}
           />
@@ -73,7 +74,10 @@ class VerifySelection extends React.Component {
             value={this.props.selectedUsers}
             getUsers={this.props.getUsers}
             selectUser={this.props.selectUser}
-            handleChangeList={this.props.handleChangeList('selectedUsers')}
+            handleChangeList={this.props.handleChangeList(
+              this.props.selectedUsers,
+              'selectedUsers'
+            )}
             handleSelectAll={this.props.handleSelectAll}
             handleUnselectAll={this.props.handleUnselectAll}
           />
@@ -85,7 +89,10 @@ class VerifySelection extends React.Component {
             getVideos={this.props.getVideos}
             getVideoCollections={this.props.getVideoCollections}
             handleChange={this.props.handleChange('selectedVideos')}
-            handleChangeList={this.props.handleChangeList('selectedVideos')}
+            handleChangeList={this.props.handleChangeList(
+              this.props.selectedVideos,
+              'selectedVideos'
+            )}
             handleSelectAll={this.props.handleSelectAll}
             handleUnselectAll={this.props.handleUnselectAll}
           />
@@ -97,7 +104,10 @@ class VerifySelection extends React.Component {
             getConcepts={this.props.getConcepts}
             getConceptCollections={this.props.getConceptCollections}
             handleChange={this.props.handleChange('selectedConcepts')}
-            handleChangeList={this.props.handleChangeList('selectedConcepts')}
+            handleChangeList={this.props.handleChangeList(
+              this.props.selectedConcepts,
+              'selectedConcepts'
+            )}
             handleSelectAll={this.props.handleSelectAll}
             handleUnselectAll={this.props.handleUnselectAll}
           />
