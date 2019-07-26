@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
 import axios from 'axios';
-import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Stepper from '@material-ui/core/Stepper';
 import Step from '@material-ui/core/Step';
@@ -17,9 +16,9 @@ import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Switch from '@material-ui/core/Switch';
 import Swal from 'sweetalert2';
 
-import VerifySelectUser from '../Utilities/SelectUser.jsx';
-import VerifySelectVideo from '../Utilities/SelectVideo.jsx';
-import VerifySelectConcept from '../Utilities/SelectConcept.jsx';
+import VerifySelectUser from '../Utilities/SelectUser';
+import VerifySelectVideo from '../Utilities/SelectVideo';
+import VerifySelectConcept from '../Utilities/SelectConcept';
 
 const styles = theme => ({
   list: {
@@ -95,6 +94,13 @@ function getSteps() {
 }
 
 class AnnotationCollection extends Component {
+  toastPopup = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 3000
+  });
+
   constructor(props) {
     super(props);
     this.state = {
@@ -106,7 +112,6 @@ class AnnotationCollection extends Component {
       trackingCount: '',
       collections: [],
       includeTracking: false,
-      error: null,
       activeStep: 0
     };
   }
@@ -115,10 +120,19 @@ class AnnotationCollection extends Component {
     return this.loadCollections();
   }
 
+  promiseResolver = async promise => {
+    await Promise.resolve(promise.response).then(object => {
+      this.toastPopup.fire({
+        type: 'error',
+        title: object.data.detail
+      });
+    });
+  };
+
   loadCollections = callback => {
     const config = {
       headers: {
-        Authorization: 'Bearer ' + localStorage.getItem('token')
+        Authorization: `Bearer ${localStorage.getItem('token')}`
       }
     };
     return axios.get('/api/collections/annotations', config).then(res => {
@@ -162,7 +176,7 @@ class AnnotationCollection extends Component {
           const config = {
             headers: {
               'Content-Type': 'application/json',
-              Authorization: 'Bearer ' + localStorage.getItem('token')
+              Authorization: `Bearer ${localStorage.getItem('token')}`
             }
           };
           try {
@@ -173,16 +187,17 @@ class AnnotationCollection extends Component {
             });
             this.loadCollections();
           } catch (error) {
-            Swal.fire('Error Creating Collection', '', 'error');
+            this.promiseResolver(error);
           }
         }
       });
   };
 
   deleteAnnotationCollection = async () => {
+    const { selectedCollection } = this.state;
     const config = {
       headers: {
-        Authorization: 'Bearer ' + localStorage.getItem('token')
+        Authorization: `Bearer ${localStorage.getItem('token')}`
       }
     };
     Swal.fire({
@@ -196,8 +211,8 @@ class AnnotationCollection extends Component {
     }).then(async result => {
       if (result.value) {
         try {
-          let response = await axios.delete(
-            '/api/collections/annotations/' + this.state.selectedCollection,
+          const response = await axios.delete(
+            `/api/collections/annotations/${selectedCollection}`,
             config
           );
           if (response.status === 200) {
@@ -208,32 +223,39 @@ class AnnotationCollection extends Component {
             });
           }
         } catch (error) {
-          Swal.fire(error, '', 'error');
+          this.promiseResolver(error);
         }
       }
     });
   };
 
   insertAnnotationsToCollection = () => {
+    const {
+      selectedCollection,
+      selectedUsers,
+      selectedVideos,
+      selectedConcepts,
+      includeTracking
+    } = this.state;
     const config = {
       headers: {
-        Authorization: 'Bearer ' + localStorage.getItem('token')
+        Authorization: `Bearer ${localStorage.getItem('token')}`
       }
     };
     const body = {
-      selectedUsers: this.state.selectedUsers,
-      selectedVideos: this.state.selectedVideos,
-      selectedConcepts: this.state.selectedConcepts,
-      includeTracking: this.state.includeTracking
+      selectedUsers,
+      selectedVideos,
+      selectedConcepts,
+      includeTracking
     };
     try {
       axios
         .post(
-          '/api/collections/annotations/' + this.state.selectedCollection,
+          `/api/collections/annotations/${selectedCollection}`,
           body,
           config
         )
-        .then(res => {
+        .then(() => {
           Swal.fire({
             title: 'Inserted!',
             confirmButtonText: 'Lovely!'
@@ -241,103 +263,99 @@ class AnnotationCollection extends Component {
           this.loadCollections();
         })
         .catch(error => {
-          console.log(error);
-          Swal.fire('Could not insert', '', 'error');
+          this.promiseResolver(error);
         });
     } catch (error) {
-      Swal.fire('Error inserting video', '', 'error');
+      this.promiseResolver(error);
     }
   };
 
   getUsers = async () => {
     return axios
       .get(`/api/users?noAi=true`, {
-        headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       })
       .then(res => res.data)
       .catch(error => {
         console.log(error);
-        this.setState({
-          error: error
-        });
+        this.promiseResolver(error);
       });
   };
 
   getVideos = async () => {
+    const { selectedUsers } = this.state;
     return axios
       .get(`/api/annotations/verified`, {
-        headers: { Authorization: 'Bearer ' + localStorage.getItem('token') },
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
         params: {
           verifiedOnly: '0',
-          selectedUsers: this.state.selectedUsers
+          selectedUsers
         }
       })
       .then(res => res.data)
       .catch(error => {
-        this.setState({
-          error: error
-        });
+        console.log(error);
+        this.promiseResolver(error);
       });
   };
 
   getVideoCollections = async () => {
     return axios
       .get(`/api/collections/videos`, {
-        headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       })
       .then(res => res.data)
       .catch(error => {
-        this.setState({
-          error: error
-        });
+        console.log(error);
+        this.promiseResolver(error);
       });
   };
 
   getConcepts = async () => {
+    const { selectedUsers, selectedVideos } = this.state;
     return axios
       .get(`/api/annotations/verified`, {
         headers: {
           'Content-Type': 'application/json',
-          Authorization: 'Bearer ' + localStorage.getItem('token')
+          Authorization: `Bearer ${localStorage.getItem('token')}`
         },
         params: {
           verifiedOnly: '0',
-          selectedUsers: this.state.selectedUsers,
-          selectedVideos: this.state.selectedVideos
+          selectedUsers,
+          selectedVideos
         }
       })
       .then(res => res.data)
       .catch(error => {
-        this.setState({
-          error: error
-        });
+        console.log(error);
+        this.promiseResolver(error);
       });
   };
 
   getConceptCollections = async () => {
     return axios
       .get(`/api/collections/concepts`, {
-        headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       })
       .then(res => res.data)
       .catch(error => {
-        this.setState({
-          error: error
-        });
+        console.log(error);
+        this.promiseResolver(error);
       });
   };
 
   getAnnotations = async () => {
+    const { selectedUsers, selectedVideos, selectedConcepts } = this.state;
     return axios
       .get(`/api/annotations/collection/counts`, {
         headers: {
           'Content-Type': 'application/json',
-          Authorization: 'Bearer ' + localStorage.getItem('token')
+          Authorization: `Bearer ${localStorage.getItem('token')}`
         },
         params: {
-          selectedUsers: this.state.selectedUsers,
-          selectedVideos: this.state.selectedVideos,
-          selectedConcepts: this.state.selectedConcepts
+          selectedUsers,
+          selectedVideos,
+          selectedConcepts
         }
       })
       .then(res => {
@@ -347,15 +365,15 @@ class AnnotationCollection extends Component {
         });
       })
       .catch(error => {
-        this.setState({
-          error: error
-        });
+        console.log(error);
+        this.promiseResolver(error);
       });
   };
 
   selectUser = user => {
+    const { selectedUsers } = this.state;
     this.setState({
-      selectedUsers: this.state.selectedUsers.concat(user)
+      selectedUsers: selectedUsers.concat(user)
     });
   };
 
@@ -371,20 +389,20 @@ class AnnotationCollection extends Component {
     });
   };
 
-  handleChangeList = type => event => {
-    if (!this.state[type].includes(event.target.value)) {
+  handleChangeList = (stateVariable, type) => event => {
+    if (!stateVariable.includes(event.target.value.toString())) {
       this.setState({
-        [type]: this.state[type].concat(event.target.value)
+        [type]: stateVariable.concat(event.target.value)
       });
     } else {
       this.setState({
-        [type]: this.state[type].filter(typeid => typeid !== event.target.value)
+        [type]: stateVariable.filter(typeid => typeid !== event.target.value)
       });
     }
   };
 
   handleSelectAll = (data, dataSelected, stepInfo) => {
-    var selected = dataSelected;
+    const selected = dataSelected;
     data.forEach(row => {
       if (row.id) {
         if (!selected.includes(row.id.toString())) {
@@ -409,24 +427,23 @@ class AnnotationCollection extends Component {
         this.setState({
           selectedUsers: []
         });
-        return;
+        break;
       case 1:
         this.setState({
           selectedVideos: []
         });
-        return;
+        break;
       case 2:
         this.setState({
           selectedConcepts: []
         });
-        return;
+        break;
       case 3:
         this.setState({
           includeTracking: false
         });
-        return;
+        break;
       default:
-        return;
     }
   };
 
@@ -441,53 +458,65 @@ class AnnotationCollection extends Component {
   };
 
   showCollection = () => {
-    let data = this.state.collections.find(col => {
-      return col.id === this.state.selectedCollection;
+    const { classes } = this.props;
+    const { collections, selectedCollection } = this.state;
+    const data = collections.find(col => {
+      return col.id === selectedCollection;
     });
     if (data.users[0]) {
       return (
         <React.Fragment>
-          <Typography variant="subtitle1" className={this.props.classes.stats1}>
+          <Typography variant="subtitle1" className={classes.stats1}>
             Users ({data.users.length}):
           </Typography>
-          <Typography variant="subtitle1" className={this.props.classes.stats2}>
+          <Typography variant="subtitle1" className={classes.stats2}>
             {data.users.join(', ')}
           </Typography>
-          <Typography variant="subtitle1" className={this.props.classes.stats1}>
+          <Typography variant="subtitle1" className={classes.stats1}>
             Videos ({data.videos.length}):
           </Typography>
-          <Typography variant="subtitle1" className={this.props.classes.stats2}>
+          <Typography variant="subtitle1" className={classes.stats2}>
             {data.videos.join(', ')}
           </Typography>
-          <Typography variant="subtitle1" className={this.props.classes.stats1}>
+          <Typography variant="subtitle1" className={classes.stats1}>
             Concepts ({data.concepts.length}):
           </Typography>
-          <Typography variant="subtitle1" className={this.props.classes.stats2}>
+          <Typography variant="subtitle1" className={classes.stats2}>
             {data.concepts.join(', ')}
           </Typography>
-          <Typography variant="subtitle1" className={this.props.classes.stats1}>
+          <Typography variant="subtitle1" className={classes.stats1}>
             Contains tracking: {data.tracking ? 'True' : 'False'}
           </Typography>
         </React.Fragment>
       );
-    } else {
-      return (
-        <Typography variant="subtitle1" className={this.props.classes.stats1}>
-          No annotations
-        </Typography>
-      );
     }
+    return (
+      <Typography variant="subtitle1" className={classes.stats1}>
+        No annotations
+      </Typography>
+    );
   };
 
   getStepForm = step => {
+    const {
+      includeTracking,
+      selectedUsers,
+      selectedVideos,
+      selectedConcepts,
+      annotationCount,
+      trackingCount
+    } = this.state;
     switch (step) {
       case 0:
         return (
           <VerifySelectUser
-            value={this.state.selectedUsers}
+            value={selectedUsers}
             getUsers={this.getUsers}
             selectUser={this.selectUser}
-            handleChangeList={this.handleChangeList('selectedUsers')}
+            handleChangeList={this.handleChangeList(
+              selectedUsers,
+              'selectedUsers'
+            )}
             handleSelectAll={this.handleSelectAll}
             handleUnselectAll={this.handleUnselectAll}
           />
@@ -495,11 +524,14 @@ class AnnotationCollection extends Component {
       case 1:
         return (
           <VerifySelectVideo
-            value={this.state.selectedVideos}
+            value={selectedVideos}
             getVideos={this.getVideos}
             getVideoCollections={this.getVideoCollections}
             handleChange={this.handleChange('selectedVideos')}
-            handleChangeList={this.handleChangeList('selectedVideos')}
+            handleChangeList={this.handleChangeList(
+              selectedVideos,
+              'selectedVideos'
+            )}
             handleSelectAll={this.handleSelectAll}
             handleUnselectAll={this.handleUnselectAll}
           />
@@ -507,11 +539,14 @@ class AnnotationCollection extends Component {
       case 2:
         return (
           <VerifySelectConcept
-            value={this.state.selectedConcepts}
+            value={selectedConcepts}
             getConcepts={this.getConcepts}
             getConceptCollections={this.getConceptCollections}
             handleChange={this.handleChange('selectedConcepts')}
-            handleChangeList={this.handleChangeList('selectedConcepts')}
+            handleChangeList={this.handleChangeList(
+              selectedConcepts,
+              'selectedConcepts'
+            )}
             handleSelectAll={this.handleSelectAll}
             handleUnselectAll={this.handleUnselectAll}
           />
@@ -519,20 +554,18 @@ class AnnotationCollection extends Component {
       case 3:
         return (
           <React.Fragment>
+            <Typography>Number of Annotations: {annotationCount}</Typography>
             <Typography>
-              Number of Annotations: {this.state.annotationCount}
-            </Typography>
-            <Typography>
-              Number of Tracking Annotations: {this.state.trackingCount}
+              Number of Tracking Annotations: {trackingCount}
             </Typography>
             <FormControlLabel
               control={
                 <Switch
-                  checked={this.state.includeTracking}
+                  checked={includeTracking}
                   onChange={this.handleChangeSwitch('includeTracking')}
                   value="includeTracking"
                   color="primary"
-                  disabled={this.state.trackingCount === '0'}
+                  disabled={trackingCount === '0'}
                 />
               }
               label="Include tracking annotations"
@@ -545,15 +578,21 @@ class AnnotationCollection extends Component {
   };
 
   checkButtonDisabled = step => {
+    const {
+      selectedCollection,
+      selectedUsers,
+      selectedVideos,
+      selectedConcepts
+    } = this.state;
     switch (step) {
       case 0:
-        return this.state.selectedUsers.length === 0;
+        return selectedUsers.length === 0;
       case 1:
-        return this.state.selectedVideos.length === 0;
+        return selectedVideos.length === 0;
       case 2:
-        return this.state.selectedConcepts.length === 0;
+        return selectedConcepts.length === 0;
       case 3:
-        return this.state.selectedCollection === '';
+        return selectedCollection === '';
       default:
         return false;
     }
@@ -567,13 +606,13 @@ class AnnotationCollection extends Component {
 
   handleBack = step => {
     this.resetStep(step);
-    this.setState({
-      activeStep: this.state.activeStep - 1
-    });
+    this.setState(state => ({
+      activeStep: state.activeStep - 1
+    }));
   };
 
   render() {
-    const { activeStep } = this.state;
+    const { activeStep, collections, selectedCollection } = this.state;
     const { classes } = this.props;
     const steps = getSteps();
 
@@ -654,12 +693,12 @@ class AnnotationCollection extends Component {
           <FormControl className={classes.formControl}>
             <InputLabel>Select collection</InputLabel>
             <Select
-              value={this.state.selectedCollection}
+              value={selectedCollection}
               onChange={this.handleChangeCollection}
-              autoWidth={true}
+              autoWidth
             >
               <MenuItem value="">Select collection</MenuItem>
-              {this.state.collections.map(collection => {
+              {collections.map(collection => {
                 return (
                   <MenuItem key={collection.id} value={collection.id}>
                     {collection.name}
@@ -667,26 +706,26 @@ class AnnotationCollection extends Component {
                 );
               })}
             </Select>
-            {this.state.selectedCollection === '' ||
-            !this.state.collections.filter(collection => {
-              return collection.id === this.state.selectedCollection;
+            {selectedCollection === '' ||
+            !collections.filter(collection => {
+              return collection.id === selectedCollection;
             })[0].description ? (
               ''
             ) : (
               <FormHelperText>
                 {
-                  this.state.collections.filter(collection => {
-                    return collection.id === this.state.selectedCollection;
+                  collections.filter(collection => {
+                    return collection.id === selectedCollection;
                   })[0].description
                 }
               </FormHelperText>
             )}
           </FormControl>
-          {this.state.selectedCollection ? this.showCollection() : ''}
+          {selectedCollection ? this.showCollection() : ''}
           <div>
             <Button
               className={classes.button}
-              disabled={this.state.selectedCollection === ''}
+              disabled={selectedCollection === ''}
               onClick={this.deleteAnnotationCollection}
             >
               Delete This Collection
@@ -703,9 +742,5 @@ class AnnotationCollection extends Component {
     );
   }
 }
-
-AnnotationCollection.propTypes = {
-  classes: PropTypes.object
-};
 
 export default withStyles(styles)(AnnotationCollection);
