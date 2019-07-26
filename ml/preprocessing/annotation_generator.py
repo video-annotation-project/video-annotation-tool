@@ -47,6 +47,19 @@ def _atomic_file_exists(file_path):
         return True
 
 
+def _get_labelmap(classes):
+    """
+    Initializes the classmap of each class's database IDs to training IDs
+    """
+
+    # Keras requires that the mapping IDs correspond to the index number of the class.
+    # So we create that mapping (dictionary)
+    class_id_name = query(f"select name from concepts where id = ANY(ARRAY{classes})")
+    labelmap = pd.Series(classes.index, index=classes.id).to_dict()
+
+    return labelmap 
+
+
 def get_classmap(classes):
     """
     Initializes the classmap of each class's database IDs to training IDs
@@ -54,9 +67,8 @@ def get_classmap(classes):
 
     # Keras requires that the mapping IDs correspond to the index number of the class.
     # So we create that mapping (dictionary)
-    class_id_name = query(f"select id, name from concepts where id = ANY(ARRAY{classes})")
-    classmap = class_id_name.to_dict('index')
-
+    classmap = {class_: index for index, class_ in enumerate(classes)}
+    
     return classmap
 
 
@@ -230,7 +242,7 @@ class S3Generator(Generator):
         # Make a reverse dictionary so that we can lookup the other way
         self.labels = {}
         for key, value in self.classes.items():
-            self.labels[value['id']] = key
+            self.labels[value] = key
 
         self._connect_s3()
 
@@ -260,7 +272,7 @@ class S3Generator(Generator):
     def name_to_label(self, name):
         """ Map name to label.
         """
-        return self.classes[name]['id']
+        return self.classes[name]
 
     def label_to_name(self, label):
         """ Map label to name.

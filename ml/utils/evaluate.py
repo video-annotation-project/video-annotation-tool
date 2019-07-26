@@ -5,14 +5,13 @@ from keras_retinanet.models import load_model
 import config
 
 
-def evaluate_class_thresholds(generator):
+def evaluate_class_thresholds(model, generator):
     '''
     Evaluates the model using testing data
     printing out an F1 score as well as optimal confidence thresholds for each concept
     '''
 
     # Initializing model for eval
-    model = load_model(model_path, backbone_name='resnet50')
     model = convert_model(model)
 
     best_f1, best_thresh = f1_evaluation(generator, model, save_path=config.TEST_EXAMPLES)

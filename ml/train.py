@@ -87,7 +87,7 @@ def train_model(concepts,
     _upload_weights(model_name)
 
     # Evaluate the best confidence thresholds for the model
-    evaluate_class_thresholds(test_generator)
+    evaluate_class_thresholds(model, test_generator)
 
 
 def _initilize_model(num_classes):
@@ -157,7 +157,7 @@ def _upload_weights(model_name):
     s3.upload_file(
         config.WEIGHTS_PATH,
         config.S3_BUCKET,
-        config.S3_BUCKET_WEIGHTS_FOLDER + model_name + ".h5"
+        config.S3_WEIGHTS_FOLDER + model_name + ".h5"
     )
 
 
