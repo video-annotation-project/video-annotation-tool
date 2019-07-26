@@ -12,7 +12,8 @@
     "no-underscore-dangle": 0,
     "import/imports-first": ["error", "absolute-first"],
     "import/newline-after-import": "error",
-    "no-console": "off"
+    "no-console": "off",
+    "jsx-a11y/media-has-caption": "off"
   },
   "globals": {
     "window": true,
