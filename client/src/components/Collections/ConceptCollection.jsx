@@ -58,7 +58,7 @@ class ConceptCollection extends Component {
   loadCollections = callback => {
     const config = {
       headers: {
-        Authorization: 'Bearer ' + localStorage.getItem('token')
+        Authorization: `Bearer ${localStorage.getItem('token')}`
       }
     };
     return axios.get('/api/collections/concepts', config).then(res => {
@@ -96,7 +96,7 @@ class ConceptCollection extends Component {
           const config = {
             headers: {
               'Content-Type': 'application/json',
-              Authorization: 'Bearer ' + localStorage.getItem('token')
+              Authorization: `Bearer ${localStorage.getItem('token')}`
             }
           };
           try {
@@ -106,7 +106,8 @@ class ConceptCollection extends Component {
               confirmButtonText: 'Lovely!'
             });
             await this.loadCollections();
-            let colCreated = this.state.collections.find(
+            const { collections } = this.state;
+            const colCreated = collections.find(
               col => col.name === result.value[0]
             );
             this.setState({
@@ -130,7 +131,7 @@ class ConceptCollection extends Component {
     const config = {
       headers: {
         'Content-Type': 'application/json',
-        Authorization: 'Bearer ' + localStorage.getItem('token')
+        Authorization: `Bearer ${localStorage.getItem('token')}`
       }
     };
     Swal.fire({
@@ -144,7 +145,7 @@ class ConceptCollection extends Component {
     }).then(async result => {
       if (result.value) {
         try {
-          let response = await axios.delete(
+          const response = await axios.delete(
             `/api/collections/concepts/${id}`,
             config
           );
@@ -167,7 +168,7 @@ class ConceptCollection extends Component {
   saveToCollection = (id, list) => {
     const config = {
       headers: {
-        Authorization: 'Bearer ' + localStorage.getItem('token')
+        Authorization: `Bearer ${localStorage.getItem('token')}`
       }
     };
     const body = {
@@ -175,15 +176,15 @@ class ConceptCollection extends Component {
     };
     try {
       axios
-        .post('/api/collections/concepts/' + id, body, config)
-        .then(res => {
+        .post(`/api/collections/concepts/${id}`, body, config)
+        .then(() => {
           Swal.fire({
             title: 'Saved!',
             confirmButtonText: 'Lovely!'
           });
           this.loadCollections();
         })
-        .catch(error => {
+        .catch(() => {
           Swal.fire('Could not insert', '', 'error');
         });
     } catch (error) {
@@ -192,13 +193,14 @@ class ConceptCollection extends Component {
   };
 
   handleConceptClick = concept => {
+    const { concepts } = this.state;
     if (
-      this.state.concepts.filter(selectedConcept => {
+      concepts.filter(selectedConcept => {
         return selectedConcept.id === concept.id;
       }).length === 0
     ) {
       this.setState({
-        concepts: this.state.concepts.concat(
+        concepts: concepts.concat(
           (({ id, name, picture }) => ({ id, name, picture }))(concept)
         )
       });
@@ -206,11 +208,12 @@ class ConceptCollection extends Component {
   };
 
   handleRemove = concept => {
-    let concepts = this.state.concepts.filter(selected => {
+    const { concepts } = this.state;
+    const conceptsLocal = concepts.filter(selected => {
       return selected !== concept;
     });
     this.setState({
-      concepts: concepts
+      concepts: conceptsLocal
     });
   };
 
@@ -221,9 +224,10 @@ class ConceptCollection extends Component {
   };
 
   handleUndo = () => {
-    let concepts = this.state.collections.filter(collection => {
-      return collection.id === this.state.selectedCollection;
-    })[0].concepts;
+    const { collections, selectedCollection } = this.state;
+    const { concepts } = collections.filter(collection => {
+      return collection.id === selectedCollection;
+    })[0];
 
     this.setState({
       concepts: !concepts[0].id ? [] : concepts
@@ -231,7 +235,8 @@ class ConceptCollection extends Component {
   };
 
   handleChangeCollection = event => {
-    let currentCollection = this.state.collections.filter(collection => {
+    const { collections } = this.state;
+    const currentCollection = collections.filter(collection => {
       return collection.id === event.target.value;
     })[0];
 
@@ -245,38 +250,44 @@ class ConceptCollection extends Component {
   };
 
   hasNotChanged = () => {
-    let concepts1 = this.state.collections.filter(collection => {
-      return collection.id === this.state.selectedCollection;
+    const { collections, selectedCollection, concepts } = this.state;
+    const concepts1 = collections.filter(collection => {
+      return collection.id === selectedCollection;
     })[0].concepts;
 
-    let concepts2 = this.state.concepts;
+    const concepts2 = concepts;
 
     if (concepts1.length !== concepts2.length) return false;
 
     concepts1.sort((a, b) => (a.id > b.id ? 1 : -1));
     concepts2.sort((a, b) => (a.id > b.id ? 1 : -1));
 
-    for (let i = 0; i < concepts1.length; i++) {
-      if (concepts1[i].id !== concepts2[i].id) return false;
-    }
+    concepts1.forEach((index, concept) => {
+      if (concept.id !== concepts2[index].id) return false;
+    });
+
+    // for (let i = 0; i < concepts1.length; i++) {
+    //   if (concepts1[i].id !== concepts2[i].id) return false;
+    // }
 
     return true;
   };
 
   render() {
     const { classes } = this.props;
+    const { selectedCollection, collections, concepts } = this.state;
     return (
       <React.Fragment>
         <ConceptsSelected handleConceptClick={this.handleConceptClick} />
         <FormControl className={classes.formControl}>
           <InputLabel>Select collection</InputLabel>
           <Select
-            value={this.state.selectedCollection}
+            value={selectedCollection}
             onChange={this.handleChangeCollection}
-            autoWidth={true}
+            autoWidth
           >
             <MenuItem value="">Select collection</MenuItem>
-            {this.state.collections.map(collection => {
+            {collections.map(collection => {
               return (
                 <MenuItem key={collection.id} value={collection.id}>
                   {collection.name}
@@ -284,16 +295,16 @@ class ConceptCollection extends Component {
               );
             })}
           </Select>
-          {this.state.selectedCollection === '' ||
-          !this.state.collections.filter(collection => {
-            return collection.id === this.state.selectedCollection;
+          {selectedCollection === '' ||
+          !collections.filter(collection => {
+            return collection.id === selectedCollection;
           })[0].description ? (
             ''
           ) : (
             <FormHelperText>
               {
-                this.state.collections.filter(collection => {
-                  return collection.id === this.state.selectedCollection;
+                collections.filter(collection => {
+                  return collection.id === selectedCollection;
                 })[0].description
               }
             </FormHelperText>
@@ -302,8 +313,8 @@ class ConceptCollection extends Component {
         <div>
           <Button
             className={classes.button}
-            onClick={() => this.deleteCollection(this.state.selectedCollection)}
-            disabled={this.state.selectedCollection === ''}
+            onClick={() => this.deleteCollection(selectedCollection)}
+            disabled={selectedCollection === ''}
           >
             Delete This Collection
           </Button>
@@ -312,11 +323,13 @@ class ConceptCollection extends Component {
           </Button>
         </div>
         <List className={classes.list}>
-          {this.state.concepts.length > 0
-            ? this.state.concepts.map(concept => {
+          {concepts.length > 0
+            ? concepts.map(concept => {
                 return (
                   <ListItem key={concept.id}>
-                    <Avatar src={`https://cdn.deepseaannotations.com/concept_images/${concept.picture}`} />
+                    <Avatar
+                      src={`https://cdn.deepseaannotations.com/concept_images/${concept.picture}`}
+                    />
                     <ListItemText inset primary={concept.name} />
                     <IconButton
                       className={classes.deleteButton}
@@ -333,12 +346,12 @@ class ConceptCollection extends Component {
           className={classes.button}
           onClick={this.handleUndo}
           disabled={
-            this.state.selectedCollection === '' ||
+            selectedCollection === '' ||
             this.hasNotChanged() ||
-            (!this.state.collections.filter(collection => {
-              return collection.id === this.state.selectedCollection;
+            (!collections.filter(collection => {
+              return collection.id === selectedCollection;
             })[0].concepts[0].id &&
-              this.state.concepts.length === 0)
+              concepts.length === 0)
           }
         >
           Undo Changes
@@ -346,7 +359,7 @@ class ConceptCollection extends Component {
         <Button
           className={classes.button}
           onClick={this.handleRemoveAll}
-          disabled={this.state.concepts.length === 0}
+          disabled={concepts.length === 0}
         >
           Remove All
         </Button>
@@ -355,19 +368,19 @@ class ConceptCollection extends Component {
           color="primary"
           className={classes.button}
           onClick={() => {
-            let conceptids = [];
-            this.state.concepts.forEach(concept => {
+            const conceptids = [];
+            concepts.forEach(concept => {
               conceptids.push(concept.id);
             });
-            this.saveToCollection(this.state.selectedCollection, conceptids);
+            this.saveToCollection(selectedCollection, conceptids);
           }}
           disabled={
-            this.state.selectedCollection === '' ||
+            selectedCollection === '' ||
             this.hasNotChanged() ||
-            (!this.state.collections.filter(collection => {
-              return collection.id === this.state.selectedCollection;
+            (!collections.filter(collection => {
+              return collection.id === selectedCollection;
             })[0].concepts[0].id &&
-              this.state.concepts.length === 0)
+              concepts.length === 0)
           }
         >
           Save
