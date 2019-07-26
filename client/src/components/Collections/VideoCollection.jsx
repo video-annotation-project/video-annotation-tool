@@ -411,7 +411,6 @@ class videoCollection extends Component {
       videoPlaybackRate,
       collections
     } = this.state;
-    console.log(this.state);
     return (
       <React.Fragment>
         <Hotkeys keyName="space, right, left" onKeyDown={this.handleKeyDown} />

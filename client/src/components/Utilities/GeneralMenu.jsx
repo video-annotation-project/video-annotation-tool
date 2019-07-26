@@ -21,10 +21,14 @@ const GeneralMenu = props => {
     handleClose();
     props.handleInsert(id);
   }
-
   return (
     <div>
-      <Button variant={variant} color={color} onClick={handleClick}>
+      <Button
+        variant={variant}
+        color={color}
+        onClick={handleClick}
+        disabled={props.disabled}
+      >
         {props.name}
       </Button>
       <Menu

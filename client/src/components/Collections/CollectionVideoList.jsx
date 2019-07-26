@@ -71,28 +71,30 @@ class CollectionVideoList extends Component {
     });
   };
 
-  toggle = async list => {
-    const dataRet = await this.loadCollections();
-    console.log(dataRet);
-    this.setState(prevState => ({
-      [list]: !prevState[list],
-      data: dataRet
-    }));
+  toggle = async (open, list) => {
+    if (open === true) {
+      this.setState({
+        data: await this.loadCollections()
+      });
+    }
+    this.setState({
+      [list]: open
+    });
   };
 
   handleNewCollectionModal = () => {
-    this.toggle('CollectionOpen');
+    this.toggle(false, 'CollectionOpen');
     this.createCollection();
   };
 
   handleDeleteCollectionModal = id => {
-    this.toggle('CollectionOpen');
+    this.toggle(false, 'CollectionOpen');
     this.deleteCollection(id);
   };
 
   handleInsert = id => {
     const { openedVideo } = this.props;
-    this.toggle('CollectionOpen');
+    this.toggle(false, 'CollectionOpen');
     this.insertToCollection(id, [openedVideo.id]);
   };
 
@@ -136,7 +138,7 @@ class CollectionVideoList extends Component {
         videos: videoList
       }
     };
-    this.toggle('CollectionOpen');
+    this.toggle(false, 'CollectionOpen');
     Swal.fire({
       title: 'Are you sure?',
       text: `Removing ${videoList} from Collection ${id}`,
@@ -151,7 +153,7 @@ class CollectionVideoList extends Component {
           await axios.delete(`/api/collections/videos/elements/${id}`, config);
           Swal.fire('Deleted!', 'Videos have been removed.', 'success');
           this.setState({
-            data: this.loadCollections()
+            data: await this.loadCollections()
           });
         } catch (error) {
           console.log(error);
@@ -178,7 +180,6 @@ class CollectionVideoList extends Component {
     if (!data) {
       return <div>Loading...</div>;
     }
-    console.log(CollectionOpen);
 
     return (
       <div className={classes.root}>
@@ -186,7 +187,7 @@ class CollectionVideoList extends Component {
           className={classes.toggleButton}
           variant="contained"
           color="primary"
-          onClick={() => this.toggle('CollectionOpen')}
+          onClick={() => this.toggle(true, 'CollectionOpen')}
         >
           Toggle {collType} Collection List
         </Button>
@@ -194,7 +195,7 @@ class CollectionVideoList extends Component {
         <Drawer
           anchor="right"
           open={CollectionOpen}
-          onClose={() => this.toggle('CollectionOpen')}
+          onClose={() => this.toggle(false, 'CollectionOpen')}
         >
           <div className={classes.drawer}>
             <div className={classes.addButton}>
