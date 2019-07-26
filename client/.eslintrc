@@ -16,7 +16,6 @@
     "jsx-a11y/media-has-caption": "off",
     "no-param-reassign": [2, { "props": false }],
     "no-return-assign": [2, "except-parens"],
-    "consistent-return": "off",
     "prefer-destructuring": ["error", { "object": true, "array": false }]
   },
   "globals": {
