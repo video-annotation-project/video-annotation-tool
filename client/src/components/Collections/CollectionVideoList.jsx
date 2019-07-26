@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import PropTypes from 'prop-types';
 import axios from 'axios';
 import Button from '@material-ui/core/Button';
 import Drawer from '@material-ui/core/Drawer';
@@ -303,9 +302,5 @@ class CollectionVideoList extends Component {
     );
   }
 }
-
-CollectionVideoList.propTypes = {
-  classes: PropTypes.object.isRequired
-};
 
 export default withStyles(styles)(CollectionVideoList);
