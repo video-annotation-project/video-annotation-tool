@@ -279,7 +279,7 @@ class ConceptsSelected extends React.Component {
                 {concept.name}
                 <br />
                 <img
-                  src={"/api/concepts/images/" + concept.id}
+                  src={`https://cdn.deepseaannotations.com/concept_images/${concept.picture}`}
                   alt="Could not be downloaded"
                   height="50"
                   width="50"

@@ -3,7 +3,7 @@ const passport = require("passport");
 const psql = require("../../db/simpleConnect");
 const AWS = require("aws-sdk");
 
-var configData = require('../../../config.json');
+var configData = require("../../../config.json");
 
 /**
  * @typedef annotation
@@ -30,7 +30,9 @@ var configData = require('../../../config.json');
  * @returns {Array.<annotation>} 200 - An array of annotations
  * @returns {Error} 500 - Unexpected database error
  */
-router.get("/", passport.authenticate("jwt", { session: false }),
+router.get(
+  "/",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     let params = [];
     let queryPass = `
@@ -80,9 +82,11 @@ router.get("/", passport.authenticate("jwt", { session: false }),
   }
 );
 
-router.get("/collections", passport.authenticate("jwt", { session: false }),
+router.get(
+  "/collections",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
-    var params = "{"+req.query.collectionids+"}";
+    var params = "{" + req.query.collectionids + "}";
     let queryText = `
       SELECT
         a.*
@@ -361,7 +365,7 @@ router.patch(
     `;
 
     try {
-      let updated = await psql.query(queryText, [req.body.flag ,req.params.id]);
+      let updated = await psql.query(queryText, [req.body.flag, req.params.id]);
       res.json(updated.rows);
     } catch (error) {
       console.log(error);
@@ -397,7 +401,7 @@ router.get(
     let orderBy = "";
 
     if (selectedUsers && selectedVideos && selectedConcepts && selectedUnsure) {
-      queryText += `a.*, c.name, u.username, v.filename `;
+      queryText += `a.*, c.name, c.picture, u.username, v.filename `;
       orderBy = " ORDER BY a.id";
     } else if (selectedUsers && selectedVideos && selectedConcepts) {
       queryText += `a.unsure `;
@@ -429,17 +433,17 @@ router.get(
       queryText += ` AND a.verifiedby IS NULL`;
     }
 
-    if (selectedUsers && selectedUsers[0] !== "-1") {
+    if (selectedUsers) {
       queryText += ` AND a.userid::text=ANY($${params.length + 1})`;
       params.push(selectedUsers);
     }
 
-    if (selectedVideos && selectedVideos[0] !== "-1") {
+    if (selectedVideos) {
       queryText += ` AND a.videoid::text=ANY($${params.length + 1})`;
       params.push(selectedVideos);
     }
 
-    if (selectedConcepts && selectedConcepts[0] !== "-1") {
+    if (selectedConcepts) {
       queryText += ` AND a.conceptid::text=ANY($${params.length + 1})`;
       params.push(selectedConcepts);
     }
@@ -448,10 +452,9 @@ router.get(
     else if (selectedUnsure === "not true") queryText += ` AND NOT unsure`;
 
     if (selectedTrackingFirst === "true") {
-      queryText += ` AND a.verifiedby IS NOT NULL AND a.tracking_flag IS NULL`
-    }
-    else {
-      queryText += ` AND a.verifiedby IS NULL`
+      queryText += ` AND a.verifiedby IS NOT NULL AND a.tracking_flag IS NULL`;
+    } else {
+      queryText += ` AND a.verifiedby IS NULL`;
     }
 
     queryText += orderBy;
@@ -471,7 +474,9 @@ router.get(
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     let params = [];
-    let good_users = configData.ml.tracking_users.filter(x => req.query.selectedUsers.includes(x.toString()));
+    let good_users = configData.ml.tracking_users.filter(x =>
+      req.query.selectedUsers.includes(x.toString())
+    );
 
     let queryText = `
       SELECT
@@ -483,39 +488,37 @@ router.get(
         ) as annotationcount
       FROM annotations as A
     `;
-    if (req.query.selectedConcepts[0] !== "-1") {
-      if (params.length === 0) {
-        queryText += ` WHERE `;
-      }
-      params.push(req.query.selectedConcepts);
-      queryText += ` conceptid::text = ANY($${params.length}) `;
+
+    if (params.length === 0) {
+      queryText += ` WHERE `;
     }
-    if (req.query.selectedVideos[0] !== "-1") {
-      if (params.length === 0) {
-        queryText += ` WHERE `;
-      } else {
-        queryText += ` AND `;
-      }
-      params.push(req.query.selectedVideos);
-      queryText += ` videoid::text = ANY($${params.length}) `;
+    params.push(req.query.selectedConcepts);
+    queryText += ` conceptid::text = ANY($${params.length}) `;
+
+    if (params.length === 0) {
+      queryText += ` WHERE `;
+    } else {
+      queryText += ` AND `;
     }
-    if (req.query.selectedUsers[0] !== "-1") {
-      if (params.length === 0) {
-        queryText += ` WHERE `;
-      } else {
-        queryText += ` AND `;
-      }
-      params.push(req.query.selectedUsers);
-      if (good_users.length > 0) {
-        queryText += `EXISTS ( 
+    params.push(req.query.selectedVideos);
+    queryText += ` videoid::text = ANY($${params.length}) `;
+
+    if (params.length === 0) {
+      queryText += ` WHERE `;
+    } else {
+      queryText += ` AND `;
+    }
+    params.push(req.query.selectedUsers);
+
+    if (good_users.length > 0) {
+      queryText += `EXISTS ( 
           SELECT id, userid 
           FROM annotations 
           WHERE id=A.originalid 
           AND unsure = False
           AND userid::text = ANY($${params.length}))`;
-      } else {
-        queryText += `userid::text = ANY($${params.length})`;
-      }
+    } else {
+      queryText += `userid::text = ANY($${params.length})`;
     }
 
     try {
@@ -531,8 +534,8 @@ router.get(
 /**
  * @typedef treeData
  * @property {string} name - Name of the specific item in the current level
- * @property {integer} key - ID of the specific item in the current level 
- * @property {integer} count - Count of the specific item in the current level 
+ * @property {integer} key - ID of the specific item in the current level
+ * @property {integer} count - Count of the specific item in the current level
  * @property {boolean} expanded - Always "false", used by react to control expansion
  */
 
@@ -547,7 +550,9 @@ router.get(
  * @returns {Array.<treeData>} 200 - Returns matching annotations
  * @returns {Error} 500 - Unexpected database error
  */
-router.get("/treeData", passport.authenticate("jwt", { session: false }),
+router.get(
+  "/treeData",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     let params = [];
     let queryPass = selectLevelQuery(req.query.levelName);

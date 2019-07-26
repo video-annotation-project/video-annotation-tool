@@ -293,7 +293,6 @@ class Verify extends Component {
     });
   };
 
-
   resetStep = step => {
     switch (step) {
       case 0:

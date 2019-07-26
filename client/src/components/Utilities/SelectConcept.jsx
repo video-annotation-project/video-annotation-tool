@@ -12,21 +12,25 @@ import List from '@material-ui/core/List';
 import Tooltip from '@material-ui/core/Tooltip';
 
 const styles = theme => ({
-  button: {
+  collection: {
     textTransform: 'none'
   },
   formControl: {
-    marginTop: theme.spacing(2),
-    maxHeight: '400px',
+    marginTop: theme.spacing(1.5),
+    maxHeight: '280px',
     overflow: 'auto'
   },
   group: {
     marginLeft: 15
   },
+  button: {
+    marginTop: theme.spacing(2),
+    marginLeft: theme.spacing()
+  },
   list: {
     marginTop: theme.spacing(2),
     overflow: 'auto',
-    maxHeight: (400 - theme.spacing(2)).toString() + 'px'
+    maxHeight: (280 + theme.spacing(4)).toString() + 'px'
   }
 });
 
@@ -58,12 +62,24 @@ class SelectConcept extends React.Component {
         <Grid item>
           <Typography>Select concepts</Typography>
           <div>
-            <Button color="primary"
-                onClick={()=>{this.props.handleSelectAll(concepts, value, "selectedConcepts")}}
-              >Select All</Button>
-            <Button color="primary"
-                onClick={()=>{this.props.handleUnselectAll("selectedConcepts")}}
-              >Unselect All</Button>
+            <Button
+              className={classes.button}
+              color="primary"
+              onClick={() => {
+                this.props.handleSelectAll(concepts, value, 'selectedConcepts');
+              }}
+            >
+              Select All
+            </Button>
+            <Button
+              className={classes.button}
+              color="primary"
+              onClick={() => {
+                this.props.handleUnselectAll('selectedConcepts');
+              }}
+            >
+              Unselect All
+            </Button>
           </div>
           <FormControl component="fieldset" className={classes.formControl}>
             <FormGroup
@@ -100,7 +116,7 @@ class SelectConcept extends React.Component {
                 >
                   <div>
                     <Button
-                      className={classes.button}
+                      className={classes.collection}
                       variant="outlined"
                       value={conceptCollection.id.toString()}
                       disabled={!conceptCollection.conceptids[0]}

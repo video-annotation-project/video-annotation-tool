@@ -9,12 +9,16 @@ import Typography from '@material-ui/core/Typography';
 
 const styles = theme => ({
   formControl: {
-    marginTop: theme.spacing(2),
-    maxHeight: '400px',
+    marginTop: theme.spacing(1.5),
+    maxHeight: '280px',
     overflow: 'auto'
   },
   group: {
     marginLeft: 15
+  },
+  button: {
+    marginTop: theme.spacing(2),
+    marginLeft: theme.spacing()
   }
 });
 
@@ -48,12 +52,24 @@ class SelectUser extends React.Component {
       <>
         <Typography>Select users</Typography>
         <div>
-        <Button color="primary"
-            onClick={()=>{this.props.handleSelectAll(users, value, "selectedUsers")}}
-          >Select All</Button>
-        <Button color="primary"
-            onClick={()=>{this.props.handleUnselectAll("selectedUsers")}}
-          >Unselect All</Button>
+          <Button
+            className={classes.button}
+            color="primary"
+            onClick={() => {
+              this.props.handleSelectAll(users, value, 'selectedUsers');
+            }}
+          >
+            Select All
+          </Button>
+          <Button
+            className={classes.button}
+            color="primary"
+            onClick={() => {
+              this.props.handleUnselectAll('selectedUsers');
+            }}
+          >
+            Unselect All
+          </Button>
         </div>
         <FormControl component="fieldset" className={classes.formControl}>
           <FormGroup
