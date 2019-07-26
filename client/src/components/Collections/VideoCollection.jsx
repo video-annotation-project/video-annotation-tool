@@ -201,6 +201,9 @@ class videoCollection extends Component {
           );
           if (response.status === 200) {
             Swal.fire('Deleted!', 'Collection has been deleted.', 'success');
+            this.setState({
+              collections: await this.loadCollections()
+            });
           }
         } catch (error) {
           Swal.fire(error, '', 'error');
@@ -344,6 +347,9 @@ class videoCollection extends Component {
             Swal.fire({
               title: 'Collection Created!',
               confirmButtonText: 'Lovely!'
+            });
+            this.setState({
+              collections: await this.loadCollections()
             });
           } catch (error) {
             Swal.fire('Error Creating Collection', '', 'error');
