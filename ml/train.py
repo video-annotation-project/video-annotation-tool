@@ -24,6 +24,72 @@ s3 = boto3.client(
 )
 
 
+@timer("training")
+def train_model(concepts,
+                model_name,
+                collection_ids,
+                min_examples,
+                epochs,
+                download_data=True):
+    """ Trains the model, uploads its weights, and determines best
+        confidence thresholds for predicting
+    """
+
+    model = _initilize_model(len(concepts))
+    num_workers = _get_num_workers()
+
+    model.compile(
+        loss={
+            'regression': losses.smooth_l1(),
+            'classification': losses.focal()
+        },
+        optimizer=keras.optimizers.adam(lr=1e-5, clipnorm=0.001)
+    )
+
+    annotation_generator = AnnotationGenerator(
+        collection_ids=collection_ids,
+        min_examples=min_examples,
+        classes=concepts
+    )
+
+    train_generator = annotation_generator.flow_from_s3(
+        image_folder=config.IMAGE_FOLDER,
+        subset='training',
+        batch_size=config.BATCH_SIZE
+    )
+
+    test_generator = annotation_generator.flow_from_s3(
+        image_folder=config.IMAGE_FOLDER,
+        subset='validation',
+        batch_size=config.BATCH_SIZE
+    )
+
+    callbacks = _get_callbacks(
+        model=model,
+        model_name=model_name,
+        collection_ids=collection_ids,
+        min_examples=min_examples,
+        epochs=epochs,
+        steps_per_epoch=len(train_generator)
+    )
+
+    model.fit_generator(
+        train_generator,
+        epochs=epochs,
+        callbacks=callbacks,
+        validation_data=test_generator,
+        use_multiprocessing=True,
+        workers=num_workers,
+        verbose=2
+    )
+
+    # Upload the weights file to the S3 bucket
+    _upload_weights(model_name)
+
+    # Evaluate the best confidence thresholds for the model
+    evaluate_class_thresholds(test_generator)
+
+
 def _initilize_model(num_classes):
     """Initilze our model to train with
     """
@@ -100,69 +166,3 @@ def _get_num_workers():
         1 worker per core should give us maximum preformance.
     """
     return multiprocessing.cpu_count()
-
-
-@timer("training")
-def train_model(concepts,
-                model_name,
-                collection_ids,
-                min_examples,
-                epochs,
-                download_data=True):
-    """ Trains the model, uploads its weights, and determines best
-        confidence thresholds for predicting
-    """
-
-    model = _initilize_model(len(concepts))
-    num_workers = _get_num_workers()
-
-    model.compile(
-        loss={
-            'regression': losses.smooth_l1(),
-            'classification': losses.focal()
-        },
-        optimizer=keras.optimizers.adam(lr=1e-5, clipnorm=0.001)
-    )
-
-    collection_generator = AnnotationGenerator(
-        collection_ids=collection_ids,
-        min_examples=min_examples,
-        classes=concepts
-    )
-
-    train_generator = collection_generator.flow_from_s3(
-        image_folder=config.IMAGE_FOLDER,
-        subset='training',
-        batch_size=config.BATCH_SIZE
-    )
-
-    test_generator = collection_generator.flow_from_s3(
-        image_folder=config.IMAGE_FOLDER,
-        subset='validation',
-        batch_size=config.BATCH_SIZE
-    )
-
-    callbacks = _get_callbacks(
-        model=model,
-        model_name=model_name,
-        collection_ids=collection_ids,
-        min_examples=min_examples,
-        epochs=epochs,
-        steps_per_epoch=len(train_generator)
-    )
-
-    model.fit_generator(
-        train_generator,
-        epochs=epochs,
-        callbacks=callbacks,
-        validation_data=test_generator,
-        use_multiprocessing=True,
-        workers=num_workers,
-        verbose=2
-    )
-
-    # Upload the weights file to the S3 bucket
-    _upload_weights(model_name)
-
-    # Evaluate the best confidence thresholds for the model
-    evaluate_class_thresholds(test_generator)

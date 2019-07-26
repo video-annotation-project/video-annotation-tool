@@ -39,7 +39,7 @@ def _atomic_file_exists(file_path):
     """
     try:
         # This file open is atomic. This avoids race conditions when multiple processes are running.
-        # This race condition only happens when workers > 1 and multiprocessing = True in the fit_generator
+        # This race condition only happens when workers > 1 and multiprocessing = True in fit_generator
         fd = os.open(file_path, os.O_CREAT | os.O_EXCL)
         os.close(fd)
         return False
@@ -297,8 +297,8 @@ class S3Generator(Generator):
 
         # Add all bounding boxes and annotations to the annotations dict for a particular image
         for idx, annot in enumerate(self.image_data[image_name]):
-            annotations['labels'] = np.concatenate((annotations['labels'],
-                                                    [self.name_to_label(annot['class'])]))
+            annotations['labels'] = np.concatenate(
+                (annotations['labels'], [self.name_to_label(annot['class'])]))
 
             annotations['bboxes'] = np.concatenate((annotations['bboxes'], [[
                 float(annot['x1']),

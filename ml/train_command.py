@@ -59,44 +59,27 @@ model = cursor.fetchone()
 concepts = model[2]
 verifyVideos = model[3]
 
-<<<<<<< HEAD
 # Delete old model user
-if (model[4] != 'None'):
-    cursor.execute(
-        '''DELETE FROM users WHERE id=%s''',
-        (model[4],)
-    )
-=======
-#Delete old model user
 # if (model[4] != 'None'):
 #      cursor.execute('''
 #          DELETE FROM users
 #          WHERE id=%s''',
 #          (model[4],))
->>>>>>> 41c3a0fbc364c704a55be2387b10ca013e7a26f4
-
-user_model = model[0] + "-" + time.ctime()
-
-# username example: testV2-Fri Jun 28 11:58:37 2019
-# insert into users
-<<<<<<< HEAD
-cursor.execute(
-    '''INSERT INTO users (username, password, admin) VALUES (%s, 0, null) RETURNING *''',
-    (user_model,)
-)
-=======
->>>>>>> 41c3a0fbc364c704a55be2387b10ca013e7a26f4
+# cursor.execute(
+#     '''INSERT INTO users (username, password, admin) VALUES (%s, 0, null) RETURNING *''',
+#     (user_model,)
+# )
 
 # cursor.execute('''
-#     INSERT INTO users (username, password, admin) 
-#     VALUES (%s, 0, null) 
+#     INSERT INTO users (username, password, admin)
+#     VALUES (%s, 0, null)
 #     RETURNING *''',
 #     (user_model,))
 # model_user_id = int(cursor.fetchone()[0])
 
 # update models
 # cursor.execute('''
-#     UPDATE models 
+#     UPDATE models
 #     SET userid=%s
 #     WHERE name=%s
 #     RETURNING *''',
@@ -106,18 +89,15 @@ cursor.execute(
 train_model(concepts, info['modelSelected'], info['annotationCollections'],
             int(info['minImages']), int(info['epochs']), download_data=True)
 
-<<<<<<< HEAD
-=======
 # Run verifyVideos in parallel
 # with Pool(processes = 2) as p:
 #     p.starmap(evaluate, map(lambda video: (video, user_model, concepts), verifyVideos))
->>>>>>> 41c3a0fbc364c704a55be2387b10ca013e7a26f4
 
 # Run evaluate on all the videos in verifyVideos
 # Using for loop due to memory issues
-for video_id in verifyVideos:
-    evaluate(video_id, user_model, concepts)
-    cursor.execute('''DELETE FROM predict_progress''')
+# for video_id in verifyVideos:
+#     evaluate(video_id, user_model, concepts)
+#     cursor.execute('''DELETE FROM predict_progress''')
 
 subprocess.call(['rm', '*.mp4'])
 
