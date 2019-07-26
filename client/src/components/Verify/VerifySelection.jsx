@@ -1,5 +1,4 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Stepper from '@material-ui/core/Stepper';
 import Step from '@material-ui/core/Step';
@@ -12,11 +11,11 @@ import Switch from '@material-ui/core/Switch';
 import FormControl from '@material-ui/core/FormControl';
 import Typography from '@material-ui/core/Typography';
 
-import SelectUser from '../Utilities/SelectUser.jsx';
-import SelectVideo from '../Utilities/SelectVideo.jsx';
-import SelectConcept from '../Utilities/SelectConcept.jsx';
+import SelectUser from '../Utilities/SelectUser';
+import SelectVideo from '../Utilities/SelectVideo';
+import SelectConcept from '../Utilities/SelectConcept';
 import SelectUnsure from '../Utilities/SelectUnsure';
-import VerifyAnnotationCollection from '../Utilities/SelectAnnotationCollection.jsx';
+import VerifyAnnotationCollection from '../Utilities/SelectAnnotationCollection';
 
 const styles = theme => ({
   button: {
@@ -52,18 +51,38 @@ class VerifySelection extends React.Component {
   }
 
   getStepForm = step => {
-    const { classes } = this.props;
+    const {
+      classes,
+      selectedAnnotationCollections,
+      getAnnotationCollections,
+      handleChangeList,
+      handleChange,
+      handleSelectAll,
+      handleUnselectAll,
+      handleChangeSwitch,
+      selectedUsers,
+      getUsers,
+      selectUser,
+      selectedVideos,
+      getVideos,
+      getVideoCollections,
+      selectedConcepts,
+      getConcepts,
+      getConceptCollections,
+      selectedUnsure,
+      getUnsure,
+      selectedTrackingFirst
+    } = this.props;
+
     switch (step) {
       case 0:
         return (
           <VerifyAnnotationCollection
-            value={this.props.selectedAnnotationCollections}
-            getAnnotationCollections={this.props.getAnnotationCollections}
-            selectedAnnotationCollections={
-              this.props.selectedAnnotationCollections
-            }
-            handleChangeList={this.props.handleChangeList(
-              this.props.selectedAnnotationCollections,
+            value={selectedAnnotationCollections}
+            getAnnotationCollections={getAnnotationCollections}
+            selectedAnnotationCollections={selectedAnnotationCollections}
+            handleChangeList={handleChangeList(
+              selectedAnnotationCollections,
               'selectedAnnotationCollections'
             )}
           />
@@ -71,56 +90,51 @@ class VerifySelection extends React.Component {
       case 1:
         return (
           <SelectUser
-            value={this.props.selectedUsers}
-            getUsers={this.props.getUsers}
-            selectUser={this.props.selectUser}
-            handleChangeList={this.props.handleChangeList(
-              this.props.selectedUsers,
-              'selectedUsers'
-            )}
-            handleSelectAll={this.props.handleSelectAll}
-            handleUnselectAll={this.props.handleUnselectAll}
+            value={selectedUsers}
+            getUsers={getUsers}
+            selectUser={selectUser}
+            handleChangeList={handleChangeList(selectedUsers, 'selectedUsers')}
+            handleSelectAll={handleSelectAll}
+            handleUnselectAll={handleUnselectAll}
           />
         );
       case 2:
         return (
           <SelectVideo
-            value={this.props.selectedVideos}
-            getVideos={this.props.getVideos}
-            getVideoCollections={this.props.getVideoCollections}
-            handleChange={this.props.handleChange('selectedVideos')}
-            handleChangeList={this.props.handleChangeList(
-              this.props.selectedVideos,
+            value={selectedVideos}
+            getVideos={getVideos}
+            getVideoCollections={getVideoCollections}
+            handleChange={handleChange('selectedVideos')}
+            handleChangeList={handleChangeList(
+              selectedVideos,
               'selectedVideos'
             )}
-            handleSelectAll={this.props.handleSelectAll}
-            handleUnselectAll={this.props.handleUnselectAll}
+            handleSelectAll={handleSelectAll}
+            handleUnselectAll={handleUnselectAll}
           />
         );
       case 3:
         return (
           <SelectConcept
-            value={this.props.selectedConcepts}
-            getConcepts={this.props.getConcepts}
-            getConceptCollections={this.props.getConceptCollections}
-            handleChange={this.props.handleChange('selectedConcepts')}
-            handleChangeList={this.props.handleChangeList(
-              this.props.selectedConcepts,
+            value={selectedConcepts}
+            getConcepts={getConcepts}
+            getConceptCollections={getConceptCollections}
+            handleChange={handleChange('selectedConcepts')}
+            handleChangeList={handleChangeList(
+              selectedConcepts,
               'selectedConcepts'
             )}
-            handleSelectAll={this.props.handleSelectAll}
-            handleUnselectAll={this.props.handleUnselectAll}
+            handleSelectAll={handleSelectAll}
+            handleUnselectAll={handleUnselectAll}
           />
         );
       case 4:
         return (
           <div>
             <SelectUnsure
-              value={this.props.selectedUnsure}
-              getUnsure={this.props.getUnsure}
-              handleChangeSwitch={this.props.handleChangeSwitch(
-                'selectedUnsure'
-              )}
+              value={selectedUnsure}
+              getUnsure={getUnsure}
+              handleChangeSwitch={handleChangeSwitch('selectedUnsure')}
             />
             <div>
               <Typography>Select Video First</Typography>
@@ -130,10 +144,8 @@ class VerifySelection extends React.Component {
                     control={
                       <Switch
                         className={classes.switch}
-                        checked={this.props.selectedTrackingFirst}
-                        onChange={this.props.handleChangeSwitch(
-                          'selectedTrackingFirst'
-                        )}
+                        checked={selectedTrackingFirst}
+                        onChange={handleChangeSwitch('selectedTrackingFirst')}
                         value="selectedTrackingFirst"
                         color="primary"
                       />
@@ -151,15 +163,16 @@ class VerifySelection extends React.Component {
   };
 
   didNotSelect = step => {
+    const { selectedUsers, selectedVideos, selectedConcepts } = this.props;
     switch (step) {
       case 0:
         return false;
       case 1:
-        return this.props.selectedUsers.length === 0;
+        return selectedUsers.length === 0;
       case 2:
-        return this.props.selectedVideos.length === 0;
+        return selectedVideos.length === 0;
       case 3:
-        return this.props.selectedConcepts.length === 0;
+        return selectedConcepts.length === 0;
       default:
         return false;
     }
@@ -172,22 +185,37 @@ class VerifySelection extends React.Component {
   };
 
   handleBack = step => {
-    this.props.resetStep(step);
+    const { resetStep } = this.props;
+    const { activeStep } = this.state;
+
+    resetStep(step);
     this.setState({
-      activeStep: this.state.activeStep - 1
+      activeStep: activeStep - 1
     });
   };
 
   resetState = () => {
-    this.props.resetState();
+    const { resetState } = this.props;
+
+    resetState();
     this.setState({
       activeStep: 0
     });
   };
 
+  renderProgressButtonText = (isLast, isCollection) => {
+    if (isLast) return 'Finish';
+    if (isCollection) return 'Skip this step';
+    return 'Next';
+  };
+
   render() {
+    const {
+      classes,
+      selectedAnnotationCollections,
+      toggleSelection
+    } = this.props;
     const { activeStep } = this.state;
-    const { classes } = this.props;
     const steps = getSteps();
 
     return (
@@ -213,16 +241,16 @@ class VerifySelection extends React.Component {
                         this.handleBack(activeStep);
                       }}
                       className={classes.button}
-                      disabled={this.state.activeStep === 0}
+                      disabled={activeStep === 0}
                     >
                       Back
                     </Button>
                     {activeStep === 0 &&
-                    this.props.selectedAnnotationCollections.length !== 0 ? (
+                    selectedAnnotationCollections.length !== 0 ? (
                       <Button
                         variant="contained"
                         color="primary"
-                        onClick={this.props.toggleSelection}
+                        onClick={toggleSelection}
                         className={classes.button}
                       >
                         Skip To Annotations Verify
@@ -234,18 +262,16 @@ class VerifySelection extends React.Component {
                         disabled={this.didNotSelect(index)}
                         onClick={
                           activeStep === steps.length - 1
-                            ? this.props.toggleSelection
+                            ? toggleSelection
                             : this.handleNext
                         }
                         className={classes.button}
                       >
-                        {activeStep === steps.length - 1
-                          ? 'Finish'
-                          : activeStep === 0 &&
-                            this.props.selectedAnnotationCollections.length ===
-                              0
-                          ? 'Skip this step'
-                          : 'Next'}
+                        {this.renderProgressButtonText(
+                          activeStep === steps.length - 1,
+                          activeStep === 0 &&
+                            selectedAnnotationCollections.length === 0
+                        )}
                       </Button>
                     )}
                   </div>
@@ -258,9 +284,5 @@ class VerifySelection extends React.Component {
     );
   }
 }
-
-VerifySelection.propTypes = {
-  classes: PropTypes.object
-};
 
 export default withStyles(styles)(VerifySelection);

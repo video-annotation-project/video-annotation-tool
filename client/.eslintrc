@@ -13,7 +13,8 @@
     "import/imports-first": ["error", "absolute-first"],
     "import/newline-after-import": "error",
     "no-console": "off",
-    "jsx-a11y/media-has-caption": "off"
+    "jsx-a11y/media-has-caption": "off",
+    "no-param-reassign": [2, { "props": false }]
   },
   "globals": {
     "window": true,
