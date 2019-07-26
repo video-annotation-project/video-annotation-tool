@@ -33,7 +33,7 @@ const styles = () => ({
 class VideoList extends Component {
   constructor(props) {
     super(props);
-    const { data, insertToCollection } = this.props;
+    const { insertToCollection } = this.props;
     this.state = {
       videoListOpen: false,
       startedListOpen: false,
@@ -41,8 +41,7 @@ class VideoList extends Component {
       watchedListOpen: false,
       inProgressListOpen: false,
       openedVideo: null,
-      checkedVideos: [],
-      data
+      checkedVideos: []
     };
 
     this.insertToCollection = insertToCollection;
@@ -102,7 +101,8 @@ class VideoList extends Component {
       inProgressVideos,
       collection,
       socket,
-      loadVideos
+      loadVideos,
+      data
     } = this.props;
     const {
       startedListOpen,
@@ -111,7 +111,6 @@ class VideoList extends Component {
       inProgressListOpen,
       openedVideo,
       videoListOpen,
-      data,
       checkedVideos
     } = this.state;
 
