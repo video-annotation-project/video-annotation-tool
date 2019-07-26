@@ -262,7 +262,7 @@ class ConceptCollection extends Component {
     concepts1.sort((a, b) => (a.id > b.id ? 1 : -1));
     concepts2.sort((a, b) => (a.id > b.id ? 1 : -1));
 
-    concepts1.forEach((index, concept) => {
+    concepts1.forEach((concept, index) => {
       if (concept.id !== concepts2[index].id) return false;
     });
 
