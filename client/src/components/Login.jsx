@@ -1,18 +1,18 @@
-import React, { Component } from "react";
-import Typography from "@material-ui/core/Typography";
-import { withStyles } from "@material-ui/core/styles";
-import axios from "axios";
-import TextField from "@material-ui/core/TextField";
-import Button from "@material-ui/core/Button";
-import Swal from "sweetalert2";
+import React, { Component } from 'react';
+import Typography from '@material-ui/core/Typography';
+import { withStyles } from '@material-ui/core/styles';
+import axios from 'axios';
+import TextField from '@material-ui/core/TextField';
+import Button from '@material-ui/core/Button';
+import Swal from 'sweetalert2';
 
 const styles = {
   root: {
-    height: "70vh",
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "center"
+    height: '70vh',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center'
   }
 };
 
@@ -20,8 +20,8 @@ class Login extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      username: "",
-      password: "",
+      username: '',
+      password: '',
       errorMsg: null,
       open: false //For error modal box
     };
@@ -44,25 +44,25 @@ class Login extends Component {
       password: password
     };
     axios
-      .post("/api/users/login", body, {
-        headers: { "Content-Type": "application/json" }
+      .post('/api/users/login', body, {
+        headers: { 'Content-Type': 'application/json' }
       })
       .then(res => {
-        localStorage.setItem("isAuthed", "true");
-        localStorage.setItem("userid", res.data.userid);
-        localStorage.setItem("username", username);
-        localStorage.setItem("token", res.data.token);
+        localStorage.setItem('isAuthed', 'true');
+        localStorage.setItem('userid', res.data.userid);
+        localStorage.setItem('username', username);
+        localStorage.setItem('token', res.data.token);
         //Add code for isAdmin
         if (res.data.isAdmin) {
-          localStorage.setItem("admin", res.data.isAdmin);
+          localStorage.setItem('admin', res.data.isAdmin);
         }
-        window.location.replace("/");
+        window.location.replace('/');
       })
       .catch(error => {
         console.log(error);
         if (error.response) {
           console.log(error.response);
-          Swal.fire(error.response.data.detail, "", "error");
+          Swal.fire(error.response.data.detail, '', 'error');
         }
       });
   };

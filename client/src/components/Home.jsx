@@ -1,13 +1,13 @@
-import React, { Component } from "react";
-import Typography from "@material-ui/core/Typography";
-import { withStyles } from "@material-ui/core/styles";
+import React, { Component } from 'react';
+import Typography from '@material-ui/core/Typography';
+import { withStyles } from '@material-ui/core/styles';
 
 const styles = {
   root: {
-    height: "70vh",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
+    height: '70vh',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
     fontSize: 32
   }
 };
@@ -26,9 +26,7 @@ class HomePage extends Component {
   render() {
     const { classes } = this.props;
     return (
-      <Typography
-        className={classes.root}
-      >
+      <Typography className={classes.root}>
         Welcome {localStorage.username}
       </Typography>
     );
