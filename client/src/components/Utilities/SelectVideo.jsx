@@ -56,13 +56,34 @@ class SelectVideo extends React.Component {
     });
   };
 
+  loadVideoList = () => {
+    const { value } = this.props;
+    const { loaded, videos } = this.state;
+
+    if (!loaded) return <Typography>Loading...</Typography>;
+
+    if (videos.length === 0)
+      return <Typography>No videos for current selection</Typography>;
+
+    return videos.map(video => (
+      <FormControlLabel
+        key={video.id}
+        value={video.id.toString()}
+        control={<Checkbox color="primary" />}
+        label={`${video.id} ${video.filename}`}
+        checked={value.includes(video.id.toString())}
+      />
+    ));
+  };
+
   render() {
     const {
       classes,
       value,
       handleChange,
       handleSelectAll,
-      handleUnselectAll
+      handleUnselectAll,
+      handleChangeList
     } = this.props;
     const { videos, videoCollections } = this.state;
 
@@ -94,25 +115,9 @@ class SelectVideo extends React.Component {
             <FormGroup
               className={classes.group}
               value={value}
-              onChange={this.props.handleChangeList}
+              onChange={handleChangeList}
             >
-              {!this.state.loaded ? (
-                <Typography>Loading...</Typography>
-              ) : videos.length === 0 ? (
-                <Typography>No videos for current selection</Typography>
-              ) : (
-                <React.Fragment>
-                  {videos.map(video => (
-                    <FormControlLabel
-                      key={video.id}
-                      value={video.id.toString()}
-                      control={<Checkbox color="primary" />}
-                      label={video.id + ' ' + video.filename}
-                      checked={value.includes(video.id.toString())}
-                    />
-                  ))}
-                </React.Fragment>
-              )}
+              {this.loadVideoList()}
             </FormGroup>
           </FormControl>
         </Grid>
