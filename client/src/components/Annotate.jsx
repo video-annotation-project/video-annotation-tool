@@ -34,11 +34,10 @@ const styles = () => ({
 
 class Annotate extends Component {
   static handleUnload = ev => {
-    const event = ev;
     const videoElement = document.getElementById('video');
     if (!videoElement.paused) {
-      event.preventDefault();
-      event.returnValue = 'Are you sure you want to close?';
+      ev.preventDefault();
+      ev.returnValue = 'Are you sure you want to close?';
     }
   };
 
@@ -381,14 +380,13 @@ class Annotate extends Component {
     x1,
     y1
   ) => {
-    const image = videoImage;
-    this.uploadImage(image, date, false);
+    this.uploadImage(videoImage, date, false);
     ctx.lineWidth = '2';
     ctx.strokeStyle = 'coral';
     ctx.rect(x1, y1, dragBoxCord.width, dragBoxCord.height);
     ctx.stroke();
-    image.src = canvas.toDataURL(1.0);
-    this.uploadImage(image, date, true);
+    videoImage.src = canvas.toDataURL(1.0);
+    this.uploadImage(videoImage, date, true);
   };
 
   uploadImage = (img, date, box) => {
