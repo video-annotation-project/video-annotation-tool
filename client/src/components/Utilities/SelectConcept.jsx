@@ -1,5 +1,4 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import FormGroup from '@material-ui/core/FormGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
@@ -30,7 +29,7 @@ const styles = theme => ({
   list: {
     marginTop: theme.spacing(2),
     overflow: 'auto',
-    maxHeight: (280 + theme.spacing(4)).toString() + 'px'
+    maxHeight: `${280 + theme.spacing(4)}px`
   }
 });
 
@@ -44,18 +43,27 @@ class SelectConcept extends React.Component {
   }
 
   componentDidMount = async () => {
-    let concepts = await this.props.getConcepts();
-    let conceptCollections = await this.props.getConceptCollections();
+    const { getConcepts, getConceptCollections } = this.props;
+
+    const concepts = await getConcepts();
+    const conceptCollections = await getConceptCollections();
 
     this.setState({
-      concepts: concepts,
-      conceptCollections: conceptCollections
+      concepts,
+      conceptCollections
     });
   };
 
   render() {
-    const { classes, value, handleChangeList } = this.props;
-    const { concepts } = this.state;
+    const {
+      classes,
+      value,
+      handleChange,
+      handleChangeList,
+      handleSelectAll,
+      handleUnselectAll
+    } = this.props;
+    const { concepts, conceptCollections } = this.state;
 
     return (
       <Grid container spacing={5}>
@@ -66,7 +74,7 @@ class SelectConcept extends React.Component {
               className={classes.button}
               color="primary"
               onClick={() => {
-                this.props.handleSelectAll(concepts, value, 'selectedConcepts');
+                handleSelectAll(concepts, value, 'selectedConcepts');
               }}
             >
               Select All
@@ -75,7 +83,7 @@ class SelectConcept extends React.Component {
               className={classes.button}
               color="primary"
               onClick={() => {
-                this.props.handleUnselectAll('selectedConcepts');
+                handleUnselectAll('selectedConcepts');
               }}
             >
               Unselect All
@@ -87,15 +95,19 @@ class SelectConcept extends React.Component {
               value={value}
               onChange={handleChangeList}
             >
-              {this.state.concepts
+              {concepts
                 .filter(concept => concept.rank)
                 .map(concept => (
                   <FormControlLabel
                     key={concept.id}
                     value={concept.id.toString()}
                     control={<Checkbox color="primary" />}
-                    label={<div>{concept.id + '. ' + concept.name}</div>}
-                    checked={this.props.value.includes(concept.id.toString())}
+                    label={
+                      <div>
+                        {concept.id} {concept.name}
+                      </div>
+                    }
+                    checked={value.includes(concept.id.toString())}
                   />
                 ))}
             </FormGroup>
@@ -104,7 +116,7 @@ class SelectConcept extends React.Component {
         <Grid item>
           <Typography>Select concept collection</Typography>
           <List className={classes.list}>
-            {this.state.conceptCollections.map(conceptCollection => (
+            {conceptCollections.map(conceptCollection => (
               <ListItem key={conceptCollection.id}>
                 <Tooltip
                   title={
@@ -122,15 +134,15 @@ class SelectConcept extends React.Component {
                       disabled={!conceptCollection.conceptids[0]}
                       onClick={() => {
                         if (conceptCollection.conceptids[0]) {
-                          let conceptids = [];
-                          this.state.concepts.forEach(concept => {
+                          const conceptids = [];
+                          concepts.forEach(concept => {
                             if (
                               conceptCollection.conceptids.includes(concept.id)
                             ) {
                               conceptids.push(concept.id.toString());
                             }
                           });
-                          this.props.handleChange(conceptids);
+                          handleChange(conceptids);
                         }
                       }}
                     >
@@ -149,9 +161,5 @@ class SelectConcept extends React.Component {
     );
   }
 }
-
-SelectConcept.propTypes = {
-  classes: PropTypes.object.isRequired
-};
 
 export default withStyles(styles)(SelectConcept);

@@ -1,5 +1,4 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import FormControl from '@material-ui/core/FormControl';
@@ -31,21 +30,28 @@ class SelectUser extends React.Component {
   }
 
   componentDidMount = async () => {
-    let users = await this.props.getUsers();
+    const { getUsers, selectUser } = this.props;
+    const users = await getUsers();
 
     this.setState({
-      users: users
+      users
     });
 
     if (
       users.some(user => user.id.toString() === localStorage.getItem('userid'))
     ) {
-      this.props.selectUser(localStorage.getItem('userid'));
+      selectUser(localStorage.getItem('userid'));
     }
   };
 
   render() {
-    const { classes, value, handleChangeList } = this.props;
+    const {
+      classes,
+      value,
+      handleChangeList,
+      handleSelectAll,
+      handleUnselectAll
+    } = this.props;
     const { users } = this.state;
 
     return (
@@ -56,7 +62,7 @@ class SelectUser extends React.Component {
             className={classes.button}
             color="primary"
             onClick={() => {
-              this.props.handleSelectAll(users, value, 'selectedUsers');
+              handleSelectAll(users, value, 'selectedUsers');
             }}
           >
             Select All
@@ -65,7 +71,7 @@ class SelectUser extends React.Component {
             className={classes.button}
             color="primary"
             onClick={() => {
-              this.props.handleUnselectAll('selectedUsers');
+              handleUnselectAll('selectedUsers');
             }}
           >
             Unselect All
@@ -78,13 +84,13 @@ class SelectUser extends React.Component {
             value={value}
             onChange={handleChangeList}
           >
-            {this.state.users.map(user => (
+            {users.map(user => (
               <FormControlLabel
                 key={user.id}
                 value={user.id.toString()}
                 control={<Checkbox color="primary" />}
                 label={user.username}
-                checked={this.props.value.includes(user.id.toString())}
+                checked={value.includes(user.id.toString())}
               />
             ))}
           </FormGroup>
@@ -93,9 +99,5 @@ class SelectUser extends React.Component {
     );
   }
 }
-
-SelectUser.propTypes = {
-  classes: PropTypes.object.isRequired
-};
 
 export default withStyles(styles)(SelectUser);
