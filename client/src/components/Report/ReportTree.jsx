@@ -48,12 +48,11 @@ class ReportTree extends Component {
     const { levelName } = this.state;
     try {
       const treeData = await axios.get(
-        `api/annotations/treeData?` +
-          `levelName=${levelName}&` +
-          `queryConditions=${queryConditions}&` +
-          `unsureOnly=${unsureOnly}&` +
-          `verifiedCondition=${verifiedCondition}&` +
-          `admin=${localStorage.getItem('admin')}`,
+        `api/annotations/treeData?levelName=${levelName}&
+        queryConditions=${queryConditions}&
+        unsureOnly=${unsureOnly}&
+        verifiedCondition=${verifiedCondition}&
+        admin=${localStorage.getItem('admin')}`,
         config
       );
       this.setState({

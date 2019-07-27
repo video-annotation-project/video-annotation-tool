@@ -78,14 +78,29 @@ class ReportModal extends Component {
     this.handleOptionAvailableToggle(level, event.target.value);
   };
 
-  renderOption = (opt, level) => {
-    if (opt.selected && opt.selected !== level) {
-      return;
-    }
+  renderDropdown = (levelName, levelValue, options) => {
+    const { classes } = this.props;
+    const stateName = levelName.replace(' ', '').toLowerCase();
+
     return (
-      <option key={level + opt.name} value={opt.name}>
-        {opt.name}
-      </option>
+      <FormControl className={classes.formControl}>
+        <InputLabel>{levelName}</InputLabel>
+        <Select
+          native
+          value={levelValue}
+          onChange={event => this.handleOptionChange(stateName, event)}
+        >
+          {options.map(opt =>
+            opt.selected && opt.selected !== stateName ? (
+              ''
+            ) : (
+              <option key={levelName + opt.name} value={opt.name}>
+                {opt.name}
+              </option>
+            )
+          )}
+        </Select>
+      </FormControl>
     );
   };
 
@@ -113,39 +128,11 @@ class ReportModal extends Component {
           <DialogTitle>Select Tree Structure:</DialogTitle>
           <DialogContent>
             <form className={classes.container}>
-              <FormControl className={classes.formControl}>
-                <InputLabel>Level 1</InputLabel>
-                <Select
-                  native
-                  value={level1}
-                  onChange={event => this.handleOptionChange('level1', event)}
-                >
-                  {options.map(opt => this.renderOption(opt, 'level1'))}
-                </Select>
-              </FormControl>
-
-              <FormControl className={classes.formControl}>
-                <InputLabel>Level 2</InputLabel>
-                <Select
-                  native
-                  value={level2}
-                  onChange={event => this.handleOptionChange('level2', event)}
-                >
-                  {options.map(opt => this.renderOption(opt, 'level2'))}
-                </Select>
-              </FormControl>
+              {this.renderDropdown('Level 1', level1, options)}
+              {this.renderDropdown('Level 2', level2, options)}
 
               {localStorage.getItem('admin') ? (
-                <FormControl className={classes.formControl}>
-                  <InputLabel>Level 3</InputLabel>
-                  <Select
-                    native
-                    value={level3}
-                    onChange={event => this.handleOptionChange('level3', event)}
-                  >
-                    {options.map(opt => this.renderOption(opt, 'level3'))}
-                  </Select>
-                </FormControl>
+                this.renderDropdown('Level 3', level3, options)
               ) : (
                 <div />
               )}
