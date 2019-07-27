@@ -144,10 +144,7 @@ class Navbar extends React.Component {
             align="left"
             className={classes.pathname}
           >
-            {// eslint-disable-next-line
-            this.titleCase(location.pathname)
-            // replace(/[\/]/g, ' ')
-            }
+            {this.titleCase(location.pathname)}
             <Divider />
           </Typography>
         ) : (
