@@ -36,7 +36,7 @@ class AIvideoList extends Component {
 
   toggle = list => {
     this.setState(prevState => ({
-      [list]: !prevState.list
+      [list]: !prevState[list]
     }));
   };
 

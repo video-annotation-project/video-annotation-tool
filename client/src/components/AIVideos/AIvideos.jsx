@@ -82,7 +82,7 @@ class Annotate extends Component {
   };
 
   componentWillUnmount = () => {
-    const socket = this.state;
+    const { socket } = this.state;
     // this.updateCheckpoint(false, false);
     socket.disconnect();
     window.removeEventListener('beforeunload', this.handleUnload);
