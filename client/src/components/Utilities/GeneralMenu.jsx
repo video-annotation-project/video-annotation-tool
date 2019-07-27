@@ -1,13 +1,14 @@
-/* eslint-disable react/destructuring-assignment */
 import React from 'react';
 import Button from '@material-ui/core/Button';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 
 const GeneralMenu = props => {
+  const { disabled, name, Link, items } = props;
+  let { color, variant } = props;
   const [anchorEl, setAnchorEl] = React.useState(null);
-  const color = props.color ? props.color : 'inherit';
-  const variant = props.variant ? props.variant : 'text';
+  color = color || 'inherit';
+  variant = variant || 'text';
 
   function handleClick(event) {
     setAnchorEl(event.currentTarget);
@@ -27,9 +28,9 @@ const GeneralMenu = props => {
         variant={variant}
         color={color}
         onClick={handleClick}
-        disabled={props.disabled}
+        disabled={disabled}
       >
-        {props.name}
+        {name}
       </Button>
       <Menu
         id="simple-menu"
@@ -38,8 +39,8 @@ const GeneralMenu = props => {
         open={Boolean(anchorEl)}
         onClose={handleClose}
       >
-        {props.Link
-          ? props.items.map(item => (
+        {Link
+          ? items.map(item => (
               <MenuItem
                 key={item.name}
                 component={props.Link}
@@ -49,7 +50,7 @@ const GeneralMenu = props => {
                 {item.name}
               </MenuItem>
             ))
-          : props.items.map(item => (
+          : items.map(item => (
               <MenuItem key={item.name} onClick={() => handleInsert(item.id)}>
                 {`${item.id} ${item.name}`}
               </MenuItem>

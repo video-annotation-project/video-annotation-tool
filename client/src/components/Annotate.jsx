@@ -475,7 +475,7 @@ class Annotate extends Component {
           <DragBoxContainer
             className={classes.videoContainer}
             dragBox={classes.dragBox}
-            drawDragBox={false}
+            drawDragBoxProp={false}
             size={{
               width,
               height

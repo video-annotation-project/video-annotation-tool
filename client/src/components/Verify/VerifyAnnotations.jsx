@@ -702,7 +702,7 @@ class VerifyAnnotations extends Component {
                   <DragBoxContainer
                     className={classes.img}
                     dragBox={classes.dragBox}
-                    drawDragBox={drawDragBox}
+                    drawDragBoxProp={drawDragBox}
                     toggleDragBox={this.toggleDragBox}
                     size={{
                       width,
