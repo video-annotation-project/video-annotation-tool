@@ -213,7 +213,7 @@ class Annotate extends Component {
       <React.Fragment>
         <Hotkeys keyName="space, right, left" onKeyDown={this.handleKeyDown} />
         <Grid container className={classes.root} spacing={2}>
-          <Grid item xs={3}>
+          <Grid item xs>
             <AIvideoList
               handleVideoClick={this.handleVideoClick}
               aiVideos={aiVideos}
@@ -221,12 +221,16 @@ class Annotate extends Component {
               loadVideos={this.loadVideos}
             />
           </Grid>
-          <Grid item xs={9}>
+          <Grid item xs>
             <Typography variant="h5">
               {`${currentVideo.id} ${currentVideo.filename}`}
             </Typography>
           </Grid>
-          <Grid item xs={12}>
+          <Grid item xs />
+        </Grid>
+        <Grid container className={classes.root} spacing={2}>
+          <Grid item xs />
+          <Grid item xs alignItems="center">
             <div>
               <DragBoxContainer className={classes.videoContainer}>
                 <video
@@ -244,9 +248,9 @@ class Annotate extends Component {
               </DragBoxContainer>
               <div
                 style={{
-                  marginTop: '10px',
-                  marginLeft: '20px',
-                  marginBottom: '10px',
+                  // marginTop: '10px',
+                  // marginLeft: '20px',
+                  // marginBottom: '10px',
                   float: 'left'
                 }}
               >
@@ -262,8 +266,9 @@ class Annotate extends Component {
                   onChange={this.handleChangeSpeed}
                 />
                 <Typography
+                  color="textSecondary"
                   style={{
-                    marginTop: 20
+                    marginTop: 0
                   }}
                 >
                   Play Rate: {videoPlaybackRate}
@@ -298,11 +303,13 @@ class Annotate extends Component {
                 color="primary"
                 className={classes.button}
                 onClick={() => this.toggleVideoControls()}
+                style={{ float: 'right' }}
               >
                 Toggle Controls
               </Button>
             </div>
           </Grid>
+          <Grid item xs />
         </Grid>
       </React.Fragment>
     );
