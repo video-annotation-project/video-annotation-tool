@@ -75,9 +75,9 @@ class Navbar extends React.Component {
             >
               Video Annotation Tool
             </Typography>
-            <Button color="inherit" component={Link} to="/">
+            {/* <Button color="inherit" component={Link} to="/">
               Home
-            </Button>
+            </Button> */}
             {localStorage.getItem('isAuthed') ? (
               <React.Fragment>
                 <Button color="inherit" component={Link} to="/concepts">
@@ -113,12 +113,13 @@ class Navbar extends React.Component {
                         { name: 'View Models', link: '/models/view' },
                         { name: 'Train Models', link: '/models/train' },
                         { name: 'Predict Models', link: '/models/predict' },
-                        { name: 'Previous Models', link: '/models/runs' }
+                        { name: 'Previous Models', link: '/models/runs' },
+                        { name: 'Ai Videos', link: '/aivideos' }
                       ]}
                     />
-                    <Button color="inherit" component={Link} to="/aivideos">
+                    {/* <Button color="inherit" component={Link} to="/aivideos">
                       AI Videos
-                    </Button>
+                    </Button> */}
                     {/* <Button color="inherit" component={Link} to="/users">
                       Users
                     </Button> */}
