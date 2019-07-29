@@ -8,21 +8,34 @@ import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import Paper from '@material-ui/core/Paper';
 import TextField from '@material-ui/core/TextField';
-import { Grid } from '@material-ui/core';
+import { Grid, Typography } from '@material-ui/core';
 
 const STATUS_SUCESS_CODE = 200;
 
 const styles = theme => ({
+  welcome: {
+    height: '70vh',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    fontSize: 32
+  },
+  welcomeUser: {
+    marginTop: theme.spacing(8),
+    marginBottom: theme.spacing(4),
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    fontSize: 32
+  },
   root: {
     display: 'flex',
     flexWrap: 'wrap'
   },
   formControl: {
-    margin: theme.spacing(),
+    marginRight: theme.spacing(2),
+    marginBottom: theme.spacing(2),
     minWidth: 120
-  },
-  selectEmpty: {
-    marginTop: theme.spacing(2)
   }
 });
 
@@ -42,30 +55,13 @@ class Home extends Component {
   };
 
   componentWillMount() {
-    this.initDatepickers();
-    console.log(this.state);
-    this.getCounts(this.state.fromDate, this.state.toDate);
+    const fromDate = this.formatDate(new Date('1970-01-01T00:00:00'));
+    const toDate = this.formatDate(new Date());
+    this.setState({ fromDate, toDate });
+    this.getCounts(fromDate.ISOString, toDate.ISOString);
   }
 
-  initDatepickers = () => {
-    const to = new Date();
-    const firstMonthDigit = '01'; // January
-    const firstDateDigit = '01'; // 1st
-    const currentFullYear = to.getFullYear();
-    const firstHourOfDay = '00:00:00';
-    const firstDateOfYear = `${currentFullYear}-${firstDateDigit}-${firstMonthDigit}`;
-    const from = new Date(`${firstDateOfYear}T${firstHourOfDay}`);
-
-    const toDate = this.formatDate(to);
-    const fromDate = this.formatDate(from);
-
-    const SPACE_CHAR = ' ';
-    console.log(toDate.replace('T', SPACE_CHAR));
-
-    this.setState({ fromDate, toDate });
-  };
-
-  /**
+  /*
    * Converts a date object into the locale ISO string format.
    * Format output: YYYY-MM-DDTHH:MM:SS
    */
@@ -98,7 +94,7 @@ class Home extends Component {
     return `0${digit}`.slice(LAST_TWO_DIGITS);
   };
 
-  /**
+  /*
    * Encapsulates a Date object with other custom date properties
    * @param date javascript Date object
    */
@@ -133,7 +129,7 @@ class Home extends Component {
     }
   };
 
-  /**
+  /*
    * Gets the total annotations from all species annotated
    */
   getTotalCount = () => {
@@ -187,57 +183,69 @@ class Home extends Component {
     const [annotationTotal, verificationTotal] = this.getTotalCount();
     return (
       <div className="users body-container">
-        <h2>Welcome {localStorage.username}</h2>
-        <Grid container alignItems="center" wrap="nowrap">
-          <Grid item>
-            <TextField
-              id="from-date"
-              label="From"
-              type="datetime-local"
-              name="fromDate"
-              className={classes.formControl}
-              defaultValue={fromDate.localeISOString}
-              onChange={this.handleDateChange}
-              InputLabelProps={{
-                shrink: true
-              }}
-            />
-          </Grid>
-          <Grid>
-            <TextField
-              id="to-date"
-              label="To"
-              type="datetime-local"
-              name="toDate"
-              className={classes.formControl}
-              defaultValue={toDate.localeISOString}
-              onChange={this.handleDateChange}
-              InputLabelProps={{
-                shrink: true
-              }}
-            />
-          </Grid>
-        </Grid>
-        <Paper>
-          <Table id="CountsTable">
-            <TableHead>
-              <TableRow>
-                <TableCell>Species</TableCell>
-                <TableCell align="right">Total Annotated</TableCell>
-                <TableCell align="right">Total Verified</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>{counts ? this.renderCounts() : null}</TableBody>
-          </Table>
-        </Paper>
-        <div style={{ clear: 'both' }}>
-          <h3 style={{ float: 'left' }}>
-            Total Annotations: {annotationTotal}
-          </h3>
-          <h3 style={{ float: 'right' }}>
-            Total Verifications: {verificationTotal}
-          </h3>
-        </div>
+        <Typography
+          className={
+            localStorage.username ? classes.welcomeUser : classes.welcome
+          }
+        >
+          Welcome {localStorage.username}
+        </Typography>
+        {localStorage.username ? (
+          <React.Fragment>
+            <Grid container alignItems="center" wrap="nowrap">
+              <Grid item>
+                <TextField
+                  id="from-date"
+                  label="From"
+                  type="datetime-local"
+                  name="fromDate"
+                  className={classes.formControl}
+                  defaultValue={fromDate.localeISOString}
+                  onChange={this.handleDateChange}
+                  InputLabelProps={{
+                    shrink: true
+                  }}
+                />
+              </Grid>
+              <Grid>
+                <TextField
+                  id="to-date"
+                  label="To"
+                  type="datetime-local"
+                  name="toDate"
+                  className={classes.formControl}
+                  defaultValue={toDate.localeISOString}
+                  onChange={this.handleDateChange}
+                  InputLabelProps={{
+                    shrink: true
+                  }}
+                />
+              </Grid>
+            </Grid>
+            <Paper>
+              <Table id="CountsTable">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Species</TableCell>
+                    <TableCell align="right">Total Annotated</TableCell>
+                    <TableCell align="right">Total Verified</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>{counts ? this.renderCounts() : null}</TableBody>
+              </Table>
+            </Paper>
+            <div style={{ clear: 'both' }}>
+              <h3 style={{ float: 'left' }}>
+                Total Annotations: {annotationTotal}
+              </h3>
+              <h3 style={{ float: 'right' }}>
+                Total Verifications: {verificationTotal}
+              </h3>
+            </div>
+          </React.Fragment>
+        ) : (
+          ''
+        )}
       </div>
     );
   }
