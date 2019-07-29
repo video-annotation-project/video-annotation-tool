@@ -23,11 +23,14 @@ const styles = theme => ({
 class ConceptsList extends React.Component {
   constructor(props) {
     super(props);
+    const { changeConceptsSelected } = this.props;
     this.state = {
       concepts: [],
       isLoaded: false,
       error: null
     };
+
+    this.changeConceptsSelected = changeConceptsSelected;
   }
 
   getChildrenConcepts = async id => {
@@ -38,7 +41,7 @@ class ConceptsList extends React.Component {
       .then(res => res.data)
       .catch(error => {
         this.setState({
-          isloaded: true,
+          isLoaded: true,
           error
         });
       });
@@ -50,11 +53,16 @@ class ConceptsList extends React.Component {
     if (!concepts) {
       return;
     }
+
+    // disabled eslint because forEach does not work for this situation
+    // eslint-disable-next-line no-restricted-syntax
     for (const concept of concepts) {
+      // eslint-disable-next-line no-await-in-loop
       const children = await this.getChildrenConcepts(concept.id);
       concept.expandable = children && children.length;
       concept.expanded = false;
     }
+    console.log(concepts);
     this.setState({
       isLoaded: true,
       concepts
@@ -63,17 +71,28 @@ class ConceptsList extends React.Component {
 
   handleCheckBoxClick = (event, id) => {
     event.stopPropagation();
-    this.props.changeConceptsSelected(id);
+    this.changeConceptsSelected(id);
+  };
+
+  ternaryOpLoop = (firstif, secondif) => {
+    if (firstif) {
+      if (secondif) {
+        return <ExpandLess />;
+      }
+      return <ExpandMore />;
+    }
+    return '';
   };
 
   handleConceptClick = id => {
-    const concepts = JSON.parse(JSON.stringify(this.state.concepts));
-    const concept = concepts.find(concept => concept.id === id);
+    const { concepts } = this.state;
+    const conceptsLocal = JSON.parse(JSON.stringify(concepts));
+    const concept = conceptsLocal.find(con => con.id === id);
     if (concept.expandable) {
       concept.expanded = !concept.expanded;
     }
     this.setState({
-      concepts
+      concepts: conceptsLocal
     });
   };
 
@@ -87,6 +106,7 @@ class ConceptsList extends React.Component {
     if (error) {
       return <List>Error: {error.message}</List>;
     }
+    console.log(concepts);
     return (
       <List disablePadding className={classes.nested}>
         {concepts.map(concept => (
@@ -99,7 +119,7 @@ class ConceptsList extends React.Component {
                 src={`https://cdn.deepseaannotations.com/concept_images/${concept.picture}`}
               />
               <ListItemText inset primary={concept.name} />
-              {concept.expandable ? (
+              {/* {concept.expandable ? (
                 concept.expanded ? (
                   <ExpandLess />
                 ) : (
@@ -107,7 +127,8 @@ class ConceptsList extends React.Component {
                 )
               ) : (
                 <div />
-              )}
+              )} */}
+              {this.ternaryOpLoop(concept.expandable, concept.expanded)}
               <ListItemSecondaryAction className={classes.shiftRight}>
                 <CheckBox
                   checked={Boolean(conceptsSelected[concept.id])}
