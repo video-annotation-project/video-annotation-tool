@@ -22,11 +22,9 @@ const styles = theme => ({
     flexWrap: 'wrap'
   },
   formControl: {
-    margin: theme.spacing(),
+    marginRight: theme.spacing(2),
+    marginBottom: theme.spacing(2),
     minWidth: 120
-  },
-  selectEmpty: {
-    marginTop: theme.spacing(2)
   }
 });
 
@@ -49,22 +47,10 @@ class Users extends Component {
 
   componentWillMount() {
     this.getUsers();
-    this.initDatepickers();
-  }
-
-  initDatepickers = () => {
-    const to = new Date();
-    const firstMonthDigit = '01'; // January
-    const firstDateDigit = '01'; // 1st
-    const currentFullYear = to.getFullYear();
-    const firstHourOfDay = '00:00:00';
-    const firstDateOfYear = `${currentFullYear}-${firstDateDigit}-${firstMonthDigit}`;
-    const from = new Date(`${firstDateOfYear}T${firstHourOfDay}`);
-
-    const toDate = this.formatDate(to);
-    const fromDate = this.formatDate(from);
+    const fromDate = this.formatDate(new Date('1970-01-01T00:00:00'));
+    const toDate = this.formatDate(new Date());
     this.setState({ fromDate, toDate });
-  };
+  }
 
   /**
    * Converts a date object into the locale ISO string format.
@@ -232,7 +218,6 @@ class Users extends Component {
     const [annotationTotal, verificationTotal] = this.getTotalCount();
     return (
       <div className="users body-container">
-        <h2>Users</h2>
         <Grid container alignItems="center" wrap="nowrap">
           <Grid item>
             <FormControl className={classes.formControl}>
