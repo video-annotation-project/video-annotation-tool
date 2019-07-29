@@ -691,62 +691,72 @@ class VerifyAnnotations extends Component {
                 </div>
               </div>
             ) : (
-              <div>
-                <Hotkeys keyName="r, d, i, v" onKeyDown={this.handleKeyDown} />
-                <div
-                  style={{
-                    width: annotation.videowidth,
-                    height: annotation.videoheight
-                  }}
-                >
-                  <DragBoxContainer
-                    className={classes.img}
-                    dragBox={classes.dragBox}
-                    drawDragBoxProp={drawDragBox}
-                    toggleDragBox={this.toggleDragBox}
-                    size={{
-                      width,
-                      height
-                    }}
-                    position={{ x, y }}
-                    onDragStop={(e, d) => {
-                      this.setState({ x: d.x, y: d.y });
-                    }}
-                    onResize={(e, direction, ref, delta, position) => {
-                      this.setState({
-                        width: ref.style.width,
-                        height: ref.style.height,
-                        ...position
-                      });
-                    }}
-                  >
-                    <img
-                      id="image"
-                      onLoad={Swal.close}
-                      onError={this.handleErrImage}
-                      className={classes.img}
-                      src={`https://cdn.deepseaannotations.com/test/${annotation.image}`}
-                      alt="error"
-                      crossOrigin="use-credentials"
+              <Grid container className={classes.root} spacing={0}>
+                <Grid item xs />
+                <Grid item xs>
+                  <div>
+                    <Hotkeys
+                      keyName="r, d, i, v"
+                      onKeyDown={this.handleKeyDown}
+                    />
+                    <div
                       style={{
                         width: annotation.videowidth,
                         height: annotation.videoheight
                       }}
-                    />
-                  </DragBoxContainer>
-                </div>
-                <Typography className={classes.paper}>
-                  {index + 1} of {size}
-                </Typography>
-                {this.optionButtons(annotation)}
-                {this.annotationConcept(annotation)}
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
-              </div>
+                    >
+                      <DragBoxContainer
+                        className={classes.img}
+                        dragBox={classes.dragBox}
+                        drawDragBoxProp={drawDragBox}
+                        toggleDragBox={this.toggleDragBox}
+                        size={{
+                          width,
+                          height
+                        }}
+                        position={{ x, y }}
+                        onDragStop={(e, d) => {
+                          this.setState({ x: d.x, y: d.y });
+                        }}
+                        onResize={(e, direction, ref, delta, position) => {
+                          this.setState({
+                            width: ref.style.width,
+                            height: ref.style.height,
+                            ...position
+                          });
+                        }}
+                      >
+                        <img
+                          id="image"
+                          onLoad={Swal.close}
+                          onError={this.handleErrImage}
+                          className={classes.img}
+                          src={`https://cdn.deepseaannotations.com/test/${annotation.image}`}
+                          alt="error"
+                          crossOrigin="use-credentials"
+                          style={{
+                            width: annotation.videowidth,
+                            height: annotation.videoheight
+                          }}
+                        />
+                      </DragBoxContainer>
+                    </div>
+                    <Typography className={classes.paper}>
+                      {index + 1} of {size}
+                    </Typography>
+                    {this.optionButtons(annotation)}
+                    {this.annotationConcept(annotation)}
+                    <br />
+                    <br />
+                    <br />
+                    <br />
+                    <br />
+                    <br />
+                  </div>
+                  {this.annotationDetails(annotation)}
+                </Grid>
+                <Grid item xs />
+              </Grid>
             )}
           </React.Fragment>
         ) : (
@@ -772,7 +782,6 @@ class VerifyAnnotations extends Component {
             model={false}
           />
         )}
-        {this.annotationDetails(annotation)}
       </React.Fragment>
     );
   }

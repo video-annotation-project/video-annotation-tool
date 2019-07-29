@@ -103,7 +103,7 @@ router.get(
       ON
         a.id=ai.annotationid
       WHERE
-        ai.id = ANY($1::int[]);
+        ai.id = ANY($1::int[]) and a.verifiedby IS NULL;
     `;
 
     try {

@@ -8,6 +8,7 @@ import Slider from '@material-ui/core/Slider';
 import Swal from 'sweetalert2';
 
 import Hotkeys from 'react-hot-keys';
+import Grid from '@material-ui/core/Grid';
 import ConceptsSelected from './Utilities/ConceptsSelected';
 import DialogModal from './Utilities/DialogModal';
 import VideoList from './Utilities/VideoList';
@@ -460,119 +461,140 @@ class Annotate extends Component {
     return (
       <React.Fragment>
         <Hotkeys keyName="space, right, left" onKeyDown={this.handleKeyDown} />
-        <ConceptsSelected handleConceptClick={this.handleConceptClick} />
-        <VideoList
-          handleVideoClick={this.handleVideoClick}
-          startedVideos={startedVideos}
-          unwatchedVideos={unwatchedVideos}
-          watchedVideos={watchedVideos}
-          inProgressVideos={inProgressVideos}
-          socket={socket}
-          loadVideos={this.loadVideos}
-        />
-        <div>
-          {`${currentVideo.id} ${currentVideo.filename}`}
-          <DragBoxContainer
-            className={classes.videoContainer}
-            dragBox={classes.dragBox}
-            drawDragBoxProp={false}
-            size={{
-              width,
-              height
-            }}
-            position={{ x, y }}
-            onDragStop={(e, d) => {
-              this.setState({ x: d.x, y: d.y });
-            }}
-            onResize={(e, direction, ref, delta, position) => {
-              this.setState({
-                width: ref.style.width,
-                height: ref.style.height,
-                ...position
-              });
-            }}
-          >
-            <video
-              onPause={() => this.updateCheckpoint(false, true)}
-              id="video"
-              width="1600"
-              height="900"
-              src={`https://cdn.deepseaannotations.com/videos/${currentVideo.filename}`}
-              type="video/mp4"
-              crossOrigin="use-credentials"
-            >
-              Your browser does not support the video tag.
-            </video>
-          </DragBoxContainer>
-          <div
-            style={{
-              marginTop: '10px',
-              marginLeft: '20px',
-              marginBottom: '10px',
-              float: 'left'
-            }}
-          >
-            <Slider
-              style={{
-                width: 200,
-                marginTop: 0
-              }}
-              value={videoPlaybackRate}
-              min={0}
-              max={4}
-              step={0.1}
-              onChange={this.handleChangeSpeed}
+        <Grid container className={classes.root} spacing={0}>
+          <Grid item xs>
+            <VideoList
+              handleVideoClick={this.handleVideoClick}
+              startedVideos={startedVideos}
+              unwatchedVideos={unwatchedVideos}
+              watchedVideos={watchedVideos}
+              inProgressVideos={inProgressVideos}
+              socket={socket}
+              loadVideos={this.loadVideos}
             />
-            <Typography
-              color="textSecondary"
-              style={{
-                marginTop: 0
+          </Grid>
+          <Grid item xs>
+            <Typography variant="h5">
+              {`${currentVideo.id} ${currentVideo.filename}`}
+            </Typography>
+          </Grid>
+          <Grid item xs>
+            <ConceptsSelected handleConceptClick={this.handleConceptClick} />
+          </Grid>
+        </Grid>
+        <Grid container className={classes.root} spacing={0}>
+          <Grid item xs />
+          <Grid item xs>
+            <DragBoxContainer
+              className={classes.videoContainer}
+              dragBox={classes.dragBox}
+              drawDragBoxProp={false}
+              size={{
+                width,
+                height
+              }}
+              position={{ x, y }}
+              onDragStop={(e, d) => {
+                this.setState({ x: d.x, y: d.y });
+              }}
+              onResize={(e, direction, ref, delta, position) => {
+                this.setState({
+                  width: ref.style.width,
+                  height: ref.style.height,
+                  ...position
+                });
               }}
             >
-              Play Rate: {videoPlaybackRate}
-            </Typography>
-          </div>
-          <Button
-            color="primary"
-            variant="contained"
-            className={classes.button}
-            onClick={() => Annotate.skipVideoTime(-5)}
-          >
-            -5 sec
-          </Button>
-          <Button
-            color="primary"
-            variant="contained"
-            className={classes.button}
-            onClick={Annotate.playPause}
-          >
-            Play/Pause
-          </Button>
-          <Button
-            color="primary"
-            variant="contained"
-            className={classes.button}
-            onClick={() => Annotate.skipVideoTime(5)}
-          >
-            +5 sec
-          </Button>
-          <Button
-            color="primary"
-            variant="contained"
-            className={classes.button}
-            onClick={() => Annotate.toggleVideoControls()}
-          >
-            Toggle Controls
-          </Button>
-          <Button
-            color="primary"
-            variant="contained"
-            className={classes.button}
-            onClick={() => this.handleDoneClick()}
-          >
-            Done
-          </Button>
-        </div>
+              <video
+                onPause={() => this.updateCheckpoint(false, true)}
+                id="video"
+                width="1600"
+                height="900"
+                src={`https://cdn.deepseaannotations.com/videos/${currentVideo.filename}`}
+                type="video/mp4"
+                crossOrigin="use-credentials"
+              >
+                Your browser does not support the video tag.
+              </video>
+            </DragBoxContainer>
+          </Grid>
+          <Grid item xs />
+        </Grid>
+        <Grid container className={classes.root} spacing={0}>
+          <Grid item xs />
+          <Grid item xs={6}>
+            <div
+              style={{
+                // marginTop: '10px',
+                // marginLeft: '20px',
+                // marginBottom: '10px',
+                float: 'left'
+              }}
+            >
+              <Slider
+                style={{
+                  width: 200,
+                  marginTop: 0
+                }}
+                value={videoPlaybackRate}
+                min={0}
+                max={4}
+                step={0.1}
+                onChange={this.handleChangeSpeed}
+              />
+              <Typography
+                color="textSecondary"
+                style={{
+                  marginTop: 0
+                }}
+              >
+                Play Rate: {videoPlaybackRate}
+              </Typography>
+            </div>
+            <Button
+              color="primary"
+              variant="contained"
+              className={classes.button}
+              onClick={() => Annotate.skipVideoTime(-5)}
+            >
+              -5 sec
+            </Button>
+            <Button
+              color="primary"
+              variant="contained"
+              className={classes.button}
+              onClick={Annotate.playPause}
+            >
+              Play/Pause
+            </Button>
+            <Button
+              color="primary"
+              variant="contained"
+              className={classes.button}
+              onClick={() => Annotate.skipVideoTime(5)}
+            >
+              +5 sec
+            </Button>
+            <Button
+              color="primary"
+              variant="contained"
+              className={classes.button}
+              onClick={() => Annotate.toggleVideoControls()}
+            >
+              Toggle Controls
+            </Button>
+            <Button
+              style={{ float: 'right' }}
+              color="primary"
+              variant="contained"
+              className={classes.button}
+              onClick={() => this.handleDoneClick()}
+            >
+              Done
+            </Button>
+          </Grid>
+          <Grid item xs />
+        </Grid>
         {dialogOpen && (
           <DialogModal
             title="Confirm Annotation"

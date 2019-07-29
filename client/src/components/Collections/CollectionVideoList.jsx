@@ -188,7 +188,7 @@ class CollectionVideoList extends Component {
           color="primary"
           onClick={() => this.toggle(true, 'CollectionOpen')}
         >
-          Toggle {collType} Collection List
+          {collType} Collection List
         </Button>
 
         <Drawer

@@ -122,7 +122,7 @@ class VideoList extends Component {
           color="primary"
           onClick={() => this.toggle('videoListOpen')}
         >
-          Toggle Video List
+          Video List
         </Button>
 
         <Drawer
