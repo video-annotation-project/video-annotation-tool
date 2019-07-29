@@ -1,16 +1,15 @@
-import React from "react";
-import axios from "axios";
-import PropTypes from "prop-types";
-import Avatar from "@material-ui/core/Avatar";
-import CheckBox from "@material-ui/core/Checkbox";
-import Collapse from "@material-ui/core/Collapse";
-import List from "@material-ui/core/List";
-import ListItem from "@material-ui/core/ListItem";
-import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
-import ListItemText from "@material-ui/core/ListItemText";
-import { withStyles } from "@material-ui/core/styles";
-import ExpandLess from "@material-ui/icons/ExpandLess";
-import ExpandMore from "@material-ui/icons/ExpandMore";
+import React from 'react';
+import axios from 'axios';
+import Avatar from '@material-ui/core/Avatar';
+import CheckBox from '@material-ui/core/Checkbox';
+import Collapse from '@material-ui/core/Collapse';
+import List from '@material-ui/core/List';
+import ListItem from '@material-ui/core/ListItem';
+import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
+import ListItemText from '@material-ui/core/ListItemText';
+import { withStyles } from '@material-ui/core/styles';
+import ExpandLess from '@material-ui/icons/ExpandLess';
+import ExpandMore from '@material-ui/icons/ExpandMore';
 
 const styles = theme => ({
   nested: {
@@ -34,30 +33,31 @@ class ConceptsList extends React.Component {
   getChildrenConcepts = async id => {
     return axios
       .get(`/api/concepts/${id}`, {
-        headers: { Authorization: "Bearer " + localStorage.getItem("token") }
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       })
       .then(res => res.data)
       .catch(error => {
         this.setState({
           isloaded: true,
-          error: error
+          error
         });
       });
   };
 
   componentDidMount = async () => {
-    let concepts = await this.getChildrenConcepts(this.props.id);
+    const { id } = this.props;
+    const concepts = await this.getChildrenConcepts(id);
     if (!concepts) {
       return;
     }
-    for (let concept of concepts) {
+    for (const concept of concepts) {
       const children = await this.getChildrenConcepts(concept.id);
       concept.expandable = children && children.length;
       concept.expanded = false;
     }
     this.setState({
       isLoaded: true,
-      concepts: concepts
+      concepts
     });
   };
 
@@ -67,13 +67,13 @@ class ConceptsList extends React.Component {
   };
 
   handleConceptClick = id => {
-    let concepts = JSON.parse(JSON.stringify(this.state.concepts));
-    let concept = concepts.find(concept => concept.id === id);
+    const concepts = JSON.parse(JSON.stringify(this.state.concepts));
+    const concept = concepts.find(concept => concept.id === id);
     if (concept.expandable) {
       concept.expanded = !concept.expanded;
     }
     this.setState({
-      concepts: concepts
+      concepts
     });
   };
 
@@ -95,7 +95,9 @@ class ConceptsList extends React.Component {
               button
               onClick={() => this.handleConceptClick(concept.id)}
             >
-              <Avatar src={`https://cdn.deepseaannotations.com/concept_images/${concept.picture}`} />
+              <Avatar
+                src={`https://cdn.deepseaannotations.com/concept_images/${concept.picture}`}
+              />
               <ListItemText inset primary={concept.name} />
               {concept.expandable ? (
                 concept.expanded ? (
@@ -128,9 +130,5 @@ class ConceptsList extends React.Component {
     );
   }
 }
-
-ConceptsList.propTypes = {
-  classes: PropTypes.object.isRequired
-};
 
 export default withStyles(styles)(ConceptsList);

@@ -35,11 +35,7 @@ const App = () => {
           <React.Fragment>
             {localStorage.getItem('admin') ? (
               <React.Fragment>
-                <Route
-                  exact
-                  path="/account/createUser"
-                  component={CreateUser}
-                />
+                <Route exact path="/account/create" component={CreateUser} />
                 <Route exact path="/models/create" component={CreateModel} />
                 <Route exact path="/models/predict" component={PredictModel} />
                 <Route exact path="/models/train" component={TrainModel} />

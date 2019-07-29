@@ -60,7 +60,8 @@ class Navbar extends React.Component {
     const { classes, location } = this.props;
     const accountItems = [{ name: 'Profile', link: '/account/profile' }];
     if (localStorage.getItem('admin')) {
-      accountItems.push({ name: 'Create User', link: '/account/createUser' });
+      accountItems.push({ name: 'Create User', link: '/account/create' });
+      accountItems.push({ name: 'Users', link: '/users' });
     }
 
     return (
@@ -118,9 +119,9 @@ class Navbar extends React.Component {
                     <Button color="inherit" component={Link} to="/aivideos">
                       AI Videos
                     </Button>
-                    <Button color="inherit" component={Link} to="/users">
+                    {/* <Button color="inherit" component={Link} to="/users">
                       Users
-                    </Button>
+                    </Button> */}
                   </React.Fragment>
                 ) : (
                   ''
