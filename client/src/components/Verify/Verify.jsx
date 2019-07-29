@@ -110,7 +110,9 @@ class Verify extends Component {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         }
       )
-      .then(res => res.data)
+      .then(res => {
+        return res.data;
+      })
       .catch(error => {
         console.log(error);
       });
