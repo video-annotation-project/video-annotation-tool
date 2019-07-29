@@ -1,13 +1,13 @@
-import React from "react";
-import axios from "axios";
-import { withStyles } from "@material-ui/core/styles";
-import List from "@material-ui/core/List";
+import React from 'react';
+import axios from 'axios';
+import { withStyles } from '@material-ui/core/styles';
+import List from '@material-ui/core/List';
 
-import ConceptsList from "./ConceptsList.jsx";
+import ConceptsList from './ConceptsList';
 
 const styles = theme => ({
   root: {
-    width: "100%",
+    width: '100%',
     backgroundColor: theme.palette.background.paper
   }
 });
@@ -24,12 +24,12 @@ class Concepts extends React.Component {
 
   getConceptsSelected = async () => {
     return axios
-      .get("/api/users/concepts", {
-        headers: { Authorization: "Bearer " + localStorage.getItem("token") }
+      .get('/api/users/concepts', {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       })
       .then(res => res.data)
       .then(conceptsSelectedList => {
-        let conceptsSelectedObj = {};
+        const conceptsSelectedObj = {};
         conceptsSelectedList.forEach(concept => {
           conceptsSelectedObj[concept.id] = true;
         });
@@ -41,8 +41,8 @@ class Concepts extends React.Component {
         if (!error.response) {
           return;
         }
-        let errMsg =
-          error.response.data.detail || error.response.data.message || "Error";
+        const errMsg =
+          error.response.data.detail || error.response.data.message || 'Error';
         console.log(errMsg);
         this.setState({
           isLoaded: true,
@@ -52,27 +52,27 @@ class Concepts extends React.Component {
   };
 
   componentDidMount = async () => {
-    let conceptsSelected = await this.getConceptsSelected();
+    const conceptsSelected = await this.getConceptsSelected();
     this.setState({
       isLoaded: true,
-      conceptsSelected: conceptsSelected
+      conceptsSelected
     });
   };
 
   changeConceptsSelected = async id => {
     const config = {
-      url: "/api/users/concepts",
+      url: '/api/users/concepts',
       headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + localStorage.getItem("token")
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`
       },
       data: {
-        id: id
+        id
       }
     };
-    let conceptsSelected = this.state.conceptsSelected;
+    const { conceptsSelected } = this.state;
     conceptsSelected[id] = !conceptsSelected[id];
-    config.method = conceptsSelected[id] ? "post" : "delete";
+    config.method = conceptsSelected[id] ? 'post' : 'delete';
     axios
       .request(config)
       .then(res => {
@@ -85,8 +85,8 @@ class Concepts extends React.Component {
         if (!error.response) {
           return;
         }
-        let errMsg =
-          error.response.data.detail || error.response.data.message || "Error";
+        const errMsg =
+          error.response.data.detail || error.response.data.message || 'Error';
         console.log(errMsg);
         this.setState({
           isLoaded: true,
@@ -96,7 +96,7 @@ class Concepts extends React.Component {
   };
 
   render() {
-    const { error, isLoaded } = this.state;
+    const { error, isLoaded, conceptsSelected } = this.state;
     const { classes } = this.props;
     if (!isLoaded) {
       return <List>Loading...</List>;
@@ -109,7 +109,7 @@ class Concepts extends React.Component {
         <br />
         <ConceptsList
           id={0}
-          conceptsSelected={this.state.conceptsSelected}
+          conceptsSelected={conceptsSelected}
           changeConceptsSelected={this.changeConceptsSelected}
         />
       </div>
