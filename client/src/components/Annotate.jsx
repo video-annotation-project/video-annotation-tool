@@ -106,6 +106,10 @@ class Annotate extends Component {
   }
 
   componentDidMount = async () => {
+    // localStorage.setItem('verifyAnnotation', null);
+    // localStorage.setItem('curIndex', 0);
+    // localStorage.setItem('selectionMounted', true);
+
     // add event listener for closing or reloading window
     window.addEventListener('beforeunload', Annotate.handleUnload);
 

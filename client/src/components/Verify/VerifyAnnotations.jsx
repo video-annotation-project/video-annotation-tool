@@ -107,6 +107,11 @@ class VerifyAnnotations extends Component {
     }
   };
 
+  loaded = () => {
+    this.resetState();
+    Swal.close();
+  };
+
   componentDidMount = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     this.displayLoading();
@@ -439,7 +444,7 @@ class VerifyAnnotations extends Component {
   };
 
   optionButtons = annotation => {
-    const { classes } = this.props;
+    const { classes, resetLocalStorage } = this.props;
     const { disableVerify, videoDialogOpen } = this.state;
     return (
       <div
@@ -469,6 +474,14 @@ class VerifyAnnotations extends Component {
           onClick={this.nextAnnotation}
         >
           Ignore
+        </Button>
+        <Button
+          className={classes.button}
+          variant="contained"
+          color="primary"
+          onClick={resetLocalStorage}
+        >
+          Reset To Filter
         </Button>
         <Button
           className={classes.button}
@@ -728,7 +741,7 @@ class VerifyAnnotations extends Component {
                       >
                         <img
                           id="image"
-                          onLoad={Swal.close}
+                          onLoad={this.loaded}
                           onError={this.handleErrImage}
                           className={classes.img}
                           src={`https://cdn.deepseaannotations.com/test/${annotation.image}`}
