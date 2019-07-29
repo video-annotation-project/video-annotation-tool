@@ -7,13 +7,14 @@ import { withStyles } from '@material-ui/core/styles';
 import Slider from '@material-ui/core/Slider';
 import Swal from 'sweetalert2';
 import Hotkeys from 'react-hot-keys';
+import Grid from '@material-ui/core/Grid';
 import VideoList from '../Utilities/VideoList';
 import CollectionList from './CollectionVideoList';
 import Annotate from '../Annotate';
 
 const styles = () => ({
   videoContainer: {
-    top: '50px',
+    top: '70px',
     width: '1600px',
     height: '900px'
   },
@@ -156,7 +157,9 @@ class videoCollection extends Component {
     } catch (error) {
       console.log(error);
       Swal.fire('Error Getting Collection', '', 'error');
+      return error;
     }
+    return false;
   };
 
   loadVideos = callback => {
@@ -420,110 +423,132 @@ class videoCollection extends Component {
     return (
       <React.Fragment>
         <Hotkeys keyName="space, right, left" onKeyDown={this.handleKeyDown} />
-        <CollectionList
-          collType="video"
-          createCollection={this.createCollection}
-          loadCollections={this.loadCollections}
-          deleteCollection={this.deleteVideoCollection}
-          insertToCollection={this.insertVideosToCollection}
-          openedVideo={currentVideo}
-        />
-        <VideoList
-          handleVideoClick={this.handleVideoClick}
-          startedVideos={startedVideos}
-          unwatchedVideos={unwatchedVideos}
-          watchedVideos={watchedVideos}
-          inProgressVideos={inProgressVideos}
-          socket={socket}
-          loadVideos={this.loadVideos}
-          /* these are props for collection component only */
-          collection
-          insertToCollection={this.insertVideosToCollection}
-          data={collections}
-        />
-        <div>
-          {`${currentVideo.id} ${currentVideo.filename}`}
-          <div className={classes.videoContainer}>
-            <video
-              onPause={() => this.updateCheckpoint(false, true)}
-              id="video"
-              width="1600"
-              height="900"
-              src={`https://cdn.deepseaannotations.com/videos/${currentVideo.filename}`}
-              type="video/mp4"
-              crossOrigin="use-credentials"
-            >
-              Your browser does not support the video tag.
-            </video>
-          </div>
-          <div
-            style={{
-              marginTop: '10px',
-              marginLeft: '20px',
-              marginBottom: '10px',
-              float: 'left'
-            }}
-          >
-            <Slider
-              style={{
-                width: 200,
-                marginTop: 10
-              }}
-              value={videoPlaybackRate}
-              min={0}
-              max={4}
-              step={0.1}
-              onChange={this.handleChangeSpeed}
+        <Grid container className={classes.root} spacing={0}>
+          <Grid item xs>
+            <VideoList
+              handleVideoClick={this.handleVideoClick}
+              startedVideos={startedVideos}
+              unwatchedVideos={unwatchedVideos}
+              watchedVideos={watchedVideos}
+              inProgressVideos={inProgressVideos}
+              socket={socket}
+              loadVideos={this.loadVideos}
+              /* these are props for collection component only */
+              collection
+              insertToCollection={this.insertVideosToCollection}
+              data={collections}
             />
-            <Typography
+          </Grid>
+          <Grid item xs>
+            <Typography variant="h5">
+              {`${currentVideo.id} ${currentVideo.filename}`}
+            </Typography>
+          </Grid>
+          <Grid item xs>
+            <CollectionList
+              collType="video"
+              createCollection={this.createCollection}
+              loadCollections={this.loadCollections}
+              deleteCollection={this.deleteVideoCollection}
+              insertToCollection={this.insertVideosToCollection}
+              openedVideo={currentVideo}
+            />
+          </Grid>
+        </Grid>
+        <Grid container className={classes.root} spacing={0}>
+          <Grid item xs />
+          <Grid item xs>
+            <div className={classes.videoContainer}>
+              <video
+                onPause={() => this.updateCheckpoint(false, true)}
+                id="video"
+                width="1600"
+                height="900"
+                src={`https://cdn.deepseaannotations.com/videos/${currentVideo.filename}`}
+                type="video/mp4"
+                crossOrigin="use-credentials"
+              >
+                Your browser does not support the video tag.
+              </video>
+            </div>
+          </Grid>
+          <Grid item xs />
+        </Grid>
+        <Grid container className={classes.root} spacing={0}>
+          <Grid item xs />
+          <Grid item xs={6}>
+            <div
               style={{
-                marginTop: 20
+                // marginTop: '10px',
+                // marginLeft: '20px',
+                // marginBottom: '10px',
+                float: 'left'
               }}
             >
-              Play Rate: {videoPlaybackRate}
-            </Typography>
-          </div>
-          <Button
-            variant="contained"
-            color="primary"
-            className={classes.button}
-            onClick={() => this.skipVideoTime(-5)}
-          >
-            -5 sec
-          </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            className={classes.button}
-            onClick={this.playPause}
-          >
-            Play/Pause
-          </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            className={classes.button}
-            onClick={() => this.skipVideoTime(5)}
-          >
-            +5 sec
-          </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            className={classes.button}
-            onClick={() => this.toggleVideoControls()}
-          >
-            Toggle Controls
-          </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            className={classes.button}
-            onClick={() => this.handleDoneClick()}
-          >
-            Done
-          </Button>
-        </div>
+              <Slider
+                style={{
+                  width: 200,
+                  marginTop: 10
+                }}
+                value={videoPlaybackRate}
+                min={0}
+                max={4}
+                step={0.1}
+                onChange={this.handleChangeSpeed}
+              />
+              <Typography
+                color="textSecondary"
+                style={{
+                  marginTop: 0
+                }}
+              >
+                Play Rate: {videoPlaybackRate}
+              </Typography>
+            </div>
+            <Button
+              variant="contained"
+              color="primary"
+              className={classes.button}
+              onClick={() => this.skipVideoTime(-5)}
+            >
+              -5 sec
+            </Button>
+            <Button
+              variant="contained"
+              color="primary"
+              className={classes.button}
+              onClick={this.playPause}
+            >
+              Play/Pause
+            </Button>
+            <Button
+              variant="contained"
+              color="primary"
+              className={classes.button}
+              onClick={() => this.skipVideoTime(5)}
+            >
+              +5 sec
+            </Button>
+            <Button
+              variant="contained"
+              color="primary"
+              className={classes.button}
+              onClick={() => this.toggleVideoControls()}
+            >
+              Toggle Controls
+            </Button>
+            <Button
+              variant="contained"
+              color="primary"
+              className={classes.button}
+              style={{ float: 'right' }}
+              onClick={() => this.handleDoneClick()}
+            >
+              Done
+            </Button>
+          </Grid>
+          <Grid item xs />
+        </Grid>
       </React.Fragment>
     );
   }
