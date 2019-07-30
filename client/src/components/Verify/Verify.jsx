@@ -43,6 +43,10 @@ const styles = theme => ({
 class Verify extends Component {
   constructor(props) {
     super(props);
+    /* index is added and maintained although it is not used (because react needs
+     * a change in the state to rerender) Pls treat them as state
+     */
+
     this.state = {
       selectedAnnotationCollections: [],
       selectedUsers: [],
@@ -50,6 +54,7 @@ class Verify extends Component {
       selectedConcepts: [],
       selectedUnsure: false,
       selectedTrackingFirst: false,
+      // eslint-disable-next-line react/no-unused-state
       index: 0
     };
   }
@@ -338,6 +343,7 @@ class Verify extends Component {
         selectedConcepts: [],
         selectedUnsure: false,
         selectedTrackingFirst: false,
+        // eslint-disable-next-line react/no-unused-state
         index: 0
       },
       localStorage.setItem('curIndex', 0),
@@ -347,10 +353,10 @@ class Verify extends Component {
 
   handleNext = callback => {
     const index = JSON.parse(localStorage.getItem('curIndex'));
-    // const { index } = this.state;
     localStorage.setItem('curIndex', index + 1);
     this.setState(
       {
+        // eslint-disable-next-line react/no-unused-state
         index: index + 1
       },
       callback
@@ -361,6 +367,7 @@ class Verify extends Component {
     this.resetState(
       this.setState({
         selectionMounted: true,
+        // eslint-disable-next-line react/no-unused-state
         index: 0,
         // eslint-disable-next-line react/no-unused-state
         noAnnotations: false
@@ -391,7 +398,7 @@ class Verify extends Component {
     const index = JSON.parse(localStorage.getItem('curIndex'));
     if (annotations && index >= annotations.length + 1) {
       this.resetLocalStorage();
-      return;
+      return <div />;
     }
 
     let selection = '';

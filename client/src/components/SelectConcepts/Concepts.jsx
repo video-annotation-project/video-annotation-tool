@@ -52,9 +52,6 @@ class Concepts extends React.Component {
   };
 
   componentDidMount = async () => {
-    localStorage.setItem('verifyAnnotation', null);
-    localStorage.setItem('curIndex', 0);
-    localStorage.setItem('selectionMounted', true);
     const conceptsSelected = await this.getConceptsSelected();
     this.setState({
       isLoaded: true,

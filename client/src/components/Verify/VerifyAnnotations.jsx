@@ -635,75 +635,79 @@ class VerifyAnnotations extends Component {
         {!end ? (
           <React.Fragment>
             {tracking || videoDialogOpen ? (
-              <div>
-                <DragBoxContainer>
-                  <video
-                    id="video"
-                    width="1300"
-                    height="730"
-                    src={`https://cdn.deepseaannotations.com/videos/${annotation.id}_tracking.mp4`}
-                    type="video/mp4"
-                    controls
-                  >
-                    Your browser does not support the video tag.
-                  </video>
-                </DragBoxContainer>
-                <div
-                  className={classes.buttonsContainer1}
-                  style={{ width: annotation.videowidth / 2 }}
-                >
-                  <Button
-                    className={classes.button}
-                    variant="contained"
-                    color="primary"
-                    onClick={() => this.markTracking(true)}
-                  >
-                    Mark as Good Tracking Video
-                  </Button>
-                  <Button
-                    className={classes.button}
-                    variant="contained"
-                    color="secondary"
-                    onClick={() => this.markTracking(false)}
-                  >
-                    Mark as Bad Tracking Video
-                  </Button>
-                  <Button
-                    className={classes.button}
-                    variant="contained"
-                    onClick={this.nextAnnotation}
-                  >
-                    {tracking ? 'Ignore' : 'Next'}
-                  </Button>
-                  {videoDialogOpen ? (
-                    <IconButton
-                      onClick={this.videoDialogToggle}
-                      aria-label="Photo"
+              <Grid container>
+                <Grid item xs />
+                <Grid item xs>
+                  <DragBoxContainer>
+                    <video
+                      id="video"
+                      width="1300"
+                      height="730"
+                      src={`https://cdn.deepseaannotations.com/videos/${annotation.id}_tracking.mp4`}
+                      type="video/mp4"
+                      controls
                     >
-                      <Photo />
-                    </IconButton>
-                  ) : (
-                    ''
-                  )}
-                </div>
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
-                <div>
-                  <Typography variant="subtitle1" className={classes.button}>
-                    <b>Status: </b>{' '}
-                    {!trackingStatus
-                      ? this.getStatus(annotation.tracking_flag)
-                      : this.getStatus(trackingStatus)}
-                  </Typography>
-                  <Typography className={classes.paper}>
-                    {index + 1} of {size}
-                  </Typography>
-                </div>
-              </div>
+                      Your browser does not support the video tag.
+                    </video>
+                  </DragBoxContainer>
+                  <div
+                    className={classes.buttonsContainer1}
+                    style={{ width: annotation.videowidth / 2 }}
+                  >
+                    <Button
+                      className={classes.button}
+                      variant="contained"
+                      color="primary"
+                      onClick={() => this.markTracking(true)}
+                    >
+                      Mark as Good Tracking Video
+                    </Button>
+                    <Button
+                      className={classes.button}
+                      variant="contained"
+                      color="secondary"
+                      onClick={() => this.markTracking(false)}
+                    >
+                      Mark as Bad Tracking Video
+                    </Button>
+                    <Button
+                      className={classes.button}
+                      variant="contained"
+                      onClick={this.nextAnnotation}
+                    >
+                      {tracking ? 'Ignore' : 'Next'}
+                    </Button>
+                    {videoDialogOpen ? (
+                      <IconButton
+                        onClick={this.videoDialogToggle}
+                        aria-label="Photo"
+                      >
+                        <Photo />
+                      </IconButton>
+                    ) : (
+                      ''
+                    )}
+                  </div>
+                  <br />
+                  <br />
+                  <br />
+                  <br />
+                  <br />
+                  <br />
+                  <div>
+                    <Typography variant="subtitle1" className={classes.button}>
+                      <b>Status: </b>{' '}
+                      {!trackingStatus
+                        ? this.getStatus(annotation.tracking_flag)
+                        : this.getStatus(trackingStatus)}
+                    </Typography>
+                    <Typography className={classes.paper}>
+                      {index + 1} of {size}
+                    </Typography>
+                  </div>
+                </Grid>
+                <Grid item xs />
+              </Grid>
             ) : (
               <div style={{ marginLeft: '300px' }}>
                 <Hotkeys keyName="r, d, i, v" onKeyDown={this.handleKeyDown} />
