@@ -1,15 +1,15 @@
-import React, { Component } from "react";
-import axios from "axios";
-import PropTypes from "prop-types";
-import { withStyles } from "@material-ui/core/styles";
-import TableBody from "@material-ui/core/TableBody";
-import TableCell from "@material-ui/core/TableCell";
-import TableHead from "@material-ui/core/TableHead";
-import TableRow from "@material-ui/core/TableRow";
-import Table from "@material-ui/core/Table";
-import IconButton from "@material-ui/core/IconButton";
-import DeleteIcon from "@material-ui/icons/Delete";
-import Swal from "sweetalert2";
+import React, { Component } from 'react';
+import axios from 'axios';
+import PropTypes from 'prop-types';
+import { withStyles } from '@material-ui/core/styles';
+import TableBody from '@material-ui/core/TableBody';
+import TableCell from '@material-ui/core/TableCell';
+import TableHead from '@material-ui/core/TableHead';
+import TableRow from '@material-ui/core/TableRow';
+import Table from '@material-ui/core/Table';
+import IconButton from '@material-ui/core/IconButton';
+import DeleteIcon from '@material-ui/icons/Delete';
+import Swal from 'sweetalert2';
 
 const CustomTableCell = withStyles(theme => ({
   head: {
@@ -19,19 +19,19 @@ const CustomTableCell = withStyles(theme => ({
   },
   body: {
     fontSize: 14
-  },
+  }
 }))(TableCell);
 
 const styles = theme => ({
   root: {
     margins: 'auto',
-    padding: '20px 12%',
+    padding: '20px 12%'
   },
   row: {
-    "&:nth-of-type(odd)": {
+    '&:nth-of-type(odd)': {
       backgroundColor: theme.palette.background.default
     }
-  },
+  }
 });
 
 class ViewModels extends Component {
@@ -39,7 +39,7 @@ class ViewModels extends Component {
     super(props);
     this.state = {
       models: [],
-      modelSelected: ""
+      modelSelected: ''
     };
   }
 
@@ -50,7 +50,7 @@ class ViewModels extends Component {
   loadExistingModels = () => {
     const config = {
       headers: {
-        Authorization: "Bearer " + localStorage.getItem("token")
+        Authorization: `Bearer ${localStorage.getItem('token')}`
       }
     };
     axios
@@ -61,7 +61,7 @@ class ViewModels extends Component {
         });
       })
       .catch(error => {
-        console.log("Error in get /api/models");
+        console.log('Error in get /api/models');
         console.log(error);
         if (error.response) {
           console.log(error.response.data.detail);
@@ -69,14 +69,13 @@ class ViewModels extends Component {
       });
   };
 
-
-  deleteModel = async (model) => {
+  deleteModel = async model => {
     const config = {
       headers: {
-        Authorization: "Bearer " + localStorage.getItem("token")
+        Authorization: `Bearer ${localStorage.getItem('token')}`
       },
       data: {
-        model: model
+        model
       }
     };
     Swal.fire({
@@ -87,22 +86,18 @@ class ViewModels extends Component {
       confirmButtonColor: '#3085d6',
       cancelButtonColor: '#d33',
       confirmButtonText: 'Yes, delete it!'
-    }).then(async (result) => {
+    }).then(async result => {
       if (result.value) {
         try {
-          await axios.delete("/api/models", config);
-          Swal.fire(
-            'Deleted!',
-            'Video has been deleted.',
-            'success'
-          )
+          await axios.delete('/api/models', config);
+          Swal.fire('Deleted!', 'Video has been deleted.', 'success');
           this.loadExistingModels();
         } catch (error) {
-          Swal.fire(error, "", "error");
+          Swal.fire(error, '', 'error');
         }
       }
-    })
-  }
+    });
+  };
 
   render() {
     const { classes } = this.props;
@@ -138,13 +133,15 @@ class ViewModels extends Component {
                 <CustomTableCell align="right">
                   {model.conceptsid.toString()}
                 </CustomTableCell>
-                <CustomTableCell>{model.videos ? model.videos.toString() : "NON"}</CustomTableCell>
                 <CustomTableCell>
-                  <IconButton 
-                    onClick={() => this.deleteModel(model)} 
+                  {model.videos ? model.videos.toString() : 'NON'}
+                </CustomTableCell>
+                <CustomTableCell>
+                  <IconButton
+                    onClick={() => this.deleteModel(model)}
                     aria-label="Delete"
                   >
-                    <DeleteIcon/>
+                    <DeleteIcon />
                   </IconButton>
                 </CustomTableCell>
               </TableRow>

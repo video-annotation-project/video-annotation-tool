@@ -64,7 +64,7 @@ class Annotate extends Component {
 
   toastPopup = Swal.mixin({
     toast: true,
-    position: 'top-end',
+    position: 'top-start',
     showConfirmButton: false,
     timer: 3000
   });
