@@ -98,9 +98,71 @@ class ModelProgress extends Component {
       });
   };
 
+  ternaryOpBreak = (con1, con2) => {
+    const { classes, activeStep, steps } = this.props;
+    const {
+      currentEpoch,
+      maxEpoch,
+      epochProgress,
+      currentBatch,
+      stepsPerEpoch,
+      batchProgress
+    } = this.state;
+    let ret;
+    if (con1) {
+      ret = (
+        <div>
+          <Typography
+            variant="body1"
+            gutterBottom
+            className={classes.progressText}
+          >
+            Epoch: {currentEpoch} / {maxEpoch}
+          </Typography>
+          <LinearProgress
+            disableShrink
+            className={classes.progressBar}
+            variant="determinate"
+            value={epochProgress}
+          />
+          <Typography
+            variant="body1"
+            gutterBottom
+            className={classes.progressText}
+          >
+            {' '}
+            Batch: {currentBatch} / {stepsPerEpoch}
+          </Typography>
+          <LinearProgress
+            disableShrink
+            className={classes.progressBar}
+            variant="determinate"
+            value={batchProgress}
+            color="secondary"
+          />
+        </div>
+      );
+    } else if (con2) {
+      ret = <PredictProgress className={classes.progress} />;
+    } else {
+      ret = activeStep !== steps.length && (
+        <Typography variant="subtitle2" gutterBottom>
+          Not currently training
+        </Typography>
+      );
+    }
+    return ret;
+  };
+
   render() {
-    const { classes, className, handleStop } = this.props;
-    const { activeStep, steps } = this.props;
+    const { classes, className, handleStop, activeStep, steps } = this.props;
+    const {
+      running,
+      currentBatch,
+      currentEpoch,
+      maxEpoch,
+      stepsPerEpoch
+    } = this.state;
 
     return (
       <div className={className}>
@@ -120,20 +182,27 @@ class ModelProgress extends Component {
             </div>
           </Paper>
         )}
-        {this.state.running && activeStep === steps.length ? (
+        {this.ternaryOpBreak(
+          running && activeStep === steps.length,
+          activeStep === steps.length &&
+            !running &&
+            currentEpoch === maxEpoch &&
+            currentBatch === stepsPerEpoch
+        )}
+        {/* {running && activeStep === steps.length ? (
           <div>
             <Typography
               variant="body1"
               gutterBottom
               className={classes.progressText}
             >
-              Epoch: {this.state.currentEpoch} / {this.state.maxEpoch}
+              Epoch: {currentEpoch} / {maxEpoch}
             </Typography>
             <LinearProgress
               disableShrink
               className={classes.progressBar}
               variant="determinate"
-              value={this.state.epochProgress}
+              value={epochProgress}
             />
             <Typography
               variant="body1"
@@ -141,20 +210,20 @@ class ModelProgress extends Component {
               className={classes.progressText}
             >
               {' '}
-              Batch: {this.state.currentBatch} / {this.state.stepsPerEpoch}
+              Batch: {currentBatch} / {stepsPerEpoch}
             </Typography>
             <LinearProgress
               disableShrink
               className={classes.progressBar}
               variant="determinate"
-              value={this.state.batchProgress}
+              value={batchProgress}
               color="secondary"
             />
           </div>
         ) : activeStep === steps.length &&
-          !this.state.running &&
-          this.state.currentEpoch === this.state.maxEpoch &&
-          this.state.currentBatch === this.state.stepsPerEpoch ? (
+          !running &&
+          currentEpoch === maxEpoch &&
+          currentBatch === stepsPerEpoch ? (
           <PredictProgress className={classes.progress} />
         ) : (
           activeStep !== steps.length && (
@@ -162,7 +231,7 @@ class ModelProgress extends Component {
               Not currently training
             </Typography>
           )
-        )}
+        )} */}
       </div>
     );
   }
