@@ -579,6 +579,7 @@ router.get(
       params.push(req.user.id);
     }
     queryPass = queryPass + ` GROUP BY (name, key) ORDER BY count DESC`;
+
     try {
       const data = await psql.query(queryPass, params);
       res.json(data.rows);
