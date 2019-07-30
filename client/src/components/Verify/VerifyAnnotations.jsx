@@ -5,7 +5,7 @@ import {
   MuiThemeProvider,
   createMuiTheme
 } from '@material-ui/core/styles';
-import { Typography } from '@material-ui/core';
+import { Typography, DialogTitle, DialogContent } from '@material-ui/core';
 import Button from '@material-ui/core/Button';
 import OndemandVideo from '@material-ui/icons/OndemandVideo';
 import Photo from '@material-ui/icons/Photo';
@@ -17,6 +17,7 @@ import Grid from '@material-ui/core/Grid';
 import Swal from 'sweetalert2';
 import Hotkeys from 'react-hot-keys';
 
+import Dialog from '@material-ui/core/Dialog';
 import DialogModal from '../Utilities/DialogModal';
 import ConceptsSelected from '../Utilities/ConceptsSelected';
 import DragBoxContainer from '../Utilities/DragBoxContainer';
@@ -87,7 +88,8 @@ class VerifyAnnotations extends Component {
       height: annotation.y2 - annotation.y1,
       videoDialogOpen: false /* Needed for dialog component */,
       drawDragBox: true,
-      trackingStatus: null
+      trackingStatus: null,
+      detailDialogOpen: false
     };
 
     this.resetLocalStorage = resetLocalStorage;
@@ -106,6 +108,12 @@ class VerifyAnnotations extends Component {
         }
       });
     }
+  };
+
+  toggleDetails = () => {
+    this.setState(prevState => ({
+      detailDialogOpen: !prevState.detailDialogOpen
+    }));
   };
 
   loaded = () => {
@@ -479,9 +487,17 @@ class VerifyAnnotations extends Component {
           className={classes.button}
           variant="contained"
           color="primary"
+          onClick={this.toggleDetails}
+        >
+          Details
+        </Button>
+        <Button
+          className={classes.button}
+          variant="contained"
+          color="primary"
           onClick={resetLocalStorage}
         >
-          Reset To Filter
+          Filter Annotations
         </Button>
         <Button
           className={classes.button}
@@ -538,51 +554,53 @@ class VerifyAnnotations extends Component {
 
   annotationDetails = annotation => {
     const { classes } = this.props;
-    const { concept, comment, unsure } = this.state;
+    const { concept, comment, unsure, detailDialogOpen } = this.state;
     return (
-      <div>
-        <Typography className={classes.paper} variant="h5">
-          Annotation #{annotation.id}
-        </Typography>
-        <Typography className={classes.paper} variant="body2">
-          Video: {`${annotation.videoid} ${annotation.filename}`}
-          <IconButton
-            onClick={event =>
-              this.openVideoMetadata(event, { id: annotation.videoid })
-            }
-          >
-            <Description style={{ fontSize: 20 }} />
-          </IconButton>
-        </Typography>
-        <Typography className={classes.paper} variant="body2">
-          Annotated by: {annotation.username}
-        </Typography>
-        <Typography className={classes.paper} variant="body2">
-          Time: {Math.floor(annotation.timeinvideo / 60)} minutes{' '}
-          {Math.floor(annotation.timeinvideo % 60)} seconds
-        </Typography>
-        <Typography className={classes.paper} variant="body2">
-          Concept: {!concept ? annotation.name : concept.name}
-        </Typography>
-        {comment !== '' ? (
-          <Typography className={classes.paper} variant="body2">
-            Comment: {comment}
-          </Typography>
-        ) : (
-          ''
-        )}
-        {unsure !== null ? (
-          <Typography className={classes.paper} variant="body2">
-            Unsure:{' '}
-            {unsure
-              .toString()
-              .charAt(0)
-              .toUpperCase() + unsure.toString().slice(1)}
-          </Typography>
-        ) : (
-          ''
-        )}
-      </div>
+      <Dialog onClose={this.toggleDetails} open={detailDialogOpen}>
+        <div>
+          <DialogTitle>Annotation #{annotation.id}</DialogTitle>
+          <DialogContent>
+            <Typography className={classes.paper} variant="body2">
+              Video: {`${annotation.videoid} ${annotation.filename}`}
+              <IconButton
+                onClick={event =>
+                  this.openVideoMetadata(event, { id: annotation.videoid })
+                }
+              >
+                <Description style={{ fontSize: 20 }} />
+              </IconButton>
+            </Typography>
+            <Typography className={classes.paper} variant="body2">
+              Annotated by: {annotation.username}
+            </Typography>
+            <Typography className={classes.paper} variant="body2">
+              Time: {Math.floor(annotation.timeinvideo / 60)} minutes{' '}
+              {Math.floor(annotation.timeinvideo % 60)} seconds
+            </Typography>
+            <Typography className={classes.paper} variant="body2">
+              Concept: {!concept ? annotation.name : concept.name}
+            </Typography>
+            {comment !== '' ? (
+              <Typography className={classes.paper} variant="body2">
+                Comment: {comment}
+              </Typography>
+            ) : (
+              ''
+            )}
+            {unsure !== null ? (
+              <Typography className={classes.paper} variant="body2">
+                Unsure:{' '}
+                {unsure
+                  .toString()
+                  .charAt(0)
+                  .toUpperCase() + unsure.toString().slice(1)}
+              </Typography>
+            ) : (
+              ''
+            )}
+          </DialogContent>
+        </div>
+      </Dialog>
     );
   };
 
@@ -617,7 +635,6 @@ class VerifyAnnotations extends Component {
       return <div>Loading...</div>;
     }
 
-    console.log(this.state);
     return (
       <React.Fragment>
         {conceptDialogOpen && (
