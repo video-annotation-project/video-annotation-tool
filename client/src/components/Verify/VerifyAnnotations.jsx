@@ -38,7 +38,6 @@ const styles = theme => ({
     padding: theme.spacing()
   },
   dragBox: {
-    margin: '0px',
     backgroundColor: 'transparent',
     border: '2px coral solid',
     borderStyle: 'ridge'
@@ -72,7 +71,7 @@ const theme = createMuiTheme({
 class VerifyAnnotations extends Component {
   constructor(props) {
     super(props);
-    const { annotation } = this.props;
+    const { annotation, resetLocalStorage } = this.props;
 
     this.state = {
       disableVerify: false,
@@ -90,6 +89,8 @@ class VerifyAnnotations extends Component {
       drawDragBox: true,
       trackingStatus: null
     };
+
+    this.resetLocalStorage = resetLocalStorage;
   }
 
   displayLoading = () => {
@@ -108,7 +109,6 @@ class VerifyAnnotations extends Component {
   };
 
   loaded = () => {
-    this.resetState();
     Swal.close();
   };
 
@@ -591,7 +591,6 @@ class VerifyAnnotations extends Component {
       classes,
       annotation,
       tracking,
-      videoDialogOpen,
       index,
       size,
       toggleSelection,
@@ -610,13 +609,15 @@ class VerifyAnnotations extends Component {
       drawDragBox,
       width,
       height,
-      openedVideo
+      openedVideo,
+      videoDialogOpen
     } = this.state;
 
     if (x === null) {
       return <div>Loading...</div>;
     }
 
+    console.log(this.state);
     return (
       <React.Fragment>
         {conceptDialogOpen && (
@@ -704,72 +705,63 @@ class VerifyAnnotations extends Component {
                 </div>
               </div>
             ) : (
-              <Grid container className={classes.root} spacing={0}>
-                <Grid item xs />
-                <Grid item xs>
-                  <div>
-                    <Hotkeys
-                      keyName="r, d, i, v"
-                      onKeyDown={this.handleKeyDown}
-                    />
-                    <div
+              <div style={{ marginLeft: '300px' }}>
+                <Hotkeys keyName="r, d, i, v" onKeyDown={this.handleKeyDown} />
+                <div
+                  style={{
+                    width: annotation.videowidth,
+                    height: annotation.videoheight
+                  }}
+                >
+                  <DragBoxContainer
+                    className={classes.img}
+                    dragBox={classes.dragBox}
+                    drawDragBoxProp={drawDragBox}
+                    toggleDragBox={this.toggleDragBox}
+                    size={{
+                      width,
+                      height
+                    }}
+                    position={{ x, y }}
+                    onDragStop={(e, d) => {
+                      this.setState({ x: d.x, y: d.y });
+                    }}
+                    onResize={(e, direction, ref, delta, position) => {
+                      this.setState({
+                        width: ref.style.width,
+                        height: ref.style.height,
+                        ...position
+                      });
+                    }}
+                  >
+                    <img
+                      id="image"
+                      onLoad={this.loaded}
+                      onError={this.handleErrImage}
+                      className={classes.img}
+                      src={`https://cdn.deepseaannotations.com/test/${annotation.image}`}
+                      alt="error"
+                      crossOrigin="use-credentials"
                       style={{
                         width: annotation.videowidth,
                         height: annotation.videoheight
                       }}
-                    >
-                      <DragBoxContainer
-                        className={classes.img}
-                        dragBox={classes.dragBox}
-                        drawDragBoxProp={drawDragBox}
-                        toggleDragBox={this.toggleDragBox}
-                        size={{
-                          width,
-                          height
-                        }}
-                        position={{ x, y }}
-                        onDragStop={(e, d) => {
-                          this.setState({ x: d.x, y: d.y });
-                        }}
-                        onResize={(e, direction, ref, delta, position) => {
-                          this.setState({
-                            width: ref.style.width,
-                            height: ref.style.height,
-                            ...position
-                          });
-                        }}
-                      >
-                        <img
-                          id="image"
-                          onLoad={this.loaded}
-                          onError={this.handleErrImage}
-                          className={classes.img}
-                          src={`https://cdn.deepseaannotations.com/test/${annotation.image}`}
-                          alt="error"
-                          crossOrigin="use-credentials"
-                          style={{
-                            width: annotation.videowidth,
-                            height: annotation.videoheight
-                          }}
-                        />
-                      </DragBoxContainer>
-                    </div>
-                    <Typography className={classes.paper}>
-                      {index + 1} of {size}
-                    </Typography>
-                    {this.optionButtons(annotation)}
-                    {this.annotationConcept(annotation)}
-                    <br />
-                    <br />
-                    <br />
-                    <br />
-                    <br />
-                    <br />
-                  </div>
-                  {this.annotationDetails(annotation)}
-                </Grid>
-                <Grid item xs />
-              </Grid>
+                    />
+                  </DragBoxContainer>
+                </div>
+                <Typography className={classes.paper}>
+                  {index + 1} of {size}
+                </Typography>
+                {this.optionButtons(annotation)}
+                {this.annotationConcept(annotation)}
+                <br />
+                <br />
+                <br />
+                <br />
+                <br />
+                <br />
+                {this.annotationDetails(annotation)}
+              </div>
             )}
           </React.Fragment>
         ) : (

@@ -381,14 +381,18 @@ class Verify extends Component {
       selectedVideos,
       selectedConcepts,
       selectedUnsure,
-      selectedTrackingFirst,
-      index
+      selectedTrackingFirst
     } = this.state;
     const selectionMountedLS = JSON.parse(
       localStorage.getItem('selectionMounted')
     );
     const annotations = JSON.parse(localStorage.getItem('verifyAnnotation'));
     const noAnnotationsLS = JSON.parse(localStorage.getItem('noAnnotations'));
+    const index = JSON.parse(localStorage.getItem('curIndex'));
+    if (annotations && index >= annotations.length + 1) {
+      this.resetLocalStorage();
+      return;
+    }
 
     let selection = '';
     if (selectionMountedLS) {
@@ -449,7 +453,7 @@ class Verify extends Component {
             index={index}
             handleNext={this.handleNext}
             toggleSelection={this.toggleSelection}
-            size={JSON.parse(localStorage.getItem('verifyAnnotation')).length}
+            size={annotations.length}
             tracking={selectedTrackingFirst}
             resetLocalStorage={this.resetLocalStorage}
           />
