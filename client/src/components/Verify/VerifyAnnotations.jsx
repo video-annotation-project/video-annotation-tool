@@ -70,6 +70,13 @@ const theme = createMuiTheme({
 });
 
 class VerifyAnnotations extends Component {
+  toastPopup = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 3000
+  });
+
   constructor(props) {
     super(props);
     const { annotation, resetLocalStorage } = this.props;
@@ -167,6 +174,10 @@ class VerifyAnnotations extends Component {
     return axios
       .patch(`/api/annotations/`, body, config)
       .then(res => {
+        this.toastPopup.fire({
+          type: 'success',
+          title: 'Verified!!'
+        });
         this.nextAnnotation();
         return res.data;
       })
@@ -256,6 +267,10 @@ class VerifyAnnotations extends Component {
     axios
       .delete('/api/annotations', config)
       .then(res => {
+        this.toastPopup.fire({
+          type: 'success',
+          title: 'Deleted!!'
+        });
         return res.data;
       })
       .catch(error => {
