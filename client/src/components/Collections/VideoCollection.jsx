@@ -439,8 +439,8 @@ class videoCollection extends Component {
               data={collections}
             />
           </Grid>
-          <Grid item xs>
-            <Typography variant="h5">
+          <Grid item xs={8}>
+            <Typography variant="h5" align="center">
               {`${currentVideo.id} ${currentVideo.filename}`}
             </Typography>
           </Grid>

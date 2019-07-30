@@ -473,8 +473,8 @@ class Annotate extends Component {
               loadVideos={this.loadVideos}
             />
           </Grid>
-          <Grid item xs>
-            <Typography variant="h5">
+          <Grid item xs={10}>
+            <Typography variant="h5" align="center">
               {`${currentVideo.id} ${currentVideo.filename}`}
             </Typography>
           </Grid>
