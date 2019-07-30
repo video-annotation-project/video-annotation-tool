@@ -17,6 +17,9 @@ const styles = theme => ({
   },
   shiftRight: {
     paddingRight: theme.spacing(5)
+  },
+  text: {
+    margin: theme.spacing(4)
   }
 });
 
@@ -62,7 +65,6 @@ class ConceptsList extends React.Component {
       concept.expandable = children && children.length;
       concept.expanded = false;
     }
-
     this.setState({
       isLoaded: true,
       concepts
@@ -101,12 +103,11 @@ class ConceptsList extends React.Component {
     const { classes, conceptsSelected, changeConceptsSelected } = this.props;
 
     if (!isLoaded) {
-      return <List>Loading...</List>;
+      return <List className={classes.text}>Loading...</List>;
     }
     if (error) {
       return <List>Error: {error.message}</List>;
     }
-
     return (
       <List disablePadding className={classes.nested}>
         {concepts.map(concept => (

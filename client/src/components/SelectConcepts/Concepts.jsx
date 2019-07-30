@@ -11,7 +11,7 @@ const styles = theme => ({
     width: '100%',
     backgroundColor: theme.palette.background.paper
   },
-  search: {
+  text: {
     margin: theme.spacing(4)
   },
   input: {
@@ -208,14 +208,14 @@ class Concepts extends React.Component {
     } = this.state;
     const { classes } = this.props;
     if (!isLoaded) {
-      return <List>Loading...</List>;
+      return <List className={classes.text}>Loading...</List>;
     }
     if (error) {
       return <List>Error: {error.message}</List>;
     }
     return (
       <div className={classes.root}>
-        <div className={classes.search}>
+        <div className={classes.text}>
           <input
             className={classes.input}
             onKeyUp={this.handleKeyUp}

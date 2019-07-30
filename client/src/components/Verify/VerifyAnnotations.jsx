@@ -38,7 +38,6 @@ const styles = theme => ({
     padding: theme.spacing()
   },
   dragBox: {
-    margin: '0px',
     backgroundColor: 'transparent',
     border: '2px coral solid',
     borderStyle: 'ridge'
@@ -72,7 +71,7 @@ const theme = createMuiTheme({
 class VerifyAnnotations extends Component {
   constructor(props) {
     super(props);
-    const { annotation } = this.props;
+    const { annotation, resetLocalStorage } = this.props;
 
     this.state = {
       disableVerify: false,
@@ -90,6 +89,8 @@ class VerifyAnnotations extends Component {
       drawDragBox: true,
       trackingStatus: null
     };
+
+    this.resetLocalStorage = resetLocalStorage;
   }
 
   displayLoading = () => {
@@ -105,6 +106,10 @@ class VerifyAnnotations extends Component {
         }
       });
     }
+  };
+
+  loaded = () => {
+    Swal.close();
   };
 
   componentDidMount = () => {
@@ -439,7 +444,7 @@ class VerifyAnnotations extends Component {
   };
 
   optionButtons = annotation => {
-    const { classes } = this.props;
+    const { classes, resetLocalStorage } = this.props;
     const { disableVerify, videoDialogOpen } = this.state;
     return (
       <div
@@ -469,6 +474,14 @@ class VerifyAnnotations extends Component {
           onClick={this.nextAnnotation}
         >
           Ignore
+        </Button>
+        <Button
+          className={classes.button}
+          variant="contained"
+          color="primary"
+          onClick={resetLocalStorage}
+        >
+          Reset To Filter
         </Button>
         <Button
           className={classes.button}
@@ -578,7 +591,6 @@ class VerifyAnnotations extends Component {
       classes,
       annotation,
       tracking,
-      videoDialogOpen,
       index,
       size,
       toggleSelection,
@@ -597,13 +609,15 @@ class VerifyAnnotations extends Component {
       drawDragBox,
       width,
       height,
-      openedVideo
+      openedVideo,
+      videoDialogOpen
     } = this.state;
 
     if (x === null) {
       return <div>Loading...</div>;
     }
 
+    console.log(this.state);
     return (
       <React.Fragment>
         {conceptDialogOpen && (
@@ -621,142 +635,137 @@ class VerifyAnnotations extends Component {
         {!end ? (
           <React.Fragment>
             {tracking || videoDialogOpen ? (
-              <div>
-                <DragBoxContainer>
-                  <video
-                    id="video"
-                    width="1300"
-                    height="730"
-                    src={`https://cdn.deepseaannotations.com/videos/${annotation.id}_tracking.mp4`}
-                    type="video/mp4"
-                    controls
-                  >
-                    Your browser does not support the video tag.
-                  </video>
-                </DragBoxContainer>
-                <div
-                  className={classes.buttonsContainer1}
-                  style={{ width: annotation.videowidth / 2 }}
-                >
-                  <Button
-                    className={classes.button}
-                    variant="contained"
-                    color="primary"
-                    onClick={() => this.markTracking(true)}
-                  >
-                    Mark as Good Tracking Video
-                  </Button>
-                  <Button
-                    className={classes.button}
-                    variant="contained"
-                    color="secondary"
-                    onClick={() => this.markTracking(false)}
-                  >
-                    Mark as Bad Tracking Video
-                  </Button>
-                  <Button
-                    className={classes.button}
-                    variant="contained"
-                    onClick={this.nextAnnotation}
-                  >
-                    {tracking ? 'Ignore' : 'Next'}
-                  </Button>
-                  {videoDialogOpen ? (
-                    <IconButton
-                      onClick={this.videoDialogToggle}
-                      aria-label="Photo"
-                    >
-                      <Photo />
-                    </IconButton>
-                  ) : (
-                    ''
-                  )}
-                </div>
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
-                <div>
-                  <Typography variant="subtitle1" className={classes.button}>
-                    <b>Status: </b>{' '}
-                    {!trackingStatus
-                      ? this.getStatus(annotation.tracking_flag)
-                      : this.getStatus(trackingStatus)}
-                  </Typography>
-                  <Typography className={classes.paper}>
-                    {index + 1} of {size}
-                  </Typography>
-                </div>
-              </div>
-            ) : (
-              <Grid container className={classes.root} spacing={0}>
+              <Grid container>
                 <Grid item xs />
                 <Grid item xs>
+                  <DragBoxContainer>
+                    <video
+                      id="video"
+                      width="1300"
+                      height="730"
+                      src={`https://cdn.deepseaannotations.com/videos/${annotation.id}_tracking.mp4`}
+                      type="video/mp4"
+                      controls
+                    >
+                      Your browser does not support the video tag.
+                    </video>
+                  </DragBoxContainer>
+                  <div
+                    className={classes.buttonsContainer1}
+                    style={{ width: annotation.videowidth / 2 }}
+                  >
+                    <Button
+                      className={classes.button}
+                      variant="contained"
+                      color="primary"
+                      onClick={() => this.markTracking(true)}
+                    >
+                      Mark as Good Tracking Video
+                    </Button>
+                    <Button
+                      className={classes.button}
+                      variant="contained"
+                      color="secondary"
+                      onClick={() => this.markTracking(false)}
+                    >
+                      Mark as Bad Tracking Video
+                    </Button>
+                    <Button
+                      className={classes.button}
+                      variant="contained"
+                      onClick={this.nextAnnotation}
+                    >
+                      {tracking ? 'Ignore' : 'Next'}
+                    </Button>
+                    {videoDialogOpen ? (
+                      <IconButton
+                        onClick={this.videoDialogToggle}
+                        aria-label="Photo"
+                      >
+                        <Photo />
+                      </IconButton>
+                    ) : (
+                      ''
+                    )}
+                  </div>
+                  <br />
+                  <br />
+                  <br />
+                  <br />
+                  <br />
+                  <br />
                   <div>
-                    <Hotkeys
-                      keyName="r, d, i, v"
-                      onKeyDown={this.handleKeyDown}
-                    />
-                    <div
+                    <Typography variant="subtitle1" className={classes.button}>
+                      <b>Status: </b>{' '}
+                      {!trackingStatus
+                        ? this.getStatus(annotation.tracking_flag)
+                        : this.getStatus(trackingStatus)}
+                    </Typography>
+                    <Typography className={classes.paper}>
+                      {index + 1} of {size}
+                    </Typography>
+                  </div>
+                </Grid>
+                <Grid item xs />
+              </Grid>
+            ) : (
+              <div style={{ marginLeft: '300px' }}>
+                <Hotkeys keyName="r, d, i, v" onKeyDown={this.handleKeyDown} />
+                <div
+                  style={{
+                    width: annotation.videowidth,
+                    height: annotation.videoheight
+                  }}
+                >
+                  <DragBoxContainer
+                    className={classes.img}
+                    dragBox={classes.dragBox}
+                    drawDragBoxProp={drawDragBox}
+                    toggleDragBox={this.toggleDragBox}
+                    size={{
+                      width,
+                      height
+                    }}
+                    position={{ x, y }}
+                    onDragStop={(e, d) => {
+                      this.setState({ x: d.x, y: d.y });
+                    }}
+                    onResize={(e, direction, ref, delta, position) => {
+                      this.setState({
+                        width: ref.style.width,
+                        height: ref.style.height,
+                        ...position
+                      });
+                    }}
+                  >
+                    <img
+                      id="image"
+                      onLoad={this.loaded}
+                      onError={this.handleErrImage}
+                      className={classes.img}
+                      src={`https://cdn.deepseaannotations.com/test/${annotation.image}`}
+                      alt="error"
+                      crossOrigin="use-credentials"
                       style={{
                         width: annotation.videowidth,
                         height: annotation.videoheight
                       }}
-                    >
-                      <DragBoxContainer
-                        className={classes.img}
-                        dragBox={classes.dragBox}
-                        drawDragBoxProp={drawDragBox}
-                        toggleDragBox={this.toggleDragBox}
-                        size={{
-                          width,
-                          height
-                        }}
-                        position={{ x, y }}
-                        onDragStop={(e, d) => {
-                          this.setState({ x: d.x, y: d.y });
-                        }}
-                        onResize={(e, direction, ref, delta, position) => {
-                          this.setState({
-                            width: ref.style.width,
-                            height: ref.style.height,
-                            ...position
-                          });
-                        }}
-                      >
-                        <img
-                          id="image"
-                          onLoad={Swal.close}
-                          onError={this.handleErrImage}
-                          className={classes.img}
-                          src={`https://cdn.deepseaannotations.com/test/${annotation.image}`}
-                          alt="error"
-                          crossOrigin="use-credentials"
-                          style={{
-                            width: annotation.videowidth,
-                            height: annotation.videoheight
-                          }}
-                        />
-                      </DragBoxContainer>
-                    </div>
-                    <Typography className={classes.paper}>
-                      {index + 1} of {size}
-                    </Typography>
-                    {this.optionButtons(annotation)}
-                    {this.annotationConcept(annotation)}
-                    <br />
-                    <br />
-                    <br />
-                    <br />
-                    <br />
-                    <br />
-                  </div>
-                  {this.annotationDetails(annotation)}
-                </Grid>
-                <Grid item xs />
-              </Grid>
+                    />
+                  </DragBoxContainer>
+                </div>
+                <Typography className={classes.paper}>
+                  {index + 1} of {size}
+                </Typography>
+                {this.optionButtons(annotation)}
+                {this.annotationConcept(annotation)}
+                <br />
+                <br />
+                <br />
+                <br />
+                <br />
+                <br />
+                {this.annotationDetails(annotation)}
+              </div>
             )}
           </React.Fragment>
         ) : (
