@@ -483,7 +483,7 @@ class Annotate extends Component {
           </Grid>
         </Grid>
         <Grid container className={classes.root} spacing={0}>
-          <Grid item xs />
+          <Grid item xs={1} />
           <Grid item xs>
             <DragBoxContainer
               className={classes.videoContainer}
@@ -521,7 +521,7 @@ class Annotate extends Component {
           <Grid item xs />
         </Grid>
         <Grid container className={classes.root} spacing={0}>
-          <Grid item xs />
+          <Grid item xs={1} />
           <Grid item xs={6}>
             <div
               style={{
