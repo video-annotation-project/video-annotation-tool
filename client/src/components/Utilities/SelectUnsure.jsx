@@ -1,17 +1,16 @@
-import React from "react";
-import PropTypes from "prop-types";
-import { withStyles } from "@material-ui/core/styles";
-import FormGroup from "@material-ui/core/FormGroup";
-import FormControlLabel from "@material-ui/core/FormControlLabel";
-import Switch from "@material-ui/core/Switch";
-import FormControl from "@material-ui/core/FormControl";
-import Typography from "@material-ui/core/Typography";
+import React from 'react';
+import { withStyles } from '@material-ui/core/styles';
+import FormGroup from '@material-ui/core/FormGroup';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Switch from '@material-ui/core/Switch';
+import FormControl from '@material-ui/core/FormControl';
+import Typography from '@material-ui/core/Typography';
 
 const styles = theme => ({
   formControl: {
     marginTop: theme.spacing(2),
-    maxHeight: "400px",
-    overflow: "auto"
+    maxHeight: '400px',
+    overflow: 'auto'
   },
   switch: {
     marginLeft: theme.spacing(2)
@@ -27,7 +26,8 @@ class SelectUnsure extends React.Component {
   }
 
   componentDidMount = async () => {
-    let annotations = await this.props.getUnsure();
+    const { getUnsure } = this.props;
+    const annotations = await getUnsure();
 
     this.setState({
       disabled: annotations.length === 1 && !annotations[0].unsure
@@ -36,6 +36,7 @@ class SelectUnsure extends React.Component {
 
   render() {
     const { classes, value, handleChangeSwitch } = this.props;
+    const { disabled } = this.state;
 
     return (
       <div>
@@ -50,7 +51,7 @@ class SelectUnsure extends React.Component {
                   onChange={handleChangeSwitch}
                   value="selectedUnsure"
                   color="primary"
-                  disabled={this.state.disabled}
+                  disabled={disabled}
                 />
               }
               label="Unsure Only"
@@ -61,9 +62,5 @@ class SelectUnsure extends React.Component {
     );
   }
 }
-
-SelectUnsure.propTypes = {
-  classes: PropTypes.object.isRequired
-};
 
 export default withStyles(styles)(SelectUnsure);

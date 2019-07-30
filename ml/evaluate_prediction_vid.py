@@ -26,6 +26,8 @@ S3_BUCKET = os.getenv('AWS_S3_BUCKET_NAME')
 s3 = boto3.client('s3', aws_access_key_id = AWS_ACCESS_KEY_ID, aws_secret_access_key = AWS_SECRET_ACCESS_KEY)
 S3_WEIGHTS_FOLDER = os.getenv("AWS_S3_BUCKET_WEIGHTS_FOLDER")
 
+AWS_S3_BUCKET_METRICS_FOLDER = os.getenv("AWS_S3_BUCKET_METRICS_FOLDER")
+
 # connect to db
 con = connect(database=os.getenv("DB_NAME"), 
     host=os.getenv("DB_HOST"), 
@@ -121,6 +123,13 @@ def evaluate(video_id, model_username, concepts):
     concept_counts = get_counts(results, annotations)
     metrics = metrics.set_index('conceptid').join(concept_counts)
     metrics.to_csv("metrics" + str(video_id) + ".csv")
+    # upload the data to s3 bucket
+    print("uploading to s3 folder")
+    s3.upload_file(
+        "metrics" + str(video_id) + ".csv", S3_BUCKET,
+        AWS_S3_BUCKET_METRICS_FOLDER +  filename.replace('mp4', 'csv'),
+        ExtraArgs={'ContentType':'application/vnd.ms-excel'})
+
     print(metrics)
     con.commit()
 

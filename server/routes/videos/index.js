@@ -1,10 +1,12 @@
 const router = require('express').Router();
 const passport = require("passport");
 const psql = require("../../db/simpleConnect");
-const AWS = require("aws-sdk");
+
+var data = require('../../../config.json');
 
 router.use('/checkpoints', require('./checkpoints'))
 router.use('/aivideos', require('./ai_videos'))
+
 
 
 /**
@@ -155,6 +157,7 @@ router.get("/", passport.authenticate("jwt", { session: false }),
  */
 router.get("/summary/:videoid", passport.authenticate("jwt", { session: false }),
   async (req, res) => {
+    tracking_users = data.ml.tracking_users;
     let queryText = `
     SELECT 
       *
@@ -166,6 +169,7 @@ router.get("/summary/:videoid", passport.authenticate("jwt", { session: false })
           conceptid, videoid, COUNT(*) 
         FROM 
           annotations 
+        WHERE userid = ANY(${"'{"+tracking_users+"}'"}::int[])
         GROUP BY conceptid, videoid
       ) AS counts ON counts.conceptid=a.id
     WHERE videoid = $1`;
