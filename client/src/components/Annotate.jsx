@@ -62,6 +62,13 @@ class Annotate extends Component {
     videoElement.controls = !videoElement.controls;
   };
 
+  toastPopup = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 3000
+  });
+
   constructor(props) {
     super(props);
     // here we do a manual conditional proxy because React won't do it for us
@@ -346,6 +353,10 @@ class Annotate extends Component {
       .post('/api/annotations', body, config)
       .then(async res => {
         console.log(res.data.message);
+        this.toastPopup.fire({
+          type: 'success',
+          title: res.data.message
+        });
         this.handleDialogClose();
         this.createAndUploadImages(
           videoImage,
@@ -483,7 +494,7 @@ class Annotate extends Component {
           </Grid>
         </Grid>
         <Grid container className={classes.root} spacing={0}>
-          <Grid item xs />
+          <Grid item xs={1} />
           <Grid item xs>
             <DragBoxContainer
               className={classes.videoContainer}
@@ -521,7 +532,7 @@ class Annotate extends Component {
           <Grid item xs />
         </Grid>
         <Grid container className={classes.root} spacing={0}>
-          <Grid item xs />
+          <Grid item xs={1} />
           <Grid item xs={6}>
             <div
               style={{
