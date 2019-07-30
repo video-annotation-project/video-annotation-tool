@@ -262,13 +262,10 @@ class ConceptCollection extends Component {
     concepts1.sort((a, b) => (a.id > b.id ? 1 : -1));
     concepts2.sort((a, b) => (a.id > b.id ? 1 : -1));
 
+    // eslint-disable-next-line consistent-return
     concepts1.forEach((concept, index) => {
       if (concept.id !== concepts2[index].id) return false;
     });
-
-    // for (let i = 0; i < concepts1.length; i++) {
-    //   if (concepts1[i].id !== concepts2[i].id) return false;
-    // }
 
     return true;
   };
