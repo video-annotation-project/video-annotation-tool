@@ -114,7 +114,7 @@ class Navbar extends React.Component {
                         { name: 'Train Models', link: '/models/train' },
                         { name: 'Predict Models', link: '/models/predict' },
                         { name: 'Previous Models', link: '/models/runs' },
-                        { name: 'Ai Videos', link: '/aivideos' }
+                        { name: 'AI Videos', link: '/aivideos' }
                       ]}
                     />
                     {/* <Button color="inherit" component={Link} to="/aivideos">
