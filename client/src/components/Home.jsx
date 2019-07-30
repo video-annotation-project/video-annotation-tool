@@ -61,12 +61,12 @@ class Home extends Component {
     this.getCounts(fromDate.ISOString, toDate.ISOString);
   }
 
-  componentDidMount = () => {
+  componentDidMount() {
     localStorage.setItem('selectionMounted', true);
     localStorage.setItem('curIndex', 0);
     localStorage.removeItem('verifyAnnotation');
     localStorage.removeItem('noAnnotations');
-  };
+  }
 
   /*
    * Converts a date object into the locale ISO string format.

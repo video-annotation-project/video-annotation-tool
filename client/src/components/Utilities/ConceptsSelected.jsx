@@ -313,7 +313,7 @@ class ConceptsSelected extends React.Component {
           color="primary"
           onClick={() => this.toggleDrawer()}
         >
-          Toggle Concepts Selected
+          Concepts
         </Button>
         <div
           style={{
