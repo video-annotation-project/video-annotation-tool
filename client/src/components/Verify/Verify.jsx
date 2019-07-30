@@ -43,9 +43,6 @@ const styles = theme => ({
 class Verify extends Component {
   constructor(props) {
     super(props);
-    /* index is added and maintained although it is not used (because react needs
-     * a change in the state to rerender) Pls treat them as state
-     */
 
     this.state = {
       selectedAnnotationCollections: [],
@@ -335,6 +332,7 @@ class Verify extends Component {
   };
 
   resetState = callback => {
+    localStorage.setItem('curIndex', 0);
     this.setState(
       {
         selectedAnnotationCollections: [],
@@ -346,7 +344,6 @@ class Verify extends Component {
         // eslint-disable-next-line react/no-unused-state
         index: 0
       },
-      localStorage.setItem('curIndex', 0),
       callback
     );
   };
@@ -364,6 +361,10 @@ class Verify extends Component {
   };
 
   resetLocalStorage = () => {
+    localStorage.setItem('selectionMounted', true);
+    localStorage.setItem('curIndex', 0);
+    localStorage.removeItem('verifyAnnotation');
+    localStorage.removeItem('noAnnotations');
     this.resetState(
       this.setState({
         selectionMounted: true,
@@ -373,10 +374,6 @@ class Verify extends Component {
         noAnnotations: false
       })
     );
-    localStorage.setItem('selectionMounted', true);
-    localStorage.setItem('curIndex', 0);
-    localStorage.removeItem('verifyAnnotation');
-    localStorage.removeItem('noAnnotations');
   };
 
   render() {
@@ -438,14 +435,14 @@ class Verify extends Component {
             variant="contained"
             color="primary"
             onClick={() => {
+              localStorage.setItem('selectionMounted', !selectionMounted);
+              localStorage.setItem('noAnnotations', false);
               this.resetState();
               this.setState({
                 selectionMounted: !selectionMounted,
                 // eslint-disable-next-line react/no-unused-state
                 noAnnotations: false
               });
-              localStorage.setItem('selectionMounted', !selectionMounted);
-              localStorage.setItem('noAnnotations', false);
             }}
           >
             Reset
