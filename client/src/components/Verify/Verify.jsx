@@ -430,7 +430,7 @@ class Verify extends Component {
     } else if (noAnnotationsLS) {
       selection = (
         <Paper square elevation={0} className={classes.resetContainer}>
-          <Typography>All Tracking Videos Verified</Typography>
+          <Typography>All Verified</Typography>
           <Button
             variant="contained"
             color="primary"
