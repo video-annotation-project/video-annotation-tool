@@ -230,7 +230,7 @@ class Annotate extends Component {
         </Grid>
         <Grid container className={classes.root} spacing={2}>
           <Grid item xs />
-          <Grid item xs alignItems="center">
+          <Grid item xs>
             <div>
               <DragBoxContainer className={classes.videoContainer}>
                 <video
