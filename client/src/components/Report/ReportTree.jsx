@@ -129,8 +129,6 @@ class ReportTree extends Component {
     const { isLoaded, treeData, error } = this.state;
     const { classes } = this.props;
 
-    console.log(this.state);
-    console.log(this.props);
     if (!isLoaded) {
       return <List>Loading...</List>;
     }

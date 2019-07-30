@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
 import axios from 'axios';
-import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
@@ -69,6 +68,12 @@ class Annotations extends Component {
   }
 
   loadAnnotations = async () => {
+    const {
+      queryConditions,
+      unsureOnly,
+      verifiedCondition,
+      queryLimit
+    } = this.props;
     const config = {
       headers: {
         Authorization: `Bearer ${localStorage.getItem('token')}`
@@ -77,10 +82,10 @@ class Annotations extends Component {
     try {
       const annotations = await axios.get(
         `/api/annotations?` +
-          `queryConditions=${this.props.queryConditions}&` +
-          `unsureOnly=${this.props.unsureOnly}&` +
-          `verifiedCondition=${this.props.verifiedCondition}&` +
-          `queryLimit=${this.props.queryLimit}`,
+          `queryConditions=${queryConditions}&` +
+          `unsureOnly=${unsureOnly}&` +
+          `verifiedCondition=${verifiedCondition}&` +
+          `queryLimit=${queryLimit}`,
         config
       );
       this.setState({
@@ -104,8 +109,8 @@ class Annotations extends Component {
   };
 
   handleClick = id => {
-    const annotations = JSON.parse(JSON.stringify(this.state.annotations));
-    const annotation = annotations.find(annotation => annotation.id === id);
+    const { annotations } = this.state;
+    const annotation = annotations.find(a => a.id === id);
     annotation.expanded = !annotation.expanded;
     this.setState({
       annotations
@@ -114,7 +119,7 @@ class Annotations extends Component {
 
   toggleShowVideo = (event, id) => {
     const { annotations } = this.state;
-    const annotation = annotations.find(annotation => annotation.id === id);
+    const annotation = annotations.find(a => a.id === id);
     if (!annotation.expanded) {
       annotation.expanded = true;
     }
@@ -125,6 +130,7 @@ class Annotations extends Component {
   };
 
   handleDelete = (event, id) => {
+    const { annotations } = this.state;
     event.stopPropagation();
     const config = {
       headers: {
@@ -142,10 +148,11 @@ class Annotations extends Component {
           type: 'success',
           title: 'Annotation Deleted!!'
         });
-        let annotations = JSON.parse(JSON.stringify(this.state.annotations));
-        annotations = annotations.filter(annotation => annotation.id !== id);
+        const filteredAnnotations = annotations.filter(
+          annotation => annotation.id !== id
+        );
         this.setState({
-          annotations
+          annotations: filteredAnnotations
         });
       })
       .catch(error => {
@@ -165,8 +172,8 @@ class Annotations extends Component {
   };
 
   updateAnnotations = (id, updatedName, updatedComment, updatedUnsure) => {
-    const annotations = JSON.parse(JSON.stringify(this.state.annotations));
-    const annotation = annotations.find(annotation => annotation.id === id);
+    const { annotations } = this.state;
+    const annotation = annotations.find(a => a.id === id);
     annotation.name = updatedName;
     annotation.comment = updatedComment;
     annotation.unsure = updatedUnsure;
@@ -262,9 +269,5 @@ class Annotations extends Component {
     );
   }
 }
-
-Annotations.propTypes = {
-  classes: PropTypes.object.isRequired
-};
 
 export default withStyles(styles)(Annotations);
