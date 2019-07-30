@@ -199,31 +199,27 @@ class Summary extends React.Component {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {summary ? (
-                    summary.data.map(row => (
-                      <TableRow key={row.id}>
-                        <TableCell>
-                          <Avatar
-                            src={`https://cdn.deepseaannotations.com/concept_images/${row.picture}`}
-                          />
-                        </TableCell>
-                        <TableCell component="th" scope="row">
-                          {row.name}
-                        </TableCell>
-                        <TableCell align="right">{row.count}</TableCell>
+                  {summary
+                    ? summary.data.map(row => (
+                        <TableRow key={row.id}>
+                          <TableCell>
+                            <Avatar
+                              src={`https://cdn.deepseaannotations.com/concept_images/${row.picture}`}
+                            />
+                          </TableCell>
+                          <TableCell component="th" scope="row">
+                            {row.name}
+                          </TableCell>
+                          <TableCell align="right">{row.count}</TableCell>
 
-                        <TableCell align="right">
-                          {aiSummary
-                            ? row.notai
-                            : this.kmOrsqMeter(km, false, row.count, dist)}
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow key={1}>
-                      <TableCell>''</TableCell>
-                    </TableRow>
-                  )}
+                          <TableCell align="right">
+                            {aiSummary
+                              ? row.notai
+                              : this.kmOrsqMeter(km, false, row.count, dist)}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    : ''}
                 </TableBody>
               </Table>
             </Paper>

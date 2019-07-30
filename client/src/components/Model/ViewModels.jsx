@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
 import axios from 'axios';
-import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
@@ -38,8 +37,7 @@ class ViewModels extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      models: [],
-      modelSelected: ''
+      models: []
     };
   }
 
@@ -152,9 +150,5 @@ class ViewModels extends Component {
     );
   }
 }
-
-ViewModels.propTypes = {
-  classes: PropTypes.object
-};
 
 export default withStyles(styles)(ViewModels);
