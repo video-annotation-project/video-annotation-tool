@@ -2,6 +2,7 @@ import React from 'react';
 import axios from 'axios';
 import { withStyles } from '@material-ui/core/styles';
 import List from '@material-ui/core/List';
+import { Typography } from '@material-ui/core';
 
 import ConceptsList from './ConceptsList';
 
@@ -9,6 +10,12 @@ const styles = theme => ({
   root: {
     width: '100%',
     backgroundColor: theme.palette.background.paper
+  },
+  search: {
+    margin: theme.spacing(4)
+  },
+  input: {
+    marginBottom: theme.spacing()
   }
 });
 
@@ -18,9 +25,22 @@ class Concepts extends React.Component {
     this.state = {
       isLoaded: false,
       conceptsSelected: {},
+      conceptsLikeSearch: [],
+      conceptPath: '',
       error: null
     };
   }
+
+  componentDidMount = async () => {
+    const conceptsSelected = await this.getConceptsSelected();
+    const concepts = await this.getConcepts();
+
+    this.setState({
+      isLoaded: true,
+      conceptsSelected,
+      concepts
+    });
+  };
 
   getConceptsSelected = async () => {
     return axios
@@ -51,12 +71,25 @@ class Concepts extends React.Component {
       });
   };
 
-  componentDidMount = async () => {
-    const conceptsSelected = await this.getConceptsSelected();
-    this.setState({
-      isLoaded: true,
-      conceptsSelected
-    });
+  getConcepts = async () => {
+    return axios
+      .get(`/api/concepts`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      })
+      .then(res => {
+        return res.data;
+      })
+      .catch(error => {
+        console.log('Error in get /api/concepts');
+        console.log(error);
+        this.setState({
+          isLoaded: true,
+          error
+        });
+        if (error.response) {
+          console.log(error.response.data.detail);
+        }
+      });
   };
 
   changeConceptsSelected = async id => {
@@ -75,7 +108,7 @@ class Concepts extends React.Component {
     config.method = conceptsSelected[id] ? 'post' : 'delete';
     axios
       .request(config)
-      .then(res => {
+      .then(() => {
         this.setState({
           conceptsSelected: JSON.parse(JSON.stringify(conceptsSelected))
         });
@@ -95,8 +128,84 @@ class Concepts extends React.Component {
       });
   };
 
+  searchConcepts = search => {
+    const { concepts } = this.state;
+    const conceptsLikeSearch = concepts.filter(concept => {
+      return concept.name.match(new RegExp(search, 'i'));
+    });
+
+    this.setState({
+      conceptsLikeSearch: conceptsLikeSearch.slice(0, 10)
+    });
+  };
+
+  handleKeyUp = async e => {
+    if (e.key === 'Enter') {
+      const conceptPath = await this.getConceptPath(
+        this.getConceptInfo(e.target.value).id
+      );
+
+      this.setState({
+        conceptPath
+      });
+
+      return;
+    }
+    this.searchConcepts(e.target.value);
+  };
+
+  getConceptPath = async id => {
+    return axios
+      .get(`/api/concepts/path/${id}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      })
+      .then(res => {
+        let path = res.data[0];
+        res.data.shift();
+        res.data.forEach(concept => {
+          path += ` → ${concept}`;
+        });
+        return path;
+      })
+      .catch(error => {
+        console.log('Error in get /api/concepts/path');
+        console.log(error);
+        this.setState({
+          error
+        });
+        if (error.response) {
+          console.log(error.response.data.detail);
+        }
+      });
+  };
+
+  searchConcepts = search => {
+    const { concepts } = this.state;
+    const conceptsLikeSearch = concepts.filter(concept => {
+      return concept.name.match(new RegExp(search, 'i'));
+    });
+
+    this.setState({
+      conceptsLikeSearch: conceptsLikeSearch.slice(0, 10)
+    });
+  };
+
+  getConceptInfo = concept => {
+    const { concepts } = this.state;
+    const match = concepts.find(item => {
+      return item.name === concept;
+    });
+    return match;
+  };
+
   render() {
-    const { error, isLoaded, conceptsSelected } = this.state;
+    const {
+      error,
+      isLoaded,
+      conceptsSelected,
+      conceptsLikeSearch,
+      conceptPath
+    } = this.state;
     const { classes } = this.props;
     if (!isLoaded) {
       return <List>Loading...</List>;
@@ -106,7 +215,25 @@ class Concepts extends React.Component {
     }
     return (
       <div className={classes.root}>
-        <br />
+        <div className={classes.search}>
+          <input
+            className={classes.input}
+            onKeyUp={this.handleKeyUp}
+            autoFocus
+            margin="dense"
+            id="concept"
+            type="text"
+            placeholder="Search Concepts"
+            list="data"
+            autoComplete="off"
+          />
+          <datalist id="data">
+            {conceptsLikeSearch.map(item => (
+              <option key={item.id} value={item.name} />
+            ))}
+          </datalist>
+          {conceptPath ? <Typography>{conceptPath}</Typography> : ''}
+        </div>
         <ConceptsList
           id={0}
           conceptsSelected={conceptsSelected}

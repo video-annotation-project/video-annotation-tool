@@ -62,7 +62,7 @@ class ConceptsList extends React.Component {
       concept.expandable = children && children.length;
       concept.expanded = false;
     }
-    console.log(concepts);
+
     this.setState({
       isLoaded: true,
       concepts
@@ -106,7 +106,7 @@ class ConceptsList extends React.Component {
     if (error) {
       return <List>Error: {error.message}</List>;
     }
-    console.log(concepts);
+
     return (
       <List disablePadding className={classes.nested}>
         {concepts.map(concept => (
