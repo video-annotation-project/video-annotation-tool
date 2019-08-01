@@ -680,7 +680,7 @@ class VerifyAnnotations extends Component {
                   </DragBoxContainer>
                   <div
                     className={classes.buttonsContainer1}
-                    style={{ width: (2 * annotation.videowidth) / 3 }}
+                    style={{ width: annotation.videowidth }}
                   >
                     <Button
                       className={classes.button}
@@ -710,7 +710,6 @@ class VerifyAnnotations extends Component {
                       <IconButton
                         onClick={this.videoDialogToggle}
                         aria-label="Photo"
-                        disabled={annotation.id !== annotation.originalid}
                       >
                         <Photo />
                       </IconButton>
@@ -721,10 +720,12 @@ class VerifyAnnotations extends Component {
                   <br />
                   <br />
                   <br />
-                  <br />
-                  <br />
-                  <br />
                   <div>
+                    <Typography variant="subtitle2" className={classes.button}>
+                      {collectionFlag
+                        ? 'Next disable because the collection might contain tracking annotations'
+                        : ''}
+                    </Typography>
                     <Typography variant="subtitle1" className={classes.button}>
                       <b>Status: </b>{' '}
                       {!trackingStatus
