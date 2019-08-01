@@ -468,11 +468,11 @@ class VerifyAnnotations extends Component {
 
   optionButtons = annotation => {
     const { classes, resetLocalStorage } = this.props;
-    const { disableVerify, videoDialogOpen } = this.state;
+    const { disableVerify } = this.state;
     return (
       <div
         className={classes.buttonsContainer1}
-        style={{ width: annotation.videowidth / 2 }}
+        style={{ width: (2 * annotation.videowidth) / 3 }}
       >
         <MuiThemeProvider theme={theme}>
           <Button
@@ -512,7 +512,7 @@ class VerifyAnnotations extends Component {
           color="primary"
           onClick={resetLocalStorage}
         >
-          Filter Annotations
+          Reset Selections
         </Button>
         <Button
           className={classes.button}
@@ -523,18 +523,13 @@ class VerifyAnnotations extends Component {
         >
           Verify
         </Button>
-        {!videoDialogOpen ? (
-          <IconButton
-            onClick={this.videoDialogToggle}
-            aria-label="OnDemandVideo"
-          >
-            <OndemandVideo />
-          </IconButton>
-        ) : (
-          <IconButton onClick={this.videoDialogToggle} aria-label="Photo">
-            <Photo />
-          </IconButton>
-        )}
+        <IconButton
+          onClick={this.videoDialogToggle}
+          aria-label="OnDemandVideo"
+          disabled={annotation.id !== annotation.originalid}
+        >
+          <OndemandVideo />
+        </IconButton>
       </div>
     );
   };
@@ -546,7 +541,7 @@ class VerifyAnnotations extends Component {
     return (
       <div
         className={classes.buttonsContainer2}
-        style={{ width: annotation.videowidth / 2 }}
+        style={{ width: annotation.videowidth / 3 }}
       >
         <Grid container direction="row" alignItems="center">
           <Grid item>
@@ -628,7 +623,8 @@ class VerifyAnnotations extends Component {
       size,
       toggleSelection,
       socket,
-      loadVideos
+      loadVideos,
+      collectionFlag
     } = this.props;
     const {
       x,
@@ -684,7 +680,7 @@ class VerifyAnnotations extends Component {
                   </DragBoxContainer>
                   <div
                     className={classes.buttonsContainer1}
-                    style={{ width: annotation.videowidth / 2 }}
+                    style={{ width: (2 * annotation.videowidth) / 3 }}
                   >
                     <Button
                       className={classes.button}
@@ -706,6 +702,7 @@ class VerifyAnnotations extends Component {
                       className={classes.button}
                       variant="contained"
                       onClick={this.nextAnnotation}
+                      disabled={collectionFlag}
                     >
                       {tracking ? 'Ignore' : 'Next'}
                     </Button>
@@ -713,6 +710,7 @@ class VerifyAnnotations extends Component {
                       <IconButton
                         onClick={this.videoDialogToggle}
                         aria-label="Photo"
+                        disabled={annotation.id !== annotation.originalid}
                       >
                         <Photo />
                       </IconButton>
@@ -790,12 +788,6 @@ class VerifyAnnotations extends Component {
                 </Typography>
                 {this.optionButtons(annotation)}
                 {this.annotationConcept(annotation)}
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
                 {this.annotationDetails(annotation)}
               </div>
             )}

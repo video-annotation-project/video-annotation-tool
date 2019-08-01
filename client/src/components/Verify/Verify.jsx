@@ -51,6 +51,7 @@ class Verify extends Component {
       selectedConcepts: [],
       selectedUnsure: false,
       selectedTrackingFirst: false,
+      collectionFlag: false,
       // eslint-disable-next-line react/no-unused-state
       index: 0
     };
@@ -75,6 +76,9 @@ class Verify extends Component {
     } else {
       if (selectedAnnotationCollections.length) {
         annotations = await this.getAnnotationsFromCollection();
+        this.setState({
+          collectionFlag: true
+        });
       } else {
         annotations = await this.getAnnotations();
       }
@@ -385,7 +389,8 @@ class Verify extends Component {
       selectedVideos,
       selectedConcepts,
       selectedUnsure,
-      selectedTrackingFirst
+      selectedTrackingFirst,
+      collectionFlag
     } = this.state;
     const selectionMountedLS = JSON.parse(
       localStorage.getItem('selectionMounted')
@@ -460,6 +465,7 @@ class Verify extends Component {
             size={annotations.length}
             tracking={selectedTrackingFirst}
             resetLocalStorage={this.resetLocalStorage}
+            collectionFlag={collectionFlag}
           />
         </Paper>
       );
