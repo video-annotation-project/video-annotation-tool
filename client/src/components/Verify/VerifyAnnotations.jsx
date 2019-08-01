@@ -723,7 +723,7 @@ class VerifyAnnotations extends Component {
                   <div>
                     <Typography variant="subtitle2" className={classes.button}>
                       {collectionFlag
-                        ? 'Next disable because the collection might contain tracking annotations'
+                        ? 'Next disabled because the collection might contain tracking annotations'
                         : ''}
                     </Typography>
                     <Typography variant="subtitle1" className={classes.button}>
