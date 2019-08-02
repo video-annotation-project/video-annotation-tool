@@ -94,7 +94,7 @@ const styles = theme => ({
     top: '-15px'
   },
   hyperParamsInput: {
-    width: '190ox',
+    width: '200px',
     marginRight: '10px'
   }
 });
@@ -317,22 +317,16 @@ class TrainModel extends Component {
     const { classes } = this.props;
     const { epochs, minImages } = this.state;
 
-    const label = (
-      <span className={classes.epochText}>
-        Number of epochs <br />
-        (0 = Until Increased Loss)
-      </span>
-    );
-
     return (
       <form className={classes.hyperparametersForm}>
         <TextField
           margin="normal"
           name="epochs"
-          label={label}
+          label="Number of epochs"
           value={epochs}
           onChange={this.handleChange}
           className={classes.hyperParamsInput}
+          helperText="0 = Until Increased Loss"
         />
         <TextField
           margin="normal"
@@ -340,6 +334,7 @@ class TrainModel extends Component {
           label="Number of training images"
           value={minImages}
           onChange={this.handleChange}
+          className={classes.hyperParamsInput}
         />
       </form>
     );
