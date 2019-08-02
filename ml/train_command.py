@@ -93,7 +93,9 @@ cursor.execute('''
 
 # Start training job
 train_model(concepts, info['modelSelected'], info['annotationCollections'], 
-           int(info['minImages']), int(info['epochs']), download_data=True)
+           int(info['minImages']), int(info['epochs']), download_data=True,
+           verifiedOnly=info['verifiedOnly'],
+           includeTracking=info['includeTracking'])
 
 
 # Run verifyVideos in parallel

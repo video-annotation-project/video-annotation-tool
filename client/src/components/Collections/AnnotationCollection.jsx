@@ -773,15 +773,18 @@ class AnnotationCollection extends Component {
               </FormHelperText>
             )}
           </FormControl>
-          <Button onClick={this.createAnnotationCollection}>
-            New Annotation Collection
-          </Button>
-          <Button
-            disabled={selectedCollection === ''}
-            onClick={this.deleteAnnotationCollection}
-          >
-            Delete This Collection
-          </Button>
+          <div>
+            <Button
+              disabled={selectedCollection === ''}
+              onClick={this.deleteAnnotationCollection}
+            >
+              Delete This Collection
+            </Button>
+            <Button onClick={this.createAnnotationCollection}>
+              New Annotation Collection
+            </Button>
+          </div>
+
           <div className={classes.info}>
             {selectedCollection ? this.showCollection() : ''}
           </div>
