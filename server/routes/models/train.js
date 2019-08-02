@@ -1,25 +1,27 @@
 const router = require('express').Router();
-const passport = require("passport");
-const psql = require("../../db/simpleConnect");
-const AWS = require("aws-sdk");
+const passport = require('passport');
+const psql = require('../../db/simpleConnect');
+const AWS = require('aws-sdk');
 
 /**
  * @route POST /api/models/train
- * @group models 
+ * @group models
  * @summary Start a training session
  * @param {integer} modelInstanceId.body.required - ID of model instance to use
  * @param {enum} command.body - "start" or "stop" (Start or stop training)
  * @returns 200 - Succesfully started/stopped training
  * @returns {Error} 500 - Unexpected server error
  */
-router.post("/", passport.authenticate("jwt", { session: false }),
+router.post(
+  '/',
+  passport.authenticate('jwt', { session: false }),
   async (req, res) => {
-    let ec2 = new AWS.EC2({ region: "us-west-1" });
+    let ec2 = new AWS.EC2({ region: 'us-west-1' });
 
     let params = {
       InstanceIds: [req.body.modelInstanceId]
     };
-    if (req.body.command === "stop") {
+    if (req.body.command === 'stop') {
       const trainingStop = `
             UPDATE 
               training_progress
@@ -50,21 +52,25 @@ router.post("/", passport.authenticate("jwt", { session: false }),
 
 // TODO: figure out trainmodel then document this
 
-router.get("/:option", passport.authenticate("jwt", { session: false }),
+router.get(
+  '/:option',
+  passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     const queryText = `SELECT * FROM modeltab WHERE option = $1`;
     try {
       let response = await psql.query(queryText, [req.params.option]);
       res.json(response.rows);
     } catch (error) {
-      console.log("Error on GET /api/models");
+      console.log('Error on GET /api/models');
       console.log(error);
       res.status(500).json(error);
     }
   }
 );
 
-router.put("/:option", passport.authenticate("jwt", { session: false }),
+router.put(
+  '/:option',
+  passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     const queryText = `UPDATE modeltab SET info = $1 WHERE option = $2`;
     try {
@@ -74,14 +80,16 @@ router.put("/:option", passport.authenticate("jwt", { session: false }),
       ]);
       res.json(response.rows);
     } catch (error) {
-      console.log("Error on put /api/models");
+      console.log('Error on put /api/models');
       console.log(error);
       res.status(500).json(error);
     }
   }
 );
 
-router.get("/concepts/:videoIDs/:modelName", passport.authenticate("jwt", { session: false }),
+router.get(
+  '/concepts/:videoIDs/:modelName',
+  passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     const queryText = `
       SELECT
@@ -106,16 +114,17 @@ router.get("/concepts/:videoIDs/:modelName", passport.authenticate("jwt", { sess
       ]);
       res.json(response.rows);
     } catch (error) {
-      console.log("Error on GET /api/models/train/concepts");
+      console.log('Error on GET /api/models/train/concepts');
       console.log(error);
       res.status(500).json(error);
     }
   }
 );
 
-
 // Get videos that users have viewed
-router.get("/videos/:userIDs/:model", passport.authenticate("jwt", { session: false }),
+router.get(
+  '/videos/:userIDs/:model',
+  passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     let queryText = `
       SELECT DISTINCT 
@@ -150,7 +159,7 @@ router.get("/videos/:userIDs/:model", passport.authenticate("jwt", { session: fa
       ]);
       res.json(videos.rows);
     } catch (error) {
-      console.log("Error in get /api/videos/trainModel/");
+      console.log('Error in get /api/videos/trainModel/');
       console.log(error);
       res.status(500).json(error);
     }

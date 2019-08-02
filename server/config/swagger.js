@@ -1,4 +1,3 @@
-
 const options = {
   swaggerDefinition: {
     definition: {
@@ -6,25 +5,25 @@ const options = {
       info: {
         title: 'Deep Sea Annotations API',
         version: '1.0.0',
-        description: 'Deep Sea Annotations API Documentation',
-      },
+        description: 'Deep Sea Annotations API Documentation'
+      }
     },
     securityDefinitions: {
       ApiKeyAuth: {
-        name: "Authorization",
-        type: "apiKey",
-        scheme: "Authorization",
-        in: "header"
+        name: 'Authorization',
+        type: 'apiKey',
+        scheme: 'Authorization',
+        in: 'header'
       }
     },
-    "security": [
+    security: [
       {
-        "ApiKeyAuth": []
+        ApiKeyAuth: []
       }
-    ],
+    ]
   },
   basedir: __dirname,
-  files: ['../routes/**/*.js'],
-}
+  files: ['../routes/**/*.js']
+};
 
 module.exports = options;

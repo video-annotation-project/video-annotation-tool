@@ -1,10 +1,9 @@
-const psql = require("../db/simpleConnect");
-const passport = require("passport");
-const jwt = require("jsonwebtoken");
-const passportJWT = require("passport-jwt");
+const psql = require('../db/simpleConnect');
+const passport = require('passport');
+const jwt = require('jsonwebtoken');
+const passportJWT = require('passport-jwt');
 const ExtractJwt = passportJWT.ExtractJwt;
 const JwtStrategy = passportJWT.Strategy;
-
 
 let jwtOptions = {};
 jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
@@ -39,7 +38,7 @@ let strategy = new JwtStrategy(jwtOptions, async function(jwt_payload, next) {
 
 passport.use(strategy);
 
-module.exports = { 
-	passport, 
-	jwtOptions,
+module.exports = {
+  passport,
+  jwtOptions
 };
