@@ -15,7 +15,6 @@ import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
 import FormGroup from '@material-ui/core/FormGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
-import FormLabel from '@material-ui/core/FormLabel';
 import Checkbox from '@material-ui/core/Checkbox';
 import Typography from '@material-ui/core/Typography';
 
@@ -27,9 +26,13 @@ const styles = theme => ({
     margin: '40px 180px'
   },
   form: {
+    marginTop: theme.spacing(1.5),
     marginBottom: theme.spacing(2),
     marginLeft: theme.spacing(1),
     minWidth: 150
+  },
+  group: {
+    marginLeft: 15
   },
   center: {
     display: 'flex',
@@ -127,8 +130,6 @@ class TrainModel extends Component {
       epochs: 0,
       activeStep: 0,
       openedVideo: null,
-      currentEpoch: 0,
-      currentBatch: 0,
       socket
     };
   }
@@ -265,16 +266,12 @@ class TrainModel extends Component {
     const { classes } = this.props;
     const { annotationCollections, collections } = this.state;
 
-    const { checkSelector } = classes;
     if (!annotationCollections) {
       return <div>Loading...</div>;
     }
     return (
-      <FormControl component="fieldset" className={checkSelector}>
-        <FormLabel component="legend">
-          Select Annotation Collection to Use
-        </FormLabel>
-        <FormGroup>
+      <FormControl component="fieldset" className={classes.checkSelector}>
+        <FormGroup className={classes.group}>
           {collections
             .sort(a => (a.validConcepts ? -1 : 1))
             .map(collection => (
@@ -378,35 +375,6 @@ class TrainModel extends Component {
       default:
         return undefined;
     }
-  };
-
-  handleSelectAll = () => {
-    const { activeStep } = this.state;
-
-    const stateName = this.getStepState(activeStep);
-    // eslint-disable-next-line react/destructuring-assignment
-    const data = this.state[stateName];
-    const dataSelected = JSON.parse(
-      // eslint-disable-next-line react/destructuring-assignment, react/no-access-state-in-setstate
-      JSON.stringify(this.state[`${stateName}Selected`])
-    );
-    data.forEach(row => {
-      if (!dataSelected.includes(row.id)) {
-        dataSelected.push(row.id);
-      }
-    });
-    this.setState({
-      [`${stateName}Selected`]: dataSelected
-    });
-  };
-
-  handleUnselectAll = () => {
-    const { activeStep } = this.state;
-
-    const stateName = this.getStepState(activeStep);
-    this.setState({
-      [`${stateName}Selected`]: []
-    });
   };
 
   updateBackendInfo = () => {
@@ -570,7 +538,7 @@ class TrainModel extends Component {
                         onClick={this.handleBack}
                         className={classes.button}
                       >
-                        Back, socket, loadVideos
+                        Back
                       </Button>
                       <Button
                         variant="contained"
@@ -585,18 +553,6 @@ class TrainModel extends Component {
                         {activeStep === steps.length - 1
                           ? 'Train Model'
                           : 'Next'}
-                      </Button>
-                      <Button
-                        onClick={this.handleSelectAll}
-                        disabled={activeStep === 0 || activeStep === 4}
-                      >
-                        Select All
-                      </Button>
-                      <Button
-                        onClick={this.handleUnselectAll}
-                        disabled={activeStep === 0 || activeStep === 4}
-                      >
-                        Unselect All
                       </Button>
                     </div>
                   </StepContent>
