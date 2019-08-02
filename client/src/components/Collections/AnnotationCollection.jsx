@@ -145,10 +145,33 @@ class AnnotationCollection extends Component {
     });
   };
 
-  handleChangeCollection = event => {
+  handleChangeCollection = async event => {
     this.setState({
-      selectedCollection: event.target.value
+      selectedCollection: event.target.value,
+      selectedCollectionCounts: await this.getCollectionCounts(
+        event.target.value
+      )
     });
+  };
+
+  getCollectionCounts = async selectedCollection => {
+    try {
+      const res = await axios.get(
+        `/api/collections/annotations/counts/${selectedCollection}`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        }
+      );
+      if (res) {
+        console.log(res.data);
+        return res.data;
+      }
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   createAnnotationCollection = () => {
@@ -612,10 +635,16 @@ class AnnotationCollection extends Component {
   };
 
   render() {
-    const { activeStep, collections, selectedCollection } = this.state;
+    const {
+      activeStep,
+      collections,
+      selectedCollection,
+      selectedCollectionCounts
+    } = this.state;
     const { classes } = this.props;
     const steps = getSteps();
 
+    console.log(selectedCollectionCounts);
     return (
       <Grid container spacing={1}>
         <Grid item xs={9}>

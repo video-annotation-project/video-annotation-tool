@@ -64,6 +64,7 @@ class Home extends Component {
   componentDidMount() {
     localStorage.setItem('selectionMounted', true);
     localStorage.setItem('curIndex', 0);
+    localStorage.setItem('collectionFlag', false);
     localStorage.removeItem('verifyAnnotation');
     localStorage.removeItem('noAnnotations');
   }

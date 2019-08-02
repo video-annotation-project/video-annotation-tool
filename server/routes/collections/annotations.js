@@ -3,6 +3,51 @@ const passport = require('passport');
 const psql = require('../../db/simpleConnect');
 
 router.get(
+  '/counts/:id',
+  passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    const counts = [];
+    const queryText = `
+      SELECT
+        count(*)
+      FROM
+        annotations a
+      INNER JOIN
+        annotation_intermediate ai
+      ON
+        a.id = ai.annotationid
+      INNER JOIN
+        users u
+      ON
+        u.id = a.userid
+      WHERE
+        ai.id = $1
+    `;
+    const user = ` AND u.username != 'tracking'`;
+    const tracking = ` AND u.username = 'tracking'`;
+    const verified = ` AND a.verifiedby IS NOT NULL`;
+
+    try {
+      let count = await psql.query(queryText + user, [req.params.id]);
+      counts.push(count.rows[0]);
+      count = await psql.query(queryText + tracking, [req.params.id]);
+      counts.push(count.rows[0]);
+      count = await psql.query(queryText + user + verified, [req.params.id]);
+      counts.push(count.rows[0]);
+      count = await psql.query(queryText + tracking + verified, [
+        req.params.id
+      ]);
+      counts.push(count.rows[0]);
+
+      res.json(counts);
+    } catch (error) {
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
+);
+
+router.get(
   '/',
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {

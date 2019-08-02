@@ -52,6 +52,8 @@ class Verify extends Component {
       selectedUnsure: false,
       selectedTrackingFirst: false,
       // eslint-disable-next-line react/no-unused-state
+      collectionFlag: false,
+      // eslint-disable-next-line react/no-unused-state
       index: 0
     };
   }
@@ -75,6 +77,11 @@ class Verify extends Component {
     } else {
       if (selectedAnnotationCollections.length) {
         annotations = await this.getAnnotationsFromCollection();
+        this.setState({
+          // eslint-disable-next-line react/no-unused-state
+          collectionFlag: true
+        });
+        localStorage.setItem('collectionFlag', true);
       } else {
         annotations = await this.getAnnotations();
       }
@@ -119,6 +126,7 @@ class Verify extends Component {
         }
       )
       .then(res => {
+        localStorage.setItem('collectionFlag', false);
         return res.data;
       })
       .catch(error => {
@@ -393,6 +401,7 @@ class Verify extends Component {
     const annotations = JSON.parse(localStorage.getItem('verifyAnnotation'));
     const noAnnotationsLS = JSON.parse(localStorage.getItem('noAnnotations'));
     const index = JSON.parse(localStorage.getItem('curIndex'));
+    const collectionFlag = JSON.parse(localStorage.getItem('collectionFlag'));
     if (annotations && index >= annotations.length + 1) {
       this.resetLocalStorage();
       return <div />;
@@ -460,6 +469,7 @@ class Verify extends Component {
             size={annotations.length}
             tracking={selectedTrackingFirst}
             resetLocalStorage={this.resetLocalStorage}
+            collectionFlag={collectionFlag}
           />
         </Paper>
       );
