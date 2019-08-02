@@ -1,10 +1,12 @@
-const router = require('express').Router();
-const passport = require('passport');
-const psql = require('../../db/simpleConnect');
+const router = require("express").Router();
+const passport = require("passport");
+const psql = require("../../db/simpleConnect");
+
+var configData = require("../../../config.json");
 
 router.get(
-  '/counts/:id',
-  passport.authenticate('jwt', { session: false }),
+  "/counts/:id",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const counts = [];
     const queryText = `
@@ -48,8 +50,8 @@ router.get(
 );
 
 router.get(
-  '/',
-  passport.authenticate('jwt', { session: false }),
+  "/",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     let queryText = `
     SELECT
@@ -71,8 +73,8 @@ router.get(
 );
 
 router.post(
-  '/',
-  passport.authenticate('jwt', { session: false }),
+  "/",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const queryText = `
       INSERT INTO 
@@ -94,8 +96,8 @@ router.post(
 );
 
 router.delete(
-  '/:id',
-  passport.authenticate('jwt', { session: false }),
+  "/:id",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     const queryText = `
       DELETE FROM 
@@ -116,10 +118,13 @@ router.delete(
 );
 
 router.post(
-  '/:id',
-  passport.authenticate('jwt', { session: false }),
+  "/:id",
+  passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     let params = [parseInt(req.params.id)];
+    let good_users = configData.ml.tracking_users.filter(x =>
+      req.body.selectedUsers.includes(x.toString())
+    );
 
     let queryText1 = `      
       INSERT INTO
@@ -165,6 +170,18 @@ router.post(
       queryText1 += `
           unsure = False
           AND userid::text = ANY($${params.length})`;
+    }
+
+    if (good_users.length > 0) {
+      queryText1 += `
+        AND EXISTS ( 
+          SELECT id, userid 
+          FROM annotations 
+          WHERE id=A.originalid 
+          AND unsure = False
+          AND userid::text = ANY($${params.length}))`;
+    } else {
+      queryText1 += ` AND userid::text = ANY($${params.length})`;
     }
 
     queryText2 += ` WHERE id = ANY($${params.length})`;
@@ -256,11 +273,11 @@ router.post(
  * @returns {Error} 500 - Unexpected database error
  */
 router.get(
-  '/train',
-  passport.authenticate('jwt', { session: false }),
+  "/train",
+  passport.authenticate("jwt", { session: false }),
 
   async (req, res) => {
-    let params = '{' + req.query.ids + '}';
+    let params = "{" + req.query.ids + "}";
     let queryText = `      
       SELECT 
         name, id, count(*), array_agg(conceptid) as ids, array_agg(conceptname) as concepts

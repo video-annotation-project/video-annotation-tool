@@ -86,6 +86,9 @@ const styles = theme => ({
     marginLeft: theme.spacing(4),
     marginRight: theme.spacing(4),
     marginBottom: theme.spacing()
+  },
+  info: {
+    marginTop: theme.spacing(2)
   }
 });
 
@@ -106,6 +109,7 @@ class AnnotationCollection extends Component {
     this.state = {
       selectedUsers: [],
       selectedCollection: '',
+      selectedCollectionCounts: [],
       selectedVideos: [],
       selectedConcepts: [],
       annotationCount: '',
@@ -155,6 +159,7 @@ class AnnotationCollection extends Component {
   };
 
   getCollectionCounts = async selectedCollection => {
+    let ret;
     try {
       const res = await axios.get(
         `/api/collections/annotations/counts/${selectedCollection}`,
@@ -166,12 +171,13 @@ class AnnotationCollection extends Component {
         }
       );
       if (res) {
-        console.log(res.data);
-        return res.data;
+        ret = res.data;
       }
     } catch (error) {
       console.log(error);
+      ret = error;
     }
+    return ret;
   };
 
   createAnnotationCollection = () => {
@@ -278,10 +284,15 @@ class AnnotationCollection extends Component {
           body,
           config
         )
-        .then(() => {
+        .then(async () => {
           Swal.fire({
             title: 'Inserted!',
             confirmButtonText: 'Lovely!'
+          });
+          this.setState({
+            selectedCollectionCounts: await this.getCollectionCounts(
+              selectedCollection
+            )
           });
           this.loadCollections();
         })
@@ -482,13 +493,29 @@ class AnnotationCollection extends Component {
 
   showCollection = () => {
     const { classes } = this.props;
-    const { collections, selectedCollection } = this.state;
+    const {
+      collections,
+      selectedCollection,
+      selectedCollectionCounts
+    } = this.state;
     const data = collections.find(col => {
       return col.id === selectedCollection;
     });
     if (data.users[0]) {
       return (
         <React.Fragment>
+          <Typography variant="subtitle1" className={classes.stats1}>
+            User Annotations: {selectedCollectionCounts[0].count}
+          </Typography>
+          <Typography variant="subtitle1" className={classes.stats1}>
+            Tracking Annotations: {selectedCollectionCounts[1].count}
+          </Typography>
+          <Typography variant="subtitle1" className={classes.stats1}>
+            Verified User Annotations: {selectedCollectionCounts[2].count}
+          </Typography>
+          <Typography variant="subtitle1" className={classes.stats1}>
+            Verified Tracking Annotations: {selectedCollectionCounts[3].count}
+          </Typography>
           <Typography variant="subtitle1" className={classes.stats1}>
             Users ({data.users.length}):
           </Typography>
@@ -577,7 +604,9 @@ class AnnotationCollection extends Component {
       case 3:
         return (
           <React.Fragment>
-            <Typography>Number of Annotations: {annotationCount}</Typography>
+            <Typography>
+              Number of User Annotations: {annotationCount}
+            </Typography>
             <Typography>
               Number of Tracking Annotations: {trackingCount}
             </Typography>
@@ -635,16 +664,10 @@ class AnnotationCollection extends Component {
   };
 
   render() {
-    const {
-      activeStep,
-      collections,
-      selectedCollection,
-      selectedCollectionCounts
-    } = this.state;
+    const { activeStep, collections, selectedCollection } = this.state;
     const { classes } = this.props;
     const steps = getSteps();
 
-    console.log(selectedCollectionCounts);
     return (
       <Grid container spacing={1}>
         <Grid item xs={9}>
@@ -750,21 +773,17 @@ class AnnotationCollection extends Component {
               </FormHelperText>
             )}
           </FormControl>
-          {selectedCollection ? this.showCollection() : ''}
-          <div>
-            <Button
-              className={classes.button}
-              disabled={selectedCollection === ''}
-              onClick={this.deleteAnnotationCollection}
-            >
-              Delete This Collection
-            </Button>
-            <Button
-              className={classes.button}
-              onClick={this.createAnnotationCollection}
-            >
-              New Annotation Collection
-            </Button>
+          <Button onClick={this.createAnnotationCollection}>
+            New Annotation Collection
+          </Button>
+          <Button
+            disabled={selectedCollection === ''}
+            onClick={this.deleteAnnotationCollection}
+          >
+            Delete This Collection
+          </Button>
+          <div className={classes.info}>
+            {selectedCollection ? this.showCollection() : ''}
           </div>
         </Grid>
       </Grid>
