@@ -275,42 +275,40 @@ class TrainModel extends Component {
           Select Annotation Collection to Use
         </FormLabel>
         <FormGroup>
-          {collections
-            .sort(a => (a.validConcepts ? -1 : 1))
-            .map(collection => (
-              <div key={collection.id}>
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      onChange={this.checkboxSelect(
-                        'annotationCollections',
-                        annotationCollections,
-                        collection.id
-                      )}
-                      color="primary"
-                      checked={annotationCollections.includes(collection.id)}
-                      disabled={collection.disable}
-                    />
-                  }
-                  label={
-                    <div>
-                      {collection.name}
-                      {collection.validConcepts ? (
-                        <Typography
-                          variant="subtitle2"
-                          gutterBottom
-                          color="secondary"
-                        >
-                          {collection.validConcepts.concepts.join(', ')}
-                        </Typography>
-                      ) : (
-                        ''
-                      )}
-                    </div>
-                  }
-                />
-              </div>
-            ))}
+          {collections.map(collection => (
+            <div key={collection.id}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    onChange={this.checkboxSelect(
+                      'annotationCollections',
+                      annotationCollections,
+                      collection.id
+                    )}
+                    color="primary"
+                    checked={annotationCollections.includes(collection.id)}
+                    disabled={collection.disable}
+                  />
+                }
+                label={
+                  <div>
+                    {collection.name}
+                    {collection.validConcepts ? (
+                      <Typography
+                        variant="subtitle2"
+                        gutterBottom
+                        color="secondary"
+                      >
+                        {collection.validConcepts.concepts.join(', ')}
+                      </Typography>
+                    ) : (
+                      ''
+                    )}
+                  </div>
+                }
+              />
+            </div>
+          ))}
         </FormGroup>
       </FormControl>
     );
@@ -471,7 +469,7 @@ class TrainModel extends Component {
         }
       });
       await this.setState({
-        collections: filteredCol
+        collections: filteredCol.sort(a => (a.validConcepts ? -1 : 1))
       });
     } catch (error) {
       console.log(error);
