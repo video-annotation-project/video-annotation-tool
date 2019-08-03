@@ -53,14 +53,33 @@ router.get(
   '/',
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
-    let queryText = `
-    SELECT
-      ac.*
-    FROM
-      annotation_collection ac
-    ORDER BY
-      ac.name
+    let queryText;
+    if (req.query.train === 'true') {
+      queryText = `
+      SELECT 
+          name, id, count(*), array_agg(conceptid) as ids, json_agg((conceptname, conceptid)) as concepts
+      FROM
+      (SELECT ac.name, a.conceptid, ai.id, count(a.conceptid), c.name as conceptname
+          FROM 
+              annotation_collection ac
+          FULL JOIN
+              annotation_intermediate ai ON ac.id = ai.id
+          LEFT JOIN 
+              annotations a ON ai.annotationid = a.id
+          LEFT JOIN concepts c ON a.conceptid = c.id
+          GROUP BY ac.name, a.conceptid, ai.id, c.name ) t
+      GROUP BY name, id
+      `;
+    } else {
+      queryText = `
+      SELECT
+        ac.*
+      FROM
+        annotation_collection ac
+      ORDER BY
+        ac.name
     `;
+    }
 
     try {
       let annotationCollections = await psql.query(queryText);
@@ -256,50 +275,6 @@ router.post(
       if (added) {
         await psql.query(queryText2, params);
         res.status(200).json(added);
-      }
-    } catch (error) {
-      res.status(500).json(error);
-      console.log(error);
-    }
-  }
-);
-
-/**
- * @route GET /api/collections/annotations/train
- * @group collections
- * @summary Get a list of annotation collections that relates to model concepts id
- * @param {string} ids.query - conceptids from model
- * @returns {Array.<userInfo>} 200 - An array of annotation collections
- * @returns {Error} 500 - Unexpected database error
- */
-router.get(
-  '/train',
-  passport.authenticate('jwt', { session: false }),
-
-  async (req, res) => {
-    let params = '{' + req.query.ids + '}';
-    let queryText = `      
-      SELECT 
-        name, id, count(*), array_agg(conceptid) as ids, array_agg(conceptname) as concepts
-      FROM
-        (SELECT ac.name, a.conceptid, ai.id, count(a.conceptid), c.name as conceptname
-      FROM 
-        annotation_collection ac
-      LEFT JOIN
-        annotation_intermediate ai ON ac.id = ai.id
-      LEFT JOIN 
-        annotations a ON ai.annotationid = a.id
-      LEFT JOIN concepts c ON a.conceptid = c.id
-      WHERE 
-        a.conceptid = ANY( $1::int[] )
-      GROUP BY ac.name, a.conceptid, ai.id, c.name ) t
-      GROUP BY name, id
-    `;
-
-    try {
-      let data = await psql.query(queryText, [params]);
-      if (data) {
-        res.status(200).json(data.rows);
       }
     } catch (error) {
       res.status(500).json(error);

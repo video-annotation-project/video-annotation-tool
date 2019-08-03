@@ -276,67 +276,41 @@ class TrainModel extends Component {
   };
 
   loadCollectionList = () => {
-    const { models, modelSelected } = this.state;
+    const { models, modelSelected, annotationCollections } = this.state;
+    const localSelected = annotationCollections;
     const config = {
       headers: {
         Authorization: `Bearer ${localStorage.getItem('token')}`
       }
     };
-    axios.get(`/api/collections/annotations`, config).then(res => {
+    axios.get(`/api/collections/annotations?train=true`, config).then(res => {
       const selectedModelTuple = models.find(model => {
         return model.name === modelSelected;
       });
-      this.filterCollection(selectedModelTuple, res.data);
-    });
-  };
-
-  filterCollection = async (data, collections) => {
-    const { annotationCollections } = this.state;
-    const config = {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    };
-    try {
-      const localSelected = annotationCollections;
-      let dataRet = await axios.get(
-        `/api/collections/annotations/train?ids=${data.conceptsid}`,
-        config
-      );
-      const conceptids = dataRet.data.map(col => col.id);
-      dataRet = dataRet.data;
-      const filteredCol = collections;
-      filteredCol.forEach(col => {
-        if (!conceptids.includes(col.id)) {
+      const modelConcepts = selectedModelTuple.conceptsid;
+      res.data.forEach(col => {
+        const filtered = modelConcepts.filter(x => col.ids.includes(x));
+        if (filtered.length > 0) {
+          col.disable = false;
+          col.validConcepts = col.concepts.filter(y => filtered.includes(y.f2));
+        } else {
           const indexOfThis = localSelected.indexOf(col.id);
           if (indexOfThis > -1) {
             localSelected.splice(indexOfThis, 1);
           }
           col.disable = true;
-        } else {
-          col.disable = false;
-          col.validConcepts = dataRet.find(col1 => {
-            return col1.id === col.id;
-          });
         }
       });
-      await this.setState({
-        collections: filteredCol.sort(a => (a.validConcepts ? -1 : 1)),
+      this.setState({
+        collections: res.data.sort(a => (a.validConcepts ? -1 : 1)),
         annotationCollections: localSelected
       });
-    } catch (error) {
-      console.log(error);
-    }
+      // this.filterCollection(selectedModelTuple, res.data);
+    });
   };
 
-  // Handle user, video, and concept checkbox selections
-  checkboxSelect = (stateName, stateValue, id) => event => {
-    let deepCopy = JSON.parse(JSON.stringify(stateValue));
-    if (event.target.checked) {
-      deepCopy.push(id);
-    } else {
-      deepCopy = deepCopy.filter(user => user !== id);
-    }
+  // Used to handle changes in the hyperparameters and in the select model
+  handleChange = event => {
     this.setState({
       [stateName]: deepCopy
     });
@@ -421,7 +395,12 @@ class TrainModel extends Component {
                         gutterBottom
                         color="secondary"
                       >
-                        {collection.validConcepts.concepts.join(', ')}
+                        {collection.validConcepts.map((concept, index) => {
+                          if (index === collection.validConcepts.length - 1) {
+                            return concept.f1;
+                          }
+                          return `${concept.f1}, `;
+                        })}
                       </Typography>
                     ) : (
                       ''
