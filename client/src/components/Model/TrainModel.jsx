@@ -445,12 +445,14 @@ class TrainModel extends Component {
   };
 
   filterCollection = async (data, collections) => {
+    const { annotationCollections } = this.state;
     const config = {
       headers: {
         Authorization: `Bearer ${localStorage.getItem('token')}`
       }
     };
     try {
+      const localSelected = annotationCollections;
       let dataRet = await axios.get(
         `/api/collections/annotations/train?ids=${data.conceptsid}`,
         config
@@ -460,6 +462,10 @@ class TrainModel extends Component {
       const filteredCol = collections;
       filteredCol.forEach(col => {
         if (!conceptids.includes(col.id)) {
+          const indexOfThis = localSelected.indexOf(col.id);
+          if (indexOfThis >= 0) {
+            localSelected.splice(indexOfThis, 1);
+          }
           col.disable = true;
         } else {
           col.disable = false;
@@ -469,7 +475,8 @@ class TrainModel extends Component {
         }
       });
       await this.setState({
-        collections: filteredCol.sort(a => (a.validConcepts ? -1 : 1))
+        collections: filteredCol.sort(a => (a.validConcepts ? -1 : 1)),
+        annotationCollections: localSelected
       });
     } catch (error) {
       console.log(error);
