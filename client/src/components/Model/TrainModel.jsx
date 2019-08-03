@@ -309,13 +309,6 @@ class TrainModel extends Component {
     });
   };
 
-  // Used to handle changes in the hyperparameters and in the select model
-  handleChange = event => {
-    this.setState({
-      [stateName]: deepCopy
-    });
-  };
-
   getSteps = () => {
     return [
       'Select model',
@@ -359,6 +352,19 @@ class TrainModel extends Component {
         </Select>
       </FormControl>
     );
+  };
+
+  // Handle user, video, and concept checkbox selections
+  checkboxSelect = (stateName, stateValue, id) => event => {
+    let deepCopy = JSON.parse(JSON.stringify(stateValue));
+    if (event.target.checked) {
+      deepCopy.push(id);
+    } else {
+      deepCopy = deepCopy.filter(user => user !== id);
+    }
+    this.setState({
+      [stateName]: deepCopy
+    });
   };
 
   selectCollection = () => {
