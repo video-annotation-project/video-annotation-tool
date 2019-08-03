@@ -152,18 +152,16 @@ class AnnotationCollection extends Component {
   getCollectionCounts = async selectedCollection => {
     let ret;
     try {
-      const res = await axios.get(
-        `/api/collections/annotations/counts/${selectedCollection}`,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-          }
+      const res = await axios.get(`/api/collections/annotations/counts`, {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        },
+        params: {
+          ids: [selectedCollection]
         }
-      );
-      if (res) {
-        ret = res.data;
-      }
+      });
+      ret = res.data;
     } catch (error) {
       console.log(error);
       ret = error;

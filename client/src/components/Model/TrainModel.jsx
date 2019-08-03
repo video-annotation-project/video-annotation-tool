@@ -95,6 +95,9 @@ const styles = theme => ({
   hyperParamsInput: {
     width: '200px',
     marginRight: '10px'
+  },
+  info: {
+    marginTop: theme.spacing(2)
   }
 });
 
@@ -453,84 +456,73 @@ class TrainModel extends Component {
           onChange={this.handleChange}
           className={classes.hyperParamsInput}
         />
-        <FormControlLabel
-          control={
-            <Switch
-              checked={includeTracking}
-              onChange={this.handleChangeSwitch}
-              value="includeTracking"
-              color="primary"
-            />
-          }
-          label="Include tracking annotations"
-        />
-        <FormControlLabel
-          control={
-            <Switch
-              checked={verifiedOnly}
-              onChange={this.handleChangeSwitch}
-              value="verifiedOnly"
-              color="primary"
-            />
-          }
-          label="Verified annotations only"
-        />
-        {countsLoaded ? (
-          <div>
-            <Typography variant="subtitle1">
-              User Annotations: {selectedCollectionCounts[0].count}
-            </Typography>
-            <Typography variant="subtitle1">
-              Tracking Annotations: {selectedCollectionCounts[1].count}
-            </Typography>
-            <Typography variant="subtitle1">
-              Verified User Annotations: {selectedCollectionCounts[2].count}
-            </Typography>
-            <Typography variant="subtitle1">
-              Verified Tracking Annotations: {selectedCollectionCounts[3].count}
-            </Typography>
-          </div>
-        ) : (
-          <Typography>Loading...</Typography>
-        )}
+        <div>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={includeTracking}
+                onChange={this.handleChangeSwitch}
+                value="includeTracking"
+                color="primary"
+              />
+            }
+            label="Include tracking annotations"
+          />
+          <FormControlLabel
+            control={
+              <Switch
+                checked={verifiedOnly}
+                onChange={this.handleChangeSwitch}
+                value="verifiedOnly"
+                color="primary"
+              />
+            }
+            label="Verified annotations only"
+          />
+        </div>
+        <div className={classes.info}>
+          {countsLoaded ? (
+            <React.Fragment>
+              <Typography variant="subtitle1">
+                User Annotations: {selectedCollectionCounts[0].count}
+              </Typography>
+              <Typography variant="subtitle1">
+                Tracking Annotations: {selectedCollectionCounts[1].count}
+              </Typography>
+              <Typography variant="subtitle1">
+                Verified User Annotations: {selectedCollectionCounts[2].count}
+              </Typography>
+              <Typography variant="subtitle1">
+                Verified Tracking Annotations:{' '}
+                {selectedCollectionCounts[3].count}
+              </Typography>
+            </React.Fragment>
+          ) : (
+            <Typography>Loading...</Typography>
+          )}
+        </div>
       </form>
     );
   };
 
   getCollectionCounts = async () => {
     const { annotationCollections } = this.state;
-
-    const selectedCollectionCounts = [
-      { count: 0 },
-      { count: 0 },
-      { count: 0 },
-      { count: 0 }
-    ];
     try {
-      annotationCollections.forEach(async selectedCollection => {
-        const res = await axios.get(
-          `/api/collections/annotations/counts/${selectedCollection}`,
-          {
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${localStorage.getItem('token')}`
-            }
-          }
-        );
-        if (res) {
-          console.log(res.data);
-          for (let i = 0; i < res.data.length; i += 1) {
-            selectedCollectionCounts[i].count += parseInt(
-              res.data[i].count,
-              10
-            );
-          }
-          this.setState({
-            countsLoaded: true,
-            selectedCollectionCounts
-          });
+      const res = await axios.get(`/api/collections/annotations/counts`, {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        },
+        params: {
+          ids: annotationCollections
         }
       });
+      if (res) {
+        this.setState({
+          countsLoaded: true,
+          selectedCollectionCounts: res.data
+        });
+      }
     } catch (error) {
       console.log(error);
     }

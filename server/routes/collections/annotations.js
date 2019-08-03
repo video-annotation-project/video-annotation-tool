@@ -5,7 +5,7 @@ const psql = require('../../db/simpleConnect');
 var configData = require('../../../config.json');
 
 router.get(
-  '/counts/:id',
+  '/counts',
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     const counts = [];
@@ -23,21 +23,21 @@ router.get(
       ON
         u.id = a.userid
       WHERE
-        ai.id = $1
+        ai.id::text = ANY($1)
     `;
     const user = ` AND u.username != 'tracking'`;
     const tracking = ` AND u.username = 'tracking'`;
     const verified = ` AND a.verifiedby IS NOT NULL`;
 
     try {
-      let count = await psql.query(queryText + user, [req.params.id]);
+      let count = await psql.query(queryText + user, [req.query.ids]);
       counts.push(count.rows[0]);
-      count = await psql.query(queryText + tracking, [req.params.id]);
+      count = await psql.query(queryText + tracking, [req.query.ids]);
       counts.push(count.rows[0]);
-      count = await psql.query(queryText + user + verified, [req.params.id]);
+      count = await psql.query(queryText + user + verified, [req.query.ids]);
       counts.push(count.rows[0]);
       count = await psql.query(queryText + tracking + verified, [
-        req.params.id
+        req.query.ids
       ]);
       counts.push(count.rows[0]);
 
