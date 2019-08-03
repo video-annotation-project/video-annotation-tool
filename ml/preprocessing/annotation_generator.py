@@ -57,7 +57,7 @@ def _get_labelmap(classes):
     class_id_name = query(f"select id, name from concepts where id = ANY(ARRAY{classes})")
     labelmap = pd.Series(class_id_name.name.values, index=class_id_name.id).to_dict()
 
-    return labelmap 
+    return labelmap
 
 
 def get_classmap(classes):
@@ -68,7 +68,7 @@ def get_classmap(classes):
     # Keras requires that the mapping IDs correspond to the index number of the class.
     # So we create that mapping (dictionary)
     classmap = {class_: index for index, class_ in enumerate(classes)}
-    
+
     return classmap
 
 
@@ -245,7 +245,7 @@ class S3Generator(Generator):
         self.labels = {}
         for key, value in self.classes.items():
             self.labels[value] = key
-        
+
         self._connect_s3()
 
         self.image_data = self._read_annotations()

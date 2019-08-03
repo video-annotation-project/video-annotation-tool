@@ -1,3 +1,6 @@
+import sys
+import uuid
+
 import keras
 import tensorflow as tf
 import boto3
@@ -12,6 +15,7 @@ from keras_retinanet.callbacks import RedirectModel
 import config
 from utils.timer import timer
 from utils.evaluate import evaluate_class_thresholds
+from utils.output import DatabaseOutput
 from preprocessing.annotation_generator import AnnotationGenerator
 from callbacks.progress import Progress
 from callbacks.tensorboard import TensorboardLog
@@ -35,9 +39,14 @@ def train_model(concepts,
         confidence thresholds for predicting
     """
 
+    # Generate a random unique ID for this training job
+    job_id = uuid.uuid4()
+
     model, training_model = _initilize_model(len(concepts))
 
     num_workers = _get_num_workers()
+
+    _redirect_outputs(job_id)
 
     training_model.compile(
         loss={
@@ -67,6 +76,7 @@ def train_model(concepts,
 
     callbacks = _get_callbacks(
         model=model,
+        job_id=job_id,
         model_name=model_name,
         collection_ids=collection_ids,
         min_examples=min_examples,
@@ -109,6 +119,7 @@ def _initilize_model(num_classes):
 
 
 def _get_callbacks(model,
+                   job_id,
                    model_name,
                    min_examples,
                    epochs,
@@ -132,6 +143,7 @@ def _get_callbacks(model,
     # Every epoch upload tensorboard logs to the S3 bucket
     log_callback = TensorboardLog(
         model_name=model_name,
+        job_id=job_id,
         min_examples=min_examples,
         epochs=epochs,
         collection_ids=collection_ids
@@ -139,7 +151,7 @@ def _get_callbacks(model,
 
     # Save tensorboard logs to appropriate folder
     tensorboard_callback = keras.callbacks.TensorBoard(
-        log_dir=f'./logs/{log_callback.id}',
+        log_dir=f'./logs/{job_id}',
         batch_size=config.BATCH_SIZE,
     )
 
@@ -149,7 +161,7 @@ def _get_callbacks(model,
         num_epochs=epochs
     )
 
-    return [stopping, checkpoint, progress_callback, log_callback, tensorboard_callback]
+    return stopping, checkpoint, progress_callback, log_callback, tensorboard_callback
 
 
 def _upload_weights(model_name):
@@ -160,6 +172,14 @@ def _upload_weights(model_name):
         config.S3_BUCKET,
         config.S3_WEIGHTS_FOLDER + model_name + ".h5"
     )
+
+
+def _redirect_outputs(job_id):
+    """ The DatabaseOutput class will redirect this programs output to a column
+        in out training_progress databse (as well as into a file)
+    """
+    sys.stdout = DatabaseOutput(job_id, 'out')
+    sys.stderr = DatabaseOutput(job_id, 'err')
 
 
 def _get_num_workers():

@@ -1,105 +1,90 @@
 import os
-import json
 import datetime
 
 import keras
 import boto3
 from psycopg2 import connect
-from dotenv import load_dotenv
+
+import config
 
 
 class TensorboardLog(keras.callbacks.Callback):
 
-    def __init__(self, model_name, min_examples, epochs, collection_ids):
+    def __init__(self, model_name, job_id, min_examples, epochs, collection_ids):
 
         self.table_name = 'previous_runs'
+        self.job_id = job_id
 
-        config_path = "../config.json"
-        load_dotenv(dotenv_path="../.env")
+        self.connection = connect(
+            database=config.DB_NAME,
+            host=config.DB_HOST,
+            user=config.DB_USER,
+            password=config.DB_PASSWORD
+        )
 
-        with open(config_path) as config_buffer:    
-            config = json.loads(config_buffer.read())['ml']
-
-        # Connect to database
-        DB_NAME = os.getenv("DB_NAME")
-        DB_HOST = os.getenv("DB_HOST")
-        DB_USER = os.getenv("DB_USER")
-        DB_PASSWORD = os.getenv("DB_PASSWORD")
-
-        self.bucket = os.getenv('AWS_S3_BUCKET_NAME')
-        self.logs_dir = os.getenv('AWS_S3_BUCKET_LOGS_FOLDER')
-
-        self.connection = connect(database=DB_NAME, host=DB_HOST, user=DB_USER, password=DB_PASSWORD)
         self.cursor = self.connection.cursor()
 
-        self.client = boto3.client('s3',
-            aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
-            aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'))
+        self.client = boto3.client(
+            's3',
+            aws_access_key_id=config.AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=config.AWS_SECRET_ACCESS_KEY
+        )
 
-        self.id = self._create_log_entry(
+        self._create_log_entry(
             model_name=model_name,
             min_examples=min_examples,
             epochs=epochs,
             collection_ids=collection_ids
         )
 
-
     def on_train_begin(self, logs={}):
         self.cursor.execute(
-        f"""UPDATE 
-                {self.table_name} 
+            f"""UPDATE
+                {self.table_name}
             SET
-                start_train=%s 
-            WHERE 
+                start_train=%s
+            WHERE
                 id=%s""",
-        (datetime.datetime.now(), self.id))
+            (datetime.datetime.now(), self.id))
 
         self.connection.commit()
-    
 
     def on_train_end(self, logs={}):
         self.cursor.execute(
-        f"""UPDATE 
-                {self.table_name} 
+            f"""UPDATE
+                {self.table_name}
             SET
-                end_train=%s 
-            WHERE 
+                end_train=%s
+            WHERE
                 id=%s""",
-        (datetime.datetime.now(), self.id))
-        
+            (datetime.datetime.now(), self.id))
+
         self.connection.commit()
 
- 
     def on_epoch_begin(self, epoch, logs={}):
         return
- 
 
     def on_epoch_end(self, epoch, logs={}):
         path = f'./logs/{self.id}'
 
         for root, dirs, files in os.walk(path):
             for file in files:
-                self.client.upload_file(os.path.join(root, file), 
-                    self.bucket, f'{self.logs_dir}{self.id}/{file}')
-
+                self.client.upload_file(
+                    os.path.join(root, file), self.bucket, f'{self.logs_dir}{self.job_id}/{file}'
+                )
 
     def on_batch_begin(self, batch, logs={}):
         return
- 
 
     def on_batch_end(self, batch, logs={}):
         return
 
-
-    def _create_log_entry(self, model_name, min_examples, epochs, collection_ids):
+    def _create_log_entry(self, model_name, job_id, min_examples, epochs, collection_ids):
         self.cursor.execute(
-            f"""INSERT INTO {self.table_name} 
-                    (model_name, epochs, min_examples, collection_ids) 
-                VALUES 
-                    (%s, %s, %s, %s) RETURNING id""",
-            (model_name, epochs, min_examples, collection_ids))
+            f"""INSERT INTO {self.table_name}
+                    (model_name, job_id, epochs, min_examples, collection_ids)
+                VALUES
+                    (%s, %s, %s, %s)""",
+            (model_name, self.job_id, epochs, min_examples, collection_ids))
 
-        log_id = self.cursor.fetchone()[0]
         self.connection.commit()
-
-        return log_id
