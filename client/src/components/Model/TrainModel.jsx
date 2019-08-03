@@ -125,7 +125,12 @@ class TrainModel extends Component {
       modelSelected: null,
       collections: [],
       annotationCollections: [],
-      selectedCollectionCounts: [],
+      selectedCollectionCounts: [
+        { count: 0 },
+        { count: 0 },
+        { count: 0 },
+        { count: 0 }
+      ],
       minImages: 5000,
       epochs: 0,
       includeTracking: false,
@@ -135,6 +140,24 @@ class TrainModel extends Component {
       socket
     };
   }
+
+  componentDidMount = async () => {
+    this.loadOptionInfo();
+    this.loadExistingModels();
+  };
+
+  // Used to handle changes in the hyperparameters and in the select model
+  handleChange = event => {
+    this.setState({
+      [event.target.name]: event.target.value
+    });
+  };
+
+  handleChangeSwitch = event => {
+    this.setState({
+      [event.target.value]: event.target.checked
+    });
+  };
 
   // Methods for video meta data
   openVideoMetadata = (event, video) => {
@@ -150,9 +173,56 @@ class TrainModel extends Component {
     });
   };
 
-  componentDidMount = async () => {
-    this.loadOptionInfo();
-    this.loadExistingModels();
+  updateBackendInfo = () => {
+    const {
+      activeStep,
+      modelSelected,
+      annotationCollections,
+      epochs,
+      minImages,
+      socket
+    } = this.state;
+
+    const config = {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    };
+    const info = {
+      activeStep,
+      modelSelected,
+      annotationCollections,
+      epochs,
+      minImages
+    };
+    const body = {
+      info: JSON.stringify(info)
+    };
+    // update SQL database
+    axios
+      .put('/api/models/train/trainmodel/', body, config)
+      .then(() => {
+        socket.emit('refresh trainmodel');
+      })
+      .catch(error => {
+        console.log(error);
+        console.log(JSON.parse(JSON.stringify(error)));
+      });
+  };
+
+  postModelInstance = command => {
+    const config = {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    };
+    const body = {
+      command,
+      modelInstanceId: 'i-011660b3e976035d8'
+    };
+    axios.post(`/api/models/train`, body, config).then(res => {
+      console.log(res);
+    });
   };
 
   loadOptionInfo = () => {
@@ -219,17 +289,77 @@ class TrainModel extends Component {
     });
   };
 
-  // Used to handle changes in the hyperparameters and in the select model
-  handleChange = event => {
+  filterCollection = async (data, collections) => {
+    const { annotationCollections } = this.state;
+    const config = {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    };
+    try {
+      const localSelected = annotationCollections;
+      let dataRet = await axios.get(
+        `/api/collections/annotations/train?ids=${data.conceptsid}`,
+        config
+      );
+      const conceptids = dataRet.data.map(col => col.id);
+      dataRet = dataRet.data;
+      const filteredCol = collections;
+      filteredCol.forEach(col => {
+        if (!conceptids.includes(col.id)) {
+          const indexOfThis = localSelected.indexOf(col.id);
+          if (indexOfThis > -1) {
+            localSelected.splice(indexOfThis, 1);
+          }
+          col.disable = true;
+        } else {
+          col.disable = false;
+          col.validConcepts = dataRet.find(col1 => {
+            return col1.id === col.id;
+          });
+        }
+      });
+      await this.setState({
+        collections: filteredCol.sort(a => (a.validConcepts ? -1 : 1)),
+        annotationCollections: localSelected
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  // Handle user, video, and concept checkbox selections
+  checkboxSelect = (stateName, stateValue, id) => event => {
+    let deepCopy = JSON.parse(JSON.stringify(stateValue));
+    if (event.target.checked) {
+      deepCopy.push(id);
+    } else {
+      deepCopy = deepCopy.filter(user => user !== id);
+    }
     this.setState({
-      [event.target.name]: event.target.value
+      [stateName]: deepCopy
     });
   };
 
-  handleChangeSwitch = event => {
-    this.setState({
-      [event.target.value]: event.target.checked
-    });
+  getSteps = () => {
+    return [
+      'Select model',
+      'Select annotation collection',
+      'Select hyperparameters'
+    ];
+  };
+
+  getStepContent = step => {
+    switch (step) {
+      case 0:
+        return this.selectModel();
+      case 1:
+        return this.selectCollection();
+      case 2:
+        return this.selectHyperparameters();
+      default:
+        return 'Unknown step';
+    }
   };
 
   selectModel = () => {
@@ -254,19 +384,6 @@ class TrainModel extends Component {
         </Select>
       </FormControl>
     );
-  };
-
-  // Handle user, video, and concept checkbox selections
-  checkboxSelect = (stateName, stateValue, id) => event => {
-    let deepCopy = JSON.parse(JSON.stringify(stateValue));
-    if (event.target.checked) {
-      deepCopy.push(id);
-    } else {
-      deepCopy = deepCopy.filter(user => user !== id);
-    }
-    this.setState({
-      [stateName]: deepCopy
-    });
   };
 
   selectCollection = () => {
@@ -320,7 +437,22 @@ class TrainModel extends Component {
 
   selectHyperparameters = () => {
     const { classes } = this.props;
-    const { epochs, minImages, includeTracking, verifiedOnly } = this.state;
+    const {
+      epochs,
+      minImages,
+      includeTracking,
+      verifiedOnly,
+      selectedCollectionCounts
+    } = this.state;
+
+    // WHY ARENT THEY THE SAME WTF
+    console.log('hello');
+    console.log(selectedCollectionCounts);
+    console.log('goodbye');
+    console.log(selectedCollectionCounts[0]);
+    console.log(selectedCollectionCounts[1]);
+    console.log(selectedCollectionCounts[2]);
+    console.log(selectedCollectionCounts[3]);
 
     return (
       <form className={classes.hyperparametersForm}>
@@ -328,6 +460,7 @@ class TrainModel extends Component {
           margin="normal"
           name="epochs"
           label="Number of epochs"
+          type="number"
           value={epochs}
           onChange={this.handleChange}
           className={classes.hyperParamsInput}
@@ -337,6 +470,7 @@ class TrainModel extends Component {
           margin="normal"
           name="minImages"
           label="Number of training images"
+          type="number"
           value={minImages}
           onChange={this.handleChange}
           className={classes.hyperParamsInput}
@@ -363,124 +497,25 @@ class TrainModel extends Component {
           }
           label="Verified annotations only"
         />
+        <div>
+          <Typography variant="subtitle1">
+            User Annotations: {selectedCollectionCounts[0].count}
+          </Typography>
+          <Typography variant="subtitle1">
+            Tracking Annotations: {selectedCollectionCounts[1].count}
+          </Typography>
+          <Typography variant="subtitle1">
+            Verified User Annotations: {selectedCollectionCounts[2].count}
+          </Typography>
+          <Typography variant="subtitle1">
+            Verified Tracking Annotations: {selectedCollectionCounts[3].count}
+          </Typography>
+        </div>
       </form>
     );
   };
 
-  getSteps = () => {
-    return [
-      'Select model',
-      'Select annotation collection',
-      'Select hyperparameters'
-    ];
-  };
-
-  getStepContent = step => {
-    switch (step) {
-      case 0:
-        return this.selectModel();
-      case 1:
-        return this.selectCollection();
-      case 2:
-        return this.selectHyperparameters();
-      default:
-        return 'Unknown step';
-    }
-  };
-
-  updateBackendInfo = () => {
-    const {
-      activeStep,
-      modelSelected,
-      annotationCollections,
-      epochs,
-      minImages,
-      socket
-    } = this.state;
-
-    const config = {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    };
-    const info = {
-      activeStep,
-      modelSelected,
-      annotationCollections,
-      epochs,
-      minImages
-    };
-    const body = {
-      info: JSON.stringify(info)
-    };
-    // update SQL database
-    axios
-      .put('/api/models/train/trainmodel/', body, config)
-      .then(() => {
-        socket.emit('refresh trainmodel');
-      })
-      .catch(error => {
-        console.log(error);
-        console.log(JSON.parse(JSON.stringify(error)));
-      });
-  };
-
-  filterCollection = async (data, collections) => {
-    const config = {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    };
-    try {
-      let dataRet = await axios.get(
-        `/api/collections/annotations/train?ids=${data.conceptsid}`,
-        config
-      );
-      const conceptids = dataRet.data.map(col => col.id);
-      dataRet = dataRet.data;
-      const filteredCol = collections;
-      filteredCol.forEach(col => {
-        if (!conceptids.includes(col.id)) {
-          col.disable = true;
-        } else {
-          col.disable = false;
-          col.validConcepts = dataRet.find(col1 => {
-            return col1.id === col.id;
-          });
-        }
-      });
-      await this.setState({
-        collections: filteredCol
-      });
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  handleNext = async () => {
-    const { activeStep } = this.state;
-    // After users have been selected load user videos
-    if (activeStep === 0) {
-      this.loadCollectionList();
-    }
-    // After Model and videos have been selected load available concepts
-    // if (this.state.activeStep === 2) {
-    //   await this.loadConceptList();
-    // }
-    this.setState(
-      state => ({
-        activeStep: state.activeStep + 1
-      }),
-      () => {
-        if (activeStep === 3) {
-          this.postModelInstance('start');
-        }
-        this.updateBackendInfo();
-      }
-    );
-  };
-
-  getCollectionCounts = () => {
+  getCollectionCounts = async () => {
     const { annotationCollections } = this.state;
 
     const selectedCollectionCounts = [
@@ -501,17 +536,47 @@ class TrainModel extends Component {
           }
         );
         if (res) {
-          for (let i = 0; i < res.length; i += 1) {
-            selectedCollectionCounts[i].count += res.data[i].count;
+          for (let i = 0; i < res.data.length; i += 1) {
+            selectedCollectionCounts[i].count += parseInt(
+              res.data[i].count,
+              10
+            );
           }
         }
       });
-      this.setState({
+      await this.setState({
         selectedCollectionCounts
       });
     } catch (error) {
       console.log(error);
     }
+  };
+
+  handleNext = async () => {
+    const { activeStep } = this.state;
+    // After users have been selected load user videos
+    if (activeStep === 0) {
+      this.loadCollectionList();
+    }
+
+    if (activeStep === 1) {
+      this.getCollectionCounts();
+    }
+    // After Model and videos have been selected load available concepts
+    // if (this.state.activeStep === 2) {
+    //   await this.loadConceptList();
+    // }
+    this.setState(
+      state => ({
+        activeStep: state.activeStep + 1
+      }),
+      () => {
+        if (activeStep === 3) {
+          this.postModelInstance('start');
+        }
+        this.updateBackendInfo();
+      }
+    );
   };
 
   handleBack = () => {
@@ -535,21 +600,6 @@ class TrainModel extends Component {
         this.postModelInstance('stop');
       }
     );
-  };
-
-  postModelInstance = command => {
-    const config = {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    };
-    const body = {
-      command,
-      modelInstanceId: 'i-011660b3e976035d8'
-    };
-    axios.post(`/api/models/train`, body, config).then(res => {
-      console.log(res);
-    });
   };
 
   render() {
