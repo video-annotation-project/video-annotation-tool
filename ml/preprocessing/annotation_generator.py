@@ -54,8 +54,8 @@ def _get_labelmap(classes):
 
     # Keras requires that the mapping IDs correspond to the index number of the class.
     # So we create that mapping (dictionary)
-    class_id_name = query(f"select name from concepts where id = ANY(ARRAY{classes})")
-    labelmap = pd.Series(classes.index, index=classes.id).to_dict()
+    class_id_name = query(f"select id, name from concepts where id = ANY(ARRAY{classes})")
+    labelmap = pd.Series(class_id_name.name.values, index=class_id_name.id).to_dict()
 
     return labelmap 
 
@@ -239,11 +239,13 @@ class S3Generator(Generator):
         self.image_extension = image_extension
         self.classes = classes
 
+        self.labelmap = _get_labelmap(list(classes))
+
         # Make a reverse dictionary so that we can lookup the other way
         self.labels = {}
         for key, value in self.classes.items():
             self.labels[value] = key
-
+        
         self._connect_s3()
 
         self.image_data = self._read_annotations()
@@ -277,7 +279,7 @@ class S3Generator(Generator):
     def label_to_name(self, label):
         """ Map label to name.
         """
-        return self.labels[label]
+        return self.labelmap[self.labels[label]]
 
     def image_aspect_ratio(self, image_index):
         """ Compute the aspect ratio for an image with image_index.
@@ -330,11 +332,11 @@ class S3Generator(Generator):
 
         image_name = str(image['image'])
         try:
-            obj = self.client.get_object(Bucket=config.S3_BUCKET, Key=config.SRC_IMG_FOLDER + image_name)
+            obj = self.client.get_object(Bucket=config.S3_BUCKET, Key=config.S3_ANNOTATION_FOLDER + image_name)
             obj_image = Image.open(obj['Body'])
         # ClientError is the exception class for a KeyNotFound error
         except ClientError:
-            raise IOError(f'file {config.SRC_IMG_FOLDER}{image_name} not found in S3 bucket')
+            raise IOError(f'file {config.S3_ANNOTATION_FOLDER}{image_name} not found in S3 bucket')
 
         # Some files have a file extension, some don't. Let's fix that.
         if self.image_extension not in image_name:

@@ -35,10 +35,11 @@ def train_model(concepts,
         confidence thresholds for predicting
     """
 
-    model = _initilize_model(len(concepts))
+    model, training_model = _initilize_model(len(concepts))
+
     num_workers = _get_num_workers()
 
-    model.compile(
+    training_model.compile(
         loss={
             'regression': losses.smooth_l1(),
             'classification': losses.focal()
@@ -73,7 +74,7 @@ def train_model(concepts,
         steps_per_epoch=len(train_generator)
     )
 
-    model.fit_generator(
+    training_model.fit_generator(
         train_generator,
         epochs=epochs,
         callbacks=callbacks,
@@ -103,8 +104,8 @@ def _initilize_model(num_classes):
     gpus = len([i for i in device_lib.list_local_devices() if i.device_type == 'GPU'])
 
     if gpus > 1:
-        return multi_gpu_model(model, gpus=gpus)
-    return model
+        return model, multi_gpu_model(model, gpus=gpus)
+    return model, model
 
 
 def _get_callbacks(model,
@@ -148,7 +149,7 @@ def _get_callbacks(model,
         num_epochs=epochs
     )
 
-    return [checkpoint, stopping, progress_callback, log_callback, tensorboard_callback]
+    return [stopping, checkpoint, progress_callback, log_callback, tensorboard_callback]
 
 
 def _upload_weights(model_name):
@@ -165,4 +166,5 @@ def _get_num_workers():
     """ Returns the number of cores on this machine.
         1 worker per core should give us maximum preformance.
     """
-    return multiprocessing.cpu_count()
+    # Subtract 1 for the main thread
+    return multiprocessing.cpu_count() - 1
