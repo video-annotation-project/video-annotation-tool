@@ -137,7 +137,8 @@ class TrainModel extends Component {
       verifiedOnly: false,
       activeStep: 0,
       openedVideo: null,
-      socket
+      socket,
+      countsLoaded: false
     };
   }
 
@@ -442,17 +443,9 @@ class TrainModel extends Component {
       minImages,
       includeTracking,
       verifiedOnly,
-      selectedCollectionCounts
+      selectedCollectionCounts,
+      countsLoaded
     } = this.state;
-
-    // WHY ARENT THEY THE SAME WTF
-    console.log('hello');
-    console.log(selectedCollectionCounts);
-    console.log('goodbye');
-    console.log(selectedCollectionCounts[0]);
-    console.log(selectedCollectionCounts[1]);
-    console.log(selectedCollectionCounts[2]);
-    console.log(selectedCollectionCounts[3]);
 
     return (
       <form className={classes.hyperparametersForm}>
@@ -497,20 +490,24 @@ class TrainModel extends Component {
           }
           label="Verified annotations only"
         />
-        <div>
-          <Typography variant="subtitle1">
-            User Annotations: {selectedCollectionCounts[0].count}
-          </Typography>
-          <Typography variant="subtitle1">
-            Tracking Annotations: {selectedCollectionCounts[1].count}
-          </Typography>
-          <Typography variant="subtitle1">
-            Verified User Annotations: {selectedCollectionCounts[2].count}
-          </Typography>
-          <Typography variant="subtitle1">
-            Verified Tracking Annotations: {selectedCollectionCounts[3].count}
-          </Typography>
-        </div>
+        {countsLoaded ? (
+          <div>
+            <Typography variant="subtitle1">
+              User Annotations: {selectedCollectionCounts[0].count}
+            </Typography>
+            <Typography variant="subtitle1">
+              Tracking Annotations: {selectedCollectionCounts[1].count}
+            </Typography>
+            <Typography variant="subtitle1">
+              Verified User Annotations: {selectedCollectionCounts[2].count}
+            </Typography>
+            <Typography variant="subtitle1">
+              Verified Tracking Annotations: {selectedCollectionCounts[3].count}
+            </Typography>
+          </div>
+        ) : (
+          <Typography>Loading...</Typography>
+        )}
       </form>
     );
   };
@@ -536,16 +533,18 @@ class TrainModel extends Component {
           }
         );
         if (res) {
+          console.log(res.data);
           for (let i = 0; i < res.data.length; i += 1) {
             selectedCollectionCounts[i].count += parseInt(
               res.data[i].count,
               10
             );
           }
+          this.setState({
+            countsLoaded: true,
+            selectedCollectionCounts
+          });
         }
-      });
-      await this.setState({
-        selectedCollectionCounts
       });
     } catch (error) {
       console.log(error);
