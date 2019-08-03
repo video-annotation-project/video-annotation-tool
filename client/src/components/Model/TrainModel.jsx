@@ -463,7 +463,7 @@ class TrainModel extends Component {
       filteredCol.forEach(col => {
         if (!conceptids.includes(col.id)) {
           const indexOfThis = localSelected.indexOf(col.id);
-          if (indexOfThis >= 0) {
+          if (indexOfThis > -1) {
             localSelected.splice(indexOfThis, 1);
           }
           col.disable = true;
