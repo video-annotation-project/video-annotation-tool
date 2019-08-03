@@ -32,20 +32,12 @@ const styles = theme => ({
     height: '730px',
     paddingLeft: 0
   },
-  img: {
-    padding: theme.spacing(3),
-    width: '1280px',
-    height: '720px'
-  },
   button: {
     marginTop: theme.spacing(3),
     marginRight: theme.spacing()
   },
   actionsContainer: {
     marginBottom: theme.spacing(2)
-  },
-  resetContainer: {
-    padding: theme.spacing(3)
   },
   formControl: {
     minWidth: 200,
@@ -74,7 +66,6 @@ const styles = theme => ({
   container: {
     display: 'flex',
     flexDirection: 'row',
-    padding: '20px',
     height: '560px'
   },
   stats1: {
@@ -682,7 +673,6 @@ class AnnotationCollection extends Component {
                   <StepLabel>{label}</StepLabel>
                   <StepContent>
                     {this.getStepForm(index)}
-
                     <div className={classes.actionsContainer}>
                       <Button
                         variant="contained"

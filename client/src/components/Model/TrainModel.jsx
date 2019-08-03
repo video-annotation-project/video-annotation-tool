@@ -17,6 +17,7 @@ import FormGroup from '@material-ui/core/FormGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Checkbox from '@material-ui/core/Checkbox';
 import Typography from '@material-ui/core/Typography';
+import Switch from '@material-ui/core/Switch';
 
 import ModelProgress from './ModelProgress';
 import VideoMetadata from '../Utilities/VideoMetadata';
@@ -26,9 +27,8 @@ const styles = theme => ({
     margin: '40px 180px'
   },
   form: {
-    marginTop: theme.spacing(1.5),
-    marginBottom: theme.spacing(2),
-    marginLeft: theme.spacing(1),
+    marginTop: theme.spacing(2),
+    marginBottom: theme.spacing(),
     minWidth: 150
   },
   group: {
@@ -62,7 +62,7 @@ const styles = theme => ({
     width: '50%'
   },
   button: {
-    marginTop: theme.spacing(),
+    marginTop: theme.spacing(2),
     marginRight: theme.spacing()
   },
   actionsContainer: {
@@ -74,7 +74,8 @@ const styles = theme => ({
     padding: theme.spacing(3)
   },
   checkSelector: {
-    maxHeight: '150px',
+    marginTop: theme.spacing(),
+    maxHeight: '250px',
     overflow: 'auto'
   },
   videoSelector: {
@@ -85,8 +86,6 @@ const styles = theme => ({
     flexWrap: 'wrap'
   },
   textField: {
-    marginLeft: theme.spacing(),
-    marginRight: theme.spacing(),
     width: 200
   },
   epochText: {
@@ -126,8 +125,11 @@ class TrainModel extends Component {
       modelSelected: null,
       collections: [],
       annotationCollections: [],
+      selectedCollectionCounts: [],
       minImages: 5000,
       epochs: 0,
+      includeTracking: false,
+      verifiedOnly: false,
       activeStep: 0,
       openedVideo: null,
       socket
@@ -166,7 +168,6 @@ class TrainModel extends Component {
         const { info } = res.data[0];
         this.setState({
           activeStep: info.activeStep,
-          annotationCollections: info.annotationCollections,
           modelSelected: info.modelSelected,
           minImages: info.minImages,
           epochs: info.epochs
@@ -203,7 +204,7 @@ class TrainModel extends Component {
       });
   };
 
-  loadCollectionlist = () => {
+  loadCollectionList = () => {
     const { models, modelSelected } = this.state;
     const config = {
       headers: {
@@ -222,6 +223,12 @@ class TrainModel extends Component {
   handleChange = event => {
     this.setState({
       [event.target.name]: event.target.value
+    });
+  };
+
+  handleChangeSwitch = event => {
+    this.setState({
+      [event.target.value]: event.target.checked
     });
   };
 
@@ -272,42 +279,40 @@ class TrainModel extends Component {
     return (
       <FormControl component="fieldset" className={classes.checkSelector}>
         <FormGroup className={classes.group}>
-          {collections
-            .sort(a => (a.validConcepts ? -1 : 1))
-            .map(collection => (
-              <div key={collection.id}>
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      onChange={this.checkboxSelect(
-                        'annotationCollections',
-                        annotationCollections,
-                        collection.id
-                      )}
-                      color="primary"
-                      checked={annotationCollections.includes(collection.id)}
-                      disabled={collection.disable}
-                    />
-                  }
-                  label={
-                    <div>
-                      {collection.name}
-                      {collection.validConcepts ? (
-                        <Typography
-                          variant="subtitle2"
-                          gutterBottom
-                          color="secondary"
-                        >
-                          {collection.validConcepts.concepts.join(', ')}
-                        </Typography>
-                      ) : (
-                        ''
-                      )}
-                    </div>
-                  }
-                />
-              </div>
-            ))}
+          {collections.map(collection => (
+            <div key={collection.id}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    onChange={this.checkboxSelect(
+                      'annotationCollections',
+                      annotationCollections,
+                      collection.id
+                    )}
+                    color="primary"
+                    checked={annotationCollections.includes(collection.id)}
+                    disabled={collection.disable}
+                  />
+                }
+                label={
+                  <div>
+                    {collection.name}
+                    {collection.validConcepts ? (
+                      <Typography
+                        variant="subtitle2"
+                        gutterBottom
+                        color="secondary"
+                      >
+                        {collection.validConcepts.concepts.join(', ')}
+                      </Typography>
+                    ) : (
+                      ''
+                    )}
+                  </div>
+                }
+              />
+            </div>
+          ))}
         </FormGroup>
       </FormControl>
     );
@@ -315,7 +320,7 @@ class TrainModel extends Component {
 
   selectHyperparameters = () => {
     const { classes } = this.props;
-    const { epochs, minImages } = this.state;
+    const { epochs, minImages, includeTracking, verifiedOnly } = this.state;
 
     return (
       <form className={classes.hyperparametersForm}>
@@ -335,6 +340,28 @@ class TrainModel extends Component {
           value={minImages}
           onChange={this.handleChange}
           className={classes.hyperParamsInput}
+        />
+        <FormControlLabel
+          control={
+            <Switch
+              checked={includeTracking}
+              onChange={this.handleChangeSwitch}
+              value="includeTracking"
+              color="primary"
+            />
+          }
+          label="Include tracking annotations"
+        />
+        <FormControlLabel
+          control={
+            <Switch
+              checked={verifiedOnly}
+              onChange={this.handleChangeSwitch}
+              value="verifiedOnly"
+              color="primary"
+            />
+          }
+          label="Verified annotations only"
         />
       </form>
     );
@@ -358,17 +385,6 @@ class TrainModel extends Component {
         return this.selectHyperparameters();
       default:
         return 'Unknown step';
-    }
-  };
-
-  getStepState = step => {
-    switch (step) {
-      case 0:
-        return 'models';
-      case 1:
-        return 'collections';
-      default:
-        return undefined;
     }
   };
 
@@ -445,7 +461,7 @@ class TrainModel extends Component {
     const { activeStep } = this.state;
     // After users have been selected load user videos
     if (activeStep === 0) {
-      this.loadCollectionlist();
+      this.loadCollectionList();
     }
     // After Model and videos have been selected load available concepts
     // if (this.state.activeStep === 2) {
@@ -462,6 +478,40 @@ class TrainModel extends Component {
         this.updateBackendInfo();
       }
     );
+  };
+
+  getCollectionCounts = () => {
+    const { annotationCollections } = this.state;
+
+    const selectedCollectionCounts = [
+      { count: 0 },
+      { count: 0 },
+      { count: 0 },
+      { count: 0 }
+    ];
+    try {
+      annotationCollections.forEach(async selectedCollection => {
+        const res = await axios.get(
+          `/api/collections/annotations/counts/${selectedCollection}`,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${localStorage.getItem('token')}`
+            }
+          }
+        );
+        if (res) {
+          for (let i = 0; i < res.length; i += 1) {
+            selectedCollectionCounts[i].count += res.data[i].count;
+          }
+        }
+      });
+      this.setState({
+        selectedCollectionCounts
+      });
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   handleBack = () => {
@@ -529,6 +579,7 @@ class TrainModel extends Component {
                     {this.getStepContent(index)}
                     <div className={classes.actionsContainer}>
                       <Button
+                        variant="contained"
                         disabled={activeStep === 0}
                         onClick={this.handleBack}
                         className={classes.button}
