@@ -93,7 +93,7 @@ const styles = theme => ({
     top: '-15px'
   },
   hyperParamsInput: {
-    width: '200px',
+    width: '208px',
     marginRight: '10px'
   },
   info: {
@@ -455,6 +455,9 @@ class TrainModel extends Component {
           value={minImages}
           onChange={this.handleChange}
           className={classes.hyperParamsInput}
+          helperText={
+            countsLoaded ? `Must be between 1 - ${this.getSelectedCount()}` : ''
+          }
         />
         <div>
           <FormControlLabel
@@ -503,6 +506,26 @@ class TrainModel extends Component {
         </div>
       </form>
     );
+  };
+
+  getSelectedCount = () => {
+    const {
+      selectedCollectionCounts,
+      includeTracking,
+      verifiedOnly
+    } = this.state;
+    if (verifiedOnly) {
+      let count = parseInt(selectedCollectionCounts[2].count, 10);
+      if (includeTracking) {
+        count += parseInt(selectedCollectionCounts[3].count, 10);
+      }
+      return count;
+    }
+    let count = parseInt(selectedCollectionCounts[0].count, 10);
+    if (includeTracking) {
+      count += parseInt(selectedCollectionCounts[1].count, 10);
+    }
+    return count;
   };
 
   getCollectionCounts = async () => {
