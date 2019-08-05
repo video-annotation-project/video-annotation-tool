@@ -588,7 +588,11 @@ class TrainModel extends Component {
         activeStep: state.activeStep - 1
       }),
       () => {
+        const { activeStep } = this.state;
         this.updateBackendInfo();
+        if (activeStep === 0) {
+          this.loadCollectionList();
+        }
       }
     );
   };
