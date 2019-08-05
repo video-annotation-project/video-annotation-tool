@@ -1,6 +1,7 @@
 import functools
 import time
 
+
 def timer(task_name):
     def decorator(function):
         @functools.wraps(function)

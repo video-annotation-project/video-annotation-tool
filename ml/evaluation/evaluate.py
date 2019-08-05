@@ -1,6 +1,5 @@
-from model_scoring import f1_evaluation
+from evaluation.model_scoring import f1_evaluation
 from keras_retinanet.models import convert_model
-from keras_retinanet.models import load_model
 
 import config
 
@@ -18,10 +17,11 @@ def evaluate_class_thresholds(model, generator):
 
     total_f1 = 0
     for concept, f1 in best_f1.items():
-        print("Concept: " + concept)
-        print("F1 Score: " + str(f1))
-        print("Confidence Threshold: " + str(best_thresh[concept]))
-        print("")
+        # TODO: put this into the DB
+        # print("Concept: " + concept)
+        # print("F1 Score: " + str(f1))
+        # print("Confidence Threshold: " + str(best_thresh[concept]))
+        # print("")
         total_f1 += f1
 
 

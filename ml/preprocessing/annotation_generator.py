@@ -12,7 +12,7 @@ from keras_retinanet.preprocessing.csv_generator import Generator
 from keras_retinanet.utils.image import read_image_bgr
 
 import config
-from utils.query import query
+from utils.query import pd_query
 
 
 # Without this the program will crash
@@ -148,7 +148,7 @@ class AnnotationGenerator(object):
         frame_groups = annotations.groupby(['videoid', 'frame_num'], sort=False)
         frame_groups = [df for _, df in frame_groups]
 
-        ai_id = query("SELECT id FROM users WHERE username='tracking'").id[0]
+        ai_id = pd_query("SELECT id FROM users WHERE username='tracking'").id[0]
 
         # Give priority to frames with least amount of tracking annotations
         # And lower speed
@@ -212,7 +212,7 @@ class AnnotationGenerator(object):
             WHERE inter.id IN (%s)
         '''
 
-        return query(annotations_query, [','.join((str(id_) for id_ in collection_ids))])
+        return pd_query(annotations_query, [','.join((str(id_) for id_ in collection_ids))])
 
 
 class S3Generator(Generator):

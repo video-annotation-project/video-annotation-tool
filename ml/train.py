@@ -14,9 +14,9 @@ from keras_retinanet.callbacks import RedirectModel
 
 import config
 from utils.timer import timer
-from utils.evaluate import evaluate_class_thresholds
 from utils.output import DatabaseOutput
 from preprocessing.annotation_generator import AnnotationGenerator
+from evaluation.evaluate import evaluate_class_thresholds
 from callbacks.progress import Progress
 from callbacks.tensorboard import TensorboardLog
 
