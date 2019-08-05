@@ -115,7 +115,7 @@ def fix_offset(annotation):
             continue
         (score, _) = compare_ssim(
             img, video_frame, full=True, multichannel=True)
-        if score > .95:
+        if score > .92:
             cursor.execute(
                 '''
           UPDATE annotations
