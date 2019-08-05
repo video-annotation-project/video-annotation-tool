@@ -1,41 +1,28 @@
-from psycopg2 import connect
-import os
-from dotenv import load_dotenv
-from load_n_train import train_model
-import boto3
-import json
 import time
+import subprocess
+
+from psycopg2 import connect
+from botocore.exceptions import ClientError
+import boto3
+
 from evaluate_prediction_vid import evaluate
-from multiprocessing import Pool
+from train import train_model
+import config
 
-config_path = "../config.json"
-load_dotenv(dotenv_path="../.env")
-with open(config_path) as config_buffer:    
-    config = json.loads(config_buffer.read())['ml']
 
-weights_path = config['weights_path']
-default_weights = config['default_weights']
-
-# aws stuff
-AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
-AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
-S3_BUCKET = os.getenv('AWS_S3_BUCKET_NAME')
 s3 = boto3.client(
-    's3', aws_access_key_id = AWS_ACCESS_KEY_ID,
-     aws_secret_access_key = AWS_SECRET_ACCESS_KEY)
-S3_ANNOTATION_FOLDER = os.getenv("AWS_S3_BUCKET_ANNOTATIONS_FOLDER")
-S3_VIDEO_FOLDER = os.getenv('AWS_S3_BUCKET_VIDEOS_FOLDER')
-S3_TRACKING_FOLDER = os.getenv("AWS_S3_BUCKET_TRACKING_FOLDER")
-S3_WEIGHTS_FOLDER = os.getenv("AWS_S3_BUCKET_WEIGHTS_FOLDER")
-
-# connect to db
-DB_NAME = os.getenv("DB_NAME")
-DB_HOST = os.getenv("DB_HOST")
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
+    's3',
+    aws_access_key_id=config.AWS_ACCESS_KEY_ID,
+    aws_secret_access_key=config.AWS_SECRET_ACCESS_KEY
+)
 
 con = connect(
-    database=DB_NAME, host=DB_HOST, user=DB_USER, password=DB_PASSWORD)
+    database=config.DB_NAME,
+    host=config.DB_HOST,
+    user=config.DB_USER,
+    password=config.DB_PASSWORD
+)
+
 cursor = con.cursor()
 
 # Delete old prediction progress
@@ -51,45 +38,52 @@ row = cursor.fetchone()
 info = row[1]
 
 try:
-	s3.download_file(
-        S3_BUCKET, S3_WEIGHTS_FOLDER + str(info['modelSelected']) + '.h5',
-        weights_path)
-except:
-	s3.download_file(
-        S3_BUCKET, S3_WEIGHTS_FOLDER + default_weights, weights_path)
+    s3.download_file(
+        config.S3_BUCKET,
+        config.S3_WEIGHTS_FOLDER + str(info['modelSelected']) + '.h5',
+        config.WEIGHTS_PATH
+    )
+except ClientError:
+    s3.download_file(
+        config.S3_BUCKET,
+        config.S3_WEIGHTS_FOLDER + config.DEFAULT_WEIGHTS_PATH,
+        config.WEIGHTS_PATH
+    )
 
-cursor.execute('''
-    SELECT *
-    FROM MODELS
-    WHERE name=%s''',(info['modelSelected'],))
+cursor.execute(
+    '''SELECT * FROM MODELS WHERE name=%s''',
+    (info['modelSelected'],)
+)
+
 model = cursor.fetchone()
 concepts = model[2]
 verifyVideos = model[3]
 
-#Delete old model user
-if (model[4] != 'None'):
-     cursor.execute('''
-         DELETE FROM users
-         WHERE id=%s''',
-         (model[4],))
+# Delete old model user
+# if (model[4] != 'None'):
+#      cursor.execute('''
+#          DELETE FROM users
+#          WHERE id=%s''',
+#          (model[4],))
+# cursor.execute(
+#     '''INSERT INTO users (username, password, admin) VALUES (%s, 0, null) RETURNING *''',
+#     (user_model,)
+# )
 
-user_model = model[0] + "-" + time.ctime() 
-# username example: testV2-Fri Jun 28 11:58:37 2019
-# insert into users
-cursor.execute('''
-    INSERT INTO users (username, password, admin) 
-    VALUES (%s, 0, null) 
-    RETURNING *''',
-    (user_model,))
-model_user_id = int(cursor.fetchone()[0])
+# cursor.execute('''
+#     INSERT INTO users (username, password, admin)
+#     VALUES (%s, 0, null)
+#     RETURNING *''',
+#     (user_model,))
+# model_user_id = int(cursor.fetchone()[0])
 
 # update models
-cursor.execute('''
-    UPDATE models 
-    SET userid=%s
-    WHERE name=%s
-    RETURNING *''',
-    (model_user_id,info['modelSelected'],))
+# cursor.execute('''
+#     UPDATE models
+#     SET userid=%s
+#     WHERE name=%s
+#     RETURNING *''',
+#     (model_user_id, info['modelSelected'],))
 
 # Start training job
 train_model(concepts, info['modelSelected'], info['annotationCollections'], 
@@ -103,20 +97,21 @@ train_model(concepts, info['modelSelected'], info['annotationCollections'],
 #     p.starmap(evaluate, map(lambda video: (video, user_model, concepts), verifyVideos))
 
 # Run evaluate on all the videos in verifyVideos
-for video_id in verifyVideos: # Using for loop due to memory issues
-    evaluate(video_id, user_model, concepts)
-    cursor.execute('''
-        DELETE FROM predict_progress
-        ''')
+# Using for loop due to memory issues
+# for video_id in verifyVideos:
+#     evaluate(video_id, user_model, concepts)
+#     cursor.execute('''DELETE FROM predict_progress''')
 
-os.system('rm *.mp4')
+subprocess.call(['rm', '*.mp4'])
+
 cursor.execute('''
-    Update modeltab 
+    Update modeltab
     SET info =  '{
         \"activeStep\": 0, \"modelSelected\":\"\", \"annotationCollections\":[],
-        \"epochs\":0, \"minImages\":0}' 
+        \"epochs\":0, \"minImages\":0}'
     WHERE option = 'trainmodel'
 ''')
+
 con.commit()
-con.close()    
-os.system("sudo shutdown -h")
+con.close()
+subprocess.call(['sudo', 'shutdown', '-h'])

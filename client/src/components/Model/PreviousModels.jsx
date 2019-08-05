@@ -201,8 +201,7 @@ class PreviousModels extends Component {
               <CustomTableCell>End Train</CustomTableCell>
               <CustomTableCell>Min Examples</CustomTableCell>
               <CustomTableCell>Epochs</CustomTableCell>
-              <CustomTableCell>Concepts</CustomTableCell>
-              <CustomTableCell>Users</CustomTableCell>
+              <CustomTableCell>Annotation Collections</CustomTableCell>
               <CustomTableCell>Tensorboard</CustomTableCell>
             </TableRow>
           </TableHead>
@@ -224,10 +223,7 @@ class PreviousModels extends Component {
                 </CustomTableCell>
                 <CustomTableCell align="right">{run.epochs}</CustomTableCell>
                 <CustomTableCell align="right">
-                  {run.concepts ? run.concepts.join(', ') : ''}
-                </CustomTableCell>
-                <CustomTableCell align="right">
-                  {run.users ? run.users.join(', ') : ''}
+                  {run.annotations ? run.annotations.join(', ') : ''}
                 </CustomTableCell>
                 <CustomTableCell align="right">
                   {launched === run.id ? (
