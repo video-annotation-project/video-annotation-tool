@@ -110,13 +110,12 @@ def fix_offset(annotation):
     img = img[:, :, ::-1]
     img = cv2.resize(img, (VIDEO_WIDTH, VIDEO_HEIGHT))
 
-    for index, img in iter_from_middle(imgs):
+    for index, video_frame in iter_from_middle(imgs):
         if index == len(imgs):
             continue
         (score, _) = compare_ssim(
-            img, imgs[index], full=True, multichannel=True)
-        print(score)
-        if score > 1.95:
+            img, video_frame, full=True, multichannel=True)
+        if score > .95:
             cursor.execute(
                 '''
           UPDATE annotations
@@ -147,4 +146,3 @@ if __name__ == "__main__":
     rows = cursor.fetchall()
     for row in rows:
         fix_offset(row)
-        break
