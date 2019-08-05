@@ -184,6 +184,8 @@ class TrainModel extends Component {
       annotationCollections,
       epochs,
       minImages,
+      includeTracking,
+      verifiedOnly,
       socket
     } = this.state;
 
@@ -197,7 +199,9 @@ class TrainModel extends Component {
       modelSelected,
       annotationCollections,
       epochs,
-      minImages
+      minImages,
+      includeTracking,
+      verifiedOnly
     };
     const body = {
       info: JSON.stringify(info)
