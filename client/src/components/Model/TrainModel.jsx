@@ -21,6 +21,7 @@ import Switch from '@material-ui/core/Switch';
 
 import ModelProgress from './ModelProgress';
 import VideoMetadata from '../Utilities/VideoMetadata';
+import CollectionInfo from '../Utilities/CollectionInfo';
 
 const styles = theme => ({
   root: {
@@ -138,6 +139,7 @@ class TrainModel extends Component {
       epochs: 0,
       includeTracking: false,
       verifiedOnly: false,
+      infoDialogOpen: false,
       activeStep: 0,
       openedVideo: null,
       socket,
@@ -436,7 +438,8 @@ class TrainModel extends Component {
       includeTracking,
       verifiedOnly,
       selectedCollectionCounts,
-      countsLoaded
+      countsLoaded,
+      infoDialogOpen
     } = this.state;
 
     return (
@@ -487,29 +490,32 @@ class TrainModel extends Component {
             label="Verified annotations only"
           />
         </div>
-        <div className={classes.info}>
-          {countsLoaded ? (
-            <React.Fragment>
-              <Typography variant="subtitle1">
-                User Annotations: {selectedCollectionCounts[0].count}
-              </Typography>
-              <Typography variant="subtitle1">
-                Tracking Annotations: {selectedCollectionCounts[1].count}
-              </Typography>
-              <Typography variant="subtitle1">
-                Verified User Annotations: {selectedCollectionCounts[2].count}
-              </Typography>
-              <Typography variant="subtitle1">
-                Verified Tracking Annotations:{' '}
-                {selectedCollectionCounts[3].count}
-              </Typography>
-            </React.Fragment>
-          ) : (
-            <Typography>Loading...</Typography>
-          )}
-        </div>
+        {countsLoaded ? (
+          <React.Fragment>
+            <Button
+              color="primary"
+              className={classes.button}
+              onClick={this.toggleInfo}
+            >
+              Collection Info
+            </Button>
+            <CollectionInfo
+              open={infoDialogOpen}
+              onClose={this.toggleInfo}
+              counts={selectedCollectionCounts}
+            />
+          </React.Fragment>
+        ) : (
+          <Typography variant="subtitle1">Loading...</Typography>
+        )}
       </form>
     );
+  };
+
+  toggleInfo = () => {
+    this.setState(prevState => ({
+      infoDialogOpen: !prevState.infoDialogOpen
+    }));
   };
 
   getSelectedCount = () => {

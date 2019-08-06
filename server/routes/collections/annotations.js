@@ -11,7 +11,7 @@ router.get(
     const counts = [];
     const queryText = `
       SELECT
-        count(*)
+        c.name, count(*)
       FROM
         annotations a
       INNER JOIN
@@ -22,25 +22,31 @@ router.get(
         users u
       ON
         u.id = a.userid
+      INNER JOIN
+        concepts c
+      ON
+        c.id = a.conceptid
       WHERE
         ai.id::text = ANY($1)
     `;
     const user = ` AND u.username != 'tracking'`;
     const tracking = ` AND u.username = 'tracking'`;
     const verified = ` AND a.verifiedby IS NOT NULL`;
+    const groupby = ` GROUP BY c.name`;
 
     try {
-      let count = await psql.query(queryText + user, [req.query.ids]);
-      counts.push(count.rows[0]);
-      count = await psql.query(queryText + tracking, [req.query.ids]);
-      counts.push(count.rows[0]);
-      count = await psql.query(queryText + user + verified, [req.query.ids]);
-      counts.push(count.rows[0]);
-      count = await psql.query(queryText + tracking + verified, [
+      let count = await psql.query(queryText + user + groupby, [req.query.ids]);
+      counts.push(count.rows);
+      count = await psql.query(queryText + tracking + groupby, [req.query.ids]);
+      counts.push(count.rows);
+      count = await psql.query(queryText + user + verified + groupby, [
         req.query.ids
       ]);
-      counts.push(count.rows[0]);
-
+      counts.push(count.rows);
+      count = await psql.query(queryText + tracking + verified + groupby, [
+        req.query.ids
+      ]);
+      counts.push(count.rows);
       res.json(counts);
     } catch (error) {
       console.log(error);
