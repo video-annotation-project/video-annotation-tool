@@ -1,40 +1,38 @@
-import React, { Component } from "react";
-import axios from "axios";
-import Stepper from "@material-ui/core/Stepper";
-import Step from "@material-ui/core/Step";
-import StepLabel from "@material-ui/core/StepLabel";
-import StepContent from "@material-ui/core/StepContent";
-import Button from "@material-ui/core/Button";
-import Paper from "@material-ui/core/Paper";
-import TextField from "@material-ui/core/TextField";
-import { FormControl, Grid } from "@material-ui/core";
-import FormGroup from "@material-ui/core/FormGroup";
-import FormControlLabel from "@material-ui/core/FormControlLabel";
-import FormLabel from "@material-ui/core/FormLabel";
-import Checkbox from "@material-ui/core/Checkbox";
+import React, { Component } from 'react';
+import axios from 'axios';
+import Stepper from '@material-ui/core/Stepper';
+import Step from '@material-ui/core/Step';
+import StepLabel from '@material-ui/core/StepLabel';
+import StepContent from '@material-ui/core/StepContent';
+import Button from '@material-ui/core/Button';
+import Paper from '@material-ui/core/Paper';
+import TextField from '@material-ui/core/TextField';
+import { FormControl, Grid } from '@material-ui/core';
+import FormGroup from '@material-ui/core/FormGroup';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import FormLabel from '@material-ui/core/FormLabel';
+import Checkbox from '@material-ui/core/Checkbox';
+import Typography from '@material-ui/core/Typography';
+import { withStyles } from '@material-ui/core/styles';
+import Swal from 'sweetalert2';
+import ListItem from '@material-ui/core/ListItem';
+import Tooltip from '@material-ui/core/Tooltip';
+import List from '@material-ui/core/List';
+import IconButton from '@material-ui/core/IconButton';
+import Description from '@material-ui/icons/Description';
 
-//Video description
-import IconButton from "@material-ui/core/IconButton";
-import Description from "@material-ui/icons/Description";
-import VideoMetadata from "../Utilities/VideoMetadata.jsx";
-
-import Typography from "@material-ui/core/Typography";
-import { withStyles } from "@material-ui/core/styles";
-import Swal from "sweetalert2";
-import ListItem from "@material-ui/core/ListItem";
-import Tooltip from "@material-ui/core/Tooltip";
-import List from "@material-ui/core/List";
+import VideoMetadata from '../Utilities/VideoMetadata';
 
 const styles = theme => ({
   checkSelector: {
     marginTop: theme.spacing(2),
-    maxHeight: "400px",
-    overflow: "auto"
+    maxHeight: '400px',
+    overflow: 'auto'
   },
   list: {
     marginTop: theme.spacing(2),
-    overflow: "auto",
-    maxHeight: (400 - theme.spacing(2)).toString() + "px"
+    overflow: 'auto',
+    maxHeight: `${400 - theme.spacing(2)}px`
   },
   textField: {
     marginLeft: theme.spacing(),
@@ -49,14 +47,14 @@ const styles = theme => ({
     marginRight: theme.spacing()
   },
   collectionButton: {
-    textTransform: "none"
+    textTransform: 'none'
   },
   resetContainer: {
     padding: theme.spacing(3)
   },
   ModelNameForm: {
-    display: "flex",
-    flexWrap: "wrap"
+    display: 'flex',
+    flexWrap: 'wrap'
   },
   group: {
     marginLeft: 15
@@ -67,7 +65,7 @@ class CreateModel extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      modelName: "",
+      modelName: '',
       models: [],
       concepts: [],
       conceptCollections: [],
@@ -81,7 +79,7 @@ class CreateModel extends Component {
   }
 
   getSteps = () => {
-    return ["Name model", "Select species", "Select test videos"];
+    return ['Name model', 'Select species', 'Select test videos'];
   };
 
   getStepContent = step => {
@@ -93,7 +91,7 @@ class CreateModel extends Component {
       case 2:
         return this.selectVideo();
       default:
-        return "Unknown step";
+        return 'Unknown step';
     }
   };
 
@@ -108,22 +106,22 @@ class CreateModel extends Component {
   loadExistingModels = () => {
     const config = {
       headers: {
-        Authorization: "Bearer " + localStorage.getItem("token")
+        Authorization: `Bearer ${localStorage.getItem('token')}`
       }
     };
     axios
       .get(`/api/models`, config)
       .then(res => {
-        let models = [];
+        const models = [];
         res.data.forEach(model => {
           models.push(model.name);
         });
         this.setState({
-          models: models
+          models
         });
       })
       .catch(error => {
-        console.log("Error in get /api/models");
+        console.log('Error in get /api/models');
         console.log(error);
         if (error.response) {
           console.log(error.response.data.detail);
@@ -134,7 +132,7 @@ class CreateModel extends Component {
   loadConcepts = () => {
     const config = {
       headers: {
-        Authorization: "Bearer " + localStorage.getItem("token")
+        Authorization: `Bearer ${localStorage.getItem('token')}`
       }
     };
     axios
@@ -145,7 +143,7 @@ class CreateModel extends Component {
         });
       })
       .catch(error => {
-        console.log("Error in get /api/concepts");
+        console.log('Error in get /api/concepts');
         console.log(error);
         if (error.response) {
           console.log(error.response.data.detail);
@@ -156,7 +154,7 @@ class CreateModel extends Component {
   loadConceptCollections = async () => {
     return axios
       .get(`/api/collections/concepts`, {
-        headers: { Authorization: "Bearer " + localStorage.getItem("token") }
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       })
       .then(res => {
         this.setState({
@@ -164,16 +162,14 @@ class CreateModel extends Component {
         });
       })
       .catch(error => {
-        this.setState({
-          error: error
-        });
+        console.log(error);
       });
   };
 
   loadVideoList = () => {
     const config = {
       headers: {
-        Authorization: "Bearer " + localStorage.getItem("token")
+        Authorization: `Bearer ${localStorage.getItem('token')}`
       }
     };
     axios.get(`/api/videos`, config).then(res => {
@@ -186,7 +182,7 @@ class CreateModel extends Component {
   loadVideoCollections = async () => {
     return axios
       .get(`/api/collections/videos`, {
-        headers: { Authorization: "Bearer " + localStorage.getItem("token") }
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       })
       .then(res => {
         this.setState({
@@ -194,9 +190,7 @@ class CreateModel extends Component {
         });
       })
       .catch(error => {
-        this.setState({
-          error: error
-        });
+        console.log(error);
       });
   };
 
@@ -213,24 +207,26 @@ class CreateModel extends Component {
   };
 
   nameModel = () => {
-    const classes = this.props.classes;
+    const { classes } = this.props;
+    const { modelName } = this.state;
+
     return (
       <form className={classes.ModelNameForm} onSubmit={this.handleNext}>
         <TextField
           margin="normal"
           name="modelName"
           label="Model Name"
-          value={this.state.modelName}
+          value={modelName}
           onChange={this.handleChange}
-          autoFocus={true}
+          autoFocus
         />
       </form>
     );
   };
 
-  //Handle concept checkbox selections
-  checkboxSelect = (stateName, id) => event => {
-    let deepCopy = JSON.parse(JSON.stringify(this.state[stateName]));
+  // Handle concept checkbox selections
+  checkboxSelect = (stateName, stateValue, id) => event => {
+    let deepCopy = JSON.parse(JSON.stringify(stateValue));
     if (event.target.checked) {
       deepCopy.push(id);
     } else {
@@ -242,8 +238,9 @@ class CreateModel extends Component {
   };
 
   selectConcepts = () => {
-    const classes = this.props.classes;
-    if (!this.state.concepts) {
+    const { classes } = this.props;
+    const { concepts, conceptsSelected, conceptCollections } = this.state;
+    if (!concepts) {
       return <div>Loading...</div>;
     }
     return (
@@ -252,7 +249,7 @@ class CreateModel extends Component {
           <FormLabel component="legend">Select species to train with</FormLabel>
           <FormControl component="fieldset" className={classes.checkSelector}>
             <FormGroup className={classes.group}>
-              {this.state.concepts
+              {concepts
                 .filter(concept => concept.rank)
                 .map(concept => (
                   <div key={concept.name}>
@@ -260,16 +257,15 @@ class CreateModel extends Component {
                       control={
                         <Checkbox
                           onChange={this.checkboxSelect(
-                            "conceptsSelected",
+                            'conceptsSelected',
+                            conceptsSelected,
                             concept.id
                           )}
                           color="primary"
-                          checked={this.state.conceptsSelected.includes(
-                            concept.id
-                          )}
+                          checked={conceptsSelected.includes(concept.id)}
                         />
                       }
-                      label={concept.id + " " + concept.name}
+                      label={`${concept.id} ${concept.name}`}
                     />
                   </div>
                 ))}
@@ -281,12 +277,12 @@ class CreateModel extends Component {
             Select species collection to test model
           </FormLabel>
           <List className={classes.list}>
-            {this.state.conceptCollections.map(conceptCollection => (
+            {conceptCollections.map(conceptCollection => (
               <ListItem key={conceptCollection.id}>
                 <Tooltip
                   title={
                     !conceptCollection.description
-                      ? ""
+                      ? ''
                       : conceptCollection.description
                   }
                   placement="bottom-start"
@@ -299,15 +295,15 @@ class CreateModel extends Component {
                       disabled={!conceptCollection.conceptids[0]}
                       onClick={() => {
                         if (conceptCollection.conceptids[0]) {
-                          let conceptids = [];
-                          this.state.concepts.forEach(concept => {
+                          const conceptids = [];
+                          concepts.forEach(concept => {
                             if (
                               conceptCollection.conceptids.includes(concept.id)
                             ) {
                               conceptids.push(concept.id);
                             }
                           });
-                          this.handleChangeCollection("conceptsSelected")(
+                          this.handleChangeCollection('conceptsSelected')(
                             conceptids
                           );
                         }
@@ -315,8 +311,8 @@ class CreateModel extends Component {
                     >
                       {conceptCollection.name +
                         (!conceptCollection.conceptids[0]
-                          ? " (No concepts)"
-                          : "")}
+                          ? ' (No concepts)'
+                          : '')}
                     </Button>
                   </div>
                 </Tooltip>
@@ -328,7 +324,7 @@ class CreateModel extends Component {
     );
   };
 
-  //Methods for video meta data
+  // Methods for video meta data
   openVideoMetadata = (event, video) => {
     event.stopPropagation();
     this.setState({
@@ -343,38 +339,37 @@ class CreateModel extends Component {
   };
 
   selectVideo = () => {
-    const classes = this.props.classes;
+    const { classes } = this.props;
+    const { videos, videosSelected, videoCollections } = this.state;
 
-    if (!this.state.videos) {
+    if (!videos) {
       return <div>Loading...</div>;
     }
     return (
       <Grid container spacing={5}>
         <Grid item>
           <FormLabel component="legend">Select videos to test model</FormLabel>
-          <FormControl
-            component="fieldset"
-            className={this.props.classes.checkSelector}
-          >
+          <FormControl component="fieldset" className={classes.checkSelector}>
             <FormGroup className={classes.group}>
-              {this.state.videos.map(video => (
+              {videos.map(video => (
                 <div key={video.filename}>
                   <FormControlLabel
                     control={
                       <Checkbox
                         onChange={this.checkboxSelect(
-                          "videosSelected",
+                          'videosSelected',
+                          videosSelected,
                           video.id
                         )}
                         color="primary"
-                        checked={this.state.videosSelected.includes(video.id)}
+                        checked={videosSelected.includes(video.id)}
                       />
                     }
-                    label={video.id + " " + video.filename}
+                    label={`${video.id} ${video.filename}`}
                   />
                   <IconButton
                     onClick={event => this.openVideoMetadata(event, video)}
-                    style={{ float: "right" }}
+                    style={{ float: 'right' }}
                   >
                     <Description />
                   </IconButton>
@@ -388,12 +383,12 @@ class CreateModel extends Component {
             Select video collections to test model
           </FormLabel>
           <List className={classes.list}>
-            {this.state.videoCollections.map(videoCollection => (
+            {videoCollections.map(videoCollection => (
               <ListItem key={videoCollection.id}>
                 <Tooltip
                   title={
                     !videoCollection.description
-                      ? ""
+                      ? ''
                       : videoCollection.description
                   }
                   placement="bottom-start"
@@ -406,20 +401,20 @@ class CreateModel extends Component {
                       disabled={!videoCollection.videoids[0]}
                       onClick={() => {
                         if (videoCollection.videoids[0]) {
-                          let videoids = [];
-                          this.state.videos.forEach(video => {
+                          const videoids = [];
+                          videos.forEach(video => {
                             if (videoCollection.videoids.includes(video.id)) {
                               videoids.push(video.id);
                             }
                           });
-                          this.handleChangeCollection("videosSelected")(
+                          this.handleChangeCollection('videosSelected')(
                             videoids
                           );
                         }
                       }}
                     >
                       {videoCollection.name +
-                        (!videoCollection.videoids[0] ? " (No Videos)" : "")}
+                        (!videoCollection.videoids[0] ? ' (No Videos)' : '')}
                     </Button>
                   </div>
                 </Tooltip>
@@ -435,7 +430,7 @@ class CreateModel extends Component {
     const { modelName, conceptsSelected, videosSelected } = this.state;
     const config = {
       headers: {
-        Authorization: "Bearer " + localStorage.getItem("token")
+        Authorization: `Bearer ${localStorage.getItem('token')}`
       }
     };
     const body = {
@@ -447,25 +442,27 @@ class CreateModel extends Component {
       await axios.post(`/api/models`, body, config);
       this.loadExistingModels();
     } catch (error) {
-      console.log("Error in post /api/models");
+      console.log('Error in post /api/models');
       if (error.response) {
-        Swal.fire(error.response.data.detail, "", "error");
+        Swal.fire(error.response.data.detail, '', 'error');
       }
     }
   };
 
   handleNext = event => {
+    const { activeStep, models, modelName } = this.state;
+
     event.preventDefault();
     // If step = 0 then need to check
     // If model name exists
-    if (this.state.activeStep === 0) {
-      if (this.state.models.includes(this.state.modelName)) {
-        Swal.fire("Model Already Exists", "", "info");
+    if (activeStep === 0) {
+      if (models.includes(modelName)) {
+        Swal.fire('Model Already Exists', '', 'info');
         return;
       }
     }
     // If step = 2 then model ready to submit
-    if (this.state.activeStep === 2) {
+    if (activeStep === 2) {
       this.postModel();
     }
 
@@ -483,13 +480,13 @@ class CreateModel extends Component {
   handleReset = () => {
     this.setState({
       activeStep: 0,
-      modelName: "",
+      modelName: '',
       conceptsSelected: []
     });
   };
 
   render() {
-    const { classes } = this.props;
+    const { classes, socket, loadVideos } = this.props;
     const steps = this.getSteps();
     const {
       models,
@@ -525,14 +522,14 @@ class CreateModel extends Component {
                       onClick={this.handleNext}
                       className={classes.button}
                       disabled={
-                        (activeStep === 0 && modelName === "") ||
+                        (activeStep === 0 && modelName === '') ||
                         (activeStep === 1 && conceptsSelected.length < 1) ||
                         (activeStep === 2 && videosSelected.length < 1)
                       }
                     >
                       {activeStep === steps.length - 1
-                        ? "Create Model"
-                        : "Next"}
+                        ? 'Create Model'
+                        : 'Next'}
                     </Button>
                   </div>
                 </div>
@@ -548,21 +545,22 @@ class CreateModel extends Component {
             </Button>
           </Paper>
         )}
-        {this.state.openedVideo && (
+        {openedVideo && (
           <VideoMetadata
-            open={
-              true /* The VideoMetadata 'openness' is controlled through
+            /* 
+              The VideoMetadata 'openness' is controlled through
               boolean logic rather than by passing in a variable as an
               attribute. This is to force VideoMetadata to unmount when it 
               closes so that its state is reset. This also prevents the 
               accidental double submission bug, by implicitly reducing 
-              the transition time of VideoMetadata to zero. */
-            }
+              the transition time of VideoMetadata to zero. 
+            */
+            open
             handleClose={this.closeVideoMetadata}
             openedVideo={openedVideo}
-            socket={this.props.socket}
-            loadVideos={this.props.loadVideos}
-            modelTab={true}
+            socket={socket}
+            loadVideos={loadVideos}
+            modelTab
           />
         )}
       </div>

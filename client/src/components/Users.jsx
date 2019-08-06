@@ -1,78 +1,63 @@
-import React, { Component } from "react";
-import axios from "axios";
-import { withStyles } from "@material-ui/core/styles";
-import Table from "@material-ui/core/Table";
-import TableBody from "@material-ui/core/TableBody";
-import TableCell from "@material-ui/core/TableCell";
-import TableHead from "@material-ui/core/TableHead";
-import TableRow from "@material-ui/core/TableRow";
-import Paper from "@material-ui/core/Paper";
-import Select from "@material-ui/core/Select";
-import MenuItem from "@material-ui/core/MenuItem";
-import TextField from "@material-ui/core/TextField";
-import FormControl from "@material-ui/core/FormControl";
-import InputLabel from "@material-ui/core/InputLabel";
-import { Grid } from "@material-ui/core";
+import React, { Component } from 'react';
+import axios from 'axios';
+import { withStyles } from '@material-ui/core/styles';
+import Table from '@material-ui/core/Table';
+import TableBody from '@material-ui/core/TableBody';
+import TableCell from '@material-ui/core/TableCell';
+import TableHead from '@material-ui/core/TableHead';
+import TableRow from '@material-ui/core/TableRow';
+import Paper from '@material-ui/core/Paper';
+import Select from '@material-ui/core/Select';
+import MenuItem from '@material-ui/core/MenuItem';
+import TextField from '@material-ui/core/TextField';
+import FormControl from '@material-ui/core/FormControl';
+import InputLabel from '@material-ui/core/InputLabel';
+import { Grid } from '@material-ui/core';
 
 const STATUS_SUCESS_CODE = 200;
 
 const styles = theme => ({
   root: {
-    display: "flex",
-    flexWrap: "wrap"
+    display: 'flex',
+    flexWrap: 'wrap'
   },
   formControl: {
-    margin: theme.spacing(),
+    marginRight: theme.spacing(2),
+    marginBottom: theme.spacing(2),
     minWidth: 120
-  },
-  selectEmpty: {
-    marginTop: theme.spacing(2)
   }
 });
 
 class Users extends Component {
   state = {
-    selectedUser: "",
+    selectedUser: '',
     users: [],
     counts: [],
     fromDate: {
       date: null,
-      localeISOString: "",
-      ISOString: ""
+      localeISOString: '',
+      ISOString: ''
     },
     toDate: {
       date: null,
-      localeISOString: "",
-      ISOString: ""
+      localeISOString: '',
+      ISOString: ''
     }
   };
 
   componentWillMount() {
     this.getUsers();
-    this.initDatepickers();
+    const fromDate = this.formatDate(new Date('1970-01-01T00:00:00'));
+    const toDate = this.formatDate(new Date());
+    this.setState({ fromDate, toDate });
   }
-
-  initDatepickers = () => {
-    const to = new Date();
-    const firstMonthDigit = "01"; // January
-    const firstDateDigit = "01"; // 1st
-    const currentFullYear = to.getFullYear();
-    const firstHourOfDay = "00:00:00";
-    const firstDateOfYear =
-      currentFullYear + "-" + firstDateDigit + "-" + firstMonthDigit;
-    const from = new Date(firstDateOfYear + "T" + firstHourOfDay);
-
-    const toDate = this.formatDate(to);
-    const fromDate = this.formatDate(from);
-    this.setState({ fromDate: fromDate, toDate: toDate });
-  };
 
   /**
    * Converts a date object into the locale ISO string format.
    * Format output: YYYY-MM-DDTHH:MM:SS
    */
   convertToLocaleISOString = dateObject => {
-    let result = "";
+    let result = '';
     if (dateObject) {
       const year = dateObject.getFullYear();
       let month = dateObject.getMonth();
@@ -84,20 +69,9 @@ class Users extends Component {
       date = this.formatDateDigits(date); // Pads 0 as the left digit if date is a single digit
       hours = this.formatDateDigits(hours);
       minutes = this.formatDateDigits(minutes);
-      seconds = "00";
+      seconds = '00';
 
-      result =
-        year +
-        "-" +
-        month +
-        "-" +
-        date +
-        "T" +
-        hours +
-        ":" +
-        minutes +
-        ":" +
-        seconds;
+      result = `${year}-${month}-${date}T${hours}:${minutes}:${seconds}`;
     }
     return result;
   };
@@ -108,7 +82,7 @@ class Users extends Component {
    */
   formatDateDigits = digit => {
     const LAST_TWO_DIGITS = -2;
-    return ("0" + digit).slice(LAST_TWO_DIGITS);
+    return `0${digit}`.slice(LAST_TWO_DIGITS);
   };
 
   /**
@@ -118,19 +92,19 @@ class Users extends Component {
   formatDate = date => {
     const DATE_TIME_INDEX = 0;
     const newDate = {
-      date: date,
+      date,
       localeISOString: this.convertToLocaleISOString(date),
-      ISOString: date.toISOString().split(".")[DATE_TIME_INDEX]
+      ISOString: date.toISOString().split('.')[DATE_TIME_INDEX]
     };
     return newDate;
   };
 
   getUsers = async () => {
-    const url = "/api/users";
+    const url = '/api/users';
     const config = {
       headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + localStorage.getItem("token")
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`
       }
     };
     const data = await axios.get(url, config);
@@ -140,17 +114,17 @@ class Users extends Component {
   };
 
   getCounts = async (userId, fromDate, toDate) => {
-    const SPACE_CHAR = " ";
-    const url = "/api/users/annotations";
+    const SPACE_CHAR = ' ';
+    const url = '/api/users/annotations';
     const config = {
       headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + localStorage.getItem("token")
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`
       },
       params: {
         userid: userId,
-        fromdate: fromDate.replace("T", SPACE_CHAR),
-        todate: toDate.replace("T", SPACE_CHAR)
+        fromdate: fromDate.replace('T', SPACE_CHAR),
+        todate: toDate.replace('T', SPACE_CHAR)
       }
     };
 
@@ -164,17 +138,19 @@ class Users extends Component {
    * Gets the total annotations from all species annotated
    */
   getTotalCount = () => {
+    const { counts } = this.state;
     let annotationTotal = 0;
     let verificationTotal = 0;
-    this.state.counts.forEach(row => {
-      annotationTotal += parseInt(row.annotation_count);
-      verificationTotal += parseInt(row.verification_count);
+    counts.forEach(row => {
+      annotationTotal += Number(row.annotation_count);
+      verificationTotal += Number(row.verification_count);
     });
     return [annotationTotal, verificationTotal];
   };
 
   renderUserSelectOptions = () => {
-    return this.state.users.map(option => (
+    const { users } = this.state;
+    return users.map(option => (
       <MenuItem key={option.id} value={option.username}>
         {option.username}
       </MenuItem>
@@ -182,7 +158,8 @@ class Users extends Component {
   };
 
   renderCounts = () => {
-    return this.state.counts.map(row => (
+    const { counts } = this.state;
+    return counts.map(row => (
       <TableRow key={row.conceptid}>
         <TableCell component="th" scope="row">
           {row.name}
@@ -194,69 +171,65 @@ class Users extends Component {
   };
 
   handleUserSelectChange = event => {
+    const { users, fromDate, toDate } = this.state;
     if (event) {
       const selectedUser = event.target.value;
       if (selectedUser) {
-        this.setState({ selectedUser: selectedUser });
-        let user = this.state.users.find(user => {
+        this.setState({ selectedUser });
+        const userData = users.find(user => {
           return user.username === selectedUser;
         });
-        this.getCounts(
-          user.id,
-          this.state.fromDate.ISOString,
-          this.state.toDate.ISOString
-        );
+        this.getCounts(userData.id, fromDate.ISOString, toDate.ISOString);
       }
     }
   };
 
   handleDateChange = event => {
+    const { users, fromDate, toDate } = this.state;
     if (event) {
-      const name = event.target.name;
+      const { name } = event.target;
       let value = new Date(event.target.value);
-      if (name === "fromDate" && event.target.value === "") {
-        value = new Date("1970-01-01T00:00:00");
-      } else if (name === "toDate" && event.target.value === "") {
+      if (name === 'fromDate' && event.target.value === '') {
+        value = new Date('1970-01-01T00:00:00');
+      } else if (name === 'toDate' && event.target.value === '') {
         value = new Date();
       }
 
       const newDate = this.formatDate(value);
 
       this.setState({ [name]: newDate });
-      let selectedUser = this.state.selectedUser;
+      const { selectedUser } = this.state;
       if (selectedUser) {
-        let user = this.state.users.find(user => {
+        const userData = users.find(user => {
           return user.username === selectedUser;
         });
         this.getCounts(
-          user.id,
-          name === "fromDate"
-            ? newDate.ISOString
-            : this.state.fromDate.ISOString,
-          name === "toDate" ? newDate.ISOString : this.state.toDate.ISOString
+          userData.id,
+          name === 'fromDate' ? newDate.ISOString : fromDate.ISOString,
+          name === 'toDate' ? newDate.ISOString : toDate.ISOString
         );
       }
     }
   };
 
   render() {
+    const { selectedUser, fromDate, toDate, counts, users } = this.state;
     const { classes } = this.props;
-    let [annotationTotal, verificationTotal] = this.getTotalCount();
+    const [annotationTotal, verificationTotal] = this.getTotalCount();
     return (
       <div className="users body-container">
-        <h2>Users</h2>
         <Grid container alignItems="center" wrap="nowrap">
           <Grid item>
             <FormControl className={classes.formControl}>
               <InputLabel>User</InputLabel>
               <Select
-                value={this.state.selectedUser}
+                value={selectedUser}
                 onChange={this.handleUserSelectChange}
                 inputProps={{
-                  name: "user"
+                  name: 'user'
                 }}
               >
-                {this.state.users ? this.renderUserSelectOptions() : null}
+                {users ? this.renderUserSelectOptions() : null}
               </Select>
             </FormControl>
           </Grid>
@@ -267,7 +240,7 @@ class Users extends Component {
               type="datetime-local"
               name="fromDate"
               className={classes.formControl}
-              defaultValue={this.state.fromDate.localeISOString}
+              defaultValue={fromDate.localeISOString}
               onChange={this.handleDateChange}
               InputLabelProps={{
                 shrink: true
@@ -281,7 +254,7 @@ class Users extends Component {
               type="datetime-local"
               name="toDate"
               className={classes.formControl}
-              defaultValue={this.state.toDate.localeISOString}
+              defaultValue={toDate.localeISOString}
               onChange={this.handleDateChange}
               InputLabelProps={{
                 shrink: true
@@ -298,16 +271,14 @@ class Users extends Component {
                 <TableCell align="right">Total Verified</TableCell>
               </TableRow>
             </TableHead>
-            <TableBody>
-              {this.state.counts ? this.renderCounts() : null}
-            </TableBody>
+            <TableBody>{counts ? this.renderCounts() : null}</TableBody>
           </Table>
         </Paper>
-        <div style={{ clear: "both" }}>
-          <h3 style={{ float: "left" }}>
+        <div style={{ clear: 'both' }}>
+          <h3 style={{ float: 'left' }}>
             Total Annotations: {annotationTotal}
           </h3>
-          <h3 style={{ float: "right" }}>
+          <h3 style={{ float: 'right' }}>
             Total Verifications: {verificationTotal}
           </h3>
         </div>

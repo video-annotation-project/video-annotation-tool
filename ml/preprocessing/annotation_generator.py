@@ -152,6 +152,7 @@ class AnnotationGenerator(object):
 
         # Give priority to frames with least amount of tracking annotations
         # And lower speed
+        # TODO: add verifiedby check
         frame_groups.sort(key=lambda df: (list(df['userid']).count(ai_id), df.speed.mean()))
 
         # Selects images that we'll use (each group has annotations for an image)

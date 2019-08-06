@@ -16,6 +16,7 @@
          "resized_video_width" : 640,
          "resized_video_height" : 480,
          "max_seconds_back" : 5,
+         "tracking_vid_length" : 6000,
          "biologist_users" : [11, 12, 6, 15, 16],
          "tracking_users" : [11, 12, 6, 15, 16, 7, 8, 125]
       }

@@ -14,8 +14,7 @@ from keras_retinanet.models import convert_model
 from keras_retinanet.models import load_model
 from psycopg2 import connect
 
-from preprocessing.annotation_generator import get_classmap
-from utils.query import query
+from loading_data import queryDB, get_classmap
 
 
 # Load environment variables
@@ -149,7 +148,7 @@ def predict_on_video(videoid, model_weights, concepts, filename, upload_annotati
     cursor = con.cursor()
 
     # Get the video filename
-    vid_filename = query(f'''
+    vid_filename = queryDB(f'''
         SELECT *
         FROM videos
         WHERE id ={videoid}''').iloc[0].filename
@@ -158,7 +157,7 @@ def predict_on_video(videoid, model_weights, concepts, filename, upload_annotati
     original_frames = copy.deepcopy(frames)
 
     # Get biologist annotations for video
-    annotations = query(
+    annotations = queryDB(
         f'''
         SELECT
           x1, y1, x2, y2,
@@ -206,13 +205,14 @@ def predict_on_video(videoid, model_weights, concepts, filename, upload_annotati
     print("Done generating")
     return results, fps, original_frames, annotations
 
+
 def get_video_frames(vid_filename, videoid, con):
     frames = []
     # grab video stream
     url = s3.generate_presigned_url('get_object',
-            Params = {'Bucket': S3_BUCKET,
-                      'Key': S3_VIDEO_FOLDER + vid_filename},
-                       ExpiresIn = 100)
+                                    Params={'Bucket': S3_BUCKET,
+                                            'Key': S3_VIDEO_FOLDER + vid_filename},
+                                    ExpiresIn=100)
     vid = cv2.VideoCapture(url)
     fps = vid.get(cv2.CAP_PROP_FPS)
     length = int(vid.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -221,7 +221,7 @@ def get_video_frames(vid_filename, videoid, con):
     print("Successfully opened video.")
     check = True
     frame_counter = 0
-    one_percent_length = int(length/100)
+    one_percent_length = int(length / 100)
     while True:
         if frame_counter % one_percent_length == 0:
             upload_predict_progress(frame_counter, videoid, con, length, 0)
@@ -231,23 +231,25 @@ def get_video_frames(vid_filename, videoid, con):
             break
         frame = cv2.resize(frame, (RESIZED_WIDTH, RESIZED_HEIGHT))
         frames.append(frame)
-        frame_counter += 1 
+        frame_counter += 1
     vid.release()
     print("Done resizing video.")
-    return frames,fps
+    return frames, fps
+
 
 def init_model(model_path):
     model = load_model(model_path, backbone_name='resnet50')
     model = convert_model(model)
     return model
 
+
 def predict_frames(video_frames, fps, model, videoid, con):
     currently_tracked_objects = []
     annotations = [
         pd.DataFrame(
             columns=[
-                'x1','y1','x2','y2',
-                'label', 'confidence', 'objectid','frame_num']
+                'x1', 'y1', 'x2', 'y2',
+                'label', 'confidence', 'objectid', 'frame_num']
         )]
     total_frames = len(video_frames)
     one_percent_length = int(total_frames / 100)
@@ -274,35 +276,38 @@ def predict_frames(video_frames, fps, model, videoid, con):
                     matched_object.reinit(detection, frame, frame_num)
                 else:
                     tracked_object = Tracked_object(detection, frame, frame_num)
-                    prev_annotations, matched_obj_id = track_backwards(video_frames, frame_num, detection, tracked_object.id, fps, pd.concat(annotations))
+                    prev_annotations, matched_obj_id = track_backwards(
+                        video_frames, frame_num, detection, tracked_object.id, fps, pd.concat(annotations))
                     if matched_obj_id:
                         tracked_object.change_id(matched_obj_id)
                     tracked_object.annotations = tracked_object.annotations.append(prev_annotations)
                     currently_tracked_objects.append(tracked_object)
-    
+
     for obj in currently_tracked_objects:
         annotations.append(obj.annotations)
-                
+
     results = pd.concat(annotations)
     results.to_csv('results.csv')
     return results, video_frames
 
+
 def get_predictions(frame, model):
     frame = np.expand_dims(frame, axis=0)
     boxes, scores, labels = model.predict_on_batch(frame)
-    predictions = zip (boxes[0],scores[0],labels[0])
+    predictions = zip(boxes[0], scores[0], labels[0])
     filtered_predictions = []
-    for box, score,label in predictions:
+    for box, score, label in predictions:
         if THRESHOLDS[label] > score:
             continue
-        filtered_predictions.append((box,score,label))
+        filtered_predictions.append((box, score, label))
     return filtered_predictions
+
 
 def does_match_existing_tracked_object(detection, currently_tracked_objects):
     (x1, y1, x2, y2) = detection[0]
-    detection = pd.Series({'x1' : x1, 'y1' : y1, 'x2' : x2, 'y2' : y2})
+    detection = pd.Series({'x1': x1, 'y1': y1, 'x2': x2, 'y2': y2})
     # Compute IOU with each currently tracked object
-    max_iou = 0 
+    max_iou = 0
     match = None
     for obj in currently_tracked_objects:
         iou = compute_IOU(obj, detection)
@@ -310,6 +315,7 @@ def does_match_existing_tracked_object(detection, currently_tracked_objects):
             max_iou = iou
             match = obj
     return (max_iou >= TRACKING_IOU_THRESH), match
+
 
 def compute_IOU(A, B):
     # +1 in computations are to account for pixel indexing
@@ -325,10 +331,12 @@ def compute_IOU(A, B):
 
 # get tracking annotations before first model prediction for object - max_time_back seconds
 # skipping original frame annotation, already saved in object initialization
+
+
 def track_backwards(video_frames, frame_num, detection, object_id, fps, old_annotations):
-    annotations = pd.DataFrame(columns=['x1','y1','x2','y2','label', 'confidence', 'objectid','frame_num'])
+    annotations = pd.DataFrame(columns=['x1', 'y1', 'x2', 'y2', 'label', 'confidence', 'objectid', 'frame_num'])
     (x1, y1, x2, y2) = detection[0]
-    box = (x1, y1, (x2-x1), (y2-y1))
+    box = (x1, y1, (x2 - x1), (y2 - y1))
     frame = video_frames[frame_num]
     tracker = cv2.TrackerKCF_create()
     tracker.init(frame, box)
@@ -353,7 +361,7 @@ def track_backwards(video_frames, frame_num, detection, object_id, fps, old_anno
 
 
 def match_old_annotations(old_annotations, annotation):
-    max_iou = 0 
+    max_iou = 0
     match = None
     for _, annot in old_annotations.iterrows():
         iou = compute_IOU(annot, annotation)
@@ -380,30 +388,37 @@ def make_annotation(box, object_id, frame_num):
     annotation['frame_num'] = frame_num
     return annotation
 
-# Given a list of annotations(some with or without labels/confidence scores) for multiple objects choose a label for each object
+# Given a list of annotations(some with or without labels/confidence scores)
+# for multiple objects choose a label for each object
+
+
 def propagate_conceptids(annotations, concepts):
     label = None
     objects = annotations.groupby(['objectid'])
     for oid, group in objects:
         scores = {}
-        for k , label in group.groupby(['label']):
-            scores[k] = label.confidence.mean() # Maybe the sum?
+        for k, label in group.groupby(['label']):
+            scores[k] = label.confidence.mean()  # Maybe the sum?
         idmax = max(scores.keys(), key=(lambda k: scores[k]))
-        annotations.loc[annotations.objectid == oid,'label'] = idmax
-        annotations.loc[annotations.objectid == oid,'confidence'] = scores[idmax]
+        annotations.loc[annotations.objectid == oid, 'label'] = idmax
+        annotations.loc[annotations.objectid == oid, 'confidence'] = scores[idmax]
     annotations['label'] = annotations['label'].apply(lambda x: concepts[int(x)])
-    annotations['conceptid'] = annotations['label'] # need both label and conceptid for later
+    annotations['conceptid'] = annotations['label']  # need both label and conceptid for later
     return annotations
 
 # Limit results based on tracked object length (ex. > 30 frames)
+
+
 def length_limit_objects(pred, frame_thresh):
     obj_len = pred.groupby('objectid').label.value_counts()
     len_thresh = obj_len[obj_len > frame_thresh]
-    return pred[[(obj in len_thresh) for obj in pred.objectid]] 
+    return pred[[(obj in len_thresh) for obj in pred.objectid]]
 
 # Generates the video with the ground truth frames interlaced
+
+
 def generate_video(filename, frames, fps, results,
-                    concepts, video_id, annotations, cursor, con):
+                   concepts, video_id, annotations, cursor, con):
 
     # Combine human and prediction annotations
     results = results.append(annotations)
@@ -412,7 +427,7 @@ def generate_video(filename, frames, fps, results,
     classmap = get_classmap(concepts)
 
     total_length = len(results)
-    one_percent_length = int(total_length/100)
+    one_percent_length = int(total_length / 100)
     for pred_index, res in enumerate(results.itertuples()):
 
         if pred_index % one_percent_length == 0:
@@ -423,9 +438,9 @@ def generate_video(filename, frames, fps, results,
             cv2.rectangle(frames[res.frame_num], (x1, y1), (x2, y2), (0, 255, 0), 2)
             cv2.putText(
                 frames[res.frame_num], str(res.confidence),
-                (x1, y1+10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
-            cv2.putText(frames[res.frame_num], str(res.objectid), (x1, y2), 
-                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+                (x1, y1 + 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+            cv2.putText(frames[res.frame_num], str(res.objectid), (x1, y2),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
         else:
             cv2.rectangle(frames[res.frame_num], (x1, y1), (x2, y2), (255, 0, 0), 2)
         cv2.putText(
@@ -441,7 +456,7 @@ def save_video(filename, frames, fps, cursor, con):
     for frame in frames:
         out.write(frame)
     out.release()
-    
+
     # convert to mp4 and upload to s3 and db
     # requires temp so original not overwritten
     converted_file = 'temp.mp4'
@@ -450,22 +465,24 @@ def save_video(filename, frames, fps, cursor, con):
     # upload video..
     s3.upload_file(
         converted_file, S3_BUCKET,
-        AWS_S3_BUCKET_AIVIDEOS_FOLDER +  filename,
-        ExtraArgs={'ContentType':'video/mp4'})
+        AWS_S3_BUCKET_AIVIDEOS_FOLDER + filename,
+        ExtraArgs={'ContentType': 'video/mp4'})
     # remove files once uploaded
     os.system('rm \'' + filename + '\'')
     os.system('rm ' + converted_file)
-    
+
     # add the entry to ai_videos
     cursor.execute('''
         INSERT INTO ai_videos (name)
         VALUES (%s)''',
-        (filename,)
-    )
+                   (filename,)
+                   )
     con.commit()
     cv2.destroyAllWindows()
 
 # Chooses single prediction for each object (the middle frame)
+
+
 def get_final_predictions(results):
     middle_frames = []
     for obj in [df for _, df in results.groupby('objectid')]:
@@ -479,45 +496,50 @@ def get_final_predictions(results):
     middle_frames.columns = results.columns
     return middle_frames
 
+
 def handle_annotation(cursor, prediction, frames, videoid, videoheight, videowidth, userid, fps):
     frame = frames[int(prediction.frame_num)]
     frame_w_box = get_boxed_image(
-        *prediction.loc[['x1','x2','y1','y2']], copy.deepcopy(frame))
+        *prediction.loc[['x1', 'x2', 'y1', 'y2']], copy.deepcopy(frame))
     upload_annotation(
         cursor, frame, frame_w_box,
-        *prediction.loc[['x1','x2','y1','y2','frame_num','label']],
+        *prediction.loc[['x1', 'x2', 'y1', 'y2', 'frame_num', 'label']],
         videoid, videowidth, videoheight, userid, fps)
+
 
 def get_boxed_image(x1, x2, y1, y2, frame):
     cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)
     return frame
 
-#Uploads images and puts annotation in database
+# Uploads images and puts annotation in database
+
+
 def upload_annotation(
-    cursor, frame, frame_w_box, x1, x2, y1, y2,
-    frame_num, conceptid, videoid, videowidth, videoheight, userid, fps):
+        cursor, frame, frame_w_box, x1, x2, y1, y2,
+        frame_num, conceptid, videoid, videowidth, videoheight, userid, fps):
     timeinvideo = frame_num / fps
     no_box = str(videoid) + "_" + str(timeinvideo) + "_ai.png"
-    box = str(uuid.uuid4()) + "_" + str(videoid) +  "_" + str(timeinvideo) + "_box_ai.png"
+    box = str(uuid.uuid4()) + "_" + str(videoid) + "_" + str(timeinvideo) + "_box_ai.png"
     temp_file = str(uuid.uuid4()) + ".png"
     cv2.imwrite(temp_file, frame)
-    s3.upload_file(temp_file, S3_BUCKET, S3_ANNOTATION_FOLDER + no_box, ExtraArgs={'ContentType':'image/png'}) 
-    os.system('rm '+ temp_file)
+    s3.upload_file(temp_file, S3_BUCKET, S3_ANNOTATION_FOLDER + no_box, ExtraArgs={'ContentType': 'image/png'})
+    os.system('rm ' + temp_file)
     cv2.imwrite(temp_file, frame_w_box)
-    s3.upload_file(temp_file, S3_BUCKET, S3_ANNOTATION_FOLDER + box,  ExtraArgs={'ContentType':'image/png'})
-    os.system('rm '+ temp_file)
+    s3.upload_file(temp_file, S3_BUCKET, S3_ANNOTATION_FOLDER + box, ExtraArgs={'ContentType': 'image/png'})
+    os.system('rm ' + temp_file)
     cursor.execute(
         """
        INSERT INTO annotations (
-       videoid, userid, conceptid, timeinvideo, x1, y1, x2, y2, 
-       videowidth, videoheight, dateannotated, image, imagewithbox) 
+       videoid, userid, conceptid, timeinvideo, x1, y1, x2, y2,
+       videowidth, videoheight, dateannotated, image, imagewithbox)
        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """,
         (
-        int(videoid), int(userid), int(conceptid), timeinvideo, x1, y1, 
-        x2, y2, videowidth, videoheight, datetime.datetime.now().date(), no_box, box
+            int(videoid), int(userid), int(conceptid), timeinvideo, x1, y1,
+            x2, y2, videowidth, videoheight, datetime.datetime.now().date(), no_box, box
         )
-    ) 
+    )
+
 
 def upload_predict_progress(count, videoid, con, total_count, status):
     '''
@@ -533,12 +555,12 @@ def upload_predict_progress(count, videoid, con, total_count, status):
     '''
     cursor = con.cursor()
     print(f'count: {count} total_count: {total_count} vid: {videoid} status: {status}')
-    if (count == 0 and status == 0): # the starting point
+    if (count == 0 and status == 0):  # the starting point
         cursor.execute('''
             INSERT INTO predict_progress (videoid, framenum, totalframe, status)
             VALUES (%s, %s, %s, %s)''',
-            (videoid, count, total_count, status)
-        )
+                       (videoid, count, total_count, status)
+                       )
         con.commit()
         return
     elif (count == 0):
@@ -546,27 +568,27 @@ def upload_predict_progress(count, videoid, con, total_count, status):
             UPDATE predict_progress
             SET framenum=%s, status=%s, totalframe=%s
             WHERE videoid=%s''',
-            (count, 1, total_count, videoid,))
+                       (count, 1, total_count, videoid,))
         con.commit()
         return
 
     if (total_count == count):
         count = -1
     cursor.execute('''
-        UPDATE predict_progress 
+        UPDATE predict_progress
         SET framenum=%s
         WHERE videoid=%s''',
-        (count, videoid,)
-    )
+                   (count, videoid,)
+                   )
     con.commit()
 
 
 if __name__ == '__main__':
     # connect to db
-    con = connect(database=os.getenv("DB_NAME"), 
-        host=os.getenv("DB_HOST"), 
-        user=os.getenv("DB_USER"), 
-        password=os.getenv("DB_PASSWORD"))
+    con = connect(database=os.getenv("DB_NAME"),
+                  host=os.getenv("DB_HOST"),
+                  user=os.getenv("DB_USER"),
+                  password=os.getenv("DB_PASSWORD"))
     cursor = con.cursor()
 
     model_name = 'testV2'
@@ -575,7 +597,7 @@ if __name__ == '__main__':
     cursor.execute("SELECT * FROM MODELS WHERE name='" + model_name + "'")
     model = cursor.fetchone()
 
-    videoid = 86 
+    videoid = 86
     concepts = model[2]
 
     predict_on_video(videoid, weights_path, concepts)
