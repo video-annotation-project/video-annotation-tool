@@ -64,12 +64,14 @@ context('Misc', () => {
     cy.focused().should('have.id', 'description');
   });
 
+  // eslint-disable-next-line func-names
   context('Cypress.Screenshot', function() {
     it('cy.screenshot() - take a screenshot', () => {
       // https://on.cypress.io/screenshot
       cy.screenshot('my-image');
     });
 
+    // eslint-disable-next-line func-names
     it('Cypress.Screenshot.defaults() - change default config of screenshots', function() {
       Cypress.Screenshot.defaults({
         blackout: ['.foo'],
