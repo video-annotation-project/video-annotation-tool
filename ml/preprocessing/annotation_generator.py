@@ -54,8 +54,10 @@ def _get_labelmap(classes):
 
     # Keras requires that the mapping IDs correspond to the index number of the class.
     # So we create that mapping (dictionary)
-    class_id_name = pd_query(f"select id, name from concepts where id = ANY(ARRAY{classes})")
-    labelmap = pd.Series(class_id_name.name.values, index=class_id_name.id).to_dict()
+    class_id_name = pd_query(
+        f"select id, name from concepts where id = ANY(ARRAY{classes})")
+    labelmap = pd.Series(class_id_name.name.values,
+                         index=class_id_name.id).to_dict()
 
     return labelmap
 
@@ -91,6 +93,7 @@ class AnnotationGenerator(object):
                  collection_ids,
                  verified_only,
                  include_tracking,
+                 verify_videos,
                  classes,
                  min_examples,
                  validation_split=0.8):
@@ -99,6 +102,7 @@ class AnnotationGenerator(object):
         selected_frames, concept_counts = self._select_annotations(collection_ids,
                                                                    verified_only,
                                                                    include_tracking,
+                                                                   verify_videos,
                                                                    min_examples,
                                                                    classes)
         self.selected_frames = selected_frames
@@ -142,12 +146,12 @@ class AnnotationGenerator(object):
                 'subset parameter must be either "training" or "validation"/"testing"')
 
     @staticmethod
-    def _select_annotations(collection_ids, verified_only, include_tracking, min_examples, concepts):
+    def _select_annotations(collection_ids, verified_only, include_tracking, verify_videos, min_examples, concepts):
         selected = []
         concept_count = {}
 
         annotations = AnnotationGenerator._get_annotations(
-            collection_ids, verified_only, include_tracking)
+            collection_ids, verified_only, include_tracking, verify_videos)
 
         for concept in concepts:
             concept_count[concept] = 0
@@ -200,7 +204,7 @@ class AnnotationGenerator(object):
         return selected, concept_count
 
     @staticmethod
-    def _get_annotations(collection_ids, verified_only, include_tracking):
+    def _get_annotations(collection_ids, verified_only, include_tracking, verify_videos):
         # Query that gets all annotations for given concepts (and child concepts)
         # making sure that any tracking annotations originated from good users
         annotations_query = r'''
@@ -221,7 +225,7 @@ class AnnotationGenerator(object):
                 annotations a ON a.id=inter.annotationid
             LEFT JOIN
                 videos ON videos.id=videoid
-            WHERE inter.id = ANY(%s)
+            WHERE inter.id = ANY(%s) AND a.videoid <> ANY(%s)
         '''
         if verified_only:
             annotations_query += r''' AND a.verifiedby IS NOT NULL'''
@@ -229,7 +233,7 @@ class AnnotationGenerator(object):
         if not include_tracking:
             annotations_query += r''' AND a.id = a.originalId'''
 
-        return pd_query(annotations_query, (collection_ids, ))
+        return pd_query(annotations_query, (collection_ids, verify_videos, ))
 
 
 class S3Generator(Generator):

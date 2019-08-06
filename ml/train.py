@@ -30,6 +30,7 @@ s3 = boto3.client(
 
 @timer("training")
 def train_model(concepts,
+                verify_videos,
                 model_name,
                 collection_ids,
                 min_examples,
@@ -63,7 +64,8 @@ def train_model(concepts,
         verified_only=verified_only,
         include_tracking=include_tracking,
         min_examples=min_examples,
-        classes=concepts
+        classes=concepts,
+        verify_videos=verify_videos
     )
 
     train_generator = annotation_generator.flow_from_s3(
