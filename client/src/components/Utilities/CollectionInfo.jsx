@@ -38,6 +38,9 @@ const styles = theme => ({
   },
   root: {
     margin: theme.spacing()
+  },
+  tableCell: {
+    fontSize: '11pt'
   }
 });
 
@@ -89,11 +92,17 @@ class CollectionInfo extends Component {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>Concept</TableCell>
-                <TableCell align="right">User Annotations</TableCell>
-                <TableCell align="right">Tracking Annotations</TableCell>
-                <TableCell align="right">Verified User Annotations</TableCell>
-                <TableCell align="right">
+                <TableCell className={classes.tableCell}>Concept</TableCell>
+                <TableCell className={classes.tableCell} align="right">
+                  User Annotations
+                </TableCell>
+                <TableCell className={classes.tableCell} align="right">
+                  Tracking Annotations
+                </TableCell>
+                <TableCell className={classes.tableCell} align="right">
+                  Verified User Annotations
+                </TableCell>
+                <TableCell className={classes.tableCell} align="right">
                   Verified Tracking Annotations
                 </TableCell>
               </TableRow>
