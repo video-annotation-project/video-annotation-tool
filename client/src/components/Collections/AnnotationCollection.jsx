@@ -19,6 +19,7 @@ import Swal from 'sweetalert2';
 import VerifySelectUser from '../Utilities/SelectUser';
 import VerifySelectVideo from '../Utilities/SelectVideo';
 import VerifySelectConcept from '../Utilities/SelectConcept';
+import CollectionInfo from '../Utilities/CollectionInfo';
 
 const styles = theme => ({
   list: {
@@ -107,6 +108,7 @@ class AnnotationCollection extends Component {
       trackingCount: '',
       collections: [],
       includeTracking: false,
+      infoDialogOpen: false,
       activeStep: 0
     };
   }
@@ -480,12 +482,19 @@ class AnnotationCollection extends Component {
     });
   };
 
+  toggleInfo = () => {
+    this.setState(prevState => ({
+      infoDialogOpen: !prevState.infoDialogOpen
+    }));
+  };
+
   showCollection = () => {
     const { classes } = this.props;
     const {
       collections,
       selectedCollection,
-      selectedCollectionCounts
+      selectedCollectionCounts,
+      infoDialogOpen
     } = this.state;
     const data = collections.find(col => {
       return col.id === selectedCollection;
@@ -493,39 +502,15 @@ class AnnotationCollection extends Component {
     if (data.users[0]) {
       return (
         <React.Fragment>
-          <Typography variant="subtitle1" className={classes.stats1}>
-            User Annotations: {selectedCollectionCounts[0].count}
-          </Typography>
-          <Typography variant="subtitle1" className={classes.stats1}>
-            Tracking Annotations: {selectedCollectionCounts[1].count}
-          </Typography>
-          <Typography variant="subtitle1" className={classes.stats1}>
-            Verified User Annotations: {selectedCollectionCounts[2].count}
-          </Typography>
-          <Typography variant="subtitle1" className={classes.stats1}>
-            Verified Tracking Annotations: {selectedCollectionCounts[3].count}
-          </Typography>
-          <Typography variant="subtitle1" className={classes.stats1}>
-            Users ({data.users.length}):
-          </Typography>
-          <Typography variant="subtitle1" className={classes.stats2}>
-            {data.users.join(', ')}
-          </Typography>
-          <Typography variant="subtitle1" className={classes.stats1}>
-            Videos ({data.videos.length}):
-          </Typography>
-          <Typography variant="subtitle1" className={classes.stats2}>
-            {data.videos.join(', ')}
-          </Typography>
-          <Typography variant="subtitle1" className={classes.stats1}>
-            Concepts ({data.concepts.length}):
-          </Typography>
-          <Typography variant="subtitle1" className={classes.stats2}>
-            {data.concepts.join(', ')}
-          </Typography>
-          <Typography variant="subtitle1" className={classes.stats1}>
-            Contains tracking: {data.tracking ? 'True' : 'False'}
-          </Typography>
+          <Button color="primary" onClick={this.toggleInfo}>
+            Collection Info
+          </Button>
+          <CollectionInfo
+            open={infoDialogOpen}
+            onClose={this.toggleInfo}
+            counts={selectedCollectionCounts}
+            data={data}
+          />
         </React.Fragment>
       );
     }
