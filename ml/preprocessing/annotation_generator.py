@@ -12,7 +12,7 @@ from keras_retinanet.preprocessing.csv_generator import Generator
 from keras_retinanet.utils.image import read_image_bgr
 
 import config
-from utils.query import query
+from utils.query import pd_query
 
 
 # Without this the program will crash
@@ -54,10 +54,10 @@ def _get_labelmap(classes):
 
     # Keras requires that the mapping IDs correspond to the index number of the class.
     # So we create that mapping (dictionary)
-    class_id_name = query(f"select id, name from concepts where id = ANY(ARRAY{classes})")
+    class_id_name = pd_query(f"select id, name from concepts where id = ANY(ARRAY{classes})")
     labelmap = pd.Series(class_id_name.name.values, index=class_id_name.id).to_dict()
 
-    return labelmap 
+    return labelmap
 
 
 def get_classmap(classes):
@@ -68,7 +68,7 @@ def get_classmap(classes):
     # Keras requires that the mapping IDs correspond to the index number of the class.
     # So we create that mapping (dictionary)
     classmap = {class_: index for index, class_ in enumerate(classes)}
-    
+
     return classmap
 
 
@@ -148,7 +148,7 @@ class AnnotationGenerator(object):
         frame_groups = annotations.groupby(['videoid', 'frame_num'], sort=False)
         frame_groups = [df for _, df in frame_groups]
 
-        ai_id = query("SELECT id FROM users WHERE username='tracking'").id[0]
+        ai_id = pd_query("SELECT id FROM users WHERE username='tracking'").id[0]
 
         # Give priority to frames with least amount of tracking annotations
         # And lower speed
@@ -209,10 +209,10 @@ class AnnotationGenerator(object):
                 annotations a ON a.id=inter.annotationid
             LEFT JOIN
                 videos ON videos.id=videoid
-            WHERE inter.id IN (%s)
+            WHERE inter.id = ANY(%s)
         '''
 
-        return query(annotations_query, [','.join((str(id_) for id_ in collection_ids))])
+        return pd_query(annotations_query, (collection_ids, ))
 
 
 class S3Generator(Generator):
@@ -245,7 +245,7 @@ class S3Generator(Generator):
         self.labels = {}
         for key, value in self.classes.items():
             self.labels[value] = key
-        
+
         self._connect_s3()
 
         self.image_data = self._read_annotations()

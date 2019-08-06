@@ -8,8 +8,9 @@ from dotenv import load_dotenv
 config_path = "../config.json"
 load_dotenv(dotenv_path="../.env")
 
-with open(config_path) as config_buffer:
-    config = json.loads(config_buffer.read())['ml']
+config_file = open(config_path)
+config = json.load(config_file)['ml']
+config_file.close()
 
 # Model weights paths
 WEIGHTS_PATH = config['weights_path']
