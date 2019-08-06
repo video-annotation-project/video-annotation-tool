@@ -141,5 +141,4 @@ if __name__ == "__main__":
         '''
     )
     with Pool() as p:
-        p.map(fix_offset, map(lambda x: (x.id, x.timeinvideo,
-                                         x.videoid, x.image), cursor.fetchall()))
+        p.map(fix_offset, cursor.fetchall())
