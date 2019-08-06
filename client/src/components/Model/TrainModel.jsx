@@ -524,18 +524,29 @@ class TrainModel extends Component {
       includeTracking,
       verifiedOnly
     } = this.state;
+
+    const counts = {};
     if (verifiedOnly) {
-      let count = parseInt(selectedCollectionCounts[2].count, 10);
+      selectedCollectionCounts[2].forEach(concept => {
+        counts[concept.name] = parseInt(concept.count, 10);
+      });
       if (includeTracking) {
-        count += parseInt(selectedCollectionCounts[3].count, 10);
+        selectedCollectionCounts[3].forEach(concept => {
+          counts[concept.name] += parseInt(concept.count, 10);
+        });
       }
-      return count;
+      return Math.min(...Object.values(counts));
     }
-    let count = parseInt(selectedCollectionCounts[0].count, 10);
+
+    selectedCollectionCounts[0].forEach(concept => {
+      counts[concept.name] = parseInt(concept.count, 10);
+    });
     if (includeTracking) {
-      count += parseInt(selectedCollectionCounts[1].count, 10);
+      selectedCollectionCounts[1].forEach(concept => {
+        counts[concept.name] += parseInt(concept.count, 10);
+      });
     }
-    return count;
+    return Math.min(...Object.values(counts));
   };
 
   getCollectionCounts = async () => {
