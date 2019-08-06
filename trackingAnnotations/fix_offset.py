@@ -5,13 +5,8 @@ from pgdb import connect
 import boto3
 import os
 from dotenv import load_dotenv
-import datetime
-import copy
-import time
-import uuid
-import sys
-import math
 from PIL import Image
+import math
 import numpy as np
 import pandas as pd
 from multiprocessing import Pool
@@ -34,18 +29,36 @@ DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 
 # video/image properties
-VIDEO_WIDTH = 1600
-VIDEO_HEIGHT = 900
+VIDEO_WIDTH = 1920
+VIDEO_HEIGHT = 1080
+
+# Generator to iterate through video frames
 
 
-def fix_offset(annotation):
+def iter_from_middle(lst):
+    try:
+        middle = math.ceil(len(lst)/2)
+        yield middle, lst[middle]
+
+        for shift in range(1, middle + 1):
+            left = middle - shift
+            right = middle + shift
+            yield left, lst[left]
+            yield right, lst[right]
+
+    except IndexError:  # occures on lst[len(lst)] or for empty list
+        # raise StopIteration
+        return
+
+
+def fix_offset(videoid, timeinvideo, image, id):
     con = connect(database=DB_NAME, host=DB_HOST,
                   user=DB_USER, password=DB_PASSWORD)
     cursor = con.cursor()
 
     # get video name
     cursor.execute("SELECT filename FROM videos WHERE id=%s",
-                   (str(annotation.videoid),))
+                   (str(videoid),))
     video_name = cursor.fetchone()[0]
 
     # grab video stream
@@ -57,21 +70,20 @@ def fix_offset(annotation):
     fps = cap.get(cv2.CAP_PROP_FPS)
 
     # search within +- search range seconds of original, +- frames from original annotation
-    frames = 20
-    search_range = 1/fps * frames
+    frames = 40
+    search_seconds_range = frames / fps
 
     # initialize video for grabbing frames before annotation
-    # tell video to start at 'start'-1 time
-    cap.set(0, (annotation.timeinvideo-search_range)*1000)
+    cap.set(0, (timeinvideo-search_seconds_range)
+            * 1000)  # tell video to start at 'start'-1 time
 
     imgs = []
     times = []
-    for i in range(math.ceil(fps*search_range * 2)):
-        check, vid = cap.read()
+    for i in range(math.ceil(fps*search_seconds_range * 2)):
+        check, img = cap.read()
         if not check:
             print("end of video reached")
             break
-        img = imutils.resize(vid, width=VIDEO_WIDTH, height=VIDEO_HEIGHT)
         time = cap.get(cv2.CAP_PROP_POS_MSEC)
         times.append(time)
         imgs.append(img)
@@ -81,10 +93,10 @@ def fix_offset(annotation):
     try:
         obj = s3.get_object(
             Bucket=S3_BUCKET,
-            Key=S3_ANNOTATION_FOLDER + annotation.image
+            Key=S3_ANNOTATION_FOLDER + image
         )
     except:
-        #print("Annotation missing image.")
+        # print("Annotation missing image.")
         con.close()
         return
     img = Image.open(obj['Body'])
@@ -94,26 +106,42 @@ def fix_offset(annotation):
     img = cv2.resize(img, (VIDEO_WIDTH, VIDEO_HEIGHT))
 
     best_score = 0
-    best = None
-    for i in range(math.ceil(fps*search_range)):
-        # +1 or -1
-        for s in range(-1, 2, 2):
-            index = math.ceil(fps*search_range) + i * s
-            if index == len(imgs):
-                continue
-            (score, diff) = compare_ssim(
-                img, imgs[index], full=True, multichannel=True)
-            if best_score < score:
-                best = index
-                best_score = score
-
-            if best_score > .95:
-                cursor.execute("UPDATE annotations SET timeinvideo=%f, originalid=NULL WHERE id=%d;", (
-                    times[best]/1000, annotation.id,))
-                con.commit()
-                con.close()
-                return
+    for index, video_frame in iter_from_middle(imgs):
+        if index == len(imgs):
+            continue
+        (score, _) = compare_ssim(
+            img, video_frame, full=True, multichannel=True)
+        if score > best_score:
+            best_score = score
+        if best_score > .92:
+            cursor.execute(
+                '''
+          UPDATE annotations
+          SET framenum=%d, timeinvideo=%f, originalid=NULL
+          WHERE id= %d;''',
+                (round(times[index]*fps/1000), times[index]/1000, id,))
+            con.commit()
+            con.close()
+            return
+    print(
+        f'Failed on annnotation {id} with best score {best_score}')
     cursor.execute(
-        "UPDATE annotations SET unsure=TRUE WHERE id=%d;", (annotation.id,))
+        "UPDATE annotations SET unsure=TRUE WHERE id=%d;", (id,))
     con.commit()
     con.close()
+
+
+if __name__ == "__main__":
+    con = connect(database=DB_NAME, host=DB_HOST,
+                  user=DB_USER, password=DB_PASSWORD)
+    cursor = con.cursor()
+    cursor.execute(
+        '''
+        SELECT id, timeinvideo, videoid, image
+        FROM annotations
+        WHERE unsure=True AND framenum IS null
+        '''
+    )
+    with Pool() as p:
+        p.map(fix_offset, map(lambda x: (x.videoid, x.timeinvideo,
+                                         x.image, x.id), cursor.fetchall()))
