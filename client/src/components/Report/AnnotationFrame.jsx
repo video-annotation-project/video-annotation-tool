@@ -1,23 +1,22 @@
-import React, { Component } from "react";
-import axios from "axios";
-import PropTypes from "prop-types";
-import { withStyles } from "@material-ui/core/styles";
-import ListItem from "@material-ui/core/ListItem";
+import React, { Component } from 'react';
+import axios from 'axios';
+import { withStyles } from '@material-ui/core/styles';
+import ListItem from '@material-ui/core/ListItem';
 
-import ConceptsSelected from "../Utilities/ConceptsSelected.jsx";
-import DialogModal from "../Utilities/DialogModal.jsx";
+import ConceptsSelected from '../Utilities/ConceptsSelected';
+import DialogModal from '../Utilities/DialogModal';
 
-const styles = theme => ({
+const styles = () => ({
   item: {
-    display: "inline",
+    display: 'inline',
     paddingTop: 0,
-    width: "1300px",
-    height: "730px",
+    width: '1300px',
+    height: '730px',
     paddingLeft: 0
   },
   img: {
-    width: "1280px",
-    height: "720px"
+    width: '1280px',
+    height: '720px'
   }
 });
 
@@ -28,33 +27,36 @@ class AnnotationFrame extends Component {
       error: null,
       dialogMsg: null,
       dialogOpen: false,
-      clickedConcept: null,
+      clickedConcept: null
     };
   }
 
   editAnnotation = (comment, unsure) => {
+    const { annotation, updateAnnotations } = this.props;
+    const { clickedConcept } = this.state;
+
     const body = {
-      op: "verifyAnnotation",
-      conceptId: this.state.clickedConcept.id,
-      oldConceptId: this.props.annotation.conceptId,
-      conceptName: this.state.clickedConcept.name,
-      comment: comment,
-      unsure: unsure,
-      id: this.props.annotation.id,
+      op: 'verifyAnnotation',
+      conceptId: clickedConcept.id,
+      oldConceptId: annotation.conceptId,
+      conceptName: clickedConcept.name,
+      comment,
+      unsure,
+      id: annotation.id
     };
     const config = {
       headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + localStorage.getItem("token")
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`
       }
     };
     axios
-      .patch("/api/annotations", body, config)
-      .then(res => {
+      .patch('/api/annotations', body, config)
+      .then(() => {
         this.handleDialogClose();
-        this.props.updateAnnotations(
-          this.state.clickedConcept.id,
-          this.state.clickedConcept.name,
+        updateAnnotations(
+          clickedConcept.id,
+          clickedConcept.name,
           comment,
           unsure
         );
@@ -69,7 +71,9 @@ class AnnotationFrame extends Component {
   };
 
   handleDialogClose = () => {
-    this.props.loadAnnotations();
+    const { loadAnnotations } = this.props;
+
+    loadAnnotations();
     this.setState({
       dialogOpen: false,
       dialogMsg: null,
@@ -78,33 +82,30 @@ class AnnotationFrame extends Component {
   };
 
   handleConceptClick = concept => {
+    const { annotation } = this.props;
     this.setState({
-      dialogMsg:
-        "Switch " + this.props.annotation.name + " to " + concept.name + "?",
+      dialogMsg: `Switch ${annotation.name} to ${concept.name}?`,
       dialogOpen: true,
-      clickedConcept: concept,
+      clickedConcept: concept
     });
   };
 
   render() {
-    const {
-      error,
-      dialogMsg,
-      dialogOpen
-    } = this.state;
-    const { classes } = this.props;
-    const { unsure, comment, imagewithbox } = this.props.annotation;
+    const { error, dialogMsg, dialogOpen } = this.state;
+    const { classes, annotation } = this.props;
+    const { unsure, comment, imagewithbox } = annotation;
+
     if (error) {
       return <div>Error: {error}</div>;
     }
     return (
       <React.Fragment>
         <DialogModal
-          title={"Confirm Annotation Edit"}
+          title="Confirm Annotation Edit"
           message={dialogMsg}
           comment={comment}
           unsure={unsure}
-          placeholder={"Comments"}
+          placeholder="Comments"
           inputHandler={this.editAnnotation}
           open={dialogOpen}
           handleClose={this.handleDialogClose}
@@ -114,9 +115,7 @@ class AnnotationFrame extends Component {
           <img
             className={classes.img}
             id="imageId"
-            src={
-              "https://cdn.deepseaannotations.com/test/" + imagewithbox
-            }
+            src={`https://cdn.deepseaannotations.com/test/${imagewithbox}`}
             alt="error"
           />
         </ListItem>
@@ -124,9 +123,5 @@ class AnnotationFrame extends Component {
     );
   }
 }
-
-AnnotationFrame.propTypes = {
-  classes: PropTypes.object.isRequired
-};
 
 export default withStyles(styles)(AnnotationFrame);

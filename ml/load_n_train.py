@@ -63,7 +63,8 @@ class custom(CSVGenerator):
 
 
 def train_model(concepts, model_name, collectionIds, min_examples,
-                epochs, download_data=True):
+                epochs, download_data=True, verifiedOnly=False,
+                includeTracking=True):
 
     classmap = get_classmap(concepts)
     
@@ -81,7 +82,9 @@ def train_model(concepts, model_name, collectionIds, min_examples,
         print("Starting Download.")
 
         download_annotations(min_examples, collectionIds, concepts,
-                             classmap, img_folder, train_annot_file, valid_annot_file)
+                             classmap, img_folder, train_annot_file, valid_annot_file,
+                             verifiedOnly=verifiedOnly, includeTracking=includeTracking
+                             )
 
         end = time.time()
         print("Done Downloading Annotations: " + str((end - start)/60) + " minutes")

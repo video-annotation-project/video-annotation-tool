@@ -1,6 +1,6 @@
-const router = require("express").Router();
-const passport = require("passport");
-const psql = require("../../db/simpleConnect");
+const router = require('express').Router();
+const passport = require('passport');
+const psql = require('../../db/simpleConnect');
 
 /**
  * @typedef concept
@@ -25,8 +25,8 @@ const psql = require("../../db/simpleConnect");
  * @returns {Error} 500 - Unexpected database error
  */
 router.get(
-  "/",
-  passport.authenticate("jwt", { session: false }),
+  '/',
+  passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     const queryText = `
       SELECT
@@ -65,8 +65,8 @@ router.get(
  * @returns {Error} 500 - Unexpected database error
  */
 router.post(
-  "/",
-  passport.authenticate("jwt", { session: false }),
+  '/',
+  passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     const queryText = `
       INSERT INTO 
@@ -99,8 +99,8 @@ router.post(
  * @returns {Error} 500 - Unexpected database error
  */
 router.delete(
-  "/",
-  passport.authenticate("jwt", { session: false }),
+  '/',
+  passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     let queryText = `
       DELETE FROM
@@ -134,8 +134,8 @@ router.delete(
  * @returns {Error} 500 - Unexpected database error
  */
 router.patch(
-  "/",
-  passport.authenticate("jwt", { session: false }),
+  '/',
+  passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     const conceptsSelected = JSON.stringify(req.body.conceptsSelected);
     const queryText = `

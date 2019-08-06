@@ -27,11 +27,15 @@ const styles = () => ({
 class AIvideoList extends Component {
   constructor(props) {
     super(props);
+    const { loadVideos, handleVideoClick } = this.props;
     this.state = {
       descriptionOpen: false,
       summary: null,
       metrics: null
     };
+
+    this.loadVideos = loadVideos;
+    this.handleVideoClick = handleVideoClick;
   }
 
   toggle = list => {
@@ -41,7 +45,6 @@ class AIvideoList extends Component {
   };
 
   deleteAiVideo = async video => {
-    const { loadVideos } = this.props;
     const config = {
       headers: {
         Authorization: `Bearer ${localStorage.getItem('token')}`
@@ -64,7 +67,7 @@ class AIvideoList extends Component {
         try {
           await axios.delete('/api/videos/aivideos', config);
           Swal.fire('Deleted!', 'Video has been deleted.', 'success');
-          loadVideos();
+          this.loadVideos();
         } catch (error) {
           Swal.fire(error, '', 'error');
         }
@@ -153,7 +156,7 @@ class AIvideoList extends Component {
   // };
 
   render() {
-    const { classes, handleVideoClick, aiVideos } = this.props;
+    const { classes, aiVideos } = this.props;
     const { videoListOpen, descriptionOpen, summary, metrics } = this.state;
 
     return (
@@ -178,7 +181,7 @@ class AIvideoList extends Component {
                 <ListItem
                   button
                   key={video.id}
-                  onClick={() => handleVideoClick(video, 'aiVideos')}
+                  onClick={() => this.handleVideoClick(video, 'aiVideos')}
                 >
                   <ListItemText primary={`${video.id}. ${video.name}`} />
                   <IconButton

@@ -19,6 +19,7 @@ import Swal from 'sweetalert2';
 import VerifySelectUser from '../Utilities/SelectUser';
 import VerifySelectVideo from '../Utilities/SelectVideo';
 import VerifySelectConcept from '../Utilities/SelectConcept';
+import CollectionInfo from '../Utilities/CollectionInfo';
 
 const styles = theme => ({
   list: {
@@ -32,20 +33,12 @@ const styles = theme => ({
     height: '730px',
     paddingLeft: 0
   },
-  img: {
-    padding: theme.spacing(3),
-    width: '1280px',
-    height: '720px'
-  },
   button: {
     marginTop: theme.spacing(3),
     marginRight: theme.spacing()
   },
   actionsContainer: {
     marginBottom: theme.spacing(2)
-  },
-  resetContainer: {
-    padding: theme.spacing(3)
   },
   formControl: {
     minWidth: 200,
@@ -74,7 +67,6 @@ const styles = theme => ({
   container: {
     display: 'flex',
     flexDirection: 'row',
-    padding: '20px',
     height: '560px'
   },
   stats1: {
@@ -86,6 +78,9 @@ const styles = theme => ({
     marginLeft: theme.spacing(4),
     marginRight: theme.spacing(4),
     marginBottom: theme.spacing()
+  },
+  info: {
+    marginTop: theme.spacing(2)
   }
 });
 
@@ -106,12 +101,14 @@ class AnnotationCollection extends Component {
     this.state = {
       selectedUsers: [],
       selectedCollection: '',
+      selectedCollectionCounts: [],
       selectedVideos: [],
       selectedConcepts: [],
       annotationCount: '',
       trackingCount: '',
       collections: [],
       includeTracking: false,
+      infoDialogOpen: false,
       activeStep: 0
     };
   }
@@ -145,10 +142,33 @@ class AnnotationCollection extends Component {
     });
   };
 
-  handleChangeCollection = event => {
+  handleChangeCollection = async event => {
     this.setState({
-      selectedCollection: event.target.value
+      selectedCollection: event.target.value,
+      selectedCollectionCounts: await this.getCollectionCounts(
+        event.target.value
+      )
     });
+  };
+
+  getCollectionCounts = async selectedCollection => {
+    let ret;
+    try {
+      const res = await axios.get(`/api/collections/annotations/counts`, {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        },
+        params: {
+          ids: [selectedCollection]
+        }
+      });
+      ret = res.data;
+    } catch (error) {
+      console.log(error);
+      ret = error;
+    }
+    return ret;
   };
 
   createAnnotationCollection = () => {
@@ -255,10 +275,15 @@ class AnnotationCollection extends Component {
           body,
           config
         )
-        .then(() => {
+        .then(async () => {
           Swal.fire({
             title: 'Inserted!',
             confirmButtonText: 'Lovely!'
+          });
+          this.setState({
+            selectedCollectionCounts: await this.getCollectionCounts(
+              selectedCollection
+            )
           });
           this.loadCollections();
         })
@@ -457,36 +482,35 @@ class AnnotationCollection extends Component {
     });
   };
 
+  toggleInfo = () => {
+    this.setState(prevState => ({
+      infoDialogOpen: !prevState.infoDialogOpen
+    }));
+  };
+
   showCollection = () => {
     const { classes } = this.props;
-    const { collections, selectedCollection } = this.state;
+    const {
+      collections,
+      selectedCollection,
+      selectedCollectionCounts,
+      infoDialogOpen
+    } = this.state;
     const data = collections.find(col => {
       return col.id === selectedCollection;
     });
     if (data.users[0]) {
       return (
         <React.Fragment>
-          <Typography variant="subtitle1" className={classes.stats1}>
-            Users ({data.users.length}):
-          </Typography>
-          <Typography variant="subtitle1" className={classes.stats2}>
-            {data.users.join(', ')}
-          </Typography>
-          <Typography variant="subtitle1" className={classes.stats1}>
-            Videos ({data.videos.length}):
-          </Typography>
-          <Typography variant="subtitle1" className={classes.stats2}>
-            {data.videos.join(', ')}
-          </Typography>
-          <Typography variant="subtitle1" className={classes.stats1}>
-            Concepts ({data.concepts.length}):
-          </Typography>
-          <Typography variant="subtitle1" className={classes.stats2}>
-            {data.concepts.join(', ')}
-          </Typography>
-          <Typography variant="subtitle1" className={classes.stats1}>
-            Contains tracking: {data.tracking ? 'True' : 'False'}
-          </Typography>
+          <Button color="primary" onClick={this.toggleInfo}>
+            Collection Info
+          </Button>
+          <CollectionInfo
+            open={infoDialogOpen}
+            onClose={this.toggleInfo}
+            counts={selectedCollectionCounts}
+            data={data}
+          />
         </React.Fragment>
       );
     }
@@ -554,7 +578,9 @@ class AnnotationCollection extends Component {
       case 3:
         return (
           <React.Fragment>
-            <Typography>Number of Annotations: {annotationCount}</Typography>
+            <Typography>
+              Number of User Annotations: {annotationCount}
+            </Typography>
             <Typography>
               Number of Tracking Annotations: {trackingCount}
             </Typography>
@@ -630,7 +656,6 @@ class AnnotationCollection extends Component {
                   <StepLabel>{label}</StepLabel>
                   <StepContent>
                     {this.getStepForm(index)}
-
                     <div className={classes.actionsContainer}>
                       <Button
                         variant="contained"
@@ -721,21 +746,20 @@ class AnnotationCollection extends Component {
               </FormHelperText>
             )}
           </FormControl>
-          {selectedCollection ? this.showCollection() : ''}
           <div>
             <Button
-              className={classes.button}
               disabled={selectedCollection === ''}
               onClick={this.deleteAnnotationCollection}
             >
               Delete This Collection
             </Button>
-            <Button
-              className={classes.button}
-              onClick={this.createAnnotationCollection}
-            >
+            <Button onClick={this.createAnnotationCollection}>
               New Annotation Collection
             </Button>
+          </div>
+
+          <div className={classes.info}>
+            {selectedCollection ? this.showCollection() : ''}
           </div>
         </Grid>
       </Grid>

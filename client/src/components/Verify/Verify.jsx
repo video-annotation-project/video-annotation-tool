@@ -43,44 +43,60 @@ const styles = theme => ({
 class Verify extends Component {
   constructor(props) {
     super(props);
+
     this.state = {
-      selectionMounted: true,
       selectedAnnotationCollections: [],
       selectedUsers: [],
       selectedVideos: [],
       selectedConcepts: [],
       selectedUnsure: false,
       selectedTrackingFirst: false,
-      annotations: [],
+      // eslint-disable-next-line react/no-unused-state
+      collectionFlag: false,
+      // eslint-disable-next-line react/no-unused-state
       index: 0
     };
   }
 
   toggleSelection = async () => {
-    const { selectionMounted, selectedAnnotationCollections } = this.state;
-
+    const { selectedAnnotationCollections } = this.state;
+    const selectionMounted = JSON.parse(
+      localStorage.getItem('selectionMounted')
+    );
     let annotations = [];
     if (!selectionMounted) {
+      localStorage.setItem('selectionMounted', !selectionMounted);
+      localStorage.setItem('noAnnotations', false);
       this.resetState(
         this.setState({
           selectionMounted: !selectionMounted,
+          // eslint-disable-next-line react/no-unused-state
           noAnnotations: false
         })
       );
     } else {
       if (selectedAnnotationCollections.length) {
         annotations = await this.getAnnotationsFromCollection();
+        this.setState({
+          // eslint-disable-next-line react/no-unused-state
+          collectionFlag: true
+        });
+        localStorage.setItem('collectionFlag', true);
       } else {
         annotations = await this.getAnnotations();
       }
       if (annotations.length < 1) {
+        localStorage.setItem('noAnnotations', true);
+        localStorage.setItem('selectionMounted', !selectionMounted);
         this.setState({
+          // eslint-disable-next-line react/no-unused-state
           noAnnotations: true,
           selectionMounted: !selectionMounted
         });
       } else {
+        localStorage.setItem('selectionMounted', !selectionMounted);
+        localStorage.setItem('verifyAnnotation', JSON.stringify(annotations));
         this.setState({
-          annotations,
           selectionMounted: !selectionMounted
         });
       }
@@ -102,7 +118,6 @@ class Verify extends Component {
 
   getAnnotationsFromCollection = async () => {
     const { selectedAnnotationCollections } = this.state;
-
     return axios
       .get(
         `/api/annotations/collections?collectionids=${selectedAnnotationCollections}`,
@@ -110,7 +125,10 @@ class Verify extends Component {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         }
       )
-      .then(res => res.data)
+      .then(res => {
+        localStorage.setItem('collectionFlag', false);
+        return res.data;
+      })
       .catch(error => {
         console.log(error);
       });
@@ -129,7 +147,6 @@ class Verify extends Component {
 
   getVideos = async () => {
     const { selectedUsers } = this.state;
-
     return axios
       .get(`/api/annotations/verified`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
@@ -323,6 +340,7 @@ class Verify extends Component {
   };
 
   resetState = callback => {
+    localStorage.setItem('curIndex', 0);
     this.setState(
       {
         selectedAnnotationCollections: [],
@@ -331,6 +349,7 @@ class Verify extends Component {
         selectedConcepts: [],
         selectedUnsure: false,
         selectedTrackingFirst: false,
+        // eslint-disable-next-line react/no-unused-state
         index: 0
       },
       callback
@@ -338,12 +357,30 @@ class Verify extends Component {
   };
 
   handleNext = callback => {
-    const { index } = this.state;
+    const index = JSON.parse(localStorage.getItem('curIndex'));
+    localStorage.setItem('curIndex', index + 1);
     this.setState(
       {
+        // eslint-disable-next-line react/no-unused-state
         index: index + 1
       },
       callback
+    );
+  };
+
+  resetLocalStorage = () => {
+    localStorage.setItem('selectionMounted', true);
+    localStorage.setItem('curIndex', 0);
+    localStorage.removeItem('verifyAnnotation');
+    localStorage.removeItem('noAnnotations');
+    this.resetState(
+      this.setState({
+        selectionMounted: true,
+        // eslint-disable-next-line react/no-unused-state
+        index: 0,
+        // eslint-disable-next-line react/no-unused-state
+        noAnnotations: false
+      })
     );
   };
 
@@ -356,14 +393,22 @@ class Verify extends Component {
       selectedVideos,
       selectedConcepts,
       selectedUnsure,
-      selectedTrackingFirst,
-      noAnnotations,
-      annotations,
-      index
+      selectedTrackingFirst
     } = this.state;
+    const selectionMountedLS = JSON.parse(
+      localStorage.getItem('selectionMounted')
+    );
+    const annotations = JSON.parse(localStorage.getItem('verifyAnnotation'));
+    const noAnnotationsLS = JSON.parse(localStorage.getItem('noAnnotations'));
+    const index = JSON.parse(localStorage.getItem('curIndex'));
+    const collectionFlag = JSON.parse(localStorage.getItem('collectionFlag'));
+    if (annotations && index >= annotations.length + 1) {
+      this.resetLocalStorage();
+      return <div />;
+    }
 
     let selection = '';
-    if (selectionMounted) {
+    if (selectionMountedLS) {
       selection = (
         <VerifySelection
           selectedAnnotationCollections={selectedAnnotationCollections}
@@ -391,21 +436,23 @@ class Verify extends Component {
           handleUnselectAll={this.handleUnselectAll}
         />
       );
-    } else if (noAnnotations) {
+    } else if (noAnnotationsLS) {
       selection = (
         <Paper square elevation={0} className={classes.resetContainer}>
-          <Typography>All Tracking Videos Verified</Typography>
+          <Typography>All Verified</Typography>
           <Button
             variant="contained"
             color="primary"
-            onClick={() =>
-              this.resetState(
-                this.setState({
-                  selectionMounted: !selectionMounted,
-                  noAnnotations: false
-                })
-              )
-            }
+            onClick={() => {
+              localStorage.setItem('selectionMounted', !selectionMounted);
+              localStorage.setItem('noAnnotations', false);
+              this.resetState();
+              this.setState({
+                selectionMounted: !selectionMounted,
+                // eslint-disable-next-line react/no-unused-state
+                noAnnotations: false
+              });
+            }}
           >
             Reset
           </Button>
@@ -421,6 +468,8 @@ class Verify extends Component {
             toggleSelection={this.toggleSelection}
             size={annotations.length}
             tracking={selectedTrackingFirst}
+            resetLocalStorage={this.resetLocalStorage}
+            collectionFlag={collectionFlag}
           />
         </Paper>
       );

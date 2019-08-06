@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import Rnd from 'react-rnd';
 import { withStyles } from '@material-ui/core/styles';
 
-const styles = theme => ({
+const styles = () => ({
   dragBox: {
     margin: '0px',
     backgroundColor: 'transparent',

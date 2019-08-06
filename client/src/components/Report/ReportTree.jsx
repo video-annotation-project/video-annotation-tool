@@ -47,12 +47,11 @@ class ReportTree extends Component {
     });
     const { levelName } = this.state;
     try {
+      // the query has to be this long or the req.query will not register. If you broke it again, please fix it here
       const treeData = await axios.get(
-        `api/annotations/treeData?levelName=${levelName}&
-        queryConditions=${queryConditions}&
-        unsureOnly=${unsureOnly}&
-        verifiedCondition=${verifiedCondition}&
-        admin=${localStorage.getItem('admin')}`,
+        `api/annotations/treeData?levelName=${levelName}&queryConditions=${queryConditions}&unsureOnly=${unsureOnly}&verifiedCondition=${verifiedCondition}&admin=${localStorage.getItem(
+          'admin'
+        )}`,
         config
       );
       this.setState({
@@ -129,6 +128,7 @@ class ReportTree extends Component {
   render() {
     const { isLoaded, treeData, error } = this.state;
     const { classes } = this.props;
+
     if (!isLoaded) {
       return <List>Loading...</List>;
     }

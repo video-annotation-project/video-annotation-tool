@@ -37,5 +37,8 @@
   "devDependencies": {
     "@babel/core": "^7.5.5",
     "@babel/node": "^7.5.5"
+  },
+  "prettier": {
+    "singleQuote": true
   }
 }

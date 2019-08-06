@@ -8,12 +8,13 @@ import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
 
 import Hotkeys from 'react-hot-keys';
+import Grid from '@material-ui/core/Grid';
 import DragBoxContainer from '../Utilities/DragBoxContainer';
 import AIvideoList from './AIvideoList';
 
 const styles = () => ({
   videoContainer: {
-    top: '50px',
+    top: '60px',
     width: '1600px',
     height: '900px'
   },
@@ -211,88 +212,105 @@ class Annotate extends Component {
     return (
       <React.Fragment>
         <Hotkeys keyName="space, right, left" onKeyDown={this.handleKeyDown} />
-        <AIvideoList
-          handleVideoClick={this.handleVideoClick}
-          aiVideos={aiVideos}
-          socket={socket}
-          loadVideos={this.loadVideos}
-        />
-        <div>
-          {`${currentVideo.id} ${currentVideo.filename}`}
-          <DragBoxContainer className={classes.videoContainer}>
-            <video
-              className={classes.videoContainer}
-              //   onPause={() => this.updateCheckpoint(false, true)}
-              id="video"
-              width="1600"
-              height="900"
-              src={`https://cdn.deepseaannotations.com/ai_videos/${currentVideo.filename}`}
-              type="video/mp4"
-              crossOrigin="use-credentials"
-            >
-              Your browser does not support the video tag.
-            </video>
-          </DragBoxContainer>
-          <div
-            style={{
-              marginTop: '10px',
-              marginLeft: '20px',
-              marginBottom: '10px',
-              float: 'left'
-            }}
-          >
-            <Slider
-              style={{
-                width: 200,
-                marginTop: 10
-              }}
-              value={videoPlaybackRate}
-              min={0}
-              max={4}
-              step={0.1}
-              onChange={this.handleChangeSpeed}
+        <Grid container className={classes.root} spacing={2}>
+          <Grid item xs>
+            <AIvideoList
+              handleVideoClick={this.handleVideoClick}
+              aiVideos={aiVideos}
+              socket={socket}
+              loadVideos={this.loadVideos}
             />
-            <Typography
-              style={{
-                marginTop: 20
-              }}
-            >
-              Play Rate: {videoPlaybackRate}
+          </Grid>
+          <Grid item xs>
+            <Typography variant="h5">
+              {`${currentVideo.id} ${currentVideo.filename}`}
             </Typography>
-          </div>
-          <Button
-            variant="contained"
-            color="primary"
-            className={classes.button}
-            onClick={() => this.skipVideoTime(-5)}
-          >
-            -5 sec
-          </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            className={classes.button}
-            onClick={this.playPause}
-          >
-            Play/Pause
-          </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            className={classes.button}
-            onClick={() => this.skipVideoTime(5)}
-          >
-            +5 sec
-          </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            className={classes.button}
-            onClick={() => this.toggleVideoControls()}
-          >
-            Toggle Controls
-          </Button>
-        </div>
+          </Grid>
+          <Grid item xs />
+        </Grid>
+        <Grid container className={classes.root} spacing={2}>
+          <Grid item xs />
+          <Grid item xs>
+            <div>
+              <DragBoxContainer className={classes.videoContainer}>
+                <video
+                  className={classes.videoContainer}
+                  //   onPause={() => this.updateCheckpoint(false, true)}
+                  id="video"
+                  width="1600"
+                  height="900"
+                  src={`https://cdn.deepseaannotations.com/ai_videos/${currentVideo.filename}`}
+                  type="video/mp4"
+                  crossOrigin="use-credentials"
+                >
+                  Your browser does not support the video tag.
+                </video>
+              </DragBoxContainer>
+              <div
+                style={{
+                  // marginTop: '10px',
+                  // marginLeft: '20px',
+                  // marginBottom: '10px',
+                  float: 'left'
+                }}
+              >
+                <Slider
+                  style={{
+                    width: 200,
+                    marginTop: 10
+                  }}
+                  value={videoPlaybackRate}
+                  min={0}
+                  max={4}
+                  step={0.1}
+                  onChange={this.handleChangeSpeed}
+                />
+                <Typography
+                  color="textSecondary"
+                  style={{
+                    marginTop: 0
+                  }}
+                >
+                  Play Rate: {videoPlaybackRate}
+                </Typography>
+              </div>
+              <Button
+                variant="contained"
+                color="primary"
+                className={classes.button}
+                onClick={() => this.skipVideoTime(-5)}
+              >
+                -5 sec
+              </Button>
+              <Button
+                variant="contained"
+                color="primary"
+                className={classes.button}
+                onClick={this.playPause}
+              >
+                Play/Pause
+              </Button>
+              <Button
+                variant="contained"
+                color="primary"
+                className={classes.button}
+                onClick={() => this.skipVideoTime(5)}
+              >
+                +5 sec
+              </Button>
+              <Button
+                variant="contained"
+                color="primary"
+                className={classes.button}
+                onClick={() => this.toggleVideoControls()}
+                style={{ float: 'right' }}
+              >
+                Toggle Controls
+              </Button>
+            </div>
+          </Grid>
+          <Grid item xs />
+        </Grid>
       </React.Fragment>
     );
   }

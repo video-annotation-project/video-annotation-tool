@@ -103,29 +103,37 @@ def select_annotations(annotations, min_examples, concepts):
 #   valid_annot_file: name of validation annotations csv
 #   split: fraction of annotation images that willbe used for training (rest used in validation)
 def download_annotations(min_examples, collectionId, concepts, concept_map, 
-                         img_folder, train_annot_file, valid_annot_file, split=.8):
+                         img_folder, train_annot_file, valid_annot_file, split=.8,
+                         verifiedOnly=False, includeTracking=True):
 
     # Variable that represents all images already in the image folder
     existing_images = set(os.listdir(img_folder))
     
     # To-do: change to prepared statement
-    annotations = queryDB(f'''
+    queryText = f'''
         SELECT
-              A.id,
-              image,
-              userid,
-              videoid,
-              videowidth,
-              videoheight,
-              conceptid,
-              x1, x2, y1, y2,
-              speed,
-              ROUND(fps*timeinvideo) as frame_num
+            A.id,
+            image,
+            userid,
+            videoid,
+            videowidth,
+            videoheight,
+            conceptid,
+            x1, x2, y1, y2,
+            speed,
+            ROUND(fps*timeinvideo) as frame_num
         FROM annotation_intermediate inter
         LEFT JOIN annotations a ON a.id=inter.annotationid
         LEFT JOIN videos ON videos.id=videoid
-        WHERE inter.id IN {str(list(collectionId)).replace('[', '(').replace(']', ')')}
-    ''')
+        WHERE inter.id IN {str(list(collectionId)).replace('[', '(').replace(']', ')')}'''
+        
+    if verifiedOnly:
+        queryText += f''' AND a.verifiedby IS NOT NULL'''
+
+    if not includeTracking:
+        queryText += f''' AND a.id = a.originalId'''
+        
+    annotations = queryDB(queryText)
 
     selected, concept_count = select_annotations(annotations, min_examples, concepts)
     # selected - list of frames (frame is a group of annotations at same frame)
