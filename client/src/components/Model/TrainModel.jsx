@@ -442,7 +442,7 @@ class TrainModel extends Component {
       infoDialogOpen
     } = this.state;
 
-    return (
+    return countsLoaded ? (
       <form className={classes.hyperparametersForm}>
         <TextField
           margin="normal"
@@ -462,9 +462,7 @@ class TrainModel extends Component {
           value={minImages}
           onChange={this.handleChange}
           className={classes.hyperParamsInput}
-          helperText={
-            countsLoaded ? `Must be between 1 - ${this.getSelectedCount()}` : ''
-          }
+          helperText={countsLoaded ? this.getImageRange() : ''}
         />
         <div>
           <FormControlLabel
@@ -485,30 +483,27 @@ class TrainModel extends Component {
                 onChange={this.handleChangeSwitch}
                 value="verifiedOnly"
                 color="primary"
+                disabled={selectedCollectionCounts[2].length === 0}
               />
             }
             label="Verified annotations only"
           />
         </div>
-        {countsLoaded ? (
-          <React.Fragment>
-            <Button
-              color="primary"
-              className={classes.button}
-              onClick={this.toggleInfo}
-            >
-              Collection Info
-            </Button>
-            <CollectionInfo
-              open={infoDialogOpen}
-              onClose={this.toggleInfo}
-              counts={selectedCollectionCounts}
-            />
-          </React.Fragment>
-        ) : (
-          <Typography variant="subtitle1">Loading...</Typography>
-        )}
+        <Button
+          color="primary"
+          className={classes.button}
+          onClick={this.toggleInfo}
+        >
+          Training Info
+        </Button>
+        <CollectionInfo
+          open={infoDialogOpen}
+          onClose={this.toggleInfo}
+          counts={selectedCollectionCounts}
+        />
       </form>
+    ) : (
+      <Typography variant="subtitle1">Loading...</Typography>
     );
   };
 
@@ -518,28 +513,60 @@ class TrainModel extends Component {
     }));
   };
 
-  getSelectedCount = () => {
+  getImageRange = () => {
     const {
       selectedCollectionCounts,
       includeTracking,
       verifiedOnly
     } = this.state;
+
+    const counts = {};
     if (verifiedOnly) {
-      let count = parseInt(selectedCollectionCounts[2].count, 10);
+      selectedCollectionCounts[2].forEach(concept => {
+        counts[concept.name] = parseInt(concept.count, 10);
+      });
       if (includeTracking) {
-        count += parseInt(selectedCollectionCounts[3].count, 10);
+        selectedCollectionCounts[3].forEach(concept => {
+          counts[concept.name] += parseInt(concept.count, 10);
+        });
       }
-      return count;
+      const max = Math.min(...Object.values(counts));
+      if (max === 0) return max;
+      return max === 1 ? `Must be 1` : `Must be between 1 and ${max}`;
     }
-    let count = parseInt(selectedCollectionCounts[0].count, 10);
+
+    selectedCollectionCounts[0].forEach(concept => {
+      counts[concept.name] = parseInt(concept.count, 10);
+    });
     if (includeTracking) {
-      count += parseInt(selectedCollectionCounts[1].count, 10);
+      selectedCollectionCounts[1].forEach(concept => {
+        counts[concept.name] += parseInt(concept.count, 10);
+      });
     }
-    return count;
+    const max = Math.min(...Object.values(counts));
+    return max === 1 ? `Must be 1` : `Must be between 1 and ${max}`;
   };
 
   getCollectionCounts = async () => {
-    const { annotationCollections } = this.state;
+    const { collections, annotationCollections } = this.state;
+
+    const selectedCollections = [];
+    const validConcepts = [];
+
+    annotationCollections.forEach(id => {
+      selectedCollections.push(
+        collections.find(collection => {
+          return collection.id === id;
+        })
+      );
+    });
+
+    selectedCollections.forEach(collection => {
+      collection.validConcepts.forEach(concept => {
+        validConcepts.push(concept.f2);
+      });
+    });
+
     try {
       const res = await axios.get(`/api/collections/annotations/counts`, {
         headers: {
@@ -547,7 +574,8 @@ class TrainModel extends Component {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         },
         params: {
-          ids: annotationCollections
+          ids: annotationCollections,
+          validConcepts
         }
       });
       if (res) {
@@ -591,7 +619,8 @@ class TrainModel extends Component {
   handleBack = () => {
     this.setState(
       state => ({
-        activeStep: state.activeStep - 1
+        activeStep: state.activeStep - 1,
+        countsLoaded: false
       }),
       () => {
         const { activeStep } = this.state;

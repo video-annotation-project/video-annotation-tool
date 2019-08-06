@@ -8,8 +8,9 @@ router.get(
   '/counts',
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
+    const params = [req.query.ids];
     const counts = [];
-    const queryText = `
+    let queryText = `
       SELECT
         c.name, count(*)
       FROM
@@ -29,23 +30,28 @@ router.get(
       WHERE
         ai.id::text = ANY($1)
     `;
+
+    if (req.query.validConcepts) {
+      queryText += ` AND a.conceptid::text = ANY($2)`;
+      params.push(req.query.validConcepts);
+    }
+
     const user = ` AND u.username != 'tracking'`;
     const tracking = ` AND u.username = 'tracking'`;
     const verified = ` AND a.verifiedby IS NOT NULL`;
     const groupby = ` GROUP BY c.name`;
 
     try {
-      let count = await psql.query(queryText + user + groupby, [req.query.ids]);
+      let count = await psql.query(queryText + user + groupby, params);
       counts.push(count.rows);
-      count = await psql.query(queryText + tracking + groupby, [req.query.ids]);
+      count = await psql.query(queryText + tracking + groupby, params);
       counts.push(count.rows);
-      count = await psql.query(queryText + user + verified + groupby, [
-        req.query.ids
-      ]);
+      count = await psql.query(queryText + user + verified + groupby, params);
       counts.push(count.rows);
-      count = await psql.query(queryText + tracking + verified + groupby, [
-        req.query.ids
-      ]);
+      count = await psql.query(
+        queryText + tracking + verified + groupby,
+        params
+      );
       counts.push(count.rows);
       res.json(counts);
     } catch (error) {

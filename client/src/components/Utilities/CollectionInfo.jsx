@@ -9,12 +9,18 @@ import TableBody from '@material-ui/core/TableBody';
 import { Typography } from '@material-ui/core';
 
 const styles = theme => ({
+  header: {
+    marginTop: theme.spacing(2),
+    marginLeft: theme.spacing(2),
+    marginBottom: theme.spacing(2)
+  },
   users1: {
     marginTop: theme.spacing(3),
     marginLeft: theme.spacing(2),
     marginRight: theme.spacing(4)
   },
   users2: {
+    marginTop: theme.spacing(0.5),
     marginLeft: theme.spacing(6),
     marginRight: theme.spacing(4),
     marginBottom: theme.spacing()
@@ -25,9 +31,16 @@ const styles = theme => ({
     marginRight: theme.spacing(4)
   },
   videos2: {
+    marginTop: theme.spacing(0.5),
     marginLeft: theme.spacing(6),
     marginRight: theme.spacing(4),
     marginBottom: theme.spacing(3)
+  },
+  root: {
+    margin: theme.spacing()
+  },
+  tableCell: {
+    fontSize: '11pt'
   }
 });
 
@@ -72,58 +85,71 @@ class CollectionInfo extends Component {
 
     return (
       <Dialog onClose={onClose} open={open} fullWidth maxWidth="md">
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Concept</TableCell>
-              <TableCell align="right">User Annotations</TableCell>
-              <TableCell align="right">Tracking Annotations</TableCell>
-              <TableCell align="right">Verified User Annotations</TableCell>
-              <TableCell align="right">Verified Tracking Annotations</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {Object.keys(table).map(concept => {
-              return (
-                <TableRow key={concept}>
-                  <TableCell component="th" scope="row">
-                    {concept}
-                  </TableCell>
-                  <TableCell component="th" scope="row" align="right">
-                    {table[concept][0]}
-                  </TableCell>
-                  <TableCell component="th" scope="row" align="right">
-                    {table[concept][1]}
-                  </TableCell>
-                  <TableCell component="th" scope="row" align="right">
-                    {table[concept][2]}
-                  </TableCell>
-                  <TableCell component="th" scope="row" align="right">
-                    {table[concept][3]}
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-        {data ? (
-          <React.Fragment>
-            <Typography variant="body2" className={classes.users1}>
-              Users ({data.users.length}):
-            </Typography>
-            <Typography variant="body2" className={classes.users2}>
-              {data.users.join(', ')}
-            </Typography>
-            <Typography variant="body2" className={classes.videos1}>
-              Videos ({data.videos.length}):
-            </Typography>
-            <Typography variant="body2" className={classes.videos2}>
-              {data.videos.join(', ')}
-            </Typography>
-          </React.Fragment>
-        ) : (
-          ''
-        )}
+        <div className={classes.root}>
+          <Typography className={classes.header} variant="h6">
+            {data ? data.name : 'Training Info'}
+          </Typography>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell className={classes.tableCell}>Concept</TableCell>
+                <TableCell className={classes.tableCell} align="right">
+                  User Annotations
+                </TableCell>
+                <TableCell className={classes.tableCell} align="right">
+                  Tracking Annotations
+                </TableCell>
+                <TableCell className={classes.tableCell} align="right">
+                  Verified User Annotations
+                </TableCell>
+                <TableCell className={classes.tableCell} align="right">
+                  Verified Tracking Annotations
+                </TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {Object.keys(table).map(concept => {
+                return (
+                  <TableRow key={concept}>
+                    <TableCell component="th" scope="row">
+                      {concept}
+                    </TableCell>
+                    <TableCell component="th" scope="row" align="right">
+                      {table[concept][0]}
+                    </TableCell>
+                    <TableCell component="th" scope="row" align="right">
+                      {table[concept][1]}
+                    </TableCell>
+                    <TableCell component="th" scope="row" align="right">
+                      {table[concept][2]}
+                    </TableCell>
+                    <TableCell component="th" scope="row" align="right">
+                      {table[concept][3]}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+          {data ? (
+            <React.Fragment>
+              <Typography variant="body2" className={classes.users1}>
+                Users ({data.users.length}):
+              </Typography>
+              <Typography variant="body2" className={classes.users2}>
+                {data.users.join(', ')}
+              </Typography>
+              <Typography variant="body2" className={classes.videos1}>
+                Videos ({data.videos.length}):
+              </Typography>
+              <Typography variant="body2" className={classes.videos2}>
+                {data.videos.join(', ')}
+              </Typography>
+            </React.Fragment>
+          ) : (
+            ''
+          )}
+        </div>
       </Dialog>
     );
   }
