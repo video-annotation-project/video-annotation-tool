@@ -550,7 +550,25 @@ class TrainModel extends Component {
   };
 
   getCollectionCounts = async () => {
-    const { annotationCollections } = this.state;
+    const { collections, annotationCollections } = this.state;
+
+    const selectedCollections = [];
+    const validConcepts = [];
+
+    annotationCollections.forEach(id => {
+      selectedCollections.push(
+        collections.find(collection => {
+          return collection.id === id;
+        })
+      );
+    });
+
+    selectedCollections.forEach(collection => {
+      collection.validConcepts.forEach(concept => {
+        validConcepts.push(concept.f2);
+      });
+    });
+
     try {
       const res = await axios.get(`/api/collections/annotations/counts`, {
         headers: {
@@ -558,7 +576,8 @@ class TrainModel extends Component {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         },
         params: {
-          ids: annotationCollections
+          ids: annotationCollections,
+          validConcepts
         }
       });
       if (res) {
