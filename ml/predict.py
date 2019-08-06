@@ -173,6 +173,7 @@ def predict_on_video(videoid, model_weights, concepts, filename,
         FROM
           annotations
         WHERE
+          unsure=FALSE AND
           videoid={videoid} AND
           userid in {str(tuple(good_users))} AND
           conceptid in {str(tuple(concepts))}''')
