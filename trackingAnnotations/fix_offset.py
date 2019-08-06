@@ -7,6 +7,7 @@ import os
 from dotenv import load_dotenv
 from PIL import Image
 import numpy as np
+import pandas as pd
 from multiprocessing import Pool
 
 
