@@ -494,7 +494,7 @@ class TrainModel extends Component {
           className={classes.button}
           onClick={this.toggleInfo}
         >
-          Collection Info
+          Training Info
         </Button>
         <CollectionInfo
           open={infoDialogOpen}
