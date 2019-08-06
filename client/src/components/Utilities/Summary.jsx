@@ -1,34 +1,33 @@
-import React from "react";
-import PropTypes from "prop-types";
-import { withStyles } from "@material-ui/core/styles";
-import Modal from "@material-ui/core/Modal";
-import Button from "@material-ui/core/Button";
-import Avatar from "@material-ui/core/Avatar";
-import Paper from "@material-ui/core/Paper";
-import geoLib from "geolib";
-import Table from "@material-ui/core/Table";
-import TableBody from "@material-ui/core/TableBody";
-import TableCell from "@material-ui/core/TableCell";
-import TableHead from "@material-ui/core/TableHead";
-import TableRow from "@material-ui/core/TableRow";
-import Typography from "@material-ui/core/Typography";
+import React from 'react';
+import { withStyles } from '@material-ui/core/styles';
+import Modal from '@material-ui/core/Modal';
+import Button from '@material-ui/core/Button';
+import Avatar from '@material-ui/core/Avatar';
+import Paper from '@material-ui/core/Paper';
+import geoLib from 'geolib';
+import Table from '@material-ui/core/Table';
+import TableBody from '@material-ui/core/TableBody';
+import TableCell from '@material-ui/core/TableCell';
+import TableHead from '@material-ui/core/TableHead';
+import TableRow from '@material-ui/core/TableRow';
+import Typography from '@material-ui/core/Typography';
 
 const styles = theme => ({
   paper: {
-    position: "absolute",
+    position: 'absolute',
     width: theme.spacing(100),
     backgroundColor: theme.palette.background.paper,
     boxShadow: theme.shadows[5],
     padding: theme.spacing(4),
-    outline: "none",
-    transform: "translate(-50%, -50%)",
-    top: "50%",
-    left: "50%"
+    outline: 'none',
+    transform: 'translate(-50%, -50%)',
+    top: '50%',
+    left: '50%'
   },
   root: {
-    width: "100%",
+    width: '100%',
     marginTop: theme.spacing(3),
-    overflowX: "auto"
+    overflowX: 'auto'
   },
   table: {
     minWidth: 700
@@ -37,7 +36,6 @@ const styles = theme => ({
 
 class Summary extends React.Component {
   state = {
-    open: false,
     showTotal: false,
     total: null,
     anno: null,
@@ -45,42 +43,73 @@ class Summary extends React.Component {
   };
 
   getTotal = data => {
-    var count = 0;
-    var anno = 0;
+    let count = 0;
+    let anno = 0;
     data.forEach(element => {
-      if (element.rank === "species") {
-        count++;
+      if (element.rank === 'species') {
+        count += 1;
       }
-      anno = anno + parseInt(element.count);
+      anno += parseInt(element.count, 10);
     });
-    this.setState({ showTotal: true, total: count, anno: anno });
+    this.setState({ showTotal: true, total: count, anno });
   };
 
   convertDistance = () => {
-    if (this.state.km) this.setState({ km: false });
+    const { km } = this.state;
+    if (km) this.setState({ km: false });
     else this.setState({ km: true });
   };
 
   setDecimal = data => {
-    return parseFloat(data).toFixed(5);
+    if (data === '') {
+      return '0.0';
+    }
+    if (Number.isInteger(parseFloat(data))) {
+      return data;
+    }
+    return parseFloat(data).toFixed(3);
+  };
+
+  kmOrsqMeter = (km, isHeader, rowCount, dist) => {
+    if (isHeader) {
+      return km ? 'Creatures per km' : 'Creatures per square meter';
+    }
+    return km
+      ? this.setDecimal(rowCount / (dist * 1000))
+      : this.setDecimal(rowCount / (dist * 2));
   };
 
   render() {
-    const { classes } = this.props;
-    var start, end, dist, depth;
+    const {
+      classes,
+      gpsstart,
+      gpsstop,
+      startdepth,
+      enddepth,
+      open,
+      handleClose,
+      metrics,
+      aiSummary,
+      summary
+    } = this.props;
+    const { showTotal, total, anno, km } = this.state;
+    let start;
+    let end;
+    let dist;
+    let depth;
 
-    if (this.props.gpsstart && this.props.gpsstop) {
+    if (gpsstart && gpsstop) {
       start = {
-        latitude: this.props.gpsstart.x,
-        longitude: this.props.gpsstart.y
+        latitude: gpsstart.x,
+        longitude: gpsstart.y
       };
-      end = { latitude: this.props.gpsstop.x, longitude: this.props.gpsstop.y };
+      end = { latitude: gpsstop.x, longitude: gpsstop.y };
       dist = geoLib.getDistance(start, end, 1, 3);
     } else {
       dist = 1;
     }
-    if (this.props.startdepth && this.props.enddepth) {
-      depth = this.props.startdepth - this.props.enddepth;
+    if (startdepth && enddepth) {
+      depth = startdepth - enddepth;
     } else {
       depth = 0;
     }
@@ -90,57 +119,72 @@ class Summary extends React.Component {
         <Modal
           aria-labelledby="simple-modal-title"
           aria-describedby="simple-modal-description"
-          open={this.props.open}
-          onClose={this.props.handleClose}
+          open={open}
+          onClose={handleClose}
         >
           <div className={classes.paper}>
-            <Paper style={{ maxHeight: 400, overflow: "auto" }}>
-            {this.props.metrics ? 
-              <Table className={classes.table}> 
-              <TableHead>
-                <TableRow>
-                  <TableCell>ConceptId</TableCell>
-                  <TableCell>TP</TableCell>
-                  <TableCell>FP</TableCell>
-                  <TableCell>FN</TableCell>
-                  <TableCell>Precision</TableCell>
-                  <TableCell>Recall</TableCell>
-                  <TableCell>F1</TableCell>
-                  <TableCell>pred_num</TableCell>
-                  <TableCell>true_num</TableCell>
-                  <TableCell>count_accuracy</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {this.props.metrics ? (
-                  this.props.metrics.map(row => (
-                    <TableRow key={row.conceptid}>
-                      <TableCell>
-                        {row.conceptid}
-                      </TableCell>
-                      <TableCell component="th" scope="row">
-                        {row.TP}
-                      </TableCell>
-                      <TableCell>{row.FP}</TableCell>
-                      <TableCell>{row.FN}</TableCell>
-                      <TableCell>{row.Precision}</TableCell>
-                      <TableCell>{row.Recall}</TableCell>
-                      <TableCell>{row.F1}</TableCell>
-                      <TableCell>{row.pred_num}</TableCell>
-                      <TableCell>{row.true_num}</TableCell>
-                      <TableCell>{row.count_accuracy}</TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow key={1}>
-                    <TableCell>''</TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-              : ""
-            }
-              <Table className={classes.table}> 
+            {metrics ? (
+              <div>
+                <Typography variant="h5" color="primary">
+                  Prediction Metrics
+                </Typography>
+                <Paper style={{ maxHeight: 400, overflow: 'auto' }}>
+                  <Table className={classes.table}>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>ConceptId</TableCell>
+                        <TableCell>TP</TableCell>
+                        <TableCell>FP</TableCell>
+                        <TableCell>FN</TableCell>
+                        <TableCell>Precision</TableCell>
+                        <TableCell>Recall</TableCell>
+                        <TableCell>F1</TableCell>
+                        <TableCell>pred_num</TableCell>
+                        <TableCell>true_num</TableCell>
+                        <TableCell>count_accuracy</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {metrics ? (
+                        metrics.map(row => (
+                          <TableRow key={row.conceptid}>
+                            <TableCell>{row.conceptid}</TableCell>
+                            <TableCell>{row.TP}</TableCell>
+                            <TableCell>{row.FP}</TableCell>
+                            <TableCell>{row.FN}</TableCell>
+                            <TableCell>
+                              {this.setDecimal(row.Precision)}
+                            </TableCell>
+                            <TableCell>{this.setDecimal(row.Recall)}</TableCell>
+                            <TableCell>{this.setDecimal(row.F1)}</TableCell>
+                            <TableCell>
+                              {this.setDecimal(row.pred_num)}
+                            </TableCell>
+                            <TableCell>
+                              {this.setDecimal(row.true_num)}
+                            </TableCell>
+                            <TableCell>
+                              {this.setDecimal(row.count_accuracy)}
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow key={1}>
+                          <TableCell />
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </Paper>
+              </div>
+            ) : (
+              ''
+            )}
+            <Typography variant="h5" color="primary">
+              Summary Table
+            </Typography>
+            <Paper style={{ maxHeight: 400, overflow: 'auto' }}>
+              <Table className={classes.table}>
                 <TableHead>
                   <TableRow>
                     <TableCell>Picture</TableCell>
@@ -148,81 +192,76 @@ class Summary extends React.Component {
                     <TableCell align="right"># of Annotations</TableCell>
 
                     <TableCell align="right">
-                      {this.props.aiSummary
-                        ? "# of Annotations by Non-AI"
-                        : this.state.km
-                        ? "Creatures per km"
-                        : "Creatures per square meter"}
+                      {aiSummary
+                        ? '# of Annotations by Non-AI'
+                        : this.kmOrsqMeter(km, true)}
                     </TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {this.props.summary ? (
-                    this.props.summary.data.map(row => (
-                      <TableRow key={row.id}>
-                        <TableCell>
-                          <Avatar src={`/api/concepts/images/${row.id}`} />
-                        </TableCell>
-                        <TableCell component="th" scope="row">
-                          {row.name}
-                        </TableCell>
-                        <TableCell align="right">{row.count}</TableCell>
+                  {summary
+                    ? summary.data.map(row => (
+                        <TableRow key={row.id}>
+                          <TableCell>
+                            <Avatar
+                              src={`https://cdn.deepseaannotations.com/concept_images/${row.picture}`}
+                            />
+                          </TableCell>
+                          <TableCell component="th" scope="row">
+                            {row.name}
+                          </TableCell>
+                          <TableCell align="right">{row.count}</TableCell>
 
-                        <TableCell align="right">
-                          {this.props.aiSummary
-                            ? row.notai
-                            : this.state.km
-                            ? this.setDecimal(row.count / (dist * 1000))
-                            : this.setDecimal(row.count / (dist * 2))}
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow key={1}>
-                      <TableCell>''</TableCell>
-                    </TableRow>
-                  )}
+                          <TableCell align="right">
+                            {aiSummary
+                              ? row.notai
+                              : this.kmOrsqMeter(km, false, row.count, dist)}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    : ''}
                 </TableBody>
               </Table>
             </Paper>
             <div>
-              {this.props.summary && !this.props.aiSummary && (
+              {summary && !aiSummary && (
                 <Button
-                  onClick={() => this.getTotal(this.props.summary.data)}
+                  onClick={() => this.getTotal(summary.data)}
                   color="primary"
                 >
                   Total
                 </Button>
               )}
-              {this.props.summary && !this.props.aiSummary && (
+              {summary && !aiSummary && (
                 <Button onClick={() => this.convertDistance()} color="primary">
                   Convert
                 </Button>
               )}
-              {this.state.showTotal ? (
+              {showTotal ? (
                 <div>
                   <Typography variant="body2" gutterBottom>
-                    {"total species: " + this.state.total}
+                    {`total species: ${total}`}
                   </Typography>
                   <Typography variant="body2" gutterBottom>
-                    {"total annotations: " + this.state.anno}
+                    {`total annotations: ${anno}`}
                   </Typography>
                   <Typography variant="body2" gutterBottom>
-                    {"total density(cr/m^2): " +
-                      this.setDecimal(this.state.anno / (dist * 2))}
+                    {`total density(cr/m^2): ${this.setDecimal(
+                      anno / (dist * 2)
+                    )}`}
                   </Typography>
                   <Typography variant="body2" gutterBottom>
-                    {"total distance covered(m): " + dist}
+                    {`total distance covered(m): ${dist}`}
                   </Typography>
                   <Typography variant="body2" gutterBottom>
-                    total depth covered(m):{" "}
+                    total depth covered(m):{' '}
                     {depth < 0
-                      ? "descended " + Math.abs(depth)
-                      : "ascended " + Math.abs(depth)}
+                      ? `descended ${Math.abs(depth)}`
+                      : `ascended ${Math.abs(depth)}`}
                   </Typography>
                 </div>
               ) : (
-                ""
+                ''
               )}
             </div>
           </div>
@@ -231,10 +270,6 @@ class Summary extends React.Component {
     );
   }
 }
-
-Summary.propTypes = {
-  classes: PropTypes.object.isRequired
-};
 
 // We need an intermediary variable for handling the recursive nesting.
 const SummaryWrapped = withStyles(styles)(Summary);

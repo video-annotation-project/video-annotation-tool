@@ -89,7 +89,10 @@ verifyVideos = model[3]
 # Start training job
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 train_model(concepts, info['modelSelected'], info['annotationCollections'],
-            int(info['minImages']), int(info['epochs']), download_data=True)
+            int(info['minImages']), int(info['epochs']), download_data=True,
+            verified_only=info['verifiedOnly'],
+            include_tracking=info['includeTracking'])
+
 
 # Run verifyVideos in parallel
 # with Pool(processes = 2) as p:

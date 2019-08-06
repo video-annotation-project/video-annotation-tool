@@ -1,33 +1,91 @@
-const router = require("express").Router();
-const passport = require("passport");
-const psql = require("../../db/simpleConnect");
+const router = require('express').Router();
+const passport = require('passport');
+const psql = require('../../db/simpleConnect');
+
+var configData = require('../../../config.json');
 
 router.get(
-  "/",
-  passport.authenticate("jwt", { session: false }),
+  '/counts',
+  passport.authenticate('jwt', { session: false }),
   async (req, res) => {
-    let queryText = `
-    SELECT
-      ac.*,
-      array_agg(DISTINCT c.name) as concepts,
-      array_agg(DISTINCT u.username) as users
-    FROM
-      annotation_collection ac
-    LEFT JOIN
-      annotation_intermediate ai
-    ON
-      ac.id = ai.id
-    LEFT JOIN
-      annotations a ON ai.annotationid=a.id
-    LEFT JOIN
-      users u ON a.userid=u.id
-    LEFT JOIN
-      concepts c ON a.conceptid=c.id
-    GROUP BY
-      ac.id
-    ORDER BY
-      ac.name
+    const counts = [];
+    const queryText = `
+      SELECT
+        c.name, count(*)
+      FROM
+        annotations a
+      INNER JOIN
+        annotation_intermediate ai
+      ON
+        a.id = ai.annotationid
+      INNER JOIN
+        users u
+      ON
+        u.id = a.userid
+      INNER JOIN
+        concepts c
+      ON
+        c.id = a.conceptid
+      WHERE
+        ai.id::text = ANY($1)
     `;
+    const user = ` AND u.username != 'tracking'`;
+    const tracking = ` AND u.username = 'tracking'`;
+    const verified = ` AND a.verifiedby IS NOT NULL`;
+    const groupby = ` GROUP BY c.name`;
+
+    try {
+      let count = await psql.query(queryText + user + groupby, [req.query.ids]);
+      counts.push(count.rows);
+      count = await psql.query(queryText + tracking + groupby, [req.query.ids]);
+      counts.push(count.rows);
+      count = await psql.query(queryText + user + verified + groupby, [
+        req.query.ids
+      ]);
+      counts.push(count.rows);
+      count = await psql.query(queryText + tracking + verified + groupby, [
+        req.query.ids
+      ]);
+      counts.push(count.rows);
+      res.json(counts);
+    } catch (error) {
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
+);
+
+router.get(
+  '/',
+  passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    let queryText;
+    if (req.query.train === 'true') {
+      queryText = `
+      SELECT 
+          name, id, count(*), array_agg(conceptid) as ids, json_agg((conceptname, conceptid)) as concepts
+      FROM
+      (SELECT ac.name, a.conceptid, ai.id, count(a.conceptid), c.name as conceptname
+          FROM 
+              annotation_collection ac
+          FULL JOIN
+              annotation_intermediate ai ON ac.id = ai.id
+          LEFT JOIN 
+              annotations a ON ai.annotationid = a.id
+          LEFT JOIN concepts c ON a.conceptid = c.id
+          GROUP BY ac.name, a.conceptid, ai.id, c.name ) t
+      GROUP BY name, id
+      `;
+    } else {
+      queryText = `
+      SELECT
+        ac.*
+      FROM
+        annotation_collection ac
+      ORDER BY
+        ac.name
+    `;
+    }
 
     try {
       let annotationCollections = await psql.query(queryText);
@@ -40,8 +98,8 @@ router.get(
 );
 
 router.post(
-  "/",
-  passport.authenticate("jwt", { session: false }),
+  '/',
+  passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     const queryText = `
       INSERT INTO 
@@ -63,8 +121,8 @@ router.post(
 );
 
 router.delete(
-  "/:id",
-  passport.authenticate("jwt", { session: false }),
+  '/:id',
+  passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     const queryText = `
       DELETE FROM 
@@ -85,57 +143,120 @@ router.delete(
 );
 
 router.post(
-  "/:id",
-  passport.authenticate("jwt", { session: false }),
+  '/:id',
+  passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     let params = [parseInt(req.params.id)];
-    let queryText = `      
-    INSERT INTO
-        annotation_intermediate (id, annotationid)
-    (
-      SELECT id, annotationid FROM (
-          SELECT
-            $1::INTEGER as id, A.id as annotationid
-          FROM
-            annotations A
+    let good_users = configData.ml.tracking_users.filter(x =>
+      req.body.selectedUsers.includes(x.toString())
+    );
+
+    let queryText1 = `      
+      INSERT INTO
+          annotation_intermediate (id, annotationid)
+      (
+        SELECT id, annotationid FROM (
+            SELECT
+              $1::INTEGER as id, A.id as annotationid
+            FROM
+              annotations A
     `;
 
-    if (req.body.selectedConcepts[0] !== "-1") {
-      queryText += ` WHERE `;
-      params.push(req.body.selectedConcepts);
-      queryText += ` conceptid::text = ANY($${params.length}) `;
+    let queryText2 = `
+      UPDATE
+        annotation_collection
+      SET
+        users = (
+          SELECT
+            array_agg(DISTINCT u)
+          FROM unnest(users || (
+            SELECT
+              array_agg(username)
+            FROM
+              users 
+    `;
+
+    if (params.length === 1) {
+      queryText1 += ` WHERE `;
+    } else {
+      queryText1 += ` AND `;
     }
-    if (req.body.selectedVideos[0] !== "-1") {
-      if (params.length === 1) {
-        queryText += ` WHERE `;
-      } else {
-        queryText += ` AND `;
-      }
-      params.push(req.body.selectedVideos);
-      queryText += ` videoid::text = ANY($${params.length}) `;
-    }
-    if (req.body.selectedUsers[0] !== "-1") {
-      if (params.length === 1) {
-        queryText += ` WHERE `;
-      } else {
-        queryText += ` AND `;
-      }
-      params.push(req.body.selectedUsers);
-      if (req.body.includeTracking) {
-        queryText += `EXISTS ( 
+
+    params.push(req.body.selectedUsers);
+
+    if (req.body.includeTracking) {
+      queryText1 += `EXISTS ( 
           SELECT id, userid 
           FROM annotations 
           WHERE id=A.originalid 
           AND unsure = False
           AND userid::text = ANY($${params.length}))`;
-      } else {
-        queryText += `
+    } else {
+      queryText1 += `
           unsure = False
           AND userid::text = ANY($${params.length})`;
-      }
     }
 
-    queryText += `
+    if (good_users.length > 0) {
+      queryText1 += `
+        AND EXISTS ( 
+          SELECT id, userid 
+          FROM annotations 
+          WHERE id=A.originalid 
+          AND unsure = False
+          AND userid::text = ANY($${params.length}))`;
+    } else {
+      queryText1 += ` AND userid::text = ANY($${params.length})`;
+    }
+
+    queryText2 += ` WHERE id = ANY($${params.length})`;
+
+    queryText2 += `
+      )) u),
+      videos = (
+        SELECT
+          array_agg(DISTINCT v)
+        FROM unnest(videos || (
+          SELECT
+             array_agg(id)
+          FROM
+             videos
+    `;
+
+    if (params.length === 1) {
+      queryText1 += ` WHERE `;
+    } else {
+      queryText1 += ` AND `;
+    }
+
+    params.push(req.body.selectedVideos);
+
+    queryText1 += ` videoid::text = ANY($${params.length}) `;
+    queryText2 += ` WHERE id = ANY($${params.length})`;
+
+    queryText2 += `
+      )) v),
+      concepts = (
+        SELECT
+            array_agg(DISTINCT u)
+        FROM unnest(concepts || (
+            SELECT
+              array_agg(name)
+            FROM
+              concepts
+    `;
+
+    if (params.length === 1) {
+      queryText1 += ` WHERE `;
+    } else {
+      queryText1 += ` AND `;
+    }
+    params.push(req.body.selectedConcepts);
+
+    queryText1 += ` conceptid::text = ANY($${params.length}) `;
+    queryText2 += ` WHERE id = ANY($${params.length})`;
+
+    queryText1 += `
         ) as t(id, annotationid)
       WHERE
         NOT EXISTS (
@@ -147,54 +268,19 @@ router.post(
             ai.id = t.id::INTEGER AND ai.annotationid = t.annotationid::INTEGER))
     `;
 
-    try {
-      let added = await psql.query(queryText, params);
-      if (added) {
-        res.status(200).json(added);
-      }
-    } catch (error) {
-      res.status(500).json(error);
-      console.log(error);
+    queryText2 += ` )) u)`;
+
+    if (req.body.includeTracking) {
+      queryText2 += `, tracking = TRUE`;
     }
-  }
-);
 
-/**
- * @route GET /api/collections/annotations/train
- * @group collections
- * @summary Get a list of annotation collections that relates to model concepts id
- * @param {string} ids.query - conceptids from model
- * @returns {Array.<userInfo>} 200 - An array of annotation collections
- * @returns {Error} 500 - Unexpected database error
- */
-router.get(
-  "/train",
-  passport.authenticate("jwt", { session: false }),
-
-  async (req, res) => {
-    var params = "{" + req.query.ids + "}";
-    let queryText = `      
-      SELECT 
-        name, id, count(*), array_agg(conceptid) as ids, array_agg(conceptname) as concepts
-      FROM
-        (SELECT ac.name, a.conceptid, ai.id, count(a.conceptid), c.name as conceptname
-      FROM 
-        annotation_collection ac
-      LEFT JOIN
-        annotation_intermediate ai ON ac.id = ai.id
-      LEFT JOIN 
-        annotations a ON ai.annotationid = a.id
-      LEFT JOIN concepts c ON a.conceptid = c.id
-      WHERE 
-        a.conceptid = ANY( $1::int[] )
-      GROUP BY ac.name, a.conceptid, ai.id, c.name ) t
-      GROUP BY name, id
-    `;
+    queryText2 += ` WHERE id=$1`;
 
     try {
-      let data = await psql.query(queryText, [params]);
-      if (data) {
-        res.status(200).json(data.rows);
+      let added = await psql.query(queryText1, params);
+      if (added) {
+        await psql.query(queryText2, params);
+        res.status(200).json(added);
       }
     } catch (error) {
       res.status(500).json(error);

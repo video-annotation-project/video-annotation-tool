@@ -1,64 +1,59 @@
-import React, { Component } from "react";
-import PropTypes from "prop-types";
-import Button from "@material-ui/core/Button";
-import Drawer from "@material-ui/core/Drawer";
-import List from "@material-ui/core/List";
-import ListItem from "@material-ui/core/ListItem";
-import ListItemText from "@material-ui/core/ListItemText";
-import { withStyles } from "@material-ui/core/styles";
+import React, { Component } from 'react';
+import Button from '@material-ui/core/Button';
+import Drawer from '@material-ui/core/Drawer';
+import List from '@material-ui/core/List';
+import ListItem from '@material-ui/core/ListItem';
+import ListItemText from '@material-ui/core/ListItemText';
+import { withStyles } from '@material-ui/core/styles';
 
-import IconButton from "@material-ui/core/IconButton";
-import DeleteIcon from "@material-ui/icons/Delete";
-import Description from "@material-ui/icons/Description";
-import axios from "axios";
+import IconButton from '@material-ui/core/IconButton';
+import DeleteIcon from '@material-ui/icons/Delete';
+import Description from '@material-ui/icons/Description';
+import axios from 'axios';
 
-import Summary from "../Utilities/Summary.jsx";
-import Swal from "sweetalert2";
+import Swal from 'sweetalert2';
+import Summary from '../Utilities/Summary';
 
-const styles = theme => ({
-  root: {
-    // float: 'right',
-    // padding: '10px'
-  },
+const styles = () => ({
   drawer: {
-    // height: '1000px',
-    // padding: '15px',
-    width: "550px",
-    overflow: "auto"
+    width: '550px',
+    overflow: 'auto'
   },
   toggleButton: {
-    marginTop: "5px"
+    marginTop: '5px'
   }
 });
 
 class AIvideoList extends Component {
   constructor(props) {
     super(props);
+    const { loadVideos, handleVideoClick } = this.props;
     this.state = {
-      aiListOpen: false,
-      openedVideo: null,
       descriptionOpen: false,
       summary: null,
       metrics: null
     };
+
+    this.loadVideos = loadVideos;
+    this.handleVideoClick = handleVideoClick;
   }
 
   toggle = list => {
-    this.setState({
-      [list]: !this.state[list]
-    });
+    this.setState(prevState => ({
+      [list]: !prevState[list]
+    }));
   };
 
-  deleteAiVideo = async (video) => {
+  deleteAiVideo = async video => {
     const config = {
       headers: {
-        Authorization: "Bearer " + localStorage.getItem("token")
+        Authorization: `Bearer ${localStorage.getItem('token')}`
       },
       data: {
-        video: video
+        video
       }
     };
-    this.toggle("videoListOpen");
+    this.toggle('videoListOpen');
     Swal.fire({
       title: 'Are you sure?',
       text: "You won't be able to revert this!",
@@ -67,22 +62,18 @@ class AIvideoList extends Component {
       confirmButtonColor: '#3085d6',
       cancelButtonColor: '#d33',
       confirmButtonText: 'Yes, delete it!'
-    }).then(async (result) => {
+    }).then(async result => {
       if (result.value) {
         try {
-          await axios.delete("/api/videos/aivideos", config);
-          Swal.fire(
-            'Deleted!',
-            'Video has been deleted.',
-            'success'
-          )
-          this.props.loadVideos();
+          await axios.delete('/api/videos/aivideos', config);
+          Swal.fire('Deleted!', 'Video has been deleted.', 'success');
+          this.loadVideos();
         } catch (error) {
-          Swal.fire(error, "", "error");
+          Swal.fire(error, '', 'error');
         }
       }
     });
-  }
+  };
 
   openVideoSummary = async (event, video) => {
     event.stopPropagation();
@@ -105,60 +96,68 @@ class AIvideoList extends Component {
   getMetrics = async video => {
     const config = {
       headers: {
-        Authorization: "Bearer " + localStorage.getItem("token")
+        Authorization: `Bearer ${localStorage.getItem('token')}`
       }
     };
+    let ret;
     try {
-      let metrics = await axios.get(`/api/videos/aivideos/metrics?filename=${video.name}`, config);
-      console.log(metrics.data);
+      const metrics = await axios.get(
+        `/api/videos/aivideos/metrics?filename=${video.name}`,
+        config
+      );
       if (metrics) {
-        return metrics.data;
+        ret = metrics.data;
       }
     } catch (error) {
-      console.log("Error in summary.jsx get /api/videos/aivideos/metrics");
-      console.log(error.response.data);
+      console.error('Error in summary.jsx get /api/videos/aivideos/metrics');
+      console.error(error.response.data);
+      ret = error.response;
     }
-  }
+    return ret;
+  };
 
   getSummary = async video => {
     const config = {
       headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + localStorage.getItem("token")
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`
       }
     };
+    let ret;
     try {
-      var summary = await axios.get("/api/videos/aivideos/summary/" + video.name, config)
+      const summary = await axios.get(
+        `/api/videos/aivideos/summary/${video.name}`,
+        config
+      );
 
       if (summary) {
-        return summary;
+        ret = summary;
       }
     } catch (error) {
-        console.log("Error in summary.jsx get /api/videos/aivideos/summary");
-        console.log(error.response.data);
-    };
+      console.log('Error in summary.jsx get /api/videos/aivideos/summary');
+      console.log(error.response.data);
+      ret = error.response;
+    }
+    return ret;
   };
 
-  //Methods for video meta data
-  openVideoMetadata = (event, video) => {
-    event.stopPropagation();
-    this.setState({
-      openedVideo: video
-    });
-  };
+  // // Methods for video meta data
+  // openVideoMetadata = (event, video) => {
+  //   event.stopPropagation();
+  //   this.setState({
+  //     openedVideo: video
+  //   });
+  // };
 
-  closeVideoMetadata = () => {
-    this.setState({
-      openedVideo: null
-    });
-  };
+  // closeVideoMetadata = () => {
+  //   this.setState({
+  //     openedVideo: null
+  //   });
+  // };
 
   render() {
-    const {
-      classes,
-      handleVideoClick,
-      aiVideos
-    } = this.props;
+    const { classes, aiVideos } = this.props;
+    const { videoListOpen, descriptionOpen, summary, metrics } = this.state;
 
     return (
       <div className={classes.root}>
@@ -166,64 +165,53 @@ class AIvideoList extends Component {
           className={classes.toggleButton}
           variant="contained"
           color="primary"
-          onClick={() => this.toggle("videoListOpen")}
+          onClick={() => this.toggle('videoListOpen')}
         >
           Toggle Video List
         </Button>
 
         <Drawer
           anchor="left"
-          open={this.state.videoListOpen}
-          onClose={() => this.toggle("videoListOpen")}
+          open={videoListOpen}
+          onClose={() => this.toggle('videoListOpen')}
         >
           <div className={classes.drawer}>
-              <List disablePadding>
-                {aiVideos.map(video => (
-                  <ListItem
-                    button
-                    key={video.id}
-                    onClick={() => handleVideoClick(video, "aiVideos")}
+            <List disablePadding>
+              {aiVideos.map(video => (
+                <ListItem
+                  button
+                  key={video.id}
+                  onClick={() => this.handleVideoClick(video, 'aiVideos')}
+                >
+                  <ListItemText primary={`${video.id}. ${video.name}`} />
+                  <IconButton
+                    onClick={event => this.openVideoSummary(event, video)}
                   >
-                    <ListItemText primary={video.id + ". " + video.name} />
-                    <IconButton
-                      onClick={event => this.openVideoSummary(event, video)}
-                    >
-                      <Description/>
-                    </IconButton>
-                    <IconButton
-                      aria-label="Delete"
-                      onClick={() => this.deleteAiVideo(video)}
-                    >
-                      <DeleteIcon/>
-                    </IconButton>
-                  </ListItem>
-                ))}
-              </List>
+                    <Description />
+                  </IconButton>
+                  <IconButton
+                    aria-label="Delete"
+                    onClick={() => this.deleteAiVideo(video)}
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                </ListItem>
+              ))}
+            </List>
           </div>
         </Drawer>
-        {this.state.descriptionOpen && (
-            <Summary
-              open={
-                true /* The 'openness' is controlled through
-              boolean logic rather than by passing in a variable as an
-              attribute. This is to force Summary to unmount when it 
-              closes so that its state is reset. This also prevents the 
-              accidental double submission bug, by implicitly reducing 
-              the transition time of Summary to zero. */
-              }
-              handleClose={this.closeVideoSummary}
-              summary={this.state.summary}
-              aiSummary={true}
-              metrics={this.state.metrics}
-            />
-          )}
+        {descriptionOpen && (
+          <Summary
+            open
+            handleClose={this.closeVideoSummary}
+            summary={summary}
+            aiSummary
+            metrics={metrics}
+          />
+        )}
       </div>
     );
   }
 }
-
-AIvideoList.propTypes = {
-  classes: PropTypes.object.isRequired
-};
 
 export default withStyles(styles)(AIvideoList);

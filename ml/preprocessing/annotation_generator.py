@@ -89,12 +89,18 @@ class AnnotationGenerator(object):
 
     def __init__(self,
                  collection_ids,
+                 verified_only,
+                 include_tracking,
                  classes,
                  min_examples,
                  validation_split=0.8):
 
         # Start with a list of all possible annotations, grouped by frame in video
-        selected_frames, concept_counts = self._select_annotations(collection_ids, min_examples, classes)
+        selected_frames, concept_counts = self._select_annotations(collection_ids,
+                                                                   verified_only,
+                                                                   include_tracking,
+                                                                   min_examples,
+                                                                   classes)
         self.selected_frames = selected_frames
         self.classmap = get_classmap(classes)
 
@@ -132,27 +138,32 @@ class AnnotationGenerator(object):
                 **kwargs
             )
         else:
-            raise ValueError('subset parameter must be either "training" or "validation"/"testing"')
+            raise ValueError(
+                'subset parameter must be either "training" or "validation"/"testing"')
 
     @staticmethod
-    def _select_annotations(collection_ids, min_examples, concepts):
+    def _select_annotations(collection_ids, verified_only, include_tracking, min_examples, concepts):
         selected = []
         concept_count = {}
 
-        annotations = AnnotationGenerator._get_annotations(collection_ids)
+        annotations = AnnotationGenerator._get_annotations(
+            collection_ids, verified_only, include_tracking)
 
         for concept in concepts:
             concept_count[concept] = 0
 
         # This grouping ensure that we can view all annotations for a single image
-        frame_groups = annotations.groupby(['videoid', 'frame_num'], sort=False)
+        frame_groups = annotations.groupby(
+            ['videoid', 'frame_num'], sort=False)
         frame_groups = [df for _, df in frame_groups]
 
-        ai_id = pd_query("SELECT id FROM users WHERE username='tracking'").id[0]
+        ai_id = pd_query(
+            "SELECT id FROM users WHERE username='tracking'").id[0]
 
         # Give priority to frames with least amount of tracking annotations
         # And lower speed
-        frame_groups.sort(key=lambda df: (list(df['userid']).count(ai_id), df.speed.mean()))
+        frame_groups.sort(key=lambda df: (
+            list(df['userid']).count(ai_id), df.speed.mean()))
 
         # Selects images that we'll use (each group has annotations for an image)
         for frame in frame_groups:
@@ -177,7 +188,8 @@ class AnnotationGenerator(object):
             # Checks if frame has only concept we have too many of
             if any(v > min_examples for v in concept_count.values()):
                 # Gets all concepts that we have too many of
-                excess = list({key: value for (key, value) in concept_count.items() if value > min_examples})
+                excess = list(
+                    {key: value for (key, value) in concept_count.items() if value > min_examples})
                 # Don't save the annotation if it doens't include concept that we need more of
                 if set(excess) >= set(in_annot):
                     for a in in_annot:
@@ -188,7 +200,7 @@ class AnnotationGenerator(object):
         return selected, concept_count
 
     @staticmethod
-    def _get_annotations(collection_ids):
+    def _get_annotations(collection_ids, verified_only, include_tracking):
         # Query that gets all annotations for given concepts (and child concepts)
         # making sure that any tracking annotations originated from good users
         annotations_query = r'''
@@ -211,6 +223,11 @@ class AnnotationGenerator(object):
                 videos ON videos.id=videoid
             WHERE inter.id = ANY(%s)
         '''
+        if verified_only:
+            annotations_query += r''' AND a.verifiedby IS NOT NULL'''
+
+        if not include_tracking:
+            annotations_query += r''' AND a.id = a.originalId'''
 
         return pd_query(annotations_query, (collection_ids, ))
 
@@ -332,11 +349,13 @@ class S3Generator(Generator):
 
         image_name = str(image['image'])
         try:
-            obj = self.client.get_object(Bucket=config.S3_BUCKET, Key=config.S3_ANNOTATION_FOLDER + image_name)
+            obj = self.client.get_object(
+                Bucket=config.S3_BUCKET, Key=config.S3_ANNOTATION_FOLDER + image_name)
             obj_image = Image.open(obj['Body'])
         # ClientError is the exception class for a KeyNotFound error
         except ClientError:
-            raise IOError(f'file {config.S3_ANNOTATION_FOLDER}{image_name} not found in S3 bucket')
+            raise IOError(
+                f'file {config.S3_ANNOTATION_FOLDER}{image_name} not found in S3 bucket')
 
         # Some files have a file extension, some don't. Let's fix that.
         if self.image_extension not in image_name:
@@ -385,15 +404,19 @@ class S3Generator(Generator):
 
             # Check that the bounding box is valid.
             if x2 <= x1:
-                raise ValueError('x2 ({}) must be higher than x1 ({})'.format(x2, x1))
+                raise ValueError(
+                    'x2 ({}) must be higher than x1 ({})'.format(x2, x1))
             if y2 <= y1:
-                raise ValueError('y2 ({}) must be higher than y1 ({})'.format(y2, y1))
+                raise ValueError(
+                    'y2 ({}) must be higher than y1 ({})'.format(y2, y1))
 
             # Check if the current class name is correctly present
             if class_name not in self.classes:
-                raise ValueError('unknown class name: \'{}\' (classes: {})'.format(class_name, set(self.classes)))
+                raise ValueError('unknown class name: \'{}\' (classes: {})'.format(
+                    class_name, set(self.classes)))
 
-            result[image_file].append({'x1': x1, 'x2': x2, 'y1': y1, 'y2': y2, 'class': class_name})
+            result[image_file].append(
+                {'x1': x1, 'x2': x2, 'y1': y1, 'y2': y2, 'class': class_name})
         return result
 
     def _connect_s3(self):

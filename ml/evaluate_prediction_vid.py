@@ -128,12 +128,13 @@ def evaluate(video_id, model_username, concepts):
         annotations, results, EVALUATION_IOU_THRESH, concepts)
     concept_counts = get_counts(results, annotations)
     metrics = metrics.set_index('conceptid').join(concept_counts)
-    metrics_csv = metrics.to_csv("metrics" + str(video_id) + ".csv")
+    metrics.to_csv("metrics" + str(video_id) + ".csv")
     # upload the data to s3 bucket
+    print("uploading to s3 folder")
     s3.upload_file(
-        metrics_csv, S3_BUCKET,
-        AWS_S3_BUCKET_METRICS_FOLDER + filename,
-        ExtraArgs={'ContentType': 'application/vnd.ms-excel'})
+        "metrics" + str(video_id) + ".csv", S3_BUCKET,
+        AWS_S3_BUCKET_METRICS_FOLDER +  filename.replace('mp4', 'csv'),
+        ExtraArgs={'ContentType':'application/vnd.ms-excel'})
 
     print(metrics)
     con.commit()
