@@ -6,6 +6,7 @@ import boto3
 import os
 from dotenv import load_dotenv
 from PIL import Image
+import math
 import numpy as np
 import pandas as pd
 from multiprocessing import Pool
@@ -50,14 +51,14 @@ def iter_from_middle(lst):
         return
 
 
-def fix_offset(annotation):
+def fix_offset(videoid, timeinvideo, image, id):
     con = connect(database=DB_NAME, host=DB_HOST,
                   user=DB_USER, password=DB_PASSWORD)
     cursor = con.cursor()
 
     # get video name
     cursor.execute("SELECT filename FROM videos WHERE id=%s",
-                   (str(annotation.videoid),))
+                   (str(videoid),))
     video_name = cursor.fetchone()[0]
 
     # grab video stream
@@ -73,7 +74,7 @@ def fix_offset(annotation):
     search_seconds_range = frames / fps
 
     # initialize video for grabbing frames before annotation
-    cap.set(0, (annotation.timeinvideo-search_seconds_range)
+    cap.set(0, (timeinvideo-search_seconds_range)
             * 1000)  # tell video to start at 'start'-1 time
 
     imgs = []
@@ -92,7 +93,7 @@ def fix_offset(annotation):
     try:
         obj = s3.get_object(
             Bucket=S3_BUCKET,
-            Key=S3_ANNOTATION_FOLDER + annotation.image
+            Key=S3_ANNOTATION_FOLDER + image
         )
     except:
         # print("Annotation missing image.")
@@ -118,14 +119,14 @@ def fix_offset(annotation):
           UPDATE annotations
           SET framenum=%d, timeinvideo=%f, originalid=NULL
           WHERE id= %d;''',
-                (round(times[index]*fps/1000), times[index]/1000, annotation.id,))
+                (round(times[index]*fps/1000), times[index]/1000, id,))
             con.commit()
             con.close()
             return
     print(
-        f'Failed on annnotation {annotation.id} with best score {best_score}')
+        f'Failed on annnotation {id} with best score {best_score}')
     cursor.execute(
-        "UPDATE annotations SET unsure=TRUE WHERE id=%d;", (annotation.id,))
+        "UPDATE annotations SET unsure=TRUE WHERE id=%d;", (id,))
     con.commit()
     con.close()
 
@@ -142,4 +143,5 @@ if __name__ == "__main__":
         '''
     )
     with Pool() as p:
-        p.map(fix_offset, cursor.fetchall())
+        p.map(fix_offset, map(lambda x: (x.videoid, x.timeinvideo,
+                                         x.image, x.id), cursor.fetchall()))
