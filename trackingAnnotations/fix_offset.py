@@ -5,15 +5,8 @@ from pgdb import connect
 import boto3
 import os
 from dotenv import load_dotenv
-import datetime
-import copy
-import time
-import uuid
-import sys
-import math
 from PIL import Image
 import numpy as np
-import pandas as pd
 from multiprocessing import Pool
 
 
@@ -101,7 +94,7 @@ def fix_offset(annotation):
             Key=S3_ANNOTATION_FOLDER + annotation.image
         )
     except:
-        #print("Annotation missing image.")
+        # print("Annotation missing image.")
         con.close()
         return
     img = Image.open(obj['Body'])
@@ -110,21 +103,26 @@ def fix_offset(annotation):
     img = img[:, :, ::-1]
     img = cv2.resize(img, (VIDEO_WIDTH, VIDEO_HEIGHT))
 
+    best_score = 0
     for index, video_frame in iter_from_middle(imgs):
         if index == len(imgs):
             continue
         (score, _) = compare_ssim(
             img, video_frame, full=True, multichannel=True)
-        if score > .92:
+        if score > best_score:
+            best_score = score
+        if best_score > .92:
             cursor.execute(
                 '''
           UPDATE annotations
-          SET framenum=%d, timeinvideo=%f, originalid=NULL 
+          SET framenum=%d, timeinvideo=%f, originalid=NULL
           WHERE id= %d;''',
                 (round(times[index]*fps/1000), times[index]/1000, annotation.id,))
             con.commit()
             con.close()
             return
+    print(
+        f'Failed on annnotation {annotation.id} with best score {best_score}')
     cursor.execute(
         "UPDATE annotations SET unsure=TRUE WHERE id=%d;", (annotation.id,))
     con.commit()
@@ -137,12 +135,10 @@ if __name__ == "__main__":
     cursor = con.cursor()
     cursor.execute(
         '''
-   SELECT id, timeinvideo, videoid, image
-   FROM annotations
-   WHERE id IN (4973786, 4984018, 4984048, 4984743, 4985958, 4987375, 4987406, 4989155, 4989837, 4990318, 4990521, 4990596, 4990860, 4991687, 4991913, 4992313, 4992324, 4992507, 4996036, 4998312, 5000857, 5002358, 5005777)
-   '''
+        SELECT id, timeinvideo, videoid, image
+        FROM annotations
+        WHERE unsure=True AND framenum IS null
+        '''
     )
-
-    rows = cursor.fetchall()
-    for row in rows:
-        fix_offset(row)
+    with Pool() as p:
+        p.map(fix_offset, map(lambda x: (x.id, x.timeinvideo, x.videoid, x.image), cursor.fetchall())
