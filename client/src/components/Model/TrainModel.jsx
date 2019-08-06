@@ -442,7 +442,7 @@ class TrainModel extends Component {
       infoDialogOpen
     } = this.state;
 
-    return (
+    return countsLoaded ? (
       <form className={classes.hyperparametersForm}>
         <TextField
           margin="normal"
@@ -462,9 +462,7 @@ class TrainModel extends Component {
           value={minImages}
           onChange={this.handleChange}
           className={classes.hyperParamsInput}
-          helperText={
-            countsLoaded ? `Must be between 1 - ${this.getSelectedCount()}` : ''
-          }
+          helperText={countsLoaded ? this.getImageRange() : ''}
         />
         <div>
           <FormControlLabel
@@ -485,30 +483,27 @@ class TrainModel extends Component {
                 onChange={this.handleChangeSwitch}
                 value="verifiedOnly"
                 color="primary"
+                disabled={selectedCollectionCounts[2].length === 0}
               />
             }
             label="Verified annotations only"
           />
         </div>
-        {countsLoaded ? (
-          <React.Fragment>
-            <Button
-              color="primary"
-              className={classes.button}
-              onClick={this.toggleInfo}
-            >
-              Collection Info
-            </Button>
-            <CollectionInfo
-              open={infoDialogOpen}
-              onClose={this.toggleInfo}
-              counts={selectedCollectionCounts}
-            />
-          </React.Fragment>
-        ) : (
-          <Typography variant="subtitle1">Loading...</Typography>
-        )}
+        <Button
+          color="primary"
+          className={classes.button}
+          onClick={this.toggleInfo}
+        >
+          Collection Info
+        </Button>
+        <CollectionInfo
+          open={infoDialogOpen}
+          onClose={this.toggleInfo}
+          counts={selectedCollectionCounts}
+        />
       </form>
+    ) : (
+      <Typography variant="subtitle1">Loading...</Typography>
     );
   };
 
@@ -518,7 +513,7 @@ class TrainModel extends Component {
     }));
   };
 
-  getSelectedCount = () => {
+  getImageRange = () => {
     const {
       selectedCollectionCounts,
       includeTracking,
@@ -535,7 +530,9 @@ class TrainModel extends Component {
           counts[concept.name] += parseInt(concept.count, 10);
         });
       }
-      return Math.min(...Object.values(counts));
+      const max = Math.min(...Object.values(counts));
+      if (max === 0) return max;
+      return max === 1 ? `Must be 1` : `Must be between 1 and ${max}`;
     }
 
     selectedCollectionCounts[0].forEach(concept => {
@@ -546,7 +543,8 @@ class TrainModel extends Component {
         counts[concept.name] += parseInt(concept.count, 10);
       });
     }
-    return Math.min(...Object.values(counts));
+    const max = Math.min(...Object.values(counts));
+    return max === 1 ? `Must be 1` : `Must be between 1 and ${max}`;
   };
 
   getCollectionCounts = async () => {
@@ -621,7 +619,8 @@ class TrainModel extends Component {
   handleBack = () => {
     this.setState(
       state => ({
-        activeStep: state.activeStep - 1
+        activeStep: state.activeStep - 1,
+        countsLoaded: false
       }),
       () => {
         this.updateBackendInfo();

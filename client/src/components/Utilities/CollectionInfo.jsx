@@ -84,7 +84,7 @@ class CollectionInfo extends Component {
       <Dialog onClose={onClose} open={open} fullWidth maxWidth="md">
         <div className={classes.root}>
           <Typography className={classes.header} variant="h6">
-            {data ? data.name : 'Collection Info'}
+            {data ? data.name : 'Training Info'}
           </Typography>
           <Table>
             <TableHead>
