@@ -1,31 +1,36 @@
-from dotenv import load_dotenv
-from keras_retinanet.models import convert_model
-from keras_retinanet.models import load_model
-import cv2
-import json
-import numpy as np
-import argparse
 import copy
 import os
 import subprocess
+import json
+
+import cv2
+import numpy as np
 import boto3
-import keras
 import pandas as pd
 import uuid
-import boto3
-from psycopg2 import connect
-from loading_data import queryDB, get_classmap
 import psycopg2
 import datetime
+from dotenv import load_dotenv
+from keras_retinanet.models import convert_model
+from keras_retinanet.models import load_model
+from psycopg2 import connect
+
+from preprocessing.annotation_generator import get_classmap
+from utils.query import query
+
 
 # Load environment variables
 load_dotenv(dotenv_path="../.env")
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 S3_BUCKET = os.getenv('AWS_S3_BUCKET_NAME')
+
 s3 = boto3.client(
-    's3', aws_access_key_id = AWS_ACCESS_KEY_ID,
-     aws_secret_access_key = AWS_SECRET_ACCESS_KEY)
+    's3',
+    aws_access_key_id=AWS_ACCESS_KEY_ID,
+    aws_secret_access_key=AWS_SECRET_ACCESS_KEY
+)
+
 S3_VIDEO_FOLDER = os.getenv('AWS_S3_BUCKET_VIDEOS_FOLDER')
 S3_ANNOTATION_FOLDER = os.getenv("AWS_S3_BUCKET_ANNOTATIONS_FOLDER")
 S3_TRACKING_FOLDER = os.getenv("AWS_S3_BUCKET_TRACKING_FOLDER")
@@ -40,7 +45,8 @@ DB_PASSWORD = os.getenv("DB_PASSWORD")
 
 config_path = "../config.json"
 load_dotenv(dotenv_path="../.env")
-with open(config_path) as config_buffer:    
+
+with open(config_path) as config_buffer:
     config = json.loads(config_buffer.read())['ml']
 
 NUM_FRAMES = config['frames_between_predictions']
@@ -53,25 +59,28 @@ MAX_TIME_BACK = config['max_seconds_back']
 weights_path = config['weights_path']
 good_users = config['biologist_users']
 
-class Tracked_object:
+
+class Tracked_object(object):
 
     def __init__(self, detection, frame, frame_num):
         self.annotations = pd.DataFrame(
             columns=[
-                'x1','y1','x2','y2',
-                'label', 'confidence', 'objectid','frame_num'])
+                'x1', 'y1', 'x2', 'y2',
+                'label', 'confidence', 'objectid', 'frame_num'
+            ]
+        )
         (x1, y1, x2, y2) = detection[0]
         self.id = uuid.uuid4()
         self.x1 = x1
         self.x2 = x2
         self.y1 = y1
         self.y2 = y2
-        self.box = (x1, y1, (x2-x1), (y2-y1))
+        self.box = (x1, y1, (x2 - x1), (y2 - y1))
         self.tracker = cv2.TrackerKCF_create()
         self.tracker.init(frame, self.box)
         label = detection[2]
         confidence = detection[1]
-        self.save_annotation(frame_num,label=label, confidence=confidence)
+        self.save_annotation(frame_num, label=label, confidence=confidence)
 
     def save_annotation(self, frame_num, label=None, confidence=None):
         annotation = {}
@@ -91,9 +100,9 @@ class Tracked_object:
         self.x2 = x2
         self.y1 = y1
         self.y2 = y2
-        self.box = (x1, y1, (x2-x1), (y2-y1))
+        self.box = (x1, y1, (x2 - x1), (y2 - y1))
         self.tracker = cv2.TrackerKCF_create()
-        self.tracker.init(frame, self.box) 
+        self.tracker.init(frame, self.box)
         label = detection[2]
         confidence = detection[1]
         self.annotations = self.annotations[:-1]
@@ -106,7 +115,7 @@ class Tracked_object:
             self.x1 = x1
             self.x2 = x1 + w
             self.y1 = y1
-            self.y2 = y1 + h 
+            self.y2 = y1 + h
             self.box = (x1, y1, w, h)
             self.save_annotation(frame_num)
         return success
@@ -114,6 +123,7 @@ class Tracked_object:
     def change_id(self, matched_obj_id):
         self.id = matched_obj_id
         self.annotations['objectid'] = matched_obj_id
+
 
 def resize(row):
     new_width = RESIZED_WIDTH
@@ -129,17 +139,20 @@ def resize(row):
 def predict_on_video(videoid, model_weights, concepts, filename,
                      upload_annotations=False, userid=None):
     # Connect to db
-    con = psycopg2.connect(database = DB_NAME,
-                    user = DB_USER,
-                    password = DB_PASSWORD,
-                    host = DB_HOST,
-                    port = "5432")
+    con = psycopg2.connect(
+        database=DB_NAME,
+        user=DB_USER,
+        password=DB_PASSWORD,
+        host=DB_HOST,
+        port="5432"
+    )
+
     cursor = con.cursor()
 
     # Get the video filename
-    vid_filename = queryDB(f'''
-        SELECT * 
-        FROM videos 
+    vid_filename = query(f'''
+        SELECT *
+        FROM videos
         WHERE id ={videoid}''').iloc[0].filename
     printing_with_time("Loading Video.")
     frames, fps = get_video_frames(vid_filename, videoid, con)
@@ -150,7 +163,7 @@ def predict_on_video(videoid, model_weights, concepts, filename,
     printing_with_time("Before database query")
     annotations = queryDB(
         f'''
-        SELECT 
+        SELECT
           x1, y1, x2, y2,
           conceptid as label,
           null as confidence,
@@ -159,7 +172,7 @@ def predict_on_video(videoid, model_weights, concepts, filename,
           ROUND(timeinvideo*{fps}) as frame_num
         FROM
           annotations
-        WHERE 
+        WHERE
           videoid={videoid} AND
           userid in {str(tuple(good_users))} AND
           conceptid in {str(tuple(concepts))}''')
@@ -354,6 +367,7 @@ def track_backwards(video_frames, frame_num, detection,
             frames += 1
     return annotations, None
 
+
 def match_old_annotations(old_annotations, annotation):
     max_iou = 0 
     match = None
@@ -363,6 +377,7 @@ def match_old_annotations(old_annotations, annotation):
             max_iou = iou
             match = annot['objectid']
     return match if (max_iou >= TRACKING_IOU_THRESH) else None
+
 
 def make_annotation(box, object_id, frame_num):
     (x1, y1, w, h) = [int(v) for v in box]
@@ -406,6 +421,7 @@ def length_limit_objects(pred, frame_thresh):
 # Generates the video with the ground truth frames interlaced
 def generate_video(filename, frames, fps, results,
                     concepts, video_id, annotations, cursor, con):
+
     # Combine human and prediction annotations
     results = results.append(annotations)
     # Cast frame_num to int (prevent indexing errors)
@@ -546,6 +562,17 @@ total_count - total number of frames in the video
 status - Indicates whether processing video or drawing annotation boxes
 '''
 def upload_predict_progress(count, videoid, con, total_count, status):
+    '''
+    For updating the predict_progress psql database, which tracks prediction and 
+    video generation status.
+
+    Arguments:
+    count - frame of video (or index of annotation) being processed
+    videoid - video being processed
+    con - sql connection
+    total_count - total number of frames in the video (or number of predictions + annotations)
+    status - Indicates whether processing video or drawing annotation boxes
+    '''
     cursor = con.cursor()
     print(f'count: {count} total_count: {total_count} vid: {videoid} status: {status}')
     if (count == 0 and status == 0): # the starting point
