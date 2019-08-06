@@ -9,12 +9,18 @@ import TableBody from '@material-ui/core/TableBody';
 import { Typography } from '@material-ui/core';
 
 const styles = theme => ({
+  header: {
+    marginTop: theme.spacing(3),
+    marginLeft: theme.spacing(3),
+    marginBottom: theme.spacing(2)
+  },
   users1: {
     marginTop: theme.spacing(3),
     marginLeft: theme.spacing(2),
     marginRight: theme.spacing(4)
   },
   users2: {
+    marginTop: theme.spacing(0.5),
     marginLeft: theme.spacing(6),
     marginRight: theme.spacing(4),
     marginBottom: theme.spacing()
@@ -25,6 +31,7 @@ const styles = theme => ({
     marginRight: theme.spacing(4)
   },
   videos2: {
+    marginTop: theme.spacing(0.5),
     marginLeft: theme.spacing(6),
     marginRight: theme.spacing(4),
     marginBottom: theme.spacing(3)
@@ -72,6 +79,9 @@ class CollectionInfo extends Component {
 
     return (
       <Dialog onClose={onClose} open={open} fullWidth maxWidth="md">
+        <Typography className={classes.header} variant="h6">
+          {data ? data.name : 'Collection Info'}
+        </Typography>
         <Table>
           <TableHead>
             <TableRow>
