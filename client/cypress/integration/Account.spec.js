@@ -46,6 +46,6 @@ describe('Account1', () => {
       });
     cy.visit('/');
     cy.contains('Logout').click();
-    cy.wait(3000);
+    cy.wait(1000);
   });
 });

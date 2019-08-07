@@ -24,19 +24,28 @@
 // -- This is will overwrite an existing command --
 // Cypress.Commands.overwrite("visit", (originalFn, url, options) => { ... })
 
-Cypress.Commands.add('login', () => {
+Cypress.Commands.add('login', (username, password) => {
+  let name = '';
+  let pw = '';
+  if (!username && !password) {
+    name = 'test123';
+    pw = '123';
+  } else {
+    name = username;
+    pw = password;
+  }
   cy.request({
     method: 'POST',
     url: 'http://localhost:3000/api/users/login',
     body: {
-      username: 'test123',
-      password: '123'
+      username: name,
+      password: pw
     },
     headers: { 'Content-Type': 'application/json' }
   }).then(res => {
     window.localStorage.setItem('isAuthed', 'true');
     window.localStorage.setItem('userid', res.body.userid);
-    window.localStorage.setItem('username', 'test123');
+    window.localStorage.setItem('username', name);
     window.localStorage.setItem('token', res.body.token);
     // Add code for isAdmin
     if (res.body.isAdmin) {
