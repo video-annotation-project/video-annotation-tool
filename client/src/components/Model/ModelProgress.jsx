@@ -8,36 +8,123 @@ import Paper from '@material-ui/core/Paper';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Button from '@material-ui/core/Button';
 import PredictProgress from './PredictProgress';
+import Tabs from '@material-ui/core/Tabs';
+import Tab from '@material-ui/core/Tab';
+import SwipeableViews from 'react-swipeable-views';
+import Box from '@material-ui/core/Box';
 
-const styles = () => ({
-  trainStatus: {
-    marginTop: '20px',
-    marginBottom: '5px'
-  },
-  progressBar: {
-    height: '8px',
-    width: '82%'
-  },
-  progressText: {
-    marginTop: '20px',
-    marginBottom: '8px'
-  },
-  button: {
-    marginBottom: '30px',
-    marginLeft: '20px'
-  },
-  stopTraining: {
-    marginTop: '20px'
-  },
-  progress: {
-    display: 'flex',
-    flex: 1,
-    flexDirection: 'column',
-    justifyContent: 'right',
-    alignItems: 'right',
-    width: '50%'
+import './ModelProgress.css'
+
+
+class TrainingStatus extends Component {
+
+  ternaryOpBreak = (con1, con2) => {
+    let ret;
+    con1 = true;
+    if (con1) {
+      ret = (
+        <div className='progressBars'>
+          <Typography
+            variant="body1"
+            gutterBottom
+            className='progressText'
+          >
+            Epoch: {this.props.currentEpoch} / {this.props.maxEpoch}
+          </Typography>
+          <LinearProgress
+            className='progressBar'
+            variant="determinate"
+            value={this.props.epochProgress}
+          />
+          <Typography
+            variant="body1"
+            gutterBottom
+            className='progressText'
+          >
+            {' '}
+            Batch: {this.props.currentBatch} / {this.props.stepsPerEpoch}
+          </Typography>
+          <LinearProgress
+            className='progressBar'
+            variant="determinate"
+            value={this.props.batchProgress}
+            color="secondary"
+          />
+        </div>
+      );
+    } else if (con2) {
+      ret = <PredictProgress className='progress' />;
+    } else {
+      ret = (
+        <Typography variant="subtitle2" gutterBottom>
+          Not currently training
+        </Typography>
+      );
+    }
+    return ret;
+  };
+
+  render(){
+    return (
+      <div>
+        <Paper square elevation={0} className='resetContainer'>
+          <Typography variant="subtitle2" gutterBottom>
+            Model has started training...
+          </Typography>
+          <Button 
+            onClick={this.props.onStop} 
+            variant="contained" 
+            color="secondary"
+            className="stopButton"
+          >
+            Stop
+          </Button>
+        </Paper>
+        {this.ternaryOpBreak(
+          this.props.running, !this.props.running &&
+            this.props.currentEpoch === this.props.maxEpoch &&
+            this.props.currentBatch === this.props.stepsPerEpoch
+        )}
+      </div>
+    )
   }
-});
+}
+
+class ServerOutput extends Component {
+
+  render(){
+    return (
+      <div className='codeBlock'>
+        <code>
+          <pre>
+            {this.props.output || 'No current output'}
+          </pre>
+        </code>
+      </div>
+    )
+  }
+}
+
+class TabPanel extends Component {
+
+  render(){
+    const { children, value, index, ...other } = this.props;
+
+    return (
+      <Typography
+        component="div"
+        role="tabpanel"
+        hidden={value !== index}
+        id={`full-width-tabpanel-${index}`}
+        aria-labelledby={`full-width-tab-${index}`}
+        {...other}
+      >
+        <Box p={3}>{children}</Box>
+      </Typography>
+    );
+  }
+}
+
 
 class ModelProgress extends Component {
   constructor(props) {
@@ -45,6 +132,7 @@ class ModelProgress extends Component {
 
     this.state = {
       running: false,
+      tab: 0,
       currentEpoch: 0,
       currentBatch: 0,
       maxEpoch: 0,
@@ -98,61 +186,10 @@ class ModelProgress extends Component {
       });
   };
 
-  ternaryOpBreak = (con1, con2) => {
-    const { classes, activeStep, steps } = this.props;
-    const {
-      currentEpoch,
-      maxEpoch,
-      epochProgress,
-      currentBatch,
-      stepsPerEpoch,
-      batchProgress
-    } = this.state;
-    let ret;
-    if (con1) {
-      ret = (
-        <div>
-          <Typography
-            variant="body1"
-            gutterBottom
-            className={classes.progressText}
-          >
-            Epoch: {currentEpoch} / {maxEpoch}
-          </Typography>
-          <LinearProgress
-            disableShrink
-            className={classes.progressBar}
-            variant="determinate"
-            value={epochProgress}
-          />
-          <Typography
-            variant="body1"
-            gutterBottom
-            className={classes.progressText}
-          >
-            {' '}
-            Batch: {currentBatch} / {stepsPerEpoch}
-          </Typography>
-          <LinearProgress
-            disableShrink
-            className={classes.progressBar}
-            variant="determinate"
-            value={batchProgress}
-            color="secondary"
-          />
-        </div>
-      );
-    } else if (con2) {
-      ret = <PredictProgress className={classes.progress} />;
-    } else {
-      ret = activeStep !== steps.length && (
-        <Typography variant="subtitle2" gutterBottom>
-          Not currently training
-        </Typography>
-      );
-    }
-    return ret;
-  };
+  handleChange = (event, newValue) => {
+    console.log(newValue);
+    this.setState({ tab: newValue });
+  }
 
   render() {
     const { classes, className, handleStop, activeStep, steps } = this.props;
@@ -166,73 +203,43 @@ class ModelProgress extends Component {
 
     return (
       <div className={className}>
-        <Typography variant="h6" gutterBottom className={classes.trainStatus}>
-          Training Status
-        </Typography>
-          <Paper square elevation={0} className={classes.resetContainer}>
-            <Typography variant="subtitle2" gutterBottom>
-              Model has started training...
-            </Typography>
-            <div className={classes.stopTraining}>
-              <CircularProgress />
-              <Button onClick={handleStop} className={classes.button}>
-                Stop
-              </Button>
-            </div>
-          </Paper>
-        {this.ternaryOpBreak(
-          running && activeStep === steps.length,
-          activeStep === steps.length &&
-            !running &&
-            currentEpoch === maxEpoch &&
-            currentBatch === stepsPerEpoch
-        )}
-        {/* {running && activeStep === steps.length ? (
-          <div>
-            <Typography
-              variant="body1"
-              gutterBottom
-              className={classes.progressText}
-            >
-              Epoch: {currentEpoch} / {maxEpoch}
-            </Typography>
-            <LinearProgress
-              disableShrink
-              className={classes.progressBar}
-              variant="determinate"
-              value={epochProgress}
-            />
-            <Typography
-              variant="body1"
-              gutterBottom
-              className={classes.progressText}
-            >
-              {' '}
-              Batch: {currentBatch} / {stepsPerEpoch}
-            </Typography>
-            <LinearProgress
-              disableShrink
-              className={classes.progressBar}
-              variant="determinate"
-              value={batchProgress}
-              color="secondary"
-            />
-          </div>
-        ) : activeStep === steps.length &&
-          !running &&
-          currentEpoch === maxEpoch &&
-          currentBatch === stepsPerEpoch ? (
-          <PredictProgress className={classes.progress} />
-        ) : (
-          activeStep !== steps.length && (
-            <Typography variant="subtitle2" gutterBottom>
-              Not currently training
-            </Typography>
-          )
-        )} */}
+        <Tabs
+          value={this.state.tab}
+          variant="fullWidth"
+          indicatorColor="primary"
+          textColor="primary"
+          onChange={this.handleChange}
+          className='tabs'
+        >
+          <Tab label="Training Status" />
+          <Tab label="Standard Out" />
+          <Tab label="Standard Error" />
+        </Tabs>
+        <SwipeableViews
+          index={this.state.tab}
+        >
+          <TabPanel value={this.state.tab} index={0}>
+            <TrainingStatus
+              onStop={this.handleStop}
+              steps={this.props.steps}
+              running={this.state.running}
+              currentEpoch={this.state.currentEpoch}
+              maxEpoch={this.state.maxEpoch}
+              currentBatch={this.state.currentBatch}
+              stepsPerEpoch={this.state.stepsPerEpoch}
+            /> 
+          </TabPanel>
+          <TabPanel value={this.state.tab} index={1}>
+            <ServerOutput />
+          </TabPanel>
+          <TabPanel value={this.state.tab} index={2}>
+            <ServerOutput />
+          </TabPanel>
+        </SwipeableViews>
+
       </div>
     );
   }
 }
 
-export default withStyles(styles)(ModelProgress);
+export default ModelProgress;

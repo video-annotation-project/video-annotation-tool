@@ -2,11 +2,7 @@ import React, { Component } from 'react';
 import axios from 'axios';
 import TextField from '@material-ui/core/TextField';
 import io from 'socket.io-client';
-import { withStyles } from '@material-ui/core/styles';
-import Stepper from '@material-ui/core/Stepper';
-import Step from '@material-ui/core/Step';
-import StepLabel from '@material-ui/core/StepLabel';
-import StepContent from '@material-ui/core/StepContent';
+import Input from '@material-ui/core/Input';
 import Button from '@material-ui/core/Button';
 import Paper from '@material-ui/core/Paper';
 import { FormControl } from '@material-ui/core';
@@ -18,83 +14,134 @@ import FormControlLabel from '@material-ui/core/FormControlLabel';
 import FormLabel from '@material-ui/core/FormLabel';
 import Checkbox from '@material-ui/core/Checkbox';
 import Typography from '@material-ui/core/Typography';
+import ListItemText from '@material-ui/core/ListItemText';
+import Divider from '@material-ui/core/Divider';
 
 import ModelProgress from './ModelProgress';
 import VideoMetadata from '../Utilities/VideoMetadata';
 
-const styles = theme => ({
-  root: {
-    margin: '40px auto',
-    width: '700px',
-  },
-  form: {
-    marginBottom: theme.spacing(2),
-    marginLeft: theme.spacing(1),
-    minWidth: 150,
-  },
-  center: {
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  container: {
-    display: 'flex',
-    flexDirection: 'column',
-    padding: '20px',
-  },
-  stepper: {
-    display: 'block',
-    flex: 1,
-    flexDirection: 'column',
-    justifyContent: 'left',
-    width: '50%'
-  },
-  progress: {
-    display: 'flex',
-    flex: 1,
-    flexDirection: 'column',
-    justifyContent: 'right',
-    alignItems: 'right',
-    width: '50%'
-  },
-  button: {
-    marginTop: theme.spacing(),
-    marginRight: theme.spacing()
-  },
-  actionsContainer: {
-    flexDirection: 'column',
-    justifyContent: 'left',
-    marginBottom: theme.spacing(2)
-  },
-  resetContainer: {
-    padding: theme.spacing(3)
-  },
-  checkSelector: {
-    maxHeight: '150px',
-    overflow: 'auto'
-  },
-  videoSelector: {
-    width: '625px'
-  },
-  hyperparametersForm: {
-    display: 'flex',
-    flexWrap: 'wrap'
-  },
-  textField: {
-    marginLeft: theme.spacing(),
-    marginRight: theme.spacing(),
-    width: 200
-  },
-  epochText: {
-    position: 'relative',
-    top: '-15px'
-  },
-  hyperParamsInput: {
-    width: '190ox',
-    marginRight: '10px'
+import './TrainModel.css'
+
+
+class ModelsForm extends Component {
+
+  render(){
+    return (
+      <FormControl component="fieldset" className={this.props.className}>
+        <InputLabel shrink>
+          Model
+        </InputLabel>
+        <Select
+          name="modelSelected"
+          value={this.props.modelSelected || 'Loading...'}
+          onChange={this.props.handleChange}
+        >
+          {this.props.models.map(model => (
+            <MenuItem 
+              key={model.name} 
+              value={model.name}
+            >
+              {model.name}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+    )
   }
-});
+}
+
+
+class CollectionsForm extends Component {
+
+  render(){
+    return (
+      <FormControl component="fieldset" className={this.props.className}>
+        <InputLabel shrink>Annotations</InputLabel>
+        <Select
+          multiple
+          name="selectedAnnotations"
+          value={this.props.annotationCollections}
+          onChange={this.props.onChange}
+          input={<Input id="select-multiple" />}
+          renderValue={selected => selected.map(collection => collection.name).join(', ') || 'Loading...'}
+        >
+          {this.props.collections.map(collection => (
+            <MenuItem 
+              key={collection.id} 
+              value={collection}
+            >
+              <Checkbox 
+                checked={this.props.annotationCollections.indexOf(collection) > -1}
+              />
+              <ListItemText>
+                {collection.name}
+                {collection.validConcepts ? (
+                  <Typography
+                    variant="subtitle2"
+                    gutterBottom
+                    color="textSecondary"
+                  >
+                    {collection.validConcepts.concepts.join(', ')}
+                  </Typography>
+                ) : (
+                  ''
+                )}
+              </ListItemText>
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+    )
+  }
+}
+
+class EpochsField extends Component {
+
+  constructor(props){
+    super(props);
+
+    this.state = {
+      epochs: undefined,
+    }
+  }
+
+  render(){
+    return (
+      <TextField
+        margin="normal"
+        className={this.props.className}
+        name="epochs"
+        label="Epochs"
+        value={this.state.epochs}
+        onChange={this.handleChange}
+      />
+    )
+  }
+}
+
+class ImagesField extends Component {
+
+  constructor(props){
+    super(props);
+
+    this.state = {
+      minImages: undefined
+    }
+  }
+
+  render(){
+    return (
+      <TextField
+        margin="normal"
+        className={this.props.className}
+        name="images"
+        label="# of Images"
+        value={this.state.minImages}
+        onChange={this.handleChange}
+      />
+    )
+  }
+}
 
 class TrainModel extends Component {
   constructor(props) {
@@ -131,6 +178,7 @@ class TrainModel extends Component {
       currentBatch: 0,
       socket
     };
+
   }
 
   // Methods for video meta data
@@ -148,8 +196,9 @@ class TrainModel extends Component {
   };
 
   componentDidMount = async () => {
-    this.loadOptionInfo();
-    this.loadExistingModels();
+    await this.loadOptionInfo();
+    await this.loadExistingModels();
+    this.loadCollectionlist();
   };
 
   loadOptionInfo = () => {
@@ -159,7 +208,7 @@ class TrainModel extends Component {
       }
     };
     const option = 'trainmodel';
-    axios
+    return axios
       .get(`/api/models/train/${option}`, config)
       .then(res => {
         const { info } = res.data[0];
@@ -186,7 +235,7 @@ class TrainModel extends Component {
         Authorization: `Bearer ${localStorage.getItem('token')}`
       }
     };
-    axios
+    return axios
       .get(`/api/models`, config)
       .then(res => {
         this.setState({
@@ -209,7 +258,7 @@ class TrainModel extends Component {
         Authorization: `Bearer ${localStorage.getItem('token')}`
       }
     };
-    axios.get(`/api/collections/annotations`, config).then(res => {
+    return axios.get(`/api/collections/annotations`, config).then(res => {
       const selectedModelTuple = models.find(model => {
         return model.name === modelSelected;
       });
@@ -222,30 +271,6 @@ class TrainModel extends Component {
     this.setState({
       [event.target.name]: event.target.value
     });
-  };
-
-  selectModel = () => {
-    const { classes } = this.props;
-    const { modelSelected, models } = this.state;
-    if (modelSelected === null) {
-      return <div>Loading...</div>;
-    }
-    return (
-      <FormControl className={classes.form}>
-        <InputLabel>Select Model</InputLabel>
-        <Select
-          name="modelSelected"
-          value={modelSelected}
-          onChange={this.handleChange}
-        >
-          {models.map(model => (
-            <MenuItem key={model.name} value={model.name}>
-              {model.name}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-    );
   };
 
   // Handle user, video, and concept checkbox selections
@@ -261,92 +286,6 @@ class TrainModel extends Component {
     });
   };
 
-  selectCollection = () => {
-    const { classes } = this.props;
-    const { annotationCollections, collections } = this.state;
-
-    const { checkSelector } = classes;
-    if (!annotationCollections) {
-      return <div>Loading...</div>;
-    }
-    return (
-      <FormControl component="fieldset" className={checkSelector}>
-        <FormLabel component="legend">
-          Select Annotation Collection to Use
-        </FormLabel>
-        <FormGroup>
-          {collections
-            .sort(a => (a.validConcepts ? -1 : 1))
-            .map(collection => (
-              <div key={collection.id}>
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      onChange={this.checkboxSelect(
-                        'annotationCollections',
-                        annotationCollections,
-                        collection.id
-                      )}
-                      color="primary"
-                      checked={annotationCollections.includes(collection.id)}
-                      disabled={collection.disable}
-                    />
-                  }
-                  label={
-                    <div>
-                      {collection.name}
-                      {collection.validConcepts ? (
-                        <Typography
-                          variant="subtitle2"
-                          gutterBottom
-                          color="secondary"
-                        >
-                          {collection.validConcepts.concepts.join(', ')}
-                        </Typography>
-                      ) : (
-                        ''
-                      )}
-                    </div>
-                  }
-                />
-              </div>
-            ))}
-        </FormGroup>
-      </FormControl>
-    );
-  };
-
-  selectHyperparameters = () => {
-    const { classes } = this.props;
-    const { epochs, minImages } = this.state;
-
-    const label = (
-      <span className={classes.epochText}>
-        Number of epochs <br />
-        (0 = Until Increased Loss)
-      </span>
-    );
-
-    return (
-      <form className={classes.hyperparametersForm}>
-        <TextField
-          margin="normal"
-          name="epochs"
-          label={label}
-          value={epochs}
-          onChange={this.handleChange}
-          className={classes.hyperParamsInput}
-        />
-        <TextField
-          margin="normal"
-          name="minImages"
-          label="Number of training images"
-          value={minImages}
-          onChange={this.handleChange}
-        />
-      </form>
-    );
-  };
 
   handleSelectAll = () => {
     const { activeStep } = this.state;
@@ -425,48 +364,30 @@ class TrainModel extends Component {
         `/api/collections/annotations/train?ids=${data.conceptsid}`,
         config
       );
-      const conceptids = dataRet.data.map(col => col.id);
-      dataRet = dataRet.data;
-      const filteredCol = collections;
-      filteredCol.forEach(col => {
-        if (!conceptids.includes(col.id)) {
-          col.disable = true;
-        } else {
-          col.disable = false;
-          col.validConcepts = dataRet.find(col1 => {
-            return col1.id === col.id;
-          });
+
+      const conceptIds = dataRet.data.map(col => col.id);
+
+      const filteredCollections = collections.filter(
+        collection => {
+          const validConcepts = dataRet.data.find(
+            col => col.id === collection.id
+          );
+          collection.validConcepts = validConcepts;
+          return conceptIds.includes(collection.id);
         }
-      });
+      );
+
+      const selectedCollections = this.state.annotationCollections.map(
+        id => filteredCollections.find(col => col.id === id)
+      )
+
       await this.setState({
-        collections: filteredCol
+        annotationCollections: selectedCollections,
+        collections: filteredCollections,
       });
     } catch (error) {
       console.log(error);
     }
-  };
-
-  handleNext = async () => {
-    const { activeStep } = this.state;
-    // After users have been selected load user videos
-    if (activeStep === 0) {
-      this.loadCollectionlist();
-    }
-    // After Model and videos have been selected load available concepts
-    // if (this.state.activeStep === 2) {
-    //   await this.loadConceptList();
-    // }
-    this.setState(
-      state => ({
-        activeStep: state.activeStep + 1
-      }),
-      () => {
-        if (activeStep === 3) {
-          this.postModelInstance('start');
-        }
-        this.updateBackendInfo();
-      }
-    );
   };
 
   handleStop = () => {
@@ -496,107 +417,58 @@ class TrainModel extends Component {
     });
   };
 
+  handleChangeMultiple = event => {
+    const options = event.target.value;
+    const value = [];
+    for (let i = 0, l = options.length; i < l; i += 1) {
+      value.push(options[i]);
+    }
+    this.setState({
+      annotationCollections: value
+    });
+  }
+
   render() {
-    const { classes, socket, loadVideos } = this.props;
-    const {
-      annotationCollections,
-      modelSelected,
-      activeStep,
-      openedVideo
-    } = this.state;
 
     return (
-      <div className={classes.root}>
+      <div className='root'>
         <Paper square>
-          <div className={classes.container}>
-            <div className={classes.actionsContainer}>
-              <FormControl className={classes.form}>
-                <InputLabel>Select Model</InputLabel>
-                <Select
-                  name="modelSelected"
-                  value={modelSelected}
-                  onChange={this.handleChange}
-                >
-                  {this.state.models.map(model => (
-                    <MenuItem key={model.name} value={model.name}>
-                      {model.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              <FormControl component="fieldset" className={classes.checkSelector}>
-                <FormLabel component="legend">
-                  Select Annotation Collection to Use
-                </FormLabel>
-                <FormGroup>
-                  {this.state.collections
-                    .map(collection => (
-                      <div key={collection.id}>
-                        <FormControlLabel
-                          control={
-                            <Checkbox
-                              onChange={this.checkboxSelect(
-                                'annotationCollections',
-                                annotationCollections,
-                                collection.id
-                              )}
-                              color="primary"
-                              checked={annotationCollections.includes(collection.id)}
-                              disabled={collection.disable}
-                            />
-                          }
-                          label={
-                          <div>
-                            {collection.name}
-                            {collection.validConcepts ? (
-                              <Typography
-                                variant="subtitle2"
-                                gutterBottom
-                                color="secondary"
-                              >
-                                {collection.validConcepts.concepts.join(', ')}
-                              </Typography>
-                            ) : (
-                              ''
-                            )}
-                          </div>}
-                        />
-                      </div>
-                    ))}
-                </FormGroup>
-              </FormControl>
-              <form className={classes.hyperparametersForm}>
-                <TextField
-                  margin="normal"
-                  name="epochs"
-                  label="Choose the number of epochs"
-                  value={this.state.epochs}
-                  onChange={this.handleChange}
-                  className={classes.hyperParamsInput}
-                />
-                <TextField
-                  margin="normal"
-                  name="minImages"
-                  label="Number of training images"
-                  value={this.state.minImages}
-                  onChange={this.handleChange}
-                />
-              </form>
+          <div className='container'>
+            <div className='actionsContainer'>
+              <ModelsForm 
+                className='modelsForm'
+                modelSelected={this.state.modelSelected}
+                handleChange={this.handleChange}
+                models={this.state.models}
+              />
+              <CollectionsForm
+                className='collectionsForm'
+                collections={this.state.collections}
+                annotationCollections={this.state.annotationCollections}
+                checkboxSelect={this.checkboxSelect}
+                onChange={this.handleChangeMultiple}
+              />
+              <EpochsField 
+                className='epochsField'
+              />
+              <ImagesField 
+                className='imagesField'
+              />
             </div>
+            <Divider style={{marginTop: '30px'}} variant="middle" />
             <ModelProgress
-              className={classes.progress}
-              activeStep={activeStep}
+              className='progress'
               handleStop={this.handleStop}
             />
           </div>
         </Paper>
-        {openedVideo && (
+        {this.state.openedVideo && (
           <VideoMetadata
             open
             handleClose={this.closeVideoMetadata}
-            openedVideo={openedVideo}
-            socket={socket}
-            loadVideos={loadVideos}
+            openedVideo={this.state.openedVideo}
+            socket={this.props.socket}
+            loadVideos={this.props.loadVideos}
             modelTab
           />
         )}
@@ -605,4 +477,4 @@ class TrainModel extends Component {
   }
 }
 
-export default withStyles(styles)(TrainModel);
+export default TrainModel;

@@ -1,0 +1,43 @@
+
+.root {
+  margin: 40px auto;
+  width: 750px;
+}
+
+.center {
+  display: flex;
+  flexDirection: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.container {
+  display: flex;
+  padding: 20px;
+  flex-direction: column;
+}
+
+.actionsContainer {
+  display: flex;
+  justify-content: space-between;
+}
+
+.actionsContainer > * {
+  margin: 0 auto !important;
+}
+
+.modelsForm > div {
+  width: 160px;
+}
+
+.collectionsForm {
+  width: 280px;
+}
+
+.epochsField {
+  max-width: 60px;
+}
+
+.imagesField {
+  max-width: 100px;
+}
