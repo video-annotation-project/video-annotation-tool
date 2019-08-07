@@ -80,10 +80,16 @@ class Navbar extends React.Component {
             </Button> */}
             {localStorage.getItem('isAuthed') ? (
               <React.Fragment>
-                <Button color="inherit" component={Link} to="/concepts">
-                  Select Concepts
+                <Button
+                  id="navbar-concepts"
+                  color="inherit"
+                  component={Link}
+                  to="/concepts"
+                >
+                  Concepts
                 </Button>
                 <GeneralMenu
+                  id="navbar-collections"
                   name="Collections"
                   Link={Link}
                   items={[
@@ -93,19 +99,34 @@ class Navbar extends React.Component {
                   ]}
                 />
                 <GeneralMenu
+                  buttonid="navbar-annotate"
                   name="Annotate"
                   Link={Link}
                   items={[
-                    { name: 'Videos', link: '/annotate/videos' },
-                    { name: 'Verify', link: '/annotate/verify' }
+                    {
+                      id: 'navbar-annotate-videos',
+                      name: 'Videos',
+                      link: '/annotate/videos'
+                    },
+                    {
+                      id: 'navbar-annotate-verify',
+                      name: 'Verify',
+                      link: '/annotate/verify'
+                    }
                   ]}
                 />
-                <Button color="inherit" component={Link} to="/report">
+                <Button
+                  id="navbar-report"
+                  color="inherit"
+                  component={Link}
+                  to="/report"
+                >
                   Report
                 </Button>
                 {localStorage.getItem('admin') ? (
                   <React.Fragment>
                     <GeneralMenu
+                      id="navbar-models"
                       name="Models"
                       Link={Link}
                       items={[
@@ -127,8 +148,17 @@ class Navbar extends React.Component {
                 ) : (
                   ''
                 )}
-                <GeneralMenu name="Account" Link={Link} items={accountItems} />
-                <Button color="inherit" onClick={this.handleLogout}>
+                <GeneralMenu
+                  id="navbar-account"
+                  name="Account"
+                  Link={Link}
+                  items={accountItems}
+                />
+                <Button
+                  id="navbar-logout"
+                  color="inherit"
+                  onClick={this.handleLogout}
+                >
                   Logout
                 </Button>
               </React.Fragment>
