@@ -1,10 +1,12 @@
+let password = '123';
+
 Cypress.Commands.add('login', () => {
   cy.request({
     method: 'POST',
     url: 'http://localhost:3000/api/users/login',
     body: {
       username: 'kls',
-      password: '123'
+      password
     },
     headers: { 'Content-Type': 'application/json' }
   }).then(res => {
@@ -24,20 +26,12 @@ beforeEach(() => {
 });
 
 describe('Account', () => {
-  it('Login', () => {
-    cy.visit('/');
-    // cy.get('#navbar-login').click();
-    // cy.get('#username').type('kls');
-    // cy.get('#password').type('123');
-    // cy.get('#login').click();
-
+  it('Go to Account', () => {
     Cypress.env('cookies').forEach(cookie => {
       cy.setCookie(cookie.name, cookie.value, cookie.options);
     });
-  });
-
-  it('Go to Account', () => {
     expect(localStorage.getItem('username')).to.eq('kls');
+    cy.visit('/');
     cy.get('#navbar-account').click();
     cy.get('#navbar-profile').click();
     cy.get('form')
@@ -45,22 +39,26 @@ describe('Account', () => {
       .should('be.visible');
   });
 
-  // it('new pw test', () => {
-  //   cy.get('#current-pw').type('123');
-  //   cy.get('#new-pw1').type('456');
-  //   cy.get('#new-pw2').type('456');
-  //   cy.get('#form-submit').click();
-  // });
+  it('new pw test', () => {
+    cy.get('#current-pw').type(password);
+    cy.get('#new-pw1').type('456');
+    cy.get('#new-pw2').type('456');
+    cy.get('#form-submit').click();
+    // eslint-disable-next-line cypress/no-unnecessary-waiting
+    cy.wait(4000);
+    password = '456';
+  });
 
-  //   it('change back to old pw', () => {
-  //     cy.get('#current-pw').type('123');
-  //     cy.get('#new-pw1').type(Cypress.env('password'));
-  //     cy.get('#new-pw2').type(Cypress.env('password'));
-  //     cy.get('#form-submit').click();
-  //   });
-
-  it('Logout', () => {
-    cy.get('#navbar-logout').click();
-    cy.contains('Login').should('be.visible');
+  it('back to old pw', () => {
+    cy.visit('/');
+    cy.get('#navbar-account').click();
+    cy.get('#navbar-profile').click();
+    cy.get('form')
+      .contains('Submit')
+      .should('be.visible');
+    cy.get('#current-pw').type(password);
+    cy.get('#new-pw1').type('123');
+    cy.get('#new-pw2').type('123');
+    cy.get('#form-submit').click();
   });
 });
