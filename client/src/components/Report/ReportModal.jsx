@@ -86,6 +86,7 @@ class ReportModal extends Component {
       <FormControl className={classes.formControl}>
         <InputLabel>{levelName}</InputLabel>
         <Select
+          id={levelName.replace(' ', '-')}
           native
           value={levelValue}
           onChange={event => this.handleOptionChange(stateName, event)}
@@ -177,7 +178,11 @@ class ReportModal extends Component {
             <Button onClick={handleReportModalCancel} color="primary">
               Cancel
             </Button>
-            <Button onClick={handleReportModalOk} color="primary">
+            <Button
+              id="ok-button"
+              onClick={handleReportModalOk}
+              color="primary"
+            >
               Ok
             </Button>
           </DialogActions>

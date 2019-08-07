@@ -23,3 +23,24 @@
 //
 // -- This is will overwrite an existing command --
 // Cypress.Commands.overwrite("visit", (originalFn, url, options) => { ... })
+
+Cypress.Commands.add('login', () => {
+  cy.request({
+    method: 'POST',
+    url: 'http://localhost:3000/api/users/login',
+    body: {
+      username: 'test123',
+      password: '123'
+    },
+    headers: { 'Content-Type': 'application/json' }
+  }).then(res => {
+    window.localStorage.setItem('isAuthed', 'true');
+    window.localStorage.setItem('userid', res.body.userid);
+    window.localStorage.setItem('username', 'test123');
+    window.localStorage.setItem('token', res.body.token);
+    // Add code for isAdmin
+    if (res.body.isAdmin) {
+      window.localStorage.setItem('admin', res.body.isAdmin);
+    }
+  });
+});
