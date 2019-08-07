@@ -151,7 +151,7 @@ class AnnotationGenerator(object):
         concept_count = {}
 
         annotations = AnnotationGenerator._get_annotations(
-            collection_ids, verified_only, include_tracking, verify_videos)
+            collection_ids, verified_only, include_tracking, verify_videos, concepts)
 
         for concept in concepts:
             concept_count[concept] = 0
@@ -204,11 +204,11 @@ class AnnotationGenerator(object):
         return selected, concept_count
 
     @staticmethod
-    def _get_annotations(collection_ids, verified_only, include_tracking, verify_videos):
+    def _get_annotations(collection_ids, verified_only, include_tracking, verify_videos, concepts):
         # Query that gets all annotations for given concepts (and child concepts)
         # making sure that any tracking annotations originated from good users
         annotations_query = r'''
-            SELECT
+            WITH collection AS (SELECT
                 A.id,
                 image,
                 userid,
@@ -232,8 +232,29 @@ class AnnotationGenerator(object):
 
         if not include_tracking:
             annotations_query += r''' AND a.id = a.originalId'''
+        annotations_query += r'''
+            )
+            SELECT 
+                A.id,
+                image,
+                userid,
+                videoid,
+                videowidth,
+                videoheight,
+                conceptid,
+                x1, x2, y1, y2,
+                speed,
+                priority,
+                ROUND(fps * timeinvideo) as frame_num
+            FROM
+                annotations a
+            LEFT JOIN
+                videos ON videos.id=videoid
+            WHERE ROUND(fps * timeinvideo) IN (SELECT c.frame_num FROM collection c WHERE c.videoid=a.videoid)
+            AND a.conceptid = ANY(%s);
+        '''
 
-        return pd_query(annotations_query, (collection_ids, verify_videos, ))
+        return pd_query(annotations_query, (collection_ids, verify_videos, concepts, ))
 
 
 class S3Generator(Generator):
