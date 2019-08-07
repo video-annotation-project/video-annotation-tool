@@ -74,6 +74,7 @@ class Login extends Component {
         <br />
         <form onSubmit={this.handleSubmit}>
           <TextField
+            id="username"
             name="username"
             label="User Name"
             type="text"
@@ -84,6 +85,7 @@ class Login extends Component {
           />
           <br />
           <TextField
+            id="password"
             name="password"
             label="Password"
             type="password"
@@ -94,7 +96,7 @@ class Login extends Component {
           />
           <br />
           <br />
-          <Button type="submit" variant="contained" color="primary">
+          <Button id="login" type="submit" variant="contained" color="primary">
             Login
           </Button>
         </form>
