@@ -58,7 +58,9 @@ class Navbar extends React.Component {
 
   render() {
     const { classes, location } = this.props;
-    const accountItems = [{ name: 'Profile', link: '/account/profile' }];
+    const accountItems = [
+      { id: 'navbar-profile', name: 'Profile', link: '/account/profile' }
+    ];
     if (localStorage.getItem('admin')) {
       accountItems.push({ name: 'Create User', link: '/account/create' });
       accountItems.push({ name: 'Users', link: '/users' });
@@ -149,7 +151,7 @@ class Navbar extends React.Component {
                   ''
                 )}
                 <GeneralMenu
-                  id="navbar-account"
+                  buttonid="navbar-account"
                   name="Account"
                   Link={Link}
                   items={accountItems}
