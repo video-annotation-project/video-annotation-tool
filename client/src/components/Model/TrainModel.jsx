@@ -11,7 +11,6 @@ import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
 import FormGroup from '@material-ui/core/FormGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
-import FormLabel from '@material-ui/core/FormLabel';
 import Checkbox from '@material-ui/core/Checkbox';
 import Typography from '@material-ui/core/Typography';
 import ListItemText from '@material-ui/core/ListItemText';
@@ -19,6 +18,7 @@ import Divider from '@material-ui/core/Divider';
 
 import ModelProgress from './ModelProgress';
 import VideoMetadata from '../Utilities/VideoMetadata';
+import CollectionInfo from '../Utilities/CollectionInfo';
 
 import './TrainModel.css'
 
@@ -49,7 +49,6 @@ class ModelsForm extends Component {
     )
   }
 }
-
 
 class CollectionsForm extends Component {
 
@@ -170,16 +169,42 @@ class TrainModel extends Component {
       modelSelected: null,
       collections: [],
       annotationCollections: [],
+      selectedCollectionCounts: [
+        { count: 0 },
+        { count: 0 },
+        { count: 0 },
+        { count: 0 }
+      ],
       minImages: 5000,
       epochs: 0,
+      includeTracking: false,
+      verifiedOnly: false,
+      infoDialogOpen: false,
       activeStep: 0,
       openedVideo: null,
-      currentEpoch: 0,
-      currentBatch: 0,
-      socket
+      socket,
+      countsLoaded: false
     };
 
   }
+
+  componentDidMount = async () => {
+    this.loadOptionInfo();
+    this.loadExistingModels();
+  };
+
+  // Used to handle changes in the hyperparameters and in the select model
+  handleChange = event => {
+    this.setState({
+      [event.target.name]: event.target.value
+    });
+  };
+
+  handleChangeSwitch = event => {
+    this.setState({
+      [event.target.value]: event.target.checked
+    });
+  };
 
   // Methods for video meta data
   openVideoMetadata = (event, video) => {
@@ -214,7 +239,6 @@ class TrainModel extends Component {
         const { info } = res.data[0];
         this.setState({
           activeStep: info.activeStep,
-          annotationCollections: info.annotationCollections,
           modelSelected: info.modelSelected,
           minImages: info.minImages,
           epochs: info.epochs
@@ -251,26 +275,60 @@ class TrainModel extends Component {
       });
   };
 
-  loadCollectionlist = () => {
-    const { models, modelSelected } = this.state;
+  loadCollectionList = () => {
+    const { models, modelSelected, annotationCollections } = this.state;
+    const localSelected = annotationCollections;
     const config = {
       headers: {
         Authorization: `Bearer ${localStorage.getItem('token')}`
       }
     };
+
     return axios.get(`/api/collections/annotations`, config).then(res => {
       const selectedModelTuple = models.find(model => {
         return model.name === modelSelected;
       });
-      this.filterCollection(selectedModelTuple, res.data);
+      const modelConcepts = selectedModelTuple.conceptsid;
+      res.data.forEach(col => {
+        const filtered = modelConcepts.filter(x => col.ids.includes(x));
+        if (filtered.length > 0) {
+          col.disable = false;
+          col.validConcepts = col.concepts.filter(y => filtered.includes(y.f2));
+        } else {
+          const indexOfThis = localSelected.indexOf(col.id);
+          if (indexOfThis > -1) {
+            localSelected.splice(indexOfThis, 1);
+          }
+          col.disable = true;
+        }
+      });
+      this.setState({
+        collections: res.data.sort(a => (a.validConcepts ? -1 : 1)),
+        annotationCollections: localSelected
+      });
+      // this.filterCollection(selectedModelTuple, res.data);
     });
   };
 
-  // Used to handle changes in the hyperparameters and in the select model
-  handleChange = event => {
-    this.setState({
-      [event.target.name]: event.target.value
-    });
+  getSteps = () => {
+    return [
+      'Select model',
+      'Select annotation collection',
+      'Select hyperparameters'
+    ];
+  };
+
+  getStepContent = step => {
+    switch (step) {
+      case 0:
+        return this.selectModel();
+      case 1:
+        return this.selectCollection();
+      case 2:
+        return this.selectHyperparameters();
+      default:
+        return 'Unknown step';
+    }
   };
 
   // Handle user, video, and concept checkbox selections
@@ -285,7 +343,6 @@ class TrainModel extends Component {
       [stateName]: deepCopy
     });
   };
-
 
   handleSelectAll = () => {
     const { activeStep } = this.state;
@@ -316,49 +373,28 @@ class TrainModel extends Component {
     });
   };
 
-  updateBackendInfo = () => {
+  getSelectedCount = () => {
     const {
-      activeStep,
-      modelSelected,
-      annotationCollections,
-      epochs,
-      minImages,
-      socket
+      selectedCollectionCounts,
+      includeTracking,
+      verifiedOnly
     } = this.state;
-
-    const config = {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`
+    if (verifiedOnly) {
+      let count = parseInt(selectedCollectionCounts[2].count, 10);
+      if (includeTracking) {
+        count += parseInt(selectedCollectionCounts[3].count, 10);
       }
-    };
-    const info = {
-      activeStep,
-      modelSelected,
-      annotationCollections,
-      epochs,
-      minImages
-    };
-    const body = {
-      info: JSON.stringify(info)
-    };
-    // update SQL database
-    axios
-      .put('/api/models/train/trainmodel/', body, config)
-      .then(() => {
-        socket.emit('refresh trainmodel');
-      })
-      .catch(error => {
-        console.log(error);
-        console.log(JSON.parse(JSON.stringify(error)));
-      });
+      return count;
+    }
+    let count = parseInt(selectedCollectionCounts[0].count, 10);
+    if (includeTracking) {
+      count += parseInt(selectedCollectionCounts[1].count, 10);
+    }
+    return count;
   };
 
-  filterCollection = async (data, collections) => {
-    const config = {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    };
+  getCollectionCounts = async () => {
+    const { annotationCollections } = this.state;
     try {
       let dataRet = await axios.get(
         `/api/collections/annotations/train?ids=${data.conceptsid}`,

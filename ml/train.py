@@ -34,13 +34,15 @@ def train_model(concepts,
                 collection_ids,
                 min_examples,
                 epochs,
-                download_data=True):
+                download_data=True,
+                verified_only=False,
+                include_tracking=True):
     """ Trains the model, uploads its weights, and determines best
         confidence thresholds for predicting
     """
 
     # Generate a random unique ID for this training job
-    job_id = uuid.uuid4()
+    job_id = uuid.uuid4().hex
 
     model, training_model = _initilize_model(len(concepts))
 
@@ -58,6 +60,8 @@ def train_model(concepts,
 
     annotation_generator = AnnotationGenerator(
         collection_ids=collection_ids,
+        verified_only=verified_only,
+        include_tracking=include_tracking,
         min_examples=min_examples,
         classes=concepts
     )
@@ -109,9 +113,11 @@ def _initilize_model(num_classes):
     # multi_gpu model to save gpu memory
     with tf.device('/cpu:0'):
         model = models.backbone('resnet50').retinanet(num_classes=num_classes)
-        model.load_weights(config.WEIGHTS_PATH, by_name=True, skip_mismatch=True)
+        model.load_weights(config.WEIGHTS_PATH,
+                           by_name=True, skip_mismatch=True)
 
-    gpus = len([i for i in device_lib.list_local_devices() if i.device_type == 'GPU'])
+    gpus = len([i for i in device_lib.list_local_devices()
+                if i.device_type == 'GPU'])
 
     if gpus > 1:
         return model, multi_gpu_model(model, gpus=gpus)
@@ -157,11 +163,12 @@ def _get_callbacks(model,
 
     # Every batch and epoch update a database table with the current progress
     progress_callback = Progress(
+        job_id=job_id,
         steps_per_epoch=steps_per_epoch,
         num_epochs=epochs
     )
 
-    return stopping, checkpoint, progress_callback, log_callback, tensorboard_callback
+    return [stopping, checkpoint, progress_callback, log_callback, tensorboard_callback]
 
 
 def _upload_weights(model_name):

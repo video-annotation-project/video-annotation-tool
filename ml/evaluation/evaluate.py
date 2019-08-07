@@ -28,6 +28,6 @@ def evaluate_class_thresholds(model, generator):
 if __name__ == '__main__':
     min_examples = 1000
     concepts = [1629, 1210, 236, 383, 1133]
-    model_path = 'current_weights.h5'
+    model_path = config.WEIGHTS_PATH
 
     evaluate_class_thresholds(concepts, model_path, min_examples, download_data=False)

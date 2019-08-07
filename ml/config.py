@@ -16,7 +16,12 @@ config_file.close()
 WEIGHTS_PATH = config['weights_path']
 DEFAULT_WEIGHTS_PATH = config['default_weights']
 
+# Other folders
+IMAGE_FOLDER = config['image_folder']
 TEST_EXAMPLES = config['test_examples']
+
+# Batch size to train with
+BATCH_SIZE = config['batch_size']
 
 # AWS keys
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")

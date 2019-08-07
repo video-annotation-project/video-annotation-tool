@@ -20,9 +20,12 @@ class DatabaseOutput(TextIOWrapper):
         else:
             raise ValueError('output must either be "out" or "err"')
 
-        query(f'UPDATE training_progress SET std_{self.out} = std_{self.out} || %s WHERE id=%s',
+        query(f'UPDATE training_progress SET std_{self.out} = std_{self.out} || %s WHERE job_id=%s',
               (output, self.id))
 
     def flush(self):
         # Flush must exist, but its a no-op for us
         pass
+
+    def isatty(self):
+        return True

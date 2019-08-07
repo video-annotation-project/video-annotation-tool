@@ -6,10 +6,11 @@ import config
 
 class Progress(keras.callbacks.Callback):
 
-    def __init__(self, steps_per_epoch, num_epochs):
+    def __init__(self, job_id, steps_per_epoch, num_epochs):
 
         self.steps_per_epoch = steps_per_epoch
         self.max_epoch = num_epochs
+        self.job_id = job_id
         self.curr_epoch = 0
 
         self.table_name = 'training_progress'
@@ -27,10 +28,10 @@ class Progress(keras.callbacks.Callback):
     def on_train_begin(self, logs={}):
         self.cursor.execute(
             f"""INSERT INTO {self.table_name}
-                    (running, curr_epoch, max_epoch, curr_batch, steps_per_epoch)
+                    (job_id, running, curr_epoch, max_epoch, curr_batch, steps_per_epoch)
                 VALUES
-                    (TRUE, 0, %s, 0, %s) RETURNING id""",
-            (self.max_epoch, self.steps_per_epoch))
+                    (%s, TRUE, 0, %s, 0, %s) RETURNING id""",
+            (self.job_id, self.max_epoch, self.steps_per_epoch))
 
         self.run_id = self.cursor.fetchone()[0]
         self.connection.commit()

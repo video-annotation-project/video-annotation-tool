@@ -433,10 +433,11 @@ router.get(
       WHERE TRUE
     `;
 
+    let concater = '';
     if (verifiedOnly === '1') {
-      queryText += ` AND a.verifiedby IS NOT NULL`;
+      concater = ` AND a.verifiedby IS NOT NULL`;
     } else if (verifiedOnly === '-1') {
-      queryText += ` AND a.verifiedby IS NULL`;
+      concater += ` AND a.verifiedby IS NULL`;
     }
 
     if (selectedUsers) {
@@ -458,11 +459,10 @@ router.get(
     else if (selectedUnsure === 'not true') queryText += ` AND NOT unsure`;
 
     if (selectedTrackingFirst === 'true') {
-      queryText += ` AND a.verifiedby IS NOT NULL AND a.tracking_flag IS NULL`;
+      queryText += ` AND a.verifiedby IS NULL AND a.tracking_flag IS NULL`;
     } else {
-      queryText += ` AND a.verifiedby IS NULL`;
+      queryText += concater;
     }
-
     queryText += orderBy;
 
     try {

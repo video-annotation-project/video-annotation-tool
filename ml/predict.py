@@ -1,5 +1,9 @@
 import copy
 import os
+<< << << < HEAD
+== == == =
+import subprocess
+>>>>>> > 7a6316529866a2d3c5001046a2bebbedfd52a3d5
 import json
 
 import cv2
@@ -135,7 +139,9 @@ def resize(row):
     return row
 
 
-def predict_on_video(videoid, model_weights, concepts, filename, upload_annotations=False, userid=None):
+def predict_on_video(videoid, model_weights, concepts, filename,
+                     upload_annotations=False, userid=None):
+
     # Connect to db
     con = psycopg2.connect(
         database=DB_NAME,
@@ -157,6 +163,9 @@ def predict_on_video(videoid, model_weights, concepts, filename, upload_annotati
     original_frames = copy.deepcopy(frames)
 
     # Get biologist annotations for video
+
+    printing_with_time("Before database query")
+
     annotations = queryDB(
         f'''
         SELECT
@@ -172,22 +181,21 @@ def predict_on_video(videoid, model_weights, concepts, filename, upload_annotati
           videoid={videoid} AND
           userid in {str(tuple(good_users))} AND
           conceptid in {str(tuple(concepts))}''')
+    printing_with_time("After database query")
 
-    print("Resizing annotations.")
+    printing_with_time("Resizing annotations.")
     annotations = annotations.apply(resize, axis=1)
     annotations = annotations.drop(['videowidth', 'videoheight'], axis=1)
-    print("Done resizing annotations.")
+    printing_with_time("Done resizing annotations.")
 
     print("Initializing Model")
     model = init_model(model_weights)
 
-    print("Predicting")
+    printing_with_time("Predicting")
     results, frames = predict_frames(frames, fps, model, videoid, con)
     results = propagate_conceptids(results, concepts)
     results = length_limit_objects(results, MIN_FRAMES_THRESH)
-
-    # Interweb human annotations and predictions
-    print("Generating Video")
+    printing_with_time("Generating Video")  # interweb human annotations and predictions
 
     generate_video(
         filename, copy.deepcopy(original_frames),
@@ -426,6 +434,8 @@ def generate_video(filename, frames, fps, results,
     results.frame_num = results.frame_num.astype('int')
     classmap = get_classmap(concepts)
 
+    # make a dictionary mapping conceptid to count (init 0)
+    conceptsCounts = {concept: 0 for concept in concepts}
     total_length = len(results)
     one_percent_length = int(total_length / 100)
     for pred_index, res in enumerate(results.itertuples()):
@@ -539,6 +549,21 @@ def upload_annotation(
             x2, y2, videowidth, videoheight, datetime.datetime.now().date(), no_box, box
         )
     )
+
+
+# post frame_num to predict_progress psql
+'''
+For updating the predict_progress psql database, which tracks prediction and 
+video generation status.
+
+Arguments:
+count - frame of video (or index of annotation) being processed
+videoid - video being processed
+con - sql connection
+total_count - total number of frames in the video 
+    (or number of predictions + annotations)
+status - Indicates whether processing video or drawing annotation boxes
+'''
 
 
 def upload_predict_progress(count, videoid, con, total_count, status):

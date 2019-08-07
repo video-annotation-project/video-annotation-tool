@@ -13,7 +13,7 @@ def timer(task_name):
             end_time = time.perf_counter()
             run_time = end_time - start_time
 
-            print(f"Finished {task_name} in {run_time:.4f / 60} minutes")
+            print(f"Finished {task_name} in {run_time / 60:.4f} minutes")
             return value
         return wrapper
     return decorator
