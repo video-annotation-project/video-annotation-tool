@@ -19,6 +19,13 @@ describe('Annotate', () => {
     cy.wait('@getVideos');
   });
 
+  it('Draw box', () => {
+    cy.get('#video')
+      .trigger('mousedown', { clientX: 100, clientY: 100 })
+      .trigger('mousemove', { clientX: 200, clientY: 200 })
+      .trigger('mouseup');
+  });
+
   it('Logout', () => {
     cy.get('#navbar-logout').click();
     cy.contains('Login').should('be.visible');
