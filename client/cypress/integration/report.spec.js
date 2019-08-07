@@ -12,6 +12,8 @@ describe('Report', () => {
       .should('be.visible');
     cy.get('#selector-button').click();
   });
+
+  it('Configure selector', () => {
     cy.get('#Level-1').select('Video');
     cy.get('#Level-2').select('Concept');
     cy.get('#ok-button').click();
