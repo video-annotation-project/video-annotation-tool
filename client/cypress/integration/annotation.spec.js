@@ -5,6 +5,10 @@ describe('The Home Page', () => {
     cy.get('#username').type(Cypress.env('username'));
     cy.get('#password').type(Cypress.env('password'), { log: false });
     cy.get('#login').click();
+
+    Cypress.env('cookies').forEach(cookie => {
+      cy.setCookie(cookie.name, cookie.value, cookie.options);
+    });
   });
 
   it('Annotate Tab', () => {
