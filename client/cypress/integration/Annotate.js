@@ -1,4 +1,4 @@
-describe('The Home Page', () => {
+describe('Annotate', () => {
   it('Login', () => {
     cy.visit('/');
     cy.get('#navbar-login').click();
@@ -11,8 +11,16 @@ describe('The Home Page', () => {
     });
   });
 
-  it('Annotate Tab', () => {
+  it('Go to Annotate Tab', () => {
+    cy.server();
+    cy.route('GET', '/api/videos').as('getVideos');
     cy.get('#navbar-annotate').click();
     cy.get('#navbar-annotate-videos').click();
+    cy.wait('@getVideos');
+  });
+
+  it('Logout', () => {
+    cy.get('#navbar-logout').click();
+    cy.contains('Login').should('be.visible');
   });
 });

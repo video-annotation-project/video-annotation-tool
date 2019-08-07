@@ -1,4 +1,4 @@
-describe('LoginLogout', () => {
+describe('Login', () => {
   it('Login', () => {
     cy.visit('/');
     cy.get('#navbar-login').click();
