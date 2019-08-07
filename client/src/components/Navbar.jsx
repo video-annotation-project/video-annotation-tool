@@ -133,7 +133,12 @@ class Navbar extends React.Component {
                 </Button>
               </React.Fragment>
             ) : (
-              <Button color="inherit" component={Link} to="/login">
+              <Button
+                id="navbar-login"
+                color="inherit"
+                component={Link}
+                to="/login"
+              >
                 Login
               </Button>
             )}
