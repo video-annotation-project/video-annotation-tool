@@ -251,8 +251,16 @@ class AnnotationGenerator(object):
                 annotations a
             LEFT JOIN
                 videos ON videos.id=videoid
-            WHERE ROUND(fps * timeinvideo) IN (SELECT c.frame_num FROM collection c WHERE c.videoid=a.videoid)
-            AND a.conceptid = ANY(%s);
+            WHERE 
+                EXISTS (
+                    SELECT
+                        1 
+                    FROM
+                        collection c 
+                    WHERE
+                        c.videoid=a.videoid 
+                        AND c.frame_num=ROUND(fps * timeinvideo))
+                AND a.conceptid = ANY(%s);
         '''
 
         return pd_query(annotations_query, (collection_ids, verify_videos, concepts, ))
