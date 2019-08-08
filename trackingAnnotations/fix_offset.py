@@ -143,5 +143,5 @@ if __name__ == "__main__":
         '''
     )
     with Pool() as p:
-        p.map(fix_offset, map(lambda x: (x.videoid, x.timeinvideo,
-                                         x.image, x.id), cursor.fetchall()))
+        p.starmap(fix_offset, map(lambda x: (x.videoid, x.timeinvideo,
+                                             x.image, x.id), cursor.fetchall()))
