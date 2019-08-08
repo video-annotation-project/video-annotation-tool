@@ -86,10 +86,10 @@ class SearchModal extends Component {
           </DialogTitle>
           <DialogContent>
             <input
+              id="search-concepts"
               onKeyUp={this.handleKeyUp}
               autoFocus
               margin="dense"
-              id="concept"
               type="text"
               placeholder="Search Concepts"
               list="data"

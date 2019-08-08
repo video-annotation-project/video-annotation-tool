@@ -20,7 +20,7 @@ const styles = () => ({
   retractDrawerButton: {
     position: 'absolute',
     left: 0,
-    margin: '10px'
+    margin: '5px'
   },
   addConceptButton: {
     margin: '15px 0px 15px 0px'
@@ -260,6 +260,7 @@ class ConceptsSelected extends React.Component {
             <ChevronRight />
           </IconButton>
           <Button
+            id="concepts-add"
             className={classes.addConceptButton}
             variant="contained"
             color="primary"
@@ -272,6 +273,7 @@ class ConceptsSelected extends React.Component {
             {conceptsSelected.map((concept, index) => (
               // eslint-disable-next-line jsx-a11y/interactive-supports-focus
               <div
+                id={concept.name}
                 key={concept.id}
                 role="button"
                 className={classes.concept}
@@ -308,6 +310,7 @@ class ConceptsSelected extends React.Component {
     return (
       <div className={classes.root}>
         <Button
+          id="concepts-selected"
           className={classes.extendDrawerButton}
           variant="contained"
           color="primary"
