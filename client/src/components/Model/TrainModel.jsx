@@ -292,30 +292,34 @@ class TrainModel extends Component {
         Authorization: `Bearer ${localStorage.getItem('token')}`
       }
     };
-    axios.get(`/api/collections/annotations?train=true`, config).then(res => {
-      const selectedModelTuple = models.find(model => {
-        return model.name === modelSelected;
-      });
-      const modelConcepts = selectedModelTuple.conceptsid;
-      res.data.forEach(col => {
-        const filtered = modelConcepts.filter(x => col.ids.includes(x));
-        if (filtered.length > 0) {
-          col.disable = false;
-          col.validConcepts = col.concepts.filter(y => filtered.includes(y.f2));
-        } else {
-          const indexOfThis = localSelected.indexOf(col.id);
-          if (indexOfThis > -1) {
-            localSelected.splice(indexOfThis, 1);
-          }
-          col.disable = true;
-        }
-      });
-      this.setState({
-        collections: res.data.sort(a => (a.validConcepts ? -1 : 1)),
-        annotationCollections: localSelected
-      });
-      // this.filterCollection(selectedModelTuple, res.data);
+    const selectedModelTuple = models.find(model => {
+      return model.name === modelSelected;
     });
+    const modelConcepts = selectedModelTuple.conceptsid;
+    axios
+      .get(`/api/collections/annotations?train=${modelConcepts}`, config)
+      .then(res => {
+        // res.data.forEach(col => {
+        //   const filtered = modelConcepts.filter(x => col.ids.includes(x));
+        //   if (filtered.length > 0) {
+        //     col.disable = false;
+        //     col.validConcepts = col.concepts.filter(y =>
+        //       filtered.includes(y.f2)
+        //     );
+        //   } else {
+        //     const indexOfThis = localSelected.indexOf(col.id);
+        //     if (indexOfThis > -1) {
+        //       localSelected.splice(indexOfThis, 1);
+        //     }
+        //     col.disable = true;
+        //   }
+        // });
+        this.setState({
+          collections: res.data.sort(a => (a.validConcepts ? -1 : 1)),
+          annotationCollections: localSelected
+        });
+        // this.filterCollection(selectedModelTuple, res.data);
+      });
   };
 
   getSteps = () => {
@@ -404,18 +408,13 @@ class TrainModel extends Component {
                 label={
                   <div>
                     {collection.name}
-                    {collection.validConcepts ? (
+                    {collection.concepts ? (
                       <Typography
                         variant="subtitle2"
                         gutterBottom
                         color="secondary"
                       >
-                        {collection.validConcepts.map((concept, index) => {
-                          if (index === collection.validConcepts.length - 1) {
-                            return concept.f1;
-                          }
-                          return `${concept.f1}, `;
-                        })}
+                        {collection.concepts.join(',')}
                       </Typography>
                     ) : (
                       ''

@@ -66,10 +66,12 @@ router.get(
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     let queryText;
-    if (req.query.train === 'true') {
+    let params;
+    if (req.query.train) {
+      params = '{' + req.query.train + '}';
       queryText = `
       SELECT 
-          name, id, count(*), array_agg(conceptid) as ids, json_agg((conceptname, conceptid)) as concepts
+          name, id, count(*), array_agg(conceptid) as ids, array_agg(conceptname) as concepts
       FROM
       (SELECT ac.name, a.conceptid, ai.id, count(a.conceptid), c.name as conceptname
           FROM 
@@ -79,6 +81,8 @@ router.get(
           LEFT JOIN 
               annotations a ON ai.annotationid = a.id
           LEFT JOIN concepts c ON a.conceptid = c.id
+          WHERE 
+            a.conceptid = ANY( $1::int[] )
           GROUP BY ac.name, a.conceptid, ai.id, c.name ) t
       GROUP BY name, id
       `;
@@ -94,7 +98,12 @@ router.get(
     }
 
     try {
-      let annotationCollections = await psql.query(queryText);
+      let annotationCollections;
+      if (req.query.train) {
+        annotationCollections = await psql.query(queryText, [params]);
+      } else {
+        annotationCollections = await psql.query(queryText);
+      }
       res.json(annotationCollections.rows);
     } catch (error) {
       console.log(error);
