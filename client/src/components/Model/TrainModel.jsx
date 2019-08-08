@@ -273,7 +273,6 @@ class TrainModel extends Component {
       return model.name === modelSelected;
     });
 
-
     const config = {
       headers: {
         Authorization: `Bearer ${localStorage.getItem('token')}`
