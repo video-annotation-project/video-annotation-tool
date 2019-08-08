@@ -68,13 +68,13 @@ class CollectionsForm extends Component {
               />
               <ListItemText>
                 {collection.name}
-                {collection.validConcepts ? (
+                {collection.concepts ? (
                   <Typography
                     variant="subtitle2"
                     gutterBottom
                     color="textSecondary"
                   >
-                    {collection.validConcepts.concepts.join(', ')}
+                    {collection.concepts.join(', ')}
                   </Typography>
                 ) : (
                   ''
@@ -279,13 +279,17 @@ class TrainModel extends Component {
       }
     };
 
-    return axios.get(
-      `/api/collections/annotations?train=${selectedModelTuple.conceptsid}`, config).then(res => {
-      this.setState({
-        collections: res.data,
-        annotationCollections: localSelected
+    return axios
+      .get(
+        `/api/collections/annotations?train=${selectedModelTuple.conceptsid}`,
+        config
+      )
+      .then(res => {
+        this.setState({
+          collections: res.data,
+          annotationCollections: localSelected
+        });
       });
-    });
   };
 
   getSteps = () => {
