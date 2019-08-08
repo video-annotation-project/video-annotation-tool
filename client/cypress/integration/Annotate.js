@@ -1,17 +1,11 @@
 describe('Annotate', () => {
-  it('Login', () => {
-    cy.visit('/');
-    cy.get('#navbar-login').click();
-    cy.get('#username').type(Cypress.env('username'));
-    cy.get('#password').type(Cypress.env('password'), { log: false });
-    cy.get('#login').click();
-
-    Cypress.env('cookies').forEach(cookie => {
-      cy.setCookie(cookie.name, cookie.value, cookie.options);
-    });
+  beforeEach(() => {
+    cy.login();
   });
 
-  it('Go to Annotate Tab', () => {
+  it('Go to annotate videos page', () => {
+    expect(localStorage.getItem('username')).to.eq('test123');
+    cy.visit('/');
     cy.server();
     cy.route('GET', '/api/videos').as('getVideos');
     cy.get('#navbar-annotate').click();
@@ -24,10 +18,5 @@ describe('Annotate', () => {
       .trigger('mousedown', { clientX: 100, clientY: 100 })
       .trigger('mousemove', { clientX: 200, clientY: 200 })
       .trigger('mouseup');
-  });
-
-  it('Logout', () => {
-    cy.get('#navbar-logout').click();
-    cy.contains('Login').should('be.visible');
   });
 });

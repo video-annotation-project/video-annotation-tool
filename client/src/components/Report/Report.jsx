@@ -91,6 +91,7 @@ class Report extends React.Component {
     return (
       <div className={classes.root}>
         <Button
+          id="selector-button"
           className={classes.openSelector}
           variant="contained"
           color="primary"
