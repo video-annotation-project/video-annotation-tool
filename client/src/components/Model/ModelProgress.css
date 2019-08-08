@@ -13,9 +13,9 @@
 }
 
 .tabs {
+  margin-top: 10px;
   margin-bottom: 20px;
 }
-
 
 .trainStatus {
   margin-top: 20px;  
@@ -41,10 +41,23 @@
 }
 
 .codeBlock {
-  max-height: 500px;
+  margin: 0;
+  height: 430px;
   padding: 15px;
 
   overflow: auto;
   background: #F8F8F8;
+  border: 1px lightgrey solid;
+}
 
+.codeBlock pre {
+  margin: 0;
+}
+
+.stopButton {
+  height: 40px !important;
+}
+
+.predictProgress {
+  margin-top: 30px;
 }

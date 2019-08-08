@@ -15,11 +15,13 @@
   display: flex;
   padding: 20px;
   flex-direction: column;
+  height: 690px;
 }
 
 .actionsContainer {
   display: flex;
   justify-content: space-between;
+  margin-top: 10px;
 }
 
 .actionsContainer > * {
@@ -34,6 +36,11 @@
   width: 280px;
 }
 
+.collectionsConcepts {
+  max-width: 500px;
+  white-space: normal;
+}
+
 .epochsField {
   max-width: 60px;
 }
@@ -41,3 +48,5 @@
 .imagesField {
   max-width: 100px;
 }
+
+

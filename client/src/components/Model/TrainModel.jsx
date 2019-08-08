@@ -73,6 +73,7 @@ class CollectionsForm extends Component {
                     variant="subtitle2"
                     gutterBottom
                     color="textSecondary"
+                    className='collectionsConcepts'
                   >
                     {collection.concepts.join(', ')}
                   </Typography>
@@ -292,27 +293,6 @@ class TrainModel extends Component {
       });
   };
 
-  getSteps = () => {
-    return [
-      'Select model',
-      'Select annotation collection',
-      'Select hyperparameters'
-    ];
-  };
-
-  getStepContent = step => {
-    switch (step) {
-      case 0:
-        return this.selectModel();
-      case 1:
-        return this.selectCollection();
-      case 2:
-        return this.selectHyperparameters();
-      default:
-        return 'Unknown step';
-    }
-  };
-
   // Handle user, video, and concept checkbox selections
   checkboxSelect = (stateName, stateValue, id) => event => {
     let deepCopy = JSON.parse(JSON.stringify(stateValue));
@@ -324,55 +304,6 @@ class TrainModel extends Component {
     this.setState({
       [stateName]: deepCopy
     });
-  };
-
-  handleSelectAll = () => {
-    const { activeStep } = this.state;
-
-    const stateName = this.getStepState(activeStep);
-    // eslint-disable-next-line react/destructuring-assignment
-    const data = this.state[stateName];
-    const dataSelected = JSON.parse(
-      // eslint-disable-next-line react/destructuring-assignment, react/no-access-state-in-setstate
-      JSON.stringify(this.state[`${stateName}Selected`])
-    );
-    data.forEach(row => {
-      if (!dataSelected.includes(row.id)) {
-        dataSelected.push(row.id);
-      }
-    });
-    this.setState({
-      [`${stateName}Selected`]: dataSelected
-    });
-  };
-
-  handleUnselectAll = () => {
-    const { activeStep } = this.state;
-
-    const stateName = this.getStepState(activeStep);
-    this.setState({
-      [`${stateName}Selected`]: []
-    });
-  };
-
-  getSelectedCount = () => {
-    const {
-      selectedCollectionCounts,
-      includeTracking,
-      verifiedOnly
-    } = this.state;
-    if (verifiedOnly) {
-      let count = parseInt(selectedCollectionCounts[2].count, 10);
-      if (includeTracking) {
-        count += parseInt(selectedCollectionCounts[3].count, 10);
-      }
-      return count;
-    }
-    let count = parseInt(selectedCollectionCounts[0].count, 10);
-    if (includeTracking) {
-      count += parseInt(selectedCollectionCounts[1].count, 10);
-    }
-    return count;
   };
 
   handleStop = () => {

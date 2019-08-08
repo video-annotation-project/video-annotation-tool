@@ -41,7 +41,6 @@ class TrainingStatus extends Component {
             gutterBottom
             className='progressText'
           >
-            {' '}
             Batch: {this.props.currentBatch} / {this.props.stepsPerEpoch}
           </Typography>
           <LinearProgress
@@ -53,7 +52,7 @@ class TrainingStatus extends Component {
         </div>
       );
     } else if (con2) {
-      ret = <PredictProgress className='progress' />;
+
     } else {
       ret = (
         <Typography variant="subtitle2" gutterBottom>
@@ -68,9 +67,14 @@ class TrainingStatus extends Component {
     return (
       <div>
         <Paper square elevation={0} className='resetContainer'>
-          <Typography variant="subtitle2" gutterBottom>
-            Model has started training...
-          </Typography>
+          <div>
+            <Typography variant="subtitle1">
+             Step 1/2
+            </Typography>
+            <Typography variant="subtitle2" gutterBottom>
+              Model has started training...
+            </Typography>
+          </div>
           <Button 
             onClick={this.props.onStop} 
             variant="contained" 
@@ -136,7 +140,9 @@ class ModelProgress extends Component {
       currentEpoch: 0,
       currentBatch: 0,
       maxEpoch: 0,
-      stepsPerEpoch: 0
+      stepsPerEpoch: 0,
+      stdout: '',
+      stderr: '',
     };
 
     this.loadProgressInfo();
@@ -174,7 +180,9 @@ class ModelProgress extends Component {
           stepsPerEpoch: progress.steps_per_epoch,
           epochProgress: ((progress.curr_epoch + 1) / progress.max_epoch) * 100,
           batchProgress:
-            ((progress.curr_batch + 1) / progress.steps_per_epoch) * 100
+            ((progress.curr_batch + 1) / progress.steps_per_epoch) * 100,
+          stdout: progress.std_out,
+          stderr: progress.std_err,
         });
       })
       .catch(error => {
@@ -192,17 +200,9 @@ class ModelProgress extends Component {
   }
 
   render() {
-    const { classes, className, handleStop, activeStep, steps } = this.props;
-    const {
-      running,
-      currentBatch,
-      currentEpoch,
-      maxEpoch,
-      stepsPerEpoch
-    } = this.state;
 
     return (
-      <div className={className}>
+      <div className={this.props.className}>
         <Tabs
           value={this.state.tab}
           variant="fullWidth"
@@ -212,7 +212,7 @@ class ModelProgress extends Component {
           className='tabs'
         >
           <Tab label="Training Status" />
-          <Tab label="Standard Out" />
+          <Tab label="Standard Output" />
           <Tab label="Standard Error" />
         </Tabs>
         <SwipeableViews
@@ -227,13 +227,14 @@ class ModelProgress extends Component {
               maxEpoch={this.state.maxEpoch}
               currentBatch={this.state.currentBatch}
               stepsPerEpoch={this.state.stepsPerEpoch}
-            /> 
+            />
+            <PredictProgress className='progress'/>
           </TabPanel>
           <TabPanel value={this.state.tab} index={1}>
-            <ServerOutput />
+            <ServerOutput output={this.state.stdout}/>
           </TabPanel>
           <TabPanel value={this.state.tab} index={2}>
-            <ServerOutput />
+            <ServerOutput output={this.state.stderr}/>
           </TabPanel>
         </SwipeableViews>
 
