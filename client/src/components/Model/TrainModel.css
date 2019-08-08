@@ -1,0 +1,52 @@
+
+.root {
+  margin: 40px auto;
+  width: 750px;
+}
+
+.center {
+  display: flex;
+  flexDirection: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.container {
+  display: flex;
+  padding: 20px;
+  flex-direction: column;
+  height: 690px;
+}
+
+.actionsContainer {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+.actionsContainer > * {
+  margin: 0 auto !important;
+}
+
+.modelsForm > div {
+  width: 160px;
+}
+
+.collectionsForm {
+  width: 280px;
+}
+
+.collectionsConcepts {
+  max-width: 500px;
+  white-space: normal;
+}
+
+.epochsField {
+  max-width: 60px;
+}
+
+.imagesField {
+  max-width: 100px;
+}
+
+

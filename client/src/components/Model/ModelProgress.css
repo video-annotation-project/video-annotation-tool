@@ -1,0 +1,63 @@
+.progress {
+  display:  flex;
+  margin: 10px;
+  flex: 1;
+  flex-direction: column;
+  justify-content: right; 
+  align-items: right;
+}
+
+.resetContainer {
+  display: flex;
+  justify-content: space-between;
+}
+
+.tabs {
+  margin-top: 10px;
+  margin-bottom: 20px;
+}
+
+.trainStatus {
+  margin-top: 20px;  
+  margin-bottom: 5px; 
+}
+
+.progressBars {
+  margin-top: 20px;
+  padding: 0 15px 20px 15px;
+  background: #F8F8F8;
+  border: 2px solid #F8F8F8;
+  border-radius: 8px;
+}
+
+.progressBar {
+  margin-top: 10px !important;
+  height: 8px !important;  
+}
+
+.progressText {
+  margin-top: 10px !important;  
+  margin-bottom: 8px;
+}
+
+.codeBlock {
+  margin: 0;
+  height: 430px;
+  padding: 15px;
+
+  overflow: auto;
+  background: #F8F8F8;
+  border: 1px lightgrey solid;
+}
+
+.codeBlock pre {
+  margin: 0;
+}
+
+.stopButton {
+  height: 40px !important;
+}
+
+.predictProgress {
+  margin-top: 30px;
+}

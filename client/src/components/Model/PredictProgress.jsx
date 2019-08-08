@@ -5,17 +5,42 @@ import { withStyles } from '@material-ui/core/styles';
 import LinearProgress from '@material-ui/core/LinearProgress';
 import { Typography } from '@material-ui/core';
 
-const styles = () => ({
-  trainStatus: {
-    marginBottom: 0
-  },
-  progressBar: {
-    height: '8px'
-  },
-  progressText: {
-    marginBottom: '5px'
+import './ModelProgress.css'
+
+class PredictingStatus extends Component {
+  render(){
+    return (
+      <div className='progressBars'>
+        <Typography
+          variant="body1"
+          gutterBottom
+          className='progressText'
+        >
+          Video: {this.props.currentVideoNum} / {this.props.totalVideos}
+        </Typography>
+        <LinearProgress
+          className='progressBar'
+          variant="determinate"
+          value={this.props.videoProgress}
+        />
+        <Typography
+          variant="body1"
+          gutterBottom
+          className='progressText'
+        >
+          {this.props.stage} frame {this.props.currentFrame} of {this.props.totalFrames}
+        </Typography>
+        <LinearProgress
+          className='progressBar'
+          variant="determinate"
+          value={this.props.predictionProgress}
+          color="secondary"
+        />
+      </div>
+    )
   }
-});
+}
+
 
 class PredictProgress extends Component {
   constructor(props) {
@@ -44,18 +69,32 @@ class PredictProgress extends Component {
       }
     };
     try {
-      const ret = await axios.get(`/api/models/progress/predict`, config);
-      if (ret) {
-        const { data } = ret;
-        const totalVideos = data.length;
-        if (data.length === 0) {
+      const predictions = await axios.get(`/api/models/progress/predict`, config);
+      if (predictions) {
+        const predictionsData = predictions.data;
+        const totalVideos = predictionsData.length;
+
+        const currentVideo = this.getCurrentVideo(predictionsData);
+        const currentVideoNum = currentVideo.videoNum;
+        const currentFrame = currentVideo.framenum;
+        const totalFrames = currentVideo.totalframe;
+        const status = currentVideo.status;
+        const videoProgress = currentVideo / totalVideos * 100;
+        const predictionProgress = currentFrame / totalFrames * 100;
+
+        if (totalVideos === 0) {
           this.setState({
             running: false
           });
         } else {
           this.setState({
             totalVideos,
-            data: ret.data,
+            currentVideoNum,
+            currentFrame,
+            totalFrames,
+            status,
+            videoProgress,
+            predictionProgress,
             running: true
           });
         }
@@ -64,6 +103,23 @@ class PredictProgress extends Component {
       console.log(error);
     }
   };
+
+  getCurrentVideo = (predictions) => {
+    let currentVideo = predictions.find((pred, index) => {
+      if (pred.framenum !== pred.totalframe){
+        pred.videoNum = index + 1;
+        return pred;
+      }
+    });
+
+    if (currentVideo){
+      return currentVideo;
+    }
+
+    currentVideo = predictions[predictions.length - 1];
+    currentVideo.videoNum = predictions.length;
+    return currentVideo;
+  }
 
   getStatus = status => {
     if (status === 0) {
@@ -93,38 +149,27 @@ class PredictProgress extends Component {
     }
 
     return (
-      <div className={className}>
-        <h3 className={classes.trainStatus}> Predicting Status: </h3>
-        {running ? (
-          <div>
-            <h4 className={classes.progressText}>{totalVideos} to predict</h4>
-            {data.map(row => (
-              <div key={row.videoid}>
-                <h4 className={classes.progressText}>Videoid: {row.videoid}</h4>
-                <Typography>
-                  {this.getStatus(row.status)} at {row.framenum} out of{' '}
-                  {row.totalframe}
-                </Typography>
-                <LinearProgress
-                  className={classes.progressBar}
-                  variant="determinate"
-                  value={this.getProgress(
-                    row.framenum,
-                    row.totalframe,
-                    row.status
-                  )}
-                  // value={(row.framenum / row.totalframe) * 100}
-                  color="secondary"
-                />
-              </div>
-            ))}
-          </div>
-        ) : (
-          <h4>Not Predicting</h4>
-        )}
+      <div className='predictProgress'>
+        <div>
+          <Typography variant="subtitle1">
+           Step 2/2
+          </Typography>
+          <Typography variant="subtitle2" gutterBottom>
+            Model has started predicting...
+          </Typography>
+        </div>
+        <PredictingStatus
+          currentVideoNum={this.state.currentVideoNum}
+          totalVideos={this.state.totalVideos}
+          currentFrame={this.state.currentFrame}
+          totalFrames={this.state.totalFrames}
+          stage={this.getStatus(this.state.status)}
+          videoProgress={this.state.videoProgress}
+          predictionProgress={this.state.predictionProgress}
+        />
       </div>
     );
   }
 }
 
-export default withStyles(styles)(PredictProgress);
+export default PredictProgress;
