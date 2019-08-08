@@ -16,17 +16,11 @@ router.get(
       FROM
         annotations a
       INNER JOIN
-        annotation_intermediate ai
-      ON
-        a.id = ai.annotationid
+        annotation_intermediate ai ON a.id = ai.annotationid
       INNER JOIN
-        users u
-      ON
-        u.id = a.userid
+        users u ON u.id = a.userid
       INNER JOIN
-        concepts c
-      ON
-        c.id = a.conceptid
+        concepts c ON c.id = a.conceptid
       WHERE
         ai.id::text = ANY($1)
     `;

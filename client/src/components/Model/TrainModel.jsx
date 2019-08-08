@@ -82,10 +82,6 @@ const styles = theme => ({
   videoSelector: {
     width: '625px'
   },
-  hyperparametersForm: {
-    display: 'flex',
-    flexWrap: 'wrap'
-  },
   textField: {
     width: 200
   },
@@ -443,7 +439,7 @@ class TrainModel extends Component {
     } = this.state;
 
     return countsLoaded ? (
-      <form className={classes.hyperparametersForm}>
+      <form>
         <TextField
           margin="normal"
           name="epochs"
