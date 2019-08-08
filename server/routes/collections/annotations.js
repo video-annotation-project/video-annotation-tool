@@ -64,10 +64,10 @@ router.get(
     if (req.query.train) {
       params = '{' + req.query.train + '}';
       queryText = `
-        SELECT 
+      SELECT 
           name, id, count(*), array_agg(conceptid) as ids, array_agg(conceptname) as concepts
-        FROM
-        (SELECT ac.name, a.conceptid, ai.id, count(a.conceptid), c.name as conceptname
+      FROM
+      (SELECT ac.name, a.conceptid, ai.id, count(a.conceptid), c.name as conceptname
           FROM 
               annotation_collection ac
           FULL JOIN
@@ -78,7 +78,7 @@ router.get(
           WHERE 
             a.conceptid = ANY( $1::int[] )
           GROUP BY ac.name, a.conceptid, ai.id, c.name ) t
-        GROUP BY name, id
+      GROUP BY name, id
       `;
     } else {
       queryText = `
@@ -92,7 +92,12 @@ router.get(
     }
 
     try {
-      let annotationCollections = await psql.query(queryText, [params]);
+      let annotationCollections;
+      if (req.query.train) {
+        annotationCollections = await psql.query(queryText, [params]);
+      } else {
+        annotationCollections = await psql.query(queryText);
+      }
       res.json(annotationCollections.rows);
     } catch (error) {
       console.log(error);
