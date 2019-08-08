@@ -36,14 +36,15 @@ describe('Account', () => {
 
   it('Change password', () => {
     cy.server();
-    cy.route('PATCH', '/api/users').as('getUsers');
+    cy.route('PATCH', '/api/users').as('patchUsers');
+
     cy.get('#current-pw').type(password);
     cy.get('#new-pw1').type('456');
     cy.get('#new-pw2').type('456');
     cy.get('#form-submit')
       .click()
       .then(() => {
-        cy.wait('@getUsers');
+        cy.wait('@patchUsers');
         cy.resetDb();
       });
     cy.visit('/');

@@ -232,6 +232,7 @@ class Annotations extends Component {
                     {annotation.showVideo ? <OndemandVideo /> : <Photo />}
                   </IconButton>
                   <IconButton
+                    id="delete"
                     className={classes.icons}
                     aria-label="Delete"
                     onClick={e => this.handleDelete(e, annotation.id)}
