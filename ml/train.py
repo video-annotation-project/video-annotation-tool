@@ -146,7 +146,8 @@ def _get_callbacks(model,
     checkpoint = RedirectModel(checkpoint, model)
 
     # Stops training if val_loss stops improving
-    stopping = EarlyStopping(monitor='val_loss', min_delta=0, patience=10)
+    stopping = EarlyStopping(
+        monitor='val_loss', min_delta=0, patience=10, restore_best_weights=True)
 
     # Every epoch upload tensorboard logs to the S3 bucket
     log_callback = TensorboardLog(

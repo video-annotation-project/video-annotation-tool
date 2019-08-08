@@ -333,6 +333,24 @@ class TrainModel extends Component {
     });
   };
 
+  postStopFlag = async () => {
+    const config = {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    };
+    const body = {
+      stop_flag: true
+    };
+    console.log('post flag');
+    try {
+      const res = await axios.patch(`/api/models/train/stop`, body, config);
+      console.log(res.data);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
   handleChangeMultiple = event => {
     const options = event.target.value;
     const value = [];
@@ -367,7 +385,11 @@ class TrainModel extends Component {
               <ImagesField className="imagesField" />
             </div>
             <Divider style={{ marginTop: '30px' }} variant="middle" />
-            <ModelProgress className="progress" handleStop={this.handleStop} />
+            <ModelProgress
+              className="progress"
+              handleStop={this.handleStop}
+              postStopFlag={this.postStopFlag}
+            />
           </div>
         </Paper>
         {this.state.openedVideo && (

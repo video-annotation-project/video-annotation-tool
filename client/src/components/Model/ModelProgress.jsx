@@ -7,44 +7,34 @@ import Typography from '@material-ui/core/Typography';
 import Paper from '@material-ui/core/Paper';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Button from '@material-ui/core/Button';
-import PredictProgress from './PredictProgress';
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
 import SwipeableViews from 'react-swipeable-views';
 import Box from '@material-ui/core/Box';
+import PredictProgress from './PredictProgress';
 
-import './ModelProgress.css'
-
+import './ModelProgress.css';
 
 class TrainingStatus extends Component {
-
   ternaryOpBreak = (con1, con2) => {
     let ret;
     con1 = true;
     if (con1) {
       ret = (
-        <div className='progressBars'>
-          <Typography
-            variant="body1"
-            gutterBottom
-            className='progressText'
-          >
+        <div className="progressBars">
+          <Typography variant="body1" gutterBottom className="progressText">
             Epoch: {this.props.currentEpoch} / {this.props.maxEpoch}
           </Typography>
           <LinearProgress
-            className='progressBar'
+            className="progressBar"
             variant="determinate"
             value={this.props.epochProgress}
           />
-          <Typography
-            variant="body1"
-            gutterBottom
-            className='progressText'
-          >
+          <Typography variant="body1" gutterBottom className="progressText">
             Batch: {this.props.currentBatch} / {this.props.stepsPerEpoch}
           </Typography>
           <LinearProgress
-            className='progressBar'
+            className="progressBar"
             variant="determinate"
             value={this.props.batchProgress}
             color="secondary"
@@ -52,7 +42,6 @@ class TrainingStatus extends Component {
         </div>
       );
     } else if (con2) {
-
     } else {
       ret = (
         <Typography variant="subtitle2" gutterBottom>
@@ -63,55 +52,58 @@ class TrainingStatus extends Component {
     return ret;
   };
 
-  render(){
+  render() {
     return (
       <div>
-        <Paper square elevation={0} className='resetContainer'>
+        <Paper square elevation={0} className="resetContainer">
           <div>
-            <Typography variant="subtitle1">
-             Step 1/2
-            </Typography>
+            <Typography variant="subtitle1">Step 1/2</Typography>
             <Typography variant="subtitle2" gutterBottom>
               Model has started training...
             </Typography>
           </div>
-          <Button 
-            onClick={this.props.onStop} 
-            variant="contained" 
+          <Button
+            onClick={this.props.onStop}
+            variant="contained"
             color="secondary"
             className="stopButton"
           >
             Stop
           </Button>
+          <Button
+            onClick={this.props.postStopFlag}
+            variant="contained"
+            color="secondary"
+            className="stopButton"
+          >
+            Stop Training
+          </Button>
         </Paper>
         {this.ternaryOpBreak(
-          this.props.running, !this.props.running &&
+          this.props.running,
+          !this.props.running &&
             this.props.currentEpoch === this.props.maxEpoch &&
             this.props.currentBatch === this.props.stepsPerEpoch
         )}
       </div>
-    )
+    );
   }
 }
 
 class ServerOutput extends Component {
-
-  render(){
+  render() {
     return (
-      <div className='codeBlock'>
+      <div className="codeBlock">
         <code>
-          <pre>
-            {this.props.output || 'No current output'}
-          </pre>
+          <pre>{this.props.output || 'No current output'}</pre>
         </code>
       </div>
-    )
+    );
   }
 }
 
 class TabPanel extends Component {
-
-  render(){
+  render() {
     const { children, value, index, ...other } = this.props;
 
     return (
@@ -129,7 +121,6 @@ class TabPanel extends Component {
   }
 }
 
-
 class ModelProgress extends Component {
   constructor(props) {
     super(props);
@@ -142,7 +133,7 @@ class ModelProgress extends Component {
       maxEpoch: 0,
       stepsPerEpoch: 0,
       stdout: '',
-      stderr: '',
+      stderr: ''
     };
 
     this.loadProgressInfo();
@@ -182,7 +173,7 @@ class ModelProgress extends Component {
           batchProgress:
             ((progress.curr_batch + 1) / progress.steps_per_epoch) * 100,
           stdout: progress.std_out,
-          stderr: progress.std_err,
+          stderr: progress.std_err
         });
       })
       .catch(error => {
@@ -197,10 +188,9 @@ class ModelProgress extends Component {
   handleChange = (event, newValue) => {
     console.log(newValue);
     this.setState({ tab: newValue });
-  }
+  };
 
   render() {
-
     return (
       <div className={this.props.className}>
         <Tabs
@@ -209,17 +199,16 @@ class ModelProgress extends Component {
           indicatorColor="primary"
           textColor="primary"
           onChange={this.handleChange}
-          className='tabs'
+          className="tabs"
         >
           <Tab label="Training Status" />
           <Tab label="Standard Output" />
           <Tab label="Standard Error" />
         </Tabs>
-        <SwipeableViews
-          index={this.state.tab}
-        >
+        <SwipeableViews index={this.state.tab}>
           <TabPanel value={this.state.tab} index={0}>
             <TrainingStatus
+              postStopFlag={this.props.postStopFlag}
               onStop={this.handleStop}
               steps={this.props.steps}
               running={this.state.running}
@@ -228,16 +217,15 @@ class ModelProgress extends Component {
               currentBatch={this.state.currentBatch}
               stepsPerEpoch={this.state.stepsPerEpoch}
             />
-            <PredictProgress className='progress'/>
+            <PredictProgress className="progress" />
           </TabPanel>
           <TabPanel value={this.state.tab} index={1}>
-            <ServerOutput output={this.state.stdout}/>
+            <ServerOutput output={this.state.stdout} />
           </TabPanel>
           <TabPanel value={this.state.tab} index={2}>
-            <ServerOutput output={this.state.stderr}/>
+            <ServerOutput output={this.state.stderr} />
           </TabPanel>
         </SwipeableViews>
-
       </div>
     );
   }
