@@ -164,10 +164,11 @@ class AnnotationGenerator(object):
         ai_id = pd_query(
             "SELECT id FROM users WHERE username='tracking'").id[0]
 
-        # Give priority to frames with least amount of tracking annotations
+        # Give priority to frames with highest verification priority
+        # And with least amount of tracking annotations
         # And lower speed
         frame_groups.sort(key=lambda df: (
-            list(df['userid']).count(ai_id), df.speed.mean()))
+            -df.priority.max(), list(df['userid']).count(ai_id), df.speed.mean()))
 
         # Selects images that we'll use (each group has annotations for an image)
         for frame in frame_groups:
