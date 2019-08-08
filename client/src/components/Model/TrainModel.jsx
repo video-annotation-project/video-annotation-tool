@@ -20,39 +20,31 @@ import ModelProgress from './ModelProgress';
 import VideoMetadata from '../Utilities/VideoMetadata';
 import CollectionInfo from '../Utilities/CollectionInfo';
 
-import './TrainModel.css'
-
+import './TrainModel.css';
 
 class ModelsForm extends Component {
-
-  render(){
+  render() {
     return (
       <FormControl component="fieldset" className={this.props.className}>
-        <InputLabel shrink>
-          Model
-        </InputLabel>
+        <InputLabel shrink>Model</InputLabel>
         <Select
           name="modelSelected"
           value={this.props.modelSelected || 'Loading...'}
           onChange={this.props.handleChange}
         >
           {this.props.models.map(model => (
-            <MenuItem 
-              key={model.name} 
-              value={model.name}
-            >
+            <MenuItem key={model.name} value={model.name}>
               {model.name}
             </MenuItem>
           ))}
         </Select>
       </FormControl>
-    )
+    );
   }
 }
 
 class CollectionsForm extends Component {
-
-  render(){
+  render() {
     return (
       <FormControl component="fieldset" className={this.props.className}>
         <InputLabel shrink>Annotations</InputLabel>
@@ -62,15 +54,17 @@ class CollectionsForm extends Component {
           value={this.props.annotationCollections}
           onChange={this.props.onChange}
           input={<Input id="select-multiple" />}
-          renderValue={selected => selected.map(collection => collection.name).join(', ') || 'Loading...'}
+          renderValue={selected =>
+            selected.map(collection => collection.name).join(', ') ||
+            'Loading...'
+          }
         >
           {this.props.collections.map(collection => (
-            <MenuItem 
-              key={collection.id} 
-              value={collection}
-            >
-              <Checkbox 
-                checked={this.props.annotationCollections.indexOf(collection) > -1}
+            <MenuItem key={collection.id} value={collection}>
+              <Checkbox
+                checked={
+                  this.props.annotationCollections.indexOf(collection) > -1
+                }
               />
               <ListItemText>
                 {collection.name}
@@ -90,21 +84,20 @@ class CollectionsForm extends Component {
           ))}
         </Select>
       </FormControl>
-    )
+    );
   }
 }
 
 class EpochsField extends Component {
-
-  constructor(props){
+  constructor(props) {
     super(props);
 
     this.state = {
-      epochs: undefined,
-    }
+      epochs: undefined
+    };
   }
 
-  render(){
+  render() {
     return (
       <TextField
         margin="normal"
@@ -114,21 +107,20 @@ class EpochsField extends Component {
         value={this.state.epochs}
         onChange={this.handleChange}
       />
-    )
+    );
   }
 }
 
 class ImagesField extends Component {
-
-  constructor(props){
+  constructor(props) {
     super(props);
 
     this.state = {
       minImages: undefined
-    }
+    };
   }
 
-  render(){
+  render() {
     return (
       <TextField
         margin="normal"
@@ -138,7 +130,7 @@ class ImagesField extends Component {
         value={this.state.minImages}
         onChange={this.handleChange}
       />
-    )
+    );
   }
 }
 
@@ -185,7 +177,6 @@ class TrainModel extends Component {
       socket,
       countsLoaded: false
     };
-
   }
 
   componentDidMount = async () => {
@@ -283,31 +274,39 @@ class TrainModel extends Component {
         Authorization: `Bearer ${localStorage.getItem('token')}`
       }
     };
-
-    return axios.get(`/api/collections/annotations`, config).then(res => {
-      const selectedModelTuple = models.find(model => {
-        return model.name === modelSelected;
-      });
-      const modelConcepts = selectedModelTuple.conceptsid;
-      res.data.forEach(col => {
-        const filtered = modelConcepts.filter(x => col.ids.includes(x));
-        if (filtered.length > 0) {
-          col.disable = false;
-          col.validConcepts = col.concepts.filter(y => filtered.includes(y.f2));
-        } else {
-          const indexOfThis = localSelected.indexOf(col.id);
-          if (indexOfThis > -1) {
-            localSelected.splice(indexOfThis, 1);
-          }
-          col.disable = true;
-        }
-      });
-      this.setState({
-        collections: res.data.sort(a => (a.validConcepts ? -1 : 1)),
-        annotationCollections: localSelected
-      });
-      // this.filterCollection(selectedModelTuple, res.data);
+    const selectedModelTuple = models.find(model => {
+      return model.name === modelSelected;
     });
+
+    return axios
+      .get(
+        `/api/collections/annotations?train=${selectedModelTuple.conceptsid}`,
+        config
+      )
+      .then(res => {
+        // const selectedModelTuple = models.find(model => {
+        //   return model.name === modelSelected;
+        // });
+        // const modelConcepts = selectedModelTuple.conceptsid;
+        // res.data.forEach(col => {
+        //   const filtered = modelConcepts.filter(x => col.ids.includes(x));
+        //   if (filtered.length > 0) {
+        //     col.disable = false;
+        //     col.validConcepts = col.concepts.filter(y => filtered.includes(y.f2));
+        //   } else {
+        //     const indexOfThis = localSelected.indexOf(col.id);
+        //     if (indexOfThis > -1) {
+        //       localSelected.splice(indexOfThis, 1);
+        //     }
+        //     col.disable = true;
+        //   }
+        // });
+        this.setState({
+          collections: res.data.sort(a => (a.validConcepts ? -1 : 1)),
+          annotationCollections: localSelected
+        });
+        // this.filterCollection(selectedModelTuple, res.data);
+      });
   };
 
   getSteps = () => {
@@ -396,30 +395,28 @@ class TrainModel extends Component {
   getCollectionCounts = async () => {
     const { annotationCollections } = this.state;
     try {
-      let dataRet = await axios.get(
+      const dataRet = await axios.get(
         `/api/collections/annotations/train?ids=${data.conceptsid}`,
         config
       );
 
       const conceptIds = dataRet.data.map(col => col.id);
 
-      const filteredCollections = collections.filter(
-        collection => {
-          const validConcepts = dataRet.data.find(
-            col => col.id === collection.id
-          );
-          collection.validConcepts = validConcepts;
-          return conceptIds.includes(collection.id);
-        }
-      );
+      const filteredCollections = collections.filter(collection => {
+        const validConcepts = dataRet.data.find(
+          col => col.id === collection.id
+        );
+        collection.validConcepts = validConcepts;
+        return conceptIds.includes(collection.id);
+      });
 
-      const selectedCollections = this.state.annotationCollections.map(
-        id => filteredCollections.find(col => col.id === id)
-      )
+      const selectedCollections = this.state.annotationCollections.map(id =>
+        filteredCollections.find(col => col.id === id)
+      );
 
       await this.setState({
         annotationCollections: selectedCollections,
-        collections: filteredCollections,
+        collections: filteredCollections
       });
     } catch (error) {
       console.log(error);
@@ -462,40 +459,32 @@ class TrainModel extends Component {
     this.setState({
       annotationCollections: value
     });
-  }
+  };
 
   render() {
-
     return (
-      <div className='root'>
+      <div className="root">
         <Paper square>
-          <div className='container'>
-            <div className='actionsContainer'>
-              <ModelsForm 
-                className='modelsForm'
+          <div className="container">
+            <div className="actionsContainer">
+              <ModelsForm
+                className="modelsForm"
                 modelSelected={this.state.modelSelected}
                 handleChange={this.handleChange}
                 models={this.state.models}
               />
               <CollectionsForm
-                className='collectionsForm'
+                className="collectionsForm"
                 collections={this.state.collections}
                 annotationCollections={this.state.annotationCollections}
                 checkboxSelect={this.checkboxSelect}
                 onChange={this.handleChangeMultiple}
               />
-              <EpochsField 
-                className='epochsField'
-              />
-              <ImagesField 
-                className='imagesField'
-              />
+              <EpochsField className="epochsField" />
+              <ImagesField className="imagesField" />
             </div>
-            <Divider style={{marginTop: '30px'}} variant="middle" />
-            <ModelProgress
-              className='progress'
-              handleStop={this.handleStop}
-            />
+            <Divider style={{ marginTop: '30px' }} variant="middle" />
+            <ModelProgress className="progress" handleStop={this.handleStop} />
           </div>
         </Paper>
         {this.state.openedVideo && (
