@@ -55,6 +55,9 @@ while True:
             continue
         process = Process(target=tracking.track_annotation, args=(i,))
         process.start()
+        # Update originalid so while loop doesn't reset tracking
+        cursor.execute("UPDATE annotations SET originalid=%d WHERE id=%d;",
+                       (i.id, i.id,))
         processes.append((process, i.id))
 
         while(len(active_children()) >= cpu_count()-1):

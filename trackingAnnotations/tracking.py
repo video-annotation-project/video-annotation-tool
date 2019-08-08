@@ -269,9 +269,6 @@ def track_annotation(original):
         print("Failed to make video for annotations: " + str(original.id))
     os.system('rm ' + output_file)
     cv2.destroyAllWindows()
-    cursor.execute("UPDATE annotations SET originalid=%d WHERE id=%d;",
-                   (original.id, original.id,))
-    con.commit()
     con.close()
 
 # if __name__ == '__main__':
