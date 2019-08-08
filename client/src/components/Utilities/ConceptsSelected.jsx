@@ -308,6 +308,7 @@ class ConceptsSelected extends React.Component {
     return (
       <div className={classes.root}>
         <Button
+          id="concepts-selected"
           className={classes.extendDrawerButton}
           variant="contained"
           color="primary"
