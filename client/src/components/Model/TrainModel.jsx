@@ -223,7 +223,7 @@ class TrainModel extends Component {
   componentDidMount = async () => {
     await this.loadOptionInfo();
     await this.loadExistingModels();
-    this.loadCollectionlist();
+    this.loadCollectionList();
   };
 
   loadOptionInfo = () => {
@@ -278,35 +278,24 @@ class TrainModel extends Component {
   loadCollectionList = () => {
     const { models, modelSelected, annotationCollections } = this.state;
     const localSelected = annotationCollections;
+    const selectedModelTuple = models.find(model => {
+      return model.name === modelSelected;
+    });
+
     const config = {
       headers: {
         Authorization: `Bearer ${localStorage.getItem('token')}`
+      },
+      params: {
+        conceptIds: selectedModelTuple
       }
     };
 
     return axios.get(`/api/collections/annotations`, config).then(res => {
-      const selectedModelTuple = models.find(model => {
-        return model.name === modelSelected;
-      });
-      const modelConcepts = selectedModelTuple.conceptsid;
-      res.data.forEach(col => {
-        const filtered = modelConcepts.filter(x => col.ids.includes(x));
-        if (filtered.length > 0) {
-          col.disable = false;
-          col.validConcepts = col.concepts.filter(y => filtered.includes(y.f2));
-        } else {
-          const indexOfThis = localSelected.indexOf(col.id);
-          if (indexOfThis > -1) {
-            localSelected.splice(indexOfThis, 1);
-          }
-          col.disable = true;
-        }
-      });
       this.setState({
-        collections: res.data.sort(a => (a.validConcepts ? -1 : 1)),
+        collections: res.data,
         annotationCollections: localSelected
       });
-      // this.filterCollection(selectedModelTuple, res.data);
     });
   };
 
@@ -391,39 +380,6 @@ class TrainModel extends Component {
       count += parseInt(selectedCollectionCounts[1].count, 10);
     }
     return count;
-  };
-
-  getCollectionCounts = async () => {
-    const { annotationCollections } = this.state;
-    try {
-      let dataRet = await axios.get(
-        `/api/collections/annotations/train?ids=${data.conceptsid}`,
-        config
-      );
-
-      const conceptIds = dataRet.data.map(col => col.id);
-
-      const filteredCollections = collections.filter(
-        collection => {
-          const validConcepts = dataRet.data.find(
-            col => col.id === collection.id
-          );
-          collection.validConcepts = validConcepts;
-          return conceptIds.includes(collection.id);
-        }
-      );
-
-      const selectedCollections = this.state.annotationCollections.map(
-        id => filteredCollections.find(col => col.id === id)
-      )
-
-      await this.setState({
-        annotationCollections: selectedCollections,
-        collections: filteredCollections,
-      });
-    } catch (error) {
-      console.log(error);
-    }
   };
 
   handleStop = () => {
