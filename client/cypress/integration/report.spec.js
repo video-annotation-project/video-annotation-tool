@@ -45,7 +45,7 @@ describe('Report', () => {
     cy.get('#Level-2').select('Video');
     cy.get('#Level-3').select('Concept');
     cy.get('#ok-button').click();
-    cy.contains('test123 count:1')
+    cy.contains('test123')
       .should('be.visible')
       .click();
     cy.contains('.mp4 count:1')
