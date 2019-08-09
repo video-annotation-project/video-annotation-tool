@@ -15,7 +15,7 @@ from keras_retinanet.models import convert_model
 from keras_retinanet.models import load_model
 from psycopg2 import connect
 
-from loading_data import get_classmap
+from preprocessing.annotation_generator import get_classmap
 
 import config
 from utils.query import s3, cursor, pd_query, con
