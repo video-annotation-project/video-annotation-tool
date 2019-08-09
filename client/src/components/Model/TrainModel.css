@@ -1,4 +1,3 @@
-
 .root {
   margin: 40px auto;
   width: 750px;
@@ -6,7 +5,6 @@
 
 .center {
   display: flex;
-  flexDirection: column;
   justify-content: center;
   align-items: center;
 }
@@ -48,5 +46,3 @@
 .imagesField {
   max-width: 100px;
 }
-
-
