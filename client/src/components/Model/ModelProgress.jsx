@@ -1,58 +1,54 @@
 import React, { Component } from 'react';
 import axios from 'axios';
-
-import { withStyles } from '@material-ui/core/styles';
 import LinearProgress from '@material-ui/core/LinearProgress';
 import Typography from '@material-ui/core/Typography';
 import Paper from '@material-ui/core/Paper';
-import CircularProgress from '@material-ui/core/CircularProgress';
 import Button from '@material-ui/core/Button';
-import PredictProgress from './PredictProgress';
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
 import SwipeableViews from 'react-swipeable-views';
 import Box from '@material-ui/core/Box';
+import PredictProgress from './PredictProgress';
 
-import './ModelProgress.css'
-
+import './ModelProgress.css';
 
 class TrainingStatus extends Component {
-
   ternaryOpBreak = (con1, con2) => {
+    const {
+      currentEpoch,
+      maxEpoch,
+      epochProgress,
+      currentBatch,
+      stepsPerEpoch,
+      batchProgress
+    } = this.props;
     let ret;
+    // eslint-disable-next-line no-param-reassign
     con1 = true;
     if (con1) {
       ret = (
-        <div className='progressBars'>
-          <Typography
-            variant="body1"
-            gutterBottom
-            className='progressText'
-          >
-            Epoch: {this.props.currentEpoch} / {this.props.maxEpoch}
+        <div className="progressBars">
+          <Typography variant="body1" gutterBottom className="progressText">
+            Epoch: {currentEpoch} / {maxEpoch}
           </Typography>
           <LinearProgress
-            className='progressBar'
+            className="progressBar"
             variant="determinate"
-            value={this.props.epochProgress}
+            value={epochProgress}
           />
-          <Typography
-            variant="body1"
-            gutterBottom
-            className='progressText'
-          >
-            Batch: {this.props.currentBatch} / {this.props.stepsPerEpoch}
+          <Typography variant="body1" gutterBottom className="progressText">
+            Batch: {currentBatch} / {stepsPerEpoch}
           </Typography>
           <LinearProgress
-            className='progressBar'
+            className="progressBar"
             variant="determinate"
-            value={this.props.batchProgress}
+            value={batchProgress}
             color="secondary"
           />
         </div>
       );
     } else if (con2) {
-
+      //
     } else {
       ret = (
         <Typography variant="subtitle2" gutterBottom>
@@ -63,21 +59,27 @@ class TrainingStatus extends Component {
     return ret;
   };
 
-  render(){
+  render() {
+    const {
+      onStop,
+      running,
+      currentEpoch,
+      currentBatch,
+      maxEpoch,
+      stepsPerEpoch
+    } = this.props;
     return (
       <div>
-        <Paper square elevation={0} className='resetContainer'>
+        <Paper square elevation={0} className="resetContainer">
           <div>
-            <Typography variant="subtitle1">
-             Step 1/2
-            </Typography>
+            <Typography variant="subtitle1">Step 1/2</Typography>
             <Typography variant="subtitle2" gutterBottom>
               Model has started training...
             </Typography>
           </div>
-          <Button 
-            onClick={this.props.onStop} 
-            variant="contained" 
+          <Button
+            onClick={onStop}
+            variant="contained"
             color="secondary"
             className="stopButton"
           >
@@ -85,33 +87,34 @@ class TrainingStatus extends Component {
           </Button>
         </Paper>
         {this.ternaryOpBreak(
-          this.props.running, !this.props.running &&
-            this.props.currentEpoch === this.props.maxEpoch &&
-            this.props.currentBatch === this.props.stepsPerEpoch
+          running,
+          !running &&
+            currentEpoch === maxEpoch &&
+            currentBatch === stepsPerEpoch
         )}
       </div>
-    )
+    );
   }
 }
 
+// eslint-disable-next-line react/prefer-stateless-function
 class ServerOutput extends Component {
+  render() {
+    const { output } = this.props;
 
-  render(){
     return (
-      <div className='codeBlock'>
+      <div className="codeBlock">
         <code>
-          <pre>
-            {this.props.output || 'No current output'}
-          </pre>
+          <pre>{output || 'No current output'}</pre>
         </code>
       </div>
-    )
+    );
   }
 }
 
+// eslint-disable-next-line react/prefer-stateless-function
 class TabPanel extends Component {
-
-  render(){
+  render() {
     const { children, value, index, ...other } = this.props;
 
     return (
@@ -129,7 +132,6 @@ class TabPanel extends Component {
   }
 }
 
-
 class ModelProgress extends Component {
   constructor(props) {
     super(props);
@@ -142,7 +144,7 @@ class ModelProgress extends Component {
       maxEpoch: 0,
       stepsPerEpoch: 0,
       stdout: '',
-      stderr: '',
+      stderr: ''
     };
 
     this.loadProgressInfo();
@@ -178,11 +180,11 @@ class ModelProgress extends Component {
           currentBatch: progress.curr_batch + 1,
           maxEpoch: progress.max_epoch,
           stepsPerEpoch: progress.steps_per_epoch,
-          epochProgress: ((progress.curr_epoch + 1) / progress.max_epoch) * 100,
-          batchProgress:
-            ((progress.curr_batch + 1) / progress.steps_per_epoch) * 100,
+          // Not used?
+          // epochProgress: ((progress.curr_epoch + 1) / progress.max_epoch) * 100,
+          // batchProgress: ((progress.curr_batch + 1) / progress.steps_per_epoch) * 100,
           stdout: progress.std_out,
-          stderr: progress.std_err,
+          stderr: progress.std_err
         });
       })
       .catch(error => {
@@ -197,47 +199,55 @@ class ModelProgress extends Component {
   handleChange = (event, newValue) => {
     console.log(newValue);
     this.setState({ tab: newValue });
-  }
+  };
 
   render() {
+    const { className, steps } = this.props;
+    const {
+      tab,
+      running,
+      currentEpoch,
+      maxEpoch,
+      currentBatch,
+      stepsPerEpoch,
+      stdout,
+      stderr
+    } = this.state;
 
     return (
-      <div className={this.props.className}>
+      <div className={className}>
         <Tabs
-          value={this.state.tab}
+          value={tab}
           variant="fullWidth"
           indicatorColor="primary"
           textColor="primary"
           onChange={this.handleChange}
-          className='tabs'
+          className="tabs"
         >
           <Tab label="Training Status" />
           <Tab label="Standard Output" />
           <Tab label="Standard Error" />
         </Tabs>
-        <SwipeableViews
-          index={this.state.tab}
-        >
-          <TabPanel value={this.state.tab} index={0}>
+        <SwipeableViews index={tab}>
+          <TabPanel value={tab} index={0}>
             <TrainingStatus
               onStop={this.handleStop}
-              steps={this.props.steps}
-              running={this.state.running}
-              currentEpoch={this.state.currentEpoch}
-              maxEpoch={this.state.maxEpoch}
-              currentBatch={this.state.currentBatch}
-              stepsPerEpoch={this.state.stepsPerEpoch}
+              steps={steps}
+              running={running}
+              currentEpoch={currentEpoch}
+              maxEpoch={maxEpoch}
+              currentBatch={currentBatch}
+              stepsPerEpoch={stepsPerEpoch}
             />
-            <PredictProgress className='progress'/>
+            <PredictProgress className="progress" />
           </TabPanel>
-          <TabPanel value={this.state.tab} index={1}>
-            <ServerOutput output={this.state.stdout}/>
+          <TabPanel value={tab} index={1}>
+            <ServerOutput output={stdout} />
           </TabPanel>
-          <TabPanel value={this.state.tab} index={2}>
-            <ServerOutput output={this.state.stderr}/>
+          <TabPanel value={tab} index={2}>
+            <ServerOutput output={stderr} />
           </TabPanel>
         </SwipeableViews>
-
       </div>
     );
   }

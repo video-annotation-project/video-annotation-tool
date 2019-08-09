@@ -1,14 +1,13 @@
 import React, { Component } from 'react';
 import axios from 'axios';
 import io from 'socket.io-client';
-
 import Slider from '@material-ui/core/Slider';
 import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
-
 import Hotkeys from 'react-hot-keys';
 import Grid from '@material-ui/core/Grid';
+
 import DragBoxContainer from '../Utilities/DragBoxContainer';
 import AIvideoList from './AIvideoList';
 

@@ -3,14 +3,11 @@ import axios from 'axios';
 import TextField from '@material-ui/core/TextField';
 import io from 'socket.io-client';
 import Input from '@material-ui/core/Input';
-import Button from '@material-ui/core/Button';
 import Paper from '@material-ui/core/Paper';
 import { FormControl } from '@material-ui/core';
 import InputLabel from '@material-ui/core/InputLabel';
 import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
-import FormGroup from '@material-ui/core/FormGroup';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Checkbox from '@material-ui/core/Checkbox';
 import Typography from '@material-ui/core/Typography';
 import ListItemText from '@material-ui/core/ListItemText';
@@ -18,21 +15,22 @@ import Divider from '@material-ui/core/Divider';
 
 import ModelProgress from './ModelProgress';
 import VideoMetadata from '../Utilities/VideoMetadata';
-import CollectionInfo from '../Utilities/CollectionInfo';
 
 import './TrainModel.css';
 
+// eslint-disable-next-line react/prefer-stateless-function
 class ModelsForm extends Component {
   render() {
+    const { className, modelSelected, handleChange, models } = this.props;
     return (
-      <FormControl component="fieldset" className={this.props.className}>
+      <FormControl component="fieldset" className={className}>
         <InputLabel shrink>Model</InputLabel>
         <Select
           name="modelSelected"
-          value={this.props.modelSelected || 'Loading...'}
-          onChange={this.props.handleChange}
+          value={modelSelected || 'Loading...'}
+          onChange={handleChange}
         >
-          {this.props.models.map(model => (
+          {models.map(model => (
             <MenuItem key={model.name} value={model.name}>
               {model.name}
             </MenuItem>
@@ -43,28 +41,34 @@ class ModelsForm extends Component {
   }
 }
 
+// eslint-disable-next-line react/prefer-stateless-function
 class CollectionsForm extends Component {
   render() {
+    const {
+      className,
+      annotationCollections,
+      onChange,
+      collections
+    } = this.props;
+
     return (
-      <FormControl component="fieldset" className={this.props.className}>
+      <FormControl component="fieldset" className={className}>
         <InputLabel shrink>Annotations</InputLabel>
         <Select
           multiple
           name="selectedAnnotations"
-          value={this.props.annotationCollections}
-          onChange={this.props.onChange}
+          value={annotationCollections}
+          onChange={onChange}
           input={<Input id="select-multiple" />}
           renderValue={selected =>
             selected.map(collection => collection.name).join(', ') ||
             'Loading...'
           }
         >
-          {this.props.collections.map(collection => (
+          {collections.map(collection => (
             <MenuItem key={collection.id} value={collection}>
               <Checkbox
-                checked={
-                  this.props.annotationCollections.indexOf(collection) > -1
-                }
+                checked={annotationCollections.indexOf(collection) > -1}
               />
               <ListItemText>
                 {collection.name}
@@ -73,7 +77,7 @@ class CollectionsForm extends Component {
                     variant="subtitle2"
                     gutterBottom
                     color="textSecondary"
-                    className='collectionsConcepts'
+                    className="collectionsConcepts"
                   >
                     {collection.concepts.join(', ')}
                   </Typography>
@@ -99,13 +103,16 @@ class EpochsField extends Component {
   }
 
   render() {
+    const { className } = this.props;
+    const { epochs } = this.state;
+
     return (
       <TextField
         margin="normal"
-        className={this.props.className}
+        className={className}
         name="epochs"
         label="Epochs"
-        value={this.state.epochs}
+        value={epochs}
         onChange={this.handleChange}
       />
     );
@@ -122,13 +129,16 @@ class ImagesField extends Component {
   }
 
   render() {
+    const { className } = this.props;
+    const { minImages } = this.state;
+
     return (
       <TextField
         margin="normal"
-        className={this.props.className}
+        className={className}
         name="images"
         label="# of Images"
-        value={this.state.minImages}
+        value={minImages}
         onChange={this.handleChange}
       />
     );
@@ -162,21 +172,7 @@ class TrainModel extends Component {
       modelSelected: null,
       collections: [],
       annotationCollections: [],
-      selectedCollectionCounts: [
-        { count: 0 },
-        { count: 0 },
-        { count: 0 },
-        { count: 0 }
-      ],
-      minImages: 5000,
-      epochs: 0,
-      includeTracking: false,
-      verifiedOnly: false,
-      infoDialogOpen: false,
-      activeStep: 0,
-      openedVideo: null,
-      socket,
-      countsLoaded: false
+      openedVideo: null
     };
   }
 
@@ -230,10 +226,7 @@ class TrainModel extends Component {
       .then(res => {
         const { info } = res.data[0];
         this.setState({
-          activeStep: info.activeStep,
-          modelSelected: info.modelSelected,
-          minImages: info.minImages,
-          epochs: info.epochs
+          modelSelected: info.modelSelected
         });
       })
       .catch(error => {
@@ -307,15 +300,8 @@ class TrainModel extends Component {
   };
 
   handleStop = () => {
-    this.setState(
-      {
-        activeStep: 0
-      },
-      () => {
-        this.updateBackendInfo();
-        this.postModelInstance('stop');
-      }
-    );
+    this.updateBackendInfo();
+    this.postModelInstance('stop');
   };
 
   postModelInstance = command => {
@@ -345,6 +331,15 @@ class TrainModel extends Component {
   };
 
   render() {
+    const { socket, loadVideos } = this.props;
+    const {
+      modelSelected,
+      models,
+      collections,
+      annotationCollections,
+      openedVideo
+    } = this.state;
+
     return (
       <div className="root">
         <Paper square>
@@ -352,14 +347,14 @@ class TrainModel extends Component {
             <div className="actionsContainer">
               <ModelsForm
                 className="modelsForm"
-                modelSelected={this.state.modelSelected}
+                modelSelected={modelSelected}
                 handleChange={this.handleChange}
-                models={this.state.models}
+                models={models}
               />
               <CollectionsForm
                 className="collectionsForm"
-                collections={this.state.collections}
-                annotationCollections={this.state.annotationCollections}
+                collections={collections}
+                annotationCollections={annotationCollections}
                 checkboxSelect={this.checkboxSelect}
                 onChange={this.handleChangeMultiple}
               />
@@ -370,13 +365,13 @@ class TrainModel extends Component {
             <ModelProgress className="progress" handleStop={this.handleStop} />
           </div>
         </Paper>
-        {this.state.openedVideo && (
+        {openedVideo && (
           <VideoMetadata
             open
             handleClose={this.closeVideoMetadata}
-            openedVideo={this.state.openedVideo}
-            socket={this.props.socket}
-            loadVideos={this.props.loadVideos}
+            openedVideo={openedVideo}
+            socket={socket}
+            loadVideos={loadVideos}
             modelTab
           />
         )}

@@ -1,17 +1,16 @@
 import React, { Component } from 'react';
+import axios from 'axios';
 import Button from '@material-ui/core/Button';
 import Drawer from '@material-ui/core/Drawer';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
 import { withStyles } from '@material-ui/core/styles';
-
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
 import Description from '@material-ui/icons/Description';
-import axios from 'axios';
-
 import Swal from 'sweetalert2';
+
 import Summary from '../Utilities/Summary';
 
 const styles = () => ({
