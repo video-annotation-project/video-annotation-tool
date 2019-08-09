@@ -175,8 +175,8 @@ def track_object(frame_num, frames, box, video_object, end, original, cursor, co
 def track_annotation(original):
     print("Start tracking annotation: " + str(original.id))
     # Weird javascript time errors are fixed here
-    fix_offset(original.videoid, original.timeinvideo,
-               original.image, original.id)
+    original.timeinvideo = fix_offset(original.videoid, original.timeinvideo,
+                                      original.image, original.id)
 
     con = connect(database=DB_NAME, host=DB_HOST,
                   user=DB_USER, password=DB_PASSWORD)

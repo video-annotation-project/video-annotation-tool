@@ -122,14 +122,14 @@ def fix_offset(videoid, timeinvideo, image, id):
                 (round(times[index]*fps/1000), times[index]/1000, id,))
             con.commit()
             con.close()
-            return
+            return times[index]/1000
     print(
         f'Failed on annnotation {id} with best score {best_score}')
     cursor.execute(
         "UPDATE annotations SET unsure=TRUE WHERE id=%d;", (id,))
     con.commit()
     con.close()
-    return
+    return timeinvideo
 
 
 if __name__ == "__main__":
