@@ -22,9 +22,8 @@ class TrainingStatus extends Component {
       stepsPerEpoch,
       batchProgress
     } = this.props;
+
     let ret;
-    // eslint-disable-next-line no-param-reassign
-    con1 = true;
     if (con1) {
       ret = (
         <div className="progressBars">
@@ -97,39 +96,31 @@ class TrainingStatus extends Component {
   }
 }
 
-// eslint-disable-next-line react/prefer-stateless-function
-class ServerOutput extends Component {
-  render() {
-    const { output } = this.props;
-
-    return (
-      <div className="codeBlock">
-        <code>
-          <pre>{output || 'No current output'}</pre>
-        </code>
-      </div>
-    );
-  }
+function ServerOutput(props) {
+  const { output } = props;
+  return (
+    <div className="codeBlock">
+      <code>
+        <pre>{output || 'No current output'}</pre>
+      </code>
+    </div>
+  );
 }
 
-// eslint-disable-next-line react/prefer-stateless-function
-class TabPanel extends Component {
-  render() {
-    const { children, value, index, ...other } = this.props;
-
-    return (
-      <Typography
-        component="div"
-        role="tabpanel"
-        hidden={value !== index}
-        id={`full-width-tabpanel-${index}`}
-        aria-labelledby={`full-width-tab-${index}`}
-        {...other}
-      >
-        <Box p={3}>{children}</Box>
-      </Typography>
-    );
-  }
+function TabPanel(props) {
+  const { children, value, index, ...other } = props;
+  return (
+    <Typography
+      component="div"
+      role="tabpanel"
+      hidden={value !== index}
+      id={`full-width-tabpanel-${index}`}
+      aria-labelledby={`full-width-tab-${index}`}
+      {...other}
+    >
+      <Box p={3}>{children}</Box>
+    </Typography>
+  );
 }
 
 class ModelProgress extends Component {
@@ -197,7 +188,6 @@ class ModelProgress extends Component {
   };
 
   handleChange = (event, newValue) => {
-    console.log(newValue);
     this.setState({ tab: newValue });
   };
 

@@ -5,40 +5,38 @@ import { Typography } from '@material-ui/core';
 
 import './ModelProgress.css';
 
-// eslint-disable-next-line react/prefer-stateless-function
-class PredictingStatus extends Component {
-  render() {
-    const {
-      currentVideoNum,
-      totalVideos,
-      videoProgress,
-      stage,
-      currentFrame,
-      totalFrames,
-      predictionProgress
-    } = this.props;
-    return (
-      <div className="progressBars">
-        <Typography variant="body1" gutterBottom className="progressText">
-          Video: {currentVideoNum} / {totalVideos}
-        </Typography>
-        <LinearProgress
-          className="progressBar"
-          variant="determinate"
-          value={videoProgress}
-        />
-        <Typography variant="body1" gutterBottom className="progressText">
-          {stage} frame {currentFrame} of {totalFrames}
-        </Typography>
-        <LinearProgress
-          className="progressBar"
-          variant="determinate"
-          value={predictionProgress}
-          color="secondary"
-        />
-      </div>
-    );
-  }
+function PredictingStatus(props) {
+  const {
+    currentVideoNum,
+    totalVideos,
+    videoProgress,
+    stage,
+    currentFrame,
+    totalFrames,
+    predictionProgress
+  } = props;
+
+  return (
+    <div className="progressBars">
+      <Typography variant="body1" gutterBottom className="progressText">
+        Video: {currentVideoNum} / {totalVideos}
+      </Typography>
+      <LinearProgress
+        className="progressBar"
+        variant="determinate"
+        value={videoProgress}
+      />
+      <Typography variant="body1" gutterBottom className="progressText">
+        {stage} frame {currentFrame} of {totalFrames}
+      </Typography>
+      <LinearProgress
+        className="progressBar"
+        variant="determinate"
+        value={predictionProgress}
+        color="secondary"
+      />
+    </div>
+  );
 }
 
 class PredictProgress extends Component {
@@ -106,12 +104,11 @@ class PredictProgress extends Component {
   };
 
   getCurrentVideo = predictions => {
-    // eslint-disable-next-line
     let currentVideo = predictions.find((pred, index) => {
       if (pred.framenum !== pred.totalframe) {
         pred.videoNum = index + 1;
-        return pred;
       }
+      return pred;
     });
 
     if (currentVideo) {

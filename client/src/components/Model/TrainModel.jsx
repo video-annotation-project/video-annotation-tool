@@ -18,79 +18,67 @@ import VideoMetadata from '../Utilities/VideoMetadata';
 
 import './TrainModel.css';
 
-// eslint-disable-next-line react/prefer-stateless-function
-class ModelsForm extends Component {
-  render() {
-    const { className, modelSelected, handleChange, models } = this.props;
-    return (
-      <FormControl component="fieldset" className={className}>
-        <InputLabel shrink>Model</InputLabel>
-        <Select
-          name="modelSelected"
-          value={modelSelected || 'Loading...'}
-          onChange={handleChange}
-        >
-          {models.map(model => (
-            <MenuItem key={model.name} value={model.name}>
-              {model.name}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-    );
-  }
+function ModelsForm(props) {
+  const { className, modelSelected, handleChange, models } = props;
+  return (
+    <FormControl component="fieldset" className={className}>
+      <InputLabel shrink>Model</InputLabel>
+      <Select
+        name="modelSelected"
+        value={modelSelected || 'Loading...'}
+        onChange={handleChange}
+      >
+        {models.map(model => (
+          <MenuItem key={model.name} value={model.name}>
+            {model.name}
+          </MenuItem>
+        ))}
+      </Select>
+    </FormControl>
+  );
 }
 
-// eslint-disable-next-line react/prefer-stateless-function
-class CollectionsForm extends Component {
-  render() {
-    const {
-      className,
-      annotationCollections,
-      onChange,
-      collections
-    } = this.props;
+function CollectionsForm(props) {
+  const { className, annotationCollections, onChange, collections } = props;
 
-    return (
-      <FormControl component="fieldset" className={className}>
-        <InputLabel shrink>Annotations</InputLabel>
-        <Select
-          multiple
-          name="selectedAnnotations"
-          value={annotationCollections}
-          onChange={onChange}
-          input={<Input id="select-multiple" />}
-          renderValue={selected =>
-            selected.map(collection => collection.name).join(', ') ||
-            'Loading...'
-          }
-        >
-          {collections.map(collection => (
-            <MenuItem key={collection.id} value={collection}>
-              <Checkbox
-                checked={annotationCollections.indexOf(collection) > -1}
-              />
-              <ListItemText>
-                {collection.name}
-                {collection.concepts ? (
-                  <Typography
-                    variant="subtitle2"
-                    gutterBottom
-                    color="textSecondary"
-                    className="collectionsConcepts"
-                  >
-                    {collection.concepts.join(', ')}
-                  </Typography>
-                ) : (
-                  ''
-                )}
-              </ListItemText>
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-    );
-  }
+  return (
+    <FormControl component="fieldset" className={className}>
+      <InputLabel shrink>Annotations</InputLabel>
+      <Select
+        multiple
+        name="selectedAnnotations"
+        value={annotationCollections}
+        onChange={onChange}
+        input={<Input id="select-multiple" />}
+        renderValue={selected =>
+          selected.map(collection => collection.name).join(', ') || 'Loading...'
+        }
+      >
+        {collections.map(collection => (
+          <MenuItem key={collection.id} value={collection}>
+            <Checkbox
+              checked={annotationCollections.indexOf(collection) > -1}
+            />
+            <ListItemText>
+              {collection.name}
+              {collection.concepts ? (
+                <Typography
+                  variant="subtitle2"
+                  gutterBottom
+                  color="textSecondary"
+                  className="collectionsConcepts"
+                >
+                  {collection.concepts.join(', ')}
+                </Typography>
+              ) : (
+                ''
+              )}
+            </ListItemText>
+          </MenuItem>
+        ))}
+      </Select>
+    </FormControl>
+  );
 }
 
 class EpochsField extends Component {
