@@ -48,7 +48,7 @@ verifyVideos = model[3]
 
 user_model = model[0] + "-" + time.ctime()
 
-Delete old model user
+# Delete old model user
 if (model[4] != 'None'):
     cursor.execute('''
          DELETE FROM users
@@ -66,7 +66,7 @@ cursor.execute('''
                (user_model,))
 model_user_id = int(cursor.fetchone()[0])
 
-update models
+# update models
 cursor.execute('''
     UPDATE models
     SET userid=%s
