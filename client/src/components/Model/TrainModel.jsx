@@ -63,8 +63,11 @@ const styles = theme => ({
     width: '50%'
   },
   button: {
-    marginTop: theme.spacing(2),
+    marginTop: theme.spacing(4),
     marginRight: theme.spacing()
+  },
+  infoButton: {
+    marginTop: theme.spacing(2)
   },
   actionsContainer: {
     flexDirection: 'column',
@@ -125,12 +128,7 @@ class TrainModel extends Component {
       modelSelected: null,
       collections: [],
       annotationCollections: [],
-      selectedCollectionCounts: [
-        { count: 0 },
-        { count: 0 },
-        { count: 0 },
-        { count: 0 }
-      ],
+      selectedCollectionCounts: [],
       minImages: 5000,
       epochs: 0,
       includeTracking: false,
@@ -310,7 +308,6 @@ class TrainModel extends Component {
         collections: res.data.sort(a => (a.validConcepts ? -1 : 1)),
         annotationCollections: localSelected
       });
-      // this.filterCollection(selectedModelTuple, res.data);
     });
   };
 
@@ -434,6 +431,7 @@ class TrainModel extends Component {
       includeTracking,
       verifiedOnly,
       selectedCollectionCounts,
+      minCounts,
       countsLoaded,
       infoDialogOpen
     } = this.state;
@@ -479,15 +477,16 @@ class TrainModel extends Component {
                 onChange={this.handleChangeSwitch}
                 value="verifiedOnly"
                 color="primary"
-                disabled={selectedCollectionCounts[2].length === 0}
+                disabled={countsLoaded && !minCounts[2]}
               />
             }
             label="Verified annotations only"
           />
         </div>
         <Button
+          variant="outlined"
           color="primary"
-          className={classes.button}
+          className={classes.infoButton}
           onClick={this.toggleInfo}
         >
           Training Info
@@ -510,37 +509,24 @@ class TrainModel extends Component {
   };
 
   getImageRange = () => {
-    const {
-      selectedCollectionCounts,
-      includeTracking,
-      verifiedOnly
-    } = this.state;
+    const { minCounts, includeTracking, verifiedOnly } = this.state;
+    let selection;
 
-    const counts = {};
     if (verifiedOnly) {
-      selectedCollectionCounts[2].forEach(concept => {
-        counts[concept.name] = parseInt(concept.count, 10);
-      });
       if (includeTracking) {
-        selectedCollectionCounts[3].forEach(concept => {
-          counts[concept.name] += parseInt(concept.count, 10);
-        });
+        selection = 3;
+      } else {
+        selection = 2;
       }
-      const max = Math.min(...Object.values(counts));
-      if (max === 0) return max;
-      return max === 1 ? `Must be 1` : `Must be between 1 and ${max}`;
+    } else if (includeTracking) {
+      selection = 1;
+    } else {
+      selection = 0;
     }
 
-    selectedCollectionCounts[0].forEach(concept => {
-      counts[concept.name] = parseInt(concept.count, 10);
-    });
-    if (includeTracking) {
-      selectedCollectionCounts[1].forEach(concept => {
-        counts[concept.name] += parseInt(concept.count, 10);
-      });
-    }
-    const max = Math.min(...Object.values(counts));
-    return max === 1 ? `Must be 1` : `Must be between 1 and ${max}`;
+    return minCounts[selection] === 1
+      ? `Must be 1`
+      : `Must be between 1 and ${minCounts[selection]}`;
   };
 
   getCollectionCounts = async () => {
@@ -575,9 +561,30 @@ class TrainModel extends Component {
         }
       });
       if (res) {
+        const minCounts = [];
+        minCounts.push(Math.min(...res.data.map(count => count.user)));
+        minCounts.push(
+          Math.min(
+            ...res.data.map(
+              count => parseInt(count.user, 10) + parseInt(count.tracking, 10)
+            )
+          )
+        );
+        minCounts.push(Math.min(...res.data.map(count => count.verified_user)));
+        minCounts.push(
+          Math.min(
+            ...res.data.map(
+              count =>
+                parseInt(count.verified_user, 10) +
+                parseInt(count.verified_tracking, 10)
+            )
+          )
+        );
+
         this.setState({
           countsLoaded: true,
-          selectedCollectionCounts: res.data
+          selectedCollectionCounts: res.data,
+          minCounts
         });
       }
     } catch (error) {

@@ -9,20 +9,25 @@ router.get(
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     const params = [req.query.ids];
-    const counts = [];
     let queryText = `
-      SELECT
-        c.name, count(*)
-      FROM
-        annotations a
-      INNER JOIN
-        annotation_intermediate ai ON a.id = ai.annotationid
-      INNER JOIN
-        users u ON u.id = a.userid
-      INNER JOIN
-        concepts c ON c.id = a.conceptid
-      WHERE
-        ai.id::text = ANY($1)
+      WITH counts AS (
+        SELECT
+          c.name,
+          SUM(CASE WHEN u.username != 'tracking' THEN 1 ELSE 0 END) AS user,
+          SUM(CASE WHEN u.username = 'tracking' THEN 1 ELSE 0 END) tracking,
+          SUM(CASE WHEN u.username != 'tracking' AND a.verifiedby IS NOT null THEN 1 ELSE 0 END) verified_user,
+          SUM(CASE WHEN u.username = 'tracking' AND a.verifiedby IS NOT null THEN 1 ELSE 0 END) verified_tracking,
+          count(*) total
+        FROM
+          annotation_intermediate ai
+        LEFT JOIN
+          annotations a ON a.id = ai.annotationid
+        LEFT JOIN
+          users u ON u.id = a.userid
+        LEFT JOIN
+          concepts c ON c.id=a.conceptid
+        WHERE
+          ai.id::text = ANY($1)
     `;
 
     if (req.query.validConcepts) {
@@ -30,24 +35,27 @@ router.get(
       params.push(req.query.validConcepts);
     }
 
-    const user = ` AND u.username != 'tracking'`;
-    const tracking = ` AND u.username = 'tracking'`;
-    const verified = ` AND a.verifiedby IS NOT NULL`;
-    const groupby = ` GROUP BY c.name`;
+    queryText += `
+        GROUP BY
+          c.name
+      )
+
+      SELECT * FROM counts
+      UNION ALL
+      SELECT
+        'TOTAL' as name,
+        SUM(c.user) as user,
+        SUM(c.tracking) as tracking,
+        SUM(c.verified_user) as verified_user,
+        SUM(c.verified_tracking) as verified_tracking,
+        SUM(c.total) as total
+      FROM
+        counts c
+    `;
 
     try {
-      let count = await psql.query(queryText + user + groupby, params);
-      counts.push(count.rows);
-      count = await psql.query(queryText + tracking + groupby, params);
-      counts.push(count.rows);
-      count = await psql.query(queryText + user + verified + groupby, params);
-      counts.push(count.rows);
-      count = await psql.query(
-        queryText + tracking + verified + groupby,
-        params
-      );
-      counts.push(count.rows);
-      res.json(counts);
+      let counts = await psql.query(queryText, params);
+      res.json(counts.rows);
     } catch (error) {
       console.log(error);
       res.status(500).json(error);

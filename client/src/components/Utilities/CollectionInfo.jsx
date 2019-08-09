@@ -47,41 +47,28 @@ const styles = theme => ({
 class CollectionInfo extends Component {
   constructor(props) {
     super(props);
-    this.state = {
-      table: {}
-    };
+    this.state = {};
   }
 
-  componentDidMount = () => {
-    this.reformat();
-  };
-
-  componentDidUpdate(prevProps) {
-    const { counts } = this.props;
-    if (counts !== prevProps.counts) {
-      this.reformat();
-    }
-  }
-
-  reformat = () => {
-    const { counts } = this.props;
-    const table = {};
-    counts[0].forEach(concept => {
-      table[concept.name] = [concept.count, '0', '0', '0'];
-    });
-    for (let i = 1; i < 4; i += 1) {
-      counts[i].forEach(concept => {
-        table[concept.name][i] = concept.count;
-      });
-    }
-    this.setState({
-      table
-    });
-  };
+  // reformat = () => {
+  //   const { counts } = this.props;
+  //   console.log(counts);
+  //   const table = {};
+  //   counts[0].forEach(concept => {
+  //     table[concept.name] = [concept.count, '0', '0', '0'];
+  //   });
+  //   for (let i = 1; i < 4; i += 1) {
+  //     counts[i].forEach(concept => {
+  //       table[concept.name][i] = concept.count;
+  //     });
+  //   }
+  //   this.setState({
+  //     table
+  //   });
+  // };
 
   render() {
-    const { open, onClose, data, classes } = this.props;
-    const { table } = this.state;
+    const { open, onClose, data, counts, classes } = this.props;
 
     return (
       <Dialog onClose={onClose} open={open} fullWidth maxWidth="md">
@@ -105,26 +92,32 @@ class CollectionInfo extends Component {
                 <TableCell className={classes.tableCell} align="right">
                   Verified Tracking Annotations
                 </TableCell>
+                <TableCell className={classes.tableCell} align="right">
+                  All Annotations
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {Object.keys(table).map(concept => {
+              {counts.map(count => {
                 return (
-                  <TableRow key={concept}>
+                  <TableRow key={count.name}>
                     <TableCell component="th" scope="row">
-                      {concept}
+                      {count.name}
                     </TableCell>
                     <TableCell component="th" scope="row" align="right">
-                      {table[concept][0]}
+                      {count.user}
                     </TableCell>
                     <TableCell component="th" scope="row" align="right">
-                      {table[concept][1]}
+                      {count.tracking}
                     </TableCell>
                     <TableCell component="th" scope="row" align="right">
-                      {table[concept][2]}
+                      {count.verified_user}
                     </TableCell>
                     <TableCell component="th" scope="row" align="right">
-                      {table[concept][3]}
+                      {count.verified_tracking}
+                    </TableCell>
+                    <TableCell component="th" scope="row" align="right">
+                      {count.total}
                     </TableCell>
                   </TableRow>
                 );
