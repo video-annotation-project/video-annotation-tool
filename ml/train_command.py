@@ -54,10 +54,6 @@ if (model[4] != 'None'):
          DELETE FROM users
          WHERE id=%s''',
                    (model[4],))
-cursor.execute(
-    '''INSERT INTO users (username, password, admin) VALUES (%s, 0, null) RETURNING *''',
-    (user_model,)
-)
 
 cursor.execute('''
     INSERT INTO users (username, password, admin)
