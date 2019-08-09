@@ -8,8 +8,8 @@ import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
 import SwipeableViews from 'react-swipeable-views';
 import Box from '@material-ui/core/Box';
-import PredictProgress from './PredictProgress';
 
+import PredictProgress from './PredictProgress';
 import './ModelProgress.css';
 
 class TrainingStatus extends Component {

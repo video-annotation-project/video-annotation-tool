@@ -177,15 +177,23 @@ class TrainModel extends Component {
   }
 
   componentDidMount = async () => {
-    this.loadOptionInfo();
-    this.loadExistingModels();
+    await this.loadOptionInfo();
+    await this.loadExistingModels();
+    this.loadCollectionList();
   };
 
   // Used to handle changes in the hyperparameters and in the select model
   handleChange = event => {
-    this.setState({
-      [event.target.name]: event.target.value
-    });
+    this.setState(
+      {
+        [event.target.name]: event.target.value
+      },
+      () => {
+        if (event.target.name === 'modelSelected') {
+          this.loadCollectionList();
+        }
+      }
+    );
   };
 
   handleChangeSwitch = event => {
@@ -206,12 +214,6 @@ class TrainModel extends Component {
     this.setState({
       openedVideo: null
     });
-  };
-
-  componentDidMount = async () => {
-    await this.loadOptionInfo();
-    await this.loadExistingModels();
-    this.loadCollectionList();
   };
 
   loadOptionInfo = () => {
@@ -261,8 +263,7 @@ class TrainModel extends Component {
   };
 
   loadCollectionList = () => {
-    const { models, modelSelected, annotationCollections } = this.state;
-    const localSelected = annotationCollections;
+    const { models, modelSelected } = this.state;
     const selectedModelTuple = models.find(model => {
       return model.name === modelSelected;
     });
@@ -281,7 +282,7 @@ class TrainModel extends Component {
       .then(res => {
         this.setState({
           collections: res.data,
-          annotationCollections: localSelected
+          annotationCollections: []
         });
       });
   };
@@ -355,7 +356,6 @@ class TrainModel extends Component {
                 className="collectionsForm"
                 collections={collections}
                 annotationCollections={annotationCollections}
-                checkboxSelect={this.checkboxSelect}
                 onChange={this.handleChangeMultiple}
               />
               <EpochsField className="epochsField" />
