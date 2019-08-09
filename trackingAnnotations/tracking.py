@@ -68,7 +68,7 @@ def get_next_frame(frames, video_object, num):
         if len(frames) == 0:
             return None
         frame = frames.pop()
-    return frame
+    return frame if check else None
 
 # Uploads images and puts annotation in database
 
@@ -210,10 +210,10 @@ def track_annotation(original):
 
     while (check and curr <= end):
         check, vid = cap.read()
-        frame_list.append(vid)
+        if check:
+            frame_list.append(vid)
         curr = cap.get(0)
     cap.release()
-
     # initialize vars for getting frames after annotation
     start = timeinvideo * 1000
     end = start + (LENGTH / 2)
@@ -234,14 +234,12 @@ def track_annotation(original):
     forward_frames = track_object(
         frame_num, frames, box, True, end, original, cursor, con, TRACKING_ID, fps)
     vs.release()
-
     # get object tracking frames prior to annotation
     frames = frame_list
     # print("tracking backwards..")
     reverse_frames = track_object(
         frame_num, frames, box, False, 0, original, cursor, con, TRACKING_ID, fps)
     reverse_frames.reverse()
-
     output_file = str(uuid.uuid4()) + ".mp4"
     converted_file = str(uuid.uuid4()) + ".mp4"
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
