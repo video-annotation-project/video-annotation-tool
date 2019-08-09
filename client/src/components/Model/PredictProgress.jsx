@@ -75,13 +75,12 @@ class PredictProgress extends Component {
       if (predictions) {
         const predictionsData = predictions.data;
         const totalVideos = predictionsData.length;
-
         const currentVideo = this.getCurrentVideo(predictionsData);
         const currentVideoNum = currentVideo.videoNum;
         const currentFrame = currentVideo.framenum;
         const totalFrames = currentVideo.totalframe;
         const { status } = currentVideo;
-        const videoProgress = (currentVideo / totalVideos) * 100;
+        const videoProgress = (currentVideo.videoNum / totalVideos) * 100;
         const predictionProgress = (currentFrame / totalFrames) * 100;
 
         if (totalVideos === 0) {

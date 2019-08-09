@@ -180,9 +180,9 @@ class ModelProgress extends Component {
           currentBatch: progress.curr_batch + 1,
           maxEpoch: progress.max_epoch,
           stepsPerEpoch: progress.steps_per_epoch,
-          // Not used?
-          // epochProgress: ((progress.curr_epoch + 1) / progress.max_epoch) * 100,
-          // batchProgress: ((progress.curr_batch + 1) / progress.steps_per_epoch) * 100,
+          epochProgress: ((progress.curr_epoch + 1) / progress.max_epoch) * 100,
+          batchProgress:
+            ((progress.curr_batch + 1) / progress.steps_per_epoch) * 100,
           stdout: progress.std_out,
           stderr: progress.std_err
         });
@@ -208,6 +208,8 @@ class ModelProgress extends Component {
       running,
       currentEpoch,
       maxEpoch,
+      epochProgress,
+      batchProgress,
       currentBatch,
       stepsPerEpoch,
       stdout,
@@ -238,6 +240,8 @@ class ModelProgress extends Component {
               maxEpoch={maxEpoch}
               currentBatch={currentBatch}
               stepsPerEpoch={stepsPerEpoch}
+              epochProgress={epochProgress}
+              batchProgress={batchProgress}
             />
             <PredictProgress className="progress" />
           </TabPanel>
