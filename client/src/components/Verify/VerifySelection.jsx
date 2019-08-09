@@ -9,7 +9,6 @@ import FormGroup from '@material-ui/core/FormGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Switch from '@material-ui/core/Switch';
 import FormControl from '@material-ui/core/FormControl';
-import Typography from '@material-ui/core/Typography';
 
 import SelectUser from '../Utilities/SelectUser';
 import SelectVideo from '../Utilities/SelectVideo';
@@ -39,7 +38,13 @@ const styles = theme => ({
 });
 
 function getSteps() {
-  return ['Annotation Collections', 'Users', 'Videos', 'Concepts', 'Unsure'];
+  return [
+    'Annotation Collections',
+    'Users',
+    'Videos',
+    'Concepts',
+    'Extra Options'
+  ];
 }
 
 class VerifySelection extends React.Component {
@@ -71,7 +76,8 @@ class VerifySelection extends React.Component {
       getConceptCollections,
       selectedUnsure,
       getUnsure,
-      selectedTrackingFirst
+      selectedTrackingFirst,
+      includeTracking
     } = this.props;
 
     switch (step) {
@@ -131,13 +137,16 @@ class VerifySelection extends React.Component {
       case 4:
         return (
           <div>
-            <SelectUnsure
-              value={selectedUnsure}
-              getUnsure={getUnsure}
-              handleChangeSwitch={handleChangeSwitch('selectedUnsure')}
-            />
+            {selectedAnnotationCollections.length ? (
+              ''
+            ) : (
+              <SelectUnsure
+                value={selectedUnsure}
+                getUnsure={getUnsure}
+                handleChangeSwitch={handleChangeSwitch('selectedUnsure')}
+              />
+            )}
             <div>
-              <Typography>Select Video First</Typography>
               <FormControl component="fieldset" className={classes.formControl}>
                 <FormGroup>
                   <FormControlLabel
@@ -148,6 +157,7 @@ class VerifySelection extends React.Component {
                         onChange={handleChangeSwitch('selectedTrackingFirst')}
                         value="selectedTrackingFirst"
                         color="primary"
+                        disabled={includeTracking}
                       />
                     }
                     label="Tracking Video Verification"
@@ -155,6 +165,32 @@ class VerifySelection extends React.Component {
                 </FormGroup>
               </FormControl>
             </div>
+            {selectedAnnotationCollections.length === 0 ? (
+              ''
+            ) : (
+              <div>
+                <FormControl
+                  component="fieldset"
+                  className={classes.formControl}
+                >
+                  <FormGroup>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          className={classes.switch}
+                          checked={includeTracking}
+                          onChange={handleChangeSwitch('includeTracking')}
+                          value="includeTracking"
+                          color="primary"
+                          disabled={selectedTrackingFirst}
+                        />
+                      }
+                      label="Include Tracking"
+                    />
+                  </FormGroup>
+                </FormControl>
+              </div>
+            )}
           </div>
         );
       default:
@@ -176,6 +212,13 @@ class VerifySelection extends React.Component {
       default:
         return false;
     }
+  };
+
+  handleCollection = () => {
+    this.setState({
+      activeStep: 4
+    });
+    console.log(this.state);
   };
 
   handleNext = () => {
@@ -241,7 +284,10 @@ class VerifySelection extends React.Component {
                         this.handleBack(activeStep);
                       }}
                       className={classes.button}
-                      disabled={activeStep === 0}
+                      disabled={
+                        activeStep === 0 ||
+                        selectedAnnotationCollections.length > 0
+                      }
                     >
                       Back
                     </Button>
@@ -250,10 +296,10 @@ class VerifySelection extends React.Component {
                       <Button
                         variant="contained"
                         color="primary"
-                        onClick={toggleSelection}
+                        onClick={this.handleCollection}
                         className={classes.button}
                       >
-                        Skip To Annotations Verify
+                        Skip To Step 5
                       </Button>
                     ) : (
                       <Button
