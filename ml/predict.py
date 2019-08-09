@@ -1,9 +1,6 @@
 import copy
 import os
-<< << << < HEAD
-== == == =
 import subprocess
->>>>>> > 7a6316529866a2d3c5001046a2bebbedfd52a3d5
 import json
 
 import cv2
