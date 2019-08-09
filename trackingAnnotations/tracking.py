@@ -149,9 +149,9 @@ def track_object(frame_num, frames, box, video_object, end, original, cursor, co
             frame_list.append(frame)
             timeinvideo = abs((1 + counter)/fps)
             if video_object:
-                timeinvideo = original.timeinvideo + timeinvideo
+                timeinvideo = timeinvideo + timeinvideo
             else:
-                timeinvideo = original.timeinvideo - timeinvideo
+                timeinvideo = timeinvideo - timeinvideo
             timeinvideo = round(timeinvideo, 2)
             upload_image(frame_num, timeinvideo, frame_no_box, frame,
                          original, x, y, (x+w), (y+h), cursor, con, TRACKING_ID)
@@ -175,8 +175,8 @@ def track_object(frame_num, frames, box, video_object, end, original, cursor, co
 def track_annotation(original):
     print("Start tracking annotation: " + str(original.id))
     # Weird javascript time errors are fixed here
-    original.timeinvideo = fix_offset(original.videoid, original.timeinvideo,
-                                      original.image, original.id)
+    timeinvideo = fix_offset(original.videoid, original.timeinvideo,
+                             original.image, original.id)
 
     con = connect(database=DB_NAME, host=DB_HOST,
                   user=DB_USER, password=DB_PASSWORD)
@@ -201,7 +201,7 @@ def track_annotation(original):
 
     # initialize video for grabbing frames before annotation
     # start vidlen/2 secs before obj appears
-    start = ((original.timeinvideo * 1000) - (LENGTH / 2))
+    start = ((timeinvideo * 1000) - (LENGTH / 2))
     end = start + (LENGTH / 2)  # end when annotation occurs
     cap.set(0, start)  # tell video to start at 'start' time
     check = True
@@ -215,7 +215,7 @@ def track_annotation(original):
     cap.release()
 
     # initialize vars for getting frames after annotation
-    start = original.timeinvideo * 1000
+    start = timeinvideo * 1000
     end = start + (LENGTH / 2)
     x_ratio = (original.videowidth / VIDEO_WIDTH)
     y_ratio = (original.videoheight / VIDEO_HEIGHT)
