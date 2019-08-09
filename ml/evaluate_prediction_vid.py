@@ -6,32 +6,8 @@ import boto3
 from psycopg2 import connect
 
 import predict
-
-
-config_path = '../config.json'
-with open(config_path) as config_buffer:
-    config = json.loads(config_buffer.read())['ml']
-
-good_users = config['biologist_users']
-EVALUATION_IOU_THRESH = config['evaluation_iou_threshold']
-RESIZED_WIDTH = config['resized_video_width']
-RESIZED_HEIGHT = config['resized_video_height']
-weights_path = config['weights_path']
-
-AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
-AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
-S3_BUCKET = os.getenv('AWS_S3_BUCKET_NAME')
-s3 = boto3.client('s3', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
-S3_WEIGHTS_FOLDER = os.getenv("AWS_S3_BUCKET_WEIGHTS_FOLDER")
-
-AWS_S3_BUCKET_METRICS_FOLDER = os.getenv("AWS_S3_BUCKET_METRICS_FOLDER")
-
-# connect to db
-con = connect(database=os.getenv("DB_NAME"),
-              host=os.getenv("DB_HOST"),
-              user=os.getenv("DB_USER"),
-              password=os.getenv("DB_PASSWORD"))
-cursor = con.cursor()
+import config
+from utils.query import cursor, s3, con
 
 
 def score_predictions(validation, predictions, iou_thresh, concepts):
@@ -96,9 +72,12 @@ def score_predictions(validation, predictions, iou_thresh, concepts):
         FN = false_negatives[concept]
         precision = TP / (TP + FP) if (TP + FP) != 0 else 0
         recall = TP / (TP + FN) if (TP + FN) != 0 else 0
-        f1 = (2 * recall * precision / (precision + recall)) if (precision + recall) != 0 else 0
-        metrics = metrics.append([[concept, TP, FP, FN, precision, recall, f1]])
-    metrics.columns = ['conceptid', 'TP', 'FP', 'FN', 'Precision', 'Recall', 'F1']
+        f1 = (2 * recall * precision / (precision + recall)
+              ) if (precision + recall) != 0 else 0
+        metrics = metrics.append(
+            [[concept, TP, FP, FN, precision, recall, f1]])
+    metrics.columns = ['conceptid', 'TP', 'FP',
+                       'FN', 'Precision', 'Recall', 'F1']
     return metrics
 
 
@@ -108,8 +87,10 @@ def get_counts(results, annotations):
     counts.columns = ['pred_num']
     groundtruth_counts = pd.DataFrame(annotations.groupby('label').size())
     groundtruth_counts.columns = ['true_num']
-    counts = pd.concat((counts, groundtruth_counts), axis=1, join='outer').fillna(0)
-    counts['count_accuracy'] = 1 - abs(counts.true_num - counts.pred_num) / counts.true_num
+    counts = pd.concat((counts, groundtruth_counts),
+                       axis=1, join='outer').fillna(0)
+    counts['count_accuracy'] = 1 - \
+        abs(counts.true_num - counts.pred_num) / counts.true_num
     return counts
 
 
@@ -117,22 +98,21 @@ def evaluate(video_id, model_username, concepts):
     # file format: (video_id)_(model_name)-(ctime).mp4
     filename = str(video_id) + '_' + model_username + '.mp4'
     results, fps, original_frames, annotations = predict.predict_on_video(
-        video_id, weights_path, concepts, filename)
+        video_id, config.WEIGHTS_PATH, concepts, filename)
     print("done predicting")
 
     metrics = score_predictions(
-        annotations, results, EVALUATION_IOU_THRESH, concepts)
+        annotations, results, config.EVALUATION_IOU_THRESH, concepts)
     concept_counts = get_counts(results, annotations)
     metrics = metrics.set_index('conceptid').join(concept_counts)
     metrics.to_csv("metrics" + str(video_id) + ".csv")
     # upload the data to s3 bucket
     print("uploading to s3 folder")
     s3.upload_file(
-        "metrics" + str(video_id) + ".csv", S3_BUCKET,
-        AWS_S3_BUCKET_METRICS_FOLDER + filename.replace('mp4', 'csv'),
+        "metrics" + str(video_id) + ".csv", config.S3_BUCKET,
+        config.S3_METRICS_FOLDER + filename.replace('mp4', 'csv'),
         ExtraArgs={'ContentType': 'application/vnd.ms-excel'}
     )
-
     print(metrics)
     con.commit()
 
@@ -140,7 +120,8 @@ def evaluate(video_id, model_username, concepts):
 if __name__ == '__main__':
     model_name = 'testV2'
 
-    s3.download_file(S3_BUCKET, S3_WEIGHTS_FOLDER + model_name + '.h5', weights_path)
+    s3.download_file(config.S3_BUCKET, config.S3_WEIGHTS_FOLDER +
+                     model_name + '.h5', config.WEIGHTS_PATH)
     cursor.execute('''
         SELECT * FROM models
         LEFT JOIN users u ON u.id=userid

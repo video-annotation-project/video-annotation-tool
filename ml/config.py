@@ -12,6 +12,17 @@ config_file = open(config_path)
 config = json.load(config_file)['ml']
 config_file.close()
 
+# Evaluation validation
+GOOD_USERS = config['biologist_users']
+EVALUATION_IOU_THRESH = config['evaluation_iou_threshold']
+RESIZED_WIDTH = config['resized_video_width']
+RESIZED_HEIGHT = config['resized_video_height']
+NUM_FRAMES = config['frames_between_predictions']
+THRESHOLDS = config['prediction_confidence_thresholds']
+TRACKING_IOU_THRESH = config['prediction_tracking_iou_threshold']
+MIN_FRAMES_THRESH = config['min_frames_threshold']
+MAX_TIME_BACK = config['max_seconds_back']
+
 # Model weights paths
 WEIGHTS_PATH = config['weights_path']
 DEFAULT_WEIGHTS_PATH = config['default_weights']
@@ -33,6 +44,8 @@ S3_ANNOTATION_FOLDER = os.getenv("AWS_S3_BUCKET_ANNOTATIONS_FOLDER")
 S3_VIDEO_FOLDER = os.getenv('AWS_S3_BUCKET_VIDEOS_FOLDER')
 S3_TRACKING_FOLDER = os.getenv("AWS_S3_BUCKET_TRACKING_FOLDER")
 S3_WEIGHTS_FOLDER = os.getenv("AWS_S3_BUCKET_WEIGHTS_FOLDER")
+S3_METRICS_FOLDER = os.getenv("AWS_S3_BUCKET_METRICS_FOLDER")
+S3_BUCKET_AIVIDEOS_FOLDER = os.getenv("AWS_S3_BUCKET_AIVIDEOS_FOLDER")
 
 # Database variables
 DB_NAME = os.getenv("DB_NAME")
