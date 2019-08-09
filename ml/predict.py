@@ -21,6 +21,10 @@ import config
 from utils.query import s3, cursor, pd_query, con
 
 
+def printing_with_time(text):
+    print(text + " " + str(datetime.datetime.now()))
+
+
 class Tracked_object(object):
 
     def __init__(self, detection, frame, frame_num):
