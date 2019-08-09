@@ -1,5 +1,3 @@
-from imutils.video import VideoStream
-import imutils
 import cv2
 from pgdb import connect
 import boto3
@@ -121,7 +119,7 @@ def track_object(frame_num, frames, box, video_object, end, original, cursor, co
     frame = get_next_frame(frames, video_object, 0)
     if frame is None:
         return []
-    frame = imutils.resize(frame, width=VIDEO_WIDTH, height=VIDEO_HEIGHT)
+    frame = cv2.resize(frame, (VIDEO_WIDTH, VIDEO_HEIGHT))
     frame_num = increment_frame_num(video_object, frame_num)
 
     # initialize tracking, add first frame (original annotation)
@@ -141,7 +139,7 @@ def track_object(frame_num, frames, box, video_object, end, original, cursor, co
         if frame is None:
             break
         frame_num = increment_frame_num(video_object, frame_num)
-        frame = imutils.resize(frame, width=VIDEO_WIDTH, height=VIDEO_HEIGHT)
+        frame = cv2.resize(frame, (VIDEO_WIDTH, VIDEO_HEIGHT))
         frame_no_box = copy.deepcopy(frame)
         (success, boxes) = trackers.update(frame)
         if success:
@@ -211,7 +209,6 @@ def track_annotation(original):
 
     while (check and curr <= end):
         check, vid = cap.read()
-        vid = imutils.resize(vid, width=VIDEO_WIDTH, height=VIDEO_HEIGHT)
         frame_list.append(vid)
         curr = cap.get(0)
     cap.release()
