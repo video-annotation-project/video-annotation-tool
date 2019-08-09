@@ -218,7 +218,6 @@ class VerifySelection extends React.Component {
     this.setState({
       activeStep: 4
     });
-    console.log(this.state);
   };
 
   handleNext = () => {

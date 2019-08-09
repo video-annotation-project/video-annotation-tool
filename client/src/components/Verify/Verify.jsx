@@ -60,7 +60,6 @@ class Verify extends Component {
   }
 
   toggleSelection = async () => {
-    console.log(this.state);
     const { selectedAnnotationCollections } = this.state;
     const selectionMounted = JSON.parse(
       localStorage.getItem('selectionMounted')
