@@ -48,31 +48,31 @@ verifyVideos = model[3]
 
 user_model = model[0] + "-" + time.ctime()
 
-# Delete old model user
-# if (model[4] != 'None'):
-#      cursor.execute('''
-#          DELETE FROM users
-#          WHERE id=%s''',
-#          (model[4],))
-# cursor.execute(
-#     '''INSERT INTO users (username, password, admin) VALUES (%s, 0, null) RETURNING *''',
-#     (user_model,)
-# )
+Delete old model user
+if (model[4] != 'None'):
+    cursor.execute('''
+         DELETE FROM users
+         WHERE id=%s''',
+                   (model[4],))
+cursor.execute(
+    '''INSERT INTO users (username, password, admin) VALUES (%s, 0, null) RETURNING *''',
+    (user_model,)
+)
 
-# cursor.execute('''
-#     INSERT INTO users (username, password, admin)
-#     VALUES (%s, 0, null)
-#     RETURNING *''',
-#     (user_model,))
-# model_user_id = int(cursor.fetchone()[0])
+cursor.execute('''
+    INSERT INTO users (username, password, admin)
+    VALUES (%s, 0, null)
+    RETURNING *''',
+               (user_model,))
+model_user_id = int(cursor.fetchone()[0])
 
-# update models
-# cursor.execute('''
-#     UPDATE models
-#     SET userid=%s
-#     WHERE name=%s
-#     RETURNING *''',
-#     (model_user_id, info['modelSelected'],))
+update models
+cursor.execute('''
+    UPDATE models
+    SET userid=%s
+    WHERE name=%s
+    RETURNING *''',
+               (model_user_id, info['modelSelected'],))
 
 # Start training job
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
@@ -88,9 +88,9 @@ train_model(concepts, verifyVideos, info['modelSelected'], info['annotationColle
 
 # Run evaluate on all the videos in verifyVideos
 # Using for loop due to memory issues
-# for video_id in verifyVideos:
-#     evaluate(video_id, user_model, concepts)
-#     cursor.execute('''DELETE FROM predict_progress''')
+for video_id in verifyVideos:
+    evaluate(video_id, user_model, concepts)
+    cursor.execute('''DELETE FROM predict_progress''')
 
 subprocess.call(['rm', '*.mp4'])
 
