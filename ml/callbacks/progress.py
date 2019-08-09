@@ -2,6 +2,7 @@ import keras
 from psycopg2 import connect
 
 import config
+from utils.query import con, cursor
 
 
 class Progress(keras.callbacks.Callback):
@@ -14,16 +15,8 @@ class Progress(keras.callbacks.Callback):
         self.curr_epoch = 0
 
         self.table_name = 'training_progress'
-
-        self.connection = connect(
-            database=config.DB_NAME,
-            host=config.DB_HOST,
-            user=config.DB_USER,
-            password=config.DB_PASSWORD
-
-        )
-
-        self.cursor = self.connection.cursor()
+        self.connection = con
+        self.cursor = cursor
 
     def on_train_begin(self, logs={}):
         self.cursor.execute(

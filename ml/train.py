@@ -13,19 +13,13 @@ from keras.callbacks import ModelCheckpoint, EarlyStopping
 from keras_retinanet.callbacks import RedirectModel
 
 import config
+from utils.query import s3
 from utils.timer import timer
 from utils.output import DatabaseOutput
 from preprocessing.annotation_generator import AnnotationGenerator
 from evaluation.evaluate import evaluate_class_thresholds
 from callbacks.progress import Progress
 from callbacks.tensorboard import TensorboardLog
-
-
-s3 = boto3.client(
-    's3',
-    aws_access_key_id=config.AWS_ACCESS_KEY_ID,
-    aws_secret_access_key=config.AWS_SECRET_ACCESS_KEY
-)
 
 
 @timer("training")

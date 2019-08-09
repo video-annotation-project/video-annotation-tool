@@ -10,21 +10,7 @@ from evaluate_prediction_vid import evaluate
 from train import train_model
 import config
 
-
-s3 = boto3.client(
-    's3',
-    aws_access_key_id=config.AWS_ACCESS_KEY_ID,
-    aws_secret_access_key=config.AWS_SECRET_ACCESS_KEY
-)
-
-con = connect(
-    database=config.DB_NAME,
-    host=config.DB_HOST,
-    user=config.DB_USER,
-    password=config.DB_PASSWORD
-)
-
-cursor = con.cursor()
+from utils.query import s3, con, cursor
 
 # Delete old prediction progress
 cursor.execute('''
