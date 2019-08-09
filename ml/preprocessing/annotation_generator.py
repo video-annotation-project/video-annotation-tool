@@ -164,10 +164,11 @@ class AnnotationGenerator(object):
         ai_id = pd_query(
             "SELECT id FROM users WHERE username='tracking'").id[0]
 
-        # Give priority to frames with least amount of tracking annotations
+        # Give priority to frames with highest verification priority
+        # And with least amount of tracking annotations
         # And lower speed
         frame_groups.sort(key=lambda df: (
-            list(df['userid']).count(ai_id), df.speed.mean()))
+            -df.priority.max(), list(df['userid']).count(ai_id), df.speed.mean()))
 
         # Selects images that we'll use (each group has annotations for an image)
         for frame in frame_groups:
@@ -250,8 +251,16 @@ class AnnotationGenerator(object):
                 annotations a
             LEFT JOIN
                 videos ON videos.id=videoid
-            WHERE ROUND(fps * timeinvideo) IN (SELECT c.frame_num FROM collection c WHERE c.videoid=a.videoid)
-            AND a.conceptid = ANY(%s);
+            WHERE 
+                EXISTS (
+                    SELECT
+                        1 
+                    FROM
+                        collection c 
+                    WHERE
+                        c.videoid=a.videoid 
+                        AND c.frame_num=ROUND(fps * timeinvideo))
+                AND a.conceptid = ANY(%s);
         '''
 
         return pd_query(annotations_query, (collection_ids, verify_videos, concepts, ))
