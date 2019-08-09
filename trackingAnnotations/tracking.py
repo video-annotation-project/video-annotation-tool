@@ -13,6 +13,7 @@ import sys
 import math
 from fix_offset import fix_offset
 import json
+import subprocess
 
 # Load environment variables
 load_dotenv(dotenv_path="../.env")
@@ -253,8 +254,10 @@ def track_annotation(original):
 #      cv2.imshow("Frame", frame)
 #      cv2.waitKey(1)
     out.release()
-    os.system('ffmpeg -loglevel 0 -i ' + output_file +
-              ' -codec:v libx264 ' + converted_file)
+    # Convert file so we can stream on s3
+    temp = ['ffmpeg', '-loglevel', '0', '-i', output_file,
+            '-codec:v', 'libx264', '-y', converted_file]
+    subprocess.call(temp)
     if os.path.isfile(converted_file):
         # upload video..
         s3.upload_file(
