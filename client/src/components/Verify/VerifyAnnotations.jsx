@@ -624,7 +624,6 @@ class VerifyAnnotations extends Component {
       toggleSelection,
       socket,
       loadVideos,
-      collectionFlag,
       includeTracking
     } = this.props;
     const {
