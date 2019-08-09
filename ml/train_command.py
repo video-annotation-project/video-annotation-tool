@@ -46,6 +46,8 @@ model = cursor.fetchone()
 concepts = model[2]
 verifyVideos = model[3]
 
+user_model = model[0] + "-" + time.ctime()
+
 # Delete old model user
 # if (model[4] != 'None'):
 #      cursor.execute('''
