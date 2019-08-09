@@ -47,17 +47,16 @@ while True:
     processes = []
     print("Tracking " + str(len(rows)) + " annotations.")
     for count, i in enumerate(rows):
-        print("Working annotation: " + str(i.id))
-
+        # Update originalid so while loop doesn't reset tracking
+        cursor.execute("UPDATE annotations SET originalid=%d WHERE id=%d;",
+                       (i.id, i.id,))
         results = s3.list_objects(
             Bucket=S3_BUCKET, Prefix=S3_VIDEO_FOLDER + str(i.id) + "_tracking.mp4")
         if 'Contents' in results:
             continue
         process = Process(target=tracking.track_annotation, args=(i,))
         process.start()
-        # Update originalid so while loop doesn't reset tracking
-        cursor.execute("UPDATE annotations SET originalid=%d WHERE id=%d;",
-                       (i.id, i.id,))
+
         processes.append((process, i.id))
 
         while(len(active_children()) >= cpu_count()-1):
