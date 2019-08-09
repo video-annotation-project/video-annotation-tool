@@ -243,8 +243,8 @@ def track_annotation(original):
 
     output_file = str(uuid.uuid4()) + ".mp4"
     converted_file = str(uuid.uuid4()) + ".mp4"
-    out = cv2.VideoWriter(output_file, cv2.VideoWriter_fourcc(
-        *'mp4v'), 20, (VIDEO_WIDTH, VIDEO_HEIGHT))
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    out = cv2.VideoWriter(output_file, fourcc, 20, (VIDEO_WIDTH, VIDEO_HEIGHT))
     reverse_frames.extend(forward_frames)
     for frame in reverse_frames:
         out.write(frame)
