@@ -4,6 +4,15 @@ const psql = require('../../db/simpleConnect');
 
 var configData = require('../../../config.json');
 
+/**
+ * @route GET /api/collections/annotations/counts
+ * @group collections
+ * @summary Get the number of annotations for each concept in a group of annotation collections
+ * @param {Array.<Integer>} ids.query - List of collection ids
+ * @param {Array.<Integer>} validConcepts.query - List of concept ids to only show counts from
+ * @returns {Array.<object>} 200 - An array of counts for every concept
+ * @returns {Error} 500 - Unexpected database error
+ */
 router.get(
   '/counts',
   passport.authenticate('jwt', { session: false }),
@@ -55,7 +64,7 @@ router.get(
 
     try {
       let counts = await psql.query(queryText, params);
-      res.json(counts.rows);
+      res.status(200).json(counts.rows);
     } catch (error) {
       console.log(error);
       res.status(500).json(error);
@@ -63,6 +72,14 @@ router.get(
   }
 );
 
+/**
+ * @route GET /api/collections/annotations
+ * @group collections
+ * @summary Get all annotation collections and additional info if train param is true
+ * @param {Boolean} train.query - If collections are for training
+ * @returns {Array.<object>} 200 - An array of every annotation collection
+ * @returns {Error} 500 - Unexpected database error
+ */
 router.get(
   '/',
   passport.authenticate('jwt', { session: false }),
@@ -97,7 +114,7 @@ router.get(
 
     try {
       let annotationCollections = await psql.query(queryText);
-      res.json(annotationCollections.rows);
+      res.status(200).json(annotationCollections.rows);
     } catch (error) {
       console.log(error);
       res.status(500).json(error);
@@ -105,6 +122,15 @@ router.get(
   }
 );
 
+/**
+ * @route POST /api/collections/annotations
+ * @group collections
+ * @summary Post a new annotation collection
+ * @param {string} name.body - Collection name
+ * @param {string} description.body - Collection description
+ * @returns {Success} 200 - Annotation collection created
+ * @returns {Error} 500 - Unexpected database error
+ */
 router.post(
   '/',
   passport.authenticate('jwt', { session: false }),
@@ -121,13 +147,21 @@ router.post(
         req.body.name,
         req.body.description
       ]);
-      res.json({ value: JSON.stringify(insert.rows) });
+      res.status(200).json({ value: JSON.stringify(insert.rows) });
     } catch (error) {
       res.status(400).json(error);
     }
   }
 );
 
+/**
+ * @route DELETE /api/collections/annotations/:id
+ * @group collections
+ * @summary Delete an annotation collection
+ * @param {String} id.params - Collection id
+ * @returns {Success} 200 - Annotation collection deleted
+ * @returns {Error} 500 - Unexpected database error
+ */
 router.delete(
   '/:id',
   passport.authenticate('jwt', { session: false }),
@@ -142,7 +176,7 @@ router.delete(
     try {
       let deleted = await psql.query(queryText, [req.params.id]);
       if (deleted) {
-        res.json(deleted);
+        res.status(200).json(deleted);
       }
     } catch (error) {
       res.status(500).json(error);
@@ -150,6 +184,17 @@ router.delete(
   }
 );
 
+/**
+ * @route POST /api/collections/annotations/:id
+ * @group collections
+ * @summary Add an annotations to an annotation collection
+ * @param {String} id.params - Collection id
+ * @param {Array.<Integer>} selectedUsers.body - Array of user ids
+ * @param {Array.<Integer>} selectedVideos.body - Array of video ids
+ * @param {Array.<Integer>} selectedConcepts.body - Array of concept ids
+ * @returns {Success} 200 - Annotations added to collection
+ * @returns {Error} 500 - Unexpected database error
+ */
 router.post(
   '/:id',
   passport.authenticate('jwt', { session: false }),
