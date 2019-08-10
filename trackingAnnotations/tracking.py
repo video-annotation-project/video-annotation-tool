@@ -64,11 +64,12 @@ OPENCV_OBJECT_TRACKERS = {
 def get_next_frame(frames, video_object, num):
     if video_object:
         check, frame = frames.read()
+        frame = frame if check else None
     else:
         if len(frames) == 0:
             return None
         frame = frames.pop()
-    return frame if check else None
+    return frame
 
 # Uploads images and puts annotation in database
 
