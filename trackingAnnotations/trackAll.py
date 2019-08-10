@@ -60,7 +60,7 @@ while temp:
         # Update originalid so while loop doesn't reset tracking
         cursor.execute("UPDATE annotations SET originalid=%d WHERE id=%d;",
                        (i.id, i.id,))
-        con.commit()
+
         processes.append((process, i.id))
 
         while(len(active_children()) >= cpu_count()-1):
