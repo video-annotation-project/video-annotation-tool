@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
 import axios from 'axios';
-
 import LinearProgress from '@material-ui/core/LinearProgress';
 import Typography from '@material-ui/core/Typography';
 import Paper from '@material-ui/core/Paper';
@@ -164,7 +163,6 @@ class ModelProgress extends Component {
   };
 
   handleChange = (event, newValue) => {
-    console.log(newValue);
     this.setState({ tab: newValue });
   };
 
@@ -188,12 +186,14 @@ class ModelProgress extends Component {
             <TrainingStatus
               postStopFlag={this.props.postStopFlag}
               onStop={this.handleStop}
-              steps={this.props.steps}
+              steps={this.state.steps}
               running={this.state.running}
               currentEpoch={this.state.currentEpoch}
               maxEpoch={this.state.maxEpoch}
               currentBatch={this.state.currentBatch}
               stepsPerEpoch={this.state.stepsPerEpoch}
+              epochProgress={this.state.epochProgress}
+              batchProgress={this.state.batchProgress}
             />
             <PredictProgress className="progress" />
           </TabPanel>

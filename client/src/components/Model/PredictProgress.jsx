@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
 import axios from 'axios';
-
 import LinearProgress from '@material-ui/core/LinearProgress';
 import { Typography } from '@material-ui/core';
 
@@ -41,7 +40,6 @@ class PredictingStatus extends Component {
   }
 }
 
-
 class PredictProgress extends Component {
   constructor(props) {
     super(props);
@@ -69,18 +67,20 @@ class PredictProgress extends Component {
       }
     };
     try {
-      const predictions = await axios.get(`/api/models/progress/predict`, config);
+      const predictions = await axios.get(
+        `/api/models/progress/predict`,
+        config
+      );
       if (predictions) {
         const predictionsData = predictions.data;
         const totalVideos = predictionsData.length;
-
         const currentVideo = this.getCurrentVideo(predictionsData);
         const currentVideoNum = currentVideo.videoNum;
         const currentFrame = currentVideo.framenum;
         const totalFrames = currentVideo.totalframe;
-        const status = currentVideo.status;
-        const videoProgress = currentVideo / totalVideos * 100;
-        const predictionProgress = currentFrame / totalFrames * 100;
+        const { status } = currentVideo;
+        const videoProgress = (currentVideo.videoNum / totalVideos) * 100;
+        const predictionProgress = (currentFrame / totalFrames) * 100;
 
         if (totalVideos === 0) {
           this.setState({
@@ -104,7 +104,7 @@ class PredictProgress extends Component {
     }
   };
 
-  getCurrentVideo = (predictions) => {
+  getCurrentVideo = predictions => {
     let currentVideo = predictions.find((pred, index) => {
       if (pred.framenum !== pred.totalframe || index === predictions.length - 1){
         pred.videoNum = index + 1;
@@ -112,9 +112,8 @@ class PredictProgress extends Component {
       }
       return false;
     });
-
     return currentVideo;
-  }
+  };
 
   getStatus = status => {
     if (status === 0) {
@@ -137,11 +136,9 @@ class PredictProgress extends Component {
 
   render() {
     return (
-      <div className='predictProgress'>
+      <div className="predictProgress">
         <div>
-          <Typography variant="subtitle1">
-           Step 2/2
-          </Typography>
+          <Typography variant="subtitle1">Step 2/2</Typography>
           <Typography variant="subtitle2" gutterBottom>
             Model has started predicting...
           </Typography>

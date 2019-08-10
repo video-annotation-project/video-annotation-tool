@@ -1,9 +1,9 @@
 .progress {
-  display:  flex;
+  display: flex;
   margin: 10px;
   flex: 1;
   flex-direction: column;
-  justify-content: right; 
+  justify-content: right;
   align-items: right;
 }
 
@@ -18,25 +18,25 @@
 }
 
 .trainStatus {
-  margin-top: 20px;  
-  margin-bottom: 5px; 
+  margin-top: 20px;
+  margin-bottom: 5px;
 }
 
 .progressBars {
   margin-top: 20px;
   padding: 0 15px 20px 15px;
-  background: #F8F8F8;
-  border: 2px solid #F8F8F8;
+  background: #f8f8f8;
+  border: 2px solid #f8f8f8;
   border-radius: 8px;
 }
 
 .progressBar {
   margin-top: 10px !important;
-  height: 8px !important;  
+  height: 8px !important;
 }
 
 .progressText {
-  margin-top: 10px !important;  
+  margin-top: 10px !important;
   margin-bottom: 8px;
 }
 
@@ -46,7 +46,7 @@
   padding: 15px;
 
   overflow: auto;
-  background: #F8F8F8;
+  background: #f8f8f8;
   border: 1px lightgrey solid;
 }
 

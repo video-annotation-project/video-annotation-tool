@@ -18,25 +18,24 @@ import VideoMetadata from '../Utilities/VideoMetadata';
 
 import './TrainModel.css';
 
-class ModelsForm extends Component {
-  render() {
-    return (
-      <FormControl component="fieldset" className={this.props.className}>
-        <InputLabel shrink>Model</InputLabel>
-        <Select
-          name="modelSelected"
-          value={this.props.modelSelected || 'Loading...'}
-          onChange={this.props.handleChange}
-        >
-          {this.props.models.map(model => (
-            <MenuItem key={model.name} value={model.name}>
-              {model.name}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-    );
-  }
+function ModelsForm(props) {
+  const { className, modelSelected, handleChange, models } = props;
+  return (
+    <FormControl component="fieldset" className={className}>
+      <InputLabel shrink>Model</InputLabel>
+      <Select
+        name="modelSelected"
+        value={modelSelected || 'Loading...'}
+        onChange={handleChange}
+      >
+        {models.map(model => (
+          <MenuItem key={model.name} value={model.name}>
+            {model.name}
+          </MenuItem>
+        ))}
+      </Select>
+    </FormControl>
+  );
 }
 
 class CollectionsForm extends Component {
@@ -144,27 +143,14 @@ class TrainModel extends Component {
       modelSelected: null,
       collections: [],
       annotationCollections: [],
-      selectedCollectionCounts: [
-        { count: 0 },
-        { count: 0 },
-        { count: 0 },
-        { count: 0 }
-      ],
-      minImages: 5000,
-      epochs: 0,
-      includeTracking: false,
-      verifiedOnly: false,
-      infoDialogOpen: false,
-      activeStep: 0,
-      openedVideo: null,
-      socket,
-      countsLoaded: false
+      openedVideo: null
     };
   }
 
   componentDidMount = async () => {
-    this.loadOptionInfo();
-    this.loadExistingModels();
+    await this.loadOptionInfo();
+    await this.loadExistingModels();
+    this.loadCollectionList();
   };
 
   // Methods for video meta data
@@ -179,12 +165,6 @@ class TrainModel extends Component {
     this.setState({
       openedVideo: null
     });
-  };
-
-  componentDidMount = async () => {
-    await this.loadOptionInfo();
-    await this.loadExistingModels();
-    this.loadCollectionList();
   };
 
   loadOptionInfo = () => {
@@ -368,6 +348,15 @@ class TrainModel extends Component {
   };
 
   render() {
+    const { socket, loadVideos } = this.props;
+    const {
+      modelSelected,
+      models,
+      collections,
+      annotationCollections,
+      openedVideo
+    } = this.state;
+
     return (
       <div className="root">
         <Paper square>
@@ -375,15 +364,14 @@ class TrainModel extends Component {
             <div className="actionsContainer">
               <ModelsForm
                 className="modelsForm"
-                modelSelected={this.state.modelSelected}
+                modelSelected={modelSelected}
                 handleChange={this.handleChange}
-                models={this.state.models}
+                models={models}
               />
               <CollectionsForm
                 className="collectionsForm"
-                collections={this.state.collections}
-                annotationCollections={this.state.annotationCollections}
-                checkboxSelect={this.checkboxSelect}
+                collections={collections}
+                annotationCollections={annotationCollections}
                 onChange={this.handleChangeMultiple}
               />
               <EpochsField 
@@ -405,13 +393,13 @@ class TrainModel extends Component {
             />
           </div>
         </Paper>
-        {this.state.openedVideo && (
+        {openedVideo && (
           <VideoMetadata
             open
             handleClose={this.closeVideoMetadata}
-            openedVideo={this.state.openedVideo}
-            socket={this.props.socket}
-            loadVideos={this.props.loadVideos}
+            openedVideo={openedVideo}
+            socket={socket}
+            loadVideos={loadVideos}
             modelTab
           />
         )}
