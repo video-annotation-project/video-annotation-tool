@@ -12,11 +12,94 @@ import Checkbox from '@material-ui/core/Checkbox';
 import Typography from '@material-ui/core/Typography';
 import ListItemText from '@material-ui/core/ListItemText';
 import Divider from '@material-ui/core/Divider';
+import Button from '@material-ui/core/Button';
+import { withStyles } from '@material-ui/core/styles';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Switch from '@material-ui/core/Switch';
 
 import ModelProgress from './ModelProgress';
 import VideoMetadata from '../Utilities/VideoMetadata';
+import CollectionInfo from '../Utilities/CollectionInfo';
 
 import './TrainModel.css';
+
+const styles = theme => ({
+  root: {
+    margin: '40px 180px'
+  },
+  form: {
+    marginTop: theme.spacing(2),
+    marginBottom: theme.spacing(),
+    minWidth: 150
+  },
+  group: {
+    marginLeft: 15
+  },
+  center: {
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  container: {
+    display: 'flex',
+    flexDirection: 'row',
+    padding: '20px',
+    height: '560px'
+  },
+  stepper: {
+    display: 'block',
+    flex: 1,
+    flexDirection: 'column',
+    justifyContent: 'left',
+    width: '50%'
+  },
+  progress: {
+    display: 'flex',
+    flex: 1,
+    flexDirection: 'column',
+    justifyContent: 'right',
+    alignItems: 'right',
+    width: '50%'
+  },
+  button: {
+    marginTop: theme.spacing(4),
+    marginRight: theme.spacing()
+  },
+  infoButton: {
+    marginTop: theme.spacing(2)
+  },
+  actionsContainer: {
+    flexDirection: 'column',
+    justifyContent: 'left',
+    marginBottom: theme.spacing(2)
+  },
+  resetContainer: {
+    padding: theme.spacing(3)
+  },
+  checkSelector: {
+    marginTop: theme.spacing(),
+    maxHeight: '250px',
+    overflow: 'auto'
+  },
+  videoSelector: {
+    width: '625px'
+  },
+  textField: {
+    width: 200
+  },
+  epochText: {
+    position: 'relative',
+    top: '-15px'
+  },
+  hyperParamsInput: {
+    width: '208px',
+    marginRight: '10px'
+  },
+  info: {
+    marginTop: theme.spacing(2)
+  }
+});
 
 function ModelsForm(props) {
   const { className, modelSelected, handleChange, models } = props;
@@ -40,7 +123,6 @@ function ModelsForm(props) {
 
 function CollectionsForm(props) {
   const { className, annotationCollections, onChange, collections } = props;
-
   return (
     <FormControl component="fieldset" className={className}>
       <InputLabel shrink>Annotations</InputLabel>
@@ -55,20 +137,24 @@ function CollectionsForm(props) {
         }
       >
         {collections.map(collection => (
-          <MenuItem key={collection.id} value={collection}>
+          <MenuItem
+            key={collection.id}
+            value={collection}
+            disabled={collection.disable}
+          >
             <Checkbox
               checked={annotationCollections.indexOf(collection) > -1}
             />
             <ListItemText>
               {collection.name}
-              {collection.concepts ? (
-                <Typography
-                  variant="subtitle2"
-                  gutterBottom
-                  color="textSecondary"
-                  className="collectionsConcepts"
-                >
-                  {collection.concepts.join(', ')}
+              {collection.validConcepts ? (
+                <Typography variant="subtitle2" gutterBottom color="secondary">
+                  {collection.validConcepts.map((concept, index) => {
+                    if (index === collection.validConcepts.length - 1) {
+                      return concept.f1;
+                    }
+                    return `${concept.f1}, `;
+                  })}
                 </Typography>
               ) : (
                 ''
@@ -117,7 +203,7 @@ class ImagesField extends Component {
   }
 
   render() {
-    const { className } = this.props;
+    const { className, getImageRange } = this.props;
     const { minImages } = this.state;
 
     return (
@@ -128,6 +214,7 @@ class ImagesField extends Component {
         label="# of Images"
         value={minImages}
         onChange={this.handleChange}
+        helperText={getImageRange()}
       />
     );
   }
@@ -160,6 +247,11 @@ class TrainModel extends Component {
       modelSelected: null,
       collections: [],
       annotationCollections: [],
+      selectedCollectionCounts: [],
+      minCounts: [],
+      includeTracking: false,
+      verifiedOnly: false,
+      infoDialogOpen: false,
       openedVideo: null
     };
   }
@@ -252,9 +344,6 @@ class TrainModel extends Component {
 
   loadCollectionList = () => {
     const { models, modelSelected } = this.state;
-    const selectedModelTuple = models.find(model => {
-      return model.name === modelSelected;
-    });
 
     const config = {
       headers: {
@@ -263,14 +352,30 @@ class TrainModel extends Component {
     };
 
     return axios
-      .get(
-        `/api/collections/annotations?train=${selectedModelTuple.conceptsid}`,
-        config
-      )
+      .get(`/api/collections/annotations?train=true`, config)
       .then(res => {
+        const selectedModelTuple = models.find(model => {
+          return model.name === modelSelected;
+        });
+        const modelConcepts = selectedModelTuple.conceptsid;
+        res.data.forEach(col => {
+          const filtered = modelConcepts.filter(x => col.ids.includes(x));
+          if (filtered.length > 0) {
+            col.disable = false;
+            col.validConcepts = col.concepts.filter(y =>
+              filtered.includes(y.f2)
+            );
+          } else {
+            col.disable = true;
+          }
+        });
         this.setState({
-          collections: res.data,
-          annotationCollections: []
+          collections: res.data.sort(a => (a.validConcepts ? -1 : 1)),
+          annotationCollections: [],
+          selectedCollectionCounts: [],
+          minCounts: [],
+          includeTracking: false,
+          verifiedOnly: false
         });
       });
   };
@@ -314,19 +419,110 @@ class TrainModel extends Component {
     for (let i = 0, l = options.length; i < l; i += 1) {
       value.push(options[i]);
     }
-    this.setState({
-      annotationCollections: value
+    this.setState(
+      {
+        annotationCollections: value
+      },
+      () => {
+        this.getCollectionCounts();
+      }
+    );
+  };
+
+  getImageRange = () => {
+    const { minCounts, includeTracking, verifiedOnly } = this.state;
+    if (!minCounts.length) return '';
+
+    let selection;
+    if (verifiedOnly) {
+      if (includeTracking) {
+        selection = 3;
+      } else {
+        selection = 2;
+      }
+    } else if (includeTracking) {
+      selection = 1;
+    } else {
+      selection = 0;
+    }
+
+    return minCounts[selection] === 1
+      ? `Must be 1`
+      : `Must be 1–${minCounts[selection]}`;
+  };
+
+  toggleInfo = () => {
+    this.setState(prevState => ({
+      infoDialogOpen: !prevState.infoDialogOpen
+    }));
+  };
+
+  getCollectionCounts = async () => {
+    const { annotationCollections } = this.state;
+    const validConcepts = [];
+
+    annotationCollections.forEach(collection => {
+      collection.validConcepts.forEach(concept => {
+        validConcepts.push(concept.f2);
+      });
     });
+
+    try {
+      const res = await axios.get(`/api/collections/annotations/counts`, {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        },
+        params: {
+          ids: annotationCollections.map(collection => collection.id),
+          validConcepts
+        }
+      });
+
+      if (res) {
+        const minCounts = [];
+        minCounts.push(Math.min(...res.data.map(count => count.user)));
+        minCounts.push(
+          Math.min(
+            ...res.data.map(
+              count => parseInt(count.user, 10) + parseInt(count.tracking, 10)
+            )
+          )
+        );
+        minCounts.push(Math.min(...res.data.map(count => count.verified_user)));
+        minCounts.push(
+          Math.min(
+            ...res.data.map(
+              count =>
+                parseInt(count.verified_user, 10) +
+                parseInt(count.verified_tracking, 10)
+            )
+          )
+        );
+
+        this.setState({
+          selectedCollectionCounts: res.data,
+          minCounts
+        });
+      }
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   render() {
-    const { socket, loadVideos } = this.props;
+    const { classes, socket, loadVideos } = this.props;
     const {
       modelSelected,
       models,
       collections,
       annotationCollections,
-      openedVideo
+      openedVideo,
+      infoDialogOpen,
+      selectedCollectionCounts,
+      includeTracking,
+      verifiedOnly,
+      minCounts
     } = this.state;
 
     return (
@@ -347,8 +543,55 @@ class TrainModel extends Component {
                 onChange={this.handleChangeMultiple}
               />
               <EpochsField className="epochsField" />
-              <ImagesField className="imagesField" />
+              <ImagesField
+                className="imagesField"
+                getImageRange={this.getImageRange}
+              />
             </div>
+            {annotationCollections.length ? (
+              <React.Fragment>
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  className={classes.infoButton}
+                  onClick={this.toggleInfo}
+                >
+                  Training Info
+                </Button>
+                <div>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={includeTracking}
+                        onChange={this.handleChangeSwitch}
+                        value="includeTracking"
+                        color="primary"
+                      />
+                    }
+                    label="Include tracking annotations"
+                  />
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={verifiedOnly}
+                        onChange={this.handleChangeSwitch}
+                        value="verifiedOnly"
+                        color="primary"
+                        disabled={!minCounts[2]}
+                      />
+                    }
+                    label="Verified annotations only"
+                  />
+                </div>
+              </React.Fragment>
+            ) : (
+              ''
+            )}
+            <CollectionInfo
+              open={infoDialogOpen}
+              onClose={this.toggleInfo}
+              counts={selectedCollectionCounts}
+            />
             <Divider style={{ marginTop: '30px' }} variant="middle" />
             <ModelProgress className="progress" handleStop={this.handleStop} />
           </div>
@@ -368,4 +611,4 @@ class TrainModel extends Component {
   }
 }
 
-export default TrainModel;
+export default withStyles(styles)(TrainModel);

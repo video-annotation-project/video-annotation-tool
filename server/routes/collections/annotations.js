@@ -4,50 +4,66 @@ const psql = require('../../db/simpleConnect');
 
 var configData = require('../../../config.json');
 
+/**
+ * @route GET /api/collections/annotations/counts
+ * @group collections
+ * @summary Get the number of annotations for each concept in a group of annotation collections
+ * @param {Array.<Integer>} ids.query - List of collection ids
+ * @param {Array.<Integer>} validConcepts.query - List of concept ids to only show counts from
+ * @returns {Array.<object>} 200 - An array of counts for every concept
+ * @returns {Error} 500 - Unexpected database error
+ */
 router.get(
   '/counts',
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
-    const counts = [];
-    const queryText = `
-      SELECT
-        c.name, count(*)
-      FROM
-        annotations a
-      INNER JOIN
-        annotation_intermediate ai
-      ON
-        a.id = ai.annotationid
-      INNER JOIN
-        users u
-      ON
-        u.id = a.userid
-      INNER JOIN
-        concepts c
-      ON
-        c.id = a.conceptid
-      WHERE
-        ai.id::text = ANY($1)
-    `;
-    const user = ` AND u.username != 'tracking'`;
-    const tracking = ` AND u.username = 'tracking'`;
-    const verified = ` AND a.verifiedby IS NOT NULL`;
-    const groupby = ` GROUP BY c.name`;
+    const params = [req.query.ids];
+    let queryText = `
+     WITH counts AS (
+       SELECT
+         c.name,
+         SUM(CASE WHEN u.username != 'tracking' THEN 1 ELSE 0 END) AS user,
+         SUM(CASE WHEN u.username = 'tracking' THEN 1 ELSE 0 END) tracking,
+         SUM(CASE WHEN u.username != 'tracking' AND a.verifiedby IS NOT null THEN 1 ELSE 0 END) verified_user,
+         SUM(CASE WHEN u.username = 'tracking' AND a.verifiedby IS NOT null THEN 1 ELSE 0 END) verified_tracking,
+         count(*) total
+       FROM
+         annotation_intermediate ai
+       LEFT JOIN
+         annotations a ON a.id = ai.annotationid
+       LEFT JOIN
+         users u ON u.id = a.userid
+       LEFT JOIN
+         concepts c ON c.id=a.conceptid
+       WHERE
+         ai.id::text = ANY($1)
+   `;
+
+    if (req.query.validConcepts) {
+      queryText += ` AND a.conceptid::text = ANY($2)`;
+      params.push(req.query.validConcepts);
+    }
+
+    queryText += `
+       GROUP BY
+         c.name
+     )
+     SELECT * FROM counts
+     UNION ALL
+     SELECT
+       'TOTAL' as name,
+       SUM(c.user) as user,
+       SUM(c.tracking) as tracking,
+       SUM(c.verified_user) as verified_user,
+       SUM(c.verified_tracking) as verified_tracking,
+       SUM(c.total) as total
+     FROM
+       counts c
+   `;
 
     try {
-      let count = await psql.query(queryText + user + groupby, [req.query.ids]);
-      counts.push(count.rows);
-      count = await psql.query(queryText + tracking + groupby, [req.query.ids]);
-      counts.push(count.rows);
-      count = await psql.query(queryText + user + verified + groupby, [
-        req.query.ids
-      ]);
-      counts.push(count.rows);
-      count = await psql.query(queryText + tracking + verified + groupby, [
-        req.query.ids
-      ]);
-      counts.push(count.rows);
-      res.json(counts);
+      let counts = await psql.query(queryText, params);
+      res.status(200).json(counts.rows);
     } catch (error) {
       console.log(error);
       res.status(500).json(error);
@@ -55,17 +71,23 @@ router.get(
   }
 );
 
+/**
+ * @route GET /api/collections/annotations
+ * @group collections
+ * @summary Get all annotation collections and additional info if train param is true
+ * @param {Boolean} train.query - If collections are for training
+ * @returns {Array.<object>} 200 - An array of every annotation collection
+ * @returns {Error} 500 - Unexpected database error
+ */
 router.get(
   '/',
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     let queryText;
-    let params;
-    if (req.query.train) {
-      params = '{' + req.query.train + '}';
+    if (req.query.train === 'true') {
       queryText = `
       SELECT 
-          name, id, count(*), array_agg(conceptid) as ids, array_agg(conceptname) as concepts
+          name, id, count(*), array_agg(conceptid) as ids, json_agg((conceptname, conceptid)) as concepts
       FROM
       (SELECT ac.name, a.conceptid, ai.id, count(a.conceptid), c.name as conceptname
           FROM 
@@ -75,8 +97,6 @@ router.get(
           LEFT JOIN 
               annotations a ON ai.annotationid = a.id
           LEFT JOIN concepts c ON a.conceptid = c.id
-          WHERE 
-            a.conceptid = ANY( $1::int[] )
           GROUP BY ac.name, a.conceptid, ai.id, c.name ) t
       GROUP BY name, id
       `;
@@ -92,13 +112,8 @@ router.get(
     }
 
     try {
-      let annotationCollections;
-      if (req.query.train) {
-        annotationCollections = await psql.query(queryText, [params]);
-      } else {
-        annotationCollections = await psql.query(queryText);
-      }
-      res.json(annotationCollections.rows);
+      let annotationCollections = await psql.query(queryText);
+      res.status(200).json(annotationCollections.rows);
     } catch (error) {
       console.log(error);
       res.status(500).json(error);
