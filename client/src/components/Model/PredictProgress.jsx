@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import axios from 'axios';
 
-import { withStyles } from '@material-ui/core/styles';
 import LinearProgress from '@material-ui/core/LinearProgress';
 import { Typography } from '@material-ui/core';
 
@@ -9,6 +8,7 @@ import './ModelProgress.css'
 
 class PredictingStatus extends Component {
   render(){
+
     return (
       <div className='progressBars'>
         <Typography
@@ -21,7 +21,7 @@ class PredictingStatus extends Component {
         <LinearProgress
           className='progressBar'
           variant="determinate"
-          value={this.props.videoProgress}
+          value={this.props.videoProgress || 0}
         />
         <Typography
           variant="body1"
@@ -33,7 +33,7 @@ class PredictingStatus extends Component {
         <LinearProgress
           className='progressBar'
           variant="determinate"
-          value={this.props.predictionProgress}
+          value={this.props.predictionProgress || 0}
           color="secondary"
         />
       </div>
@@ -106,18 +106,13 @@ class PredictProgress extends Component {
 
   getCurrentVideo = (predictions) => {
     let currentVideo = predictions.find((pred, index) => {
-      if (pred.framenum !== pred.totalframe){
+      if (pred.framenum !== pred.totalframe || index === predictions.length - 1){
         pred.videoNum = index + 1;
-        return pred;
+        return true;
       }
+      return false;
     });
 
-    if (currentVideo){
-      return currentVideo;
-    }
-
-    currentVideo = predictions[predictions.length - 1];
-    currentVideo.videoNum = predictions.length;
     return currentVideo;
   }
 
@@ -141,13 +136,6 @@ class PredictProgress extends Component {
   };
 
   render() {
-    const { classes, className } = this.props;
-    const { running, totalVideos, data } = this.state;
-
-    if (running === false) {
-      return <div> </div>;
-    }
-
     return (
       <div className='predictProgress'>
         <div>

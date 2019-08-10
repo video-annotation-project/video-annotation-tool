@@ -3,14 +3,11 @@ import axios from 'axios';
 import TextField from '@material-ui/core/TextField';
 import io from 'socket.io-client';
 import Input from '@material-ui/core/Input';
-import Button from '@material-ui/core/Button';
 import Paper from '@material-ui/core/Paper';
 import { FormControl } from '@material-ui/core';
 import InputLabel from '@material-ui/core/InputLabel';
 import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
-import FormGroup from '@material-ui/core/FormGroup';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Checkbox from '@material-ui/core/Checkbox';
 import Typography from '@material-ui/core/Typography';
 import ListItemText from '@material-ui/core/ListItemText';
@@ -18,7 +15,6 @@ import Divider from '@material-ui/core/Divider';
 
 import ModelProgress from './ModelProgress';
 import VideoMetadata from '../Utilities/VideoMetadata';
-import CollectionInfo from '../Utilities/CollectionInfo';
 
 import './TrainModel.css';
 
@@ -50,7 +46,7 @@ class CollectionsForm extends Component {
         <InputLabel shrink>Annotations</InputLabel>
         <Select
           multiple
-          name="selectedAnnotations"
+          name="annotationCollections"
           value={this.props.annotationCollections}
           onChange={this.props.onChange}
           input={<Input id="select-multiple" />}
@@ -90,13 +86,6 @@ class CollectionsForm extends Component {
 }
 
 class EpochsField extends Component {
-  constructor(props) {
-    super(props);
-
-    this.state = {
-      epochs: undefined
-    };
-  }
 
   render() {
     return (
@@ -105,31 +94,24 @@ class EpochsField extends Component {
         className={this.props.className}
         name="epochs"
         label="Epochs"
-        value={this.state.epochs}
-        onChange={this.handleChange}
+        value={this.props.epochs}
+        onChange={this.props.onChange}
       />
     );
   }
 }
 
 class ImagesField extends Component {
-  constructor(props) {
-    super(props);
-
-    this.state = {
-      minImages: undefined
-    };
-  }
 
   render() {
     return (
       <TextField
         margin="normal"
         className={this.props.className}
-        name="images"
+        name="minImages"
         label="# of Images"
-        value={this.state.minImages}
-        onChange={this.handleChange}
+        value={this.props.minImages}
+        onChange={this.props.onChange}
       />
     );
   }
@@ -185,19 +167,6 @@ class TrainModel extends Component {
     this.loadExistingModels();
   };
 
-  // Used to handle changes in the hyperparameters and in the select model
-  handleChange = event => {
-    this.setState({
-      [event.target.name]: event.target.value
-    });
-  };
-
-  handleChangeSwitch = event => {
-    this.setState({
-      [event.target.value]: event.target.checked
-    });
-  };
-
   // Methods for video meta data
   openVideoMetadata = (event, video) => {
     event.stopPropagation();
@@ -224,16 +193,16 @@ class TrainModel extends Component {
         Authorization: `Bearer ${localStorage.getItem('token')}`
       }
     };
-    const option = 'trainmodel';
     return axios
-      .get(`/api/models/train/${option}`, config)
+      .get(`/api/models/train`, config)
       .then(res => {
-        const { info } = res.data[0];
+        const params = res.data;
+
         this.setState({
-          activeStep: info.activeStep,
-          modelSelected: info.modelSelected,
-          minImages: info.minImages,
-          epochs: info.epochs
+          modelSelected: params.model,
+          minImages: params.min_images,
+          epochs: params.epochs,
+          selectedCollectionIds: params.annotation_collections
         });
       })
       .catch(error => {
@@ -268,8 +237,7 @@ class TrainModel extends Component {
   };
 
   loadCollectionList = () => {
-    const { models, modelSelected, annotationCollections } = this.state;
-    const localSelected = annotationCollections;
+    const { models, modelSelected } = this.state;
     const selectedModelTuple = models.find(model => {
       return model.name === modelSelected;
     });
@@ -286,9 +254,13 @@ class TrainModel extends Component {
         config
       )
       .then(res => {
+        const annotationCollections = this.state.selectedCollectionIds.map(
+            (collId) => res.data.find((c) => c.id === collId)
+        ).filter((x) => x);
+
         this.setState({
           collections: res.data,
-          annotationCollections: localSelected
+          annotationCollections: annotationCollections
         });
       });
   };
@@ -306,13 +278,39 @@ class TrainModel extends Component {
     });
   };
 
+
+  // Used to handle changes in the hyperparameters and in the select model
+  handleChange = event => {
+    this.setState({
+      [event.target.name]: event.target.value
+    }, async () =>  { 
+      if (event.target.name === 'modelSelected'){
+        await this.loadCollectionList();
+        this.updateModelParams({annotationCollections: this.state.annotationCollections.map((v) => v.id)});
+      }
+    });
+
+    this.updateModelParams({[event.target.name]: event.target.value});
+  };
+
+  handleChangeMultiple = event => {
+    const options = event.target.value;
+    const values = [];
+    for (let i = 0, l = options.length; i < l; i += 1) {
+      values.push(options[i]);
+    }
+    this.setState({
+      annotationCollections: values
+    });
+    this.updateModelParams({annotationCollections: values.map((v) => v.id)});
+  };
+
   handleStop = () => {
     this.setState(
       {
         activeStep: 0
       },
       () => {
-        this.updateBackendInfo();
         this.postModelInstance('stop');
       }
     );
@@ -333,6 +331,24 @@ class TrainModel extends Component {
     });
   };
 
+  updateModelParams = (params) => {
+    const config = {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    };
+
+    const body = {
+      ...params,
+    };
+
+    try {
+      axios.put(`/api/models/train`, body, config);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
   postStopFlag = async () => {
     const config = {
       headers: {
@@ -349,17 +365,6 @@ class TrainModel extends Component {
     } catch (err) {
       console.log(err);
     }
-  };
-
-  handleChangeMultiple = event => {
-    const options = event.target.value;
-    const value = [];
-    for (let i = 0, l = options.length; i < l; i += 1) {
-      value.push(options[i]);
-    }
-    this.setState({
-      annotationCollections: value
-    });
   };
 
   render() {
@@ -381,8 +386,16 @@ class TrainModel extends Component {
                 checkboxSelect={this.checkboxSelect}
                 onChange={this.handleChangeMultiple}
               />
-              <EpochsField className="epochsField" />
-              <ImagesField className="imagesField" />
+              <EpochsField 
+                className="epochsField" 
+                epochs={this.state.epochs} 
+                onChange={this.handleChange}
+              />
+              <ImagesField 
+                className="imagesField" 
+                minImages={this.state.minImages} 
+                onChange={this.handleChange}
+              />
             </div>
             <Divider style={{ marginTop: '30px' }} variant="middle" />
             <ModelProgress

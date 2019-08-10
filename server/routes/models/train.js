@@ -46,6 +46,7 @@ router.post(
     let params = {
       InstanceIds: [req.body.modelInstanceId]
     };
+
     if (req.body.command === 'stop') {
       const trainingStop = `
             UPDATE 
@@ -74,6 +75,53 @@ router.post(
     }
   }
 );
+
+router.put(
+  '/',
+  passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+
+    let queryText = `
+    UPDATE 
+      model_params 
+    SET
+      epochs=$1,
+      min_images=$2,
+      model=$3,
+      annotation_collections=$4 `;
+
+    try {
+      let response = await psql.query(queryText, [
+        req.body.epochs,
+        req.body.minImages,
+        req.body.modelSelected,
+        req.body.annotationCollections
+      ]);
+      res.json(response.rows);
+    } catch (error) {
+      console.log('Error on put /api/models/train');
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
+);
+
+router.get(
+  '/',
+  passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    const queryText = `SELECT * FROM model_params`;
+    try {
+      let response = await psql.query(queryText);
+      res.json(response.rows[0]);
+    } catch (error) {
+      console.log('Error on GET /api/models');
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
+);
+
 
 // TODO: figure out trainmodel then document this
 
