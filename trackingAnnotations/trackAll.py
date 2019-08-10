@@ -29,8 +29,9 @@ with open(config_path) as config_buffer:
     config = json.loads(config_buffer.read())['ml']
 
 tracking_users = config['tracking_users']
-
-while True:
+temp = True
+while temp:
+    temp = False
     con = connect(database=DB_NAME, host=DB_HOST,
                   user=DB_USER, password=DB_PASSWORD)
     cursor = con.cursor()
@@ -47,16 +48,19 @@ while True:
     processes = []
     print("Tracking " + str(len(rows)) + " annotations.")
     for count, i in enumerate(rows):
-        # Update originalid so while loop doesn't reset tracking
-        cursor.execute("UPDATE annotations SET originalid=%d WHERE id=%d;",
-                       (i.id, i.id,))
+        '''
         results = s3.list_objects(
             Bucket=S3_BUCKET, Prefix=S3_VIDEO_FOLDER + str(i.id) + "_track.mp4")
         if 'Contents' in results:
             continue
+        '''
         process = Process(target=tracking.track_annotation, args=(i,))
         process.start()
 
+        # Update originalid so while loop doesn't reset tracking
+        cursor.execute("UPDATE annotations SET originalid=%d WHERE id=%d;",
+                       (i.id, i.id,))
+        cursor.commit()
         processes.append((process, i.id))
 
         while(len(active_children()) >= cpu_count()-1):
