@@ -42,7 +42,6 @@ class Tracked_object(object):
         self.y2 = y2
         self.box = (x1, y1, (x2 - x1), (y2 - y1))
         self.tracker = cv2.TrackerKCF_create()
-        print(f'{detection[0]}     {self.box}')
         self.tracker.init(frame, self.box)
         label = detection[2]
         confidence = detection[1]
