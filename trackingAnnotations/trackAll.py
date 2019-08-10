@@ -51,7 +51,7 @@ while True:
         cursor.execute("UPDATE annotations SET originalid=%d WHERE id=%d;",
                        (i.id, i.id,))
         results = s3.list_objects(
-            Bucket=S3_BUCKET, Prefix=S3_VIDEO_FOLDER + str(i.id) + "_tracking.mp4")
+            Bucket=S3_BUCKET, Prefix=S3_VIDEO_FOLDER + str(i.id) + "_track.mp4")
         if 'Contents' in results:
             continue
         process = Process(target=tracking.track_annotation, args=(i,))

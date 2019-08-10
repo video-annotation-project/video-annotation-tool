@@ -74,8 +74,8 @@ def get_next_frame(frames, video_object, num):
 
 
 def upload_image(frame_num, timeinvideo, frame, frame_w_box, annotation, x1, y1, x2, y2, cursor, con, TRACKING_ID):
-    no_box = str(annotation.videoid) + "_" + str(timeinvideo) + "_tracking.png"
-    box = str(annotation.id) + "_" + str(timeinvideo) + "_box_tracking.png"
+    no_box = str(annotation.videoid) + "_" + str(timeinvideo) + "_track.png"
+    box = str(annotation.id) + "_" + str(timeinvideo) + "_box_track.png"
     temp_file = str(uuid.uuid4()) + ".png"
     cv2.imwrite(temp_file, frame)
     s3.upload_file(temp_file, S3_BUCKET, S3_ANNOTATION_FOLDER +
@@ -259,7 +259,7 @@ def track_annotation(original):
         s3.upload_file(
             converted_file,
             S3_BUCKET,
-            S3_VIDEO_FOLDER + str(original.id) + "_tracking.mp4",
+            S3_VIDEO_FOLDER + str(original.id) + "_track.mp4",
             ExtraArgs={'ContentType': 'video/mp4'}
         )
         os.system('rm ' + converted_file)
