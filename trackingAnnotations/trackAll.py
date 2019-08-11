@@ -2,7 +2,7 @@ from pgdb import connect
 import os
 from dotenv import load_dotenv
 import tracking
-from multiprocessing import Process, active_children, cpu_count
+from multiprocessing import Pool
 import boto3
 import datetime
 import math
@@ -29,6 +29,27 @@ with open(config_path) as config_buffer:
     config = json.loads(config_buffer.read())['ml']
 
 tracking_users = config['tracking_users']
+
+def annotationMap(id, conceptid, timeinvideo, videoid, image,
+                  videowidth, videoheight, x1, y1, x2, y2, comment, unsure):
+    con = connect(database=DB_NAME, host=DB_HOST,
+                user=DB_USER, password=DB_PASSWORD)
+    cursor = con.cursor()
+    '''
+    results = s3.list_objects(
+        Bucket=S3_BUCKET, Prefix=S3_VIDEO_FOLDER + str(i.id) + "_track.mp4")
+    if 'Contents' in results:
+        continue
+    '''
+    tracking.track_annotation(id, conceptid, timeinvideo, videoid, image,
+                  videowidth, videoheight, x1, y1, x2, y2, comment, unsure)
+    # Update originalid so while loop doesn't reset tracking
+    cursor.execute("UPDATE annotations SET originalid=%d WHERE id=%d;",
+                   (id, id,))
+    con.commit()
+    con.close()
+    return
+
 temp = True
 while temp:
     temp = False
@@ -37,38 +58,23 @@ while temp:
     cursor = con.cursor()
     # get annotations from test
     cursor.execute(f'''
-        SELECT * 
+        SELECT
+            id, conceptid, timeinvideo, videoid, image,
+            videowidth, videoheight, x1, y1, x2, y2,
+            comment, unsure
         FROM annotations 
         WHERE originalid is NULL
         AND userid in {str(tuple(tracking_users))}
+        LIMIT 10
     ''')
 
-    rows = cursor.fetchall()
-
-    processes = []
-    print("Tracking " + str(len(rows)) + " annotations.")
-    for count, i in enumerate(rows):
-        '''
-        results = s3.list_objects(
-            Bucket=S3_BUCKET, Prefix=S3_VIDEO_FOLDER + str(i.id) + "_track.mp4")
-        if 'Contents' in results:
-            continue
-        '''
-        process = Process(target=tracking.track_annotation, args=(i,))
-        process.start()
-
-        # Update originalid so while loop doesn't reset tracking
-        cursor.execute("UPDATE annotations SET originalid=%d WHERE id=%d;",
-                       (i.id, i.id,))
-
-        processes.append((process, i.id))
-
-        while(len(active_children()) >= cpu_count()-1):
-            pass
-
-        if(len(processes) > 256):
-            for p, originid in processes:
-                p.join()
-            processes = []
-    con.commit()
+    #print()
+    print("Tracking " + str(cursor.rowcount) + " annotations.")
+    with Pool() as p:
+        p.starmap(annotationMap, map(
+            lambda x: (
+                x.id, x.conceptid, x.timeinvideo, x.videoid,
+                x.image, x.videowidth, x.videoheight,
+                x.x1, x.y1, x.x2, x.y2, x.comment, x.unsure),cursor.fetchall()))
     con.close()
+

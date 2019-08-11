@@ -74,9 +74,11 @@ def get_next_frame(frames, video_object, num):
 # Uploads images and puts annotation in database
 
 
-def upload_image(frame_num, timeinvideo, frame, frame_w_box, annotation, x1, y1, x2, y2, cursor, con, TRACKING_ID):
-    no_box = str(annotation.videoid) + "_" + str(timeinvideo) + "_track.png"
-    box = str(annotation.id) + "_" + str(timeinvideo) + "_box_track.png"
+def upload_image(frame_num, timeinvideo, frame, frame_w_box,
+                 id, videoid, conceptid, comment, unsure,
+                 x1, y1, x2, y2, cursor, con, TRACKING_ID):
+    no_box = str(videoid) + "_" + str(timeinvideo) + "_track.png"
+    box = str(id) + "_" + str(timeinvideo) + "_box_track.png"
     temp_file = str(uuid.uuid4()) + ".png"
     cv2.imwrite(temp_file, frame)
     s3.upload_file(temp_file, S3_BUCKET, S3_ANNOTATION_FOLDER +
@@ -94,12 +96,13 @@ def upload_image(frame_num, timeinvideo, frame, frame_w_box, annotation, x1, y1,
 	 VALUES (%d, %d, %d, %d, %f, %f, %f, %f, %f, %d, %d, %s, %s, %s, %s, %s, %d)
       """,
         (
-            frame_num, annotation.videoid, TRACKING_ID, annotation.conceptid, timeinvideo, x1, y1,
+            frame_num, videoid, TRACKING_ID, conceptid, timeinvideo, x1, y1,
             x2, y2, VIDEO_WIDTH, VIDEO_HEIGHT, datetime.datetime.now().date(), no_box, box,
-            annotation.comment, annotation.unsure, annotation.id
+            comment, unsure, id
         )
     )
     con.commit()
+    return
 
 
 def increment_frame_num(video_object, frame_num):
@@ -112,7 +115,9 @@ def increment_frame_num(video_object, frame_num):
 # Tracks the object forwards and backwards in a video
 
 
-def track_object(frame_num, frames, box, video_object, end, original, cursor, con, TRACKING_ID, fps):
+def track_object(frame_num, frames, box, video_object, end,
+                 id, videoid, conceptid, comment, unsure,
+                 cursor, con, TRACKING_ID, fps):
     frame_list = []
     trackers = cv2.MultiTracker_create()
 
@@ -155,7 +160,8 @@ def track_object(frame_num, frames, box, video_object, end, original, cursor, co
                 timeinvideo = timeinvideo - timeinvideo
             timeinvideo = round(timeinvideo, 2)
             upload_image(frame_num, timeinvideo, frame_no_box, frame,
-                         original, x, y, (x+w), (y+h), cursor, con, TRACKING_ID)
+                         id, videoid, conceptid, comment, unsure,
+                         x, y, (x+w), (y+h), cursor, con, TRACKING_ID)
             counter += 1
             time_elapsed += (1/fps)
         # make video at least 4 seconds long (2 before and 2 after annotation) even if object isn't tracked
@@ -173,12 +179,12 @@ def track_object(frame_num, frames, box, video_object, end, original, cursor, co
 # original must be pgdb row
 
 
-def track_annotation(original):
-    print("Start tracking annotation: " + str(original.id))
+def track_annotation(id, conceptid, timeinvideo, videoid, image,
+                    videowidth, videoheight, x1, y1, x2, y2, comment, unsure):
+    print("Start tracking annotation: " + str(id))
     # Weird javascript time errors are fixed here
-    timeinvideo = fix_offset(original.videoid, original.timeinvideo,
-                             original.image, original.id)
-
+    timeinvideo = fix_offset(videoid, timeinvideo,
+                             image, id)
     con = connect(database=DB_NAME, host=DB_HOST,
                   user=DB_USER, password=DB_PASSWORD)
     cursor = con.cursor()
@@ -189,7 +195,7 @@ def track_annotation(original):
 
     # get video name
     cursor.execute("SELECT filename FROM videos WHERE id=%s",
-                   (str(original.videoid),))
+                   (str(videoid),))
     video_name = cursor.fetchone().filename
 
     # grab video stream
@@ -218,12 +224,12 @@ def track_annotation(original):
     # initialize vars for getting frames after annotation
     start = timeinvideo * 1000
     end = start + (LENGTH / 2)
-    x_ratio = (original.videowidth / VIDEO_WIDTH)
-    y_ratio = (original.videoheight / VIDEO_HEIGHT)
-    x1 = original.x1 / x_ratio
-    y1 = original.y1 / y_ratio
-    width = (original.x2 / x_ratio) - x1
-    height = (original.y2 / y_ratio) - y1
+    x_ratio = (videowidth / VIDEO_WIDTH)
+    y_ratio = (videoheight / VIDEO_HEIGHT)
+    x1 = x1 / x_ratio
+    y1 = y1 / y_ratio
+    width = (x2 / x_ratio) - x1
+    height = (y2 / y_ratio) - y1
     box = (x1, y1, width, height)
 
     # new video capture object for frames after annotation
@@ -233,13 +239,17 @@ def track_annotation(original):
     frame_num = (int(frames.get(1)))
     # print("tracking forwards..")
     forward_frames = track_object(
-        frame_num, frames, box, True, end, original, cursor, con, TRACKING_ID, fps)
+        frame_num, frames, box, True, end,
+        id, videoid, conceptid, comment, unsure,
+        cursor, con, TRACKING_ID, fps)
     vs.release()
     # get object tracking frames prior to annotation
     frames = frame_list
     # print("tracking backwards..")
     reverse_frames = track_object(
-        frame_num, frames, box, False, 0, original, cursor, con, TRACKING_ID, fps)
+        frame_num, frames, box, False, 0,
+        id, videoid, conceptid, comment, unsure,
+        cursor, con, TRACKING_ID, fps)
     reverse_frames.reverse()
     output_file = str(uuid.uuid4()) + ".mp4"
     converted_file = str(uuid.uuid4()) + ".mp4"
@@ -260,17 +270,18 @@ def track_annotation(original):
         s3.upload_file(
             converted_file,
             S3_BUCKET,
-            S3_VIDEO_FOLDER + str(original.id) + "_track.mp4",
+            S3_VIDEO_FOLDER + str(id) + "_track.mp4",
             ExtraArgs={'ContentType': 'video/mp4'}
         )
         os.system('rm ' + converted_file)
     else:
         pass
-        print("Failed to make video for annotations: " + str(original.id))
+        print("Failed to make video for annotations: " + str(id))
     os.system('rm ' + output_file)
     cv2.destroyAllWindows()
     con.close()
-    print("Done tracking annotation: " + str(original.id))
+    print("Done tracking annotation: " + str(id))
+    return
 
 # if __name__ == '__main__':
 #  main()
