@@ -98,6 +98,13 @@ const styles = theme => ({
   },
   info: {
     marginTop: theme.spacing(2)
+  },
+  switches: {
+    marginTop: theme.spacing()
+  },
+  options: {
+    marginLeft: theme.spacing(1.5),
+    marginRight: theme.spacing(1.5)
   }
 });
 
@@ -430,8 +437,14 @@ class TrainModel extends Component {
   };
 
   getImageRange = () => {
-    const { minCounts, includeTracking, verifiedOnly } = this.state;
-    if (!minCounts.length) return '';
+    const {
+      annotationCollections,
+      minCounts,
+      includeTracking,
+      verifiedOnly
+    } = this.state;
+
+    if (!annotationCollections.length || !minCounts.length) return '';
 
     let selection;
     if (verifiedOnly) {
@@ -494,8 +507,7 @@ class TrainModel extends Component {
           Math.min(
             ...res.data.map(
               count =>
-                parseInt(count.verified_user, 10) +
-                parseInt(count.verified_tracking, 10)
+                parseInt(count.verified_user, 10) + parseInt(count.tracking, 10)
             )
           )
         );
@@ -549,8 +561,9 @@ class TrainModel extends Component {
               />
             </div>
             {annotationCollections.length ? (
-              <React.Fragment>
+              <div className={classes.options}>
                 <Button
+                  fullWidth
                   variant="outlined"
                   color="primary"
                   className={classes.infoButton}
@@ -558,7 +571,7 @@ class TrainModel extends Component {
                 >
                   Training Info
                 </Button>
-                <div>
+                <div className={classes.switches}>
                   <FormControlLabel
                     control={
                       <Switch
@@ -583,7 +596,7 @@ class TrainModel extends Component {
                     label="Verified annotations only"
                   />
                 </div>
-              </React.Fragment>
+              </div>
             ) : (
               ''
             )}
