@@ -62,6 +62,7 @@ class Home extends Component {
   }
 
   componentDidMount() {
+    // These variables are for the varify tab check point
     localStorage.setItem('selectionMounted', true);
     localStorage.setItem('curIndex', 0);
     localStorage.setItem('collectionFlag', false);
