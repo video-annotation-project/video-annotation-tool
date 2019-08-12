@@ -98,6 +98,13 @@ const styles = theme => ({
   },
   info: {
     marginTop: theme.spacing(2)
+  },
+  switches: {
+    marginTop: theme.spacing()
+  },
+  options: {
+    marginLeft: theme.spacing(1.5),
+    marginRight: theme.spacing(1.5)
   }
 });
 
@@ -248,8 +255,7 @@ class TrainModel extends Component {
       collections: [],
       annotationCollections: [],
       selectedCollectionCounts: [],
-      minImages: 5000,
-      epochs: 0,
+      minCounts: [],
       includeTracking: false,
       verifiedOnly: false,
       infoDialogOpen: false,
@@ -381,51 +387,6 @@ class TrainModel extends Component {
       });
   };
 
-  getSteps = () => {
-    return [
-      'Select model',
-      'Select annotation collection',
-      'Select hyperparameters'
-    ];
-  };
-
-  getStepContent = step => {
-    switch (step) {
-      case 0:
-        return this.selectModel();
-      case 1:
-        return this.selectCollection();
-      case 2:
-        return this.selectHyperparameters();
-      default:
-        return 'Unknown step';
-    }
-  };
-
-  selectModel = () => {
-    const { classes } = this.props;
-    const { modelSelected, models } = this.state;
-    if (modelSelected === null) {
-      return <div>Loading...</div>;
-    }
-    return (
-      <FormControl className={classes.form}>
-        <InputLabel>Select Model</InputLabel>
-        <Select
-          name="modelSelected"
-          value={modelSelected}
-          onChange={this.handleChange}
-        >
-          {models.map(model => (
-            <MenuItem key={model.name} value={model.name}>
-              {model.name}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-    );
-  };
-
   // Handle user, video, and concept checkbox selections
   checkboxSelect = (stateName, stateValue, id) => event => {
     let deepCopy = JSON.parse(JSON.stringify(stateValue));
@@ -444,83 +405,19 @@ class TrainModel extends Component {
     this.postModelInstance('stop');
   };
 
-  selectHyperparameters = () => {
-    const { classes } = this.props;
-    const {
-      epochs,
-      minImages,
-      includeTracking,
-      verifiedOnly,
-      selectedCollectionCounts,
-      minCounts,
-      countsLoaded,
-      infoDialogOpen
-    } = this.state;
-
-    return countsLoaded ? (
-      <form>
-        <TextField
-          margin="normal"
-          name="epochs"
-          label="Number of epochs"
-          type="number"
-          value={epochs}
-          onChange={this.handleChange}
-          className={classes.hyperParamsInput}
-          helperText="0 = Until Increased Loss"
-        />
-        <TextField
-          margin="normal"
-          name="minImages"
-          label="Number of training images"
-          type="number"
-          value={minImages}
-          onChange={this.handleChange}
-          className={classes.hyperParamsInput}
-          helperText={countsLoaded ? this.getImageRange() : ''}
-        />
-        <div>
-          <FormControlLabel
-            control={
-              <Switch
-                checked={includeTracking}
-                onChange={this.handleChangeSwitch}
-                value="includeTracking"
-                color="primary"
-              />
-            }
-            label="Include tracking annotations"
-          />
-          <FormControlLabel
-            control={
-              <Switch
-                checked={verifiedOnly}
-                onChange={this.handleChangeSwitch}
-                value="verifiedOnly"
-                color="primary"
-                disabled={countsLoaded && !minCounts[2]}
-              />
-            }
-            label="Verified annotations only"
-          />
-        </div>
-        <Button
-          variant="outlined"
-          color="primary"
-          className={classes.infoButton}
-          onClick={this.toggleInfo}
-        >
-          Training Info
-        </Button>
-        <CollectionInfo
-          open={infoDialogOpen}
-          onClose={this.toggleInfo}
-          counts={selectedCollectionCounts}
-        />
-      </form>
-    ) : (
-      <Typography variant="subtitle1">Loading...</Typography>
-    );
+  postModelInstance = command => {
+    const config = {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    };
+    const body = {
+      command,
+      modelInstanceId: 'i-011660b3e976035d8'
+    };
+    axios.post(`/api/models/train`, body, config).then(res => {
+      console.log(res);
+    });
   };
 
   handleChangeMultiple = event => {
@@ -540,9 +437,16 @@ class TrainModel extends Component {
   };
 
   getImageRange = () => {
-    const { minCounts, includeTracking, verifiedOnly } = this.state;
-    let selection;
+    const {
+      annotationCollections,
+      minCounts,
+      includeTracking,
+      verifiedOnly
+    } = this.state;
 
+    if (!annotationCollections.length || !minCounts.length) return '';
+
+    let selection;
     if (verifiedOnly) {
       if (includeTracking) {
         selection = 3;
@@ -557,13 +461,23 @@ class TrainModel extends Component {
 
     return minCounts[selection] === 1
       ? `Must be 1`
-      : `Must be between 1 and ${minCounts[selection]}`;
+      : `Must be 1–${minCounts[selection]}`;
   };
 
-  toggleInfo = () => {
-    this.setState(prevState => ({
-      infoDialogOpen: !prevState.infoDialogOpen
-    }));
+  handleChangeMultiple = event => {
+    const options = event.target.value;
+    const value = [];
+    for (let i = 0, l = options.length; i < l; i += 1) {
+      value.push(options[i]);
+    }
+    this.setState(
+      {
+        annotationCollections: value
+      },
+      () => {
+        this.getCollectionCounts();
+      }
+    );
   };
 
   getCollectionCounts = async () => {
@@ -603,14 +517,12 @@ class TrainModel extends Component {
           Math.min(
             ...res.data.map(
               count =>
-                parseInt(count.verified_user, 10) +
-                parseInt(count.verified_tracking, 10)
+                parseInt(count.verified_user, 10) + parseInt(count.tracking, 10)
             )
           )
         );
 
         this.setState({
-          countsLoaded: true,
           selectedCollectionCounts: res.data,
           minCounts
         });
@@ -659,8 +571,9 @@ class TrainModel extends Component {
               />
             </div>
             {annotationCollections.length ? (
-              <React.Fragment>
+              <div className={classes.options}>
                 <Button
+                  fullWidth
                   variant="outlined"
                   color="primary"
                   className={classes.infoButton}
@@ -668,7 +581,7 @@ class TrainModel extends Component {
                 >
                   Training Info
                 </Button>
-                <div>
+                <div className={classes.switches}>
                   <FormControlLabel
                     control={
                       <Switch
@@ -693,7 +606,7 @@ class TrainModel extends Component {
                     label="Verified annotations only"
                   />
                 </div>
-              </React.Fragment>
+              </div>
             ) : (
               ''
             )}
