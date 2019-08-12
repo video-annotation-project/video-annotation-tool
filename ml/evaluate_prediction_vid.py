@@ -118,7 +118,7 @@ def evaluate(video_id, model_username, concepts):
 
 
 if __name__ == '__main__':
-    model_name = 'testV2'
+    model_name = 'test'
 
     s3.download_file(config.S3_BUCKET, config.S3_WEIGHTS_FOLDER +
                      model_name + '.h5', config.WEIGHTS_PATH)
