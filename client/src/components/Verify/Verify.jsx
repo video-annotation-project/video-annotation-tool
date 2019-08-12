@@ -43,6 +43,13 @@ const styles = theme => ({
 class Verify extends Component {
   constructor(props) {
     super(props);
+    const selectionMounted = JSON.parse(
+      localStorage.getItem('selectionMounted')
+    );
+    const annotations = JSON.parse(localStorage.getItem('verifyAnnotation'));
+    const noAnnotations = JSON.parse(localStorage.getItem('noAnnotations'));
+    const index = JSON.parse(localStorage.getItem('curIndex'));
+    const collectionFlag = JSON.parse(localStorage.getItem('collectionFlag'));
 
     this.state = {
       selectedAnnotationCollections: [],
@@ -51,19 +58,20 @@ class Verify extends Component {
       selectedConcepts: [],
       selectedUnsure: false,
       selectedTrackingFirst: false,
-      // eslint-disable-next-line react/no-unused-state
-      collectionFlag: false,
-      // eslint-disable-next-line react/no-unused-state
-      index: 0,
-      includeTracking: false
+      collectionFlag,
+      selectionMounted,
+      noAnnotations,
+      index,
+      includeTracking: false,
+      annotations
     };
   }
 
   toggleSelection = async () => {
-    const { selectedAnnotationCollections } = this.state;
-    const selectionMounted = JSON.parse(
-      localStorage.getItem('selectionMounted')
-    );
+    const { selectedAnnotationCollections, selectionMounted } = this.state;
+    // const selectionMounted = JSON.parse(
+    //   localStorage.getItem('selectionMounted')
+    // );
     let annotations = [];
     if (!selectionMounted) {
       localStorage.setItem('selectionMounted', !selectionMounted);
@@ -71,18 +79,16 @@ class Verify extends Component {
       this.resetState(
         this.setState({
           selectionMounted: !selectionMounted,
-          // eslint-disable-next-line react/no-unused-state
           noAnnotations: false
         })
       );
     } else {
       if (selectedAnnotationCollections.length) {
         annotations = await this.getAnnotationsFromCollection();
+        localStorage.setItem('collectionFlag', true);
         this.setState({
-          // eslint-disable-next-line react/no-unused-state
           collectionFlag: true
         });
-        localStorage.setItem('collectionFlag', true);
       } else {
         annotations = await this.getAnnotations();
       }
@@ -90,7 +96,6 @@ class Verify extends Component {
         localStorage.setItem('noAnnotations', true);
         localStorage.setItem('selectionMounted', !selectionMounted);
         this.setState({
-          // eslint-disable-next-line react/no-unused-state
           noAnnotations: true,
           selectionMounted: !selectionMounted
         });
@@ -98,7 +103,8 @@ class Verify extends Component {
         localStorage.setItem('selectionMounted', !selectionMounted);
         localStorage.setItem('verifyAnnotation', JSON.stringify(annotations));
         this.setState({
-          selectionMounted: !selectionMounted
+          selectionMounted: !selectionMounted,
+          annotations
         });
       }
     }
@@ -129,6 +135,9 @@ class Verify extends Component {
       )
       .then(res => {
         localStorage.setItem('collectionFlag', false);
+        this.setState({
+          collectionFlag: false
+        });
         return res.data;
       })
       .catch(error => {
@@ -352,7 +361,6 @@ class Verify extends Component {
         selectedUnsure: false,
         selectedTrackingFirst: false,
         includeTracking: false,
-        // eslint-disable-next-line react/no-unused-state
         index: 0
       },
       callback
@@ -360,11 +368,10 @@ class Verify extends Component {
   };
 
   handleNext = callback => {
-    const index = JSON.parse(localStorage.getItem('curIndex'));
+    const { index } = this.state;
     localStorage.setItem('curIndex', index + 1);
     this.setState(
       {
-        // eslint-disable-next-line react/no-unused-state
         index: index + 1
       },
       callback
@@ -379,10 +386,9 @@ class Verify extends Component {
     this.resetState(
       this.setState({
         selectionMounted: true,
-        // eslint-disable-next-line react/no-unused-state
         index: 0,
-        // eslint-disable-next-line react/no-unused-state
-        noAnnotations: false
+        noAnnotations: false,
+        annotations: []
       })
     );
   };
@@ -397,22 +403,19 @@ class Verify extends Component {
       selectedConcepts,
       selectedUnsure,
       selectedTrackingFirst,
-      includeTracking
+      includeTracking,
+      annotations,
+      noAnnotations,
+      index,
+      collectionFlag
     } = this.state;
-    const selectionMountedLS = JSON.parse(
-      localStorage.getItem('selectionMounted')
-    );
-    const annotations = JSON.parse(localStorage.getItem('verifyAnnotation'));
-    const noAnnotationsLS = JSON.parse(localStorage.getItem('noAnnotations'));
-    const index = JSON.parse(localStorage.getItem('curIndex'));
-    const collectionFlag = JSON.parse(localStorage.getItem('collectionFlag'));
     if (annotations && index >= annotations.length + 1) {
       this.resetLocalStorage();
       return <div />;
     }
 
     let selection = '';
-    if (selectionMountedLS) {
+    if (selectionMounted) {
       selection = (
         <VerifySelection
           selectedAnnotationCollections={selectedAnnotationCollections}
@@ -441,7 +444,7 @@ class Verify extends Component {
           handleUnselectAll={this.handleUnselectAll}
         />
       );
-    } else if (noAnnotationsLS) {
+    } else if (noAnnotations) {
       selection = (
         <Paper square elevation={0} className={classes.resetContainer}>
           <Typography>All Verified</Typography>
@@ -454,7 +457,6 @@ class Verify extends Component {
               this.resetState();
               this.setState({
                 selectionMounted: !selectionMounted,
-                // eslint-disable-next-line react/no-unused-state
                 noAnnotations: false
               });
             }}
