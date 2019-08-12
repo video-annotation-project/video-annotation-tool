@@ -19,25 +19,25 @@ router.get(
   async (req, res) => {
     const params = [req.query.ids];
     let queryText = `
-     WITH counts AS (
-       SELECT
-         c.name,
-         SUM(CASE WHEN u.username != 'tracking' THEN 1 ELSE 0 END) AS user,
-         SUM(CASE WHEN u.username = 'tracking' THEN 1 ELSE 0 END) tracking,
-         SUM(CASE WHEN u.username != 'tracking' AND a.verifiedby IS NOT null THEN 1 ELSE 0 END) verified_user,
-         SUM(CASE WHEN u.username = 'tracking' AND a.verifiedby IS NOT null THEN 1 ELSE 0 END) verified_tracking,
-         count(*) total
-       FROM
-         annotation_intermediate ai
-       LEFT JOIN
-         annotations a ON a.id = ai.annotationid
-       LEFT JOIN
-         users u ON u.id = a.userid
-       LEFT JOIN
-         concepts c ON c.id=a.conceptid
-       WHERE
-         ai.id::text = ANY($1)
-   `;
+      WITH counts AS (
+        SELECT
+          c.name,
+          SUM(CASE WHEN u.username != 'tracking' THEN 1 ELSE 0 END) AS user,
+          SUM(CASE WHEN u.username = 'tracking' THEN 1 ELSE 0 END) tracking,
+          SUM(CASE WHEN u.username != 'tracking' AND a.verifiedby IS NOT null THEN 1 ELSE 0 END) verified_user,
+          SUM(CASE WHEN u.username = 'tracking' AND a.verifiedby IS NOT null THEN 1 ELSE 0 END) verified_tracking,
+          count(*) total
+        FROM
+          annotation_intermediate ai
+        LEFT JOIN
+          annotations a ON a.id = ai.annotationid
+        LEFT JOIN
+          users u ON u.id = a.userid
+        LEFT JOIN
+          concepts c ON c.id=a.conceptid
+        WHERE
+          ai.id::text = ANY($1)
+    `;
 
     if (req.query.validConcepts) {
       queryText += ` AND a.conceptid::text = ANY($2)`;
@@ -45,25 +45,26 @@ router.get(
     }
 
     queryText += `
-       GROUP BY
-         c.name
-     )
-     SELECT * FROM counts
-     UNION ALL
-     SELECT
-       'TOTAL' as name,
-       SUM(c.user) as user,
-       SUM(c.tracking) as tracking,
-       SUM(c.verified_user) as verified_user,
-       SUM(c.verified_tracking) as verified_tracking,
-       SUM(c.total) as total
-     FROM
-       counts c
-   `;
+        GROUP BY
+          c.name
+      )
+
+      SELECT * FROM counts
+      UNION ALL
+      SELECT
+        'TOTAL' as name,
+        SUM(c.user) as user,
+        SUM(c.tracking) as tracking,
+        SUM(c.verified_user) as verified_user,
+        SUM(c.verified_tracking) as verified_tracking,
+        SUM(c.total) as total
+      FROM
+        counts c
+    `;
 
     try {
       let counts = await psql.query(queryText, params);
-      res.status(200).json(counts.rows);
+      res.json(counts.rows);
     } catch (error) {
       console.log(error);
       res.status(500).json(error);

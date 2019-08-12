@@ -113,7 +113,7 @@ def fix_offset(videoid, timeinvideo, image, id):
             img, video_frame, full=True, multichannel=True)
         if score > best_score:
             best_score = score
-        if best_score > .92:
+        if best_score > .91:
             cursor.execute(
                 '''
           UPDATE annotations
@@ -122,13 +122,14 @@ def fix_offset(videoid, timeinvideo, image, id):
                 (round(times[index]*fps/1000), times[index]/1000, id,))
             con.commit()
             con.close()
-            return
+            return times[index]/1000
     print(
         f'Failed on annnotation {id} with best score {best_score}')
     cursor.execute(
         "UPDATE annotations SET unsure=TRUE WHERE id=%d;", (id,))
     con.commit()
     con.close()
+    return timeinvideo
 
 
 if __name__ == "__main__":

@@ -12,10 +12,9 @@ import IconButton from '@material-ui/core/IconButton';
 import Description from '@material-ui/icons/Description';
 import { ChevronLeft } from '@material-ui/icons';
 import Grid from '@material-ui/core/Grid';
-
 import Checkbox from '@material-ui/core/Checkbox';
-import VideoMetadata from './VideoMetadata';
 
+import VideoMetadata from './VideoMetadata';
 import GeneralMenu from './GeneralMenu';
 
 const styles = theme => ({

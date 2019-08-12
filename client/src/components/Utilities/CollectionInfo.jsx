@@ -50,6 +50,23 @@ class CollectionInfo extends Component {
     this.state = {};
   }
 
+  // reformat = () => {
+  //   const { counts } = this.props;
+  //   console.log(counts);
+  //   const table = {};
+  //   counts[0].forEach(concept => {
+  //     table[concept.name] = [concept.count, '0', '0', '0'];
+  //   });
+  //   for (let i = 1; i < 4; i += 1) {
+  //     counts[i].forEach(concept => {
+  //       table[concept.name][i] = concept.count;
+  //     });
+  //   }
+  //   this.setState({
+  //     table
+  //   });
+  // };
+
   render() {
     const { open, onClose, data, counts, classes } = this.props;
 
