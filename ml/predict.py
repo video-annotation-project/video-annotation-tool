@@ -133,7 +133,8 @@ def predict_on_video(videoid, model_weights, concepts, filename,
           unsure=FALSE AND
           videoid={videoid} AND
           userid in {str(tuple(config.GOOD_USERS))} AND
-          conceptid in {str(tuple(concepts))}''')
+          conceptid in {str(tuple(concepts))} ''')
+    print(annotations);
 
     printing_with_time("After database query")
 
@@ -232,7 +233,11 @@ def predict_frames(video_frames, fps, model, videoid):
         # Then, check if any detections match a currently tracked object
         if frame_num % config.NUM_FRAMES == 0:
             detections = get_predictions(frame, model)
+            print(f'total detections: {len(detections)}')
             for detection in detections:
+                (x1, y1, x2, y2) = detection[0]
+                if (x1 > x2 or y1 > y2):
+                    continue
                 match, matched_object = does_match_existing_tracked_object(
                     detection, currently_tracked_objects)
                 if match:
