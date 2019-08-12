@@ -1,13 +1,11 @@
-const password = '123';
-
 Cypress.Commands.add('resetDb', () => {
   cy.request({
     method: 'PATCH',
     url: 'http://localhost:3000/api/users',
     body: {
-      password: '456',
-      newPassword1: '123',
-      newPasswrod2: '123'
+      password: Cypress.env('test_new_password'),
+      newPassword1: Cypress.env('test_password'),
+      newPasswrod2: Cypress.env('test_password')
     },
     headers: {
       'Content-Type': 'application/json',
@@ -25,7 +23,9 @@ describe('Account', () => {
     Cypress.env('cookies').forEach(cookie => {
       cy.setCookie(cookie.name, cookie.value, cookie.options);
     });
-    expect(localStorage.getItem('username')).to.eq('test123');
+    expect(localStorage.getItem('username')).to.eq(
+      Cypress.env('test_username')
+    );
     cy.visit('/');
     cy.get('#navbar-account').click();
     cy.get('#navbar-profile').click();
@@ -36,10 +36,11 @@ describe('Account', () => {
 
   it('Change password', () => {
     cy.server();
-    cy.route('PATCH', '/api/users').as('getUsers');
-    cy.get('#current-pw').type(password);
-    cy.get('#new-pw1').type('456');
-    cy.get('#new-pw2').type('456');
+    cy.route('PATCH', '/api/users').as('patchUsers');
+
+    cy.get('#current-pw').type(Cypress.env('test_password'));
+    cy.get('#new-pw1').type(Cypress.env('test_new_password'));
+    cy.get('#new-pw2').type(Cypress.env('test_new_password'));
     cy.get('#form-submit')
       .click()
       .then(() => {

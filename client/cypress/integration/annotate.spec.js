@@ -7,7 +7,9 @@ describe('Annotate', () => {
     cy.server();
     cy.route('GET', '/api/videos').as('getVideos');
 
-    expect(localStorage.getItem('username')).to.eq('test123');
+    expect(localStorage.getItem('username')).to.eq(
+      Cypress.env('test_username')
+    );
     cy.visit('/');
     cy.get('#navbar-annotate').click();
     cy.get('#navbar-annotate-videos').click();
@@ -48,7 +50,9 @@ describe('Annotate', () => {
   });
 
   it('Go to report page', () => {
-    expect(localStorage.getItem('username')).to.eq('test123');
+    expect(localStorage.getItem('username')).to.eq(
+      Cypress.env('test_username')
+    );
     cy.visit('/');
     cy.get('#navbar-report').click();
     cy.get('button')
