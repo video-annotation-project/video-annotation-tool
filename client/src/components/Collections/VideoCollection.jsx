@@ -8,6 +8,7 @@ import Slider from '@material-ui/core/Slider';
 import Swal from 'sweetalert2';
 import Hotkeys from 'react-hot-keys';
 import Grid from '@material-ui/core/Grid';
+
 import VideoList from '../Utilities/VideoList';
 import CollectionList from './CollectionVideoList';
 import Annotate from '../Annotate';

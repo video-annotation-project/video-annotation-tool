@@ -1,12 +1,8 @@
 import os
-import copy
 import json
 
-import cv2
-import numpy as np
 import pandas as pd
 import boto3
-from dotenv import load_dotenv
 from psycopg2 import connect
 
 import predict
@@ -133,8 +129,9 @@ def evaluate(video_id, model_username, concepts):
     print("uploading to s3 folder")
     s3.upload_file(
         "metrics" + str(video_id) + ".csv", S3_BUCKET,
-        AWS_S3_BUCKET_METRICS_FOLDER +  filename.replace('mp4', 'csv'),
-        ExtraArgs={'ContentType':'application/vnd.ms-excel'})
+        AWS_S3_BUCKET_METRICS_FOLDER + filename.replace('mp4', 'csv'),
+        ExtraArgs={'ContentType': 'application/vnd.ms-excel'}
+    )
 
     print(metrics)
     con.commit()
