@@ -30,10 +30,11 @@ with open(config_path) as config_buffer:
 
 tracking_users = config['tracking_users']
 
+
 def annotationMap(id, conceptid, timeinvideo, videoid, image,
                   videowidth, videoheight, x1, y1, x2, y2, comment, unsure):
     con = connect(database=DB_NAME, host=DB_HOST,
-                user=DB_USER, password=DB_PASSWORD)
+                  user=DB_USER, password=DB_PASSWORD)
     cursor = con.cursor()
     '''
     results = s3.list_objects(
@@ -42,13 +43,14 @@ def annotationMap(id, conceptid, timeinvideo, videoid, image,
         continue
     '''
     tracking.track_annotation(id, conceptid, timeinvideo, videoid, image,
-                  videowidth, videoheight, x1, y1, x2, y2, comment, unsure)
+                              videowidth, videoheight, x1, y1, x2, y2, comment, unsure)
     # Update originalid so while loop doesn't reset tracking
     cursor.execute("UPDATE annotations SET originalid=%d WHERE id=%d;",
                    (id, id,))
     con.commit()
     con.close()
     return
+
 
 temp = True
 while temp:
@@ -68,13 +70,11 @@ while temp:
         LIMIT 10
     ''')
 
-    #print()
     print("Tracking " + str(cursor.rowcount) + " annotations.")
     with Pool() as p:
         p.starmap(annotationMap, map(
             lambda x: (
                 x.id, x.conceptid, x.timeinvideo, x.videoid,
                 x.image, x.videowidth, x.videoheight,
-                x.x1, x.y1, x.x2, x.y2, x.comment, x.unsure),cursor.fetchall()))
+                x.x1, x.y1, x.x2, x.y2, x.comment, x.unsure), cursor.fetchall()))
     con.close()
-
