@@ -13,7 +13,8 @@ for video in cursor.fetchall():
     # grab video stream
     url = s3.generate_presigned_url(
         'get_object',
-        Params={'Bucket': S3_BUCKET, 'Key': S3_VIDEO_FOLDER + video.filename},
+        Params={'Bucket': config.S3_BUCKET,
+                'Key': config.S3_VIDEO_FOLDER + video.filename},
         ExpiresIn=100)
     cap = cv2.VideoCapture(url)
     fps = cap.get(cv2.CAP_PROP_FPS)
