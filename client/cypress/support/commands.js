@@ -28,8 +28,8 @@ Cypress.Commands.add('login', (username, password) => {
   let name = '';
   let pw = '';
   if (!username && !password) {
-    name = 'test123';
-    pw = '123';
+    name = Cypress.env('test_username');
+    pw = Cypress.env('test_password');
   } else {
     name = username;
     pw = password;
