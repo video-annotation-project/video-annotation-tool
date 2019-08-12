@@ -379,7 +379,6 @@ class TrainModel extends Component {
           verifiedOnly: false
         });
       });
-    });
   };
 
   getSteps = () => {
