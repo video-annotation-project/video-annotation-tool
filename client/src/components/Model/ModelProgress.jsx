@@ -8,8 +8,8 @@ import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
 import SwipeableViews from 'react-swipeable-views';
 import Box from '@material-ui/core/Box';
-import PredictProgress from './PredictProgress';
 
+import PredictProgress from './PredictProgress';
 import './ModelProgress.css';
 
 class TrainingStatus extends Component {
@@ -22,9 +22,8 @@ class TrainingStatus extends Component {
       stepsPerEpoch,
       batchProgress
     } = this.props;
+
     let ret;
-    // eslint-disable-next-line no-param-reassign
-    con1 = true;
     if (con1) {
       ret = (
         <div className="progressBars">
@@ -105,39 +104,31 @@ class TrainingStatus extends Component {
   }
 }
 
-// eslint-disable-next-line react/prefer-stateless-function
-class ServerOutput extends Component {
-  render() {
-    const { output } = this.props;
-
-    return (
-      <div className="codeBlock">
-        <code>
-          <pre>{output || 'No current output'}</pre>
-        </code>
-      </div>
-    );
-  }
+function ServerOutput(props) {
+  const { output } = props;
+  return (
+    <div className="codeBlock">
+      <code>
+        <pre>{output || 'No current output'}</pre>
+      </code>
+    </div>
+  );
 }
 
-// eslint-disable-next-line react/prefer-stateless-function
-class TabPanel extends Component {
-  render() {
-    const { children, value, index, ...other } = this.props;
-
-    return (
-      <Typography
-        component="div"
-        role="tabpanel"
-        hidden={value !== index}
-        id={`full-width-tabpanel-${index}`}
-        aria-labelledby={`full-width-tab-${index}`}
-        {...other}
-      >
-        <Box p={3}>{children}</Box>
-      </Typography>
-    );
-  }
+function TabPanel(props) {
+  const { children, value, index, ...other } = props;
+  return (
+    <Typography
+      component="div"
+      role="tabpanel"
+      hidden={value !== index}
+      id={`full-width-tabpanel-${index}`}
+      aria-labelledby={`full-width-tab-${index}`}
+      {...other}
+    >
+      <Box p={3}>{children}</Box>
+    </Typography>
+  );
 }
 
 class ModelProgress extends Component {
@@ -188,9 +179,9 @@ class ModelProgress extends Component {
           currentBatch: progress.curr_batch + 1,
           maxEpoch: progress.max_epoch,
           stepsPerEpoch: progress.steps_per_epoch,
-          // Not used?
-          // epochProgress: ((progress.curr_epoch + 1) / progress.max_epoch) * 100,
-          // batchProgress: ((progress.curr_batch + 1) / progress.steps_per_epoch) * 100,
+          epochProgress: ((progress.curr_epoch + 1) / progress.max_epoch) * 100,
+          batchProgress:
+            ((progress.curr_batch + 1) / progress.steps_per_epoch) * 100,
           stdout: progress.std_out,
           stderr: progress.std_err
         });
@@ -205,7 +196,6 @@ class ModelProgress extends Component {
   };
 
   handleChange = (event, newValue) => {
-    console.log(newValue);
     this.setState({ tab: newValue });
   };
 
@@ -216,6 +206,8 @@ class ModelProgress extends Component {
       running,
       currentEpoch,
       maxEpoch,
+      epochProgress,
+      batchProgress,
       currentBatch,
       stepsPerEpoch,
       stdout,
@@ -247,6 +239,8 @@ class ModelProgress extends Component {
               maxEpoch={maxEpoch}
               currentBatch={currentBatch}
               stepsPerEpoch={stepsPerEpoch}
+              epochProgress={epochProgress}
+              batchProgress={batchProgress}
             />
             <PredictProgress className="progress" />
           </TabPanel>
