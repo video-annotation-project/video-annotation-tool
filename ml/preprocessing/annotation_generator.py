@@ -167,6 +167,7 @@ class AnnotationGenerator(object):
         # Give priority to frames with highest verification priority
         # And with least amount of tracking annotations
         # And lower speed
+
         frame_groups.sort(key=lambda df: (
             -df.priority.max(), list(df['userid']).count(ai_id), df.speed.mean()))
 

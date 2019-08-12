@@ -8,16 +8,13 @@ import ListItemText from '@material-ui/core/ListItemText';
 import { withStyles } from '@material-ui/core/styles';
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
-
 import Collapse from '@material-ui/core/Collapse';
 import ExpandLess from '@material-ui/icons/ExpandLess';
 import ExpandMore from '@material-ui/icons/ExpandMore';
-
 import Checkbox from '@material-ui/core/Checkbox';
-
 import Typography from '@material-ui/core/Typography';
-
 import Swal from 'sweetalert2';
+
 import GeneralMenu from '../Utilities/GeneralMenu';
 
 const styles = () => ({
