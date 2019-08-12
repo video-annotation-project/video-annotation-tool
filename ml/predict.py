@@ -134,7 +134,7 @@ def predict_on_video(videoid, model_weights, concepts, filename,
           videoid={videoid} AND
           userid in {str(tuple(config.GOOD_USERS))} AND
           conceptid in {str(tuple(concepts))} ''')
-    print(annotations);
+    print(annotations)
 
     printing_with_time("After database query")
 

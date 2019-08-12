@@ -5,7 +5,7 @@ import subprocess
 import time
 import random
 
-import keras 
+import keras
 import pandas as pd
 import tensorflow as tf
 import skimage as sk
@@ -32,7 +32,7 @@ from tensorboard_logs import create_log_entry
 
 config_path = "../config.json"
 load_dotenv(dotenv_path="../.env")
-with open(config_path) as config_buffer:    
+with open(config_path) as config_buffer:
     config = json.loads(config_buffer.read())['ml']
 
 train_annot_file = config['train_annot_file']
@@ -45,9 +45,12 @@ AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 S3_BUCKET = os.getenv('AWS_S3_BUCKET_NAME')
 S3_BUCKET_WEIGHTS_FOLDER = os.getenv('AWS_S3_BUCKET_WEIGHTS_FOLDER')
-s3 = boto3.client('s3', aws_access_key_id = AWS_ACCESS_KEY_ID, aws_secret_access_key = AWS_SECRET_ACCESS_KEY)
+s3 = boto3.client('s3', aws_access_key_id=AWS_ACCESS_KEY_ID,
+                  aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
 
 # Wrapper for csv generator to allow for further data augmentation
+
+
 class custom(CSVGenerator):
     def __getitem__(self, index):
         inputs, targets = CSVGenerator.__getitem__(self, index)
@@ -67,10 +70,10 @@ def train_model(concepts, model_name, collectionIds, min_examples,
                 includeTracking=True):
 
     classmap = get_classmap(concepts)
-    
+
     # Downloads the annotation data and saves it into training and validation csv's.
     # Also downloads corresponding images.
-    
+
     if download_data:
         folders = ["weights"]
         for dir in folders:
@@ -87,22 +90,23 @@ def train_model(concepts, model_name, collectionIds, min_examples,
                              )
 
         end = time.time()
-        print("Done Downloading Annotations: " + str((end - start)/60) + " minutes")
-
+        print("Done Downloading Annotations: " +
+              str((end - start)/60) + " minutes")
 
     # Trains the model!!!!! WOOOT WOOOT!
 
     start = time.time()
     print("Starting Training.")
 
-    # Suggested to initialize model on cpu before turning into a 
+    # Suggested to initialize model on cpu before turning into a
     # multi_gpu model to save gpu memory
     with tf.device('/cpu:0'):
-        model = models.backbone('resnet50').retinanet(num_classes=len(concepts))#modifier=freeze_model)
+        model = models.backbone('resnet50').retinanet(
+            num_classes=len(concepts))  # modifier=freeze_model)
         model.load_weights(weights_path, by_name=True, skip_mismatch=True)
 
-    gpus = len([i for i in device_lib.list_local_devices() if i.device_type == 'GPU'])
-
+    gpus = len([i for i in device_lib.list_local_devices()
+                if i.device_type == 'GPU'])
 
     if gpus > 1:
         training_model = multi_gpu_model(model, gpus=gpus)
@@ -111,12 +115,12 @@ def train_model(concepts, model_name, collectionIds, min_examples,
 
     training_model.compile(
         loss={
-            'regression'    : losses.smooth_l1(),
+            'regression': losses.smooth_l1(),
             'classification': losses.focal()
         },
         optimizer=keras.optimizers.adam(lr=1e-5, clipnorm=0.001)
     )
-    
+
     # transform_generator = random_transform_generator(
     #     min_rotation=-0.1,
     #     max_rotation=0.1,
@@ -129,29 +133,29 @@ def train_model(concepts, model_name, collectionIds, min_examples,
     #     flip_x_chance=0.5,
     #     flip_y_chance=0.5,
     # )
-    
+
     temp = pd.DataFrame(list(zip(classmap.values(), classmap.keys())))
-    temp.to_csv('classmap.csv',index=False, header=False)
+    temp.to_csv('classmap.csv', index=False, header=False)
     train_generator = custom(
         train_annot_file,
         'classmap.csv',
         # transform_generator=transform_generator,
-        batch_size = batch_size
+        batch_size=batch_size
     )
 
     test_generator = CSVGenerator(
         valid_annot_file,
         'classmap.csv',
-        batch_size = batch_size,
+        batch_size=batch_size,
         shuffle_groups=False
     )
 
-
     # Checkpoint: save models that are improvements
-    checkpoint = ModelCheckpoint(weights_path, monitor='val_loss', save_best_only=True)
+    checkpoint = ModelCheckpoint(
+        weights_path, monitor='val_loss', save_best_only=True)
     checkpoint = RedirectModel(checkpoint, model)
 
-    #stopping: stops training if val_loss stops improving
+    # stopping: stops training if val_loss stops improving
     stopping = EarlyStopping(monitor='val_loss', min_delta=0, patience=10)
 
     log_table_name = 'previous_runs'
@@ -180,15 +184,18 @@ def train_model(concepts, model_name, collectionIds, min_examples,
     # Every batch and epoch update a database table with the current progress
     progress_callback = Progress(
         steps_per_epoch=len(train_generator), num_epochs=epochs)
-    
-    history = training_model.fit_generator(train_generator, 
-        epochs=epochs, 
-        callbacks=[checkpoint, stopping, progress_callback], #, log_callback],
-        validation_data=test_generator,
-        verbose=2
-    ).history
 
-    s3.upload_file(weights_path, S3_BUCKET, S3_BUCKET_WEIGHTS_FOLDER + model_name+".h5") 
+    history = training_model.fit_generator(train_generator,
+                                           epochs=epochs,
+                                           # , log_callback],
+                                           callbacks=[
+                                               checkpoint, stopping, progress_callback],
+                                           validation_data=test_generator,
+                                           verbose=2
+                                           ).history
+
+    s3.upload_file(weights_path, S3_BUCKET,
+                   S3_BUCKET_WEIGHTS_FOLDER + model_name+".h5")
 
     end = time.time()
     print("Done Training Model: " + str((end - start)/60) + " minutes")

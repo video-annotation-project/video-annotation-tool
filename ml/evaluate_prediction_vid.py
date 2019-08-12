@@ -79,8 +79,10 @@ def score_predictions(validation, predictions, iou_thresh, concepts):
             if (precision + recall) != 0
             else 0
         )
-        metrics = metrics.append([[concept, TP, FP, FN, precision, recall, f1]])
-    metrics.columns = ["conceptid", "TP", "FP", "FN", "Precision", "Recall", "F1"]
+        metrics = metrics.append(
+            [[concept, TP, FP, FN, precision, recall, f1]])
+    metrics.columns = ["conceptid", "TP", "FP",
+                       "FN", "Precision", "Recall", "F1"]
     return metrics
 
 
@@ -90,7 +92,8 @@ def get_counts(results, annotations):
     counts.columns = ["pred_num"]
     groundtruth_counts = pd.DataFrame(annotations.groupby("label").size())
     groundtruth_counts.columns = ["true_num"]
-    counts = pd.concat((counts, groundtruth_counts), axis=1, join="outer").fillna(0)
+    counts = pd.concat((counts, groundtruth_counts),
+                       axis=1, join="outer").fillna(0)
     counts["count_accuracy"] = (
         1 - abs(counts.true_num - counts.pred_num) / counts.true_num
     )
