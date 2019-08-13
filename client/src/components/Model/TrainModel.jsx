@@ -464,10 +464,20 @@ class TrainModel extends Component {
       : `Must be 1–${minCounts[selection]}`;
   };
 
-  toggleInfo = () => {
-    this.setState(prevState => ({
-      infoDialogOpen: !prevState.infoDialogOpen
-    }));
+  handleChangeMultiple = event => {
+    const options = event.target.value;
+    const value = [];
+    for (let i = 0, l = options.length; i < l; i += 1) {
+      value.push(options[i]);
+    }
+    this.setState(
+      {
+        annotationCollections: value
+      },
+      () => {
+        this.getCollectionCounts();
+      }
+    );
   };
 
   getCollectionCounts = async () => {
@@ -606,7 +616,11 @@ class TrainModel extends Component {
               counts={selectedCollectionCounts}
             />
             <Divider style={{ marginTop: '30px' }} variant="middle" />
-            <ModelProgress className="progress" handleStop={this.handleStop} />
+            <ModelProgress
+              className="progress"
+              handleStop={this.handleStop}
+              postStopFlag={this.postStopFlag}
+            />
           </div>
         </Paper>
         {openedVideo && (

@@ -84,6 +84,14 @@ class TrainingStatus extends Component {
           >
             Stop
           </Button>
+          <Button
+            onClick={this.props.postStopFlag}
+            variant="contained"
+            color="secondary"
+            className="stopButton"
+          >
+            Stop Training
+          </Button>
         </Paper>
         {this.ternaryOpBreak(
           running,
@@ -223,6 +231,7 @@ class ModelProgress extends Component {
         <SwipeableViews index={tab}>
           <TabPanel value={tab} index={0}>
             <TrainingStatus
+              postStopFlag={this.props.postStopFlag}
               onStop={this.handleStop}
               steps={steps}
               running={running}
