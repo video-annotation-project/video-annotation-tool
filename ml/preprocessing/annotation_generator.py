@@ -230,10 +230,16 @@ class AnnotationGenerator(object):
             WHERE inter.id = ANY(%s) AND a.videoid <> ANY(%s)
         '''
         if verified_only:
-            annotations_query += r''' AND a.verifiedby IS NOT NULL'''
+            annotations_query += r''' AND ((a.verifiedby IS NOT NULL 
+                AND a.userid <> (SELECT id FROM users WHERE username='tracking'))'''
+        else:
+            annotations_query += r''' AND (TRUE'''
 
-        if not include_tracking:
-            annotations_query += r''' AND a.id = a.originalId'''
+        if include_tracking:
+            annotations_query += r''' OR (a.userid = (SELECT id FROM users WHERE username='tracking') 
+                AND a.verifiedby IS NULL))'''
+        else:
+            annotations_query += r''')'''
         annotations_query += r'''
             )
             SELECT 
@@ -373,7 +379,8 @@ class S3Generator(Generator):
                 float(annot['y2']),
             ]]))
 
-        print(f'Num annotations for frame: {annotations["bboxes"].shape[0]} image: {image_name}')
+        print(
+            f'Num annotations for frame: {annotations["bboxes"].shape[0]} image: {image_name}')
 
         return annotations
 

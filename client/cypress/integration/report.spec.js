@@ -4,7 +4,9 @@ describe('Report', () => {
   });
 
   it('Go to report page', () => {
-    expect(localStorage.getItem('username')).to.eq('test123');
+    expect(localStorage.getItem('username')).to.eq(
+      Cypress.env('test_username')
+    );
     cy.visit('/');
     cy.get('#navbar-report').click();
     cy.get('button')
@@ -45,7 +47,7 @@ describe('Report', () => {
     cy.get('#Level-2').select('Video');
     cy.get('#Level-3').select('Concept');
     cy.get('#ok-button').click();
-    cy.contains('test123')
+    cy.contains(Cypress.env('test_username'))
       .should('be.visible')
       .click();
     cy.contains('.mp4 count:1')
