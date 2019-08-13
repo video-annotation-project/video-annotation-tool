@@ -52,9 +52,7 @@ def annotationMap(id, conceptid, timeinvideo, videoid, image,
     return
 
 
-temp = True
-while temp:
-    temp = False
+while True:
     con = connect(database=DB_NAME, host=DB_HOST,
                   user=DB_USER, password=DB_PASSWORD)
     cursor = con.cursor()
@@ -67,7 +65,6 @@ while temp:
         FROM annotations 
         WHERE originalid is NULL
         AND userid in {str(tuple(tracking_users))}
-        LIMIT 10
     ''')
 
     print("Tracking " + str(cursor.rowcount) + " annotations.")
