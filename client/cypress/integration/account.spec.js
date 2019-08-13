@@ -44,7 +44,7 @@ describe('Account', () => {
     cy.get('#form-submit')
       .click()
       .then(() => {
-        cy.wait('@getUsers');
+        cy.wait('@patchUsers');
         cy.resetDb();
       });
     cy.visit('/');
