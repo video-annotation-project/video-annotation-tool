@@ -4,7 +4,6 @@ import FormGroup from '@material-ui/core/FormGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Switch from '@material-ui/core/Switch';
 import FormControl from '@material-ui/core/FormControl';
-import Typography from '@material-ui/core/Typography';
 
 const styles = theme => ({
   formControl: {
@@ -26,12 +25,13 @@ class SelectUnsure extends React.Component {
   }
 
   componentDidMount = async () => {
-    const { getUnsure } = this.props;
-    const annotations = await getUnsure();
-
-    this.setState({
-      disabled: annotations.length === 1 && !annotations[0].unsure
-    });
+    const { getUnsure, value } = this.props;
+    if (value) {
+      const annotations = await getUnsure();
+      this.setState({
+        disabled: annotations.length === 1 && !annotations[0].unsure
+      });
+    }
   };
 
   render() {
@@ -40,7 +40,6 @@ class SelectUnsure extends React.Component {
 
     return (
       <div>
-        <Typography>Select unsure</Typography>
         <FormControl component="fieldset" className={classes.formControl}>
           <FormGroup>
             <FormControlLabel

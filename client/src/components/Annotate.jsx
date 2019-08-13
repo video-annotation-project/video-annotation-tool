@@ -353,7 +353,7 @@ class Annotate extends Component {
       .post('/api/annotations', body, config)
       .then(async res => {
         console.log(res.data.message);
-        this.toastPopup.fire({
+        Swal.fire({
           type: 'success',
           title: res.data.message
         });

@@ -2,34 +2,38 @@ import React, { Component } from 'react';
 import axios from 'axios';
 import TextField from '@material-ui/core/TextField';
 import io from 'socket.io-client';
-import { withStyles } from '@material-ui/core/styles';
-import Stepper from '@material-ui/core/Stepper';
-import Step from '@material-ui/core/Step';
-import StepLabel from '@material-ui/core/StepLabel';
-import StepContent from '@material-ui/core/StepContent';
-import Button from '@material-ui/core/Button';
+import Input from '@material-ui/core/Input';
 import Paper from '@material-ui/core/Paper';
 import { FormControl } from '@material-ui/core';
 import InputLabel from '@material-ui/core/InputLabel';
 import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
-import FormGroup from '@material-ui/core/FormGroup';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
-import FormLabel from '@material-ui/core/FormLabel';
 import Checkbox from '@material-ui/core/Checkbox';
 import Typography from '@material-ui/core/Typography';
+import ListItemText from '@material-ui/core/ListItemText';
+import Divider from '@material-ui/core/Divider';
+import Button from '@material-ui/core/Button';
+import { withStyles } from '@material-ui/core/styles';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Switch from '@material-ui/core/Switch';
 
 import ModelProgress from './ModelProgress';
 import VideoMetadata from '../Utilities/VideoMetadata';
+import CollectionInfo from '../Utilities/CollectionInfo';
+
+import './TrainModel.css';
 
 const styles = theme => ({
   root: {
     margin: '40px 180px'
   },
   form: {
-    marginBottom: theme.spacing(2),
-    marginLeft: theme.spacing(1),
+    marginTop: theme.spacing(2),
+    marginBottom: theme.spacing(),
     minWidth: 150
+  },
+  group: {
+    marginLeft: 15
   },
   center: {
     display: 'flex',
@@ -59,8 +63,11 @@ const styles = theme => ({
     width: '50%'
   },
   button: {
-    marginTop: theme.spacing(),
+    marginTop: theme.spacing(4),
     marginRight: theme.spacing()
+  },
+  infoButton: {
+    marginTop: theme.spacing(2)
   },
   actionsContainer: {
     flexDirection: 'column',
@@ -71,19 +78,14 @@ const styles = theme => ({
     padding: theme.spacing(3)
   },
   checkSelector: {
-    maxHeight: '150px',
+    marginTop: theme.spacing(),
+    maxHeight: '250px',
     overflow: 'auto'
   },
   videoSelector: {
     width: '625px'
   },
-  hyperparametersForm: {
-    display: 'flex',
-    flexWrap: 'wrap'
-  },
   textField: {
-    marginLeft: theme.spacing(),
-    marginRight: theme.spacing(),
     width: 200
   },
   epochText: {
@@ -91,10 +93,139 @@ const styles = theme => ({
     top: '-15px'
   },
   hyperParamsInput: {
-    width: '190ox',
+    width: '208px',
     marginRight: '10px'
+  },
+  info: {
+    marginTop: theme.spacing(2)
+  },
+  switches: {
+    marginTop: theme.spacing()
+  },
+  options: {
+    marginLeft: theme.spacing(1.5),
+    marginRight: theme.spacing(1.5)
   }
 });
+
+function ModelsForm(props) {
+  const { className, modelSelected, handleChange, models } = props;
+  return (
+    <FormControl component="fieldset" className={className}>
+      <InputLabel shrink>Model</InputLabel>
+      <Select
+        name="modelSelected"
+        value={modelSelected || 'Loading...'}
+        onChange={handleChange}
+      >
+        {models.map(model => (
+          <MenuItem key={model.name} value={model.name}>
+            {model.name}
+          </MenuItem>
+        ))}
+      </Select>
+    </FormControl>
+  );
+}
+
+function CollectionsForm(props) {
+  const { className, annotationCollections, onChange, collections } = props;
+  return (
+    <FormControl component="fieldset" className={className}>
+      <InputLabel shrink>Annotations</InputLabel>
+      <Select
+        multiple
+        name="selectedAnnotations"
+        value={annotationCollections}
+        onChange={onChange}
+        input={<Input id="select-multiple" />}
+        renderValue={selected =>
+          selected.map(collection => collection.name).join(', ') || 'Loading...'
+        }
+      >
+        {collections.map(collection => (
+          <MenuItem
+            key={collection.id}
+            value={collection}
+            disabled={collection.disable}
+          >
+            <Checkbox
+              checked={annotationCollections.indexOf(collection) > -1}
+            />
+            <ListItemText>
+              {collection.name}
+              {collection.validConcepts ? (
+                <Typography variant="subtitle2" gutterBottom color="secondary">
+                  {collection.validConcepts.map((concept, index) => {
+                    if (index === collection.validConcepts.length - 1) {
+                      return concept.f1;
+                    }
+                    return `${concept.f1}, `;
+                  })}
+                </Typography>
+              ) : (
+                ''
+              )}
+            </ListItemText>
+          </MenuItem>
+        ))}
+      </Select>
+    </FormControl>
+  );
+}
+
+class EpochsField extends Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      epochs: undefined
+    };
+  }
+
+  render() {
+    const { className } = this.props;
+    const { epochs } = this.state;
+
+    return (
+      <TextField
+        margin="normal"
+        className={className}
+        name="epochs"
+        label="Epochs"
+        value={epochs}
+        onChange={this.handleChange}
+      />
+    );
+  }
+}
+
+class ImagesField extends Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      minImages: undefined
+    };
+  }
+
+  render() {
+    const { className, getImageRange } = this.props;
+    const { minImages } = this.state;
+
+    return (
+      <TextField
+        margin="normal"
+        className={className}
+        name="images"
+        label="# of Images"
+        value={minImages}
+        onChange={this.handleChange}
+        helperText={getImageRange()}
+      />
+    );
+  }
+}
 
 class TrainModel extends Component {
   constructor(props) {
@@ -123,15 +254,40 @@ class TrainModel extends Component {
       modelSelected: null,
       collections: [],
       annotationCollections: [],
-      minImages: 5000,
-      epochs: 0,
-      activeStep: 0,
-      openedVideo: null,
-      currentEpoch: 0,
-      currentBatch: 0,
-      socket
+      selectedCollectionCounts: [],
+      minCounts: [],
+      includeTracking: false,
+      verifiedOnly: false,
+      infoDialogOpen: false,
+      openedVideo: null
     };
   }
+
+  componentDidMount = async () => {
+    await this.loadOptionInfo();
+    await this.loadExistingModels();
+    this.loadCollectionList();
+  };
+
+  // Used to handle changes in the hyperparameters and in the select model
+  handleChange = event => {
+    this.setState(
+      {
+        [event.target.name]: event.target.value
+      },
+      () => {
+        if (event.target.name === 'modelSelected') {
+          this.loadCollectionList();
+        }
+      }
+    );
+  };
+
+  handleChangeSwitch = event => {
+    this.setState({
+      [event.target.value]: event.target.checked
+    });
+  };
 
   // Methods for video meta data
   openVideoMetadata = (event, video) => {
@@ -147,11 +303,6 @@ class TrainModel extends Component {
     });
   };
 
-  componentDidMount = async () => {
-    this.loadOptionInfo();
-    this.loadExistingModels();
-  };
-
   loadOptionInfo = () => {
     const config = {
       headers: {
@@ -159,16 +310,12 @@ class TrainModel extends Component {
       }
     };
     const option = 'trainmodel';
-    axios
+    return axios
       .get(`/api/models/train/${option}`, config)
       .then(res => {
         const { info } = res.data[0];
         this.setState({
-          activeStep: info.activeStep,
-          annotationCollections: info.annotationCollections,
-          modelSelected: info.modelSelected,
-          minImages: info.minImages,
-          epochs: info.epochs
+          modelSelected: info.modelSelected
         });
       })
       .catch(error => {
@@ -186,7 +333,7 @@ class TrainModel extends Component {
         Authorization: `Bearer ${localStorage.getItem('token')}`
       }
     };
-    axios
+    return axios
       .get(`/api/models`, config)
       .then(res => {
         this.setState({
@@ -202,50 +349,42 @@ class TrainModel extends Component {
       });
   };
 
-  loadCollectionlist = () => {
+  loadCollectionList = () => {
     const { models, modelSelected } = this.state;
+
     const config = {
       headers: {
         Authorization: `Bearer ${localStorage.getItem('token')}`
       }
     };
-    axios.get(`/api/collections/annotations`, config).then(res => {
-      const selectedModelTuple = models.find(model => {
-        return model.name === modelSelected;
+
+    return axios
+      .get(`/api/collections/annotations?train=true`, config)
+      .then(res => {
+        const selectedModelTuple = models.find(model => {
+          return model.name === modelSelected;
+        });
+        const modelConcepts = selectedModelTuple.conceptsid;
+        res.data.forEach(col => {
+          const filtered = modelConcepts.filter(x => col.ids.includes(x));
+          if (filtered.length > 0) {
+            col.disable = false;
+            col.validConcepts = col.concepts.filter(y =>
+              filtered.includes(y.f2)
+            );
+          } else {
+            col.disable = true;
+          }
+        });
+        this.setState({
+          collections: res.data.sort(a => (a.validConcepts ? -1 : 1)),
+          annotationCollections: [],
+          selectedCollectionCounts: [],
+          minCounts: [],
+          includeTracking: false,
+          verifiedOnly: false
+        });
       });
-      this.filterCollection(selectedModelTuple, res.data);
-    });
-  };
-
-  // Used to handle changes in the hyperparameters and in the select model
-  handleChange = event => {
-    this.setState({
-      [event.target.name]: event.target.value
-    });
-  };
-
-  selectModel = () => {
-    const { classes } = this.props;
-    const { modelSelected, models } = this.state;
-    if (modelSelected === null) {
-      return <div>Loading...</div>;
-    }
-    return (
-      <FormControl className={classes.form}>
-        <InputLabel>Select Model</InputLabel>
-        <Select
-          name="modelSelected"
-          value={modelSelected}
-          onChange={this.handleChange}
-        >
-          {models.map(model => (
-            <MenuItem key={model.name} value={model.name}>
-              {model.name}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-    );
   };
 
   // Handle user, video, and concept checkbox selections
@@ -261,267 +400,9 @@ class TrainModel extends Component {
     });
   };
 
-  selectCollection = () => {
-    const { classes } = this.props;
-    const { annotationCollections, collections } = this.state;
-
-    const { checkSelector } = classes;
-    if (!annotationCollections) {
-      return <div>Loading...</div>;
-    }
-    return (
-      <FormControl component="fieldset" className={checkSelector}>
-        <FormLabel component="legend">
-          Select Annotation Collection to Use
-        </FormLabel>
-        <FormGroup>
-          {collections
-            .sort(a => (a.validConcepts ? -1 : 1))
-            .map(collection => (
-              <div key={collection.id}>
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      onChange={this.checkboxSelect(
-                        'annotationCollections',
-                        annotationCollections,
-                        collection.id
-                      )}
-                      color="primary"
-                      checked={annotationCollections.includes(collection.id)}
-                      disabled={collection.disable}
-                    />
-                  }
-                  label={
-                    <div>
-                      {collection.name}
-                      {collection.validConcepts ? (
-                        <Typography
-                          variant="subtitle2"
-                          gutterBottom
-                          color="secondary"
-                        >
-                          {collection.validConcepts.concepts.join(', ')}
-                        </Typography>
-                      ) : (
-                        ''
-                      )}
-                    </div>
-                  }
-                />
-              </div>
-            ))}
-        </FormGroup>
-      </FormControl>
-    );
-  };
-
-  selectHyperparameters = () => {
-    const { classes } = this.props;
-    const { epochs, minImages } = this.state;
-
-    const label = (
-      <span className={classes.epochText}>
-        Number of epochs <br />
-        (0 = Until Increased Loss)
-      </span>
-    );
-
-    return (
-      <form className={classes.hyperparametersForm}>
-        <TextField
-          margin="normal"
-          name="epochs"
-          label={label}
-          value={epochs}
-          onChange={this.handleChange}
-          className={classes.hyperParamsInput}
-        />
-        <TextField
-          margin="normal"
-          name="minImages"
-          label="Number of training images"
-          value={minImages}
-          onChange={this.handleChange}
-        />
-      </form>
-    );
-  };
-
-  getSteps = () => {
-    return [
-      'Select model',
-      'Select annotation collection',
-      'Select hyperparameters'
-    ];
-  };
-
-  getStepContent = step => {
-    switch (step) {
-      case 0:
-        return this.selectModel();
-      case 1:
-        return this.selectCollection();
-      case 2:
-        return this.selectHyperparameters();
-      default:
-        return 'Unknown step';
-    }
-  };
-
-  getStepState = step => {
-    switch (step) {
-      case 0:
-        return 'models';
-      case 1:
-        return 'collections';
-      default:
-        return undefined;
-    }
-  };
-
-  handleSelectAll = () => {
-    const { activeStep } = this.state;
-
-    const stateName = this.getStepState(activeStep);
-    // eslint-disable-next-line react/destructuring-assignment
-    const data = this.state[stateName];
-    const dataSelected = JSON.parse(
-      // eslint-disable-next-line react/destructuring-assignment, react/no-access-state-in-setstate
-      JSON.stringify(this.state[`${stateName}Selected`])
-    );
-    data.forEach(row => {
-      if (!dataSelected.includes(row.id)) {
-        dataSelected.push(row.id);
-      }
-    });
-    this.setState({
-      [`${stateName}Selected`]: dataSelected
-    });
-  };
-
-  handleUnselectAll = () => {
-    const { activeStep } = this.state;
-
-    const stateName = this.getStepState(activeStep);
-    this.setState({
-      [`${stateName}Selected`]: []
-    });
-  };
-
-  updateBackendInfo = () => {
-    const {
-      activeStep,
-      modelSelected,
-      annotationCollections,
-      epochs,
-      minImages,
-      socket
-    } = this.state;
-
-    const config = {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    };
-    const info = {
-      activeStep,
-      modelSelected,
-      annotationCollections,
-      epochs,
-      minImages
-    };
-    const body = {
-      info: JSON.stringify(info)
-    };
-    // update SQL database
-    axios
-      .put('/api/models/train/trainmodel/', body, config)
-      .then(() => {
-        socket.emit('refresh trainmodel');
-      })
-      .catch(error => {
-        console.log(error);
-        console.log(JSON.parse(JSON.stringify(error)));
-      });
-  };
-
-  filterCollection = async (data, collections) => {
-    const config = {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    };
-    try {
-      let dataRet = await axios.get(
-        `/api/collections/annotations/train?ids=${data.conceptsid}`,
-        config
-      );
-      const conceptids = dataRet.data.map(col => col.id);
-      dataRet = dataRet.data;
-      const filteredCol = collections;
-      filteredCol.forEach(col => {
-        if (!conceptids.includes(col.id)) {
-          col.disable = true;
-        } else {
-          col.disable = false;
-          col.validConcepts = dataRet.find(col1 => {
-            return col1.id === col.id;
-          });
-        }
-      });
-      await this.setState({
-        collections: filteredCol
-      });
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  handleNext = async () => {
-    const { activeStep } = this.state;
-    // After users have been selected load user videos
-    if (activeStep === 0) {
-      this.loadCollectionlist();
-    }
-    // After Model and videos have been selected load available concepts
-    // if (this.state.activeStep === 2) {
-    //   await this.loadConceptList();
-    // }
-    this.setState(
-      state => ({
-        activeStep: state.activeStep + 1
-      }),
-      () => {
-        if (activeStep === 3) {
-          this.postModelInstance('start');
-        }
-        this.updateBackendInfo();
-      }
-    );
-  };
-
-  handleBack = () => {
-    this.setState(
-      state => ({
-        activeStep: state.activeStep - 1
-      }),
-      () => {
-        this.updateBackendInfo();
-      }
-    );
-  };
-
   handleStop = () => {
-    this.setState(
-      {
-        activeStep: 0
-      },
-      () => {
-        this.updateBackendInfo();
-        this.postModelInstance('stop');
-      }
-    );
+    this.updateBackendInfo();
+    this.postModelInstance('stop');
   };
 
   postModelInstance = command => {
@@ -539,75 +420,206 @@ class TrainModel extends Component {
     });
   };
 
+  handleChangeMultiple = event => {
+    const options = event.target.value;
+    const value = [];
+    for (let i = 0, l = options.length; i < l; i += 1) {
+      value.push(options[i]);
+    }
+    this.setState(
+      {
+        annotationCollections: value
+      },
+      () => {
+        this.getCollectionCounts();
+      }
+    );
+  };
+
+  getImageRange = () => {
+    const {
+      annotationCollections,
+      minCounts,
+      includeTracking,
+      verifiedOnly
+    } = this.state;
+
+    if (!annotationCollections.length || !minCounts.length) return '';
+
+    let selection;
+    if (verifiedOnly) {
+      if (includeTracking) {
+        selection = 3;
+      } else {
+        selection = 2;
+      }
+    } else if (includeTracking) {
+      selection = 1;
+    } else {
+      selection = 0;
+    }
+
+    return minCounts[selection] === 1
+      ? `Must be 1`
+      : `Must be 1–${minCounts[selection]}`;
+  };
+
+  handleChangeMultiple = event => {
+    const options = event.target.value;
+    const value = [];
+    for (let i = 0, l = options.length; i < l; i += 1) {
+      value.push(options[i]);
+    }
+    this.setState(
+      {
+        annotationCollections: value
+      },
+      () => {
+        this.getCollectionCounts();
+      }
+    );
+  };
+
+  getCollectionCounts = async () => {
+    const { annotationCollections } = this.state;
+    const validConcepts = [];
+
+    annotationCollections.forEach(collection => {
+      collection.validConcepts.forEach(concept => {
+        validConcepts.push(concept.f2);
+      });
+    });
+
+    try {
+      const res = await axios.get(`/api/collections/annotations/counts`, {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        },
+        params: {
+          ids: annotationCollections.map(collection => collection.id),
+          validConcepts
+        }
+      });
+
+      if (res) {
+        const minCounts = [];
+        minCounts.push(Math.min(...res.data.map(count => count.user)));
+        minCounts.push(
+          Math.min(
+            ...res.data.map(
+              count => parseInt(count.user, 10) + parseInt(count.tracking, 10)
+            )
+          )
+        );
+        minCounts.push(Math.min(...res.data.map(count => count.verified_user)));
+        minCounts.push(
+          Math.min(
+            ...res.data.map(
+              count =>
+                parseInt(count.verified_user, 10) + parseInt(count.tracking, 10)
+            )
+          )
+        );
+
+        this.setState({
+          selectedCollectionCounts: res.data,
+          minCounts
+        });
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   render() {
     const { classes, socket, loadVideos } = this.props;
     const {
-      annotationCollections,
       modelSelected,
-      activeStep,
-      openedVideo
+      models,
+      collections,
+      annotationCollections,
+      openedVideo,
+      infoDialogOpen,
+      selectedCollectionCounts,
+      includeTracking,
+      verifiedOnly,
+      minCounts
     } = this.state;
 
-    const steps = this.getSteps();
-
     return (
-      <div className={classes.root}>
+      <div className="root">
         <Paper square>
-          <div className={classes.container}>
-            <Stepper
-              className={classes.stepper}
-              activeStep={activeStep}
-              orientation="vertical"
-            >
-              {steps.map((label, index) => (
-                <Step key={label}>
-                  <StepLabel>{label}</StepLabel>
-                  <StepContent>
-                    {this.getStepContent(index)}
-                    <div className={classes.actionsContainer}>
-                      <Button
-                        disabled={activeStep === 0}
-                        onClick={this.handleBack}
-                        className={classes.button}
-                      >
-                        Back, socket, loadVideos
-                      </Button>
-                      <Button
-                        variant="contained"
+          <div className="container">
+            <div className="actionsContainer">
+              <ModelsForm
+                className="modelsForm"
+                modelSelected={modelSelected}
+                handleChange={this.handleChange}
+                models={models}
+              />
+              <CollectionsForm
+                className="collectionsForm"
+                collections={collections}
+                annotationCollections={annotationCollections}
+                onChange={this.handleChangeMultiple}
+              />
+              <EpochsField className="epochsField" />
+              <ImagesField
+                className="imagesField"
+                getImageRange={this.getImageRange}
+              />
+            </div>
+            {annotationCollections.length ? (
+              <div className={classes.options}>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  color="primary"
+                  className={classes.infoButton}
+                  onClick={this.toggleInfo}
+                >
+                  Training Info
+                </Button>
+                <div className={classes.switches}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={includeTracking}
+                        onChange={this.handleChangeSwitch}
+                        value="includeTracking"
                         color="primary"
-                        onClick={this.handleNext}
-                        className={classes.button}
-                        disabled={
-                          (activeStep === 0 && modelSelected === '') ||
-                          (activeStep === 1 && annotationCollections.length < 1)
-                        }
-                      >
-                        {activeStep === steps.length - 1
-                          ? 'Train Model'
-                          : 'Next'}
-                      </Button>
-                      <Button
-                        onClick={this.handleSelectAll}
-                        disabled={activeStep === 0 || activeStep === 4}
-                      >
-                        Select All
-                      </Button>
-                      <Button
-                        onClick={this.handleUnselectAll}
-                        disabled={activeStep === 0 || activeStep === 4}
-                      >
-                        Unselect All
-                      </Button>
-                    </div>
-                  </StepContent>
-                </Step>
-              ))}
-            </Stepper>
+                      />
+                    }
+                    label="Include tracking annotations"
+                  />
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={verifiedOnly}
+                        onChange={this.handleChangeSwitch}
+                        value="verifiedOnly"
+                        color="primary"
+                        disabled={!minCounts[2]}
+                      />
+                    }
+                    label="Verified annotations only"
+                  />
+                </div>
+              </div>
+            ) : (
+              ''
+            )}
+            <CollectionInfo
+              open={infoDialogOpen}
+              onClose={this.toggleInfo}
+              counts={selectedCollectionCounts}
+            />
+            <Divider style={{ marginTop: '30px' }} variant="middle" />
             <ModelProgress
-              className={classes.progress}
-              activeStep={activeStep}
-              steps={steps}
+              className="progress"
               handleStop={this.handleStop}
+              postStopFlag={this.postStopFlag}
             />
           </div>
         </Paper>

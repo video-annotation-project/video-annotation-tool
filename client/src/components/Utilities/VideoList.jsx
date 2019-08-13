@@ -10,13 +10,14 @@ import ExpandLess from '@material-ui/icons/ExpandLess';
 import ExpandMore from '@material-ui/icons/ExpandMore';
 import IconButton from '@material-ui/core/IconButton';
 import Description from '@material-ui/icons/Description';
-
+import { ChevronLeft } from '@material-ui/icons';
+import Grid from '@material-ui/core/Grid';
 import Checkbox from '@material-ui/core/Checkbox';
-import VideoMetadata from './VideoMetadata';
 
+import VideoMetadata from './VideoMetadata';
 import GeneralMenu from './GeneralMenu';
 
-const styles = () => ({
+const styles = theme => ({
   drawer: {
     width: '550px',
     overflow: 'auto'
@@ -27,6 +28,12 @@ const styles = () => ({
   addButton: {
     marginTop: '10px',
     marginLeft: '20px'
+  },
+  retractDrawerButton: {
+    margin: '5px'
+  },
+  listText: {
+    marginLeft: theme.spacing()
   }
 });
 
@@ -131,14 +138,32 @@ class VideoList extends Component {
           onClose={() => this.toggle('videoListOpen')}
         >
           <div className={classes.drawer}>
+            <Grid
+              container
+              direction="row"
+              justify="flex-end"
+              alignItems="center"
+            >
+              <IconButton
+                id="close-video-list"
+                className={classes.retractDrawerButton}
+                onClick={() => this.toggle('videoListOpen')}
+              >
+                <ChevronLeft />
+              </IconButton>
+            </Grid>
             <ListItem button onClick={() => this.toggle('startedListOpen')}>
-              <ListItemText inset primary="My In Progress Videos" />
+              <ListItemText
+                className={classes.listText}
+                primary="My In Progress Videos"
+              />
               {startedListOpen ? <ExpandLess /> : <ExpandMore />}
             </ListItem>
             <Collapse in={startedListOpen} timeout="auto" unmountOnExit>
               <List disablePadding>
                 {startedVideos.map(video => (
                   <ListItem
+                    id={`video-${video.id}`}
                     button
                     key={video.id}
                     style={video.count > 1 ? { backgroundColor: 'red' } : {}}
@@ -157,7 +182,10 @@ class VideoList extends Component {
                     ) : (
                       ''
                     )}
-                    <ListItemText primary={`${video.id}. ${video.filename}`} />
+                    <ListItemText
+                      className={classes.listText}
+                      primary={`${video.id}. ${video.filename}`}
+                    />
                     <IconButton
                       onClick={event => this.openVideoMetadata(event, video)}
                     >
@@ -169,13 +197,17 @@ class VideoList extends Component {
             </Collapse>
 
             <ListItem button onClick={() => this.toggle('unwatchedListOpen')}>
-              <ListItemText inset primary="Unwatched Videos" />
+              <ListItemText
+                className={classes.listText}
+                primary="Unwatched Videos"
+              />
               {unwatchedListOpen ? <ExpandLess /> : <ExpandMore />}
             </ListItem>
             <Collapse in={unwatchedListOpen} timeout="auto" unmountOnExit>
               <List component="div" disablePadding>
                 {unwatchedVideos.map(video => (
                   <ListItem
+                    id={`video-${video.id}`}
                     button
                     key={video.id}
                     onClick={() => handleVideoClick(video, 'unwatchedVideos')}
@@ -193,7 +225,10 @@ class VideoList extends Component {
                     ) : (
                       ''
                     )}
-                    <ListItemText primary={`${video.id}. ${video.filename}`} />
+                    <ListItemText
+                      className={classes.listText}
+                      primary={`${video.id}. ${video.filename}`}
+                    />
                     <IconButton
                       onClick={event => this.openVideoMetadata(event, video)}
                     >
@@ -205,13 +240,17 @@ class VideoList extends Component {
             </Collapse>
 
             <ListItem button onClick={() => this.toggle('watchedListOpen')}>
-              <ListItemText inset primary="Annotated Videos" />
+              <ListItemText
+                className={classes.listText}
+                primary="Annotated Videos"
+              />
               {watchedListOpen ? <ExpandLess /> : <ExpandMore />}
             </ListItem>
             <Collapse in={watchedListOpen} timeout="auto" unmountOnExit>
               <List component="div" disablePadding>
                 {watchedVideos.map(video => (
                   <ListItem
+                    id={`video-${video.id}`}
                     button
                     key={video.id}
                     onClick={() => handleVideoClick(video, 'watchedVideos')}
@@ -229,7 +268,10 @@ class VideoList extends Component {
                     ) : (
                       ''
                     )}
-                    <ListItemText primary={`${video.id}. ${video.filename}`} />
+                    <ListItemText
+                      className={classes.listText}
+                      primary={`${video.id}. ${video.filename}`}
+                    />
                     <IconButton
                       onClick={event => this.openVideoMetadata(event, video)}
                     >
@@ -241,13 +283,17 @@ class VideoList extends Component {
             </Collapse>
 
             <ListItem button onClick={() => this.toggle('inProgressListOpen')}>
-              <ListItemText inset primary="All In Progress Videos" />
+              <ListItemText
+                className={classes.listText}
+                primary="All In Progress Videos"
+              />
               {inProgressListOpen ? <ExpandLess /> : <ExpandMore />}
             </ListItem>
             <Collapse in={inProgressListOpen} timeout="auto" unmountOnExit>
               <List component="div" disablePadding>
                 {inProgressVideos.map(video => (
                   <ListItem
+                    id={`video-${video.id}`}
                     button
                     key={video.id}
                     onClick={() => handleVideoClick(video, 'inProgressVideos')}
@@ -265,7 +311,10 @@ class VideoList extends Component {
                     ) : (
                       ''
                     )}
-                    <ListItemText primary={`${video.id}. ${video.filename}`} />
+                    <ListItemText
+                      className={classes.listText}
+                      primary={`${video.id}. ${video.filename}`}
+                    />
                     <IconButton
                       onClick={event => this.openVideoMetadata(event, video)}
                     >

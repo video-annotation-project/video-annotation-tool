@@ -22,18 +22,6 @@ router.get(
   '/',
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
-    // const queryText = `
-    //   SELECT
-    //     *
-    //   FROM ONLY
-    //     concepts
-    //   NATURAL FULL JOIN
-    //     concept_collection
-    //   WHERE
-    //     deleted_flag IS NOT TRUE
-    //   ORDER BY
-    //     name
-    // `;
     const queryText = `
       SELECT *
       FROM concepts

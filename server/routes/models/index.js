@@ -163,17 +163,15 @@ router.get(
     const queryText = `
       SELECT
         m.id, m.model_name, m.start_train, m.end_train, m.epochs, m.min_examples,
-        array_agg(DISTINCT c.name) concepts, array_agg(DISTINCT u.username) users
+        array_agg(DISTINCT a.name) annotations
       FROM
         previous_runs m
       JOIN
-        concepts c ON c.id=ANY(m.concepts)
-      JOIN
-        users u ON u.id=ANY(m.users)
+        annotation_collection a ON a.id=ANY(m.collection_ids)
       GROUP BY
         (m.id, m.model_name, m.start_train, m.end_train, m.epochs, m.min_examples)
       ORDER BY
-        id DESC`;
+        m.id DESC`;
     try {
       let response = await psql.query(queryText);
       res.json(response.rows);

@@ -1,9 +1,8 @@
 const router = require('express').Router();
-const passport = require("passport");
-const psql = require("../../db/simpleConnect");
+const passport = require('passport');
+const psql = require('../../db/simpleConnect');
 
-
- /**
+/**
  * @typedef trainProgress
  * @property {boolean} running - Is the model currently training
  * @property {integer} curr_epoch - Current epoch the training is at
@@ -14,12 +13,14 @@ const psql = require("../../db/simpleConnect");
 
 /**
  * @route GET /api/models/progress/train
- * @group models 
+ * @group models
  * @summary Get current training session progress
  * @returns {trainProgress.model} 200 - Current training progress
  * @returns {Error} 500 - Unexpected database error
  */
-router.get("/train", passport.authenticate("jwt", { session: false }),
+router.get(
+  '/train',
+  passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     const queryText = `
       SELECT 
@@ -33,14 +34,14 @@ router.get("/train", passport.authenticate("jwt", { session: false }),
       let response = await psql.query(queryText);
       res.json(response.rows);
     } catch (error) {
-      console.log("Error on GET /api/models");
+      console.log('Error on GET /api/models');
       console.log(error);
       res.status(500).json(error);
     }
   }
 );
 
- /**
+/**
  * @typedef predictProgress
  * @property {integer} videoid - ID of the video we're predicting
  * @property {integer} framenum - Current frame we are predicting on
@@ -50,12 +51,14 @@ router.get("/train", passport.authenticate("jwt", { session: false }),
 
 /**
  * @route GET /api/models/progress/predict
- * @group models 
+ * @group models
  * @summary Get current video prediction progress
  * @returns {predictProgress.model} 200 - Current prediction progress
  * @returns {Error} 500 - Unexpected database error
  */
-router.get("/predict", passport.authenticate("jwt", { session: false }),
+router.get(
+  '/predict',
+  passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     const queryText = `
       SELECT 
@@ -67,7 +70,7 @@ router.get("/predict", passport.authenticate("jwt", { session: false }),
       let response = await psql.query(queryText);
       res.json(response.rows);
     } catch (error) {
-      console.log("Error on GET /api/models");
+      console.log('Error on GET /api/models');
       console.log(error);
       res.status(500).json(error);
     }

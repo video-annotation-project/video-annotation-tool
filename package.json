@@ -6,7 +6,7 @@
     "node": ">=8.10"
   },
   "dependencies": {
-    "aws-sdk": "^2.496.0",
+    "aws-sdk": "^2.507.0",
     "babel-cli": "^6.26.0",
     "babel-core": "6.14.0",
     "bcrypt": "^3.0.6",
@@ -23,6 +23,7 @@
     "passport": "^0.4.0",
     "passport-jwt": "^4.0.0",
     "pg": "^7.11.0",
+    "react-swipeable-views": "^0.13.3",
     "s3": "^4.4.0",
     "socket.io": "^2.2.0",
     "swagger-ui-express": "^4.0.7"
@@ -37,5 +38,8 @@
   "devDependencies": {
     "@babel/core": "^7.5.5",
     "@babel/node": "^7.5.5"
+  },
+  "prettier": {
+    "singleQuote": true
   }
 }
