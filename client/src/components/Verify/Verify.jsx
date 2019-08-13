@@ -54,7 +54,8 @@ class Verify extends Component {
       // eslint-disable-next-line react/no-unused-state
       collectionFlag: false,
       // eslint-disable-next-line react/no-unused-state
-      index: 0
+      index: 0,
+      includeTracking: false
     };
   }
 
@@ -117,10 +118,11 @@ class Verify extends Component {
   };
 
   getAnnotationsFromCollection = async () => {
-    const { selectedAnnotationCollections } = this.state;
+    const { selectedAnnotationCollections, includeTracking } = this.state;
     return axios
       .get(
-        `/api/annotations/collections?collectionids=${selectedAnnotationCollections}`,
+        `/api/annotations/collections?` +
+          `collectionids=${selectedAnnotationCollections}&tracking=${includeTracking}`,
         {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         }
@@ -349,6 +351,7 @@ class Verify extends Component {
         selectedConcepts: [],
         selectedUnsure: false,
         selectedTrackingFirst: false,
+        includeTracking: false,
         // eslint-disable-next-line react/no-unused-state
         index: 0
       },
@@ -393,7 +396,8 @@ class Verify extends Component {
       selectedVideos,
       selectedConcepts,
       selectedUnsure,
-      selectedTrackingFirst
+      selectedTrackingFirst,
+      includeTracking
     } = this.state;
     const selectionMountedLS = JSON.parse(
       localStorage.getItem('selectionMounted')
@@ -417,6 +421,7 @@ class Verify extends Component {
           selectedConcepts={selectedConcepts}
           selectedUnsure={selectedUnsure}
           selectedTrackingFirst={selectedTrackingFirst}
+          includeTracking={includeTracking}
           getAnnotationCollections={this.getAnnotationCollections}
           getAnnotationsFromCollection={this.getAnnotationsFromCollection}
           getUsers={this.getUsers}

@@ -10,21 +10,7 @@ from evaluate_prediction_vid import evaluate
 from train import train_model
 import config
 
-
-s3 = boto3.client(
-    's3',
-    aws_access_key_id=config.AWS_ACCESS_KEY_ID,
-    aws_secret_access_key=config.AWS_SECRET_ACCESS_KEY
-)
-
-con = connect(
-    database=config.DB_NAME,
-    host=config.DB_HOST,
-    user=config.DB_USER,
-    password=config.DB_PASSWORD
-)
-
-cursor = con.cursor()
+from utils.query import s3, con, cursor
 
 # Delete old prediction progress
 cursor.execute('''
@@ -60,38 +46,36 @@ model = cursor.fetchone()
 concepts = model[2]
 verifyVideos = model[3]
 
-# Delete old model user
-# if (model[4] != 'None'):
-#      cursor.execute('''
-#          DELETE FROM users
-#          WHERE id=%s''',
-#          (model[4],))
-# cursor.execute(
-#     '''INSERT INTO users (username, password, admin) VALUES (%s, 0, null) RETURNING *''',
-#     (user_model,)
-# )
+user_model = model[0] + "-" + time.ctime()
 
-# cursor.execute('''
-#     INSERT INTO users (username, password, admin)
-#     VALUES (%s, 0, null)
-#     RETURNING *''',
-#     (user_model,))
-# model_user_id = int(cursor.fetchone()[0])
+# Delete old model user
+if (model[4] != 'None'):
+    cursor.execute('''
+         DELETE FROM users
+         WHERE id=%s''',
+                   (model[4],))
+
+cursor.execute('''
+    INSERT INTO users (username, password, admin)
+    VALUES (%s, 0, null)
+    RETURNING *''',
+               (user_model,))
+model_user_id = int(cursor.fetchone()[0])
 
 # update models
-# cursor.execute('''
-#     UPDATE models
-#     SET userid=%s
-#     WHERE name=%s
-#     RETURNING *''',
-#     (model_user_id, info['modelSelected'],))
+cursor.execute('''
+    UPDATE models
+    SET userid=%s
+    WHERE name=%s
+    RETURNING *''',
+               (model_user_id, info['modelSelected'],))
 
 # Start training job
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-train_model(concepts, verifyVideos, info['modelSelected'], info['annotationCollections'],
-            int(info['minImages']), int(info['epochs']), download_data=True,
-            verified_only=info['verifiedOnly'],
-            include_tracking=info['includeTracking'])
+# train_model(concepts, verifyVideos, info['modelSelected'], info['annotationCollections'],
+#             int(info['minImages']), int(info['epochs']), download_data=True,
+#             verified_only=info['verifiedOnly'],
+#             include_tracking=info['includeTracking'])
 
 
 # Run verifyVideos in parallel
@@ -100,9 +84,9 @@ train_model(concepts, verifyVideos, info['modelSelected'], info['annotationColle
 
 # Run evaluate on all the videos in verifyVideos
 # Using for loop due to memory issues
-# for video_id in verifyVideos:
-#     evaluate(video_id, user_model, concepts)
-#     cursor.execute('''DELETE FROM predict_progress''')
+for video_id in verifyVideos:
+    evaluate(video_id, user_model, concepts)
+    cursor.execute('''DELETE FROM predict_progress''')
 
 subprocess.call(['rm', '*.mp4'])
 
