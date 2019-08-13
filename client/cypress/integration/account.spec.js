@@ -5,7 +5,7 @@ Cypress.Commands.add('resetDb', () => {
     body: {
       password: Cypress.env('test_new_password'),
       newPassword1: Cypress.env('test_password'),
-      newPasswrod2: Cypress.env('test_password')
+      newPassword2: Cypress.env('test_password')
     },
     headers: {
       'Content-Type': 'application/json',

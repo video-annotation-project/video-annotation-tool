@@ -43,6 +43,7 @@ describe('Annotate', () => {
     cy.get('#concepts-add').click();
     cy.wait('@getConcepts');
     cy.get('#search-concepts').type('Unknown{enter}');
+    cy.wait('@getConcepts');
     cy.get('#Unknown').click();
     cy.get('#dialog-input').type('Cypress test - delete later');
     cy.get('#submit').click();
