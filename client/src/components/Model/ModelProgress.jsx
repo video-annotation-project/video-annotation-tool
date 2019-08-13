@@ -65,7 +65,8 @@ class TrainingStatus extends Component {
       currentEpoch,
       currentBatch,
       maxEpoch,
-      stepsPerEpoch
+      stepsPerEpoch,
+      postStopFlag
     } = this.props;
     return (
       <div>
@@ -85,7 +86,7 @@ class TrainingStatus extends Component {
             Stop
           </Button>
           <Button
-            onClick={this.props.postStopFlag}
+            onClick={postStopFlag}
             variant="contained"
             color="secondary"
             className="stopButton"
@@ -211,7 +212,8 @@ class ModelProgress extends Component {
       currentBatch,
       stepsPerEpoch,
       stdout,
-      stderr
+      stderr,
+      postStopFlag
     } = this.state;
 
     return (
@@ -231,7 +233,7 @@ class ModelProgress extends Component {
         <SwipeableViews index={tab}>
           <TabPanel value={tab} index={0}>
             <TrainingStatus
-              postStopFlag={this.props.postStopFlag}
+              postStopFlag={postStopFlag}
               onStop={this.handleStop}
               steps={steps}
               running={running}
