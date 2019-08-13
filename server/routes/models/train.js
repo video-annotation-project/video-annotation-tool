@@ -12,8 +12,6 @@ router.patch(
         training_progress
       SET
         stop_flag = True
-      WHERE
-        id=(SELECT max(id) FROM training_progress)
       RETURNING *
     `;
 
@@ -52,15 +50,13 @@ router.post(
             UPDATE 
               training_progress
             SET 
-              running = False
-            WHERE
-              id=(SELECT max(id) FROM training_progress)`;
+              status = 0`;
 
       const predictStop = `
             UPDATE 
               predict_progress
             SET 
-              running = False`;
+              status = 0`;
 
       await psql.query(trainingStop);
       await psql.query(predictStop);
@@ -88,14 +84,18 @@ router.put(
       epochs=$1,
       min_images=$2,
       model=$3,
-      annotation_collections=$4 `;
+      annotation_collections=$4,
+      verified_only=$5,
+      include_tracking=$6 `;
 
     try {
       let response = await psql.query(queryText, [
         req.body.epochs,
         req.body.minImages,
         req.body.modelSelected,
-        req.body.annotationCollections
+        req.body.annotationCollections,
+        req.body.verifiedOnly.
+        req.body.includeTracking
       ]);
       res.json(response.rows);
     } catch (error) {

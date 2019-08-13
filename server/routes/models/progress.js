@@ -27,8 +27,6 @@ router.get(
         * 
       FROM 
         training_progress 
-      ORDER BY 
-        id DESC LIMIT 1
     `;
     try {
       let response = await psql.query(queryText);

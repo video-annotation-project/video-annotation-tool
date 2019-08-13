@@ -194,13 +194,12 @@ class EpochsField extends Component {
 class ImagesField extends Component {
 
   render() {
-    const { className, getImageRange } = this.props;
-    const { minImages } = this.state;
+    const { className, getImageRange, minImages } = this.props;
 
     return (
       <TextField
         margin="normal"
-        className={this.props.className}
+        className={className}
         name="minImages"
         label="# of Images"
         value={minImages}
@@ -235,7 +234,7 @@ class TrainModel extends Component {
 
     this.state = {
       models: [],
-      modelSelected: null,
+      modelSelected: undefined,
       collections: [],
       annotationCollections: [],
       selectedCollectionCounts: [],
@@ -248,7 +247,6 @@ class TrainModel extends Component {
   }
 
   componentDidMount = async () => {
-    await this.loadOptionInfo();
     await this.loadExistingModels();
     this.loadCollectionList();
   };
@@ -325,13 +323,23 @@ class TrainModel extends Component {
       }
     };
 
+
     return axios
       .get(`/api/collections/annotations?train=true`, config)
       .then(res => {
+
         const selectedModelTuple = models.find(model => {
           return model.name === modelSelected;
         });
-        const modelConcepts = selectedModelTuple.conceptsid;
+
+        let modelConcepts;
+
+        if (this.state.modelSelected === undefined){
+          modelConcepts = [];
+        } else {
+          modelConcepts = selectedModelTuple.conceptsid;
+        }
+
         res.data.forEach(col => {
           const filtered = modelConcepts.filter(x => col.ids.includes(x));
           if (filtered.length > 0) {
@@ -372,14 +380,12 @@ class TrainModel extends Component {
   handleChange = event => {
     this.setState({
       [event.target.name]: event.target.value
-    }, async () =>  { 
-      if (event.target.name === 'modelSelected'){
-        await this.loadCollectionList();
-        this.updateModelParams({annotationCollections: this.state.annotationCollections.map((v) => v.id)});
+    }, () => {   
+        if (event.target.name === 'modelSelected'){
+          this.loadCollectionList();
+        }
       }
-    });
-
-    this.updateModelParams({[event.target.name]: event.target.value});
+    );
   };
 
   handleChangeMultiple = event => {
@@ -388,10 +394,6 @@ class TrainModel extends Component {
     for (let i = 0, l = options.length; i < l; i += 1) {
       values.push(options[i]);
     }
-    this.setState({
-      annotationCollections: values
-    });
-    this.updateModelParams({annotationCollections: values.map((v) => v.id)});
   };
 
   handleStop = () => {
@@ -538,6 +540,20 @@ class TrainModel extends Component {
     }
   };
 
+  startTraining = () => {
+    try {
+      const res = await axios.put(`/api/model/train`, {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        },
+        params: {
+          ids: annotationCollections.map(collection => collection.id),
+          validConcepts
+        }
+      });
+  }
+
   render() {
     const { classes, socket, loadVideos } = this.props;
     const {
@@ -579,6 +595,7 @@ class TrainModel extends Component {
                 className="imagesField" 
                 minImages={this.state.minImages} 
                 onChange={this.handleChange}
+                getImageRange={this.getImageRange}
               />
             </div>
             {annotationCollections.length ? (
@@ -631,6 +648,7 @@ class TrainModel extends Component {
               className="progress"
               handleStop={this.handleStop}
               postStopFlag={this.postStopFlag}
+              startTraining={this.startTraining}
             />
           </div>
         </Paper>

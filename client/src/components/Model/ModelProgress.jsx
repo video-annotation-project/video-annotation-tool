@@ -20,12 +20,31 @@ class TrainingStatus extends Component {
       <div>
         <Paper square elevation={0} className="resetContainer">
           <div>
-            <Typography variant="subtitle1">Step 1/2</Typography>
+            <Typography 
+              hidden={this.props.buttonStatus === 0} 
+              variant="subtitle1">
+                Step 1/2
+            </Typography>
+            <Typography 
+              hidden={this.props.buttonStatus !== 0} 
+              variant="subtitle1">
+                Not currently training.
+            </Typography>  
             <Typography variant="subtitle2" gutterBottom>
-              Model has started training...
+              {this.props.status === 1 && 'Model has started training...'}
+              {this.props.status === 2 && 'Model has finished training.'}
             </Typography>
           </div>
-          <div>
+            <div hidden={this.props.buttonStatus !== 0}>
+            <Button
+              onClick={this.props.startTraining}
+              variant="contained"
+              color="primary"
+            >
+              Start Training
+            </Button>
+          </div>
+          <div hidden={this.props.buttonStatus !== 1}>
             <Button
               onClick={this.props.onStop}
               variant="contained"
@@ -42,8 +61,17 @@ class TrainingStatus extends Component {
               Terminate
             </Button>
           </div>
+          <div hidden={this.props.buttonStatus !== 2}>
+            <Button
+              onClick={this.props.postStopFlag}
+              variant="contained"
+              color="primary"
+            >
+              Reset Training
+            </Button>
+          </div>
         </Paper>
-        <div className="progressBars">
+        <div className="progressBars"  hidden={this.props.status === 0}>
           <Typography variant="body1" gutterBottom className="progressText">
             Epoch: {this.props.currentEpoch} / {this.props.maxEpoch}
           </Typography>
@@ -125,7 +153,12 @@ class ModelProgress extends Component {
     clearInterval(this.interval);
   }
 
-  loadProgressInfo = () => {
+  loadProgressInfo(){
+    this.loadProgressInfoTrain();
+    this.loadProgressInfoPredict();
+  }
+
+  loadProgressInfoTrain = () => {
     const { activeStep } = this.props;
     if (activeStep < 3) {
       return;
@@ -141,7 +174,6 @@ class ModelProgress extends Component {
         const progress = res.data[0];
 
         this.setState({
-          running: progress.running,
           currentEpoch: progress.curr_epoch + 1,
           currentBatch: progress.curr_batch + 1,
           maxEpoch: progress.max_epoch,
@@ -150,7 +182,8 @@ class ModelProgress extends Component {
           batchProgress:
             ((progress.curr_batch + 1) / progress.steps_per_epoch) * 100,
           stdout: progress.std_out,
-          stderr: progress.std_err
+          stderr: progress.std_err,
+          trainStatus: progress.status
         });
       })
       .catch(error => {
@@ -165,6 +198,63 @@ class ModelProgress extends Component {
   handleChange = (event, newValue) => {
     this.setState({ tab: newValue });
   };
+
+
+  loadProgressInfoPredict = async () => {
+    const config = {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    };
+    try {
+      const predictions = await axios.get(
+        `/api/models/progress/predict`,
+        config
+      );
+
+      const predictionsData = predictions.data;
+      const totalVideos = predictionsData.length;
+      const currentVideo = this.getCurrentVideo(predictionsData);
+      const totalFrames = currentVideo.totalframe;
+      const currentVideoNum = currentVideo.videoNum;
+      const currentFrame = currentVideo.framenum;
+      const predictStatus = currentVideo.status;
+      const videoProgress = (currentVideo.videoNum / totalVideos) * 100;
+      const predictionProgress = (currentFrame / totalFrames) * 100;
+
+      this.setState({
+        totalVideos,
+        currentVideoNum,
+        currentFrame,
+        totalFrames,
+        predictStatus,
+        videoProgress,
+        predictionProgress,
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  getCurrentVideo = predictions => {
+    let currentVideo = predictions.find((pred, index) => {
+      if (pred.framenum !== pred.totalframe || index === predictions.length - 1){
+        pred.videoNum = index + 1;
+        return true;
+      }
+      return false;
+    });
+    return currentVideo;
+  };
+
+  getButtonStatus = () => {
+    if (this.state.trainStatus === 0){
+      return 0;
+    } else if (this.state.predictStatus === 4){
+      return 2;
+    }
+    return 1;
+  }
 
   render() {
 
@@ -195,8 +285,20 @@ class ModelProgress extends Component {
               stepsPerEpoch={this.state.stepsPerEpoch}
               epochProgress={this.state.epochProgress}
               batchProgress={this.state.batchProgress}
+              status={this.state.trainStatus}
+              buttonStatus={this.getButtonStatus()}
+              startTraining={this.props.startTraining}
             />
-            <PredictProgress className="progress" />
+            <PredictProgress 
+              className="progress" 
+              currentVideoNum={this.state.currentVideoNum}
+              totalVideos={this.state.totalVideos}
+              currentFrame={this.state.currentFrame}
+              totalFrames={this.state.totalFrames}
+              videoProgress={this.state.videoProgress}
+              predictionProgress={this.state.predictionProgress}
+              status={this.state.predictStatus}
+            />
           </TabPanel>
           <TabPanel value={this.state.tab} index={1}>
             <ServerOutput output={this.state.stdout} />

@@ -43,114 +43,27 @@ class PredictingStatus extends Component {
 class PredictProgress extends Component {
   constructor(props) {
     super(props);
-
-    this.state = {
-      running: false
-    };
-
-    this.loadProgressInfo();
-    this.loadProgressInfo = this.loadProgressInfo.bind(this);
   }
-
-  componentDidMount() {
-    this.interval = setInterval(() => this.loadProgressInfo(), 500);
-  }
-
-  componentWillUnmount() {
-    clearInterval(this.interval);
-  }
-
-  loadProgressInfo = async () => {
-    const config = {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    };
-    try {
-      const predictions = await axios.get(
-        `/api/models/progress/predict`,
-        config
-      );
-      if (predictions) {
-        const predictionsData = predictions.data;
-        const totalVideos = predictionsData.length;
-        const currentVideo = this.getCurrentVideo(predictionsData);
-        const currentVideoNum = currentVideo.videoNum;
-        const currentFrame = currentVideo.framenum;
-        const totalFrames = currentVideo.totalframe;
-        const { status } = currentVideo;
-        const videoProgress = (currentVideo.videoNum / totalVideos) * 100;
-        const predictionProgress = (currentFrame / totalFrames) * 100;
-
-        if (totalVideos === 0) {
-          this.setState({
-            running: false
-          });
-        } else {
-          this.setState({
-            totalVideos,
-            currentVideoNum,
-            currentFrame,
-            totalFrames,
-            status,
-            videoProgress,
-            predictionProgress,
-            running: true
-          });
-        }
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  getCurrentVideo = predictions => {
-    let currentVideo = predictions.find((pred, index) => {
-      if (pred.framenum !== pred.totalframe || index === predictions.length - 1){
-        pred.videoNum = index + 1;
-        return true;
-      }
-      return false;
-    });
-    return currentVideo;
-  };
-
-  getStatus = status => {
-    if (status === 0) {
-      return 'Resizing';
-    }
-    if (status === 1) {
-      return 'Predicting';
-    }
-    if (status === 2) {
-      return 'Generating';
-    }
-    return '';
-  };
-
-  getProgress = (framenum, totalframe) => {
-    // var progress = (status * (100 / totalSteps)) + (framenum / totalframe) * (100 / totalSteps);
-    const progress = (framenum / totalframe) * 100;
-    return progress;
-  };
 
   render() {
     return (
-      <div className="predictProgress">
+      <div className="predictProgress" hidden={this.props.status === 0} >
         <div>
           <Typography variant="subtitle1">Step 2/2</Typography>
           <Typography variant="subtitle2" gutterBottom>
-            Model has started predicting...
+            {this.props.status === 1 && 'Currently resizing vidoes...'}
+            {this.props.status === 2 && 'Currently predicting videos...'}
+            {this.props.status === 3 && 'Currently generating videos...'}
+            {this.props.status === 4 && 'Model has finished predicting.'}
           </Typography>
         </div>
         <PredictingStatus
-          currentVideoNum={this.state.currentVideoNum}
-          totalVideos={this.state.totalVideos}
-          currentFrame={this.state.currentFrame}
-          totalFrames={this.state.totalFrames}
-          stage={this.getStatus(this.state.status)}
-          videoProgress={this.state.videoProgress}
-          predictionProgress={this.state.predictionProgress}
+          currentVideoNum={this.props.currentVideoNum}
+          totalVideos={this.props.totalVideos}
+          currentFrame={this.props.currentFrame}
+          totalFrames={this.props.totalFrames}
+          videoProgress={this.props.videoProgress}
+          predictionProgress={this.props.predictionProgress}
         />
       </div>
     );
