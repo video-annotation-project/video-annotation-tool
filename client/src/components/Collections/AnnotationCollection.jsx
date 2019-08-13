@@ -81,6 +81,9 @@ const styles = theme => ({
   },
   info: {
     marginTop: theme.spacing(2)
+  },
+  infoButton: {
+    marginLeft: theme.spacing()
   }
 });
 
@@ -502,7 +505,12 @@ class AnnotationCollection extends Component {
     if (data.users[0]) {
       return (
         <React.Fragment>
-          <Button color="primary" onClick={this.toggleInfo}>
+          <Button
+            className={classes.infoButton}
+            variant="outlined"
+            color="primary"
+            onClick={this.toggleInfo}
+          >
             Collection Info
           </Button>
           <CollectionInfo

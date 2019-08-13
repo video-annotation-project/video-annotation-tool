@@ -13,10 +13,12 @@ import config
 from utils.query import s3, con, cursor
 
 # Delete old prediction progress
-cursor.execute('''
+cursor.execute(
+    """
     DELETE FROM
       predict_progress
-''')
+"""
+)
 con.commit()
 
 # get annotations from test
@@ -27,20 +29,17 @@ info = row[1]
 try:
     s3.download_file(
         config.S3_BUCKET,
-        config.S3_WEIGHTS_FOLDER + str(info['modelSelected']) + '.h5',
-        config.WEIGHTS_PATH
+        config.S3_WEIGHTS_FOLDER + str(info["modelSelected"]) + ".h5",
+        config.WEIGHTS_PATH,
     )
 except ClientError:
     s3.download_file(
         config.S3_BUCKET,
         config.S3_WEIGHTS_FOLDER + config.DEFAULT_WEIGHTS_PATH,
-        config.WEIGHTS_PATH
+        config.WEIGHTS_PATH,
     )
 
-cursor.execute(
-    '''SELECT * FROM MODELS WHERE name=%s''',
-    (info['modelSelected'],)
-)
+cursor.execute("""SELECT * FROM MODELS WHERE name=%s""", (info["modelSelected"],))
 
 model = cursor.fetchone()
 concepts = model[2]
@@ -49,33 +48,46 @@ verifyVideos = model[3]
 user_model = model[0] + "-" + time.ctime()
 
 # Delete old model user
-if (model[4] != 'None'):
-    cursor.execute('''
+if model[4] != "None":
+    cursor.execute(
+        """
          DELETE FROM users
-         WHERE id=%s''',
-                   (model[4],))
+         WHERE id=%s""",
+        (model[4],),
+    )
 
-cursor.execute('''
+cursor.execute(
+    """
     INSERT INTO users (username, password, admin)
     VALUES (%s, 0, null)
-    RETURNING *''',
-               (user_model,))
+    RETURNING *""",
+    (user_model,),
+)
 model_user_id = int(cursor.fetchone()[0])
 
 # update models
-cursor.execute('''
+cursor.execute(
+    """
     UPDATE models
     SET userid=%s
     WHERE name=%s
-    RETURNING *''',
-               (model_user_id, info['modelSelected'],))
+    RETURNING *""",
+    (model_user_id, info["modelSelected"]),
+)
 
 # Start training job
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-# train_model(concepts, verifyVideos, info['modelSelected'], info['annotationCollections'],
-#             int(info['minImages']), int(info['epochs']), download_data=True,
-#             verified_only=info['verifiedOnly'],
-#             include_tracking=info['includeTracking'])
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
+# train_model(
+#     concepts,
+#     verifyVideos,
+#     info["modelSelected"],
+#     info["annotationCollections"],
+#     int(info["minImages"]),
+#     int(info["epochs"]),
+#     download_data=True,
+#     verified_only=info["verifiedOnly"],
+#     include_tracking=info["includeTracking"],
+# )
 
 
 # Run verifyVideos in parallel
@@ -86,18 +98,20 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 # Using for loop due to memory issues
 for video_id in verifyVideos:
     evaluate(video_id, user_model, concepts)
-    cursor.execute('''DELETE FROM predict_progress''')
+    cursor.execute("""DELETE FROM predict_progress""")
 
-subprocess.call(['rm', '*.mp4'])
+subprocess.call(["rm", "*.mp4"])
 
-cursor.execute('''
+cursor.execute(
+    """
     Update modeltab
     SET info =  '{
         \"activeStep\": 0, \"modelSelected\":\"\", \"annotationCollections\":[],
         \"epochs\":0, \"minImages\":0}'
     WHERE option = 'trainmodel'
-''')
+"""
+)
 
 con.commit()
 con.close()
-subprocess.call(['sudo', 'shutdown', '-h'])
+subprocess.call(["sudo", "shutdown", "-h"])

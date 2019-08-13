@@ -6,7 +6,7 @@
 # testing
 /coverage
 cypress.env.json
-
+/cypress/screenshots/*
 # production
 /build
 

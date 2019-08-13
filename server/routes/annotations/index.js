@@ -266,9 +266,7 @@ router.delete(
       // add tracking video
       Objects.push({
         Key:
-          process.env.AWS_S3_BUCKET_VIDEOS_FOLDER +
-          req.body.id +
-          '_tracking.mp4'
+          process.env.AWS_S3_BUCKET_VIDEOS_FOLDER + req.body.id + '_track.mp4'
       });
       let params = {
         Bucket: process.env.AWS_S3_BUCKET_NAME,
@@ -666,8 +664,7 @@ let verifyAnnotation = async (req, res) => {
     });
     // add tracking video
     Objects.push({
-      Key:
-        process.env.AWS_S3_BUCKET_VIDEOS_FOLDER + req.body.id + '_tracking.mp4'
+      Key: process.env.AWS_S3_BUCKET_VIDEOS_FOLDER + req.body.id + '_track.mp4'
     });
     params = {
       Bucket: process.env.AWS_S3_BUCKET_NAME,
