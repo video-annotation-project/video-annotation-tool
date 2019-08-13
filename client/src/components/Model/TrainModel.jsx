@@ -480,6 +480,12 @@ class TrainModel extends Component {
     );
   };
 
+  toggleInfo = () => {
+    this.setState(prevState => ({
+      infoDialogOpen: !prevState.infoDialogOpen
+    }));
+  };
+
   getCollectionCounts = async () => {
     const { annotationCollections } = this.state;
     const validConcepts = [];
