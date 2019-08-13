@@ -48,14 +48,21 @@ class TrainingStatus extends Component {
       );
     } else if (con2) {
       //
-    } else {
-      ret = (
-        <Typography variant="subtitle2" gutterBottom>
-          Not currently training
-        </Typography>
-      );
     }
     return ret;
+  };
+
+  getStatus = status => {
+    if (status === 0) {
+      return 'is not';
+    }
+    if (status === 1) {
+      return 'has started';
+    }
+    if (status === 2) {
+      return 'has done';
+    }
+    return '';
   };
 
   render() {
@@ -65,7 +72,9 @@ class TrainingStatus extends Component {
       currentEpoch,
       currentBatch,
       maxEpoch,
-      stepsPerEpoch
+      stepsPerEpoch,
+      status,
+      postStopFlag
     } = this.props;
     return (
       <div>
@@ -73,7 +82,7 @@ class TrainingStatus extends Component {
           <div>
             <Typography variant="subtitle1">Step 1/2</Typography>
             <Typography variant="subtitle2" gutterBottom>
-              Model has started training...
+              Model {this.getStatus(status)} training...
             </Typography>
           </div>
           <Button
@@ -85,7 +94,7 @@ class TrainingStatus extends Component {
             Stop
           </Button>
           <Button
-            onClick={this.props.postStopFlag}
+            onClick={postStopFlag}
             variant="contained"
             color="secondary"
             className="stopButton"
@@ -138,6 +147,7 @@ class ModelProgress extends Component {
     this.state = {
       running: false,
       tab: 0,
+      status: null,
       currentEpoch: 0,
       currentBatch: 0,
       maxEpoch: 0,
@@ -172,9 +182,14 @@ class ModelProgress extends Component {
       .get(`/api/models/progress/train`, config)
       .then(res => {
         const progress = res.data[0];
+        let running = false;
+        if (progress.status === 1) {
+          running = true;
+        }
 
         this.setState({
-          running: progress.running,
+          running,
+          status: progress.status,
           currentEpoch: progress.curr_epoch + 1,
           currentBatch: progress.curr_batch + 1,
           maxEpoch: progress.max_epoch,
@@ -211,7 +226,8 @@ class ModelProgress extends Component {
       currentBatch,
       stepsPerEpoch,
       stdout,
-      stderr
+      stderr,
+      status
     } = this.state;
 
     return (
@@ -241,6 +257,7 @@ class ModelProgress extends Component {
               stepsPerEpoch={stepsPerEpoch}
               epochProgress={epochProgress}
               batchProgress={batchProgress}
+              status={status}
             />
             <PredictProgress className="progress" />
           </TabPanel>

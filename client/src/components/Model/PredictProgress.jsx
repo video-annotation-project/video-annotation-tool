@@ -11,8 +11,6 @@ function PredictingStatus(props) {
     totalVideos,
     videoProgress,
     stage,
-    currentFrame,
-    totalFrames,
     predictionProgress
   } = props;
 
@@ -27,7 +25,7 @@ function PredictingStatus(props) {
         value={videoProgress}
       />
       <Typography variant="body1" gutterBottom className="progressText">
-        {stage} frame {currentFrame} of {totalFrames}
+        {stage}
       </Typography>
       <LinearProgress
         className="progressBar"
@@ -120,15 +118,21 @@ class PredictProgress extends Component {
     return currentVideo;
   };
 
-  getStatus = status => {
+  getStatus = (status, currentFrame, totalFrames) => {
     if (status === 0) {
-      return 'Resizing';
+      return 'Before Predicting';
     }
     if (status === 1) {
-      return 'Predicting';
+      return `Resizing frame ${currentFrame} of ${totalFrames}`;
     }
     if (status === 2) {
-      return 'Generating';
+      return `Predicting frame ${currentFrame} of ${totalFrames}`;
+    }
+    if (status === 3) {
+      return `Generating frame ${currentFrame} of ${totalFrames}`;
+    }
+    if (status === 4) {
+      return 'Done evaluating';
     }
     return '';
   };
@@ -151,8 +155,24 @@ class PredictProgress extends Component {
       predictionProgress
     } = this.state;
 
+    let runnningText = '';
+    if (status === 0 || status === 4) {
+      runnningText = 'has started';
+    } else {
+      runnningText = 'is not';
+    }
+    console.log(runnningText);
     if (running === false) {
-      return <div> </div>;
+      return (
+        <div className="predictProgress">
+          <div>
+            <Typography variant="subtitle1">Step 2/2</Typography>
+            <Typography variant="subtitle2" gutterBottom>
+              Model is not predicting...
+            </Typography>
+          </div>
+        </div>
+      );
     }
 
     return (
@@ -160,7 +180,7 @@ class PredictProgress extends Component {
         <div>
           <Typography variant="subtitle1">Step 2/2</Typography>
           <Typography variant="subtitle2" gutterBottom>
-            Model has started predicting...
+            Model {runnningText} {status} predicting...
           </Typography>
         </div>
         <PredictingStatus
@@ -168,7 +188,7 @@ class PredictProgress extends Component {
           totalVideos={totalVideos}
           currentFrame={currentFrame}
           totalFrames={totalFrames}
-          stage={this.getStatus(status)}
+          stage={this.getStatus(status, currentFrame, totalFrames)}
           videoProgress={videoProgress}
           predictionProgress={predictionProgress}
         />
