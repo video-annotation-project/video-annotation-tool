@@ -44,7 +44,7 @@ videoid = int(info['videoSelected'])
 concepts = model[2]
 userid = int(info['userSelected'])
 
-predict_on_video(videoid, weights_path, concepts, upload_annotations=True, userid)
+predict_on_video(videoid, weights_path, concepts, userid, upload_annotations=True)
 
 cursor.execute("Update modeltab SET info =  '{\"activeStep\": 0, \"modelSelected\":\"\",\"videoSelected\":\"\",\"userSelected\":\"\"}' WHERE option = 'predictmodel'")
 con.commit()
