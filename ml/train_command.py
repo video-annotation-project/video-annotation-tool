@@ -84,6 +84,9 @@ train_model(
 # with Pool(processes = 2) as p:
 #     p.starmap(evaluate, map(lambda video: (video, user_model, concepts), verifyVideos))
 
+# Just to be sure in case of web app not deleting the progress
+cursor.execute("""DELETE FROM predict_progress""")
+con.commit()
 # Run evaluate on all the videos in verifyVideos
 # Using for loop due to memory issues
 for video_id in verifyVideos:
@@ -92,7 +95,7 @@ for video_id in verifyVideos:
 cursor.execute(
     """
     UPDATE predict_progress
-    SET status = 4
+    SET status=4
     """
 )
 
@@ -101,9 +104,9 @@ subprocess.call(["rm", "*.mp4"])
 cursor.execute(
     """
     Update model_params
-    SET epochs = 0, min_images=0, model='', annotation_collections=ARRAY[]::integer[],
+    SET epochs = 0, min_images=0, model='', annotation_collections=ARRAY[]: : integer[],
         verified_only=null, include_tracking=null
-    WHERE option = 'train'
+    WHERE option='train'
     """
 )
 
