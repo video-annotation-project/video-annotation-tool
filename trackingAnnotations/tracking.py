@@ -189,13 +189,13 @@ def matchS3Frame(priorFrames, postFrames, s3Image):
     best_index = None
     for index, (prior, post) in enumerate(
             zip_longest(reversed(priorFrames), postFrames)):
-        if prior:
+        if prior is not None:
             (prior_score, _) = compare_ssim(
                 s3Image, prior, full=True, multichannel=True)
             if prior_score > best_score:
                 best_score = prior_score
                 best_index = -index
-        if post:
+        if post is not None:
             (post_score, _) = compare_ssim(
                 s3Image, post, full=True, multichannel=True)
             if post_score > best_score:
