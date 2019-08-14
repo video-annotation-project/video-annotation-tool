@@ -178,4 +178,15 @@ CREATE TABLE training_progress (
 );
 
 
+CREATE TABLE model_params (
+  option text,
+  epochs integer,
+  min_images integer,
+  model_selected integer,
+  annotation_collections integer,
+  verified_only bool,
+  include_tracking bool
+);
+
+
 INSERT INTO users(username, password, admin) VALUES('admin', '$2b$10$cTBlJX8aQC8joysM78ZTtuAj5vW55Trwuy6kYe.PbY/m1wzQFsA1a', true);

@@ -11,9 +11,9 @@
 
 .container {
   display: flex;
+  height: 760px;
   padding: 20px;
   flex-direction: column;
-  height: 690px;
 }
 
 .actionsContainer {
