@@ -303,10 +303,7 @@ def track_annotation(id, conceptid, timeinvideo, videoid, image,
     start = timeinvideo * 1000
     end = start + (LENGTH / 2)
     postFrames, fps, frame_num = getVideoFrames(url, start, end)
-    testing = postFrames[0] == priorFrames[-1]
-    print("Testing if share frames: ", testing)
-    if not testing:
-        return
+
     # Fix weird javascript video currentTime randomization
     fix_offset(priorFrames, postFrames, s3Image, fps,
                timeinvideo, frame_num, cursor, con)
