@@ -39,7 +39,8 @@ except ClientError:
         config.WEIGHTS_PATH,
     )
 
-cursor.execute("""SELECT * FROM MODELS WHERE name=%s""", (info["modelSelected"],))
+cursor.execute("""SELECT * FROM MODELS WHERE name=%s""",
+               (info["modelSelected"],))
 
 model = cursor.fetchone()
 concepts = model[2]
@@ -98,7 +99,6 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 # Using for loop due to memory issues
 for video_id in verifyVideos:
     evaluate(video_id, user_model, concepts)
-    cursor.execute("""DELETE FROM predict_progress""")
 
 subprocess.call(["rm", "*.mp4"])
 

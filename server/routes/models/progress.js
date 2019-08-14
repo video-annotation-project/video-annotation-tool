@@ -59,14 +59,22 @@ router.get(
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     const queryText = `
-      SELECT 
-        * 
-      FROM 
-        predict_progress 
+    SELECT 
+      *,
+      (SELECT verificationvideos
+      FROM models 
+      WHERE name=(SELECT model FROM model_params WHERE option='train'))
+      as totalvideos
+    FROM 
+      predict_progress 
+    LIMIT 1
     `;
     try {
       let response = await psql.query(queryText);
-      res.json(response.rows);
+      let returnValue = response.rows[0];
+      returnValue.currentVideo =
+        returnValue.totalvideos.indexOf(returnValue.videoid) + 1;
+      res.json(returnValue);
     } catch (error) {
       console.log('Error on GET /api/models');
       console.log(error);

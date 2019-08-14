@@ -40,6 +40,7 @@ class TrainingStatus extends Component {
               onClick={this.props.startTraining}
               variant="contained"
               color="primary"
+              disabled={!this.props.ready}
             >
               Start Training
             </Button>
@@ -133,6 +134,7 @@ class ModelProgress extends Component {
     this.state = {
       running: false,
       tab: 0,
+      status: null,
       currentEpoch: 0,
       currentBatch: 0,
       maxEpoch: 0,
@@ -172,6 +174,10 @@ class ModelProgress extends Component {
       .get(`/api/models/progress/train`, config)
       .then(res => {
         const progress = res.data[0];
+        let running = false;
+        if (progress.status === 1) {
+          running = true;
+        }
 
         this.setState({
           currentEpoch: progress.curr_epoch + 1,
@@ -214,7 +220,7 @@ class ModelProgress extends Component {
 
       const predictionsData = predictions.data;
       const totalVideos = predictionsData.length;
-      const currentVideo = this.getCurrentVideo(predictionsData);
+      const currentVideo = predictionsData.currentVideo;
       const totalFrames = currentVideo.totalframe;
       const currentVideoNum = currentVideo.videoNum;
       const currentFrame = currentVideo.framenum;
@@ -236,17 +242,6 @@ class ModelProgress extends Component {
     }
   };
 
-  getCurrentVideo = predictions => {
-    let currentVideo = predictions.find((pred, index) => {
-      if (pred.framenum !== pred.totalframe || index === predictions.length - 1){
-        pred.videoNum = index + 1;
-        return true;
-      }
-      return false;
-    });
-    return currentVideo;
-  };
-
   getButtonStatus = () => {
     if (this.state.trainStatus === 0){
       return 0;
@@ -257,6 +252,20 @@ class ModelProgress extends Component {
   }
 
   render() {
+    const { className, steps } = this.props;
+    const {
+      tab,
+      running,
+      currentEpoch,
+      maxEpoch,
+      epochProgress,
+      batchProgress,
+      currentBatch,
+      stepsPerEpoch,
+      stdout,
+      stderr,
+      status
+    } = this.state;
 
     return (
       <div className={this.props.className}>
@@ -288,6 +297,7 @@ class ModelProgress extends Component {
               status={this.state.trainStatus}
               buttonStatus={this.getButtonStatus()}
               startTraining={this.props.startTraining}
+              ready={this.props.ready}
             />
             <PredictProgress 
               className="progress" 

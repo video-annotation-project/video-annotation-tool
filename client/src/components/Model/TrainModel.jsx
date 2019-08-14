@@ -194,17 +194,16 @@ class EpochsField extends Component {
 class ImagesField extends Component {
 
   render() {
-    const { className, getImageRange, minImages } = this.props;
 
     return (
       <TextField
         margin="normal"
-        className={className}
+        className={this.props.className}
         name="minImages"
         label="# of Images"
-        value={minImages}
-        onChange={this.handleChange}
-        helperText={getImageRange()}
+        value={this.props.minImages}
+        onChange={this.props.onChange}
+        helperText={this.props.getImageRange()}
       />
     );
   }
@@ -242,7 +241,8 @@ class TrainModel extends Component {
       includeTracking: false,
       verifiedOnly: false,
       infoDialogOpen: false,
-      openedVideo: null
+      openedVideo: null,
+      ready: false,
     };
   }
 
@@ -379,7 +379,8 @@ class TrainModel extends Component {
   // Used to handle changes in the hyperparameters and in the select model
   handleChange = event => {
     this.setState({
-      [event.target.name]: event.target.value
+      [event.target.name]: event.target.value,
+      ready: this.checkReady()
     }, () => {   
         if (event.target.name === 'modelSelected'){
           this.loadCollectionList();
@@ -474,7 +475,8 @@ class TrainModel extends Component {
     }
     this.setState(
       {
-        annotationCollections: value
+        annotationCollections: value,
+        ready: this.checkReady()
       },
       () => {
         this.getCollectionCounts();
@@ -540,18 +542,33 @@ class TrainModel extends Component {
     }
   };
 
-  startTraining = () => {
+  startTraining = async () => {
+
     try {
-      const res = await axios.put(`/api/model/train`, {
+      const res = await axios.get(`/api/models/train/`, {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${localStorage.getItem('token')}`
         },
-        params: {
-          ids: annotationCollections.map(collection => collection.id),
-          validConcepts
-        }
       });
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  checkReady = () => {
+
+    const paramFields = ['epochs', 'minImages', 'modelSelected', 
+        'annotationCollections', 'includeTracking', 'verifiedOnly']
+
+    for (const key of paramFields){
+      if (!this.state.hasOwnProperty(key) 
+          || this.state[key] === null
+          || this.state[key] === undefined){
+        return false;
+      }
+    }
+    return true;
   }
 
   render() {
@@ -649,6 +666,7 @@ class TrainModel extends Component {
               handleStop={this.handleStop}
               postStopFlag={this.postStopFlag}
               startTraining={this.startTraining}
+              ready={this.state.ready}
             />
           </div>
         </Paper>

@@ -64,6 +64,7 @@ class PredictProgress extends Component {
           totalFrames={this.props.totalFrames}
           videoProgress={this.props.videoProgress}
           predictionProgress={this.props.predictionProgress}
+
         />
       </div>
     );
