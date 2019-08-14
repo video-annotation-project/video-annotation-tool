@@ -230,13 +230,13 @@ class AnnotationGenerator(object):
             WHERE inter.id = ANY(%s) AND a.videoid <> ANY(%s)
         '''
         if verified_only:
-            annotations_query += r''' AND ((a.verifiedby IS NOT NULL 
+            annotations_query += r''' AND ((a.verifiedby IS NOT NULL
                 AND a.userid <> (SELECT id FROM users WHERE username='tracking'))'''
         else:
             annotations_query += r''' AND (TRUE'''
 
         if include_tracking:
-            annotations_query += r''' OR (a.userid = (SELECT id FROM users WHERE username='tracking') 
+            annotations_query += r''' OR (a.userid = (SELECT id FROM users WHERE username='tracking')
                 AND a.verifiedby IS NULL))'''
         else:
             annotations_query += r''')'''
