@@ -72,9 +72,13 @@ router.get(
     try {
       let response = await psql.query(queryText);
       let returnValue = response.rows[0];
-      returnValue.currentVideo =
-        returnValue.totalvideos.indexOf(returnValue.videoid) + 1;
-      res.json(returnValue);
+      if (returnValue.totalvideos) {
+        returnValue.currentVideo =
+          returnValue.totalvideos.indexOf(returnValue.videoid) + 1;
+        res.json(returnValue);
+      } else {
+        res.json('not loaded');
+      }
     } catch (error) {
       console.log('Error on GET /api/models');
       console.log(error);

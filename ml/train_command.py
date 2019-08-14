@@ -13,13 +13,13 @@ import config
 from utils.query import s3, con, cursor, pd_query
 
 # get annotations from test
-train_model = pd_query("""
+model_params = pd_query("""
     SELECT * FROM model_params WHERE option='train'""").iloc[0]
 
 try:
     s3.download_file(
         config.S3_BUCKET,
-        config.S3_WEIGHTS_FOLDER + str(train_model["model"]) + ".h5",
+        config.S3_WEIGHTS_FOLDER + str(model_params["model"]) + ".h5",
         config.WEIGHTS_PATH,
     )
 except ClientError:
@@ -30,7 +30,7 @@ except ClientError:
     )
 
 model = pd_query('''SELECT * FROM models WHERE name=%s''',
-                 (str(train_model['model']),)).iloc[0]
+                 (str(model_params['model']),)).iloc[0]
 
 # model = cursor.fetchone()
 concepts = model['concepts']
@@ -63,7 +63,7 @@ cursor.execute(
     SET userid=%s
     WHERE name=%s
     RETURNING *""",
-    (model_user_id, train_model["model"]),
+    (model_user_id, model_params["model"]),
 )
 
 # Start training job
@@ -71,32 +71,42 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 train_model(
     concepts,
     verifyVideos,
-    train_model["model"],
-    train_model["annotation_collections"],
-    int(train_model["min_images"]),
-    int(train_model["epochs"]),
+    model_params["model"],
+    model_params["annotation_collections"],
+    int(model_params["min_images"]),
+    int(model_params["epochs"]),
     download_data=True,
-    verified_only=train_model["verified_only"],
-    include_tracking=train_model["include_tracking"],
+    verified_only=model_params["verified_only"],
+    include_tracking=model_params["include_tracking"],
 )
 
 # Run verifyVideos in parallel
 # with Pool(processes = 2) as p:
 #     p.starmap(evaluate, map(lambda video: (video, user_model, concepts), verifyVideos))
 
+# Just to be sure in case of web app not deleting the progress
+cursor.execute("""DELETE FROM predict_progress""")
+con.commit()
 # Run evaluate on all the videos in verifyVideos
 # Using for loop due to memory issues
 for video_id in verifyVideos:
     evaluate(video_id, user_model, concepts)
+
+cursor.execute(
+    """
+    UPDATE predict_progress
+    SET status=4
+    """
+)
 
 subprocess.call(["rm", "*.mp4"])
 
 cursor.execute(
     """
     Update model_params
-    SET epochs = 0, min_images=0, model='', annotation_collections=ARRAY[]::integer[],
+    SET epochs = 0, min_images=0, model='', annotation_collections=ARRAY[]: : integer[],
         verified_only=null, include_tracking=null
-    WHERE option = 'train'
+    WHERE option='train'
     """
 )
 
