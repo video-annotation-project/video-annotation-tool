@@ -112,10 +112,10 @@ def getVideoFrames(url, start, end):
     curr = start
 
     while (check and curr <= end):
-        check, vid = cap.read()
+        check, frame = cap.read()
         if check:
             frame_list.append(
-                cv2.resize(vid, (VIDEO_WIDTH, VIDEO_HEIGHT)))
+                cv2.resize(frame, (VIDEO_WIDTH, VIDEO_HEIGHT)))
         curr = cap.get(0)  # get time in milliseconds
     cap.release()
     return frame_list, fps, frame_num
@@ -187,7 +187,8 @@ def upload_video(priorFrames, postFrames):
 def matchS3Frame(priorFrames, postFrames, s3Image):
     best_score = 0
     best_index = None
-    for index, (prior, post) in enumerate(reversed(priorFrames), postFrames):
+    for index, (prior, post) in enumerate(
+            zip_longest(reversed(priorFrames), postFrames)):
         if prior:
             (prior_score, _) = compare_ssim(
                 s3Image, prior, full=True, multichannel=True)
