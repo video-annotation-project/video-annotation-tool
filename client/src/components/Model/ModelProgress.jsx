@@ -12,30 +12,30 @@ import PredictProgress from './PredictProgress';
 
 import './ModelProgress.css';
 
-
 class TrainingStatus extends Component {
-
   render() {
     return (
       <div>
         <Paper square elevation={0} className="resetContainer">
           <div>
-            <Typography 
-              hidden={this.props.buttonStatus === 0} 
-              variant="subtitle1">
-                Step 1/2
+            <Typography
+              hidden={this.props.buttonStatus === 0}
+              variant="subtitle1"
+            >
+              Step 1/2
             </Typography>
-            <Typography 
-              hidden={this.props.buttonStatus !== 0} 
-              variant="subtitle1">
-                Not currently training.
-            </Typography>  
+            <Typography
+              hidden={this.props.buttonStatus !== 0}
+              variant="subtitle1"
+            >
+              Not currently training.
+            </Typography>
             <Typography variant="subtitle2" gutterBottom>
               {this.props.status === 1 && 'Model has started training...'}
               {this.props.status === 2 && 'Model has finished training.'}
             </Typography>
           </div>
-            <div hidden={this.props.buttonStatus !== 0}>
+          <div hidden={this.props.buttonStatus !== 0}>
             <Button
               onClick={this.props.startTraining}
               variant="contained"
@@ -72,7 +72,7 @@ class TrainingStatus extends Component {
             </Button>
           </div>
         </Paper>
-        <div className="progressBars"  hidden={this.props.status === 0}>
+        <div className="progressBars" hidden={this.props.status === 0}>
           <Typography variant="body1" gutterBottom className="progressText">
             Epoch: {this.props.currentEpoch} / {this.props.maxEpoch}
           </Typography>
@@ -132,6 +132,7 @@ class ModelProgress extends Component {
     super(props);
 
     this.state = {
+      loaded: false,
       running: false,
       tab: 0,
       status: null,
@@ -155,7 +156,7 @@ class ModelProgress extends Component {
     clearInterval(this.interval);
   }
 
-  loadProgressInfo(){
+  loadProgressInfo() {
     this.loadProgressInfoTrain();
     this.loadProgressInfoPredict();
   }
@@ -205,7 +206,6 @@ class ModelProgress extends Component {
     this.setState({ tab: newValue });
   };
 
-
   loadProgressInfoPredict = async () => {
     const config = {
       headers: {
@@ -217,10 +217,15 @@ class ModelProgress extends Component {
         `/api/models/progress/predict`,
         config
       );
-
       const predictionsData = predictions.data;
+      if (predictionsData === 'not loaded') {
+        this.setState({
+          loaded: false
+        });
+        return;
+      }
       const totalVideos = predictionsData.length;
-      const currentVideo = predictionsData.currentVideo;
+      const { currentVideo } = predictionsData;
       const totalFrames = currentVideo.totalframe;
       const currentVideoNum = currentVideo.videoNum;
       const currentFrame = currentVideo.framenum;
@@ -229,13 +234,14 @@ class ModelProgress extends Component {
       const predictionProgress = (currentFrame / totalFrames) * 100;
 
       this.setState({
+        loaded: true,
         totalVideos,
         currentVideoNum,
         currentFrame,
         totalFrames,
         predictStatus,
         videoProgress,
-        predictionProgress,
+        predictionProgress
       });
     } catch (error) {
       console.log(error);
@@ -243,17 +249,19 @@ class ModelProgress extends Component {
   };
 
   getButtonStatus = () => {
-    if (this.state.trainStatus === 0){
+    if (this.state.trainStatus === 0) {
       return 0;
-    } else if (this.state.predictStatus === 4){
+    }
+    if (this.state.predictStatus === 4) {
       return 2;
     }
     return 1;
-  }
+  };
 
   render() {
     const { className, steps } = this.props;
     const {
+      loaded,
       tab,
       running,
       currentEpoch,
@@ -299,16 +307,20 @@ class ModelProgress extends Component {
               startTraining={this.props.startTraining}
               ready={this.props.ready}
             />
-            <PredictProgress 
-              className="progress" 
-              currentVideoNum={this.state.currentVideoNum}
-              totalVideos={this.state.totalVideos}
-              currentFrame={this.state.currentFrame}
-              totalFrames={this.state.totalFrames}
-              videoProgress={this.state.videoProgress}
-              predictionProgress={this.state.predictionProgress}
-              status={this.state.predictStatus}
-            />
+            {loaded ? (
+              <PredictProgress
+                className="progress"
+                currentVideoNum={this.state.currentVideoNum}
+                totalVideos={this.state.totalVideos}
+                currentFrame={this.state.currentFrame}
+                totalFrames={this.state.totalFrames}
+                videoProgress={this.state.videoProgress}
+                predictionProgress={this.state.predictionProgress}
+                status={this.state.predictStatus}
+              />
+            ) : (
+              ''
+            )}
           </TabPanel>
           <TabPanel value={this.state.tab} index={1}>
             <ServerOutput output={this.state.stdout} />
