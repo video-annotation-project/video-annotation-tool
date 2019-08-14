@@ -86,7 +86,7 @@ router.get(
       let response = await psql.query(queryText, [req.params.option]);
       res.json(response.rows);
     } catch (error) {
-      console.log('Error on GET /api/models');
+      console.log('Error on GET /api/models/train/:option');
       console.log(error);
       res.status(500).json(error);
     }
