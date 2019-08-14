@@ -72,7 +72,7 @@ router.get(
     try {
       let response = await psql.query(queryText);
       let returnValue = response.rows[0];
-      if (returnValue.totalvideos) {
+      if (returnValue && returnValue.totalvideos) {
         returnValue.currentVideo =
           returnValue.totalvideos.indexOf(returnValue.videoid) + 1;
         res.json(returnValue);
