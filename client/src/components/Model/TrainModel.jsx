@@ -632,6 +632,8 @@ class TrainModel extends Component {
       selectedCollectionCounts,
       includeTracking,
       verifiedOnly,
+      epochs,
+      minImages,
       minCounts
     } = this.state;
 
@@ -654,12 +656,12 @@ class TrainModel extends Component {
               />
               <EpochsField 
                 className="epochsField" 
-                epochs={this.state.epochs} 
+                epochs={epochs} 
                 onChange={this.handleChange}
               />
               <ImagesField 
                 className="imagesField" 
-                minImages={this.state.minImages} 
+                minImages={minImages} 
                 onChange={this.handleChange}
                 getImageRange={this.getImageRange}
               />
