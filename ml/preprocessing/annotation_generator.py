@@ -379,9 +379,6 @@ class S3Generator(Generator):
                 float(annot['y2']),
             ]]))
 
-        print(
-            f'Num annotations for frame: {annotations["bboxes"].shape[0]} image: {image_name}')
-
         return annotations
 
     def _download_image(self, image_index):

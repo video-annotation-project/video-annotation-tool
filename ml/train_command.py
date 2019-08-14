@@ -44,7 +44,7 @@ if model['userid'] != None:
         """
          DELETE FROM users
          WHERE id=%s""",
-        (model['userid'],),
+        (int(model['userid']),),
     )
 
 cursor.execute(
