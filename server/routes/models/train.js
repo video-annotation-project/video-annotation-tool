@@ -12,7 +12,7 @@ router.patch(
         training_progress
       SET
         stop_flag = True,
-        status = 0
+        status = 2
       RETURNING *
     `;
 
@@ -20,7 +20,31 @@ router.patch(
       let result = await psql.query(queryText);
       if (result) {
         res.status(200).json(result.rows);
-      }
+      }a
+    } catch (error) {
+      res.json(error);
+    }
+  }
+);
+
+router.patch(
+  '/reset',
+  passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    const resetTraining = `
+      UPDATE
+        training_progress
+      SET
+        status = 0
+    `;
+
+    const resetPredicting = `DELETE FROM predict_progress;`;
+
+    try {
+      let result = await psql.query(queryText);
+      if (result) {
+        res.status(200).json(result.rows);
+      }a
     } catch (error) {
       res.json(error);
     }
@@ -53,11 +77,7 @@ router.post(
             SET 
               status = 0`;
 
-      const predictStop = `
-            UPDATE 
-              predict_progress
-            SET 
-              status = 0`;
+      const predictStop = `DELETE FROM predict_progress`;
 
       await psql.query(trainingStop);
       await psql.query(predictStop);

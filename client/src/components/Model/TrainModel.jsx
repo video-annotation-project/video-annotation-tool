@@ -557,6 +557,22 @@ class TrainModel extends Component {
     }
   }
 
+  resetTraining = () => {
+    try {
+      const config = {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      };
+      
+      return axios.patch('/api/models/train/reset', config);  
+
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+
   updateModelParams = async () => {
     try {
       const config = {
@@ -700,6 +716,7 @@ class TrainModel extends Component {
               postStopFlag={this.postStopFlag}
               startTraining={this.startTraining}
               onStop={this.stopTraining}
+              onReset={this.resetTraining}
               onTerminate={() => this.postModelInstance('stop')}
               onReady={this.checkReady}
             />

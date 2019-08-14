@@ -286,6 +286,7 @@ class ModelProgress extends Component {
               status={this.state.trainStatus}
               buttonStatus={this.getButtonStatus()}
               startTraining={this.props.startTraining}
+              onReset={this.onReset}
               onReady={this.props.onReady}
               onStop={this.props.onStop}
               onTerminate={this.props.onTerminate}
