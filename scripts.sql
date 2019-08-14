@@ -157,7 +157,9 @@ CREATE TABLE previous_runs (
   epochs integer,
   concepts integer[],
   videos integer[],
-  users integer[]
+  users integer[],
+  std_out text,
+  std_err text
 );
 
 /* 

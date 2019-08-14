@@ -86,7 +86,7 @@ router.get(
   '/collections',
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
-    var params = '{' + req.query.collectionids + '}';
+    let params = '{' + req.query.collectionids + '}';
     let queryText = `
       SELECT
         a.*, c.name, c.picture, u.username, v.filename 
@@ -103,9 +103,11 @@ router.get(
       ON
         a.id=ai.annotationid
       WHERE
-        ai.id = ANY($1::int[]) and a.verifiedby IS NULL;
+        ai.id = ANY($1::int[]) and a.verifiedby IS NULL
     `;
-
+    if (req.query.tracking == 'false') {
+      queryText += ` AND userid <> (SELECT id from users where username ='tracking')`;
+    }
     try {
       const annotations = await psql.query(queryText, [params]);
       res.json(annotations.rows);
@@ -264,9 +266,7 @@ router.delete(
       // add tracking video
       Objects.push({
         Key:
-          process.env.AWS_S3_BUCKET_VIDEOS_FOLDER +
-          req.body.id +
-          '_tracking.mp4'
+          process.env.AWS_S3_BUCKET_VIDEOS_FOLDER + req.body.id + '_track.mp4'
       });
       let params = {
         Bucket: process.env.AWS_S3_BUCKET_NAME,
@@ -664,8 +664,7 @@ let verifyAnnotation = async (req, res) => {
     });
     // add tracking video
     Objects.push({
-      Key:
-        process.env.AWS_S3_BUCKET_VIDEOS_FOLDER + req.body.id + '_tracking.mp4'
+      Key: process.env.AWS_S3_BUCKET_VIDEOS_FOLDER + req.body.id + '_track.mp4'
     });
     params = {
       Bucket: process.env.AWS_S3_BUCKET_NAME,

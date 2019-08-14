@@ -1,4 +1,4 @@
-import sys
+# import sys
 import uuid
 
 import keras
@@ -13,6 +13,7 @@ from keras.callbacks import ModelCheckpoint, EarlyStopping
 from keras_retinanet.callbacks import RedirectModel
 
 import config
+from utils.query import s3
 from utils.timer import timer
 from utils.output import DatabaseOutput
 from preprocessing.annotation_generator import AnnotationGenerator
@@ -21,15 +22,9 @@ from callbacks.progress import Progress
 from callbacks.tensorboard import TensorboardLog
 
 
-s3 = boto3.client(
-    's3',
-    aws_access_key_id=config.AWS_ACCESS_KEY_ID,
-    aws_secret_access_key=config.AWS_SECRET_ACCESS_KEY
-)
-
-
 @timer("training")
 def train_model(concepts,
+                verify_videos,
                 model_name,
                 collection_ids,
                 min_examples,
@@ -63,7 +58,8 @@ def train_model(concepts,
         verified_only=verified_only,
         include_tracking=include_tracking,
         min_examples=min_examples,
-        classes=concepts
+        classes=concepts,
+        verify_videos=verify_videos
     )
 
     train_generator = annotation_generator.flow_from_s3(
@@ -144,7 +140,8 @@ def _get_callbacks(model,
     checkpoint = RedirectModel(checkpoint, model)
 
     # Stops training if val_loss stops improving
-    stopping = EarlyStopping(monitor='val_loss', min_delta=0, patience=10)
+    stopping = EarlyStopping(
+        monitor='val_loss', min_delta=0, patience=10, restore_best_weights=True)
 
     # Every epoch upload tensorboard logs to the S3 bucket
     log_callback = TensorboardLog(
@@ -185,8 +182,8 @@ def _redirect_outputs(job_id):
     """ The DatabaseOutput class will redirect this programs output to a column
         in out training_progress databse (as well as into a file)
     """
-    sys.stdout = DatabaseOutput(job_id, 'out')
-    sys.stderr = DatabaseOutput(job_id, 'err')
+    # sys.stdout = DatabaseOutput(job_id, 'out')
+    # sys.stderr = DatabaseOutput(job_id, 'err')
 
 
 def _get_num_workers():

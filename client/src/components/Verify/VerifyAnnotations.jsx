@@ -624,7 +624,7 @@ class VerifyAnnotations extends Component {
       toggleSelection,
       socket,
       loadVideos,
-      collectionFlag
+      includeTracking
     } = this.props;
     const {
       x,
@@ -671,7 +671,7 @@ class VerifyAnnotations extends Component {
                       id="video"
                       width="1300"
                       height="730"
-                      src={`https://cdn.deepseaannotations.com/videos/${annotation.id}_tracking.mp4`}
+                      src={`https://cdn.deepseaannotations.com/videos/${annotation.id}_track.mp4`}
                       type="video/mp4"
                       controls
                     >
@@ -702,9 +702,9 @@ class VerifyAnnotations extends Component {
                       className={classes.button}
                       variant="contained"
                       onClick={this.nextAnnotation}
-                      disabled={collectionFlag}
+                      disabled={includeTracking}
                     >
-                      {tracking ? 'Ignore' : 'Next'}
+                      Next
                     </Button>
                     {videoDialogOpen ? (
                       <IconButton
@@ -722,7 +722,7 @@ class VerifyAnnotations extends Component {
                   <br />
                   <div>
                     <Typography variant="subtitle2" className={classes.button}>
-                      {collectionFlag
+                      {includeTracking
                         ? 'Next disabled because the collection might contain tracking annotations'
                         : ''}
                     </Typography>

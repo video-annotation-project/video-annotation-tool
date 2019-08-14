@@ -54,8 +54,10 @@ def _get_labelmap(classes):
 
     # Keras requires that the mapping IDs correspond to the index number of the class.
     # So we create that mapping (dictionary)
-    class_id_name = pd_query(f"select id, name from concepts where id = ANY(ARRAY{classes})")
-    labelmap = pd.Series(class_id_name.name.values, index=class_id_name.id).to_dict()
+    class_id_name = pd_query(
+        f"select id, name from concepts where id = ANY(ARRAY{classes})")
+    labelmap = pd.Series(class_id_name.name.values,
+                         index=class_id_name.id).to_dict()
 
     return labelmap
 
@@ -91,6 +93,7 @@ class AnnotationGenerator(object):
                  collection_ids,
                  verified_only,
                  include_tracking,
+                 verify_videos,
                  classes,
                  min_examples,
                  validation_split=0.8):
@@ -99,6 +102,7 @@ class AnnotationGenerator(object):
         selected_frames, concept_counts = self._select_annotations(collection_ids,
                                                                    verified_only,
                                                                    include_tracking,
+                                                                   verify_videos,
                                                                    min_examples,
                                                                    classes)
         self.selected_frames = selected_frames
@@ -142,12 +146,12 @@ class AnnotationGenerator(object):
                 'subset parameter must be either "training" or "validation"/"testing"')
 
     @staticmethod
-    def _select_annotations(collection_ids, verified_only, include_tracking, min_examples, concepts):
+    def _select_annotations(collection_ids, verified_only, include_tracking, verify_videos, min_examples, concepts):
         selected = []
         concept_count = {}
 
         annotations = AnnotationGenerator._get_annotations(
-            collection_ids, verified_only, include_tracking)
+            collection_ids, verified_only, include_tracking, verify_videos, concepts)
 
         for concept in concepts:
             concept_count[concept] = 0
@@ -160,10 +164,12 @@ class AnnotationGenerator(object):
         ai_id = pd_query(
             "SELECT id FROM users WHERE username='tracking'").id[0]
 
-        # Give priority to frames with least amount of tracking annotations
+        # Give priority to frames with highest verification priority
+        # And with least amount of tracking annotations
         # And lower speed
+
         frame_groups.sort(key=lambda df: (
-            list(df['userid']).count(ai_id), df.speed.mean()))
+            -df.priority.max(), list(df['userid']).count(ai_id), df.speed.mean()))
 
         # Selects images that we'll use (each group has annotations for an image)
         for frame in frame_groups:
@@ -200,11 +206,11 @@ class AnnotationGenerator(object):
         return selected, concept_count
 
     @staticmethod
-    def _get_annotations(collection_ids, verified_only, include_tracking):
+    def _get_annotations(collection_ids, verified_only, include_tracking, verify_videos, concepts):
         # Query that gets all annotations for given concepts (and child concepts)
         # making sure that any tracking annotations originated from good users
         annotations_query = r'''
-            SELECT
+            WITH collection AS (SELECT
                 A.id,
                 image,
                 userid,
@@ -221,15 +227,50 @@ class AnnotationGenerator(object):
                 annotations a ON a.id=inter.annotationid
             LEFT JOIN
                 videos ON videos.id=videoid
-            WHERE inter.id = ANY(%s)
+            WHERE inter.id = ANY(%s) AND a.videoid <> ANY(%s)
         '''
         if verified_only:
-            annotations_query += r''' AND a.verifiedby IS NOT NULL'''
+            annotations_query += r''' AND ((a.verifiedby IS NOT NULL 
+                AND a.userid <> (SELECT id FROM users WHERE username='tracking'))'''
+        else:
+            annotations_query += r''' AND (TRUE'''
 
-        if not include_tracking:
-            annotations_query += r''' AND a.id = a.originalId'''
+        if include_tracking:
+            annotations_query += r''' OR (a.userid = (SELECT id FROM users WHERE username='tracking') 
+                AND a.verifiedby IS NULL))'''
+        else:
+            annotations_query += r''')'''
+        annotations_query += r'''
+            )
+            SELECT 
+                A.id,
+                image,
+                userid,
+                videoid,
+                videowidth,
+                videoheight,
+                conceptid,
+                x1, x2, y1, y2,
+                speed,
+                priority,
+                ROUND(fps * timeinvideo) as frame_num
+            FROM
+                annotations a
+            LEFT JOIN
+                videos ON videos.id=videoid
+            WHERE 
+                EXISTS (
+                    SELECT
+                        1 
+                    FROM
+                        collection c 
+                    WHERE
+                        c.videoid=a.videoid 
+                        AND c.frame_num=ROUND(fps * timeinvideo))
+                AND a.conceptid = ANY(%s);
+        '''
 
-        return pd_query(annotations_query, (collection_ids, ))
+        return pd_query(annotations_query, (collection_ids, verify_videos, concepts, ))
 
 
 class S3Generator(Generator):
@@ -337,6 +378,9 @@ class S3Generator(Generator):
                 float(annot['x2']),
                 float(annot['y2']),
             ]]))
+
+        print(
+            f'Num annotations for frame: {annotations["bboxes"].shape[0]} image: {image_name}')
 
         return annotations
 

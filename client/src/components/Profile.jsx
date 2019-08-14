@@ -62,10 +62,8 @@ class Profile extends Component {
         history.push('/');
       })
       .catch(error => {
-        console.log(error);
-        if (error.response) {
-          Swal(error.response.data.detail, '', 'error');
-        }
+        console.log(error.response);
+        Swal.fire(error.response.data.detail, '', 'error');
       });
   };
 
@@ -78,6 +76,7 @@ class Profile extends Component {
         <br />
         <form onSubmit={this.handleSubmit}>
           <TextField
+            id="current-pw"
             label="Current Password"
             type="password"
             name="password"
@@ -86,6 +85,7 @@ class Profile extends Component {
           />
           <br />
           <TextField
+            id="new-pw1"
             label="New Password"
             type="password"
             name="newPassword1"
@@ -94,6 +94,7 @@ class Profile extends Component {
           />
           <br />
           <TextField
+            id="new-pw2"
             label="Confirm New Password"
             type="password"
             name="newPassword2"
@@ -102,7 +103,12 @@ class Profile extends Component {
           />
           <br />
           <br />
-          <Button type="submit" variant="contained" color="primary">
+          <Button
+            id="form-submit"
+            type="submit"
+            variant="contained"
+            color="primary"
+          >
             Submit
           </Button>
         </form>

@@ -4,7 +4,7 @@ import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 
 const GeneralMenu = props => {
-  const { disabled, name, Link, items } = props;
+  const { disabled, buttonid, name, Link, items } = props;
   let { color, variant } = props;
   const [anchorEl, setAnchorEl] = React.useState(null);
   color = color || 'inherit';
@@ -25,6 +25,7 @@ const GeneralMenu = props => {
   return (
     <div>
       <Button
+        id={buttonid}
         variant={variant}
         color={color}
         onClick={handleClick}
@@ -42,6 +43,7 @@ const GeneralMenu = props => {
         {Link
           ? items.map(item => (
               <MenuItem
+                id={item.id}
                 key={item.name}
                 component={props.Link}
                 to={item.link}

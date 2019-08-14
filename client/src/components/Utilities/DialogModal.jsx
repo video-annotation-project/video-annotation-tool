@@ -68,6 +68,7 @@ class DialogModal extends Component {
           <DialogContentText>{message}</DialogContentText>
           <br />
           <Input
+            id="dialog-input"
             onKeyUp={
               this.handleInputKeyUp
             } /* there are four options here: onKeyDown, 
@@ -76,7 +77,6 @@ class DialogModal extends Component {
             backspace, and onChange does not trigger in response to an enter. */
             autoFocus
             margin="dense"
-            id="concept"
             type="text"
             defaultValue={comment}
             placeholder={placeholder}
@@ -98,7 +98,7 @@ class DialogModal extends Component {
           <Button onClick={this.handleClose} color="primary">
             Cancel
           </Button>
-          <Button onClick={this.handleSubmit} color="primary">
+          <Button id="submit" onClick={this.handleSubmit} color="primary">
             Submit
           </Button>
         </DialogActions>

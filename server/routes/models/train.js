@@ -3,6 +3,31 @@ const passport = require('passport');
 const psql = require('../../db/simpleConnect');
 const AWS = require('aws-sdk');
 
+router.patch(
+  '/stop',
+  passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    const queryText = `
+      UPDATE
+        training_progress
+      SET
+        stop_flag = True
+      WHERE
+        id=(SELECT max(id) FROM training_progress)
+      RETURNING *
+    `;
+
+    try {
+      let result = await psql.query(queryText);
+      if (result) {
+        res.status(200).json(result.rows);
+      }
+    } catch (error) {
+      res.json(error);
+    }
+  }
+);
+
 /**
  * @route POST /api/models/train
  * @group models

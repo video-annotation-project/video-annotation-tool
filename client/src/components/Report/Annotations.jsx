@@ -232,6 +232,7 @@ class Annotations extends Component {
                     {annotation.showVideo ? <OndemandVideo /> : <Photo />}
                   </IconButton>
                   <IconButton
+                    id="delete"
                     className={classes.icons}
                     aria-label="Delete"
                     onClick={e => this.handleDelete(e, annotation.id)}
@@ -248,7 +249,7 @@ class Annotations extends Component {
                     id="video"
                     width="800"
                     height="450"
-                    src={`https://cdn.deepseaannotations.com/videos/${annotation.id}_tracking.mp4`}
+                    src={`https://cdn.deepseaannotations.com/videos/${annotation.id}_track.mp4`}
                     type="video/mp4"
                     controls
                   >
