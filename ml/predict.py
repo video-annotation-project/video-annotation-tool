@@ -186,7 +186,7 @@ def get_video_frames(vid_filename, videoid):
     one_percent_length = int(length / 100)
     while True:
         if frame_counter % one_percent_length == 0:
-            upload_predict_progress(frame_counter, videoid, length, 0)
+            upload_predict_progress(frame_counter, videoid, length, 1)
 
         check, frame = vid.read()
         if not check:
@@ -219,7 +219,7 @@ def predict_frames(video_frames, fps, model, videoid):
     for frame_num, frame in enumerate(video_frames):
         if frame_num % one_percent_length == 0:
             # update the progress every 1% of the video
-            upload_predict_progress(frame_num, videoid, total_frames, 1)
+            upload_predict_progress(frame_num, videoid, total_frames, 2)
 
         # update tracking for currently tracked objects
         for obj in currently_tracked_objects:
@@ -408,7 +408,7 @@ def generate_video(filename, frames, fps, results,
     for pred_index, res in enumerate(results.itertuples()):
 
         if pred_index % one_percent_length == 0:
-            upload_predict_progress(pred_index, video_id, total_length, 2)
+            upload_predict_progress(pred_index, video_id, total_length, 3)
 
         x1, y1, x2, y2 = int(res.x1), int(res.y1), int(res.x2), int(res.y2)
         if res.confidence:
@@ -551,7 +551,7 @@ def upload_predict_progress(count, videoid, total_count, status):
     '''
     print(
         f'count: {count} total_count: {total_count} vid: {videoid} status: {status}')
-    if (count == 0 and status == 0):  # the starting point
+    if (count == 0 and status == 1):  # the starting point
         cursor.execute('''
             INSERT INTO predict_progress (videoid, framenum, totalframe, status)
             VALUES (%s, %s, %s, %s)''',
@@ -564,7 +564,7 @@ def upload_predict_progress(count, videoid, total_count, status):
             UPDATE predict_progress
             SET framenum=%s, status=%s, totalframe=%s
             WHERE videoid=%s''',
-                       (count, 1, total_count, videoid,))
+                       (count, status, total_count, videoid,))
         con.commit()
         return
 

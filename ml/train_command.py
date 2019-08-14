@@ -89,6 +89,13 @@ train_model(
 for video_id in verifyVideos:
     evaluate(video_id, user_model, concepts)
 
+cursor.execute(
+    """
+    UPDATE predict_progress
+    SET status = 4
+    """
+)
+
 subprocess.call(["rm", "*.mp4"])
 
 cursor.execute(
