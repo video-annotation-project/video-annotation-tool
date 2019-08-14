@@ -242,7 +242,7 @@ class AnnotationGenerator(object):
             annotations_query += r''')'''
         annotations_query += r'''
             )
-            SELECT 
+            SELECT
                 A.id,
                 image,
                 userid,
@@ -258,14 +258,14 @@ class AnnotationGenerator(object):
                 annotations a
             LEFT JOIN
                 videos ON videos.id=videoid
-            WHERE 
+            WHERE
                 EXISTS (
                     SELECT
-                        1 
+                        1
                     FROM
-                        collection c 
+                        collection c
                     WHERE
-                        c.videoid=a.videoid 
+                        c.videoid=a.videoid
                         AND c.frame_num=ROUND(fps * timeinvideo))
                 AND a.conceptid = ANY(%s);
         '''

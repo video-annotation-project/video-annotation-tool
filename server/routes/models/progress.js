@@ -27,7 +27,6 @@ router.get(
         * 
       FROM 
         training_progress 
-      LIMIT 1
     `;
     try {
       let response = await psql.query(queryText);

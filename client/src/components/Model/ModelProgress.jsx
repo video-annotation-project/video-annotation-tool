@@ -8,136 +8,123 @@ import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
 import SwipeableViews from 'react-swipeable-views';
 import Box from '@material-ui/core/Box';
-
 import PredictProgress from './PredictProgress';
+
 import './ModelProgress.css';
 
+
 class TrainingStatus extends Component {
-  ternaryOpBreak = (con1, con2) => {
-    const {
-      currentEpoch,
-      maxEpoch,
-      epochProgress,
-      currentBatch,
-      stepsPerEpoch,
-      batchProgress
-    } = this.props;
-
-    let ret;
-    if (con1) {
-      ret = (
-        <div className="progressBars">
-          <Typography variant="body1" gutterBottom className="progressText">
-            Epoch: {currentEpoch} / {maxEpoch}
-          </Typography>
-          <LinearProgress
-            className="progressBar"
-            variant="determinate"
-            value={epochProgress}
-          />
-          <Typography variant="body1" gutterBottom className="progressText">
-            Batch: {currentBatch} / {stepsPerEpoch}
-          </Typography>
-          <LinearProgress
-            className="progressBar"
-            variant="determinate"
-            value={batchProgress}
-            color="secondary"
-          />
-        </div>
-      );
-    } else if (con2) {
-      //
-    }
-    return ret;
-  };
-
-  getStatus = status => {
-    if (status === 0) {
-      return 'is not';
-    }
-    if (status === 1) {
-      return 'has started';
-    }
-    if (status === 2) {
-      return 'has done';
-    }
-    return '';
-  };
 
   render() {
-    const {
-      onStop,
-      running,
-      currentEpoch,
-      currentBatch,
-      maxEpoch,
-      stepsPerEpoch,
-      status,
-      postStopFlag
-    } = this.props;
     return (
       <div>
         <Paper square elevation={0} className="resetContainer">
           <div>
-            <Typography variant="subtitle1">Step 1/2</Typography>
+            <Typography 
+              hidden={this.props.buttonStatus === 0} 
+              variant="subtitle1">
+                Step 1/2
+            </Typography>
+            <Typography 
+              hidden={this.props.buttonStatus !== 0} 
+              variant="subtitle1">
+                Not currently training.
+            </Typography>  
             <Typography variant="subtitle2" gutterBottom>
-              Model {this.getStatus(status)} training...
+              {this.props.status === 1 && 'Model has started training...'}
+              {this.props.status === 2 && 'Model has finished training.'}
             </Typography>
           </div>
-          <Button
-            onClick={onStop}
-            variant="contained"
-            color="secondary"
-            className="stopButton"
-          >
-            Stop
-          </Button>
-          <Button
-            onClick={postStopFlag}
-            variant="contained"
-            color="secondary"
-            className="stopButton"
-          >
-            Stop Training
-          </Button>
+            <div hidden={this.props.buttonStatus !== 0}>
+            <Button
+              onClick={this.props.startTraining}
+              variant="contained"
+              color="primary"
+              disabled={!this.props.ready}
+            >
+              Start Training
+            </Button>
+          </div>
+          <div hidden={this.props.buttonStatus !== 1}>
+            <Button
+              onClick={this.props.onStop}
+              variant="contained"
+              color="secondary"
+              className="stopButton"
+            >
+              Stop Training
+            </Button>
+            <Button
+              onClick={this.props.postStopFlag}
+              variant="contained"
+              className="terminateButton"
+            >
+              Terminate
+            </Button>
+          </div>
+          <div hidden={this.props.buttonStatus !== 2}>
+            <Button
+              onClick={this.props.postStopFlag}
+              variant="contained"
+              color="primary"
+            >
+              Reset Training
+            </Button>
+          </div>
         </Paper>
-        {this.ternaryOpBreak(
-          running,
-          !running &&
-            currentEpoch === maxEpoch &&
-            currentBatch === stepsPerEpoch
-        )}
+        <div className="progressBars"  hidden={this.props.status === 0}>
+          <Typography variant="body1" gutterBottom className="progressText">
+            Epoch: {this.props.currentEpoch} / {this.props.maxEpoch}
+          </Typography>
+          <LinearProgress
+            className="progressBar"
+            variant="determinate"
+            value={this.props.epochProgress || 0}
+          />
+          <Typography variant="body1" gutterBottom className="progressText">
+            Batch: {this.props.currentBatch} / {this.props.stepsPerEpoch}
+          </Typography>
+          <LinearProgress
+            className="progressBar"
+            variant="determinate"
+            value={this.props.batchProgress || 0}
+            color="secondary"
+          />
+        </div>
       </div>
     );
   }
 }
 
-function ServerOutput(props) {
-  const { output } = props;
-  return (
-    <div className="codeBlock">
-      <code>
-        <pre>{output || 'No current output'}</pre>
-      </code>
-    </div>
-  );
+class ServerOutput extends Component {
+  render() {
+    return (
+      <div className="codeBlock">
+        <code>
+          <pre>{this.props.output || 'No current output'}</pre>
+        </code>
+      </div>
+    );
+  }
 }
 
-function TabPanel(props) {
-  const { children, value, index, ...other } = props;
-  return (
-    <Typography
-      component="div"
-      role="tabpanel"
-      hidden={value !== index}
-      id={`full-width-tabpanel-${index}`}
-      aria-labelledby={`full-width-tab-${index}`}
-      {...other}
-    >
-      <Box p={3}>{children}</Box>
-    </Typography>
-  );
+class TabPanel extends Component {
+  render() {
+    const { children, value, index, ...other } = this.props;
+
+    return (
+      <Typography
+        component="div"
+        role="tabpanel"
+        hidden={value !== index}
+        id={`full-width-tabpanel-${index}`}
+        aria-labelledby={`full-width-tab-${index}`}
+        {...other}
+      >
+        <Box p={3}>{children}</Box>
+      </Typography>
+    );
+  }
 }
 
 class ModelProgress extends Component {
@@ -168,7 +155,12 @@ class ModelProgress extends Component {
     clearInterval(this.interval);
   }
 
-  loadProgressInfo = () => {
+  loadProgressInfo(){
+    this.loadProgressInfoTrain();
+    this.loadProgressInfoPredict();
+  }
+
+  loadProgressInfoTrain = () => {
     const { activeStep } = this.props;
     if (activeStep < 3) {
       return;
@@ -188,8 +180,6 @@ class ModelProgress extends Component {
         }
 
         this.setState({
-          running,
-          status: progress.status,
           currentEpoch: progress.curr_epoch + 1,
           currentBatch: progress.curr_batch + 1,
           maxEpoch: progress.max_epoch,
@@ -198,7 +188,8 @@ class ModelProgress extends Component {
           batchProgress:
             ((progress.curr_batch + 1) / progress.steps_per_epoch) * 100,
           stdout: progress.std_out,
-          stderr: progress.std_err
+          stderr: progress.std_err,
+          trainStatus: progress.status
         });
       })
       .catch(error => {
@@ -213,6 +204,52 @@ class ModelProgress extends Component {
   handleChange = (event, newValue) => {
     this.setState({ tab: newValue });
   };
+
+
+  loadProgressInfoPredict = async () => {
+    const config = {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    };
+    try {
+      const predictions = await axios.get(
+        `/api/models/progress/predict`,
+        config
+      );
+
+      const predictionsData = predictions.data;
+      const totalVideos = predictionsData.length;
+      const currentVideo = predictionsData.currentVideo;
+      const totalFrames = currentVideo.totalframe;
+      const currentVideoNum = currentVideo.videoNum;
+      const currentFrame = currentVideo.framenum;
+      const predictStatus = currentVideo.status;
+      const videoProgress = (currentVideo.videoNum / totalVideos) * 100;
+      const predictionProgress = (currentFrame / totalFrames) * 100;
+
+      this.setState({
+        totalVideos,
+        currentVideoNum,
+        currentFrame,
+        totalFrames,
+        predictStatus,
+        videoProgress,
+        predictionProgress,
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  getButtonStatus = () => {
+    if (this.state.trainStatus === 0){
+      return 0;
+    } else if (this.state.predictStatus === 4){
+      return 2;
+    }
+    return 1;
+  }
 
   render() {
     const { className, steps } = this.props;
@@ -231,9 +268,9 @@ class ModelProgress extends Component {
     } = this.state;
 
     return (
-      <div className={className}>
+      <div className={this.props.className}>
         <Tabs
-          value={tab}
+          value={this.state.tab}
           variant="fullWidth"
           indicatorColor="primary"
           textColor="primary"
@@ -244,28 +281,40 @@ class ModelProgress extends Component {
           <Tab label="Standard Output" />
           <Tab label="Standard Error" />
         </Tabs>
-        <SwipeableViews index={tab}>
-          <TabPanel value={tab} index={0}>
+        <SwipeableViews index={this.state.tab}>
+          <TabPanel value={this.state.tab} index={0}>
             <TrainingStatus
               postStopFlag={this.props.postStopFlag}
               onStop={this.handleStop}
-              steps={steps}
-              running={running}
-              currentEpoch={currentEpoch}
-              maxEpoch={maxEpoch}
-              currentBatch={currentBatch}
-              stepsPerEpoch={stepsPerEpoch}
-              epochProgress={epochProgress}
-              batchProgress={batchProgress}
-              status={status}
+              steps={this.state.steps}
+              running={this.state.running}
+              currentEpoch={this.state.currentEpoch}
+              maxEpoch={this.state.maxEpoch}
+              currentBatch={this.state.currentBatch}
+              stepsPerEpoch={this.state.stepsPerEpoch}
+              epochProgress={this.state.epochProgress}
+              batchProgress={this.state.batchProgress}
+              status={this.state.trainStatus}
+              buttonStatus={this.getButtonStatus()}
+              startTraining={this.props.startTraining}
+              ready={this.props.ready}
             />
-            <PredictProgress className="progress" />
+            <PredictProgress 
+              className="progress" 
+              currentVideoNum={this.state.currentVideoNum}
+              totalVideos={this.state.totalVideos}
+              currentFrame={this.state.currentFrame}
+              totalFrames={this.state.totalFrames}
+              videoProgress={this.state.videoProgress}
+              predictionProgress={this.state.predictionProgress}
+              status={this.state.predictStatus}
+            />
           </TabPanel>
-          <TabPanel value={tab} index={1}>
-            <ServerOutput output={stdout} />
+          <TabPanel value={this.state.tab} index={1}>
+            <ServerOutput output={this.state.stdout} />
           </TabPanel>
-          <TabPanel value={tab} index={2}>
-            <ServerOutput output={stderr} />
+          <TabPanel value={this.state.tab} index={2}>
+            <ServerOutput output={this.state.stderr} />
           </TabPanel>
         </SwipeableViews>
       </div>
