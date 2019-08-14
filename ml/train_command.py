@@ -10,26 +10,16 @@ from evaluate_prediction_vid import evaluate
 from train import train_model
 import config
 
-from utils.query import s3, con, cursor
-
-# Delete old prediction progress
-cursor.execute(
-    """
-    DELETE FROM
-      predict_progress
-"""
-)
-con.commit()
+from utils.query import s3, con, cursor, pd_query
 
 # get annotations from test
-cursor.execute("SELECT * FROM MODELTAB WHERE option='trainmodel'")
-row = cursor.fetchone()
-info = row[1]
+train_model = pd_query("""
+    SELECT * FROM model_params WHERE option='train'""").iloc[0]
 
 try:
     s3.download_file(
         config.S3_BUCKET,
-        config.S3_WEIGHTS_FOLDER + str(info["modelSelected"]) + ".h5",
+        config.S3_WEIGHTS_FOLDER + str(train_model["model"]) + ".h5",
         config.WEIGHTS_PATH,
     )
 except ClientError:
@@ -39,22 +29,22 @@ except ClientError:
         config.WEIGHTS_PATH,
     )
 
-cursor.execute("""SELECT * FROM MODELS WHERE name=%s""",
-               (info["modelSelected"],))
+model = pd_query('''SELECT * FROM models WHERE name=%s''',
+                 (str(train_model['model']),)).iloc[0]
 
-model = cursor.fetchone()
-concepts = model[2]
-verifyVideos = model[3]
+# model = cursor.fetchone()
+concepts = model['concepts']
+verifyVideos = model['verificationvideos']
 
-user_model = model[0] + "-" + time.ctime()
+user_model = model['name'] + "-" + time.ctime()
 
 # Delete old model user
-if model[4] != "None":
+if model['userid'] != None:
     cursor.execute(
         """
          DELETE FROM users
          WHERE id=%s""",
-        (model[4],),
+        (model['userid'],),
     )
 
 cursor.execute(
@@ -73,23 +63,22 @@ cursor.execute(
     SET userid=%s
     WHERE name=%s
     RETURNING *""",
-    (model_user_id, info["modelSelected"]),
+    (model_user_id, train_model["model"]),
 )
 
 # Start training job
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
-# train_model(
-#     concepts,
-#     verifyVideos,
-#     info["modelSelected"],
-#     info["annotationCollections"],
-#     int(info["minImages"]),
-#     int(info["epochs"]),
-#     download_data=True,
-#     verified_only=info["verifiedOnly"],
-#     include_tracking=info["includeTracking"],
-# )
-
+train_model(
+    concepts,
+    verifyVideos,
+    train_model["model"],
+    train_model["annotation_collections"],
+    int(train_model["min_images"]),
+    int(train_model["epochs"]),
+    download_data=True,
+    verified_only=train_model["verified_only"],
+    include_tracking=train_model["include_tracking"],
+)
 
 # Run verifyVideos in parallel
 # with Pool(processes = 2) as p:
@@ -104,12 +93,11 @@ subprocess.call(["rm", "*.mp4"])
 
 cursor.execute(
     """
-    Update modeltab
-    SET info =  '{
-        \"activeStep\": 0, \"modelSelected\":\"\", \"annotationCollections\":[],
-        \"epochs\":0, \"minImages\":0}'
-    WHERE option = 'trainmodel'
-"""
+    Update model_params
+    SET epochs = 0, min_images=0, model='', annotation_collections=ARRAY[]::integer[],
+        verified_only=null, include_tracking=null
+    WHERE option = 'train'
+    """
 )
 
 con.commit()
