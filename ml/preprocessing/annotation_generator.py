@@ -209,6 +209,10 @@ class AnnotationGenerator(object):
     def _get_annotations(collection_ids, verified_only, include_tracking, verify_videos, concepts):
         # Query that gets all annotations for given concepts (and child concepts)
         # making sure that any tracking annotations originated from good users
+        tracking_user = cursor.execute(
+            """SELECT id FROM users WHERE username = 'tracking'""")
+        tracking_uid = cursor.fetchone()[0]
+
         annotations_query = r'''
             WITH collection AS (SELECT
                 A.id,
@@ -229,17 +233,10 @@ class AnnotationGenerator(object):
                 videos ON videos.id=videoid
             WHERE inter.id = ANY(%s) AND a.videoid <> ANY(%s)
         '''
-        if verified_only:
-            annotations_query += r''' AND ((a.verifiedby IS NOT NULL 
-                AND a.userid <> (SELECT id FROM users WHERE username='tracking'))'''
-        else:
-            annotations_query += r''' AND (TRUE'''
 
-        if include_tracking:
-            annotations_query += r''' OR (a.userid = (SELECT id FROM users WHERE username='tracking') 
-                AND a.verifiedby IS NULL))'''
-        else:
-            annotations_query += r''')'''
+        if verified_only:
+            annotations_query += """ AND a.verifiedby IS NOT NULL"""
+
         annotations_query += r'''
             )
             SELECT
@@ -267,8 +264,10 @@ class AnnotationGenerator(object):
                     WHERE
                         c.videoid=a.videoid
                         AND c.frame_num=ROUND(fps * timeinvideo))
-                AND a.conceptid = ANY(%s);
+                AND a.conceptid = ANY(%s)
         '''
+        if not include_tracking:
+            annotations_query += f''' AND a.userid <> {tracking_uid}'''
 
         return pd_query(annotations_query, (collection_ids, verify_videos, concepts, ))
 
