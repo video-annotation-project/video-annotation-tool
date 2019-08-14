@@ -40,7 +40,7 @@ class TrainingStatus extends Component {
               onClick={this.props.startTraining}
               variant="contained"
               color="primary"
-              disabled={!this.props.ready}
+              disabled={!this.props.onReady()}
             >
               Start Training
             </Button>
@@ -55,7 +55,7 @@ class TrainingStatus extends Component {
               Stop Training
             </Button>
             <Button
-              onClick={this.props.postStopFlag}
+              onClick={this.props.onTerminate}
               variant="contained"
               className="terminateButton"
             >
@@ -64,7 +64,7 @@ class TrainingStatus extends Component {
           </div>
           <div hidden={this.props.buttonStatus !== 2}>
             <Button
-              onClick={this.props.postStopFlag}
+              onClick={this.props.onReset}
               variant="contained"
               color="primary"
             >
@@ -227,7 +227,7 @@ class ModelProgress extends Component {
       const totalVideos = predictionsData.length;
       const { currentVideo } = predictionsData;
       const totalFrames = currentVideo.totalframe;
-      const currentVideoNum = currentVideo.videoNum;
+      const currentVideoNum = currentVideo.currentVideo;
       const currentFrame = currentVideo.framenum;
       const predictStatus = currentVideo.status;
       const videoProgress = (currentVideo.videoNum / totalVideos) * 100;
@@ -242,7 +242,10 @@ class ModelProgress extends Component {
         predictStatus,
         videoProgress,
         predictionProgress
+        currentVideo,
+        predictionProgress,
       });
+
     } catch (error) {
       console.log(error);
     }
@@ -260,20 +263,7 @@ class ModelProgress extends Component {
 
   render() {
     const { className, steps } = this.props;
-    const {
-      loaded,
-      tab,
-      running,
-      currentEpoch,
-      maxEpoch,
-      epochProgress,
-      batchProgress,
-      currentBatch,
-      stepsPerEpoch,
-      stdout,
-      stderr,
-      status
-    } = this.state;
+    const { loaded } = this.state;
 
     return (
       <div className={this.props.className}>
@@ -305,7 +295,9 @@ class ModelProgress extends Component {
               status={this.state.trainStatus}
               buttonStatus={this.getButtonStatus()}
               startTraining={this.props.startTraining}
-              ready={this.props.ready}
+              onReady={this.props.onReady}
+              onStop={this.props.onStop}
+              onTerminate={this.props.onTerminate}
             />
             {loaded ? (
               <PredictProgress
