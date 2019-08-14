@@ -288,7 +288,7 @@ def track_annotation(id, conceptid, timeinvideo, videoid, image,
     TRACKING_ID = getTrackingUserid(cursor)
     url = getVideoURL(cursor, videoid)
     s3Image = getS3Image(image)
-    if not s3Image:
+    if s3Image is None:
         return
 
     # initialize video for grabbing frames before annotation
