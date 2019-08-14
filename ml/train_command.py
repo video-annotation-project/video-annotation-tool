@@ -63,7 +63,7 @@ cursor.execute(
     SET userid=%s
     WHERE name=%s
     RETURNING *""",
-    (model_user_id, train_model["model"]),
+    (model_user_id, model_params["model"]),
 )
 
 # Start training job
