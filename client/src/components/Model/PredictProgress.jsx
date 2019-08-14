@@ -3,40 +3,32 @@ import axios from 'axios';
 import LinearProgress from '@material-ui/core/LinearProgress';
 import { Typography } from '@material-ui/core';
 
-import './ModelProgress.css'
+import './ModelProgress.css';
 
 class PredictingStatus extends Component {
-  render(){
-
+  render() {
     return (
-      <div className='progressBars'>
-        <Typography
-          variant="body1"
-          gutterBottom
-          className='progressText'
-        >
+      <div className="progressBars">
+        <Typography variant="body1" gutterBottom className="progressText">
           Video: {this.props.currentVideoNum} / {this.props.totalVideos}
         </Typography>
         <LinearProgress
-          className='progressBar'
+          className="progressBar"
           variant="determinate"
           value={this.props.videoProgress || 0}
         />
-        <Typography
-          variant="body1"
-          gutterBottom
-          className='progressText'
-        >
-          {this.props.stage} frame {this.props.currentFrame} of {this.props.totalFrames}
+        <Typography variant="body1" gutterBottom className="progressText">
+          {this.props.stage} frame {this.props.currentFrame} of{' '}
+          {this.props.totalFrames}
         </Typography>
         <LinearProgress
-          className='progressBar'
+          className="progressBar"
           variant="determinate"
           value={this.props.predictionProgress || 0}
           color="secondary"
         />
       </div>
-    )
+    );
   }
 }
 
@@ -47,7 +39,7 @@ class PredictProgress extends Component {
 
   render() {
     return (
-      <div className="predictProgress" hidden={this.props.status === 0} >
+      <div className="predictProgress" hidden={this.props.status === 0}>
         <div>
           <Typography variant="subtitle1">Step 2/2</Typography>
           <Typography variant="subtitle2" gutterBottom>
@@ -64,7 +56,6 @@ class PredictProgress extends Component {
           totalFrames={this.props.totalFrames}
           videoProgress={this.props.videoProgress}
           predictionProgress={this.props.predictionProgress}
-
         />
       </div>
     );
