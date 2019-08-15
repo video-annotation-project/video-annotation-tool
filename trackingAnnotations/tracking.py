@@ -153,7 +153,7 @@ def upload_image(frame_num, frame, frame_w_box,
     return
 
 
-def upload_video(priorFrames, postFrames):
+def upload_video(priorFrames, postFrames, id):
     completed = False
     # Combine all frames
     priorFrames.extend(postFrames)
@@ -324,7 +324,7 @@ def track_annotation(id, conceptid, timeinvideo, videoid, image,
         id, videoid, conceptid, comment, unsure,
         cursor, con, TRACKING_ID, fps, timeinvideo)
 
-    upload_video(priorFrames, postFrames)
+    upload_video(priorFrames, postFrames, id)
     cv2.destroyAllWindows()
     con.close()
     print("Done tracking annotation: " + str(id))
