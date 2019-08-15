@@ -12,7 +12,7 @@ from keras_retinanet.preprocessing.csv_generator import Generator
 from keras_retinanet.utils.image import read_image_bgr
 
 import config
-from utils.query import pd_query
+from utils.query import pd_query, cursor
 
 
 # Without this the program will crash
@@ -377,6 +377,8 @@ class S3Generator(Generator):
                 float(annot['x2']),
                 float(annot['y2']),
             ]]))
+
+        print(f'Num annotations: {annotations["bboxes"].shape[0]} in image {image["save_name"]} / {image["image"]}')
 
         return annotations
 

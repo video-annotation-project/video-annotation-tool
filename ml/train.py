@@ -1,4 +1,4 @@
-# import sys
+import sys
 import uuid
 
 import keras
@@ -182,8 +182,8 @@ def _redirect_outputs(job_id):
     """ The DatabaseOutput class will redirect this programs output to a column
         in out training_progress databse (as well as into a file)
     """
-    sys.stdout = DatabaseOutput(job_id, 'out')
-    sys.stderr = DatabaseOutput(job_id, 'err')
+    # sys.stdout = DatabaseOutput(job_id, 'out')
+    # sys.stderr = DatabaseOutput(job_id, 'err')
 
 
 def _get_num_workers():
