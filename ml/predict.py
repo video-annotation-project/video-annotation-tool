@@ -148,7 +148,9 @@ def predict_on_video(videoid, model_weights, concepts, filename,
 
     printing_with_time("Predicting")
     results, frames = predict_frames(frames, fps, model, videoid)
+    print(results + " this is first one")
     results = propagate_conceptids(results, concepts)
+    print(results + " this is second one")
     results = length_limit_objects(results, config.MIN_FRAMES_THRESH)
     # interweb human annotations and predictions
     printing_with_time("Generating Video")
@@ -186,7 +188,7 @@ def get_video_frames(vid_filename, videoid):
     one_percent_length = int(length / 100)
     while True:
         if frame_counter % one_percent_length == 0:
-            upload_predict_progress(frame_counter, videoid, length, 0)
+            upload_predict_progress(frame_counter, videoid, length, 1)
 
         check, frame = vid.read()
         if not check:
@@ -219,7 +221,7 @@ def predict_frames(video_frames, fps, model, videoid):
     for frame_num, frame in enumerate(video_frames):
         if frame_num % one_percent_length == 0:
             # update the progress every 1% of the video
-            upload_predict_progress(frame_num, videoid, total_frames, 1)
+            upload_predict_progress(frame_num, videoid, total_frames, 2)
 
         # update tracking for currently tracked objects
         for obj in currently_tracked_objects:
@@ -385,6 +387,7 @@ def propagate_conceptids(annotations, concepts):
 
 
 def length_limit_objects(pred, frame_thresh):
+    print(pred)
     obj_len = pred.groupby('objectid').label.value_counts()
     len_thresh = obj_len[obj_len > frame_thresh]
     return pred[[(obj in len_thresh) for obj in pred.objectid]]
@@ -408,7 +411,7 @@ def generate_video(filename, frames, fps, results,
     for pred_index, res in enumerate(results.itertuples()):
 
         if pred_index % one_percent_length == 0:
-            upload_predict_progress(pred_index, video_id, total_length, 2)
+            upload_predict_progress(pred_index, video_id, total_length, 3)
 
         x1, y1, x2, y2 = int(res.x1), int(res.y1), int(res.x2), int(res.y2)
         if res.confidence:
@@ -551,20 +554,11 @@ def upload_predict_progress(count, videoid, total_count, status):
     '''
     print(
         f'count: {count} total_count: {total_count} vid: {videoid} status: {status}')
-    if (count == 0 and status == 0):  # the starting point
-        cursor.execute('''
-            INSERT INTO predict_progress (videoid, framenum, totalframe, status)
-            VALUES (%s, %s, %s, %s)''',
-                       (videoid, count, total_count, status)
-                       )
-        con.commit()
-        return
-    elif (count == 0):
+    if (count == 0):
         cursor.execute('''
             UPDATE predict_progress
-            SET framenum=%s, status=%s, totalframe=%s
-            WHERE videoid=%s''',
-                       (count, 1, total_count, videoid,))
+            SET framenum=%s, status=%s, totalframe=%s''',
+                       (count, status, total_count,))
         con.commit()
         return
 
@@ -572,9 +566,8 @@ def upload_predict_progress(count, videoid, total_count, status):
         count = -1
     cursor.execute('''
         UPDATE predict_progress
-        SET framenum=%s
-        WHERE videoid=%s''',
-                   (count, videoid,)
+        SET framenum=%s''',
+                   (count,)
                    )
     con.commit()
 

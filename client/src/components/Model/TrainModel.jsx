@@ -108,6 +108,9 @@ const styles = theme => ({
   }
 });
 
+const paramFields = ['epochs', 'minImages', 'modelSelected', 
+    'annotationCollections', 'includeTracking', 'verifiedOnly']
+
 function ModelsForm(props) {
   const { className, modelSelected, handleChange, models } = props;
   return (
@@ -127,6 +130,7 @@ function ModelsForm(props) {
     </FormControl>
   );
 }
+
 
 function CollectionsForm(props) {
   const { className, annotationCollections, onChange, collections } = props;
@@ -175,53 +179,33 @@ function CollectionsForm(props) {
 }
 
 class EpochsField extends Component {
-  constructor(props) {
-    super(props);
-
-    this.state = {
-      epochs: undefined
-    };
-  }
 
   render() {
-    const { className } = this.props;
-    const { epochs } = this.state;
-
     return (
       <TextField
         margin="normal"
-        className={className}
+        className={this.props.className}
         name="epochs"
         label="Epochs"
-        value={epochs}
-        onChange={this.handleChange}
+        value={this.props.epochs}
+        onChange={this.props.onChange}
       />
     );
   }
 }
 
 class ImagesField extends Component {
-  constructor(props) {
-    super(props);
-
-    this.state = {
-      minImages: undefined
-    };
-  }
 
   render() {
-    const { className, getImageRange } = this.props;
-    const { minImages } = this.state;
-
     return (
       <TextField
         margin="normal"
-        className={className}
-        name="images"
+        className={this.props.className}
+        name="minImages"
         label="# of Images"
-        value={minImages}
-        onChange={this.handleChange}
-        helperText={getImageRange()}
+        value={this.props.minImages}
+        onChange={this.props.onChange}
+        helperText={this.props.getImageRange()}
       />
     );
   }
@@ -251,7 +235,7 @@ class TrainModel extends Component {
 
     this.state = {
       models: [],
-      modelSelected: null,
+      modelSelected: undefined,
       collections: [],
       annotationCollections: [],
       selectedCollectionCounts: [],
@@ -259,34 +243,16 @@ class TrainModel extends Component {
       includeTracking: false,
       verifiedOnly: false,
       infoDialogOpen: false,
-      openedVideo: null
+      openedVideo: null,
+      epochs: '',
+      minImages: '',
+      ready: false,
     };
   }
 
   componentDidMount = async () => {
-    await this.loadOptionInfo();
     await this.loadExistingModels();
     this.loadCollectionList();
-  };
-
-  // Used to handle changes in the hyperparameters and in the select model
-  handleChange = event => {
-    this.setState(
-      {
-        [event.target.name]: event.target.value
-      },
-      () => {
-        if (event.target.name === 'modelSelected') {
-          this.loadCollectionList();
-        }
-      }
-    );
-  };
-
-  handleChangeSwitch = event => {
-    this.setState({
-      [event.target.value]: event.target.checked
-    });
   };
 
   // Methods for video meta data
@@ -309,13 +275,16 @@ class TrainModel extends Component {
         Authorization: `Bearer ${localStorage.getItem('token')}`
       }
     };
-    const option = 'trainmodel';
     return axios
-      .get(`/api/models/train/${option}`, config)
+      .get(`/api/models/train`, config)
       .then(res => {
-        const { info } = res.data[0];
+        const params = res.data;
+
         this.setState({
-          modelSelected: info.modelSelected
+          modelSelected: params.model,
+          minImages: params.min_images,
+          epochs: params.epochs,
+          selectedCollectionIds: params.annotation_collections
         });
       })
       .catch(error => {
@@ -358,13 +327,23 @@ class TrainModel extends Component {
       }
     };
 
+
     return axios
       .get(`/api/collections/annotations?train=true`, config)
       .then(res => {
+
         const selectedModelTuple = models.find(model => {
           return model.name === modelSelected;
         });
-        const modelConcepts = selectedModelTuple.conceptsid;
+
+        let modelConcepts;
+
+        if (this.state.modelSelected === undefined){
+          modelConcepts = [];
+        } else {
+          modelConcepts = selectedModelTuple.conceptsid;
+        }
+
         res.data.forEach(col => {
           const filtered = modelConcepts.filter(x => col.ids.includes(x));
           if (filtered.length > 0) {
@@ -400,9 +379,28 @@ class TrainModel extends Component {
     });
   };
 
+
+  // Used to handle changes in the hyperparameters and in the select model
+  handleChange = event => {
+    event.persist();
+    this.setState({
+      [event.target.name]: event.target.value,
+    }, () => {   
+        if (event.target.name === 'modelSelected'){
+          this.loadCollectionList();
+        }
+      }
+    );
+  };
+
   handleStop = () => {
-    this.updateBackendInfo();
-    this.postModelInstance('stop');
+    this.setState(
+      {
+      },
+      () => {
+        this.postModelInstance('stop');
+      }
+    );
   };
 
   postModelInstance = command => {
@@ -428,7 +426,7 @@ class TrainModel extends Component {
     }
     this.setState(
       {
-        annotationCollections: value
+        annotationCollections: value, 
       },
       () => {
         this.getCollectionCounts();
@@ -472,12 +470,19 @@ class TrainModel extends Component {
     }
     this.setState(
       {
-        annotationCollections: value
+        annotationCollections: value,
+        ready: this.checkReady()
       },
       () => {
         this.getCollectionCounts();
       }
     );
+  };
+
+  toggleInfo = () => {
+    this.setState(prevState => ({
+      infoDialogOpen: !prevState.infoDialogOpen
+    }));
   };
 
   getCollectionCounts = async () => {
@@ -532,6 +537,89 @@ class TrainModel extends Component {
     }
   };
 
+  startTraining = async () => {
+    await this.updateModelParams();
+    this.postModelInstance();
+  }
+
+  stopTraining = () => {
+    try {
+      const config = {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      };
+      
+      return axios.patch('/api/models/train/stop', config);  
+
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  resetTraining = () => {
+    try {
+      const config = {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      };
+      
+      return axios.patch('/api/models/train/reset', {}, config);  
+
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+
+  updateModelParams = async () => {
+    try {
+      const config = {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      };
+
+      const { 
+        epochs, 
+        minImages, 
+        annotationCollections, 
+        modelSelected, 
+        verifiedOnly, 
+        includeTracking 
+      } = this.state;
+
+      const body = {
+        epochs,
+        minImages,
+        includeTracking,
+        verifiedOnly,
+        annotationCollections: annotationCollections.map((c) => c.id),
+        modelSelected: modelSelected,
+      };
+      
+      return axios.put('/api/models/train', body, config);
+
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  checkReady = () => {
+
+    for (const key of paramFields){
+      if (!this.state.hasOwnProperty(key) 
+          || this.state[key] === null
+          || this.state[key] === undefined
+          || (Array.isArray(this.state[key]) && this.state[key].length === 0)
+          || this.state[key] === ''){
+        return false;
+      }
+    }
+    return true;
+  }
+
   render() {
     const { classes, socket, loadVideos } = this.props;
     const {
@@ -544,6 +632,8 @@ class TrainModel extends Component {
       selectedCollectionCounts,
       includeTracking,
       verifiedOnly,
+      epochs,
+      minImages,
       minCounts
     } = this.state;
 
@@ -564,9 +654,15 @@ class TrainModel extends Component {
                 annotationCollections={annotationCollections}
                 onChange={this.handleChangeMultiple}
               />
-              <EpochsField className="epochsField" />
-              <ImagesField
-                className="imagesField"
+              <EpochsField 
+                className="epochsField" 
+                epochs={epochs} 
+                onChange={this.handleChange}
+              />
+              <ImagesField 
+                className="imagesField" 
+                minImages={minImages} 
+                onChange={this.handleChange}
                 getImageRange={this.getImageRange}
               />
             </div>
@@ -620,6 +716,11 @@ class TrainModel extends Component {
               className="progress"
               handleStop={this.handleStop}
               postStopFlag={this.postStopFlag}
+              startTraining={this.startTraining}
+              onStop={this.stopTraining}
+              onReset={this.resetTraining}
+              onTerminate={() => this.postModelInstance('stop')}
+              onReady={this.checkReady}
             />
           </div>
         </Paper>

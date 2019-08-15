@@ -324,6 +324,26 @@ class CreateModel extends Component {
     );
   };
 
+  handleSelectAll = (data, dataSelected, stepInfo) => {
+    const selected = dataSelected;
+    data.forEach(row => {
+      if (row.id) {
+        if (!selected.includes(row.id)) {
+          selected.push(row.id);
+        }
+      }
+    });
+    this.setState({
+      [stepInfo]: selected
+    });
+  };
+
+  handleUnselectAll = stepInfo => {
+    this.setState({
+      [stepInfo]: []
+    });
+  };
+
   // Methods for video meta data
   openVideoMetadata = (event, video) => {
     event.stopPropagation();
@@ -349,6 +369,26 @@ class CreateModel extends Component {
       <Grid container spacing={5}>
         <Grid item>
           <FormLabel component="legend">Select videos to test model</FormLabel>
+          <div>
+            <Button
+              className={classes.button}
+              color="primary"
+              onClick={() => {
+                this.handleSelectAll(videos, videosSelected, 'videosSelected');
+              }}
+            >
+              Select All
+            </Button>
+            <Button
+              className={classes.button}
+              color="primary"
+              onClick={() => {
+                this.handleUnselectAll('videosSelected');
+              }}
+            >
+              Unselect All
+            </Button>
+          </div>
           <FormControl component="fieldset" className={classes.checkSelector}>
             <FormGroup className={classes.group}>
               {videos.map(video => (

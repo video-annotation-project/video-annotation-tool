@@ -56,6 +56,13 @@
 
 .stopButton {
   height: 40px !important;
+  margin-right: 10px !important;
+}
+
+.terminateButton {
+  height: 40px !important;
+  color: white !important;
+  background-color: #6e0101 !important;
 }
 
 .predictProgress {
