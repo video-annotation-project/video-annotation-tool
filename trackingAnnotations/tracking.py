@@ -254,7 +254,8 @@ def track_object(frame_num, frames, box, track_forward, end,
 
     # keep tracking object until its out of frame or time is up
     for index, frame in enumerate(frames):
-        time_elapsed += (1/fps) if track_forward else -(1/fps)
+        time_elapsed += (1 / fps) if track_forward else - (1 / fps)
+        frame_num += index if track_forward else -index
         frame_no_box = copy.deepcopy(frame)
         if index == 0:  # initialize bounding box in first frame
             trackers.add(tracker, frame, box)
@@ -264,9 +265,9 @@ def track_object(frame_num, frames, box, track_forward, end,
                 (x, y, w, h) = [int(v) for v in box]
                 cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
             if index != 0:
-                upload_image(frame_num + index if track_forward else - index,
-                             frame_no_box, frame, id, videoid, conceptid,
-                             comment, unsure, x, y, (x + w), (y + h),
+                upload_image(frame_num, frame_no_box, frame, id, videoid,
+                             conceptid, comment, unsure,
+                             x, y, (x + w), (y + h),
                              cursor, con, TRACKING_ID,
                              round(timeinvideo + time_elapsed, 2))
         frame_list.append(frame)
