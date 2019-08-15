@@ -5,7 +5,6 @@ import { Typography } from '@material-ui/core';
 import './ModelProgress.css';
 
 function PredictingStatus(props) {
-
   const {
     currentVideoNum,
     totalVideos,
@@ -27,8 +26,7 @@ function PredictingStatus(props) {
         value={videoProgress || 0}
       />
       <Typography variant="body1" gutterBottom className="progressText">
-        {stage} frame {currentFrame} of{' '}
-        {totalFrames}
+        {stage} frame {currentFrame} of {totalFrames}
       </Typography>
       <LinearProgress
         className="progressBar"
@@ -41,22 +39,22 @@ function PredictingStatus(props) {
 }
 
 function PredictProgress(props) {
-
-  const { 
-    status, 
-    currentVideoNum, 
-    totalVideos, 
+  const {
+    status,
+    currentVideoNum,
+    totalVideos,
     currentFrame,
-    totalFrames, 
-    videoProgress, 
-    predictionProgress } = props;
+    totalFrames,
+    videoProgress,
+    predictionProgress
+  } = props;
 
   return (
     <div className="predictProgress" hidden={status === 0}>
       <div>
         <Typography variant="subtitle1">Step 2/2</Typography>
         <Typography variant="subtitle2" gutterBottom>
-          {status === 1 && 'Currently resizing vidoes...'}
+          {status === 1 && 'Currently resizing videos...'}
           {status === 2 && 'Currently predicting videos...'}
           {status === 3 && 'Currently generating videos...'}
           {status === 4 && 'Model has finished predicting.'}
