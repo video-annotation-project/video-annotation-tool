@@ -265,7 +265,8 @@ class ModelProgress extends Component {
       predictionProgress,
       predictStatus,
       stdout,
-      stderr
+      stderr,
+      postStopFlag
     } = this.state;
 
     return (
