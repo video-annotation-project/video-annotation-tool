@@ -219,7 +219,7 @@ def fix_offset(priorFrames, postFrames, s3Image, fps, timeinvideo,
                 SET framenum=%d, timeinvideo=%f, originalid=NULL
                 WHERE id= %d;
             ''',
-            (best_time, best_frame, id,))
+            (best_frame, best_time, id,))
         con.commit()
     else:
         print(
