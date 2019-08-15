@@ -324,7 +324,11 @@ def track_annotation(id, conceptid, timeinvideo, videoid, image,
         id, videoid, conceptid, comment, unsure,
         cursor, con, TRACKING_ID, fps, timeinvideo)
 
-    upload_video(priorFrames, postFrames, id)
+    if upload_video(priorFrames, postFrames, id):
+        print('uploaded')
+    else:
+        print("fuck you")
+
     cv2.destroyAllWindows()
     con.close()
     print("Done tracking annotation: " + str(id))
