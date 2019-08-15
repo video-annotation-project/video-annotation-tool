@@ -14,12 +14,19 @@ from dotenv import load_dotenv
 from keras_retinanet.models import convert_model
 from keras_retinanet.models import load_model
 from psycopg2 import connect
-
-from preprocessing.annotation_generator import get_classmap
+import subprocess
 
 import config
 from utils.query import s3, cursor, pd_query, con
 
+def get_classmap(concepts):
+    classmap = []
+    for concept in concepts:
+        name = pd_query("select name from concepts where id=" + str(concept)).iloc[0]["name"]
+        classmap.append([name,concepts.index(concept)])
+    classmap = pd.DataFrame(classmap)
+    classmap = classmap.to_dict()[0]
+    return classmap
 
 def printing_with_time(text):
     print(text + " " + str(datetime.datetime.now()))
@@ -405,7 +412,11 @@ def generate_video(filename, frames, fps, results,
     conceptsCounts = {concept: 0 for concept in concepts}
     total_length = len(results)
     one_percent_length = int(total_length / 100)
+    f = open('gen.txt', 'w')
+    f.write(str(frames[130]))
+    f.write(str(classmap))
     for pred_index, res in enumerate(results.itertuples()):
+        f.write(f'{pred_index}  {res} {type(frames)}')
 
         if pred_index % one_percent_length == 0:
             upload_predict_progress(pred_index, video_id, total_length, 3)
@@ -440,7 +451,9 @@ def save_video(filename, frames, fps):
     # requires temp so original not overwritten
     converted_file = 'temp.mp4'
     # Convert file so we can stream on s3
-    os.system(f'ffmpeg -i \'{filename}\' -codec:v libx264 -y {converted_file}')
+    temp = ['ffmpeg', '-loglevel', '0', '-i', filename,
+            '-codec:v', 'libx264', '-y', converted_file]
+    subprocess.call(temp)
     # upload video..
     s3.upload_file(
         converted_file, config.S3_BUCKET,

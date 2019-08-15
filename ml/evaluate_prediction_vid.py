@@ -134,7 +134,7 @@ if __name__ == "__main__":
         LEFT JOIN users u ON u.id=userid
         WHERE name=%s
         """,
-        ("testV2",),
+        ("testv3",),
     )
     model = cursor.fetchone()
 
@@ -142,5 +142,19 @@ if __name__ == "__main__":
     concepts = model[2]
     userid = "270"
     model_username = "testV2_KLSKLS"
+
+    cursor.execute("""DELETE FROM predict_progress""")
+    con.commit()
+    cursor.execute(
+        """
+        INSERT INTO predict_progress (videoid, current_video, total_videos)
+        VALUES (%s, %s, %s)""",
+        (0, 0, 1),
+    )
+    con.commit()
+    cursor.execute(
+        """UPDATE predict_progress SET videoid = 86, current_video = current_video + 1"""
+    )
+    con.commit()
 
     evaluate(video_id, model_username, concepts)
