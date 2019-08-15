@@ -318,7 +318,7 @@ def track_annotation(id, conceptid, timeinvideo, videoid, image,
     postFrames = track_object(
         frame_num, postFrames, box, True, end,
         id, videoid, conceptid, comment, unsure,
-        cur, sor, con, TRACKING_ID, fps, timeinvideo)
+        cursor, con, TRACKING_ID, fps, timeinvideo)
 
     # tracking backwards
     priorFrames = track_object(
