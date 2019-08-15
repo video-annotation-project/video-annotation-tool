@@ -66,7 +66,7 @@ class ModelProgress extends Component {
   };
 
   TrainingStatus = () => {
-    const { onTerminate, onReady, onStop, startTraining } = this.props;
+    const { onTerminate, onReady, onStop, onReset, startTraining } = this.props;
     const {
       currentEpoch,
       stepsPerEpoch,
@@ -125,7 +125,7 @@ class ModelProgress extends Component {
             </Button>
           </div>
           <div hidden={this.getButtonStatus() !== 2}>
-            <Button onClick={this.onReset} variant="contained" color="primary">
+            <Button onClick={onReset} variant="contained" color="primary">
               Reset Training
             </Button>
           </div>
@@ -213,13 +213,12 @@ class ModelProgress extends Component {
         return;
       }
 
-      const totalVideos = predictionsData.length;
-      const { currentVideo } = predictionsData;
-      const totalFrames = currentVideo.totalframe;
-      const currentVideoNum = currentVideo.currentVideo;
-      const currentFrame = currentVideo.framenum;
-      const predictStatus = currentVideo.status;
-      const videoProgress = (currentVideo.videoNum / totalVideos) * 100;
+      const totalVideos = predictionsData.total_videos;
+      const currentVideoNum = predictionsData.current_video;
+      const totalFrames = predictionsData.totalframe;
+      const currentFrame = predictionsData.framenum;
+      const predictStatus = predictionsData.status;
+      const videoProgress = (currentVideoNum / totalVideos) * 100;
       const predictionProgress = (currentFrame / totalFrames) * 100;
 
       this.setState({
@@ -246,10 +245,6 @@ class ModelProgress extends Component {
       return 2;
     }
     return 1;
-  };
-
-  onReset = () => {
-    console.log('this is dummy');
   };
 
   loadProgressInfo() {

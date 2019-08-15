@@ -41,10 +41,8 @@ router.patch(
     const resetPredicting = `DELETE FROM predict_progress;`;
 
     try {
-      let result = await psql.query(queryText);
-      if (result) {
-        res.status(200).json(result.rows);
-      }a
+      await psql.query(resetTraining);
+      await psql.query(resetPredicting);
     } catch (error) {
       res.json(error);
     }

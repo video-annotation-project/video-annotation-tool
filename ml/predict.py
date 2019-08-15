@@ -551,15 +551,7 @@ def upload_predict_progress(count, videoid, total_count, status):
     '''
     print(
         f'count: {count} total_count: {total_count} vid: {videoid} status: {status}')
-    if (count == 0 and status == 1):  # the starting point
-        cursor.execute('''
-            INSERT INTO predict_progress (videoid, framenum, totalframe, status)
-            VALUES (%s, %s, %s, %s)''',
-                       (videoid, count, total_count, status)
-                       )
-        con.commit()
-        return
-    elif (count == 0):
+    if (count == 0):
         cursor.execute('''
             UPDATE predict_progress
             SET framenum=%s, status=%s, totalframe=%s

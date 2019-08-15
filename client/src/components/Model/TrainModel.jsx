@@ -565,7 +565,7 @@ class TrainModel extends Component {
         }
       };
       
-      return axios.patch('/api/models/train/reset', config);  
+      return axios.patch('/api/models/train/reset', {}, config);  
 
     } catch (error) {
       console.log(error);
