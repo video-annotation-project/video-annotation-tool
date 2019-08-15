@@ -126,7 +126,7 @@ def upload_image(frame_num, frame, frame_w_box,
                  x1, y1, x2, y2, cursor, con, TRACKING_ID, timeinvideo):
     # Uploads images and puts annotation in database
     no_box = str(videoid) + "_" + str(timeinvideo) + "_tracking.png"
-    box = str(id) + "_" + str(timeinvideo) + "_box_track.png"
+    box = str(id) + "_" + str(timeinvideo) + "_box_tracking.png"
     temp_file = str(uuid.uuid4()) + ".png"
     cv2.imwrite(temp_file, frame)
     s3.upload_file(temp_file, S3_BUCKET, S3_ANNOTATION_FOLDER +
