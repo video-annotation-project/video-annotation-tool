@@ -38,7 +38,7 @@ def annotationMap(id, conceptid, timeinvideo, videoid, image,
     cursor = con.cursor()
     '''
     results = s3.list_objects(
-        Bucket=S3_BUCKET, Prefix=S3_VIDEO_FOLDER + str(i.id) + "_track.mp4")
+        Bucket=S3_BUCKET, Prefix=S3_VIDEO_FOLDER + str(i.id) + "_tracking.mp4")
     if 'Contents' in results:
         continue
     '''

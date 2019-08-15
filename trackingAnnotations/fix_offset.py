@@ -116,9 +116,10 @@ def fix_offset(videoid, timeinvideo, image, id):
         if best_score > .91:
             cursor.execute(
                 '''
-          UPDATE annotations
-          SET framenum=%d, timeinvideo=%f, originalid=NULL
-          WHERE id= %d;''',
+                    UPDATE annotations
+                    SET framenum=%d, timeinvideo=%f, originalid=NULL
+                    WHERE id= %d;
+                ''',
                 (round(times[index]*fps/1000), times[index]/1000, id,))
             con.commit()
             con.close()

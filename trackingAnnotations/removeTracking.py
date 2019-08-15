@@ -30,7 +30,7 @@ def remove_data(annotation):
     cursor = con.cursor()
     s3.delete_object(Bucket=S3_BUCKET, Key=os.getenv("AWS_S3_BUCKET_ANNOTATIONS_FOLDER") + image)
     s3.delete_object(Bucket=S3_BUCKET, Key=os.getenv("AWS_S3_BUCKET_ANNOTATIONS_FOLDER") + imagewithbox)
-    s3.delete_object(Bucket=S3_BUCKET, Key=os.getenv('AWS_S3_BUCKET_VIDEOS_FOLDER') + str(originalid) + "_track.mp4")
+    s3.delete_object(Bucket=S3_BUCKET, Key=os.getenv('AWS_S3_BUCKET_VIDEOS_FOLDER') + str(originalid) + "_tracking.mp4")
     cursor.execute("UPDATE annotations SET originalid=null WHERE id=%d;",(originalid,))
     print(annotation)
     con.commit()

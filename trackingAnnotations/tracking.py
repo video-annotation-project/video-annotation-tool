@@ -125,7 +125,7 @@ def upload_image(frame_num, frame, frame_w_box,
                  id, videoid, conceptid, comment, unsure,
                  x1, y1, x2, y2, cursor, con, TRACKING_ID, timeinvideo):
     # Uploads images and puts annotation in database
-    no_box = str(videoid) + "_" + str(timeinvideo) + "_track.png"
+    no_box = str(videoid) + "_" + str(timeinvideo) + "_tracking.png"
     box = str(id) + "_" + str(timeinvideo) + "_box_track.png"
     temp_file = str(uuid.uuid4()) + ".png"
     cv2.imwrite(temp_file, frame)
@@ -155,6 +155,8 @@ def upload_image(frame_num, frame, frame_w_box,
 
 def upload_video(priorFrames, postFrames, id):
     completed = False
+    # Order priorFrames by time
+    priorFrames.reverse()
     # Combine all frames
     priorFrames.extend(postFrames)
 
@@ -175,7 +177,7 @@ def upload_video(priorFrames, postFrames, id):
         s3.upload_file(
             converted_file,
             S3_BUCKET,
-            S3_VIDEO_FOLDER + str(id) + "_track.mp4",
+            S3_VIDEO_FOLDER + str(id) + "_tracking.mp4",
             ExtraArgs={'ContentType': 'video/mp4'}
         )
         os.system('rm ' + converted_file)
@@ -316,7 +318,7 @@ def track_annotation(id, conceptid, timeinvideo, videoid, image,
     postFrames = track_object(
         frame_num, postFrames, box, True, end,
         id, videoid, conceptid, comment, unsure,
-        cursor, con, TRACKING_ID, fps, timeinvideo)
+        cur, sor, con, TRACKING_ID, fps, timeinvideo)
 
     # tracking backwards
     priorFrames = track_object(
@@ -324,10 +326,7 @@ def track_annotation(id, conceptid, timeinvideo, videoid, image,
         id, videoid, conceptid, comment, unsure,
         cursor, con, TRACKING_ID, fps, timeinvideo)
 
-    if upload_video(priorFrames, postFrames, id):
-        print('uploaded')
-    else:
-        print("fuck you")
+    upload_video(priorFrames, postFrames, id):
 
     cv2.destroyAllWindows()
     con.close()
