@@ -1,23 +1,16 @@
 import copy
 import os
-import subprocess
-import json
+import uuid
+import datetime
 
 import cv2
 import numpy as np
-import boto3
 import pandas as pd
-import uuid
-import psycopg2
-import datetime
-from dotenv import load_dotenv
 from keras_retinanet.models import convert_model
 from keras_retinanet.models import load_model
-from psycopg2 import connect
-
-from preprocessing.annotation_generator import get_classmap
 
 import config.config
+from train.preprocessing.annotation_generator import get_classmap
 from utils.query import s3, cursor, pd_query, con
 
 

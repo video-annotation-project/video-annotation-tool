@@ -2,9 +2,7 @@ import os
 import time
 import subprocess
 
-from psycopg2 import connect
 from botocore.exceptions import ClientError
-import boto3
 
 from predict.evaluate_prediction_vid import evaluate
 from train.train import train_model

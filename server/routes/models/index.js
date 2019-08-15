@@ -162,14 +162,14 @@ router.get(
   async (req, res) => {
     const queryText = `
       SELECT
-        m.id, m.model_name, m.start_train, m.end_train, m.epochs, m.min_examples,
+        m.id, m.job_id, m.model_name, m.start_train, m.end_train, m.epochs, m.min_examples,
         array_agg(DISTINCT a.name) annotations
       FROM
         previous_runs m
       JOIN
         annotation_collection a ON a.id=ANY(m.collection_ids)
       GROUP BY
-        (m.id, m.model_name, m.start_train, m.end_train, m.epochs, m.min_examples)
+        (m.id, m.model_name, m.start_train, m.end_train, m.epochs, m.min_examples, m.job_id)
       ORDER BY
         m.id DESC`;
     try {

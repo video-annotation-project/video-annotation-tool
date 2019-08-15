@@ -1,9 +1,7 @@
-import sys
 import uuid
 
 import keras
 import tensorflow as tf
-import boto3
 import multiprocessing
 from tensorflow.python.client import device_lib
 from keras_retinanet import models
@@ -15,7 +13,6 @@ from keras_retinanet.callbacks import RedirectModel
 import config.config
 from utils.query import s3
 from utils.timer import timer
-from utils.output import DatabaseOutput
 from preprocessing.annotation_generator import AnnotationGenerator
 from train.evaluation.evaluate import evaluate_class_thresholds
 from train.callbacks.progress import Progress

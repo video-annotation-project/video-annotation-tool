@@ -100,6 +100,8 @@ router.post(
       }
     });
 
+    console.log(process.env.AWS_S3_BUCKET_LOGS_FOLDER );
+
     downloader.on('error', function(err) {
       res.status(400).json(err);
     });
