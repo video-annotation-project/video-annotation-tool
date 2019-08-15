@@ -205,7 +205,7 @@ def matchS3Frame(priorFrames, postFrames, s3Image):
 
 
 def fix_offset(priorFrames, postFrames, s3Image, fps, timeinvideo,
-               frame_num, cursor, con):
+               frame_num, id, cursor, con):
     best_score, best_index = matchS3Frame(priorFrames, postFrames, s3Image)
     if best_index == 0:
         # No change necessary
@@ -233,7 +233,7 @@ def fix_offset(priorFrames, postFrames, s3Image, fps, timeinvideo,
         del postFrames[:best_index]
     else:
         tempFrames = priorFrames[best_index - 1:]
-        postFrames = tempFramess + postFrames
+        postFrames = tempFrames + postFrames
         del priorFrames[best_index:]
     return priorFrames, postFrames
 
@@ -307,7 +307,7 @@ def track_annotation(id, conceptid, timeinvideo, videoid, image,
 
     # Fix weird javascript video currentTime randomization
     fix_offset(priorFrames, postFrames, s3Image, fps,
-               timeinvideo, frame_num, cursor, con)
+               timeinvideo, frame_num, id, cursor, con)
 
     # tracking forwards..
     postFrames = track_object(
