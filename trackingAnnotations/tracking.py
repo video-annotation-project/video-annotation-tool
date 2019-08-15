@@ -255,7 +255,7 @@ def track_object(frame_num, frames, box, track_forward, end,
     # keep tracking object until its out of frame or time is up
     for index, frame in enumerate(frames):
         time_elapsed += (1 / fps) if track_forward else - (1 / fps)
-        frame_num += index if track_forward else -index
+        frame_num += 1 if track_forward else -1
         frame_no_box = copy.deepcopy(frame)
         if index == 0:  # initialize bounding box in first frame
             trackers.add(tracker, frame, box)
