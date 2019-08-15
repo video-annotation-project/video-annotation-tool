@@ -18,6 +18,10 @@ import subprocess
 
 import config
 from utils.query import s3, cursor, pd_query, con
+from ffmpy import FFmpeg
+from memory_profiler import profile
+
+fp=open('memory_profiler.log','w+')
 
 def get_classmap(concepts):
     classmap = []
@@ -109,7 +113,7 @@ def resize(row):
     row.videoheight = new_height
     return row
 
-
+@profile(stream=fp)
 def predict_on_video(videoid, model_weights, concepts, filename,
                      upload_annotations=False, userid=None):
 
@@ -174,7 +178,7 @@ def predict_on_video(videoid, model_weights, concepts, filename,
     print("Done generating")
     return results, fps, original_frames, annotations
 
-
+@profile(stream=fp)
 def get_video_frames(vid_filename, videoid):
     frames = []
     # grab video stream
@@ -211,7 +215,6 @@ def init_model(model_path):
     model = load_model(model_path, backbone_name='resnet50')
     model = convert_model(model)
     return model
-
 
 def predict_frames(video_frames, fps, model, videoid):
     currently_tracked_objects = []
@@ -398,7 +401,7 @@ def length_limit_objects(pred, frame_thresh):
 
 # Generates the video with the ground truth frames interlaced
 
-
+@profile(stream=fp)
 def generate_video(filename, frames, fps, results,
                    concepts, video_id, annotations):
 
@@ -439,7 +442,7 @@ def generate_video(filename, frames, fps, results,
 
     save_video(filename, frames, fps)
 
-
+@profile(stream=fp)
 def save_video(filename, frames, fps):
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     out = cv2.VideoWriter(filename, fourcc, fps, frames[0].shape[::-1][1:3])
@@ -451,9 +454,16 @@ def save_video(filename, frames, fps):
     # requires temp so original not overwritten
     converted_file = 'temp.mp4'
     # Convert file so we can stream on s3
-    temp = ['ffmpeg', '-loglevel', '0', '-i', filename,
-            '-codec:v', 'libx264', '-y', converted_file]
-    subprocess.call(temp)
+    ff = FFmpeg(
+        inputs={filename: ['-loglevel', '0']},
+        outputs={converted_file: ['-codec:v', 'libx264', '-y']}
+    )
+    print(ff.cmd)
+    ff.run()
+
+    # temp = ['ffmpeg', '-loglevel', '0', '-i', filename,
+    #         '-codec:v', 'libx264', '-y', converted_file]
+    # subprocess.call(temp)
     # upload video..
     s3.upload_file(
         converted_file, config.S3_BUCKET,
