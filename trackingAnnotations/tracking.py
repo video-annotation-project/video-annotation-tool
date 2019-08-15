@@ -154,6 +154,7 @@ def upload_image(frame_num, frame, frame_w_box,
 
 
 def upload_video(priorFrames, postFrames):
+    completed = False
     # Combine all frames
     priorFrames.extend(postFrames)
 
@@ -168,7 +169,7 @@ def upload_video(priorFrames, postFrames):
     temp = ['ffmpeg', '-loglevel', '0', '-i', output_file,
             '-codec:v', 'libx264', '-y', converted_file]
     subprocess.call(temp)
-    os.system('rm ' + output_file)
+
     if os.path.isfile(converted_file):
         # upload video..
         s3.upload_file(
@@ -178,10 +179,11 @@ def upload_video(priorFrames, postFrames):
             ExtraArgs={'ContentType': 'video/mp4'}
         )
         os.system('rm ' + converted_file)
+        completed = True
     else:
         print("Failed to make video for annotations: " + str(id))
-        return False
-    return True
+    os.system('rm ' + output_file)
+    return completed
 
 
 def matchS3Frame(priorFrames, postFrames, s3Image):
@@ -211,15 +213,15 @@ def fix_offset(priorFrames, postFrames, s3Image, fps, timeinvideo,
         # No change necessary
         return priorFrames, postFrames
     elif best_score > .9:
-        best_time = round(timeinvideo + (best_index / fps), 2)
-        best_frame = frame_num + best_index
+        timeinvideo = round(timeinvideo + (best_index / fps), 2)
+        frame_num = frame_num + best_index
         cursor.execute(
             '''
                 UPDATE annotations
                 SET framenum=%d, timeinvideo=%f, originalid=NULL
                 WHERE id= %d;
             ''',
-            (best_frame, best_time, id,))
+            (frame_num, timeinvideo, id,))
         con.commit()
     else:
         print(
@@ -235,7 +237,7 @@ def fix_offset(priorFrames, postFrames, s3Image, fps, timeinvideo,
         tempFrames = priorFrames[best_index - 1:]
         postFrames = tempFrames + postFrames
         del priorFrames[best_index:]
-    return priorFrames, postFrames
+    return priorFrames, postFrames, timeinvideo, frame_num
 
 
 def track_object(frame_num, frames, box, track_forward, end,
@@ -306,8 +308,9 @@ def track_annotation(id, conceptid, timeinvideo, videoid, image,
     postFrames, fps, frame_num = getVideoFrames(url, start, end)
 
     # Fix weird javascript video currentTime randomization
-    fix_offset(priorFrames, postFrames, s3Image, fps,
-               timeinvideo, frame_num, id, cursor, con)
+    priorFrames, postFrames, timeinvideo, frame_num = fix_offset(
+        priorFrames, postFrames, s3Image, fps,
+        timeinvideo, frame_num, id, cursor, con)
 
     # tracking forwards..
     postFrames = track_object(
