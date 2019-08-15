@@ -6,9 +6,9 @@ from psycopg2 import connect
 from botocore.exceptions import ClientError
 import boto3
 
-from evaluate_prediction_vid import evaluate
-from train import train_model
-import config
+from predict.evaluate_prediction_vid import evaluate
+from train.train import train_model
+import config.config
 
 from utils.query import s3, con, cursor, pd_query
 

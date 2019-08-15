@@ -2,7 +2,7 @@ import pandas as pd
 from psycopg2 import connect
 import boto3
 
-import config
+import config.config
 
 con = connect(
     database=config.DB_NAME,

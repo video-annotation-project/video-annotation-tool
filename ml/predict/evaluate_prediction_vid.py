@@ -6,7 +6,7 @@ import boto3
 from psycopg2 import connect
 
 import predict
-import config
+import config.config
 from utils.query import cursor, s3, con
 
 

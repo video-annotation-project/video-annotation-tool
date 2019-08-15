@@ -17,7 +17,7 @@ from psycopg2 import connect
 
 from preprocessing.annotation_generator import get_classmap
 
-import config
+import config.config
 from utils.query import s3, cursor, pd_query, con
 
 

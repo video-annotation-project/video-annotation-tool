@@ -4,7 +4,7 @@ import cv2
 import boto3
 from dotenv import load_dotenv
 from pgdb import connect
-import config
+import config.config
 from query import cursor, s3, con
 
 # get video name
