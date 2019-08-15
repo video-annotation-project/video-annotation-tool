@@ -211,7 +211,7 @@ def fix_offset(priorFrames, postFrames, s3Image, fps, timeinvideo,
     best_score, best_index = matchS3Frame(priorFrames, postFrames, s3Image)
     if best_index == 0:
         # No change necessary
-        return priorFrames, postFrames
+        return priorFrames, postFrames, timeinvideo, frame_num
     elif best_score > .9:
         timeinvideo = round(timeinvideo + (best_index / fps), 2)
         frame_num = frame_num + best_index
