@@ -11,7 +11,8 @@ router.patch(
       UPDATE
         training_progress
       SET
-        stop_flag = True
+        stop_flag = True,
+        status = 2
       RETURNING *
     `;
 
@@ -19,7 +20,29 @@ router.patch(
       let result = await psql.query(queryText);
       if (result) {
         res.status(200).json(result.rows);
-      }
+      }a
+    } catch (error) {
+      res.json(error);
+    }
+  }
+);
+
+router.patch(
+  '/reset',
+  passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    const resetTraining = `
+      UPDATE
+        training_progress
+      SET
+        status = 0
+    `;
+
+    const resetPredicting = `DELETE FROM predict_progress;`;
+
+    try {
+      await psql.query(resetTraining);
+      await psql.query(resetPredicting);
     } catch (error) {
       res.json(error);
     }
@@ -52,11 +75,7 @@ router.post(
             SET 
               status = 0`;
 
-      const predictStop = `
-            UPDATE 
-              predict_progress
-            SET 
-              status = 0`;
+      const predictStop = `DELETE FROM predict_progress`;
 
       await psql.query(trainingStop);
       await psql.query(predictStop);
@@ -89,12 +108,13 @@ router.put(
       include_tracking=$6 `;
 
     try {
+      console.log(req.body);
       let response = await psql.query(queryText, [
         req.body.epochs,
         req.body.minImages,
         req.body.modelSelected,
         req.body.annotationCollections,
-        req.body.verifiedOnly.
+        req.body.verifiedOnly,
         req.body.includeTracking
       ]);
       res.json(response.rows);
@@ -122,7 +142,6 @@ router.get(
   }
 );
 
-
 // TODO: figure out trainmodel then document this
 
 router.get(
@@ -135,25 +154,6 @@ router.get(
       res.json(response.rows);
     } catch (error) {
       console.log('Error on GET /api/models');
-      console.log(error);
-      res.status(500).json(error);
-    }
-  }
-);
-
-router.put(
-  '/:option',
-  passport.authenticate('jwt', { session: false }),
-  async (req, res) => {
-    const queryText = `UPDATE modeltab SET info = $1 WHERE option = $2`;
-    try {
-      let response = await psql.query(queryText, [
-        req.body.info,
-        req.params.option
-      ]);
-      res.json(response.rows);
-    } catch (error) {
-      console.log('Error on put /api/models');
       console.log(error);
       res.status(500).json(error);
     }

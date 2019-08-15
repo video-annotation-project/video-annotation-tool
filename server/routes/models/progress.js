@@ -60,11 +60,7 @@ router.get(
   async (req, res) => {
     const queryText = `
     SELECT 
-      *,
-      (SELECT verificationvideos
-      FROM models 
-      WHERE name=(SELECT model FROM model_params WHERE option='train'))
-      as totalvideos
+      *
     FROM 
       predict_progress 
     LIMIT 1
@@ -72,9 +68,11 @@ router.get(
     try {
       let response = await psql.query(queryText);
       let returnValue = response.rows[0];
-      returnValue.currentVideo =
-        returnValue.totalvideos.indexOf(returnValue.videoid) + 1;
-      res.json(returnValue);
+      if (returnValue) {
+        res.json(returnValue);
+      } else {
+        res.json('not loaded');
+      }
     } catch (error) {
       console.log('Error on GET /api/models');
       console.log(error);

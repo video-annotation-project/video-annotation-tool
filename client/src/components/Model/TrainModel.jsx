@@ -108,6 +108,9 @@ const styles = theme => ({
   }
 });
 
+const paramFields = ['epochs', 'minImages', 'modelSelected', 
+    'annotationCollections', 'includeTracking', 'verifiedOnly']
+
 function ModelsForm(props) {
   const { className, modelSelected, handleChange, models } = props;
   return (
@@ -194,7 +197,6 @@ class EpochsField extends Component {
 class ImagesField extends Component {
 
   render() {
-
     return (
       <TextField
         margin="normal"
@@ -242,6 +244,8 @@ class TrainModel extends Component {
       verifiedOnly: false,
       infoDialogOpen: false,
       openedVideo: null,
+      epochs: '',
+      minImages: '',
       ready: false,
     };
   }
@@ -378,9 +382,9 @@ class TrainModel extends Component {
 
   // Used to handle changes in the hyperparameters and in the select model
   handleChange = event => {
+    event.persist();
     this.setState({
       [event.target.name]: event.target.value,
-      ready: this.checkReady()
     }, () => {   
         if (event.target.name === 'modelSelected'){
           this.loadCollectionList();
@@ -389,18 +393,9 @@ class TrainModel extends Component {
     );
   };
 
-  handleChangeMultiple = event => {
-    const options = event.target.value;
-    const values = [];
-    for (let i = 0, l = options.length; i < l; i += 1) {
-      values.push(options[i]);
-    }
-  };
-
   handleStop = () => {
     this.setState(
       {
-        activeStep: 0
       },
       () => {
         this.postModelInstance('stop');
@@ -431,7 +426,7 @@ class TrainModel extends Component {
     }
     this.setState(
       {
-        annotationCollections: value
+        annotationCollections: value, 
       },
       () => {
         this.getCollectionCounts();
@@ -543,14 +538,69 @@ class TrainModel extends Component {
   };
 
   startTraining = async () => {
+    await this.updateModelParams();
+    this.postModelInstance();
+  }
 
+  stopTraining = () => {
     try {
-      const res = await axios.get(`/api/models/train/`, {
+      const config = {
         headers: {
-          'Content-Type': 'application/json',
           Authorization: `Bearer ${localStorage.getItem('token')}`
-        },
-      });
+        }
+      };
+      
+      return axios.patch('/api/models/train/stop', config);  
+
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  resetTraining = () => {
+    try {
+      const config = {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      };
+      
+      return axios.patch('/api/models/train/reset', {}, config);  
+
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+
+  updateModelParams = async () => {
+    try {
+      const config = {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      };
+
+      const { 
+        epochs, 
+        minImages, 
+        annotationCollections, 
+        modelSelected, 
+        verifiedOnly, 
+        includeTracking 
+      } = this.state;
+
+      const body = {
+        epochs,
+        minImages,
+        includeTracking,
+        verifiedOnly,
+        annotationCollections: annotationCollections.map((c) => c.id),
+        modelSelected: modelSelected,
+      };
+      
+      return axios.put('/api/models/train', body, config);
+
     } catch (error) {
       console.log(error);
     }
@@ -558,13 +608,12 @@ class TrainModel extends Component {
 
   checkReady = () => {
 
-    const paramFields = ['epochs', 'minImages', 'modelSelected', 
-        'annotationCollections', 'includeTracking', 'verifiedOnly']
-
     for (const key of paramFields){
       if (!this.state.hasOwnProperty(key) 
           || this.state[key] === null
-          || this.state[key] === undefined){
+          || this.state[key] === undefined
+          || (Array.isArray(this.state[key]) && this.state[key].length === 0)
+          || this.state[key] === ''){
         return false;
       }
     }
@@ -583,6 +632,8 @@ class TrainModel extends Component {
       selectedCollectionCounts,
       includeTracking,
       verifiedOnly,
+      epochs,
+      minImages,
       minCounts
     } = this.state;
 
@@ -605,12 +656,12 @@ class TrainModel extends Component {
               />
               <EpochsField 
                 className="epochsField" 
-                epochs={this.state.epochs} 
+                epochs={epochs} 
                 onChange={this.handleChange}
               />
               <ImagesField 
                 className="imagesField" 
-                minImages={this.state.minImages} 
+                minImages={minImages} 
                 onChange={this.handleChange}
                 getImageRange={this.getImageRange}
               />
@@ -666,7 +717,10 @@ class TrainModel extends Component {
               handleStop={this.handleStop}
               postStopFlag={this.postStopFlag}
               startTraining={this.startTraining}
-              ready={this.state.ready}
+              onStop={this.stopTraining}
+              onReset={this.resetTraining}
+              onTerminate={() => this.postModelInstance('stop')}
+              onReady={this.checkReady}
             />
           </div>
         </Paper>

@@ -88,9 +88,17 @@ train_model(
 # Just to be sure in case of web app not deleting the progress
 cursor.execute("""DELETE FROM predict_progress""")
 con.commit()
+cursor.execute('''
+    INSERT INTO predict_progress (videoid, current_video, total_videos)
+    VALUES (%s, %s, %s)''', (0, 0, len(verifyVideos))
+               )
+con.commit()
 # Run evaluate on all the videos in verifyVideos
 # Using for loop due to memory issues
 for video_id in verifyVideos:
+    cursor.execute(
+        '''UPDATE predict_progress SET current_video = current_video + 1''')
+    con.commit()
     evaluate(video_id, user_model, concepts)
 
 cursor.execute(
