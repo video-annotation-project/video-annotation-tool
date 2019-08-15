@@ -212,13 +212,12 @@ class ModelProgress extends Component {
         });
         return;
       }
-      const totalVideos = predictionsData.length;
-      const { currentVideo } = predictionsData;
-      const totalFrames = currentVideo.totalframe;
-      const currentVideoNum = currentVideo.currentVideo;
-      const currentFrame = currentVideo.framenum;
-      const predictStatus = currentVideo.status;
-      const videoProgress = (currentVideo.videoNum / totalVideos) * 100;
+      const totalVideos = predictionsData.total_videos;
+      const currentVideoNum = predictionsData.current_video;
+      const totalFrames = predictionsData.totalframe;
+      const currentFrame = predictionsData.framenum;
+      const predictStatus = predictionsData.status;
+      const videoProgress = (currentVideoNum / totalVideos) * 100;
       const predictionProgress = (currentFrame / totalFrames) * 100;
 
       this.setState({
