@@ -226,7 +226,7 @@ class ConceptsSelected extends React.Component {
     if (draggedConcept) {
       return;
     }
-    event.currentTarget.style.backgroundColor = 'lightgrey';
+    event.currentTarget.style.backgroundColor = 'lightgray';
   };
 
   onMouseLeave = event => {
@@ -234,7 +234,7 @@ class ConceptsSelected extends React.Component {
     if (draggedConcept) {
       return;
     }
-    event.currentTarget.style.backgroundColor = 'white';
+    event.currentTarget.style.backgroundColor = '#132232';
   };
 
   render() {
@@ -326,7 +326,7 @@ class ConceptsSelected extends React.Component {
             zIndex: 1,
             top: 0,
             right: 0,
-            backgroundColor: 'white',
+            backgroundColor: '#132232',
             overflowX: 'hidden',
             transition: '0.3s'
           }}

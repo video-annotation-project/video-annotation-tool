@@ -671,7 +671,7 @@ class VerifyAnnotations extends Component {
                       id="video"
                       width="1300"
                       height="730"
-                      src={`https://cdn.deepseaannotations.com/videos/${annotation.id}_track.mp4`}
+                      src={`https://cdn.deepseaannotations.com/videos/${annotation.id}_tracking.mp4`}
                       type="video/mp4"
                       controls
                     >

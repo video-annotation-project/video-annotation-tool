@@ -24,13 +24,12 @@ class Progress(keras.callbacks.Callback):
                     job_id=%s,
                     status=1,
                     curr_epoch=0,
-                    max_epoch%=%s,
+                    max_epoch=%s,
                     curr_batch=0,
                     steps_per_epoch=%s
-                RETURNING id""",
+                """,
             (self.job_id, self.max_epoch, self.steps_per_epoch))
 
-        self.run_id = self.cursor.fetchone()[0]
         self.connection.commit()
 
     def on_train_end(self, logs={}):

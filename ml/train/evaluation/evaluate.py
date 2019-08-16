@@ -1,7 +1,7 @@
-from evaluation.model_scoring import f1_evaluation
+from train.evaluation.model_scoring import f1_evaluation
 from keras_retinanet.models import convert_model
 
-import config
+import config.config
 
 
 def evaluate_class_thresholds(model, generator):

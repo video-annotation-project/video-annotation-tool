@@ -2,19 +2,19 @@ import os
 import time
 import subprocess
 
-from psycopg2 import connect
 from botocore.exceptions import ClientError
-import boto3
 
-from evaluate_prediction_vid import evaluate
-from train import train_model
-import config
+from predict.evaluate_prediction_vid import evaluate
+from train.train import train_model
+import config.config
 
 from utils.query import s3, con, cursor, pd_query
 
 # get annotations from test
-model_params = pd_query("""
-    SELECT * FROM model_params WHERE option='train'""").iloc[0]
+model_params = pd_query(
+    """
+    SELECT * FROM model_params WHERE option='train'"""
+).iloc[0]
 
 try:
     s3.download_file(
@@ -29,22 +29,23 @@ except ClientError:
         config.WEIGHTS_PATH,
     )
 
-model = pd_query('''SELECT * FROM models WHERE name=%s''',
-                 (str(model_params['model']),)).iloc[0]
+model = pd_query(
+    """SELECT * FROM models WHERE name=%s""", (str(model_params["model"]),)
+).iloc[0]
 
 # model = cursor.fetchone()
-concepts = model['concepts']
-verifyVideos = model['verificationvideos']
+concepts = model["concepts"]
+verifyVideos = model["verificationvideos"]
 
-user_model = model['name'] + "-" + time.ctime()
+user_model = model["name"] + "-" + time.ctime()
 
 # Delete old model user
-if model['userid'] != None:
+if model["userid"] != None:
     cursor.execute(
         """
          DELETE FROM users
          WHERE id=%s""",
-        (model['userid'],),
+        (int(model["userid"]),),
     )
 
 cursor.execute(
@@ -68,6 +69,7 @@ cursor.execute(
 
 # Start training job
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
+
 train_model(
     concepts,
     verifyVideos,
@@ -87,16 +89,19 @@ train_model(
 # Just to be sure in case of web app not deleting the progress
 cursor.execute("""DELETE FROM predict_progress""")
 con.commit()
-cursor.execute('''
+cursor.execute(
+    """
     INSERT INTO predict_progress (videoid, current_video, total_videos)
-    VALUES (%s, %s, %s)''', (0, 0, len(verifyVideos))
-               )
+    VALUES (%s, %s, %s)""",
+    (0, 0, len(verifyVideos)),
+)
 con.commit()
 # Run evaluate on all the videos in verifyVideos
 # Using for loop due to memory issues
 for video_id in verifyVideos:
     cursor.execute(
-        '''UPDATE predict_progress SET current_video = current_video + 1''')
+        f"""UPDATE predict_progress SET videoid = {video_id}, current_video = current_video + 1"""
+    )
     con.commit()
     evaluate(video_id, user_model, concepts)
 

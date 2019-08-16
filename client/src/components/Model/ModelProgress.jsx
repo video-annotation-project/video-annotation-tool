@@ -66,7 +66,7 @@ class ModelProgress extends Component {
   };
 
   TrainingStatus = () => {
-    const { onTerminate, onReady, onStop, onReset, startTraining } = this.props;
+    const { handleTerminate, onReady, stopTraining, handleReset, startTraining } = this.props;
     const {
       currentEpoch,
       stepsPerEpoch,
@@ -109,7 +109,7 @@ class ModelProgress extends Component {
           </div>
           <div hidden={this.getButtonStatus() !== 1}>
             <Button
-              onClick={onStop}
+              onClick={stopTraining}
               variant="contained"
               color="secondary"
               className="stopButton"
@@ -117,7 +117,7 @@ class ModelProgress extends Component {
               Stop Training
             </Button>
             <Button
-              onClick={onTerminate}
+              onClick={handleTerminate}
               variant="contained"
               className="terminateButton"
             >
@@ -125,7 +125,7 @@ class ModelProgress extends Component {
             </Button>
           </div>
           <div hidden={this.getButtonStatus() !== 2}>
-            <Button onClick={onReset} variant="contained" color="primary">
+            <Button onClick={handleReset} variant="contained" color="primary">
               Reset Training
             </Button>
           </div>

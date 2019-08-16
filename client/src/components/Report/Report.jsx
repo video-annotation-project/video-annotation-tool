@@ -8,7 +8,7 @@ import ReportTree from './ReportTree';
 const styles = theme => ({
   root: {
     width: '100%',
-    backgroundColor: theme.palette.background.paper
+    backgroundColor: '#132232'
   },
   openSelector: {
     position: 'sticky',

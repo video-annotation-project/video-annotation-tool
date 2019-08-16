@@ -11,7 +11,7 @@
 
 .container {
   display: flex;
-  height: 760px;
+  height: 780px;
   padding: 20px;
   flex-direction: column;
 }

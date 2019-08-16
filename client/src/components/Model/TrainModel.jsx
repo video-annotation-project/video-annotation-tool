@@ -178,37 +178,36 @@ function CollectionsForm(props) {
   );
 }
 
-class EpochsField extends Component {
+function EpochsField(props) {
 
-  render() {
-    return (
-      <TextField
-        margin="normal"
-        className={this.props.className}
-        name="epochs"
-        label="Epochs"
-        value={this.props.epochs}
-        onChange={this.props.onChange}
-      />
-    );
-  }
+  const { className, epochs, onChange } = props;
+  return (
+    <TextField
+      margin="normal"
+      className={className}
+      name="epochs"
+      label="Epochs"
+      value={epochs}
+      onChange={onChange}
+    />
+  );
 }
 
-class ImagesField extends Component {
+function ImagesField(props) {
 
-  render() {
-    return (
-      <TextField
-        margin="normal"
-        className={this.props.className}
-        name="minImages"
-        label="# of Images"
-        value={this.props.minImages}
-        onChange={this.props.onChange}
-        helperText={this.props.getImageRange()}
-      />
-    );
-  }
+  const { className, minImages, onChange, getImageRange } = props;
+
+  return (
+    <TextField
+      margin="normal"
+      className={className}
+      name="minImages"
+      label="# of Images"
+      value={minImages}
+      onChange={onChange}
+      helperText={getImageRange()}
+    />
+  );
 }
 
 class TrainModel extends Component {
@@ -338,7 +337,7 @@ class TrainModel extends Component {
 
         let modelConcepts;
 
-        if (this.state.modelSelected === undefined){
+        if (modelSelected === undefined){
           modelConcepts = [];
         } else {
           modelConcepts = selectedModelTuple.conceptsid;
@@ -385,13 +384,20 @@ class TrainModel extends Component {
     event.persist();
     this.setState({
       [event.target.name]: event.target.value,
-    }, () => {   
+    }, () => {  
         if (event.target.name === 'modelSelected'){
           this.loadCollectionList();
         }
       }
     );
   };
+
+  handleChangeSwitch = event => {
+    event.persist();
+    this.setState({
+      [event.target.value]: event.target.checked,
+    });
+  }
 
   handleStop = () => {
     this.setState(
@@ -538,7 +544,11 @@ class TrainModel extends Component {
   };
 
   startTraining = async () => {
-    await this.updateModelParams();
+    try {
+      await this.updateModelParams();
+    } catch (error){
+      console.log(error);
+    }
     this.postModelInstance();
   }
 
@@ -550,7 +560,7 @@ class TrainModel extends Component {
         }
       };
       
-      return axios.patch('/api/models/train/stop', config);  
+      axios.patch('/api/models/train/stop', config);  
 
     } catch (error) {
       console.log(error);
@@ -565,7 +575,7 @@ class TrainModel extends Component {
         }
       };
       
-      return axios.patch('/api/models/train/reset', {}, config);  
+      axios.patch('/api/models/train/reset', {}, config);  
 
     } catch (error) {
       console.log(error);
@@ -574,50 +584,45 @@ class TrainModel extends Component {
 
 
   updateModelParams = async () => {
-    try {
-      const config = {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
-      };
+    const config = {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    };
 
-      const { 
-        epochs, 
-        minImages, 
-        annotationCollections, 
-        modelSelected, 
-        verifiedOnly, 
-        includeTracking 
-      } = this.state;
+    const { 
+      epochs, 
+      minImages, 
+      annotationCollections, 
+      modelSelected, 
+      verifiedOnly, 
+      includeTracking 
+    } = this.state;
 
-      const body = {
-        epochs,
-        minImages,
-        includeTracking,
-        verifiedOnly,
-        annotationCollections: annotationCollections.map((c) => c.id),
-        modelSelected: modelSelected,
-      };
-      
-      return axios.put('/api/models/train', body, config);
-
-    } catch (error) {
-      console.log(error);
-    }
+    const body = {
+      epochs,
+      minImages,
+      includeTracking,
+      verifiedOnly,
+      modelSelected,
+      annotationCollections: annotationCollections.map((c) => c.id),
+    };
+    
+    return axios.put('/api/models/train', body, config);
   }
 
   checkReady = () => {
+    const { state } = this;
 
-    for (const key of paramFields){
-      if (!this.state.hasOwnProperty(key) 
-          || this.state[key] === null
-          || this.state[key] === undefined
-          || (Array.isArray(this.state[key]) && this.state[key].length === 0)
-          || this.state[key] === ''){
-        return false;
-      }
-    }
-    return true;
+    const notReady = paramFields.find((key) => {
+      return (!Object.prototype.hasOwnProperty.call(state, key)
+        || state[key] === null
+        || state[key] === undefined
+        || (Array.isArray(state[key]) && state[key].length === 0)
+        || state[key] === '');
+    });
+
+    return !notReady;
   }
 
   render() {
@@ -714,12 +719,11 @@ class TrainModel extends Component {
             <Divider style={{ marginTop: '30px' }} variant="middle" />
             <ModelProgress
               className="progress"
-              handleStop={this.handleStop}
               postStopFlag={this.postStopFlag}
               startTraining={this.startTraining}
-              onStop={this.stopTraining}
-              onReset={this.resetTraining}
-              onTerminate={() => this.postModelInstance('stop')}
+              stopTraining={this.stopTraining}
+              resetTraining={this.resetTraining}
+              terminateTraining={() => this.postModelInstance('stop')}
               onReady={this.checkReady}
             />
           </div>

@@ -35,7 +35,9 @@ router.patch(
       UPDATE
         training_progress
       SET
-        status = 0
+        status = 0,
+        std_out='',
+        std_err=''
     `;
 
     const resetPredicting = `DELETE FROM predict_progress;`;
@@ -73,7 +75,9 @@ router.post(
             UPDATE 
               training_progress
             SET 
-              status = 0`;
+              status = 0,
+              std_out = '',
+              std_err = ''`;
 
       const predictStop = `DELETE FROM predict_progress`;
 

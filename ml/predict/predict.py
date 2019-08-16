@@ -1,22 +1,17 @@
 import copy
 import os
-import subprocess
-import json
+import uuid
+import datetime
 
 import cv2
 import numpy as np
-import boto3
 import pandas as pd
-import uuid
-import psycopg2
-import datetime
-from dotenv import load_dotenv
 from keras_retinanet.models import convert_model
 from keras_retinanet.models import load_model
-from psycopg2 import connect
 import subprocess
 
-import config
+import config.config
+from train.preprocessing.annotation_generator import get_classmap
 from utils.query import s3, cursor, pd_query, con
 from ffmpy import FFmpeg
 from memory_profiler import profile
@@ -159,7 +154,9 @@ def predict_on_video(videoid, model_weights, concepts, filename,
 
     printing_with_time("Predicting")
     results, frames = predict_frames(frames, fps, model, videoid)
+    print(results + " this is first one")
     results = propagate_conceptids(results, concepts)
+    print(results + " this is second one")
     results = length_limit_objects(results, config.MIN_FRAMES_THRESH)
     # interweb human annotations and predictions
     printing_with_time("Generating Video")
@@ -395,6 +392,7 @@ def propagate_conceptids(annotations, concepts):
 
 
 def length_limit_objects(pred, frame_thresh):
+    print(pred)
     obj_len = pred.groupby('objectid').label.value_counts()
     len_thresh = obj_len[obj_len > frame_thresh]
     return pred[[(obj in len_thresh) for obj in pred.objectid]]
@@ -577,9 +575,8 @@ def upload_predict_progress(count, videoid, total_count, status):
     if (count == 0):
         cursor.execute('''
             UPDATE predict_progress
-            SET framenum=%s, status=%s, totalframe=%s
-            WHERE videoid=%s''',
-                       (count, status, total_count, videoid,))
+            SET framenum=%s, status=%s, totalframe=%s''',
+                       (count, status, total_count,))
         con.commit()
         return
 
@@ -587,9 +584,8 @@ def upload_predict_progress(count, videoid, total_count, status):
         count = -1
     cursor.execute('''
         UPDATE predict_progress
-        SET framenum=%s
-        WHERE videoid=%s''',
-                   (count, videoid,)
+        SET framenum=%s''',
+                   (count,)
                    )
     con.commit()
 

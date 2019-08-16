@@ -1,4 +1,5 @@
 import sys
+
 from io import TextIOWrapper
 
 from utils.query import query

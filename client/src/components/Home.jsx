@@ -33,7 +33,7 @@ const styles = theme => ({
     flexWrap: 'wrap'
   },
   formControl: {
-    marginRight: theme.spacing(2),
+    marginLeft: theme.spacing(2),
     marginBottom: theme.spacing(2),
     minWidth: 120
   }

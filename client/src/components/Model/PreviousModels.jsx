@@ -208,7 +208,7 @@ class PreviousModels extends Component {
             {runs.map(run => (
               <TableRow key={run.id}>
                 <CustomTableCell component="th" scope="row">
-                  {run.id}
+                  {run.job_id}
                 </CustomTableCell>
                 <CustomTableCell align="right">
                   {run.model_name}
@@ -225,7 +225,7 @@ class PreviousModels extends Component {
                   {run.annotations ? run.annotations.join(', ') : ''}
                 </CustomTableCell>
                 <CustomTableCell align="right">
-                  {launched === run.id ? (
+                  {launched === run.job_id ? (
                     <div className={classes.running}>
                       <Button
                         variant="contained"
@@ -248,10 +248,10 @@ class PreviousModels extends Component {
                       variant="contained"
                       size="small"
                       color="default"
-                      onClick={() => this.launchTensorboard(run.id)}
+                      onClick={() => this.launchTensorboard(run.job_id)}
                       style={{ width: 80 }}
                     >
-                      {loadingId === run.id ? (
+                      {loadingId === run.job_id ? (
                         <CircularProgress size={20} />
                       ) : (
                         'Launch'

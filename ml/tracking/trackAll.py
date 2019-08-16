@@ -8,7 +8,7 @@ import datetime
 import math
 import json
 
-load_dotenv(dotenv_path="../.env")
+load_dotenv(dotenv_path="../../.env")
 
 # aws stuff
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
@@ -24,7 +24,7 @@ DB_HOST = os.getenv("DB_HOST")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 
-config_path = "../config.json"
+config_path = "../../config.json"
 with open(config_path) as config_buffer:
     config = json.loads(config_buffer.read())['ml']
 
@@ -38,7 +38,7 @@ def annotationMap(id, conceptid, timeinvideo, videoid, image,
     cursor = con.cursor()
     '''
     results = s3.list_objects(
-        Bucket=S3_BUCKET, Prefix=S3_VIDEO_FOLDER + str(i.id) + "_track.mp4")
+        Bucket=S3_BUCKET, Prefix=S3_VIDEO_FOLDER + str(i.id) + "_tracking.mp4")
     if 'Contents' in results:
         continue
     '''
