@@ -88,12 +88,7 @@ class SelectUser extends React.Component {
               <FormControlLabel
                 key={user.id}
                 value={user.id.toString()}
-                control={
-                  <Checkbox
-                    labelStyle={{ color: 'white' }}
-                    iconStyle={{ fill: 'white' }}
-                  />
-                }
+                control={<Checkbox color="secondary" />}
                 label={user.username}
                 checked={value.includes(user.id.toString())}
               />

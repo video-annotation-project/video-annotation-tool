@@ -3,123 +3,20 @@ import ReactDOM from 'react-dom';
 import { BrowserRouter } from 'react-router-dom';
 import { createMuiTheme } from '@material-ui/core/styles';
 import { ThemeProvider } from '@material-ui/styles';
-// import './index.css';
 import CssBaseline from '@material-ui/core/CssBaseline';
-
 import App from './App';
+import theme from './theme';
 
-const background = '#132232';
-const primary = '#274769';
-const secondary = '#1b324c';
-
-const theme = createMuiTheme({
-  palette: {
-    type: 'dark',
-    primary: {
-      text: 'white',
-      main: primary
-    },
-    secondary: {
-      text: 'white',
-      main: secondary
-    },
-    background: {
-      paper: background,
-      default: background
-    }
-  }
-  // props: {
-  //   MuiTable: {
-  //     stripedRows: true
-  //   },
-  //   MuiTextField: {
-  //     variant: 'filled'
-  //   }
-  // },
-  // overrides: {
-  //   // Style sheet name ⚛️
-  //   MuiButton: {
-  //     root: {
-  //       color: secondary
-  //     }
-  //   },
-  //   MuiTable: {
-  //     root: {
-  //       color: 'white',
-  //       backgroundColor: background
-  //     }
-  //   },
-  //   MuiTableRow: {
-  //     root: {
-  //       color: 'white'
-  //     }
-  //   },
-  //   MuiTableCell: {
-  //     root: {
-  //       color: 'white',
-  //       border: 'none'
-  //     },
-  //     head: {
-  //       border: 'none'
-  //     },
-  //     body: {
-  //       border: 'none'
-  //     }
-  //   },
-  //   MuiPaper: {
-  //     root: {
-  //       backgroundColor: secondary
-  //     }
-  //   },
-  //   MuiTypography: {
-  //     colorTextPrimary: {
-  //       color: 'white'
-  //     },
-  //     root: {
-  //       color: 'white'
-  //     }
-  //   },
-  //   MuiStepIcon: {
-  //     root: {
-  //       color: 'white'
-  //     }
-  //   },
-  //   MuiStepLabel: {
-  //     active: {
-  //       color: 'white'
-  //     },
-  //     label: {
-  //       color: 'white'
-  //     }
-  //   },
-  //   MuiMenuItem: {
-  //     gutters: {
-  //       color: 'white'
-  //     }
-  //   },
-  //   MuiButtonBase: {
-  //     root: {
-  //       color: primary
-  //     }
-  //   },
-  //   MuiCheckbox: {
-  //     colorSecondary: {
-  //       Mui: {
-  //         checked: {
-  //           fill: 'white'
-  //         }
-  //       }
-  //     }
-  //   }
-  // }
-});
+const darkTheme = createMuiTheme(theme);
 
 ReactDOM.render(
-  <ThemeProvider theme={theme}>
-    <CssBaseline />
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
+  <ThemeProvider theme={darkTheme}>
+    <React.Fragment>
+      <CssBaseline />
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    </React.Fragment>
   </ThemeProvider>,
   document.getElementById('root')
 );

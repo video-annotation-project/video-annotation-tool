@@ -55,7 +55,7 @@ class SelectAnnotationCollection extends React.Component {
               <FormControlLabel
                 key={collection.id}
                 value={collection.id.toString()}
-                control={<Checkbox color="primary" />}
+                control={<Checkbox color="secondary" />}
                 label={collection.name}
                 checked={value.includes(collection.id.toString())}
               />

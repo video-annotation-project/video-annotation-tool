@@ -62,7 +62,7 @@
 .terminateButton {
   height: 40px !important;
   color: white !important;
-  background-color: #6e0101 !important;
+  background-color: rgb(255, 60, 0) !important;
 }
 
 .predictProgress {
