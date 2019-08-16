@@ -13,8 +13,9 @@ import ConceptsSelected from './Utilities/ConceptsSelected';
 import DialogModal from './Utilities/DialogModal';
 import VideoList from './Utilities/VideoList';
 import DragBoxContainer from './Utilities/DragBoxContainer';
+import Paper from '@material-ui/core/Paper';
 
-const styles = () => ({
+const styles = theme => ({
   videoContainer: {
     top: '50px',
     width: '1600px',
@@ -30,6 +31,9 @@ const styles = () => ({
     marginTop: '10px',
     marginLeft: '20px',
     marginBottom: '10px'
+  }, 
+  text: {
+    margin: theme.spacing(2)
   }
 });
 
@@ -464,13 +468,14 @@ class Annotate extends Component {
       dialogMsg
     } = this.state;
     if (!isLoaded) {
-      return <div>Loading...</div>;
+      return <div className={classes.text}>Loading...</div>;
     }
     if (error) {
-      return <div>Error: {error}</div>;
+      return <div className={classes.text}>Error: {error}</div>;
     }
     return (
       <React.Fragment>
+        <Paper>
         <Hotkeys keyName="space, right, left" onKeyDown={this.handleKeyDown} />
         <Grid container className={classes.root} spacing={0}>
           <Grid item xs>
@@ -616,7 +621,8 @@ class Annotate extends Component {
             open
             handleClose={this.handleDialogClose}
           />
-        )}
+          )}
+          </Paper>
       </React.Fragment>
     );
   }
