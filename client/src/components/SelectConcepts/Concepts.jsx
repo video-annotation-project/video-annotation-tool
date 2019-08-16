@@ -5,7 +5,6 @@ import List from '@material-ui/core/List';
 import { Typography } from '@material-ui/core';
 import TextField from '@material-ui/core/TextField';
 import Downshift from 'downshift';
-import Popper from '@material-ui/core/Popper';
 import Paper from '@material-ui/core/Paper';
 import MenuItem from '@material-ui/core/MenuItem';
 
@@ -13,7 +12,7 @@ import ConceptsList from './ConceptsList';
 
 const styles = theme => ({
   root: {
-    width: '100%',
+    width: '100%'
   },
   text: {
     margin: theme.spacing(4)
@@ -184,14 +183,12 @@ class Concepts extends React.Component {
   };
 
   searchConcepts = search => {
+    console.log(search);
     const { concepts } = this.state;
     const conceptsLikeSearch = concepts.filter(concept => {
       return concept.name.match(new RegExp(search, 'i'));
     });
-
-    this.setState({
-      conceptsLikeSearch: conceptsLikeSearch.slice(0, 10)
-    });
+    return conceptsLikeSearch.slice(0, 10);
   };
 
   getConceptInfo = concept => {
@@ -202,53 +199,127 @@ class Concepts extends React.Component {
     return match;
   };
 
-  renderSuggestion = (suggestionProps) => {
-    const { suggestion, index, itemProps, highlightedIndex, selectedItem } = suggestionProps;
+  renderSuggestion = suggestionProps => {
+    const { suggestion, index, itemProps, highlightedIndex } = suggestionProps;
     const isHighlighted = highlightedIndex === index;
-    const isSelected = (selectedItem || '').indexOf(suggestion.label) > -1;
-
     return (
       <MenuItem
         {...itemProps}
         key={suggestion.id}
         selected={isHighlighted}
         component="div"
-        style={{
-          fontWeight: isSelected ? 500 : 400,
-        }}
       >
         {suggestion.name}
       </MenuItem>
     );
-  }
+  };
 
- renderInput = (inputProps) => {
-  const { InputProps, classes, ref, ...other } = inputProps;
+  renderInput = inputProps => {
+    const { InputProps, classes, ref, ...other } = inputProps;
 
-  return (
-    <TextField
-      InputProps={{
-        inputRef: ref,
-        classes: {
-          root: classes.inputRoot,
-          input: classes.inputInput,
-        },
-        ...InputProps,
-      }}
-      {...other}
-    />
-  );
-}
+    return (
+      <TextField
+        InputProps={{
+          inputRef: ref,
+          classes: {
+            root: classes.inputRoot,
+            input: classes.inputInput
+          },
+          ...InputProps
+        }}
+        {...other}
+      />
+    );
+  };
 
-render() {
-    const {
-      error,
-      isLoaded,
-      conceptsSelected,
-      conceptsLikeSearch,
-      conceptPath
-    } = this.state;
+  itemToString = item => {
+    if (item == null) {
+      return '';
+    }
+    return item.name;
+  };
+
+  DownshiftMenu = props => {
+    const { classes } = props;
+
+    return (
+      <Downshift
+        className={classes.input}
+        autoFocus
+        margin="dense"
+        id="concept"
+        type="text"
+        itemToString={this.itemToString}
+      >
+        {({
+          clearSelection,
+          getInputProps,
+          getItemProps,
+          getLabelProps,
+          getMenuProps,
+          highlightedIndex,
+          inputValue,
+          isOpen,
+          openMenu
+        }) => {
+          const { onBlur, onChange, onFocus, ...inputProps } = getInputProps({
+            onChange: event => {
+              if (event.target.value === '') {
+                clearSelection();
+              }
+            },
+            onKeyUp: async e => {
+              if (e.key === 'Enter') {
+                this.setState({
+                  conceptPath: await this.getConceptPath(
+                    this.getConceptInfo(e.target.value).id
+                  )
+                });
+              }
+            },
+            onFocus: openMenu,
+            placeholder: 'Search for concept here',
+            spellCheck: false
+          });
+
+          return (
+            <div className={classes.container}>
+              {this.renderInput({
+                fullWidth: true,
+                classes,
+                label: 'Concept name',
+                InputLabelProps: getLabelProps({ shrink: true }),
+                InputProps: { onBlur, onChange, onFocus },
+                inputProps
+              })}
+
+              <div {...getMenuProps()}>
+                {isOpen ? (
+                  <Paper className={classes.paper} square>
+                    {this.searchConcepts(inputValue).map((suggestion, index) =>
+                      this.renderSuggestion({
+                        suggestion,
+                        index,
+                        itemProps: getItemProps({
+                          item: suggestion
+                        }),
+                        highlightedIndex
+                      })
+                    )}
+                  </Paper>
+                ) : null}
+              </div>
+            </div>
+          );
+        }}
+      </Downshift>
+    );
+  };
+
+  render() {
+    const { error, isLoaded, conceptsSelected, conceptPath } = this.state;
     const { classes } = this.props;
+    const { DownshiftMenu } = this;
     if (!isLoaded) {
       return <List className={classes.text}>Loading...</List>;
     }
@@ -258,7 +329,7 @@ render() {
     return (
       <div className={classes.root}>
         <div className={classes.text}>
-
+          <DownshiftMenu classes={classes} />
           {conceptPath ? <Typography>{conceptPath}</Typography> : ''}
         </div>
         <ConceptsList
@@ -271,78 +342,4 @@ render() {
   }
 }
 
-
-
 export default withStyles(styles)(Concepts);
-
-
-// <Downshift
-//   id="downshift-options"
-//   className={classes.input}
-//   autoFocus
-//   margin="dense"
-//   id="concept"
-//   type="text"
-// >
-//  {({
-    // clearSelection,
-    // getInputProps,
-    // getItemProps,
-    // getLabelProps,
-    // getMenuProps,
-    // highlightedIndex,
-    // inputValue,
-    // isOpen,
-    // openMenu,
-    // selectedItem,
-  // }) => {
-  //   const { onBlur, onChange, onFocus, ...inputProps } = getInputProps({
-  //     onChange: event => {
-  //       if (event.target.value === '') {
-  //         clearSelection();
-  //       }
-  //     },
-  //     handleKeyUp: async e => {
-  //       if (e.key === 'Enter') {
-  //         const conceptPath = await this.getConceptPath(
-  //           this.getConceptInfo(e.target.value).id
-//           );
-//           this.setState({
-//             conceptPath
-//           });
-//         }
-//       },
-//       onFocus: openMenu,
-//       placeholder: 'Concept name',
-//     });
-
-//     return (
-//       <div className={classes.container}>
-//         {this.renderInput({
-//           fullWidth: true,
-//           classes,
-//           label: 'Concepts',
-//           InputLabelProps: getLabelProps({ shrink: true }),
-//           InputProps: { onBlur, onChange, onFocus },
-//           inputProps,
-//         })}
-
-//         <div {...getMenuProps()}>
-//           {isOpen ? (
-//             <Paper className={classes.paper} square>
-//               {this.conceptsLikeSearch(inputValue).map((suggestion, index) =>
-//                 this.renderSuggestion({
-//                   suggestion,
-//                   index,
-//                   itemProps: getItemProps({ item: suggestion.label }),
-//                   highlightedIndex,
-//                   selectedItem,
-//                 }),
-//               )}
-//             </Paper>
-//           ) : null}
-//         </div>
-//       </div>
-//     );
-//   }}
-// </Downshift>
