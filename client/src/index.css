@@ -14,7 +14,3 @@ header {
 tr:nth-child(even) {
   background: #1b324c;
 }
-
-.MuiCheckbox-colorSecondary.Mui-checked {
-  color: 'white';
-}

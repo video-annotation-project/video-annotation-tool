@@ -3,7 +3,9 @@ import ReactDOM from 'react-dom';
 import { BrowserRouter } from 'react-router-dom';
 import { createMuiTheme } from '@material-ui/core/styles';
 import { ThemeProvider } from '@material-ui/styles';
-import './index.css';
+// import './index.css';
+import CssBaseline from '@material-ui/core/CssBaseline';
+
 import App from './App';
 
 const background = '#132232';
@@ -15,104 +17,106 @@ const theme = createMuiTheme({
     type: 'dark',
     primary: {
       text: 'white',
-      main: background
+      main: primary
     },
     secondary: {
       text: 'white',
-      main: primary
+      main: secondary
     },
     background: {
+      paper: background,
       default: background
     }
-  },
-  props: {
-    MuiTable: {
-      stripedRows: true
-    },
-    MuiTextField: {
-      variant: 'filled'
-    }
-  },
-  overrides: {
-    // Style sheet name ⚛️
-    MuiButton: {
-      root: {
-        color: secondary
-      }
-    },
-    MuiTable: {
-      root: {
-        color: 'white',
-        backgroundColor: background
-      }
-    },
-    MuiTableRow: {
-      root: {
-        color: 'white'
-      }
-    },
-    MuiTableCell: {
-      root: {
-        color: 'white',
-        border: 'none'
-      },
-      head: {
-        border: 'none'
-      },
-      body: {
-        border: 'none'
-      }
-    },
-    MuiPaper: {
-      root: {
-        backgroundColor: secondary
-      }
-    },
-    MuiTypography: {
-      colorTextPrimary: {
-        color: 'white'
-      },
-      root: {
-        color: 'white'
-      }
-    },
-    MuiStepIcon: {
-      root: {
-        color: 'white'
-      }
-    },
-    MuiStepLabel: {
-      active: {
-        color: 'white'
-      },
-      label: {
-        color: 'white'
-      }
-    },
-    MuiMenuItem: {
-      gutters: {
-        color: 'white'
-      }
-    },
-    MuiButtonBase: {
-      root: {
-        color: primary
-      }
-    },
-    MuiCheckbox: {
-      colorSecondary: {
-        Mui: {
-          checked: {
-            fill: 'white'
-          }
-        }
-      }
-    }
   }
+  // props: {
+  //   MuiTable: {
+  //     stripedRows: true
+  //   },
+  //   MuiTextField: {
+  //     variant: 'filled'
+  //   }
+  // },
+  // overrides: {
+  //   // Style sheet name ⚛️
+  //   MuiButton: {
+  //     root: {
+  //       color: secondary
+  //     }
+  //   },
+  //   MuiTable: {
+  //     root: {
+  //       color: 'white',
+  //       backgroundColor: background
+  //     }
+  //   },
+  //   MuiTableRow: {
+  //     root: {
+  //       color: 'white'
+  //     }
+  //   },
+  //   MuiTableCell: {
+  //     root: {
+  //       color: 'white',
+  //       border: 'none'
+  //     },
+  //     head: {
+  //       border: 'none'
+  //     },
+  //     body: {
+  //       border: 'none'
+  //     }
+  //   },
+  //   MuiPaper: {
+  //     root: {
+  //       backgroundColor: secondary
+  //     }
+  //   },
+  //   MuiTypography: {
+  //     colorTextPrimary: {
+  //       color: 'white'
+  //     },
+  //     root: {
+  //       color: 'white'
+  //     }
+  //   },
+  //   MuiStepIcon: {
+  //     root: {
+  //       color: 'white'
+  //     }
+  //   },
+  //   MuiStepLabel: {
+  //     active: {
+  //       color: 'white'
+  //     },
+  //     label: {
+  //       color: 'white'
+  //     }
+  //   },
+  //   MuiMenuItem: {
+  //     gutters: {
+  //       color: 'white'
+  //     }
+  //   },
+  //   MuiButtonBase: {
+  //     root: {
+  //       color: primary
+  //     }
+  //   },
+  //   MuiCheckbox: {
+  //     colorSecondary: {
+  //       Mui: {
+  //         checked: {
+  //           fill: 'white'
+  //         }
+  //       }
+  //     }
+  //   }
+  // }
 });
 
 ReactDOM.render(
   <ThemeProvider theme={theme}>
+    <CssBaseline />
     <BrowserRouter>
       <App />
     </BrowserRouter>
