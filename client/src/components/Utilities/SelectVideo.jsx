@@ -94,7 +94,7 @@ class SelectVideo extends React.Component {
           <div>
             <Button
               className={classes.button}
-              color="primary"
+              color="secondary"
               onClick={() => {
                 handleSelectAll(videos, value, 'selectedVideos');
               }}
@@ -103,7 +103,7 @@ class SelectVideo extends React.Component {
             </Button>
             <Button
               className={classes.button}
-              color="primary"
+              color="secondary"
               onClick={() => {
                 handleUnselectAll('selectedVideos');
               }}
@@ -137,7 +137,8 @@ class SelectVideo extends React.Component {
                   <div>
                     <Button
                       className={classes.collection}
-                      variant="outlined"
+                      variant="contained"
+                      color="primary"
                       value={videoCollection.id.toString()}
                       disabled={!videoCollection.videoids[0]}
                       onClick={() => {
