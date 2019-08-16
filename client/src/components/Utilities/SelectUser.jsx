@@ -60,7 +60,7 @@ class SelectUser extends React.Component {
         <div>
           <Button
             className={classes.button}
-            variant="contained"
+            color="secondary"
             onClick={() => {
               handleSelectAll(users, value, 'selectedUsers');
             }}
@@ -69,7 +69,7 @@ class SelectUser extends React.Component {
           </Button>
           <Button
             className={classes.button}
-            variant="contained"
+            color="secondary"
             onClick={() => {
               handleUnselectAll('selectedUsers');
             }}
