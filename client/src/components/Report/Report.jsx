@@ -1,18 +1,17 @@
-import React from "react";
-import { withStyles } from "@material-ui/core/styles";
-import PropTypes from "prop-types";
-import Button from "@material-ui/core/Button";
+import React from 'react';
+import { withStyles } from '@material-ui/core/styles';
+import Button from '@material-ui/core/Button';
 
-import ReportModal from "./ReportModal.jsx";
-import ReportTree from "./ReportTree.jsx";
+import ReportModal from './ReportModal';
+import ReportTree from './ReportTree';
 
 const styles = theme => ({
   root: {
-    width: "100%",
+    width: '100%',
     backgroundColor: theme.palette.background.paper
   },
   openSelector: {
-    position: "sticky",
+    position: 'sticky',
     margin: theme.spacing(1),
     top: 0,
     zIndex: 99
@@ -24,12 +23,12 @@ class Report extends React.Component {
     super(props);
     this.state = {
       openReportModal: false,
-      level1: "",
-      level2: "",
-      level3: "",
+      level1: '',
+      level2: '',
+      level3: '',
       renderTree: false,
       unsureOnly: false,
-      verifiedCondition: "all"
+      verifiedCondition: 'all'
     };
   }
 
@@ -59,10 +58,11 @@ class Report extends React.Component {
   };
 
   handleReportModalOk = () => {
-    if (this.state.level1 === "") {
+    const { level1, level2, level3 } = this.state;
+    if (level1 === '') {
       return;
     }
-    if (this.state.level2 === "" && this.state.level3 !== "") {
+    if (level2 === '' && level3 !== '') {
       return;
     }
     this.setState({
@@ -71,11 +71,11 @@ class Report extends React.Component {
     });
   };
 
-  handleVerifiedCondition = (event) => {
+  handleVerifiedCondition = event => {
     this.setState({
       verifiedCondition: event.target.value
-    })
-  }
+    });
+  };
 
   render() {
     const { classes } = this.props;
@@ -85,11 +85,13 @@ class Report extends React.Component {
       level1,
       level2,
       level3,
-      openReportModal
+      openReportModal,
+      renderTree
     } = this.state;
     return (
       <div className={classes.root}>
         <Button
+          id="selector-button"
           className={classes.openSelector}
           variant="contained"
           color="primary"
@@ -110,24 +112,20 @@ class Report extends React.Component {
           handleReportModalCancel={this.handleReportModalCancel}
           handleReportModalOk={this.handleReportModalOk}
         />
-        {this.state.renderTree ? (
+        {renderTree ? (
           <ReportTree
             treeDepth={0}
-            queryConditions={""}
+            queryConditions=""
             levels={[level1, level2, level3]}
-            unsureOnly={this.state.unsureOnly}
+            unsureOnly={unsureOnly}
             verifiedCondition={verifiedCondition}
           />
         ) : (
-            <div />
-          )}
+          <div />
+        )}
       </div>
     );
   }
 }
-
-Report.propTypes = {
-  classes: PropTypes.object.isRequired
-};
 
 export default withStyles(styles)(Report);

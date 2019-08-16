@@ -1,7 +1,9 @@
-const router = require("express").Router();
-const passport = require("passport");
-const psql = require("../../db/simpleConnect");
-const AWS = require("aws-sdk");
+const router = require('express').Router();
+const passport = require('passport');
+const psql = require('../../db/simpleConnect');
+const AWS = require('aws-sdk');
+
+var configData = require('../../../config.json');
 
 /**
  * @typedef annotation
@@ -28,7 +30,9 @@ const AWS = require("aws-sdk");
  * @returns {Array.<annotation>} 200 - An array of annotations
  * @returns {Error} 500 - Unexpected database error
  */
-router.get("/", passport.authenticate("jwt", { session: false }),
+router.get(
+  '/',
+  passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     let params = [];
     let queryPass = `
@@ -44,12 +48,12 @@ router.get("/", passport.authenticate("jwt", { session: false }),
         concepts ON concepts.id=annotations.conceptid
       WHERE 
         annotations.userid NOT IN (17, 32)`;
-    if (req.query.unsureOnly === "true") {
+    if (req.query.unsureOnly === 'true') {
       queryPass += ` AND annotations.unsure = true`;
     }
-    if (req.query.verifiedCondition === "verified only") {
+    if (req.query.verifiedCondition === 'verified only') {
       queryPass += ` AND annotations.verifiedby IS NOT NULL`;
-    } else if (req.query.verifiedCondition === "unverified only") {
+    } else if (req.query.verifiedCondition === 'unverified only') {
       queryPass += ` AND annotations.verifiedby IS NULL`;
     }
     if (!req.user.admin) {
@@ -64,7 +68,7 @@ router.get("/", passport.authenticate("jwt", { session: false }),
     // Retrieves only selected 100 if queryLimit exists
     if (
       req.query.queryLimit !== undefined &&
-      req.query.queryLimit !== "undefined"
+      req.query.queryLimit !== 'undefined'
     ) {
       queryPass = queryPass + req.query.queryLimit;
     }
@@ -78,22 +82,32 @@ router.get("/", passport.authenticate("jwt", { session: false }),
   }
 );
 
-router.get("/collections", passport.authenticate("jwt", { session: false }),
+router.get(
+  '/collections',
+  passport.authenticate('jwt', { session: false }),
   async (req, res) => {
-    var params = "{"+req.query.collectionids+"}";
+    let params = '{' + req.query.collectionids + '}';
     let queryText = `
       SELECT
-        a.*
+        a.*, c.name, c.picture, u.username, v.filename 
       FROM
         annotation_intermediate ai
       LEFT JOIN
         annotations a
+      LEFT JOIN
+        concepts c ON c.id=a.conceptid
+      LEFT JOIN
+        users u ON u.id=a.userid
+      LEFT JOIN
+        videos v ON v.id=a.videoid
       ON
         a.id=ai.annotationid
       WHERE
-        ai.id = ANY($1::int[]);
+        ai.id = ANY($1::int[]) and a.verifiedby IS NULL
     `;
-
+    if (req.query.tracking == 'false') {
+      queryText += ` AND userid <> (SELECT id from users where username ='tracking')`;
+    }
     try {
       const annotations = await psql.query(queryText, [params]);
       res.json(annotations.rows);
@@ -136,8 +150,8 @@ router.get("/collections", passport.authenticate("jwt", { session: false }),
  * @returns {Error} 500 - Unexpected database error
  */
 router.post(
-  "/",
-  passport.authenticate("jwt", { session: false }),
+  '/',
+  passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     data = [
       req.user.id,
@@ -150,8 +164,8 @@ router.post(
       req.body.y2,
       req.body.videoWidth,
       req.body.videoHeight,
-      req.body.image + ".png",
-      req.body.imagewithbox + ".png",
+      req.body.image + '.png',
+      req.body.imagewithbox + '.png',
       req.body.comment,
       req.body.unsure
     ];
@@ -171,7 +185,7 @@ router.post(
     try {
       let insertRes = await psql.query(queryText, data);
       res.json({
-        message: "Annotated",
+        message: 'Annotated',
         value: JSON.stringify(insertRes.rows[0])
       });
     } catch (error) {
@@ -201,15 +215,15 @@ router.post(
  * @returns {Error} 500 - Unexpected database or S3 error
  */
 router.patch(
-  "/",
-  passport.authenticate("jwt", { session: false }),
+  '/',
+  passport.authenticate('jwt', { session: false }),
   async (req, res) => {
-    if (req.body.op === "updateBoundingBox") {
+    if (req.body.op === 'updateBoundingBox') {
       updateBoundingBox(req, res);
-    } else if (req.body.op === "verifyAnnotation") {
+    } else if (req.body.op === 'verifyAnnotation') {
       verifyAnnotation(req, res);
     } else {
-      res.status(400).json({ error: "Unrecognized patch operation." });
+      res.status(400).json({ error: 'Unrecognized patch operation.' });
     }
   }
 );
@@ -223,8 +237,8 @@ router.patch(
  * @returns {Error} 500 - Unexpected database or S3 error
  */
 router.delete(
-  "/",
-  passport.authenticate("jwt", { session: false }),
+  '/',
+  passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     let s3 = new AWS.S3();
     let queryText = `
@@ -252,9 +266,7 @@ router.delete(
       // add tracking video
       Objects.push({
         Key:
-          process.env.AWS_S3_BUCKET_VIDEOS_FOLDER +
-          req.body.id +
-          "_tracking.mp4"
+          process.env.AWS_S3_BUCKET_VIDEOS_FOLDER + req.body.id + '_track.mp4'
       });
       let params = {
         Bucket: process.env.AWS_S3_BUCKET_NAME,
@@ -264,14 +276,14 @@ router.delete(
       };
       let s3Res = await s3.deleteObjects(params, (err, data) => {
         if (err) {
-          console.log("Err: deleting images");
+          console.log('Err: deleting images');
           res.status(500).json(err);
         } else {
-          res.json("delete");
+          res.json('delete');
         }
       });
     } catch (error) {
-      console.log("Error in delete /api/annotations");
+      console.log('Error in delete /api/annotations');
       console.log(error);
       res.status(500).json(error);
     }
@@ -295,8 +307,8 @@ router.delete(
  * @returns {Error} 500 - Unexpected S3 error
  */
 router.post(
-  "/images",
-  passport.authenticate("jwt", { session: false }),
+  '/images',
+  passport.authenticate('jwt', { session: false }),
   (req, res) => {
     let s3 = new AWS.S3();
     let key = process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER;
@@ -305,17 +317,17 @@ router.post(
     } else {
       key += req.body.date;
       if (req.body.box) {
-        key += "_box";
+        key += '_box';
       }
-      key += ".png";
+      key += '.png';
     }
 
     const params = {
       Key: key,
       Bucket: process.env.AWS_S3_BUCKET_NAME,
-      ContentEncoding: "base64",
-      ContentType: "image/png",
-      Body: Buffer(req.body.buf) //the base64 string is now the body
+      ContentEncoding: 'base64',
+      ContentType: 'image/png',
+      Body: Buffer.from(req.body.buf) //the base64 string is now the body
     };
     s3.putObject(params, (err, data) => {
       if (err) {
@@ -325,7 +337,7 @@ router.post(
           .json(error)
           .end();
       } else {
-        res.json({ message: "successfully uploaded image to S3" });
+        res.json({ message: 'successfully uploaded image to S3' });
       }
     });
   }
@@ -346,7 +358,7 @@ router.post(
  */
 router.patch(
   `/tracking/:id`,
-  passport.authenticate("jwt", { session: false }),
+  passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     let queryText = `
       UPDATE
@@ -359,7 +371,7 @@ router.patch(
     `;
 
     try {
-      let updated = await psql.query(queryText, [req.body.flag ,req.params.id]);
+      let updated = await psql.query(queryText, [req.body.flag, req.params.id]);
       res.json(updated.rows);
     } catch (error) {
       console.log(error);
@@ -380,8 +392,8 @@ router.patch(
  * @returns {Error} 500 - Unexpected database error
  */
 router.get(
-  "/verified",
-  passport.authenticate("jwt", { session: false }),
+  '/verified',
+  passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     const verifiedOnly = req.query.verifiedOnly;
     const selectedUsers = req.query.selectedUsers;
@@ -391,22 +403,22 @@ router.get(
     const selectedTrackingFirst = req.query.selectedTrackingFirst;
 
     let params = [];
-    let queryText = "SELECT DISTINCT ";
-    let orderBy = "";
+    let queryText = 'SELECT DISTINCT ';
+    let orderBy = '';
 
     if (selectedUsers && selectedVideos && selectedConcepts && selectedUnsure) {
-      queryText += `a.*, c.name, u.username, v.filename `;
-      orderBy = " ORDER BY a.id";
+      queryText += `a.*, c.name, c.picture, u.username, v.filename `;
+      orderBy = ' ORDER BY a.id';
     } else if (selectedUsers && selectedVideos && selectedConcepts) {
       queryText += `a.unsure `;
     } else if (selectedUsers && selectedVideos) {
       queryText += `c.* `;
-      orderBy = " ORDER BY c.name";
+      orderBy = ' ORDER BY c.name';
     } else if (selectedUsers) {
       queryText += `v.id, v.filename `;
-      orderBy = " ORDER BY v.id";
+      orderBy = ' ORDER BY v.id';
     } else {
-      res.status(400).json({ error: "Nothing selected." });
+      res.status(400).json({ error: 'Nothing selected.' });
     }
 
     queryText += `
@@ -421,37 +433,36 @@ router.get(
       WHERE TRUE
     `;
 
-    if (verifiedOnly === "1") {
-      queryText += ` AND a.verifiedby IS NOT NULL`;
-    } else if (verifiedOnly === "-1") {
-      queryText += ` AND a.verifiedby IS NULL`;
+    let concater = '';
+    if (verifiedOnly === '1') {
+      concater = ` AND a.verifiedby IS NOT NULL`;
+    } else if (verifiedOnly === '-1') {
+      concater += ` AND a.verifiedby IS NULL`;
     }
 
-    if (selectedUsers && selectedUsers[0] !== "-1") {
+    if (selectedUsers) {
       queryText += ` AND a.userid::text=ANY($${params.length + 1})`;
       params.push(selectedUsers);
     }
 
-    if (selectedVideos && selectedVideos[0] !== "-1") {
+    if (selectedVideos) {
       queryText += ` AND a.videoid::text=ANY($${params.length + 1})`;
       params.push(selectedVideos);
     }
 
-    if (selectedConcepts && selectedConcepts[0] !== "-1") {
+    if (selectedConcepts) {
       queryText += ` AND a.conceptid::text=ANY($${params.length + 1})`;
       params.push(selectedConcepts);
     }
 
-    if (selectedUnsure === "true") queryText += ` AND unsure`;
-    else if (selectedUnsure === "not true") queryText += ` AND NOT unsure`;
+    if (selectedUnsure === 'true') queryText += ` AND unsure`;
+    else if (selectedUnsure === 'not true') queryText += ` AND NOT unsure`;
 
-    if (selectedTrackingFirst === "true") {
-      queryText += ` AND a.verifiedby IS NOT NULL AND a.tracking_flag IS NULL`
+    if (selectedTrackingFirst === 'true') {
+      queryText += ` AND a.verifiedby IS NULL AND a.tracking_flag IS NULL`;
+    } else {
+      queryText += concater;
     }
-    else {
-      queryText += ` AND a.verifiedby IS NULL`
-    }
-
     queryText += orderBy;
 
     try {
@@ -465,46 +476,57 @@ router.get(
 );
 
 router.get(
-  "/collection/counts",
-  passport.authenticate("jwt", { session: false }),
+  '/collection/counts',
+  passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     let params = [];
+    let good_users = configData.ml.tracking_users.filter(x =>
+      req.query.selectedUsers.includes(x.toString())
+    );
+
     let queryText = `
-      SELECT 
-        SUM(CASE WHEN userid=32 THEN 1 ELSE 0 END) as trackingcount,
-        SUM(CASE WHEN userid!=32 THEN 1 ELSE 0 END) as annotationcount
+      SELECT
+        coalesce(
+          SUM(CASE WHEN userid=32 THEN 1 ELSE 0 END), 0
+        ) as trackingcount,
+        coalesce(
+          SUM(CASE WHEN userid!=32 THEN 1 ELSE 0 END), 0
+        ) as annotationcount
       FROM annotations as A
     `;
-    if (req.query.selectedConcepts[0] !== "-1") {
-      if (params.length === 0) {
-        queryText += ` WHERE `;
-      }
-      params.push(req.query.selectedConcepts);
-      queryText += ` conceptid::text = ANY($${params.length}) `;
+
+    if (params.length === 0) {
+      queryText += ` WHERE `;
     }
-    if (req.query.selectedVideos[0] !== "-1") {
-      if (params.length === 0) {
-        queryText += ` WHERE `;
-      } else {
-        queryText += ` AND `;
-      }
-      params.push(req.query.selectedVideos);
-      queryText += ` videoid::text = ANY($${params.length}) `;
+    params.push(req.query.selectedConcepts);
+    queryText += ` conceptid::text = ANY($${params.length}) `;
+
+    if (params.length === 0) {
+      queryText += ` WHERE `;
+    } else {
+      queryText += ` AND `;
     }
-    if (req.query.selectedUsers[0] !== "-1") {
-      if (params.length === 0) {
-        queryText += ` WHERE `;
-      } else {
-        queryText += ` AND `;
-      }
-      params.push(req.query.selectedUsers);
+    params.push(req.query.selectedVideos);
+    queryText += ` videoid::text = ANY($${params.length}) `;
+
+    if (params.length === 0) {
+      queryText += ` WHERE `;
+    } else {
+      queryText += ` AND `;
+    }
+    params.push(req.query.selectedUsers);
+
+    if (good_users.length > 0) {
       queryText += `EXISTS ( 
-        SELECT id, userid 
-        FROM annotations 
-        WHERE id=A.originalid 
-        AND unsure = False
-        AND userid::text = ANY($${params.length}))`;
+          SELECT id, userid 
+          FROM annotations 
+          WHERE id=A.originalid 
+          AND unsure = False
+          AND userid::text = ANY($${params.length}))`;
+    } else {
+      queryText += `userid::text = ANY($${params.length})`;
     }
+
     try {
       let response = await psql.query(queryText, params);
       res.json(response.rows);
@@ -518,8 +540,8 @@ router.get(
 /**
  * @typedef treeData
  * @property {string} name - Name of the specific item in the current level
- * @property {integer} key - ID of the specific item in the current level 
- * @property {integer} count - Count of the specific item in the current level 
+ * @property {integer} key - ID of the specific item in the current level
+ * @property {integer} count - Count of the specific item in the current level
  * @property {boolean} expanded - Always "false", used by react to control expansion
  */
 
@@ -534,7 +556,9 @@ router.get(
  * @returns {Array.<treeData>} 200 - Returns matching annotations
  * @returns {Error} 500 - Unexpected database error
  */
-router.get("/treeData", passport.authenticate("jwt", { session: false }),
+router.get(
+  '/treeData',
+  passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     let params = [];
     let queryPass = selectLevelQuery(req.query.levelName);
@@ -542,12 +566,12 @@ router.get("/treeData", passport.authenticate("jwt", { session: false }),
     if (req.query.queryConditions) {
       queryPass = queryPass + req.query.queryConditions;
     }
-    if (req.query.unsureOnly === "true") {
+    if (req.query.unsureOnly === 'true') {
       queryPass = queryPass + ` AND annotations.unsure = true`;
     }
-    if (req.query.verifiedCondition === "verified only") {
+    if (req.query.verifiedCondition === 'verified only') {
       queryPass = queryPass + ` AND annotations.verifiedby IS NOT NULL`;
-    } else if (req.query.verifiedCondition === "unverified only") {
+    } else if (req.query.verifiedCondition === 'unverified only') {
       queryPass = queryPass + ` AND annotations.verifiedby IS NULL`;
     }
     if (!req.user.admin) {
@@ -555,6 +579,7 @@ router.get("/treeData", passport.authenticate("jwt", { session: false }),
       params.push(req.user.id);
     }
     queryPass = queryPass + ` GROUP BY (name, key) ORDER BY count DESC`;
+
     try {
       const data = await psql.query(queryPass, params);
       res.json(data.rows);
@@ -639,8 +664,7 @@ let verifyAnnotation = async (req, res) => {
     });
     // add tracking video
     Objects.push({
-      Key:
-        process.env.AWS_S3_BUCKET_VIDEOS_FOLDER + req.body.id + "_tracking.mp4"
+      Key: process.env.AWS_S3_BUCKET_VIDEOS_FOLDER + req.body.id + '_track.mp4'
     });
     params = {
       Bucket: process.env.AWS_S3_BUCKET_NAME,
@@ -654,7 +678,7 @@ let verifyAnnotation = async (req, res) => {
         res.status(500).json(err);
       }
     });
-    res.json("success");
+    res.json('success');
   } catch (error) {
     console.log(error);
     res.status(500).json(error);
@@ -662,8 +686,8 @@ let verifyAnnotation = async (req, res) => {
 };
 
 let selectLevelQuery = level => {
-  let queryPass = "";
-  if (level === "Video") {
+  let queryPass = '';
+  if (level === 'Video') {
     queryPass = `
       SELECT 
         videos.filename as name, videos.id as key, COUNT(*) as count,
@@ -674,7 +698,7 @@ let selectLevelQuery = level => {
         videos.id=annotations.videoid AND annotations.userid NOT IN (17, 32)
     `;
   }
-  if (level === "Concept") {
+  if (level === 'Concept') {
     queryPass = `
       SELECT 
         concepts.name as name, concepts.id as key, COUNT(*) as count,
@@ -685,7 +709,7 @@ let selectLevelQuery = level => {
         annotations.conceptid=concepts.id AND annotations.userid NOT IN (17, 32)
     `;
   }
-  if (level === "User") {
+  if (level === 'User') {
     queryPass = `
       SELECT 
         users.username as name, users.id as key, COUNT(*) as count,

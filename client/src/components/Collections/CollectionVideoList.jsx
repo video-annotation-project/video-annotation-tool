@@ -1,167 +1,181 @@
-import React, { Component } from "react";
-import PropTypes from "prop-types";
-import axios from "axios";
-import Button from "@material-ui/core/Button";
-import Drawer from "@material-ui/core/Drawer";
-import List from "@material-ui/core/List";
-import ListItem from "@material-ui/core/ListItem";
-import ListItemText from "@material-ui/core/ListItemText";
-import { withStyles } from "@material-ui/core/styles";
-import IconButton from "@material-ui/core/IconButton";
-import DeleteIcon from "@material-ui/icons/Delete";
-
-import GeneralMenu from "../Utilities/GeneralMenu";
-
-import Collapse from "@material-ui/core/Collapse";
-import ExpandLess from "@material-ui/icons/ExpandLess";
-import ExpandMore from "@material-ui/icons/ExpandMore";
-
+import React, { Component } from 'react';
+import axios from 'axios';
+import Button from '@material-ui/core/Button';
+import Drawer from '@material-ui/core/Drawer';
+import List from '@material-ui/core/List';
+import ListItem from '@material-ui/core/ListItem';
+import ListItemText from '@material-ui/core/ListItemText';
+import { withStyles } from '@material-ui/core/styles';
+import IconButton from '@material-ui/core/IconButton';
+import DeleteIcon from '@material-ui/icons/Delete';
+import Collapse from '@material-ui/core/Collapse';
+import ExpandLess from '@material-ui/icons/ExpandLess';
+import ExpandMore from '@material-ui/icons/ExpandMore';
 import Checkbox from '@material-ui/core/Checkbox';
-
 import Typography from '@material-ui/core/Typography';
+import Swal from 'sweetalert2';
 
-import Swal from "sweetalert2";
+import GeneralMenu from '../Utilities/GeneralMenu';
 
-const styles = theme => ({
+const styles = () => ({
   drawer: {
-    width: "550px",
-    overflow: "auto"
+    width: '550px',
+    overflow: 'auto'
   },
   toggleButton: {
-    marginTop: "5px",
-    float: "right"
+    marginTop: '5px',
+    float: 'right'
   },
   createButton: {
-    marginTop: "10px",
-    marginLeft: "20px"
-  },  
+    marginTop: '10px',
+    marginLeft: '20px'
+  },
   addButton: {
-    float: "right",
-    marginTop: "10px",
-    marginLeft: "20px"
+    float: 'right',
+    marginTop: '10px',
+    marginLeft: '20px'
   },
   desc: {
-    marginLeft: "20px"
-  },
+    marginLeft: '20px'
+  }
 });
 
 class CollectionVideoList extends Component {
   constructor(props) {
     super(props);
+    const {
+      createCollection,
+      deleteCollection,
+      insertToCollection,
+      loadCollections
+    } = this.props;
+
     this.state = {
       CollectionOpen: false,
       data: null
     };
+
+    this.createCollection = createCollection;
+    this.deleteCollection = deleteCollection;
+    this.insertToCollection = insertToCollection;
+    this.loadCollections = loadCollections;
   }
 
-  componentDidMount = () => {
+  componentDidMount = async () => {
     this.setState({
-      data: this.props.data
-    })
-  }
+      data: await this.loadCollections()
+    });
+  };
 
-  componentDidUpdate(prevProps, prevState) {
-    // only update chart if the data has changed
-    if (prevProps.data !== this.props.data) {
+  toggle = async (open, list) => {
+    if (open === true) {
       this.setState({
-        data: this.props.data
-      })
+        data: await this.loadCollections()
+      });
     }
-  }
-
-  toggle = list => {
-    this.props.loadCollections();
     this.setState({
-      [list]: !this.state[list]
+      [list]: open
     });
   };
 
   handleNewCollectionModal = () => {
-    this.toggle("CollectionOpen");
-    this.props.createCollection();
-  } 
+    this.toggle(false, 'CollectionOpen');
+    this.createCollection();
+  };
 
   handleDeleteCollectionModal = id => {
-    this.toggle("CollectionOpen");
-    this.props.deleteCollection(id)
-  } 
+    this.toggle(false, 'CollectionOpen');
+    this.deleteCollection(id);
+  };
 
   handleInsert = id => {
-    this.toggle("CollectionOpen");
-    this.props.insertToCollection(id, [this.props.openedVideo.id])
-  }
+    const { openedVideo } = this.props;
+    this.toggle(false, 'CollectionOpen');
+    this.insertToCollection(id, [openedVideo.id]);
+  };
 
   handleListClick = async name => {
-    let data = JSON.parse(JSON.stringify(this.state.data));
-    let selected = data.find(data => data.name === name);
+    const { data } = this.state;
+    const collections = JSON.parse(JSON.stringify(data));
+    const selected = collections.find(col => col.name === name);
     selected.expanded = !selected.expanded;
     this.setState({
-      data: data
+      data: collections
     });
   };
 
   handleChange = (collectionid, name, videoid) => event => {
-    var checkedVideos = this.state.data;
-    var selectedCol = checkedVideos.find(data => data.id === collectionid)
+    const { data } = this.state;
+    const checkedVideos = data;
+    const selectedCol = checkedVideos.find(video => video.id === collectionid);
     if (!selectedCol.checked) {
       selectedCol.checked = [];
     }
-    var index = selectedCol.checked.indexOf(videoid);
-    if (event.target.checked &&
-      !selectedCol.checked.includes(videoid)
-      ) {
-        selectedCol.checked.push(videoid);
-    }
-    else if (!event.target.checked) {
+    const index = selectedCol.checked.indexOf(videoid);
+    if (event.target.checked && !selectedCol.checked.includes(videoid)) {
+      selectedCol.checked.push(videoid);
+    } else if (!event.target.checked) {
       selectedCol.checked.splice(index, 1);
     }
     this.setState({
-      ...this.state, 
       [name]: event.target.checked
     });
-  }
+  };
 
   removeVideo = async id => {
-    var videoList = this.state.data.find(data => data.id === id).checked;
-    console.log(id + " " +  videoList);
+    const { data } = this.state;
+    const videoList = data.find(col => col.id === id).checked;
+    console.log(`${id} ${videoList}`);
     const config = {
       headers: {
-        Authorization: "Bearer " + localStorage.getItem("token")
+        Authorization: `Bearer ${localStorage.getItem('token')}`
       },
       data: {
         videos: videoList
       }
     };
-    this.toggle("CollectionOpen");
+    this.toggle(false, 'CollectionOpen');
     Swal.fire({
-      title: "Are you sure?",
+      title: 'Are you sure?',
       text: `Removing ${videoList} from Collection ${id}`,
-      type: "warning",
+      type: 'warning',
       showCancelButton: true,
-      confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Yes, delete it!"
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, delete it!'
     }).then(async result => {
       if (result.value) {
         try {
-          await axios.delete("/api/collections/videos/elements/" + id, config);
-          Swal.fire("Deleted!", "Videos have been removed.", "success");
-          this.props.loadCollections()
+          await axios.delete(`/api/collections/videos/elements/${id}`, config);
+          Swal.fire('Deleted!', 'Videos have been removed.', 'success');
+          this.setState({
+            data: await this.loadCollections()
+          });
         } catch (error) {
           console.log(error);
-          
-          Swal.fire("Error removing", "", "error");
+
+          Swal.fire('Error removing', '', 'error');
         }
       }
     });
-  }
+  };
+
+  ternaryOpLoop = (firstif, secondif) => {
+    if (firstif) {
+      if (secondif) {
+        return <ExpandLess />;
+      }
+      return <ExpandMore />;
+    }
+    return '';
+  };
 
   render() {
-    const { classes } = this.props;
-    const { data } = this.state;
+    const { classes, collType } = this.props;
+    const { data, CollectionOpen } = this.state;
     if (!data) {
-      return <div>Loading...</div>
-    } 
+      return <div>Loading...</div>;
+    }
 
     return (
       <div className={classes.root}>
@@ -169,27 +183,25 @@ class CollectionVideoList extends Component {
           className={classes.toggleButton}
           variant="contained"
           color="primary"
-          onClick={() => this.toggle("CollectionOpen")}
+          onClick={() => this.toggle(true, 'CollectionOpen')}
         >
-          Toggle {this.props.collType} Collection List
+          {collType} Collection List
         </Button>
 
         <Drawer
           anchor="right"
-          open={this.state.CollectionOpen}
-          onClose={() => this.toggle("CollectionOpen")}
+          open={CollectionOpen}
+          onClose={() => this.toggle(false, 'CollectionOpen')}
         >
           <div className={classes.drawer}>
             <div className={classes.addButton}>
               <GeneralMenu
-                name={"Add opened video to collection"}
+                name="Add opened video to collection"
                 variant="contained"
                 color="primary"
                 handleInsert={this.handleInsert}
                 Link={false}
-                items={
-                  this.props.data
-                }
+                items={data}
               />
             </div>
             <Button
@@ -203,56 +215,81 @@ class CollectionVideoList extends Component {
             <List component="div" disablePadding>
               {data.map(collection => (
                 <React.Fragment key={collection.id}>
-                  <ListItem button onClick={() => this.handleListClick(collection.name)}>
-                    <ListItemText primary={collection.id + ". " + collection.name} 
-                      secondary={collection.videoids.join(" , ")}
+                  <ListItem
+                    button
+                    onClick={() => this.handleListClick(collection.name)}
+                  >
+                    <ListItemText
+                      primary={`${collection.id}. ${collection.name}`}
+                      secondary={collection.videoids.join(' , ')}
                     />
-                    <IconButton 
-                      onClick={() => this.handleDeleteCollectionModal(collection.id)} 
+                    <IconButton
+                      onClick={() =>
+                        this.handleDeleteCollectionModal(collection.id)
+                      }
                       aria-label="Delete"
                     >
-                      <DeleteIcon/>
+                      <DeleteIcon />
                     </IconButton>
-                    {collection.videoids[0] || collection.description ? 
-                    collection.expanded ? <ExpandLess /> : <ExpandMore /> : ""
-                    }
-
+                    {this.ternaryOpLoop(
+                      collection.videoids[0] || collection.description,
+                      collection.expanded
+                    )}
                   </ListItem>
-                  
-                  {collection.videoids[0] || collection.description ? 
-                  <Collapse in={collection.expanded} timeout="auto" unmountOnExit>
-                    <Typography variant="subtitle1" gutterBottom className={classes.desc}>
-                      {collection.description} 
-                    </Typography>
-                    {collection.videoids[0] ?
-                    <div>
-                      <List disablePadding>
-                        {collection.videos.map(video => (
-                          <ListItem key={video.f1}>
-                            <Checkbox
-                              checked={video.selected}
-                              onChange={this.handleChange(collection.id, video.selected, video.f1)}
-                              value="selected"
-                              color="primary"
-                              inputProps={{
-                                'aria-label': 'secondary checkbox',
-                              }}
-                            /> 
-                            <ListItemText primary={video.f1 + " " + video.f2}/>
-                          </ListItem>
-                        ))}
-                      </List>
-                      <Button 
-                        className={classes.createButton}
-                        variant="contained"
-                        color="primary"
-                        onClick={() => this.removeVideo(collection.id)}
+
+                  {collection.videoids[0] || collection.description ? (
+                    <Collapse
+                      in={collection.expanded}
+                      timeout="auto"
+                      unmountOnExit
+                    >
+                      <Typography
+                        variant="subtitle1"
+                        gutterBottom
+                        className={classes.desc}
                       >
-                        Remove Videos
-                      </Button>
-                    </div> : ""}
-                  </Collapse> : ""}
-                  
+                        {collection.description}
+                      </Typography>
+                      {collection.videoids[0] ? (
+                        <div>
+                          <List disablePadding>
+                            {collection.videos.map(video => (
+                              <ListItem key={video.f1}>
+                                <Checkbox
+                                  checked={video.selected}
+                                  onChange={this.handleChange(
+                                    collection.id,
+                                    video.selected,
+                                    video.f1
+                                  )}
+                                  value="selected"
+                                  color="primary"
+                                  inputProps={{
+                                    'aria-label': 'secondary checkbox'
+                                  }}
+                                />
+                                <ListItemText
+                                  primary={`${video.f1} ${video.f2}`}
+                                />
+                              </ListItem>
+                            ))}
+                          </List>
+                          <Button
+                            className={classes.createButton}
+                            variant="contained"
+                            color="primary"
+                            onClick={() => this.removeVideo(collection.id)}
+                          >
+                            Remove Videos
+                          </Button>
+                        </div>
+                      ) : (
+                        ''
+                      )}
+                    </Collapse>
+                  ) : (
+                    ''
+                  )}
                 </React.Fragment>
               ))}
             </List>
@@ -262,9 +299,5 @@ class CollectionVideoList extends Component {
     );
   }
 }
-
-CollectionVideoList.propTypes = {
-  classes: PropTypes.object.isRequired
-};
 
 export default withStyles(styles)(CollectionVideoList);

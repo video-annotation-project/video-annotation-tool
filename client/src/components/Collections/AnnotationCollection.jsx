@@ -1,42 +1,37 @@
-import React, { Component } from "react";
-import axios from "axios";
-import PropTypes from "prop-types";
-import { withStyles } from "@material-ui/core/styles";
-import Stepper from "@material-ui/core/Stepper";
-import Step from "@material-ui/core/Step";
-import StepLabel from "@material-ui/core/StepLabel";
-import StepContent from "@material-ui/core/StepContent";
-import Button from "@material-ui/core/Button";
-import { Grid, Typography } from "@material-ui/core";
-import InputLabel from "@material-ui/core/InputLabel";
-import Select from "@material-ui/core/Select";
-import MenuItem from "@material-ui/core/MenuItem";
-import FormHelperText from "@material-ui/core/FormHelperText";
-import FormControl from "@material-ui/core/FormControl";
-import FormControlLabel from "@material-ui/core/FormControlLabel";
-import Switch from "@material-ui/core/Switch";
-import Swal from "sweetalert2";
+import React, { Component } from 'react';
+import axios from 'axios';
+import { withStyles } from '@material-ui/core/styles';
+import Stepper from '@material-ui/core/Stepper';
+import Step from '@material-ui/core/Step';
+import StepLabel from '@material-ui/core/StepLabel';
+import StepContent from '@material-ui/core/StepContent';
+import Button from '@material-ui/core/Button';
+import { Grid, Typography } from '@material-ui/core';
+import InputLabel from '@material-ui/core/InputLabel';
+import Select from '@material-ui/core/Select';
+import MenuItem from '@material-ui/core/MenuItem';
+import FormHelperText from '@material-ui/core/FormHelperText';
+import FormControl from '@material-ui/core/FormControl';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Switch from '@material-ui/core/Switch';
+import Swal from 'sweetalert2';
 
-import VerifySelectUser from "../Utilities/SelectUser.jsx";
-import VerifySelectVideo from "../Utilities/SelectVideo.jsx";
-import VerifySelectConcept from "../Utilities/SelectConcept.jsx";
+import VerifySelectUser from '../Utilities/SelectUser';
+import VerifySelectVideo from '../Utilities/SelectVideo';
+import VerifySelectConcept from '../Utilities/SelectConcept';
+import CollectionInfo from '../Utilities/CollectionInfo';
 
 const styles = theme => ({
   list: {
-    width: "100%",
+    width: '100%',
     backgroundColor: theme.palette.background.paper
   },
   item: {
-    display: "inline",
+    display: 'inline',
     paddingTop: 0,
-    width: "1300px",
-    height: "730px",
+    width: '1300px',
+    height: '730px',
     paddingLeft: 0
-  },
-  img: {
-    padding: theme.spacing(3),
-    width: "1280px",
-    height: "720px"
   },
   button: {
     marginTop: theme.spacing(3),
@@ -44,9 +39,6 @@ const styles = theme => ({
   },
   actionsContainer: {
     marginBottom: theme.spacing(2)
-  },
-  resetContainer: {
-    padding: theme.spacing(3)
   },
   formControl: {
     minWidth: 200,
@@ -58,25 +50,24 @@ const styles = theme => ({
     marginTop: theme.spacing()
   },
   stepper: {
-    display: "block",
+    display: 'block',
     flex: 1,
-    flexDirection: "column",
-    justifyContent: "left",
-    width: "70%"
+    flexDirection: 'column',
+    justifyContent: 'left',
+    width: '70%'
   },
   models: {
-    display: "flex",
+    display: 'flex',
     flex: 1,
-    flexDirection: "column",
-    justifyContent: "right",
-    alignItems: "right",
-    width: "30%"
+    flexDirection: 'column',
+    justifyContent: 'right',
+    alignItems: 'right',
+    width: '30%'
   },
   container: {
-    display: "flex",
-    flexDirection: "row",
-    padding: "20px",
-    height: "560px"
+    display: 'flex',
+    flexDirection: 'row',
+    height: '560px'
   },
   stats1: {
     marginTop: theme.spacing(),
@@ -87,27 +78,40 @@ const styles = theme => ({
     marginLeft: theme.spacing(4),
     marginRight: theme.spacing(4),
     marginBottom: theme.spacing()
+  },
+  info: {
+    marginTop: theme.spacing(2)
+  },
+  infoButton: {
+    marginLeft: theme.spacing()
   }
 });
 
 function getSteps() {
-  return ["Users", "Videos", "Concepts", "Insert"];
+  return ['Users', 'Videos', 'Concepts', 'Insert'];
 }
 
 class AnnotationCollection extends Component {
+  toastPopup = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 3000
+  });
+
   constructor(props) {
     super(props);
     this.state = {
-      /* -1 represents select all */
       selectedUsers: [],
-      selectedCollection: "",
+      selectedCollection: '',
+      selectedCollectionCounts: [],
       selectedVideos: [],
       selectedConcepts: [],
-      annotationCount: "",
-      trackingCount: "",
+      annotationCount: '',
+      trackingCount: '',
       collections: [],
       includeTracking: false,
-      error: null,
+      infoDialogOpen: false,
       activeStep: 0
     };
   }
@@ -116,13 +120,22 @@ class AnnotationCollection extends Component {
     return this.loadCollections();
   }
 
+  promiseResolver = async promise => {
+    await Promise.resolve(promise.response).then(object => {
+      this.toastPopup.fire({
+        type: 'error',
+        title: object.data.detail
+      });
+    });
+  };
+
   loadCollections = callback => {
     const config = {
       headers: {
-        Authorization: "Bearer " + localStorage.getItem("token")
+        Authorization: `Bearer ${localStorage.getItem('token')}`
       }
     };
-    return axios.get("/api/collections/annotations", config).then(res => {
+    return axios.get('/api/collections/annotations', config).then(res => {
       this.setState(
         {
           collections: res.data
@@ -132,26 +145,49 @@ class AnnotationCollection extends Component {
     });
   };
 
-  handleChangeCollection = event => {
+  handleChangeCollection = async event => {
     this.setState({
-      selectedCollection: event.target.value
+      selectedCollection: event.target.value,
+      selectedCollectionCounts: await this.getCollectionCounts(
+        event.target.value
+      )
     });
+  };
+
+  getCollectionCounts = async selectedCollection => {
+    let ret;
+    try {
+      const res = await axios.get(`/api/collections/annotations/counts`, {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        },
+        params: {
+          ids: [selectedCollection]
+        }
+      });
+      ret = res.data;
+    } catch (error) {
+      console.log(error);
+      ret = error;
+    }
+    return ret;
   };
 
   createAnnotationCollection = () => {
     Swal.mixin({
-      confirmButtonText: "Next",
+      confirmButtonText: 'Next',
       showCancelButton: true,
-      progressSteps: ["1", "2"]
+      progressSteps: ['1', '2']
     })
       .queue([
         {
-          title: "Collection Name",
-          input: "text"
+          title: 'Collection Name',
+          input: 'text'
         },
         {
-          title: "Description",
-          input: "textarea"
+          title: 'Description',
+          input: 'textarea'
         }
       ])
       .then(async result => {
@@ -162,202 +198,210 @@ class AnnotationCollection extends Component {
           };
           const config = {
             headers: {
-              "Content-Type": "application/json",
-              Authorization: "Bearer " + localStorage.getItem("token")
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${localStorage.getItem('token')}`
             }
           };
           try {
-            await axios.post("/api/collections/annotations", body, config);
+            await axios.post('/api/collections/annotations', body, config);
             Swal.fire({
-              title: "Collection Created!",
-              confirmButtonText: "Lovely!"
+              title: 'Collection Created!',
+              confirmButtonText: 'Lovely!'
             });
             this.loadCollections();
           } catch (error) {
-            Swal.fire("Error Creating Collection", "", "error");
+            this.promiseResolver(error);
           }
         }
       });
   };
 
   deleteAnnotationCollection = async () => {
+    const { selectedCollection } = this.state;
     const config = {
       headers: {
-        Authorization: "Bearer " + localStorage.getItem("token")
+        Authorization: `Bearer ${localStorage.getItem('token')}`
       }
     };
     Swal.fire({
-      title: "Are you sure?",
+      title: 'Are you sure?',
       text: "You won't be able to revert this!",
-      type: "warning",
+      type: 'warning',
       showCancelButton: true,
-      confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Yes, delete it!"
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, delete it!'
     }).then(async result => {
       if (result.value) {
         try {
-          let response = await axios.delete(
-            "/api/collections/annotations/" + this.state.selectedCollection,
+          const response = await axios.delete(
+            `/api/collections/annotations/${selectedCollection}`,
             config
           );
           if (response.status === 200) {
-            Swal.fire("Deleted!", "Collection has been deleted.", "success");
+            Swal.fire('Deleted!', 'Collection has been deleted.', 'success');
             this.loadCollections();
             this.setState({
-              selectedCollection: ""
+              selectedCollection: ''
             });
           }
         } catch (error) {
-          Swal.fire(error, "", "error");
+          this.promiseResolver(error);
         }
       }
     });
   };
 
   insertAnnotationsToCollection = () => {
+    const {
+      selectedCollection,
+      selectedUsers,
+      selectedVideos,
+      selectedConcepts,
+      includeTracking
+    } = this.state;
     const config = {
       headers: {
-        Authorization: "Bearer " + localStorage.getItem("token")
+        Authorization: `Bearer ${localStorage.getItem('token')}`
       }
     };
     const body = {
-      selectedUsers: this.state.selectedUsers,
-      selectedVideos: this.state.selectedVideos,
-      selectedConcepts: this.state.selectedConcepts,
-      includeTracking: this.state.includeTracking
+      selectedUsers,
+      selectedVideos,
+      selectedConcepts,
+      includeTracking
     };
     try {
       axios
         .post(
-          "/api/collections/annotations/" + this.state.selectedCollection,
+          `/api/collections/annotations/${selectedCollection}`,
           body,
           config
         )
-        .then(res => {
+        .then(async () => {
           Swal.fire({
-            title: "Inserted!",
-            confirmButtonText: "Lovely!"
+            title: 'Inserted!',
+            confirmButtonText: 'Lovely!'
+          });
+          this.setState({
+            selectedCollectionCounts: await this.getCollectionCounts(
+              selectedCollection
+            )
           });
           this.loadCollections();
         })
         .catch(error => {
-          console.log(error);
-          Swal.fire("Could not insert", "", "error");
+          this.promiseResolver(error);
         });
     } catch (error) {
-      Swal.fire("Error inserting video", "", "error");
+      this.promiseResolver(error);
     }
   };
 
   getUsers = async () => {
     return axios
       .get(`/api/users?noAi=true`, {
-        headers: { Authorization: "Bearer " + localStorage.getItem("token") }
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       })
       .then(res => res.data)
       .catch(error => {
         console.log(error);
-        this.setState({
-          error: error
-        });
+        this.promiseResolver(error);
       });
   };
 
   getVideos = async () => {
+    const { selectedUsers } = this.state;
     return axios
       .get(`/api/annotations/verified`, {
-        headers: { Authorization: "Bearer " + localStorage.getItem("token") },
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
         params: {
-          verifiedOnly: "0",
-          selectedUsers: this.state.selectedUsers
+          verifiedOnly: '0',
+          selectedUsers
         }
       })
       .then(res => res.data)
       .catch(error => {
-        this.setState({
-          error: error
-        });
+        console.log(error);
+        this.promiseResolver(error);
       });
   };
 
   getVideoCollections = async () => {
     return axios
       .get(`/api/collections/videos`, {
-        headers: { Authorization: "Bearer " + localStorage.getItem("token") }
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       })
       .then(res => res.data)
       .catch(error => {
-        this.setState({
-          error: error
-        });
+        console.log(error);
+        this.promiseResolver(error);
       });
   };
 
   getConcepts = async () => {
+    const { selectedUsers, selectedVideos } = this.state;
     return axios
       .get(`/api/annotations/verified`, {
         headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + localStorage.getItem("token")
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`
         },
         params: {
-          verifiedOnly: "0",
-          selectedUsers: this.state.selectedUsers,
-          selectedVideos: this.state.selectedVideos
+          verifiedOnly: '0',
+          selectedUsers,
+          selectedVideos
         }
       })
       .then(res => res.data)
       .catch(error => {
-        this.setState({
-          error: error
-        });
+        console.log(error);
+        this.promiseResolver(error);
       });
   };
 
   getConceptCollections = async () => {
     return axios
       .get(`/api/collections/concepts`, {
-        headers: { Authorization: "Bearer " + localStorage.getItem("token") }
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       })
       .then(res => res.data)
       .catch(error => {
-        this.setState({
-          error: error
-        });
+        console.log(error);
+        this.promiseResolver(error);
       });
   };
 
   getAnnotations = async () => {
+    const { selectedUsers, selectedVideos, selectedConcepts } = this.state;
     return axios
       .get(`/api/annotations/collection/counts`, {
         headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + localStorage.getItem("token")
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`
         },
         params: {
-          selectedUsers: this.state.selectedUsers,
-          selectedVideos: this.state.selectedVideos,
-          selectedConcepts: this.state.selectedConcepts
+          selectedUsers,
+          selectedVideos,
+          selectedConcepts
         }
       })
       .then(res => {
-        console.log(res.data);
         this.setState({
           annotationCount: res.data[0].annotationcount,
           trackingCount: res.data[0].trackingcount
         });
       })
       .catch(error => {
-        this.setState({
-          error: error
-        });
+        console.log(error);
+        this.promiseResolver(error);
       });
   };
 
   selectUser = user => {
+    const { selectedUsers } = this.state;
     this.setState({
-      selectedUsers: this.state.selectedUsers.concat(user)
+      selectedUsers: selectedUsers.concat(user)
     });
   };
 
@@ -373,28 +417,36 @@ class AnnotationCollection extends Component {
     });
   };
 
-  handleChangeList = type => event => {
-    if (!this.state[type].includes(event.target.value)) {
-      if (event.target.value === "-1") {
-        this.setState({
-          [type]: ["-1"]
-        });
-      } else {
-        if (this.state[type][0] === "-1") {
-          this.setState({
-            [type]: [event.target.value]
-          });
-        } else {
-          this.setState({
-            [type]: this.state[type].concat(event.target.value)
-          });
-        }
-      }
+  handleChangeList = (stateVariable, type) => event => {
+    if (!stateVariable.includes(event.target.value.toString())) {
+      this.setState({
+        [type]: stateVariable.concat(event.target.value)
+      });
     } else {
       this.setState({
-        [type]: this.state[type].filter(typeid => typeid !== event.target.value)
+        [type]: stateVariable.filter(typeid => typeid !== event.target.value)
       });
     }
+  };
+
+  handleSelectAll = (data, dataSelected, stepInfo) => {
+    const selected = dataSelected;
+    data.forEach(row => {
+      if (row.id) {
+        if (!selected.includes(row.id.toString())) {
+          selected.push(row.id.toString());
+        }
+      }
+    });
+    this.setState({
+      [stepInfo]: selected
+    });
+  };
+
+  handleUnselectAll = stepInfo => {
+    this.setState({
+      [stepInfo]: []
+    });
   };
 
   resetStep = step => {
@@ -403,30 +455,28 @@ class AnnotationCollection extends Component {
         this.setState({
           selectedUsers: []
         });
-        return;
+        break;
       case 1:
         this.setState({
           selectedVideos: []
         });
-        return;
+        break;
       case 2:
         this.setState({
           selectedConcepts: []
         });
-        return;
+        break;
       case 3:
         this.setState({
           includeTracking: false
         });
-        return;
+        break;
       default:
-        return;
     }
   };
 
   resetState = () => {
     this.setState({
-      selectedCollection: "",
       selectedUsers: [],
       selectedVideos: [],
       selectedConcepts: [],
@@ -435,78 +485,121 @@ class AnnotationCollection extends Component {
     });
   };
 
+  toggleInfo = () => {
+    this.setState(prevState => ({
+      infoDialogOpen: !prevState.infoDialogOpen
+    }));
+  };
+
   showCollection = () => {
-    let data = this.state.collections.find(col => {
-      return col.id === this.state.selectedCollection;
+    const { classes } = this.props;
+    const {
+      collections,
+      selectedCollection,
+      selectedCollectionCounts,
+      infoDialogOpen
+    } = this.state;
+    const data = collections.find(col => {
+      return col.id === selectedCollection;
     });
-    if (data.concepts[0] && data.users[0]) {
+    if (data.users[0]) {
       return (
         <React.Fragment>
-          <Typography variant="subtitle1" className={this.props.classes.stats1}>
-            Concepts ({data.concepts.length}):
-          </Typography>
-          <Typography variant="subtitle1" className={this.props.classes.stats2}>
-            {data.concepts.join(", ")}
-          </Typography>
-          <Typography variant="subtitle1" className={this.props.classes.stats1}>
-            Users ({data.users.length}):
-          </Typography>
-          <Typography variant="subtitle1" className={this.props.classes.stats2}>
-            {data.users.join(", ")}
-          </Typography>
+          <Button
+            className={classes.infoButton}
+            variant="outlined"
+            color="primary"
+            onClick={this.toggleInfo}
+          >
+            Collection Info
+          </Button>
+          <CollectionInfo
+            open={infoDialogOpen}
+            onClose={this.toggleInfo}
+            counts={selectedCollectionCounts}
+            data={data}
+          />
         </React.Fragment>
       );
     }
+    return (
+      <Typography variant="subtitle1" className={classes.stats1}>
+        No annotations
+      </Typography>
+    );
   };
 
   getStepForm = step => {
+    const {
+      includeTracking,
+      selectedUsers,
+      selectedVideos,
+      selectedConcepts,
+      annotationCount,
+      trackingCount
+    } = this.state;
     switch (step) {
       case 0:
         return (
           <VerifySelectUser
-            value={this.state.selectedUsers}
+            value={selectedUsers}
             getUsers={this.getUsers}
             selectUser={this.selectUser}
-            handleChangeList={this.handleChangeList("selectedUsers")}
+            handleChangeList={this.handleChangeList(
+              selectedUsers,
+              'selectedUsers'
+            )}
+            handleSelectAll={this.handleSelectAll}
+            handleUnselectAll={this.handleUnselectAll}
           />
         );
       case 1:
         return (
           <VerifySelectVideo
-            value={this.state.selectedVideos}
+            value={selectedVideos}
             getVideos={this.getVideos}
             getVideoCollections={this.getVideoCollections}
-            handleChange={this.handleChange("selectedVideos")}
-            handleChangeList={this.handleChangeList("selectedVideos")}
+            handleChange={this.handleChange('selectedVideos')}
+            handleChangeList={this.handleChangeList(
+              selectedVideos,
+              'selectedVideos'
+            )}
+            handleSelectAll={this.handleSelectAll}
+            handleUnselectAll={this.handleUnselectAll}
           />
         );
       case 2:
         return (
           <VerifySelectConcept
-            value={this.state.selectedConcepts}
+            value={selectedConcepts}
             getConcepts={this.getConcepts}
             getConceptCollections={this.getConceptCollections}
-            handleChange={this.handleChange("selectedConcepts")}
-            handleChangeList={this.handleChangeList("selectedConcepts")}
+            handleChange={this.handleChange('selectedConcepts')}
+            handleChangeList={this.handleChangeList(
+              selectedConcepts,
+              'selectedConcepts'
+            )}
+            handleSelectAll={this.handleSelectAll}
+            handleUnselectAll={this.handleUnselectAll}
           />
         );
       case 3:
         return (
           <React.Fragment>
             <Typography>
-              Number of Annotations: {this.state.annotationCount}
+              Number of User Annotations: {annotationCount}
             </Typography>
             <Typography>
-              Number of Tracking Annotations: {this.state.trackingCount}
+              Number of Tracking Annotations: {trackingCount}
             </Typography>
             <FormControlLabel
               control={
                 <Switch
-                  checked={this.state.includeTracking}
-                  onChange={this.handleChangeSwitch("includeTracking")}
+                  checked={includeTracking}
+                  onChange={this.handleChangeSwitch('includeTracking')}
                   value="includeTracking"
                   color="primary"
-                  disabled={this.state.trackingCount === "0"}
+                  disabled={trackingCount === '0'}
                 />
               }
               label="Include tracking annotations"
@@ -514,20 +607,26 @@ class AnnotationCollection extends Component {
           </React.Fragment>
         );
       default:
-        return "Unknown step";
+        return 'Unknown step';
     }
   };
 
   checkButtonDisabled = step => {
+    const {
+      selectedCollection,
+      selectedUsers,
+      selectedVideos,
+      selectedConcepts
+    } = this.state;
     switch (step) {
       case 0:
-        return this.state.selectedUsers.length === 0;
+        return selectedUsers.length === 0;
       case 1:
-        return this.state.selectedVideos.length === 0;
+        return selectedVideos.length === 0;
       case 2:
-        return this.state.selectedConcepts.length === 0;
+        return selectedConcepts.length === 0;
       case 3:
-        return this.state.selectedCollection === "";
+        return selectedCollection === '';
       default:
         return false;
     }
@@ -541,19 +640,19 @@ class AnnotationCollection extends Component {
 
   handleBack = step => {
     this.resetStep(step);
-    this.setState({
-      activeStep: this.state.activeStep - 1
-    });
+    this.setState(state => ({
+      activeStep: state.activeStep - 1
+    }));
   };
 
   render() {
-    const { activeStep } = this.state;
+    const { activeStep, collections, selectedCollection } = this.state;
     const { classes } = this.props;
     const steps = getSteps();
 
     return (
-      <Grid container spacing={5}>
-        <Grid item xs={6}>
+      <Grid container spacing={1}>
+        <Grid item xs={9}>
           <div className={classes.container}>
             <Stepper
               activeStep={activeStep}
@@ -565,7 +664,6 @@ class AnnotationCollection extends Component {
                   <StepLabel>{label}</StepLabel>
                   <StepContent>
                     {this.getStepForm(index)}
-
                     <div className={classes.actionsContainer}>
                       <Button
                         variant="contained"
@@ -585,7 +683,7 @@ class AnnotationCollection extends Component {
                           Back
                         </Button>
                       ) : (
-                        ""
+                        ''
                       )}
                       {activeStep === steps.length - 1 ? (
                         <Button
@@ -593,7 +691,7 @@ class AnnotationCollection extends Component {
                           color="primary"
                           disabled={this.checkButtonDisabled(index)}
                           onClick={() =>
-                            this.insertAnnotationsToCollection("annotations")
+                            this.insertAnnotationsToCollection('annotations')
                           }
                           className={classes.button}
                         >
@@ -624,16 +722,16 @@ class AnnotationCollection extends Component {
             </Stepper>
           </div>
         </Grid>
-        <Grid item xs={6} className={classes.collection}>
+        <Grid item xs={3} className={classes.collection}>
           <FormControl className={classes.formControl}>
             <InputLabel>Select collection</InputLabel>
             <Select
-              value={this.state.selectedCollection}
+              value={selectedCollection}
               onChange={this.handleChangeCollection}
-              autoWidth={true}
+              autoWidth
             >
               <MenuItem value="">Select collection</MenuItem>
-              {this.state.collections.map(collection => {
+              {collections.map(collection => {
                 return (
                   <MenuItem key={collection.id} value={collection.id}>
                     {collection.name}
@@ -641,45 +739,40 @@ class AnnotationCollection extends Component {
                 );
               })}
             </Select>
-            {this.state.selectedCollection === "" ||
-            !this.state.collections.filter(collection => {
-              return collection.id === this.state.selectedCollection;
+            {selectedCollection === '' ||
+            !collections.filter(collection => {
+              return collection.id === selectedCollection;
             })[0].description ? (
-              ""
+              ''
             ) : (
               <FormHelperText>
                 {
-                  this.state.collections.filter(collection => {
-                    return collection.id === this.state.selectedCollection;
+                  collections.filter(collection => {
+                    return collection.id === selectedCollection;
                   })[0].description
                 }
               </FormHelperText>
             )}
           </FormControl>
-          {this.state.selectedCollection ? this.showCollection() : ""}
           <div>
             <Button
-              className={classes.button}
-              disabled={this.state.selectedCollection === ""}
+              disabled={selectedCollection === ''}
               onClick={this.deleteAnnotationCollection}
             >
               Delete This Collection
             </Button>
-            <Button
-              className={classes.button}
-              onClick={this.createAnnotationCollection}
-            >
+            <Button onClick={this.createAnnotationCollection}>
               New Annotation Collection
             </Button>
+          </div>
+
+          <div className={classes.info}>
+            {selectedCollection ? this.showCollection() : ''}
           </div>
         </Grid>
       </Grid>
     );
   }
 }
-
-AnnotationCollection.propTypes = {
-  classes: PropTypes.object
-};
 
 export default withStyles(styles)(AnnotationCollection);

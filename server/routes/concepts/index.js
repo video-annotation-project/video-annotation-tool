@@ -1,7 +1,7 @@
-const router = require("express").Router();
-const passport = require("passport");
-const psql = require("../../db/simpleConnect");
-const AWS = require("aws-sdk");
+const router = require('express').Router();
+const passport = require('passport');
+const psql = require('../../db/simpleConnect');
+const AWS = require('aws-sdk');
 
 // returns a list of concept names
 /**
@@ -19,21 +19,9 @@ const AWS = require("aws-sdk");
  * @returns {Error} 500 - Unexpected database error
  */
 router.get(
-  "/",
-  passport.authenticate("jwt", { session: false }),
+  '/',
+  passport.authenticate('jwt', { session: false }),
   async (req, res) => {
-    // const queryText = `
-    //   SELECT
-    //     *
-    //   FROM ONLY
-    //     concepts
-    //   NATURAL FULL JOIN
-    //     concept_collection
-    //   WHERE
-    //     deleted_flag IS NOT TRUE
-    //   ORDER BY
-    //     name
-    // `;
     const queryText = `
       SELECT *
       FROM concepts
@@ -49,8 +37,8 @@ router.get(
 );
 
 router.get(
-  "/:id",
-  passport.authenticate("jwt", { session: false }),
+  '/:id',
+  passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     //   FROM ONLY
     //   concepts
@@ -76,7 +64,7 @@ router.get(
 
 // in the future, this route as well as the /api/annotationImages route can
 // be circumvented by using cloudfront
-router.get("/images/:id", async (req, res) => {
+router.get('/images/:id', async (req, res) => {
   let s3 = new AWS.S3();
   const queryText = `SELECT picture FROM concepts WHERE concepts.id=$1`;
   try {
@@ -93,5 +81,27 @@ router.get("/images/:id", async (req, res) => {
     res.status(400).json(error);
   }
 });
+
+router.get(
+  '/path/:id',
+  passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    const path = [];
+    let conceptid = req.params.id;
+    const queryText = `SELECT * FROM concepts WHERE id=$1`;
+
+    try {
+      while (conceptid) {
+        const concept = await psql.query(queryText, [conceptid]);
+        path.unshift(concept.rows[0].name);
+        conceptid = concept.rows[0].parent;
+      }
+      res.json(path);
+    } catch (error) {
+      res.status(500).json(error);
+      console.log(error);
+    }
+  }
+);
 
 module.exports = router;

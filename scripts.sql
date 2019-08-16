@@ -157,7 +157,9 @@ CREATE TABLE previous_runs (
   epochs integer,
   concepts integer[],
   videos integer[],
-  users integer[]
+  users integer[],
+  std_out text,
+  std_err text
 );
 
 /* 
@@ -173,6 +175,17 @@ CREATE TABLE training_progress (
   max_epoch integer,
   curr_batch integer,
   steps_per_epoch integer
+);
+
+
+CREATE TABLE model_params (
+  option text,
+  epochs integer,
+  min_images integer,
+  model_selected integer,
+  annotation_collections integer,
+  verified_only bool,
+  include_tracking bool
 );
 
 
