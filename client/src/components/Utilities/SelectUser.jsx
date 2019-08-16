@@ -60,7 +60,7 @@ class SelectUser extends React.Component {
         <div>
           <Button
             className={classes.button}
-            color="primary"
+            variant="contained"
             onClick={() => {
               handleSelectAll(users, value, 'selectedUsers');
             }}
@@ -69,7 +69,7 @@ class SelectUser extends React.Component {
           </Button>
           <Button
             className={classes.button}
-            color="primary"
+            variant="contained"
             onClick={() => {
               handleUnselectAll('selectedUsers');
             }}
@@ -88,7 +88,12 @@ class SelectUser extends React.Component {
               <FormControlLabel
                 key={user.id}
                 value={user.id.toString()}
-                control={<Checkbox color="primary" />}
+                control={
+                  <Checkbox
+                    labelStyle={{ color: 'white' }}
+                    iconStyle={{ fill: 'white' }}
+                  />
+                }
                 label={user.username}
                 checked={value.includes(user.id.toString())}
               />

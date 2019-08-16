@@ -624,7 +624,7 @@ class VerifyAnnotations extends Component {
       toggleSelection,
       socket,
       loadVideos,
-      includeTracking
+      excludeTracking
     } = this.props;
     const {
       x,
@@ -702,7 +702,7 @@ class VerifyAnnotations extends Component {
                       className={classes.button}
                       variant="contained"
                       onClick={this.nextAnnotation}
-                      disabled={includeTracking}
+                      disabled={!excludeTracking}
                     >
                       Next
                     </Button>
@@ -722,7 +722,7 @@ class VerifyAnnotations extends Component {
                   <br />
                   <div>
                     <Typography variant="subtitle2" className={classes.button}>
-                      {includeTracking
+                      {!excludeTracking
                         ? 'Next disabled because the collection might contain tracking annotations'
                         : ''}
                     </Typography>
