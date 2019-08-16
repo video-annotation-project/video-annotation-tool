@@ -9,8 +9,13 @@ import Tab from '@material-ui/core/Tab';
 import SwipeableViews from 'react-swipeable-views';
 import Box from '@material-ui/core/Box';
 import PredictProgress from './PredictProgress';
+import withStyles from '@material-ui/core/styles/withStyles';
 
 import './ModelProgress.css';
+
+const styles = theme => {
+
+};
 
 class ModelProgress extends Component {
   constructor(props) {
@@ -313,4 +318,4 @@ class ModelProgress extends Component {
   }
 }
 
-export default ModelProgress;
+export default withStyles(styles)(ModelProgress);

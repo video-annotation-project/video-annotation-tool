@@ -101,7 +101,7 @@ class SelectConcept extends React.Component {
                   <FormControlLabel
                     key={concept.id}
                     value={concept.id.toString()}
-                    control={<Checkbox color="primary" />}
+                    control={<Checkbox color="secondary" />}
                     label={
                       <div>
                         {concept.id} {concept.name}

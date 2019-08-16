@@ -144,7 +144,7 @@ class ReportModal extends Component {
                     checked={unsureOnly}
                     onChange={event => this.handleUnsureCheckbox(event)}
                     value="unsureOnly"
-                    color="primary"
+                    color="secondary"
                   />
                 }
                 label="Unsure Only"

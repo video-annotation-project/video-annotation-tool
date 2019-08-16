@@ -475,7 +475,6 @@ class Annotate extends Component {
     }
     return (
       <React.Fragment>
-        <Paper>
         <Hotkeys keyName="space, right, left" onKeyDown={this.handleKeyDown} />
         <Grid container className={classes.root} spacing={0}>
           <Grid item xs>
@@ -622,7 +621,6 @@ class Annotate extends Component {
             handleClose={this.handleDialogClose}
           />
           )}
-          </Paper>
       </React.Fragment>
     );
   }
