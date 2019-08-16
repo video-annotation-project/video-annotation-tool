@@ -46,7 +46,8 @@ function PredictProgress(props) {
     currentFrame,
     totalFrames,
     videoProgress,
-    predictionProgress
+    predictionProgress,
+    videoId
   } = props;
 
   return (
@@ -54,10 +55,10 @@ function PredictProgress(props) {
       <div>
         <Typography variant="subtitle1">Step 2/2</Typography>
         <Typography variant="subtitle2" gutterBottom>
-          {status === 1 && 'Currently resizing videos...'}
-          {status === 2 && 'Currently predicting videos...'}
-          {status === 3 && 'Currently generating videos...'}
-          {status === 4 && 'Model has finished predicting.'}
+          {status === 1 && `Currently resizing video ${videoId}...`}
+          {status === 2 && `Currently predicting video ${videoId}...`}
+          {status === 3 && `Currently generating video ${videoId}...`}
+          {status === 4 && `Model has finished predicting.`}
         </Typography>
       </div>
       <PredictingStatus
