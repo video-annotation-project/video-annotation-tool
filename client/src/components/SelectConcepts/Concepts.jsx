@@ -3,6 +3,11 @@ import axios from 'axios';
 import { withStyles } from '@material-ui/core/styles';
 import List from '@material-ui/core/List';
 import { Typography } from '@material-ui/core';
+import ListItem from '@material-ui/core/ListItem';
+import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
+import ListItemText from '@material-ui/core/ListItemText';
+import Avatar from '@material-ui/core/Avatar';
+import CheckBox from '@material-ui/core/Checkbox';
 
 import ConceptsList from './ConceptsList';
 
@@ -11,11 +16,21 @@ const styles = theme => ({
     width: '100%',
     backgroundColor: theme.palette.background.paper
   },
-  text: {
-    margin: theme.spacing(4)
+  path: {
+    marginTop: theme.spacing(),
+    marginLeft: theme.spacing(4),
+    marginBottom: theme.spacing(4)
   },
   input: {
+    marginLeft: theme.spacing(4),
+    marginTop: theme.spacing(4),
     marginBottom: theme.spacing()
+  },
+  shiftRight: {
+    paddingRight: theme.spacing(5)
+  },
+  nested: {
+    paddingLeft: theme.spacing(2)
   }
 });
 
@@ -26,6 +41,7 @@ class Concepts extends React.Component {
       isLoaded: false,
       conceptsSelected: {},
       conceptsLikeSearch: [],
+      conceptSearched: '',
       conceptPath: '',
       error: null
     };
@@ -141,11 +157,13 @@ class Concepts extends React.Component {
 
   handleKeyUp = async e => {
     if (e.key === 'Enter') {
+      const { value } = e.target;
       const conceptPath = await this.getConceptPath(
-        this.getConceptInfo(e.target.value).id
+        this.getConceptInfo(value).id
       );
 
       this.setState({
+        conceptSearched: this.getConceptInfo(value),
         conceptPath
       });
 
@@ -198,12 +216,18 @@ class Concepts extends React.Component {
     return match;
   };
 
+  handleCheckBoxClick = (event, id) => {
+    event.stopPropagation();
+    this.changeConceptsSelected(id);
+  };
+
   render() {
     const {
       error,
       isLoaded,
       conceptsSelected,
       conceptsLikeSearch,
+      conceptSearched,
       conceptPath
     } = this.state;
     const { classes } = this.props;
@@ -215,25 +239,46 @@ class Concepts extends React.Component {
     }
     return (
       <div className={classes.root}>
-        <div className={classes.text}>
-          <input
-            className={classes.input}
-            onKeyUp={this.handleKeyUp}
-            autoFocus
-            margin="dense"
-            id="concept"
-            type="text"
-            placeholder="Search Concepts"
-            list="data"
-            autoComplete="off"
-          />
-          <datalist id="data">
-            {conceptsLikeSearch.map(item => (
-              <option key={item.id} value={item.name} />
-            ))}
-          </datalist>
-          {conceptPath ? <Typography>{conceptPath}</Typography> : ''}
-        </div>
+        <input
+          className={classes.input}
+          onKeyUp={this.handleKeyUp}
+          autoFocus
+          margin="dense"
+          id="concept"
+          type="text"
+          placeholder="Search Concepts"
+          list="data"
+          autoComplete="off"
+        />
+        <datalist id="data">
+          {conceptsLikeSearch.map(item => (
+            <option key={item.id} value={item.name} />
+          ))}
+        </datalist>
+        {conceptSearched ? (
+          <List disablePadding className={classes.nested}>
+            <ListItem>
+              <Avatar
+                src={`https://cdn.deepseaannotations.com/concept_images/${conceptSearched.picture}`}
+              />
+              <ListItemText inset primary={conceptSearched.name} />
+              <ListItemSecondaryAction className={classes.shiftRight}>
+                <CheckBox
+                  checked={Boolean(conceptsSelected[conceptSearched.id])}
+                  onClick={e => this.handleCheckBoxClick(e, conceptSearched.id)}
+                  color="primary"
+                />
+              </ListItemSecondaryAction>
+            </ListItem>
+          </List>
+        ) : (
+          ''
+        )}
+        {conceptPath ? (
+          <Typography className={classes.path}>{conceptPath}</Typography>
+        ) : (
+          ''
+        )}
         <ConceptsList
           id={0}
           conceptsSelected={conceptsSelected}
