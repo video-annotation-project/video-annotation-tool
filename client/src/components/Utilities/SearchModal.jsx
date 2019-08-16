@@ -1,8 +1,9 @@
-import React, { Component } from 'react';
+import React from 'react';
 import Dialog from '@material-ui/core/Dialog';
 import DialogContent from '@material-ui/core/DialogContent';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import { withStyles } from '@material-ui/core/styles';
+import ConceptSearchMenu from './ConceptSearchMenu';
 
 const styles = () => ({
   dialogTitle: {
@@ -15,96 +16,54 @@ const styles = () => ({
   A pop up dialog box that prompts the user for input.
   Has the properties:
     -inputHandler: function called when user hits enter, passes the input
-    -title
-    -message
+    -concepts: list of concepts from database
     -handleClose
     -open
 */
-class SearchModal extends Component {
-  constructor(props) {
-    super(props);
-    const { handleClose, inputHandler } = this.props;
-    this.state = {
-      conceptsLikeSearch: []
-    };
-    this.handleClose = handleClose;
-    this.inputHandler = inputHandler;
-  }
-
-  getId = concept => {
-    const { concepts } = this.props;
+const SearchModal = props => {
+  const { classes, inputHandler, handleClose, concepts, open } = props;
+  function getId(concept) {
     const match = concepts.find(item => {
       return item.name === concept;
     });
     return match ? match.id : null;
-  };
+  }
 
-  handleClose = () => {
-    this.handleClose();
-  };
-
-  handleKeyUp = e => {
-    if (e.key === 'Enter') {
-      if (this.getId(e.target.value)) {
-        this.inputHandler(this.getId(e.target.value));
-      } else {
-        this.handleClose();
+  function handleKeyUp(event) {
+    if (event.key === 'Enter') {
+      const id = getId(event.target.value);
+      if (!id) {
+        return;
       }
-      return;
+      inputHandler(id);
     }
-    this.searchConcepts(e.target.value);
-  };
+  }
 
-  searchConcepts = search => {
-    const { concepts } = this.props;
+  function searchConcepts(search) {
     const conceptsLikeSearch = concepts.filter(concept => {
       return concept.name.match(new RegExp(search, 'i'));
     });
-
-    this.setState({
-      conceptsLikeSearch: conceptsLikeSearch.slice(0, 10)
-    });
-  };
-
-  render() {
-    const { classes, concepts, open } = this.props;
-    const { conceptsLikeSearch } = this.state;
-
-    if (!concepts) {
-      return (
-        <Dialog open={open} onClose={this.handleClose}>
-          Loading...
-        </Dialog>
-      );
-    }
-
-    return (
-      <div>
-        <Dialog open={open} onClose={this.handleClose}>
-          <DialogTitle className={classes.dialogTitle}>
-            Add New Concept
-          </DialogTitle>
-          <DialogContent>
-            <input
-              id="search-concepts"
-              onKeyUp={this.handleKeyUp}
-              autoFocus
-              margin="dense"
-              type="text"
-              placeholder="Search Concepts"
-              list="data"
-              autoComplete="off"
-            />
-            <datalist id="data">
-              {conceptsLikeSearch.map(item => (
-                <option key={item.id} value={item.name} />
-              ))}
-            </datalist>
-          </DialogContent>
-        </Dialog>
-      </div>
-    );
+    return conceptsLikeSearch.slice(0, 10);
   }
-}
+
+  return concepts ? (
+    <div>
+      <Dialog open={open} onClose={handleClose}>
+        <DialogTitle className={classes.dialogTitle}>Add Concept</DialogTitle>
+        <DialogContent>
+          <ConceptSearchMenu
+            classes={classes}
+            handleKeyUp={handleKeyUp}
+            searchConcepts={searchConcepts}
+          />
+        </DialogContent>
+      </Dialog>
+    </div>
+  ) : (
+    <Dialog open={open} onClose={handleClose}>
+      Loading...
+    </Dialog>
+  );
+};
 
 export default withStyles(styles)(SearchModal);
