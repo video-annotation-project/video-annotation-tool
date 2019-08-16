@@ -220,6 +220,7 @@ class ModelProgress extends Component {
       const predictStatus = predictionsData.status;
       const videoProgress = (currentVideoNum / totalVideos) * 100;
       const predictionProgress = (currentFrame / totalFrames) * 100;
+      const videoId = predictionsData.videoid;
 
       this.setState({
         loaded: true,
@@ -229,7 +230,8 @@ class ModelProgress extends Component {
         totalFrames,
         predictStatus,
         videoProgress,
-        predictionProgress
+        predictionProgress,
+        videoId
       });
     } catch (error) {
       console.log(error);
@@ -266,6 +268,7 @@ class ModelProgress extends Component {
       predictStatus,
       stdout,
       stderr,
+      videoId,
       postStopFlag
     } = this.state;
 
@@ -300,6 +303,7 @@ class ModelProgress extends Component {
                   videoProgress={videoProgress}
                   predictionProgress={predictionProgress}
                   status={predictStatus}
+                  videoId={videoId}
                 />
               ) : (
                 ''
