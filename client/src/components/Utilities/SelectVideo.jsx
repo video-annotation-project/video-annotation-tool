@@ -69,7 +69,7 @@ class SelectVideo extends React.Component {
       <FormControlLabel
         key={video.id}
         value={video.id.toString()}
-        control={<Checkbox color="primary" />}
+        control={<Checkbox color="secondary" />}
         label={`${video.id} ${video.filename}`}
         checked={value.includes(video.id.toString())}
       />

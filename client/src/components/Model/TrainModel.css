@@ -40,9 +40,10 @@
 }
 
 .epochsField {
-  max-width: 60px;
+  max-width: 80px;
+  margin-bottom: 10px;
 }
 
 .imagesField {
-  max-width: 100px;
+  max-width: 110px;
 }

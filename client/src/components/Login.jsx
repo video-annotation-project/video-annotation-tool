@@ -111,6 +111,7 @@ class Login extends Component {
             value={password}
             onChange={this.handleChange}
             margin="normal"
+            variant="filled"
             required
             InputProps={{
               endAdornment: (

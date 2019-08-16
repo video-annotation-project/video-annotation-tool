@@ -1,8 +1,13 @@
 import React from 'react';
 import LinearProgress from '@material-ui/core/LinearProgress';
 import { Typography } from '@material-ui/core';
+import withStyles from '@material-ui/core/styles/withStyles';
 
 import './ModelProgress.css';
+
+const styles = theme => {
+
+};
 
 function PredictingStatus(props) {
 
@@ -74,4 +79,4 @@ function PredictProgress(props) {
   );
 }
 
-export default PredictProgress;
+export default withStyles(styles)(PredictProgress);

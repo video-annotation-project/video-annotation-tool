@@ -467,7 +467,6 @@ class Verify extends Component {
       );
     } else {
       selection = (
-        <Paper square elevation={0} className={classes.resetContainer}>
           <VerifyAnnotations
             annotation={annotations[index]}
             index={index}
@@ -478,7 +477,6 @@ class Verify extends Component {
             resetLocalStorage={this.resetLocalStorage}
             collectionFlag={collectionFlag}
           />
-        </Paper>
       );
     }
 
