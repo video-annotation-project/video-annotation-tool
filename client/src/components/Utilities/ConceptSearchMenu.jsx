@@ -75,10 +75,9 @@ const ConceptSearchMenu = props => {
         });
 
         return (
-          <div className={classes.container}>
+          <div>
             {renderInput({
               fullWidth: true,
-              classes,
               label: 'Concept name',
               InputLabelProps: getLabelProps({ shrink: true }),
               InputProps: { onBlur, onChange, onFocus },
@@ -87,7 +86,7 @@ const ConceptSearchMenu = props => {
 
             <div {...getMenuProps()}>
               {isOpen ? (
-                <Paper className={classes.paper} square>
+                <Paper square>
                   {searchConcepts(inputValue).map((suggestion, index) =>
                     renderSuggestion({
                       suggestion,
