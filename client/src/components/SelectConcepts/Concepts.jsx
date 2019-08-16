@@ -28,7 +28,6 @@ class Concepts extends React.Component {
     this.state = {
       isLoaded: false,
       conceptsSelected: {},
-      conceptsLikeSearch: [],
       conceptPath: '',
       error: null
     };
@@ -131,30 +130,14 @@ class Concepts extends React.Component {
       });
   };
 
-  searchConcepts = search => {
-    const { concepts } = this.state;
-    const conceptsLikeSearch = concepts.filter(concept => {
-      return concept.name.match(new RegExp(search, 'i'));
-    });
-
-    this.setState({
-      conceptsLikeSearch: conceptsLikeSearch.slice(0, 10)
-    });
-  };
-
   handleKeyUp = async e => {
     if (e.key === 'Enter') {
-      const conceptPath = await this.getConceptPath(
-        this.getConceptInfo(e.target.value).id
-      );
-
       this.setState({
-        conceptPath
+        conceptPath: await this.getConceptPath(
+          this.getConceptInfo(e.target.value).id
+        )
       });
-
-      return;
     }
-    this.searchConcepts(e.target.value);
   };
 
   getConceptPath = async id => {
@@ -183,7 +166,6 @@ class Concepts extends React.Component {
   };
 
   searchConcepts = search => {
-    console.log(search);
     const { concepts } = this.state;
     const conceptsLikeSearch = concepts.filter(concept => {
       return concept.name.match(new RegExp(search, 'i'));
@@ -241,7 +223,6 @@ class Concepts extends React.Component {
 
   DownshiftMenu = props => {
     const { classes } = props;
-
     return (
       <Downshift
         className={classes.input}
@@ -268,15 +249,7 @@ class Concepts extends React.Component {
                 clearSelection();
               }
             },
-            onKeyUp: async e => {
-              if (e.key === 'Enter') {
-                this.setState({
-                  conceptPath: await this.getConceptPath(
-                    this.getConceptInfo(e.target.value).id
-                  )
-                });
-              }
-            },
+            onKeyUp: this.handleKeyUp,
             onFocus: openMenu,
             placeholder: 'Search for concept here',
             spellCheck: false
