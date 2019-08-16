@@ -3,12 +3,9 @@ import axios from 'axios';
 import { withStyles } from '@material-ui/core/styles';
 import List from '@material-ui/core/List';
 import { Typography } from '@material-ui/core';
-import TextField from '@material-ui/core/TextField';
-import Downshift from 'downshift';
-import Paper from '@material-ui/core/Paper';
-import MenuItem from '@material-ui/core/MenuItem';
 
 import ConceptsList from './ConceptsList';
+import ConceptSearchMenu from '../Utilities/ConceptSearchMenu';
 
 const styles = theme => ({
   root: {
@@ -183,118 +180,9 @@ class Concepts extends React.Component {
     return match;
   };
 
-  renderSuggestion = suggestionProps => {
-    const { suggestion, index, itemProps, highlightedIndex } = suggestionProps;
-    const isHighlighted = highlightedIndex === index;
-    return (
-      <MenuItem
-        {...itemProps}
-        key={suggestion.id}
-        selected={isHighlighted}
-        component="div"
-      >
-        {suggestion.name}
-      </MenuItem>
-    );
-  };
-
-  renderInput = inputProps => {
-    const { InputProps, classes, ref, ...other } = inputProps;
-
-    return (
-      <TextField
-        InputProps={{
-          inputRef: ref,
-          classes: {
-            root: classes.inputRoot,
-            input: classes.inputInput
-          },
-          ...InputProps
-        }}
-        {...other}
-      />
-    );
-  };
-
-  itemToString = item => {
-    if (item == null) {
-      return '';
-    }
-    return item.name;
-  };
-
-  DownshiftMenu = props => {
-    const { classes } = props;
-    return (
-      <Downshift
-        className={classes.input}
-        autoFocus
-        margin="dense"
-        id="concept"
-        type="text"
-        itemToString={this.itemToString}
-      >
-        {({
-          clearSelection,
-          getInputProps,
-          getItemProps,
-          getLabelProps,
-          getMenuProps,
-          highlightedIndex,
-          inputValue,
-          isOpen,
-          openMenu
-        }) => {
-          const { onBlur, onChange, onFocus, ...inputProps } = getInputProps({
-            onChange: event => {
-              if (event.target.value === '') {
-                clearSelection();
-              }
-            },
-            onKeyUp: this.handleKeyUp,
-            onFocus: openMenu,
-            placeholder: 'Search for concept here',
-            spellCheck: false
-          });
-
-          return (
-            <div className={classes.container}>
-              {this.renderInput({
-                fullWidth: true,
-                classes,
-                label: 'Concept name',
-                InputLabelProps: getLabelProps({ shrink: true }),
-                InputProps: { onBlur, onChange, onFocus },
-                inputProps
-              })}
-
-              <div {...getMenuProps()}>
-                {isOpen ? (
-                  <Paper className={classes.paper} square>
-                    {this.searchConcepts(inputValue).map((suggestion, index) =>
-                      this.renderSuggestion({
-                        suggestion,
-                        index,
-                        itemProps: getItemProps({
-                          item: suggestion
-                        }),
-                        highlightedIndex
-                      })
-                    )}
-                  </Paper>
-                ) : null}
-              </div>
-            </div>
-          );
-        }}
-      </Downshift>
-    );
-  };
-
   render() {
     const { error, isLoaded, conceptsSelected, conceptPath } = this.state;
     const { classes } = this.props;
-    const { DownshiftMenu } = this;
     if (!isLoaded) {
       return <List className={classes.text}>Loading...</List>;
     }
@@ -304,7 +192,11 @@ class Concepts extends React.Component {
     return (
       <div className={classes.root}>
         <div className={classes.text}>
-          <DownshiftMenu classes={classes} />
+          <ConceptSearchMenu
+            classes={classes}
+            handleKeyUp={this.handleKeyUp}
+            searchConcepts={this.searchConcepts}
+          />
           {conceptPath ? <Typography>{conceptPath}</Typography> : ''}
         </div>
         <ConceptsList
