@@ -132,10 +132,12 @@ class Concepts extends React.Component {
 
   handleKeyUp = async e => {
     if (e.key === 'Enter') {
+      const concept = this.getConceptInfo(e.target.value);
+      if (!concept) {
+        return;
+      }
       this.setState({
-        conceptPath: await this.getConceptPath(
-          this.getConceptInfo(e.target.value).id
-        )
+        conceptPath: await this.getConceptPath(concept.id)
       });
     }
   };
