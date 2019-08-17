@@ -90,7 +90,7 @@ class DialogModal extends Component {
                 checked={unsure}
                 onChange={this.handleCheckboxChange}
                 value="unsure"
-                color="primary"
+                color="secondary"
               />
             }
             label="Unsure"
