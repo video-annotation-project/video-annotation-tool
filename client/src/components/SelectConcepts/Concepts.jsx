@@ -3,6 +3,11 @@ import axios from 'axios';
 import { withStyles } from '@material-ui/core/styles';
 import List from '@material-ui/core/List';
 import { Typography } from '@material-ui/core';
+import ListItem from '@material-ui/core/ListItem';
+import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
+import ListItemText from '@material-ui/core/ListItemText';
+import Avatar from '@material-ui/core/Avatar';
+import CheckBox from '@material-ui/core/Checkbox';
 
 import ConceptsList from './ConceptsList';
 import ConceptSearchMenu from '../Utilities/ConceptSearchMenu';
@@ -11,11 +16,18 @@ const styles = theme => ({
   root: {
     width: '100%'
   },
-  text: {
-    margin: theme.spacing(4)
+  search: {
+    marginBottom: theme.spacing(4)
   },
-  input: {
-    marginBottom: theme.spacing()
+  path: {
+    marginTop: theme.spacing(),
+    marginLeft: theme.spacing(4)
+  },
+  shiftRight: {
+    paddingRight: theme.spacing(5)
+  },
+  nested: {
+    paddingLeft: theme.spacing(2)
   }
 });
 
@@ -25,6 +37,7 @@ class Concepts extends React.Component {
     this.state = {
       isLoaded: false,
       conceptsSelected: {},
+      conceptSearched: '',
       conceptPath: '',
       error: null
     };
@@ -129,12 +142,18 @@ class Concepts extends React.Component {
 
   handleKeyUp = async e => {
     if (e.key === 'Enter') {
-      const concept = this.getConceptInfo(e.target.value);
+      const { value } = e.target;
+      const concept = this.getConceptInfo(value);
       if (!concept) {
         return;
       }
+      const conceptPath = await this.getConceptPath(
+        this.getConceptInfo(value).id
+      );
+
       this.setState({
-        conceptPath: await this.getConceptPath(concept.id)
+        conceptSearched: this.getConceptInfo(value),
+        conceptPath
       });
     }
   };
@@ -180,24 +199,64 @@ class Concepts extends React.Component {
     return match;
   };
 
+  handleCheckBoxClick = (event, id) => {
+    event.stopPropagation();
+    this.changeConceptsSelected(id);
+  };
+
   render() {
-    const { error, isLoaded, conceptsSelected, conceptPath } = this.state;
+    const {
+      error,
+      isLoaded,
+      conceptsSelected,
+      conceptSearched,
+      conceptPath
+    } = this.state;
     const { classes } = this.props;
+
     if (!isLoaded) {
-      return <List className={classes.text}>Loading...</List>;
+      return <Typography className={classes.path}>Loading...</Typography>;
     }
     if (error) {
-      return <List>Error: {error.message}</List>;
+      return (
+        <Typography className={classes.path}>Error: {error.message}</Typography>
+      );
     }
     return (
       <div className={classes.root}>
-        <div className={classes.text}>
+        <div className={classes.search}>
           <ConceptSearchMenu
+            className={classes.input}
             classes={classes}
             handleKeyUp={this.handleKeyUp}
             searchConcepts={this.searchConcepts}
           />
-          {conceptPath ? <Typography>{conceptPath}</Typography> : ''}
+          {conceptSearched ? (
+            <List disablePadding className={classes.nested}>
+              <ListItem>
+                <Avatar
+                  src={`https://cdn.deepseaannotations.com/concept_images/${conceptSearched.picture}`}
+                />
+                <ListItemText inset primary={conceptSearched.name} />
+                <ListItemSecondaryAction className={classes.shiftRight}>
+                  <CheckBox
+                    checked={Boolean(conceptsSelected[conceptSearched.id])}
+                    onClick={e =>
+                      this.handleCheckBoxClick(e, conceptSearched.id)
+                    }
+                    color="primary"
+                  />
+                </ListItemSecondaryAction>
+              </ListItem>
+            </List>
+          ) : (
+            ''
+          )}
+          {conceptPath ? (
+            <Typography className={classes.path}>{conceptPath}</Typography>
+          ) : (
+            ''
+          )}
         </div>
         <ConceptsList
           id={0}
