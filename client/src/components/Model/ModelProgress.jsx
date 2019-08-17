@@ -8,14 +8,12 @@ import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
 import SwipeableViews from 'react-swipeable-views';
 import Box from '@material-ui/core/Box';
-import PredictProgress from './PredictProgress';
 import withStyles from '@material-ui/core/styles/withStyles';
+import PredictProgress from './PredictProgress';
 
 import './ModelProgress.css';
 
-const styles = theme => {
-
-};
+const styles = theme => {};
 
 class ModelProgress extends Component {
   constructor(props) {
@@ -71,7 +69,13 @@ class ModelProgress extends Component {
   };
 
   TrainingStatus = () => {
-    const { handleTerminate, onReady, stopTraining, handleReset, startTraining } = this.props;
+    const {
+      handleTerminate,
+      onReady,
+      stopTraining,
+      handleReset,
+      startTraining
+    } = this.props;
     const {
       currentEpoch,
       stepsPerEpoch,
@@ -224,6 +228,7 @@ class ModelProgress extends Component {
       const predictStatus = predictionsData.status;
       const videoProgress = (currentVideoNum / totalVideos) * 100;
       const predictionProgress = (currentFrame / totalFrames) * 100;
+      const videoId = predictionsData.videoid;
 
       this.setState({
         loaded: true,
@@ -233,7 +238,8 @@ class ModelProgress extends Component {
         totalFrames,
         predictStatus,
         videoProgress,
-        predictionProgress
+        predictionProgress,
+        videoId
       });
     } catch (error) {
       console.log(error);
@@ -269,7 +275,8 @@ class ModelProgress extends Component {
       predictionProgress,
       predictStatus,
       stdout,
-      stderr
+      stderr,
+      videoId
     } = this.state;
 
     return (
@@ -303,6 +310,7 @@ class ModelProgress extends Component {
                   videoProgress={videoProgress}
                   predictionProgress={predictionProgress}
                   status={predictStatus}
+                  videoId={videoId}
                 />
               ) : (
                 ''

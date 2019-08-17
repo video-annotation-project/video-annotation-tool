@@ -30,7 +30,7 @@ const styles = theme => ({
     marginTop: '10px',
     marginLeft: '20px',
     marginBottom: '10px'
-  }, 
+  },
   text: {
     margin: theme.spacing(2)
   }
@@ -619,7 +619,7 @@ class Annotate extends Component {
             open
             handleClose={this.handleDialogClose}
           />
-          )}
+        )}
       </React.Fragment>
     );
   }

@@ -5,7 +5,12 @@ import {
   MuiThemeProvider,
   createMuiTheme
 } from '@material-ui/core/styles';
-import { Typography, DialogTitle, DialogContent } from '@material-ui/core';
+import {
+  Paper,
+  Typography,
+  DialogTitle,
+  DialogContent
+} from '@material-ui/core';
 import Button from '@material-ui/core/Button';
 import OndemandVideo from '@material-ui/icons/OndemandVideo';
 import Photo from '@material-ui/icons/Photo';
@@ -624,7 +629,7 @@ class VerifyAnnotations extends Component {
       toggleSelection,
       socket,
       loadVideos,
-      includeTracking
+      excludeTracking
     } = this.props;
     const {
       x,
@@ -702,7 +707,7 @@ class VerifyAnnotations extends Component {
                       className={classes.button}
                       variant="contained"
                       onClick={this.nextAnnotation}
-                      disabled={includeTracking}
+                      disabled={!excludeTracking}
                     >
                       Next
                     </Button>
@@ -722,7 +727,7 @@ class VerifyAnnotations extends Component {
                   <br />
                   <div>
                     <Typography variant="subtitle2" className={classes.button}>
-                      {includeTracking
+                      {!excludeTracking
                         ? 'Next disabled because the collection might contain tracking annotations'
                         : ''}
                     </Typography>
@@ -732,7 +737,7 @@ class VerifyAnnotations extends Component {
                         ? this.getStatus(annotation.tracking_flag)
                         : this.getStatus(trackingStatus)}
                     </Typography>
-                    <Typography className={classes.paper}>
+                    <Typography>
                       {index + 1} of {size}
                     </Typography>
                   </div>
@@ -740,7 +745,7 @@ class VerifyAnnotations extends Component {
                 <Grid item xs />
               </Grid>
             ) : (
-              <div style={{ marginLeft: '300px' }}>
+              <div style={{ marginLeft: '250px' }}>
                 <Hotkeys keyName="r, d, i, v" onKeyDown={this.handleKeyDown} />
                 <div
                   style={{
@@ -784,7 +789,7 @@ class VerifyAnnotations extends Component {
                     />
                   </DragBoxContainer>
                 </div>
-                <Typography className={classes.paper}>
+                <Typography>
                   {index + 1} of {size}
                 </Typography>
                 {this.optionButtons(annotation)}

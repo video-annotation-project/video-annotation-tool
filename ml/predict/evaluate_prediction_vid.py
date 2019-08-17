@@ -155,3 +155,8 @@ if __name__ == "__main__":
     con.commit()
 
     evaluate(video_id, model_username, concepts)
+    cursor.execute('''
+        DELETE FROM predict_progress
+        ''')
+
+    con.commit()

@@ -77,7 +77,7 @@ class VerifySelection extends React.Component {
       selectedUnsure,
       getUnsure,
       selectedTrackingFirst,
-      includeTracking
+      excludeTracking
     } = this.props;
 
     switch (step) {
@@ -157,7 +157,7 @@ class VerifySelection extends React.Component {
                         onChange={handleChangeSwitch('selectedTrackingFirst')}
                         value="selectedTrackingFirst"
                         color="primary"
-                        disabled={includeTracking}
+                        disabled={!excludeTracking}
                       />
                     }
                     label="Tracking Video Verification"
@@ -178,14 +178,14 @@ class VerifySelection extends React.Component {
                       control={
                         <Switch
                           className={classes.switch}
-                          checked={includeTracking}
-                          onChange={handleChangeSwitch('includeTracking')}
-                          value="includeTracking"
+                          checked={excludeTracking}
+                          onChange={handleChangeSwitch('excludeTracking')}
+                          value="excludeTracking"
                           color="primary"
                           disabled={selectedTrackingFirst}
                         />
                       }
-                      label="Include Tracking"
+                      label="Exclude Tracking"
                     />
                   </FormGroup>
                 </FormControl>
