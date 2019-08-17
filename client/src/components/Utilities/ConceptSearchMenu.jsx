@@ -1,8 +1,17 @@
 import React from 'react';
+import { withStyles } from '@material-ui/core/styles';
 import Downshift from 'downshift';
 import TextField from '@material-ui/core/TextField';
 import Paper from '@material-ui/core/Paper';
 import MenuItem from '@material-ui/core/MenuItem';
+
+const styles = theme => ({
+  input: {
+    marginLeft: theme.spacing(4),
+    marginTop: theme.spacing(4),
+    marginBottom: theme.spacing()
+  }
+});
 
 const ConceptSearchMenu = props => {
   const { classes, handleKeyUp, searchConcepts } = props;
@@ -75,7 +84,7 @@ const ConceptSearchMenu = props => {
         });
 
         return (
-          <div>
+          <div className={classes.input}>
             {renderInput({
               fullWidth: true,
               label: 'Concept name',
@@ -107,4 +116,4 @@ const ConceptSearchMenu = props => {
   );
 };
 
-export default ConceptSearchMenu;
+export default withStyles(styles)(ConceptSearchMenu);

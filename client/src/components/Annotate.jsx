@@ -13,7 +13,6 @@ import ConceptsSelected from './Utilities/ConceptsSelected';
 import DialogModal from './Utilities/DialogModal';
 import VideoList from './Utilities/VideoList';
 import DragBoxContainer from './Utilities/DragBoxContainer';
-import Paper from '@material-ui/core/Paper';
 
 const styles = theme => ({
   videoContainer: {

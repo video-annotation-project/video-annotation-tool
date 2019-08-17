@@ -16,15 +16,12 @@ const styles = theme => ({
   root: {
     width: '100%'
   },
-  path: {
-    marginTop: theme.spacing(),
-    marginLeft: theme.spacing(4),
+  search: {
     marginBottom: theme.spacing(4)
   },
-  input: {
-    marginLeft: theme.spacing(4),
-    marginTop: theme.spacing(4),
-    marginBottom: theme.spacing()
+  path: {
+    marginTop: theme.spacing(),
+    marginLeft: theme.spacing(4)
   },
   shiftRight: {
     paddingRight: theme.spacing(5)
@@ -218,42 +215,49 @@ class Concepts extends React.Component {
     const { classes } = this.props;
 
     if (!isLoaded) {
-      return <List className={classes.text}>Loading...</List>;
+      return <Typography className={classes.path}>Loading...</Typography>;
     }
     if (error) {
-      return <List>Error: {error.message}</List>;
+      return (
+        <Typography className={classes.path}>Error: {error.message}</Typography>
+      );
     }
     return (
       <div className={classes.root}>
-        <ConceptSearchMenu
-          classes={classes}
-          handleKeyUp={this.handleKeyUp}
-          searchConcepts={this.searchConcepts}
-        />
-        {conceptSearched ? (
-          <List disablePadding className={classes.nested}>
-            <ListItem>
-              <Avatar
-                src={`https://cdn.deepseaannotations.com/concept_images/${conceptSearched.picture}`}
-              />
-              <ListItemText inset primary={conceptSearched.name} />
-              <ListItemSecondaryAction className={classes.shiftRight}>
-                <CheckBox
-                  checked={Boolean(conceptsSelected[conceptSearched.id])}
-                  onClick={e => this.handleCheckBoxClick(e, conceptSearched.id)}
-                  color="primary"
+        <div className={classes.search}>
+          <ConceptSearchMenu
+            className={classes.input}
+            classes={classes}
+            handleKeyUp={this.handleKeyUp}
+            searchConcepts={this.searchConcepts}
+          />
+          {conceptSearched ? (
+            <List disablePadding className={classes.nested}>
+              <ListItem>
+                <Avatar
+                  src={`https://cdn.deepseaannotations.com/concept_images/${conceptSearched.picture}`}
                 />
-              </ListItemSecondaryAction>
-            </ListItem>
-          </List>
-        ) : (
-          ''
-        )}
-        {conceptPath ? (
-          <Typography className={classes.path}>{conceptPath}</Typography>
-        ) : (
-          ''
-        )}
+                <ListItemText inset primary={conceptSearched.name} />
+                <ListItemSecondaryAction className={classes.shiftRight}>
+                  <CheckBox
+                    checked={Boolean(conceptsSelected[conceptSearched.id])}
+                    onClick={e =>
+                      this.handleCheckBoxClick(e, conceptSearched.id)
+                    }
+                    color="primary"
+                  />
+                </ListItemSecondaryAction>
+              </ListItem>
+            </List>
+          ) : (
+            ''
+          )}
+          {conceptPath ? (
+            <Typography className={classes.path}>{conceptPath}</Typography>
+          ) : (
+            ''
+          )}
+        </div>
         <ConceptsList
           id={0}
           conceptsSelected={conceptsSelected}
