@@ -5,12 +5,7 @@ import {
   MuiThemeProvider,
   createMuiTheme
 } from '@material-ui/core/styles';
-import {
-  Paper,
-  Typography,
-  DialogTitle,
-  DialogContent
-} from '@material-ui/core';
+import { Typography, DialogTitle, DialogContent } from '@material-ui/core';
 import Button from '@material-ui/core/Button';
 import OndemandVideo from '@material-ui/icons/OndemandVideo';
 import Photo from '@material-ui/icons/Photo';
