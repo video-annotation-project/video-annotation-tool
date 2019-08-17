@@ -1,7 +1,5 @@
 import keras
-from psycopg2 import connect
 
-import config
 from utils.query import con, cursor
 
 
@@ -20,32 +18,37 @@ class Progress(keras.callbacks.Callback):
 
     def on_train_begin(self, logs={}):
         self.cursor.execute(
-            f"""INSERT INTO {self.table_name}
-                    (job_id, running, curr_epoch, max_epoch, curr_batch, steps_per_epoch)
-                VALUES
-                    (%s, TRUE, 0, %s, 0, %s) RETURNING id""",
+            f"""UPDATE
+                    {self.table_name}
+                SET
+                    job_id=%s,
+                    status=1,
+                    curr_epoch=0,
+                    max_epoch=%s,
+                    curr_batch=0,
+                    steps_per_epoch=%s
+                """,
             (self.job_id, self.max_epoch, self.steps_per_epoch))
 
-        self.run_id = self.cursor.fetchone()[0]
         self.connection.commit()
 
     def on_train_end(self, logs={}):
         self.cursor.execute(
-            f"""UPDATE {self.table_name} SET running = FALSE WHERE id = %s""", (self.run_id,))
+            f"""UPDATE {self.table_name} SET status = 2""")
         self.connection.commit()
 
     def on_epoch_begin(self, epoch, logs={}):
-        self.cursor.execute(f"""UPDATE {self.table_name}  SET curr_epoch = %s WHERE id = %s""",
-                            (epoch, self.run_id))
+        self.cursor.execute(f"""UPDATE {self.table_name}  SET curr_epoch = %s""",
+                            (epoch,))
         self.connection.commit()
 
     def on_epoch_end(self, epoch, logs={}):
         self.curr_epoch = epoch
         self.cursor.execute(
-            f"""SELECT stop_flag from {self.table_name} WHERE id = %s""", (self.run_id,))
+            f"""SELECT stop_flag FROM {self.table_name}""")
         flag = self.cursor.fetchone()[0]
         if flag:
-            print("end training")
+            print("ending training early")
             self.model.stop_training = True
 
     def on_batch_begin(self, batch, logs={}):
@@ -55,9 +58,8 @@ class Progress(keras.callbacks.Callback):
             f"""UPDATE
                     {self.table_name}
                 SET
-                    curr_batch = %s
-                WHERE id = %s""",
-            (batch, self.run_id))
+                    curr_batch = %s""",
+            (batch,))
 
         self.connection.commit()
 

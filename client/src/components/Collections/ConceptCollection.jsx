@@ -310,12 +310,13 @@ class ConceptCollection extends Component {
         <div>
           <Button
             className={classes.button}
+            color="secondary"
             onClick={() => this.deleteCollection(selectedCollection)}
             disabled={selectedCollection === ''}
           >
             Delete This Collection
           </Button>
-          <Button className={classes.button} onClick={this.createCollection}>
+          <Button className={classes.button} color="secondary" onClick={this.createCollection}>
             New Concept Collection
           </Button>
         </div>

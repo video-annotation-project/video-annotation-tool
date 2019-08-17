@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from predict import predict_on_video
 import boto3
 import json
-import config
+import config.config
 from utils.query import s3, con, cursor
 from config import S3_BUCKET, S3_WEIGHTS_FOLDER, WEIGHTS_PATH
 

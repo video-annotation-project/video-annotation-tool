@@ -5,8 +5,8 @@ from dotenv import load_dotenv
 
 # This file loads in all environmental and configuration variables
 
-config_path = "../config.json"
-load_dotenv(dotenv_path="../.env")
+config_path = "../../config.json"
+load_dotenv(dotenv_path="../../.env")
 
 config_file = open(config_path)
 config = json.load(config_file)["ml"]

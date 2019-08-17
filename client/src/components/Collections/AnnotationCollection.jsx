@@ -66,8 +66,7 @@ const styles = theme => ({
   },
   container: {
     display: 'flex',
-    flexDirection: 'row',
-    height: '560px'
+    flexDirection: 'row'
   },
   stats1: {
     marginTop: theme.spacing(),

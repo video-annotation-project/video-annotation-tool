@@ -10,6 +10,7 @@ import Grid from '@material-ui/core/Grid';
 
 import DragBoxContainer from '../Utilities/DragBoxContainer';
 import AIvideoList from './AIvideoList';
+import Paper from '@material-ui/core/Paper';
 
 const styles = () => ({
   videoContainer: {
@@ -210,6 +211,7 @@ class Annotate extends Component {
     }
     return (
       <React.Fragment>
+        <Paper>
         <Hotkeys keyName="space, right, left" onKeyDown={this.handleKeyDown} />
         <Grid container className={classes.root} spacing={2}>
           <Grid item xs>
@@ -256,7 +258,7 @@ class Annotate extends Component {
                 <Slider
                   style={{
                     width: 200,
-                    marginTop: 10
+                    marginTop: 0
                   }}
                   value={videoPlaybackRate}
                   min={0}
@@ -310,6 +312,7 @@ class Annotate extends Component {
           </Grid>
           <Grid item xs />
         </Grid>
+        </Paper>
       </React.Fragment>
     );
   }

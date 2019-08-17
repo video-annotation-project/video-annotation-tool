@@ -8,136 +8,19 @@ import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
 import SwipeableViews from 'react-swipeable-views';
 import Box from '@material-ui/core/Box';
-
+import withStyles from '@material-ui/core/styles/withStyles';
 import PredictProgress from './PredictProgress';
+
 import './ModelProgress.css';
 
-class TrainingStatus extends Component {
-  ternaryOpBreak = (con1, con2) => {
-    const {
-      currentEpoch,
-      maxEpoch,
-      epochProgress,
-      currentBatch,
-      stepsPerEpoch,
-      batchProgress
-    } = this.props;
-
-    let ret;
-    if (con1) {
-      ret = (
-        <div className="progressBars">
-          <Typography variant="body1" gutterBottom className="progressText">
-            Epoch: {currentEpoch} / {maxEpoch}
-          </Typography>
-          <LinearProgress
-            className="progressBar"
-            variant="determinate"
-            value={epochProgress}
-          />
-          <Typography variant="body1" gutterBottom className="progressText">
-            Batch: {currentBatch} / {stepsPerEpoch}
-          </Typography>
-          <LinearProgress
-            className="progressBar"
-            variant="determinate"
-            value={batchProgress}
-            color="secondary"
-          />
-        </div>
-      );
-    } else if (con2) {
-      //
-    } else {
-      ret = (
-        <Typography variant="subtitle2" gutterBottom>
-          Not currently training
-        </Typography>
-      );
-    }
-    return ret;
-  };
-
-  render() {
-    const {
-      onStop,
-      running,
-      currentEpoch,
-      currentBatch,
-      maxEpoch,
-      stepsPerEpoch,
-      postStopFlag
-    } = this.props;
-    return (
-      <div>
-        <Paper square elevation={0} className="resetContainer">
-          <div>
-            <Typography variant="subtitle1">Step 1/2</Typography>
-            <Typography variant="subtitle2" gutterBottom>
-              Model has started training...
-            </Typography>
-          </div>
-          <Button
-            onClick={onStop}
-            variant="contained"
-            color="secondary"
-            className="stopButton"
-          >
-            Stop
-          </Button>
-          <Button
-            onClick={postStopFlag}
-            variant="contained"
-            color="secondary"
-            className="stopButton"
-          >
-            Stop Training
-          </Button>
-        </Paper>
-        {this.ternaryOpBreak(
-          running,
-          !running &&
-            currentEpoch === maxEpoch &&
-            currentBatch === stepsPerEpoch
-        )}
-      </div>
-    );
-  }
-}
-
-function ServerOutput(props) {
-  const { output } = props;
-  return (
-    <div className="codeBlock">
-      <code>
-        <pre>{output || 'No current output'}</pre>
-      </code>
-    </div>
-  );
-}
-
-function TabPanel(props) {
-  const { children, value, index, ...other } = props;
-  return (
-    <Typography
-      component="div"
-      role="tabpanel"
-      hidden={value !== index}
-      id={`full-width-tabpanel-${index}`}
-      aria-labelledby={`full-width-tab-${index}`}
-      {...other}
-    >
-      <Box p={3}>{children}</Box>
-    </Typography>
-  );
-}
+const styles = theme => {};
 
 class ModelProgress extends Component {
   constructor(props) {
     super(props);
 
     this.state = {
-      running: false,
+      loaded: false,
       tab: 0,
       currentEpoch: 0,
       currentBatch: 0,
@@ -159,7 +42,126 @@ class ModelProgress extends Component {
     clearInterval(this.interval);
   }
 
-  loadProgressInfo = () => {
+  ServerOutput = output => {
+    return (
+      <div className="codeBlock">
+        <code>
+          <pre>{output || 'No current output'}</pre>
+        </code>
+      </div>
+    );
+  };
+
+  TabPanel = (props, value, index, children) => {
+    const { ...other } = props;
+    return (
+      <Typography
+        component="div"
+        role="tabpanel"
+        hidden={value !== index}
+        id={`full-width-tabpanel-${index}`}
+        aria-labelledby={`full-width-tab-${index}`}
+        {...other}
+      >
+        <Box p={3}>{children}</Box>
+      </Typography>
+    );
+  };
+
+  TrainingStatus = () => {
+    const {
+      handleTerminate,
+      onReady,
+      stopTraining,
+      handleReset,
+      startTraining
+    } = this.props;
+    const {
+      currentEpoch,
+      stepsPerEpoch,
+      maxEpoch,
+      currentBatch,
+      batchProgress,
+      epochProgress,
+      trainStatus
+    } = this.state;
+    return (
+      <React.Fragment>
+        <Paper square elevation={0} className="resetContainer">
+          <div>
+            <Typography
+              hidden={this.getButtonStatus() === 0}
+              variant="subtitle1"
+            >
+              Step 1/2
+            </Typography>
+            <Typography
+              hidden={this.getButtonStatus() !== 0}
+              variant="subtitle1"
+            >
+              Not currently training.
+            </Typography>
+            <Typography variant="subtitle2" gutterBottom>
+              {trainStatus === 1 && 'Model has started training...'}
+              {trainStatus === 2 && 'Model has finished training.'}
+            </Typography>
+          </div>
+          <div hidden={this.getButtonStatus() !== 0}>
+            <Button
+              onClick={startTraining}
+              variant="contained"
+              color="secondary"
+              disabled={!onReady()}
+            >
+              Start Training
+            </Button>
+          </div>
+          <div hidden={this.getButtonStatus() !== 1}>
+            <Button
+              onClick={stopTraining}
+              variant="contained"
+              className="stopButton"
+            >
+              Stop Training
+            </Button>
+            <Button
+              onClick={handleTerminate}
+              variant="contained"
+              className="terminateButton"
+            >
+              Terminate
+            </Button>
+          </div>
+          <div hidden={this.getButtonStatus() !== 2}>
+            <Button onClick={handleReset} variant="contained" color="primary">
+              Reset Training
+            </Button>
+          </div>
+        </Paper>
+        <div className="progressBars" hidden={trainStatus === 0}>
+          <Typography variant="body1" gutterBottom className="progressText">
+            Epoch: {currentEpoch} / {maxEpoch}
+          </Typography>
+          <LinearProgress
+            className="progressBar"
+            variant="determinate"
+            value={epochProgress || 0}
+          />
+          <Typography variant="body1" gutterBottom className="progressText">
+            Batch: {currentBatch} / {stepsPerEpoch}
+          </Typography>
+          <LinearProgress
+            className="progressBar"
+            variant="determinate"
+            value={batchProgress || 0}
+            color="secondary"
+          />
+        </div>
+      </React.Fragment>
+    );
+  };
+
+  loadProgressInfoTrain = () => {
     const { activeStep } = this.props;
     if (activeStep < 3) {
       return;
@@ -175,7 +177,6 @@ class ModelProgress extends Component {
         const progress = res.data[0];
 
         this.setState({
-          running: progress.running,
           currentEpoch: progress.curr_epoch + 1,
           currentBatch: progress.curr_batch + 1,
           maxEpoch: progress.max_epoch,
@@ -184,7 +185,8 @@ class ModelProgress extends Component {
           batchProgress:
             ((progress.curr_batch + 1) / progress.steps_per_epoch) * 100,
           stdout: progress.std_out,
-          stderr: progress.std_err
+          stderr: progress.std_err,
+          trainStatus: progress.status
         });
       })
       .catch(error => {
@@ -200,20 +202,81 @@ class ModelProgress extends Component {
     this.setState({ tab: newValue });
   };
 
+  loadProgressInfoPredict = async () => {
+    const config = {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    };
+    try {
+      const predictions = await axios.get(
+        `/api/models/progress/predict`,
+        config
+      );
+      const predictionsData = predictions.data;
+      if (predictionsData === 'not loaded') {
+        this.setState({
+          loaded: false
+        });
+        return;
+      }
+
+      const totalVideos = predictionsData.total_videos;
+      const currentVideoNum = predictionsData.current_video;
+      const totalFrames = predictionsData.totalframe;
+      const currentFrame = predictionsData.framenum;
+      const predictStatus = predictionsData.status;
+      const videoProgress = (currentVideoNum / totalVideos) * 100;
+      const predictionProgress = (currentFrame / totalFrames) * 100;
+      const videoId = predictionsData.videoid;
+
+      this.setState({
+        loaded: true,
+        totalVideos,
+        currentVideoNum,
+        currentFrame,
+        totalFrames,
+        predictStatus,
+        videoProgress,
+        predictionProgress,
+        videoId
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  getButtonStatus = () => {
+    const { trainStatus, predictStatus } = this.state;
+    if (trainStatus === 0) {
+      return 0;
+    }
+    if (predictStatus === 4) {
+      return 2;
+    }
+    return 1;
+  };
+
+  loadProgressInfo() {
+    this.loadProgressInfoTrain();
+    this.loadProgressInfoPredict();
+  }
+
   render() {
-    const { className, steps } = this.props;
+    const { className } = this.props;
     const {
+      loaded,
       tab,
-      running,
-      currentEpoch,
-      maxEpoch,
-      epochProgress,
-      batchProgress,
-      currentBatch,
-      stepsPerEpoch,
+      currentVideoNum,
+      totalVideos,
+      currentFrame,
+      totalFrames,
+      videoProgress,
+      predictionProgress,
+      predictStatus,
       stdout,
       stderr,
-      postStopFlag
+      videoId
     } = this.state;
 
     return (
@@ -221,8 +284,8 @@ class ModelProgress extends Component {
         <Tabs
           value={tab}
           variant="fullWidth"
-          indicatorColor="primary"
-          textColor="primary"
+          indicatorColor="secondary"
+          textColor="secondary"
           onChange={this.handleChange}
           className="tabs"
         >
@@ -231,31 +294,35 @@ class ModelProgress extends Component {
           <Tab label="Standard Error" />
         </Tabs>
         <SwipeableViews index={tab}>
-          <TabPanel value={tab} index={0}>
-            <TrainingStatus
-              postStopFlag={postStopFlag}
-              onStop={this.handleStop}
-              steps={steps}
-              running={running}
-              currentEpoch={currentEpoch}
-              maxEpoch={maxEpoch}
-              currentBatch={currentBatch}
-              stepsPerEpoch={stepsPerEpoch}
-              epochProgress={epochProgress}
-              batchProgress={batchProgress}
-            />
-            <PredictProgress className="progress" />
-          </TabPanel>
-          <TabPanel value={tab} index={1}>
-            <ServerOutput output={stdout} />
-          </TabPanel>
-          <TabPanel value={tab} index={2}>
-            <ServerOutput output={stderr} />
-          </TabPanel>
+          {this.TabPanel(
+            this.props,
+            tab,
+            0,
+            <div>
+              {this.TrainingStatus()}
+              {loaded ? (
+                <PredictProgress
+                  className="progress"
+                  currentVideoNum={currentVideoNum}
+                  totalVideos={totalVideos}
+                  currentFrame={currentFrame}
+                  totalFrames={totalFrames}
+                  videoProgress={videoProgress}
+                  predictionProgress={predictionProgress}
+                  status={predictStatus}
+                  videoId={videoId}
+                />
+              ) : (
+                ''
+              )}
+            </div>
+          )}
+          {this.TabPanel(this.props, tab, 1, this.ServerOutput(stdout))}
+          {this.TabPanel(this.props, tab, 2, this.ServerOutput(stderr))}
         </SwipeableViews>
       </div>
     );
   }
 }
 
-export default ModelProgress;
+export default withStyles(styles)(ModelProgress);

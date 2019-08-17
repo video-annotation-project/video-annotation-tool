@@ -2,7 +2,7 @@ import pandas as pd
 from psycopg2 import connect
 import boto3
 
-import config
+import config.config
 
 con = connect(
     database=config.DB_NAME,
@@ -24,7 +24,6 @@ def pd_query(query_string, params=None):
     Execture a SQL query using Pandas
     Returns resulting rows
     """
-
     result = pd.read_sql_query(query_string, con, params=params)
     return result
 

@@ -1,25 +1,31 @@
 import copy
 import os
-import subprocess
-import json
+import uuid
+import datetime
 
 import cv2
 import numpy as np
-import boto3
 import pandas as pd
-import uuid
-import psycopg2
-import datetime
-from dotenv import load_dotenv
 from keras_retinanet.models import convert_model
 from keras_retinanet.models import load_model
-from psycopg2 import connect
+import subprocess
 
-from preprocessing.annotation_generator import get_classmap
-
-import config
+import config.config
+from train.preprocessing.annotation_generator import get_classmap
 from utils.query import s3, cursor, pd_query, con
+from ffmpy import FFmpeg
+from memory_profiler import profile
 
+fp=open('memory_profiler.log','w+')
+
+def get_classmap(concepts):
+    classmap = []
+    for concept in concepts:
+        name = pd_query("select name from concepts where id=" + str(concept)).iloc[0]["name"]
+        classmap.append([name,concepts.index(concept)])
+    classmap = pd.DataFrame(classmap)
+    classmap = classmap.to_dict()[0]
+    return classmap
 
 def printing_with_time(text):
     print(text + " " + str(datetime.datetime.now()))
@@ -102,7 +108,7 @@ def resize(row):
     row.videoheight = new_height
     return row
 
-
+@profile(stream=fp)
 def predict_on_video(videoid, model_weights, concepts, filename,
                      upload_annotations=False, userid=None):
 
@@ -148,7 +154,9 @@ def predict_on_video(videoid, model_weights, concepts, filename,
 
     printing_with_time("Predicting")
     results, frames = predict_frames(frames, fps, model, videoid)
+    print(results + " this is first one")
     results = propagate_conceptids(results, concepts)
+    print(results + " this is second one")
     results = length_limit_objects(results, config.MIN_FRAMES_THRESH)
     # interweb human annotations and predictions
     printing_with_time("Generating Video")
@@ -167,7 +175,7 @@ def predict_on_video(videoid, model_weights, concepts, filename,
     print("Done generating")
     return results, fps, original_frames, annotations
 
-
+@profile(stream=fp)
 def get_video_frames(vid_filename, videoid):
     frames = []
     # grab video stream
@@ -186,7 +194,7 @@ def get_video_frames(vid_filename, videoid):
     one_percent_length = int(length / 100)
     while True:
         if frame_counter % one_percent_length == 0:
-            upload_predict_progress(frame_counter, videoid, length, 0)
+            upload_predict_progress(frame_counter, videoid, length, 1)
 
         check, frame = vid.read()
         if not check:
@@ -205,7 +213,6 @@ def init_model(model_path):
     model = convert_model(model)
     return model
 
-
 def predict_frames(video_frames, fps, model, videoid):
     currently_tracked_objects = []
     annotations = [
@@ -219,7 +226,7 @@ def predict_frames(video_frames, fps, model, videoid):
     for frame_num, frame in enumerate(video_frames):
         if frame_num % one_percent_length == 0:
             # update the progress every 1% of the video
-            upload_predict_progress(frame_num, videoid, total_frames, 1)
+            upload_predict_progress(frame_num, videoid, total_frames, 2)
 
         # update tracking for currently tracked objects
         for obj in currently_tracked_objects:
@@ -385,13 +392,14 @@ def propagate_conceptids(annotations, concepts):
 
 
 def length_limit_objects(pred, frame_thresh):
+    print(pred)
     obj_len = pred.groupby('objectid').label.value_counts()
     len_thresh = obj_len[obj_len > frame_thresh]
     return pred[[(obj in len_thresh) for obj in pred.objectid]]
 
 # Generates the video with the ground truth frames interlaced
 
-
+@profile(stream=fp)
 def generate_video(filename, frames, fps, results,
                    concepts, video_id, annotations):
 
@@ -405,10 +413,14 @@ def generate_video(filename, frames, fps, results,
     conceptsCounts = {concept: 0 for concept in concepts}
     total_length = len(results)
     one_percent_length = int(total_length / 100)
+    f = open('gen.txt', 'w')
+    f.write(str(frames[130]))
+    f.write(str(classmap))
     for pred_index, res in enumerate(results.itertuples()):
+        f.write(f'{pred_index}  {res} {type(frames)}')
 
         if pred_index % one_percent_length == 0:
-            upload_predict_progress(pred_index, video_id, total_length, 2)
+            upload_predict_progress(pred_index, video_id, total_length, 3)
 
         x1, y1, x2, y2 = int(res.x1), int(res.y1), int(res.x2), int(res.y2)
         if res.confidence:
@@ -428,7 +440,7 @@ def generate_video(filename, frames, fps, results,
 
     save_video(filename, frames, fps)
 
-
+@profile(stream=fp)
 def save_video(filename, frames, fps):
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     out = cv2.VideoWriter(filename, fourcc, fps, frames[0].shape[::-1][1:3])
@@ -440,7 +452,16 @@ def save_video(filename, frames, fps):
     # requires temp so original not overwritten
     converted_file = 'temp.mp4'
     # Convert file so we can stream on s3
-    os.system(f'ffmpeg -i \'{filename}\' -codec:v libx264 -y {converted_file}')
+    ff = FFmpeg(
+        inputs={filename: ['-loglevel', '0']},
+        outputs={converted_file: ['-codec:v', 'libx264', '-y']}
+    )
+    print(ff.cmd)
+    ff.run()
+
+    # temp = ['ffmpeg', '-loglevel', '0', '-i', filename,
+    #         '-codec:v', 'libx264', '-y', converted_file]
+    # subprocess.call(temp)
     # upload video..
     s3.upload_file(
         converted_file, config.S3_BUCKET,
@@ -551,20 +572,11 @@ def upload_predict_progress(count, videoid, total_count, status):
     '''
     print(
         f'count: {count} total_count: {total_count} vid: {videoid} status: {status}')
-    if (count == 0 and status == 0):  # the starting point
-        cursor.execute('''
-            INSERT INTO predict_progress (videoid, framenum, totalframe, status)
-            VALUES (%s, %s, %s, %s)''',
-                       (videoid, count, total_count, status)
-                       )
-        con.commit()
-        return
-    elif (count == 0):
+    if (count == 0):
         cursor.execute('''
             UPDATE predict_progress
-            SET framenum=%s, status=%s, totalframe=%s
-            WHERE videoid=%s''',
-                       (count, 1, total_count, videoid,))
+            SET framenum=%s, status=%s, totalframe=%s''',
+                       (count, status, total_count,))
         con.commit()
         return
 
@@ -572,9 +584,8 @@ def upload_predict_progress(count, videoid, total_count, status):
         count = -1
     cursor.execute('''
         UPDATE predict_progress
-        SET framenum=%s
-        WHERE videoid=%s''',
-                   (count, videoid,)
+        SET framenum=%s''',
+                   (count,)
                    )
     con.commit()
 

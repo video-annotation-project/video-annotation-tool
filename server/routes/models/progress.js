@@ -27,14 +27,12 @@ router.get(
         * 
       FROM 
         training_progress 
-      ORDER BY 
-        id DESC LIMIT 1
     `;
     try {
       let response = await psql.query(queryText);
       res.json(response.rows);
     } catch (error) {
-      console.log('Error on GET /api/models');
+      console.log('Error on GET /api/models/progress/train');
       console.log(error);
       res.status(500).json(error);
     }
@@ -61,16 +59,22 @@ router.get(
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     const queryText = `
-      SELECT 
-        * 
-      FROM 
-        predict_progress 
+    SELECT 
+      *
+    FROM 
+      predict_progress 
+    LIMIT 1
     `;
     try {
       let response = await psql.query(queryText);
-      res.json(response.rows);
+      let returnValue = response.rows[0];
+      if (returnValue) {
+        res.json(returnValue);
+      } else {
+        res.json('not loaded');
+      }
     } catch (error) {
-      console.log('Error on GET /api/models');
+      console.log('Error on GET /api/models/progress/predict');
       console.log(error);
       res.status(500).json(error);
     }

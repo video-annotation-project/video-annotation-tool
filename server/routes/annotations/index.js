@@ -105,7 +105,7 @@ router.get(
       WHERE
         ai.id = ANY($1::int[]) and a.verifiedby IS NULL
     `;
-    if (req.query.tracking == 'false') {
+    if (req.query.tracking == 'true') {
       queryText += ` AND userid <> (SELECT id from users where username ='tracking')`;
     }
     try {
@@ -266,7 +266,9 @@ router.delete(
       // add tracking video
       Objects.push({
         Key:
-          process.env.AWS_S3_BUCKET_VIDEOS_FOLDER + req.body.id + '_track.mp4'
+          process.env.AWS_S3_BUCKET_VIDEOS_FOLDER +
+          req.body.id +
+          '_tracking.mp4'
       });
       let params = {
         Bucket: process.env.AWS_S3_BUCKET_NAME,
@@ -520,7 +522,7 @@ router.get(
       queryText += `EXISTS ( 
           SELECT id, userid 
           FROM annotations 
-          WHERE id=A.originalid 
+          WHERE (id=A.originalid OR A.originalid IS NULL)
           AND unsure = False
           AND userid::text = ANY($${params.length}))`;
     } else {
@@ -664,7 +666,8 @@ let verifyAnnotation = async (req, res) => {
     });
     // add tracking video
     Objects.push({
-      Key: process.env.AWS_S3_BUCKET_VIDEOS_FOLDER + req.body.id + '_track.mp4'
+      Key:
+        process.env.AWS_S3_BUCKET_VIDEOS_FOLDER + req.body.id + '_tracking.mp4'
     });
     params = {
       Bucket: process.env.AWS_S3_BUCKET_NAME,

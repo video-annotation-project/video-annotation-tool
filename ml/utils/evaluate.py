@@ -1,7 +1,7 @@
-from evaluation.model_scoring import f1_evaluation
+from train.evaluation.model_scoring import f1_evaluation
 from keras_retinanet.models import convert_model
 
-import config
+import config.config
 
 
 def evaluate_class_thresholds(model, generator):
@@ -13,7 +13,8 @@ def evaluate_class_thresholds(model, generator):
     # Initializing model for eval
     model = convert_model(model)
 
-    best_f1, best_thresh = f1_evaluation(generator, model, save_path=config.TEST_EXAMPLES)
+    best_f1, best_thresh = f1_evaluation(
+        generator, model, save_path=config.TEST_EXAMPLES)
 
     total_f1 = 0
     for concept, f1 in best_f1.items():
@@ -28,6 +29,7 @@ def evaluate_class_thresholds(model, generator):
 if __name__ == '__main__':
     min_examples = 1000
     concepts = [1629, 1210, 236, 383, 1133]
-    model_path = config.WEIGHTS_PATH
+    model_path = 'current_weights.h5'
 
-    evaluate_class_thresholds(concepts, model_path, min_examples, download_data=False)
+    evaluate_class_thresholds(concepts, model_path,
+                              min_examples, download_data=False)

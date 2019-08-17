@@ -144,7 +144,7 @@ class ReportModal extends Component {
                     checked={unsureOnly}
                     onChange={event => this.handleUnsureCheckbox(event)}
                     value="unsureOnly"
-                    color="primary"
+                    color="secondary"
                   />
                 }
                 label="Unsure Only"
@@ -175,13 +175,13 @@ class ReportModal extends Component {
             </form>
           </DialogContent>
           <DialogActions>
-            <Button onClick={handleReportModalCancel} color="primary">
+            <Button onClick={handleReportModalCancel} color="secondary">
               Cancel
             </Button>
             <Button
               id="ok-button"
               onClick={handleReportModalOk}
-              color="primary"
+              color="secondary"
             >
               Ok
             </Button>

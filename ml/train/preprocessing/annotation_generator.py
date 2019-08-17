@@ -11,8 +11,8 @@ from botocore.exceptions import ClientError
 from keras_retinanet.preprocessing.csv_generator import Generator
 from keras_retinanet.utils.image import read_image_bgr
 
-import config
-from utils.query import pd_query
+import config.config
+from utils.query import pd_query, cursor
 
 
 # Without this the program will crash
@@ -209,6 +209,10 @@ class AnnotationGenerator(object):
     def _get_annotations(collection_ids, verified_only, include_tracking, verify_videos, concepts):
         # Query that gets all annotations for given concepts (and child concepts)
         # making sure that any tracking annotations originated from good users
+        tracking_user = cursor.execute(
+            """SELECT id FROM users WHERE username = 'tracking'""")
+        tracking_uid = cursor.fetchone()[0]
+
         annotations_query = r'''
             WITH collection AS (SELECT
                 A.id,
@@ -229,20 +233,13 @@ class AnnotationGenerator(object):
                 videos ON videos.id=videoid
             WHERE inter.id = ANY(%s) AND a.videoid <> ANY(%s)
         '''
-        if verified_only:
-            annotations_query += r''' AND ((a.verifiedby IS NOT NULL 
-                AND a.userid <> (SELECT id FROM users WHERE username='tracking'))'''
-        else:
-            annotations_query += r''' AND (TRUE'''
 
-        if include_tracking:
-            annotations_query += r''' OR (a.userid = (SELECT id FROM users WHERE username='tracking') 
-                AND a.verifiedby IS NULL))'''
-        else:
-            annotations_query += r''')'''
+        if verified_only:
+            annotations_query += """ AND a.verifiedby IS NOT NULL"""
+
         annotations_query += r'''
             )
-            SELECT 
+            SELECT
                 A.id,
                 image,
                 userid,
@@ -258,17 +255,19 @@ class AnnotationGenerator(object):
                 annotations a
             LEFT JOIN
                 videos ON videos.id=videoid
-            WHERE 
+            WHERE
                 EXISTS (
                     SELECT
-                        1 
+                        1
                     FROM
-                        collection c 
+                        collection c
                     WHERE
-                        c.videoid=a.videoid 
+                        c.videoid=a.videoid
                         AND c.frame_num=ROUND(fps * timeinvideo))
-                AND a.conceptid = ANY(%s);
+                AND a.conceptid = ANY(%s)
         '''
+        if not include_tracking:
+            annotations_query += f''' AND a.userid <> {tracking_uid}'''
 
         return pd_query(annotations_query, (collection_ids, verify_videos, concepts, ))
 
@@ -379,8 +378,7 @@ class S3Generator(Generator):
                 float(annot['y2']),
             ]]))
 
-        print(
-            f'Num annotations for frame: {annotations["bboxes"].shape[0]} image: {image_name}')
+        print(f'Num annotations: {annotations["bboxes"].shape[0]} in image {image["save_name"]} / {image["image"]}')
 
         return annotations
 

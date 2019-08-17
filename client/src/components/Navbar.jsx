@@ -8,14 +8,14 @@ import Typography from '@material-ui/core/Typography';
 import { Divider } from '@material-ui/core';
 import GeneralMenu from './Utilities/GeneralMenu';
 
-const styles = {
+const styles = theme => ({
   flex: {
     flexGrow: 1
   },
   pathname: {
-    margin: '10px'
+    margin: theme.spacing()
   }
-};
+});
 
 class Navbar extends React.Component {
   constructor(props) {

@@ -3,19 +3,31 @@ import axios from 'axios';
 import { withStyles } from '@material-ui/core/styles';
 import List from '@material-ui/core/List';
 import { Typography } from '@material-ui/core';
+import ListItem from '@material-ui/core/ListItem';
+import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
+import ListItemText from '@material-ui/core/ListItemText';
+import Avatar from '@material-ui/core/Avatar';
+import CheckBox from '@material-ui/core/Checkbox';
 
 import ConceptsList from './ConceptsList';
+import ConceptSearchMenu from '../Utilities/ConceptSearchMenu';
 
 const styles = theme => ({
   root: {
-    width: '100%',
-    backgroundColor: theme.palette.background.paper
+    width: '100%'
   },
-  text: {
-    margin: theme.spacing(4)
+  search: {
+    marginBottom: theme.spacing(4)
   },
-  input: {
-    marginBottom: theme.spacing()
+  path: {
+    marginTop: theme.spacing(),
+    marginLeft: theme.spacing(4)
+  },
+  shiftRight: {
+    paddingRight: theme.spacing(5)
+  },
+  nested: {
+    paddingLeft: theme.spacing(2)
   }
 });
 
@@ -25,7 +37,7 @@ class Concepts extends React.Component {
     this.state = {
       isLoaded: false,
       conceptsSelected: {},
-      conceptsLikeSearch: [],
+      conceptSearched: '',
       conceptPath: '',
       error: null
     };
@@ -128,30 +140,22 @@ class Concepts extends React.Component {
       });
   };
 
-  searchConcepts = search => {
-    const { concepts } = this.state;
-    const conceptsLikeSearch = concepts.filter(concept => {
-      return concept.name.match(new RegExp(search, 'i'));
-    });
-
-    this.setState({
-      conceptsLikeSearch: conceptsLikeSearch.slice(0, 10)
-    });
-  };
-
   handleKeyUp = async e => {
     if (e.key === 'Enter') {
+      const { value } = e.target;
+      const concept = this.getConceptInfo(value);
+      if (!concept) {
+        return;
+      }
       const conceptPath = await this.getConceptPath(
-        this.getConceptInfo(e.target.value).id
+        this.getConceptInfo(value).id
       );
 
       this.setState({
+        conceptSearched: this.getConceptInfo(value),
         conceptPath
       });
-
-      return;
     }
-    this.searchConcepts(e.target.value);
   };
 
   getConceptPath = async id => {
@@ -184,10 +188,7 @@ class Concepts extends React.Component {
     const conceptsLikeSearch = concepts.filter(concept => {
       return concept.name.match(new RegExp(search, 'i'));
     });
-
-    this.setState({
-      conceptsLikeSearch: conceptsLikeSearch.slice(0, 10)
-    });
+    return conceptsLikeSearch.slice(0, 10);
   };
 
   getConceptInfo = concept => {
@@ -198,41 +199,64 @@ class Concepts extends React.Component {
     return match;
   };
 
+  handleCheckBoxClick = (event, id) => {
+    event.stopPropagation();
+    this.changeConceptsSelected(id);
+  };
+
   render() {
     const {
       error,
       isLoaded,
       conceptsSelected,
-      conceptsLikeSearch,
+      conceptSearched,
       conceptPath
     } = this.state;
     const { classes } = this.props;
+
     if (!isLoaded) {
-      return <List className={classes.text}>Loading...</List>;
+      return <Typography className={classes.path}>Loading...</Typography>;
     }
     if (error) {
-      return <List>Error: {error.message}</List>;
+      return (
+        <Typography className={classes.path}>Error: {error.message}</Typography>
+      );
     }
     return (
       <div className={classes.root}>
-        <div className={classes.text}>
-          <input
+        <div className={classes.search}>
+          <ConceptSearchMenu
             className={classes.input}
-            onKeyUp={this.handleKeyUp}
-            autoFocus
-            margin="dense"
-            id="concept"
-            type="text"
-            placeholder="Search Concepts"
-            list="data"
-            autoComplete="off"
+            classes={classes}
+            handleKeyUp={this.handleKeyUp}
+            searchConcepts={this.searchConcepts}
           />
-          <datalist id="data">
-            {conceptsLikeSearch.map(item => (
-              <option key={item.id} value={item.name} />
-            ))}
-          </datalist>
-          {conceptPath ? <Typography>{conceptPath}</Typography> : ''}
+          {conceptSearched ? (
+            <List disablePadding className={classes.nested}>
+              <ListItem>
+                <Avatar
+                  src={`https://cdn.deepseaannotations.com/concept_images/${conceptSearched.picture}`}
+                />
+                <ListItemText inset primary={conceptSearched.name} />
+                <ListItemSecondaryAction className={classes.shiftRight}>
+                  <CheckBox
+                    checked={Boolean(conceptsSelected[conceptSearched.id])}
+                    onClick={e =>
+                      this.handleCheckBoxClick(e, conceptSearched.id)
+                    }
+                    color="primary"
+                  />
+                </ListItemSecondaryAction>
+              </ListItem>
+            </List>
+          ) : (
+            ''
+          )}
+          {conceptPath ? (
+            <Typography className={classes.path}>{conceptPath}</Typography>
+          ) : (
+            ''
+          )}
         </div>
         <ConceptsList
           id={0}

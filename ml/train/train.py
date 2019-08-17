@@ -1,9 +1,7 @@
-# import sys
 import uuid
 
 import keras
 import tensorflow as tf
-import boto3
 import multiprocessing
 from tensorflow.python.client import device_lib
 from keras_retinanet import models
@@ -12,14 +10,13 @@ from keras.utils import multi_gpu_model
 from keras.callbacks import ModelCheckpoint, EarlyStopping
 from keras_retinanet.callbacks import RedirectModel
 
-import config
+import config.config
 from utils.query import s3
 from utils.timer import timer
-from utils.output import DatabaseOutput
 from preprocessing.annotation_generator import AnnotationGenerator
-from evaluation.evaluate import evaluate_class_thresholds
-from callbacks.progress import Progress
-from callbacks.tensorboard import TensorboardLog
+from train.evaluation.evaluate import evaluate_class_thresholds
+from train.callbacks.progress import Progress
+from train.callbacks.tensorboard import TensorboardLog
 
 
 @timer("training")

@@ -12,7 +12,7 @@ import MenuItem from '@material-ui/core/MenuItem';
 import TextField from '@material-ui/core/TextField';
 import FormControl from '@material-ui/core/FormControl';
 import InputLabel from '@material-ui/core/InputLabel';
-import { Grid } from '@material-ui/core';
+import { Grid, Typography} from '@material-ui/core';
 
 const STATUS_SUCESS_CODE = 200;
 
@@ -22,9 +22,13 @@ const styles = theme => ({
     flexWrap: 'wrap'
   },
   formControl: {
-    marginRight: theme.spacing(2),
+    marginTop: theme.spacing(2),
+    marginLeft: theme.spacing(2),
     marginBottom: theme.spacing(2),
     minWidth: 120
+  },
+  info: {
+    margin: theme.spacing(2),
   }
 });
 
@@ -275,12 +279,12 @@ class Users extends Component {
           </Table>
         </Paper>
         <div style={{ clear: 'both' }}>
-          <h3 style={{ float: 'left' }}>
+          <Typography variant="h6" className={classes.info} style={{ float: 'left' }}>
             Total Annotations: {annotationTotal}
-          </h3>
-          <h3 style={{ float: 'right' }}>
+          </Typography>
+          <Typography variant="h6" className={classes.info} style={{ float: 'right' }}>
             Total Verifications: {verificationTotal}
-          </h3>
+          </Typography>
         </div>
       </div>
     );

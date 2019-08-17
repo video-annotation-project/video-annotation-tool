@@ -62,7 +62,7 @@ class Verify extends Component {
       selectionMounted,
       noAnnotations,
       index,
-      includeTracking: false,
+      excludeTracking: false,
       annotations
     };
   }
@@ -124,11 +124,11 @@ class Verify extends Component {
   };
 
   getAnnotationsFromCollection = async () => {
-    const { selectedAnnotationCollections, includeTracking } = this.state;
+    const { selectedAnnotationCollections, excludeTracking } = this.state;
     return axios
       .get(
         `/api/annotations/collections?` +
-          `collectionids=${selectedAnnotationCollections}&tracking=${includeTracking}`,
+          `collectionids=${selectedAnnotationCollections}&tracking=${excludeTracking}`,
         {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         }
@@ -360,7 +360,7 @@ class Verify extends Component {
         selectedConcepts: [],
         selectedUnsure: false,
         selectedTrackingFirst: false,
-        includeTracking: false,
+        excludeTracking: false,
         index: 0
       },
       callback
@@ -403,7 +403,7 @@ class Verify extends Component {
       selectedConcepts,
       selectedUnsure,
       selectedTrackingFirst,
-      includeTracking,
+      excludeTracking,
       annotations,
       noAnnotations,
       index,
@@ -424,7 +424,7 @@ class Verify extends Component {
           selectedConcepts={selectedConcepts}
           selectedUnsure={selectedUnsure}
           selectedTrackingFirst={selectedTrackingFirst}
-          includeTracking={includeTracking}
+          excludeTracking={excludeTracking}
           getAnnotationCollections={this.getAnnotationCollections}
           getAnnotationsFromCollection={this.getAnnotationsFromCollection}
           getUsers={this.getUsers}
@@ -467,7 +467,6 @@ class Verify extends Component {
       );
     } else {
       selection = (
-        <Paper square elevation={0} className={classes.resetContainer}>
           <VerifyAnnotations
             annotation={annotations[index]}
             index={index}
@@ -478,7 +477,6 @@ class Verify extends Component {
             resetLocalStorage={this.resetLocalStorage}
             collectionFlag={collectionFlag}
           />
-        </Paper>
       );
     }
 

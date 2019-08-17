@@ -25,8 +25,8 @@
 .progressBars {
   margin-top: 20px;
   padding: 0 15px 20px 15px;
-  background: #f8f8f8;
-  border: 2px solid #f8f8f8;
+  background: #132232;
+  border: 2px solid #132232;
   border-radius: 8px;
 }
 
@@ -46,7 +46,7 @@
   padding: 15px;
 
   overflow: auto;
-  background: #f8f8f8;
+  background: #1b324c;
   border: 1px lightgrey solid;
 }
 
@@ -56,6 +56,13 @@
 
 .stopButton {
   height: 40px !important;
+  margin-right: 10px !important;
+}
+
+.terminateButton {
+  height: 40px !important;
+  color: white !important;
+  background-color: rgb(255, 60, 0) !important;
 }
 
 .predictProgress {

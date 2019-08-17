@@ -1,11 +1,7 @@
-import os
-
 import cv2
-import boto3
-from dotenv import load_dotenv
-from pgdb import connect
-import config
+
 from query import cursor, s3, con
+import config.config
 
 # get video name
 cursor.execute("SELECT filename FROM videos where fps is NULL")

@@ -72,7 +72,7 @@ class SelectConcept extends React.Component {
           <div>
             <Button
               className={classes.button}
-              color="primary"
+              color="secondary"
               onClick={() => {
                 handleSelectAll(concepts, value, 'selectedConcepts');
               }}
@@ -81,7 +81,7 @@ class SelectConcept extends React.Component {
             </Button>
             <Button
               className={classes.button}
-              color="primary"
+              color="secondary"
               onClick={() => {
                 handleUnselectAll('selectedConcepts');
               }}
@@ -101,7 +101,7 @@ class SelectConcept extends React.Component {
                   <FormControlLabel
                     key={concept.id}
                     value={concept.id.toString()}
-                    control={<Checkbox color="primary" />}
+                    control={<Checkbox color="secondary" />}
                     label={
                       <div>
                         {concept.id} {concept.name}
@@ -129,7 +129,8 @@ class SelectConcept extends React.Component {
                   <div>
                     <Button
                       className={classes.collection}
-                      variant="outlined"
+                      variant="contained"
+                      color="primary"
                       value={conceptCollection.id.toString()}
                       disabled={!conceptCollection.conceptids[0]}
                       onClick={() => {

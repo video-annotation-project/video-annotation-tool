@@ -249,7 +249,7 @@ class Annotations extends Component {
                     id="video"
                     width="800"
                     height="450"
-                    src={`https://cdn.deepseaannotations.com/videos/${annotation.id}_track.mp4`}
+                    src={`https://cdn.deepseaannotations.com/videos/${annotation.id}_tracking.mp4`}
                     type="video/mp4"
                     controls
                   >
