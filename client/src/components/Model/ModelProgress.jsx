@@ -106,7 +106,7 @@ class ModelProgress extends Component {
             <Button
               onClick={startTraining}
               variant="contained"
-              color="primary"
+              color="secondary"
               disabled={!onReady()}
             >
               Start Training
@@ -116,7 +116,6 @@ class ModelProgress extends Component {
             <Button
               onClick={stopTraining}
               variant="contained"
-              color="secondary"
               className="stopButton"
             >
               Stop Training
@@ -278,8 +277,8 @@ class ModelProgress extends Component {
         <Tabs
           value={tab}
           variant="fullWidth"
-          indicatorColor="primary"
-          textColor="primary"
+          indicatorColor="secondary"
+          textColor="secondary"
           onChange={this.handleChange}
           className="tabs"
         >

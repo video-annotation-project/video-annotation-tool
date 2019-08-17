@@ -17,7 +17,7 @@
     },
     "secondary": {
       "light": "rgba(65, 129, 129, 1)",
-      "main": "#faac25",
+      "main": "#00a8ba",
       "dark": "rgba(19, 34, 50, 1)",
       "contrastText": "#fff"
     },
@@ -35,70 +35,6 @@
     }
   },
   "overrides": {
-    "MuiButton": {
-      "root": {
-        "color": "rgba(39, 71, 105, 1)"
-      }
-    },
-    "MuiTable": {
-      "root": {
-        "color": "white",
-        "backgroundColor": "rgba(39, 71, 105, 1)"
-      }
-    },
-    "MuiTableRow": {
-      "root": {
-        "color": "white"
-      }
-    },
-    "MuiTableCell": {
-      "root": {
-        "color": "white",
-        "border": "none"
-      },
-      "head": {
-        "border": "none"
-      },
-      "body": {
-        "border": "none"
-      }
-    },
-    "MuiTypography": {
-      "colorTextPrimary": {
-        "color": "white"
-      },
-      "root": {
-        "color": "white"
-      }
-    },
-    "MuiStepIcon": {
-      "root": {
-        "color": "white"
-      }
-    },
-    "MuiStepLabel": {
-      "active": {
-        "color": "white"
-      },
-      "label": {
-        "color": "white"
-      }
-    },
-    "MuiMenuItem": {
-      "gutters": {
-        "color": "white"
-      }
-    },
-    "MuiButtonBase": {
-      "root": {
-        "color": "rgba(27, 50, 76, 1)"
-      }
-    },
-    "MuiTab": {
-      "textColorPrimary": {
-        "color": "white"
-      }
-    },
     "MuiInputLabel": {
       "root": {
         "color": "white",
