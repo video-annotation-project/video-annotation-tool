@@ -12,9 +12,10 @@ import MenuItem from '@material-ui/core/MenuItem';
 import TextField from '@material-ui/core/TextField';
 import FormControl from '@material-ui/core/FormControl';
 import InputLabel from '@material-ui/core/InputLabel';
-import { Grid, Typography} from '@material-ui/core';
+import { Grid, Typography } from '@material-ui/core';
 
 const STATUS_SUCESS_CODE = 200;
+const YEAR = new Date().getFullYear();
 
 const styles = theme => ({
   root: {
@@ -28,7 +29,7 @@ const styles = theme => ({
     minWidth: 120
   },
   info: {
-    margin: theme.spacing(2),
+    margin: theme.spacing(2)
   }
 });
 
@@ -51,7 +52,7 @@ class Users extends Component {
 
   componentWillMount() {
     this.getUsers();
-    const fromDate = this.formatDate(new Date('1970-01-01T00:00:00'));
+    const fromDate = this.formatDate(new Date(`${YEAR}-01-01T00:00:00`));
     const toDate = this.formatDate(new Date());
     this.setState({ fromDate, toDate });
   }
@@ -194,7 +195,7 @@ class Users extends Component {
       const { name } = event.target;
       let value = new Date(event.target.value);
       if (name === 'fromDate' && event.target.value === '') {
-        value = new Date('1970-01-01T00:00:00');
+        value = new Date(`${YEAR}-01-01T00:00:00`);
       } else if (name === 'toDate' && event.target.value === '') {
         value = new Date();
       }
@@ -279,10 +280,18 @@ class Users extends Component {
           </Table>
         </Paper>
         <div style={{ clear: 'both' }}>
-          <Typography variant="h6" className={classes.info} style={{ float: 'left' }}>
+          <Typography
+            variant="h6"
+            className={classes.info}
+            style={{ float: 'left' }}
+          >
             Total Annotations: {annotationTotal}
           </Typography>
-          <Typography variant="h6" className={classes.info} style={{ float: 'right' }}>
+          <Typography
+            variant="h6"
+            className={classes.info}
+            style={{ float: 'right' }}
+          >
             Total Verifications: {verificationTotal}
           </Typography>
         </div>
