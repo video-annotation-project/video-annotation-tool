@@ -34,11 +34,13 @@
       "hint": "rgba(0, 0, 0, 0.8)"
     }
   },
-  "MuiInputLabel": {
-    "root": {
-      "color": "white",
-      "&$focused": {
-        "color": "white"
+  "overrides": {
+    "MuiInputLabel": {
+      "root": {
+        "color": "white",
+        "&$focused": {
+          "color": "white"
+        }
       }
     }
   }

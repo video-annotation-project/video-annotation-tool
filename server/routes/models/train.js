@@ -139,7 +139,7 @@ router.get(
       let response = await psql.query(queryText);
       res.json(response.rows[0]);
     } catch (error) {
-      console.log('Error on GET /api/models');
+      console.log('Error on GET /api/models/train/:option');
       console.log(error);
       res.status(500).json(error);
     }

@@ -32,7 +32,7 @@ router.get(
       let response = await psql.query(queryText);
       res.json(response.rows);
     } catch (error) {
-      console.log('Error on GET /api/models');
+      console.log('Error on GET /api/models/progress/train');
       console.log(error);
       res.status(500).json(error);
     }
@@ -74,7 +74,7 @@ router.get(
         res.json('not loaded');
       }
     } catch (error) {
-      console.log('Error on GET /api/models');
+      console.log('Error on GET /api/models/progress/predict');
       console.log(error);
       res.status(500).json(error);
     }

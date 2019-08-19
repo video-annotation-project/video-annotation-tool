@@ -90,15 +90,15 @@ class DialogModal extends Component {
                 checked={unsure}
                 onChange={this.handleCheckboxChange}
                 value="unsure"
-                color="primary"
+                color="secondary"
               />
             }
             label="Unsure"
           />
-          <Button onClick={this.handleClose} color="primary">
+          <Button onClick={this.handleClose} color="secondary">
             Cancel
           </Button>
-          <Button id="submit" onClick={this.handleSubmit} color="primary">
+          <Button id="submit" onClick={this.handleSubmit} color="secondary">
             Submit
           </Button>
         </DialogActions>

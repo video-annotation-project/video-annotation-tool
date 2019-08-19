@@ -8,14 +8,12 @@ import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
 import SwipeableViews from 'react-swipeable-views';
 import Box from '@material-ui/core/Box';
-import PredictProgress from './PredictProgress';
 import withStyles from '@material-ui/core/styles/withStyles';
+import PredictProgress from './PredictProgress';
 
 import './ModelProgress.css';
 
-const styles = theme => {
-
-};
+const styles = theme => {};
 
 class ModelProgress extends Component {
   constructor(props) {
@@ -71,7 +69,13 @@ class ModelProgress extends Component {
   };
 
   TrainingStatus = () => {
-    const { handleTerminate, onReady, stopTraining, handleReset, startTraining } = this.props;
+    const {
+      handleTerminate,
+      onReady,
+      stopTraining,
+      handleReset,
+      startTraining
+    } = this.props;
     const {
       currentEpoch,
       stepsPerEpoch,
@@ -272,8 +276,7 @@ class ModelProgress extends Component {
       predictStatus,
       stdout,
       stderr,
-      videoId,
-      postStopFlag
+      videoId
     } = this.state;
 
     return (
