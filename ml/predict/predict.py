@@ -16,16 +16,19 @@ from utils.query import s3, cursor, pd_query, con
 from ffmpy import FFmpeg
 from memory_profiler import profile
 
-fp=open('memory_profiler.log','w+')
+fp = open('memory_profiler.log', 'w+')
+
 
 def get_classmap(concepts):
     classmap = []
     for concept in concepts:
-        name = pd_query("select name from concepts where id=" + str(concept)).iloc[0]["name"]
-        classmap.append([name,concepts.index(concept)])
+        name = pd_query("select name from concepts where id=" +
+                        str(concept)).iloc[0]["name"]
+        classmap.append([name, concepts.index(concept)])
     classmap = pd.DataFrame(classmap)
     classmap = classmap.to_dict()[0]
     return classmap
+
 
 def printing_with_time(text):
     print(text + " " + str(datetime.datetime.now()))
@@ -108,6 +111,7 @@ def resize(row):
     row.videoheight = new_height
     return row
 
+
 @profile(stream=fp)
 def predict_on_video(videoid, model_weights, concepts, filename,
                      upload_annotations=False, userid=None):
@@ -175,6 +179,7 @@ def predict_on_video(videoid, model_weights, concepts, filename,
     print("Done generating")
     return results, fps, original_frames, annotations
 
+
 @profile(stream=fp)
 def get_video_frames(vid_filename, videoid):
     frames = []
@@ -212,6 +217,7 @@ def init_model(model_path):
     model = load_model(model_path, backbone_name='resnet50')
     model = convert_model(model)
     return model
+
 
 def predict_frames(video_frames, fps, model, videoid):
     currently_tracked_objects = []
@@ -399,6 +405,7 @@ def length_limit_objects(pred, frame_thresh):
 
 # Generates the video with the ground truth frames interlaced
 
+
 @profile(stream=fp)
 def generate_video(filename, frames, fps, results,
                    concepts, video_id, annotations):
@@ -423,22 +430,34 @@ def generate_video(filename, frames, fps, results,
             upload_predict_progress(pred_index, video_id, total_length, 3)
 
         x1, y1, x2, y2 = int(res.x1), int(res.y1), int(res.x2), int(res.y2)
-        if res.confidence:
+        # boxText init to concept name
+        boxText = classmap[concepts.index(res.label)]
+        seenObjects = []
+        if pd.isna(res.confidence):  # No confidence means user annotation
+            # Draws a (user) red box
+            # Note: opencv uses color as BGR
+            cv2.rectangle(frames[res.frame_num], (x1, y1),
+                          (x2, y2), (0, 0, 255), 2)
+        else:  # if confidence exists -> AI annotation
+            # Keeps count of concepts
+            if (res.objectidd not in seenObjects):
+                conceptsCounts[res.label] += 1
+                seenObjects.append(res.objectid)
+            # Draw an (AI) green box
             cv2.rectangle(frames[res.frame_num], (x1, y1),
                           (x2, y2), (0, 255, 0), 2)
+            # boxText = count concept-name (confidence) e.g. "1 Starfish (0.5)"
+            boxText = str(conceptsCounts[res.label]) + " " + boxText + \
+                " (" + str(round(res.confidence, 3)) + ")"
             cv2.putText(
                 frames[res.frame_num], str(res.confidence),
                 (x1, y1 + 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
-            cv2.putText(frames[res.frame_num], str(res.objectid), (x1, y2),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
-        else:
-            cv2.rectangle(frames[res.frame_num], (x1, y1),
-                          (x2, y2), (255, 0, 0), 2)
         cv2.putText(
-            frames[res.frame_num], classmap[concepts.index(res.label)],
-            (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+            frames[res.frame_num], boxText,
+            (x1-5, y2+10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
 
     save_video(filename, frames, fps)
+
 
 @profile(stream=fp)
 def save_video(filename, frames, fps):
