@@ -15,5 +15,3 @@ cache:
     - ~/.cache
 install:
   - npm ci
-script:
-  - npm run test -C client
