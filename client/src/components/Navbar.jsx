@@ -16,7 +16,7 @@ const styles = theme => ({
     margin: theme.spacing(1.5)
   },
   divider: {
-    marginBottom: theme.spacing(1.5)
+    marginBottom: theme.spacing(0)
   }
 });
 

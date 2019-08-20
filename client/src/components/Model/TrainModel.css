@@ -1,5 +1,5 @@
 .root {
-  margin: 40px auto;
+  margin: 0px auto;
   width: 750px;
 }
 
@@ -11,7 +11,7 @@
 
 .container {
   display: flex;
-  height: 780px;
+  height: 720px;
   padding: 20px;
   flex-direction: column;
 }

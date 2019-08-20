@@ -26,13 +26,13 @@ import VideoMetadata from '../Utilities/VideoMetadata';
 const styles = theme => ({
   checkSelector: {
     marginTop: theme.spacing(2),
-    maxHeight: '400px',
+    maxHeight: '300px',
     overflow: 'auto'
   },
   list: {
     marginTop: theme.spacing(2),
     overflow: 'auto',
-    maxHeight: `${400 - theme.spacing(2)}px`
+    maxHeight: `${350 - theme.spacing(2)}px`
   },
   textField: {
     marginLeft: theme.spacing(),

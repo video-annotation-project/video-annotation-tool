@@ -24,79 +24,7 @@ import CollectionInfo from '../Utilities/CollectionInfo';
 import './TrainModel.css';
 
 const styles = theme => ({
-  root: {
-    margin: '40px 180px'
-  },
-  form: {
-    marginTop: theme.spacing(2),
-    marginBottom: theme.spacing(),
-    minWidth: 150
-  },
-  group: {
-    marginLeft: 15
-  },
-  center: {
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center'
-  },
-  container: {
-    display: 'flex',
-    flexDirection: 'row',
-    padding: '20px',
-    height: '560px'
-  },
-  stepper: {
-    display: 'block',
-    flex: 1,
-    flexDirection: 'column',
-    justifyContent: 'left',
-    width: '50%'
-  },
-  progress: {
-    display: 'flex',
-    flex: 1,
-    flexDirection: 'column',
-    justifyContent: 'right',
-    alignItems: 'right',
-    width: '50%'
-  },
-  button: {
-    marginTop: theme.spacing(4),
-    marginRight: theme.spacing()
-  },
   infoButton: {
-    marginTop: theme.spacing(2)
-  },
-  actionsContainer: {
-    flexDirection: 'column',
-    justifyContent: 'left',
-    marginBottom: theme.spacing(2)
-  },
-  resetContainer: {
-    padding: theme.spacing(3)
-  },
-  checkSelector: {
-    marginTop: theme.spacing(),
-    maxHeight: '250px',
-    overflow: 'auto'
-  },
-  videoSelector: {
-    width: '625px'
-  },
-  textField: {
-    width: 200
-  },
-  epochText: {
-    position: 'relative',
-    top: '-15px'
-  },
-  hyperParamsInput: {
-    width: '208px',
-    marginRight: '10px'
-  },
-  info: {
     marginTop: theme.spacing(2)
   },
   switches: {
@@ -108,8 +36,14 @@ const styles = theme => ({
   }
 });
 
-const paramFields = ['epochs', 'minImages', 'modelSelected', 
-    'annotationCollections', 'includeTracking', 'verifiedOnly']
+const paramFields = [
+  'epochs',
+  'minImages',
+  'modelSelected',
+  'annotationCollections',
+  'includeTracking',
+  'verifiedOnly'
+];
 
 function ModelsForm(props) {
   const { className, modelSelected, handleChange, models } = props;
@@ -130,7 +64,6 @@ function ModelsForm(props) {
     </FormControl>
   );
 }
-
 
 function CollectionsForm(props) {
   const { className, annotationCollections, onChange, collections } = props;
@@ -179,7 +112,6 @@ function CollectionsForm(props) {
 }
 
 function EpochsField(props) {
-
   const { className, epochs, onChange } = props;
   return (
     <TextField
@@ -194,7 +126,6 @@ function EpochsField(props) {
 }
 
 function ImagesField(props) {
-
   const { className, minImages, onChange, getImageRange } = props;
 
   return (
@@ -245,7 +176,7 @@ class TrainModel extends Component {
       openedVideo: null,
       epochs: '',
       minImages: '',
-      ready: false,
+      ready: false
     };
   }
 
@@ -326,18 +257,16 @@ class TrainModel extends Component {
       }
     };
 
-
     return axios
       .get(`/api/collections/annotations?train=true`, config)
       .then(res => {
-
         const selectedModelTuple = models.find(model => {
           return model.name === modelSelected;
         });
 
         let modelConcepts;
 
-        if (modelSelected === undefined){
+        if (modelSelected === undefined) {
           modelConcepts = [];
         } else {
           modelConcepts = selectedModelTuple.conceptsid;
@@ -378,14 +307,15 @@ class TrainModel extends Component {
     });
   };
 
-
   // Used to handle changes in the hyperparameters and in the select model
   handleChange = event => {
     event.persist();
-    this.setState({
-      [event.target.name]: event.target.value,
-    }, () => {  
-        if (event.target.name === 'modelSelected'){
+    this.setState(
+      {
+        [event.target.name]: event.target.value
+      },
+      () => {
+        if (event.target.name === 'modelSelected') {
           this.loadCollectionList();
         }
       }
@@ -395,18 +325,14 @@ class TrainModel extends Component {
   handleChangeSwitch = event => {
     event.persist();
     this.setState({
-      [event.target.value]: event.target.checked,
+      [event.target.value]: event.target.checked
     });
-  }
+  };
 
   handleStop = () => {
-    this.setState(
-      {
-      },
-      () => {
-        this.postModelInstance('stop');
-      }
-    );
+    this.setState({}, () => {
+      this.postModelInstance('stop');
+    });
   };
 
   postModelInstance = command => {
@@ -432,7 +358,7 @@ class TrainModel extends Component {
     }
     this.setState(
       {
-        annotationCollections: value, 
+        annotationCollections: value
       },
       () => {
         this.getCollectionCounts();
@@ -546,11 +472,11 @@ class TrainModel extends Component {
   startTraining = async () => {
     try {
       await this.updateModelParams();
-    } catch (error){
+    } catch (error) {
       console.log(error);
     }
     this.postModelInstance();
-  }
+  };
 
   stopTraining = () => {
     try {
@@ -559,13 +485,12 @@ class TrainModel extends Component {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
       };
-      
-      axios.patch('/api/models/train/stop', config);  
 
+      axios.patch('/api/models/train/stop', config);
     } catch (error) {
       console.log(error);
     }
-  }
+  };
 
   resetTraining = () => {
     try {
@@ -574,14 +499,12 @@ class TrainModel extends Component {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
       };
-      
-      axios.patch('/api/models/train/reset', {}, config);  
 
+      axios.patch('/api/models/train/reset', {}, config);
     } catch (error) {
       console.log(error);
     }
-  }
-
+  };
 
   updateModelParams = async () => {
     const config = {
@@ -590,13 +513,13 @@ class TrainModel extends Component {
       }
     };
 
-    const { 
-      epochs, 
-      minImages, 
-      annotationCollections, 
-      modelSelected, 
-      verifiedOnly, 
-      includeTracking 
+    const {
+      epochs,
+      minImages,
+      annotationCollections,
+      modelSelected,
+      verifiedOnly,
+      includeTracking
     } = this.state;
 
     const body = {
@@ -605,25 +528,27 @@ class TrainModel extends Component {
       includeTracking,
       verifiedOnly,
       modelSelected,
-      annotationCollections: annotationCollections.map((c) => c.id),
+      annotationCollections: annotationCollections.map(c => c.id)
     };
-    
+
     return axios.put('/api/models/train', body, config);
-  }
+  };
 
   checkReady = () => {
     const { state } = this;
 
-    const notReady = paramFields.find((key) => {
-      return (!Object.prototype.hasOwnProperty.call(state, key)
-        || state[key] === null
-        || state[key] === undefined
-        || (Array.isArray(state[key]) && state[key].length === 0)
-        || state[key] === '');
+    const notReady = paramFields.find(key => {
+      return (
+        !Object.prototype.hasOwnProperty.call(state, key) ||
+        state[key] === null ||
+        state[key] === undefined ||
+        (Array.isArray(state[key]) && state[key].length === 0) ||
+        state[key] === ''
+      );
     });
 
     return !notReady;
-  }
+  };
 
   render() {
     const { classes, socket, loadVideos } = this.props;
@@ -659,14 +584,14 @@ class TrainModel extends Component {
                 annotationCollections={annotationCollections}
                 onChange={this.handleChangeMultiple}
               />
-              <EpochsField 
-                className="epochsField" 
-                epochs={epochs} 
+              <EpochsField
+                className="epochsField"
+                epochs={epochs}
                 onChange={this.handleChange}
               />
-              <ImagesField 
-                className="imagesField" 
-                minImages={minImages} 
+              <ImagesField
+                className="imagesField"
+                minImages={minImages}
                 onChange={this.handleChange}
                 getImageRange={this.getImageRange}
               />
