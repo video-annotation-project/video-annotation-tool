@@ -497,14 +497,7 @@ class videoCollection extends Component {
                 step={0.1}
                 onChange={this.handleChangeSpeed}
               />
-              <Typography
-                color="textSecondary"
-                style={{
-                  marginTop: 0
-                }}
-              >
-                Play Rate: {videoPlaybackRate}
-              </Typography>
+              <Typography>Play Rate: {videoPlaybackRate}</Typography>
             </div>
             <Button
               variant="contained"
