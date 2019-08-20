@@ -15,3 +15,5 @@ cache:
     - ~/.cache
 install:
   - npm ci
+script:
+  - $(npm bin)/print-env TRAVIS
