@@ -23,7 +23,6 @@ import ViewModels from './components/Model/ViewModels';
 import PredictModel from './components/Model/PredictModel';
 import TrainModel from './components/Model/TrainModel';
 
-import './App.scss'
 require('dotenv').config();
 
 const App = () => {

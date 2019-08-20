@@ -14,7 +14,7 @@ import blue from '@material-ui/core/colors/blue';
 import Description from '@material-ui/icons/Description';
 import Avatar from '@material-ui/core/Avatar';
 import Grid from '@material-ui/core/Grid';
-import Swal from 'sweetalert2';
+import Swal from 'sweetalert2/src/sweetalert2';
 import Hotkeys from 'react-hot-keys';
 
 import Dialog from '@material-ui/core/Dialog';
