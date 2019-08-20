@@ -14,7 +14,7 @@ import FormHelperText from '@material-ui/core/FormHelperText';
 import FormControl from '@material-ui/core/FormControl';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Switch from '@material-ui/core/Switch';
-import Swal from 'sweetalert2';
+import Swal from 'sweetalert2/src/sweetalert2';
 
 import VerifySelectUser from '../Utilities/SelectUser';
 import VerifySelectVideo from '../Utilities/SelectVideo';

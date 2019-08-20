@@ -14,7 +14,7 @@ import FormLabel from '@material-ui/core/FormLabel';
 import Checkbox from '@material-ui/core/Checkbox';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
-import Swal from 'sweetalert2';
+import Swal from 'sweetalert2/src/sweetalert2';
 import ListItem from '@material-ui/core/ListItem';
 import Tooltip from '@material-ui/core/Tooltip';
 import List from '@material-ui/core/List';

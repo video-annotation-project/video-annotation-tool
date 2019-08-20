@@ -22,8 +22,8 @@ import CreateModel from './components/Model/CreateModel';
 import ViewModels from './components/Model/ViewModels';
 import PredictModel from './components/Model/PredictModel';
 import TrainModel from './components/Model/TrainModel';
+import '@sweetalert2/themes/dark';
 
-import './App.scss'
 require('dotenv').config();
 
 const App = () => {

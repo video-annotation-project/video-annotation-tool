@@ -5,7 +5,7 @@ import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
 import Slider from '@material-ui/core/Slider';
-import Swal from 'sweetalert2';
+import Swal from 'sweetalert2/src/sweetalert2';
 
 import Hotkeys from 'react-hot-keys';
 import Grid from '@material-ui/core/Grid';

@@ -4,12 +4,11 @@ import { withStyles } from '@material-ui/core/styles';
 import axios from 'axios';
 import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
-import Swal from 'sweetalert2';
+import Swal from 'sweetalert2/src/sweetalert2';
 import Visibility from '@material-ui/icons/Visibility';
 import VisibilityOff from '@material-ui/icons/VisibilityOff';
 import IconButton from '@material-ui/core/IconButton';
 import InputAdornment from '@material-ui/core/InputAdornment';
-
 
 const styles = {
   root: {
@@ -45,7 +44,7 @@ class Login extends Component {
     this.setState({
       showPassword: !showPassword
     });
-  }
+  };
 
   handleSubmit = event => {
     event.preventDefault();
@@ -107,7 +106,7 @@ class Login extends Component {
             className={classes.input}
             name="password"
             label="Password"
-            type={showPassword ? "text" : "password"}
+            type={showPassword ? 'text' : 'password'}
             value={password}
             onChange={this.handleChange}
             margin="normal"
@@ -124,7 +123,7 @@ class Login extends Component {
                     {showPassword ? <VisibilityOff /> : <Visibility />}
                   </IconButton>
                 </InputAdornment>
-              ),
+              )
             }}
           />
           <br />

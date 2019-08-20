@@ -15,7 +15,7 @@ import IconButton from '@material-ui/core/IconButton';
 import Icon from '@material-ui/core/Icon';
 import DoneAll from '@material-ui/icons/DoneAll';
 
-import Swal from 'sweetalert2';
+import Swal from 'sweetalert2/src/sweetalert2';
 import AnnotationFrame from './AnnotationFrame';
 
 const styles = theme => ({
