@@ -19,6 +19,7 @@ Our own app used for deep sea annotations is live [here](https://www.deepseaanno
 - [Api Documentation](#api-documentation)
 - [Coding Style Guide](#coding-style-guide)
 - [Configuring Tensorboard](#configuring-tensorboard)
+- [Setting up Travis CI](#setting-up-travis-ci)
 
 ## Installation
 ### Environment
@@ -194,3 +195,11 @@ server {
 ```
 
 This file should be placed in the `/etc/nginx/conf.d/`folder. This will allow the tensorboard server to be located at tensorboard.yourdomain.com .
+
+## Setting up Travis CI
+Follow these steps if changes are made to any env files
+  1. Install Travis CI with `gem install travis` (Ruby required)
+  2. Log in with GitHub credentials
+  3. Compress env files with `tar cvf travis.tar .env ./client/cypress.env.json`
+  4. Encrypt the tar file with `travis encrypt-file travis.tar --add`
+  5. Delete the tar file before pushing

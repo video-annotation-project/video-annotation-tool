@@ -1,19 +1,20 @@
 language: node_js
 node_js:
-          - 8.12
-            # addons:
-            # #   apt:
-            # #     packages:
-            # #       # Ubuntu 16+ does not install this dependency by default, so we need to install it ourselves
-            # #       - libgconf-2-4
-            # # cache:
-            # #   # Caches $HOME/.npm when npm ci is default script command
-            # #   # Caches node_modules in all other cases
-            # #   npm: true
-            # #   directories:
-            # #     # we also need to cache folder with Cypress binary
-            # #     - ~/.cache
-            # # install:
-            # #   - npm ci
-            # # script:
-            # #   - npm run test -C client
+  - 8.12
+addons:
+  apt:
+    packages:
+      - libgconf-2-4
+cache:
+  npm: true
+  directories:
+    - '~/.cache'
+install:
+  - npm i
+  - '(cd client && npm i)'
+script:
+  - npm run ci
+before_install:
+  - openssl aes-256-cbc -K $encrypted_64db488ef579_key -iv $encrypted_64db488ef579_iv
+    -in travis.tar.enc -out travis.tar -d
+  - tar xvf travis.tar
