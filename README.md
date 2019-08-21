@@ -19,7 +19,7 @@ Our own app used for deep sea annotations is live [here](https://www.deepseaanno
 - [Api Documentation](#api-documentation)
 - [Coding Style Guide](#coding-style-guide)
 - [Configuring Tensorboard](#configuring-tensorboard)
-- [Setting up Travis CI](#travis-setup)
+- [Setting up Travis CI](#setting-up-travis-ci)
 
 ## Installation
 ### Environment
