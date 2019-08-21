@@ -9,7 +9,7 @@ import { withStyles } from '@material-ui/core/styles';
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
 import Description from '@material-ui/icons/Description';
-import Swal from 'sweetalert2';
+import Swal from 'sweetalert2/src/sweetalert2';
 
 import Summary from '../Utilities/Summary';
 

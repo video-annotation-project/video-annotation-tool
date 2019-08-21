@@ -13,7 +13,10 @@ const styles = theme => ({
     flexGrow: 1
   },
   pathname: {
-    margin: theme.spacing()
+    margin: theme.spacing(1.5)
+  },
+  divider: {
+    marginBottom: theme.spacing(0)
   }
 });
 
@@ -177,15 +180,17 @@ class Navbar extends React.Component {
           </Toolbar>
         </AppBar>
         {localStorage.getItem('isAuthed') && location.pathname !== '/' ? (
-          <Typography
-            variant="h4"
-            color="textPrimary"
-            align="left"
-            className={classes.pathname}
-          >
-            {this.titleCase(location.pathname)}
-            <Divider />
-          </Typography>
+          <React.Fragment>
+            <Typography
+              variant="h4"
+              color="textPrimary"
+              align="left"
+              className={classes.pathname}
+            >
+              {this.titleCase(location.pathname)}
+            </Typography>
+            <Divider className={classes.divider} />
+          </React.Fragment>
         ) : (
           ''
         )}

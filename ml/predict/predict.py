@@ -10,7 +10,7 @@ from keras_retinanet.models import convert_model
 from keras_retinanet.models import load_model
 import subprocess
 
-import config.config
+from config import config
 from train.preprocessing.annotation_generator import get_classmap
 from utils.query import s3, cursor, pd_query, con
 from ffmpy import FFmpeg
@@ -158,9 +158,7 @@ def predict_on_video(videoid, model_weights, concepts, filename,
 
     printing_with_time("Predicting")
     results, frames = predict_frames(frames, fps, model, videoid)
-    print(results + " this is first one")
     results = propagate_conceptids(results, concepts)
-    print(results + " this is second one")
     results = length_limit_objects(results, config.MIN_FRAMES_THRESH)
     # interweb human annotations and predictions
     printing_with_time("Generating Video")

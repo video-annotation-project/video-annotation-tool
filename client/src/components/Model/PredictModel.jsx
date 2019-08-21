@@ -46,7 +46,7 @@ const styles = theme => ({
     padding: theme.spacing(3)
   },
   videoForm: {
-    maxHeight: '400px',
+    maxHeight: '350px',
     overflow: 'auto',
     width: '630px'
   }
