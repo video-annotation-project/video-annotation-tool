@@ -10,8 +10,8 @@ cache:
   directories:
     - '~/.cache'
 install:
-  - npm i
-  - '(cd client && npm i)'
+  - npm ci
+  - '(cd client && npm ci)'
 script:
   - npm run ci
 before_install:
