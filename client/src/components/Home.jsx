@@ -65,8 +65,9 @@ class Home extends Component {
   componentDidMount() {
     // These variables are for the varify tab checkpoint
     localStorage.setItem('selectionMounted', true);
+    localStorage.setItem('selectedTrackingFirst', false);
+    localStorage.setItem('videoDialogOpen', false);
     localStorage.setItem('curIndex', 0);
-    localStorage.setItem('collectionFlag', false);
     localStorage.removeItem('verifyAnnotation');
     localStorage.removeItem('noAnnotations');
   }
