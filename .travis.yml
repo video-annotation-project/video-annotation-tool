@@ -16,5 +16,3 @@ cache:
 install:
   - npm i
   - (cd client && npm i)
-script:
-  - $(npm bin)/print-env TRAVIS
