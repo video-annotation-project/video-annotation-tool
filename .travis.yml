@@ -16,3 +16,5 @@ cache:
 install:
   - npm i
   - (cd client && npm i)
+script:
+  - npm run ci

@@ -37,11 +37,13 @@
     "client": "node npm-client.js start",
     "dev": "echo \"This command has been deprecated. Use 'npm start'\" && exit 1",
     "lint": "eslint .",
-    "test": "node npm-client.js test"
+    "test": "node npm-client.js test",
+    "ci": "start-test 3000"
   },
   "devDependencies": {
     "@babel/core": "^7.5.5",
-    "@babel/node": "^7.5.5"
+    "@babel/node": "^7.5.5",
+    "start-server-and-test": "^1.10.0"
   },
   "prettier": {
     "singleQuote": true
