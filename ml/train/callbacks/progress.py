@@ -64,6 +64,12 @@ class Progress(keras.callbacks.Callback):
         self.connection.commit()
 
     def on_batch_end(self, batch, logs={}):
+        self.cursor.execute(
+            f"""SELECT stop_flag FROM {self.table_name}""")
+        flag = self.cursor.fetchone()[0]
+        if flag:
+            print("ending training early")
+            self.model.stop_training = True
         return
 
 

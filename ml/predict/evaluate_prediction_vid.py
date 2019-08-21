@@ -5,8 +5,8 @@ import pandas as pd
 import boto3
 from psycopg2 import connect
 
-import predict
-import config.config
+from predict import predict
+from config import config
 from utils.query import cursor, s3, con
 
 
