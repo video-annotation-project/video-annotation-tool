@@ -346,7 +346,6 @@ class TrainModel extends Component {
       modelInstanceId: 'i-011660b3e976035d8'
     };
 
-    console.log("JERE");
     axios.post(`/api/models/train`, body, config).then(res => {
       console.log(res);
     });
