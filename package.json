@@ -1,48 +1,51 @@
 {
-    "name": "video-annotation-tool",
-    "version": "0.0.1",
-    "private": true,
-    "engines": {
-        "node": ">=8.10"
-    },
-    "dependencies": {
-        "aws-sdk": "^2.513.0",
-        "babel-cli": "^6.26.0",
-        "babel-core": "6.14.0",
-        "bcrypt": "^3.0.6",
-        "body-parser": "^1.19.0",
-        "braces": "^2.3.2",
-        "concurrently": "^3.1.0",
-        "csvtojson": "^2.0.10",
-        "dotenv": "^6.2.0",
-        "downshift": "^3.2.12",
-        "express": "^4.17.1",
-        "express-swagger-generator": "^1.1.15",
-        "json-decycle": "^1.0.0",
-        "jsonwebtoken": "^8.5.1",
-        "lodash": "^4.17.15",
-        "nodemon": "^1.19.1",
-        "passport": "^0.4.0",
-        "passport-jwt": "^4.0.0",
-        "pg": "^7.12.1",
-        "react": "^16.9.0",
-        "react-swipeable-views": "^0.13.3",
-        "s3": "^4.4.0",
-        "socket.io": "^2.2.0",
-        "swagger-ui-express": "^4.0.7"
-    },
-    "scripts": {
-        "start": "concurrently \"nodemon -w server server/server.js\" \"npm run client\"",
-        "server": "nodemon -w server server/server.js",
-        "client": "node start-client.js",
-        "dev": "echo \"This command has been deprecated. Use 'npm start'\" && exit 1",
-        "lint": "eslint ."
-    },
-    "devDependencies": {
-        "@babel/core": "^7.5.5",
-        "@babel/node": "^7.5.5"
-    },
-    "prettier": {
-        "singleQuote": true
-    }
+  "name": "video-annotation-tool",
+  "version": "0.0.1",
+  "private": true,
+  "engines": {
+    "node": ">=8.10"
+  },
+  "dependencies": {
+    "aws-sdk": "^2.513.0",
+    "babel-cli": "^6.26.0",
+    "babel-core": "6.14.0",
+    "bcrypt": "^3.0.6",
+    "body-parser": "^1.19.0",
+    "braces": "^2.3.2",
+    "concurrently": "^3.1.0",
+    "csvtojson": "^2.0.10",
+    "dotenv": "^6.2.0",
+    "downshift": "^3.2.12",
+    "express": "^4.17.1",
+    "express-swagger-generator": "^1.1.15",
+    "json-decycle": "^1.0.0",
+    "jsonwebtoken": "^8.5.1",
+    "lodash": "^4.17.15",
+    "nodemon": "^1.19.1",
+    "passport": "^0.4.0",
+    "passport-jwt": "^4.0.0",
+    "pg": "^7.12.1",
+    "react": "^16.9.0",
+    "react-swipeable-views": "^0.13.3",
+    "s3": "^4.4.0",
+    "socket.io": "^2.2.0",
+    "swagger-ui-express": "^4.0.7"
+  },
+  "scripts": {
+    "start": "concurrently \"nodemon -w server server/server.js\" \"npm run client\"",
+    "server": "nodemon -w server server/server.js",
+    "client": "node npm-client.js start",
+    "dev": "echo \"This command has been deprecated. Use 'npm start'\" && exit 1",
+    "lint": "eslint .",
+    "test": "node npm-client.js test",
+    "ci": "start-test 3000"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.5.5",
+    "@babel/node": "^7.5.5",
+    "start-server-and-test": "^1.10.0"
+  },
+  "prettier": {
+    "singleQuote": true
+  }
 }
