@@ -57,7 +57,7 @@ class ConceptsList extends React.Component {
       return;
     }
 
-    concepts.map((concept) => {
+    concepts.map(async (concept) => {
       const children = await this.getChildrenConcepts(concept.id);
       concept.expandable = children && children.length;
       concept.expanded = false;
