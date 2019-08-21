@@ -467,16 +467,16 @@ class Verify extends Component {
       );
     } else {
       selection = (
-          <VerifyAnnotations
-            annotation={annotations[index]}
-            index={index}
-            handleNext={this.handleNext}
-            toggleSelection={this.toggleSelection}
-            size={annotations.length}
-            tracking={selectedTrackingFirst}
-            resetLocalStorage={this.resetLocalStorage}
-            collectionFlag={collectionFlag}
-          />
+        <VerifyAnnotations
+          annotation={annotations[index]}
+          index={index}
+          handleNext={this.handleNext}
+          toggleSelection={this.toggleSelection}
+          size={annotations.length}
+          tracking={selectedTrackingFirst}
+          resetLocalStorage={this.resetLocalStorage}
+          collectionFlag={collectionFlag}
+        />
       );
     }
 

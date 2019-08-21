@@ -9,7 +9,7 @@ import Typography from '@material-ui/core/Typography';
 const styles = theme => ({
   formControl: {
     marginTop: theme.spacing(2),
-    maxHeight: '400px',
+    maxHeight: '250px',
     overflow: 'auto'
   },
   group: {

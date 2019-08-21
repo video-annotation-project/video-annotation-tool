@@ -261,7 +261,7 @@ class VerifySelection extends React.Component {
     const steps = getSteps();
 
     return (
-      <div className={classes.root}>
+      <div>
         <Stepper activeStep={activeStep} orientation="vertical">
           {steps.map((label, index) => (
             <Step key={label}>

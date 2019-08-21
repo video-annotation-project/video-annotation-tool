@@ -8,7 +8,7 @@ import FormControl from '@material-ui/core/FormControl';
 const styles = theme => ({
   formControl: {
     marginTop: theme.spacing(2),
-    maxHeight: '400px',
+    maxHeight: '250px',
     overflow: 'auto'
   },
   switch: {

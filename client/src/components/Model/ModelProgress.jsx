@@ -70,7 +70,7 @@ class ModelProgress extends Component {
 
   TrainingStatus = () => {
     const {
-      handleTerminate,
+      terminateTraining,
       onReady,
       stopTraining,
       handleReset,
@@ -125,7 +125,7 @@ class ModelProgress extends Component {
               Stop Training
             </Button>
             <Button
-              onClick={handleTerminate}
+              onClick={terminateTraining}
               variant="contained"
               className="terminateButton"
             >

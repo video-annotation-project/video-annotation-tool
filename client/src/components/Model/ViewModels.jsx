@@ -8,7 +8,7 @@ import TableRow from '@material-ui/core/TableRow';
 import Table from '@material-ui/core/Table';
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
-import Swal from 'sweetalert2';
+import Swal from 'sweetalert2/src/sweetalert2';
 
 const CustomTableCell = withStyles(theme => ({
   head: {
