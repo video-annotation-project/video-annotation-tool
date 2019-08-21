@@ -18,3 +18,5 @@ install:
   - (cd client && npm i)
 script:
   - npm run ci
+notifications:
+  email: false
