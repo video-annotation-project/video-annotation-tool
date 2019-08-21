@@ -1,25 +1,19 @@
 language: node_js
 node_js:
-- 8.12
-addons:
-  apt:
-    packages:
-    - libgconf-2-4
-cache:
-  npm: true
-  directories:
-  - "~/.cache"
-install:
-- npm i
-- "(cd client && npm i)"
-script:
-- npm run ci
-env:
-  matrix:
-  - secure: lPFDLyKEnk6xj2OWo969/pspXvNxi2Z6juwQpq0c54W1u9E6B+ucggOqNWr5kAbXZThmUGPr4e2lnF1Rngq0MYH9WnJckuzNtDxR++C0dhW4DY+eEDDBXowrWFT3V1+uaccL1M5eFHGbjlkS6QoyTX45YYNoQqDKO2ZfOC3GYGh76jQZdmUJ9Fw3gJFfgBXJ1lJebgWmoOkRyMKjemrwdeMZuyRzGU312hjC3nd8CTKmP7yM1XnJj/5GJAZZMmnsySOnbUCULjj04TPPjqO5REfuNx1349/9ieEK3aRz+sQ6mByAFl2XudUEBY42j58KTvuiBjFEQ3h+au6KYFIqelvupJz+2OyNY+Xcbo5JloRFhaxTSaRBbOzowEL6sost3P09kLgCYJbdU2NfEjzwu1BQ8XJFBHzq2tB6dj0Mjj2INm/kW2NOqWDxXpnHexbdnxr8YemvOToDhP9+Gvp9wG88EBoGpRnhJ+kCSfr3+x2kVOAF7EfQE7WckhpOTCR0flUz9QJeSkYU6IVWKq9REvC+KNKHdOoIhWb8iZpP9MNMTxXmZgwPpGXcJPm1fzSnseEam0AfaeNVhPblbmu+VwEt5IS1o72tR496L4QrQtWHRjXrsWEuUNTsdeQNrfLkhb3vRgoNn4KcMiRoFbrLieOVisEBRvmYlrSgS7SfRW0=
-  - secure: bm+KMDQsG13XLwRVZaEbZk084tuy8y2hpAe+IESpMF94Cohwta7JzZ3Gd+PAZrwbyFxPi3qz/1DMsMuIQbwdQKatUGQEaz8+x5ZfaB5MzQMZaeysY/rXm2b/Up09YbxPrvdydcBDSvG+h5bcLb0QU0xC6Z86Bmo2JrUoCNV3RRLV8lofnLXp8qFJQGstamivP66e7baw8DoHiqq8osvheqA+B8HAEwAQ6azAlm2Y2+STQRTBAfEeFNDLMs2ONlpv6qN/bOlRQrW+sc4zrSPvR1kYIU61JvYOJpD+dmOtz+2Sg9RiMGhztBxZEDGpMdUVLuN5dgkLMdtvkHXyaK3jzZcGNfQYs1uTbak9G5IsG2CkhWzx2PxUC5DqbaTrdRQ1x3eg/3A3hxaqH9qfhe/9EuREC6ABxRI9RzgBYLb9TJm4KJQ/4ADfg4fZmPZm/JtWYqd89CyjH82tf6IE7DMnm5MbY9XX87paMop2pLDgC3p15dCjRCD0PJTkbUE54xU35qAEN7CRfVJXvlbqj6hyQvDQCyPHtDAms543nKVxgb3iMgtltvfpnvQYh5af/3VZ2wj3umG8VVjbuylxeqLv5JoXFha9xq7OdjfjPTSWZy0BykDN6RNvxyp81XP+i8EDy56USTndj3lYitLhRz7L+WV4hqfSFqg1ECdJCiXHwW4=
-  - secure: sSAd8ckm+mO26emoY5I3hwS9PoeLPJgupRFsJCGzJ2fXNju23g5k8ZCdhR2AnvCod9y1uKngTkHAEj531DdUoSp1Bm+7yH560IqpkcJk7ZAvIVb6V86gr7/ys70JprB4YW+6Qg87k+zakuLlUfD9886ZPv8SsBoVdIhMszu0oHWv0tJ/L2EVs9BGPcJjzBIdtWnj29xCfqSD2BKZDUx1k2ufMybara36pqmUk9botQ/f1LAs8V0RIBJympYAoG4aJjyDCtgZhQF5P9t7N+qsu77WBpIv2lwn1QyzYcRmimnzZsHpbTqQGZ5j0lCKMgGB063PqpRBjEAmfxLDANYnEkgAx2Q3yxaikLyuUWnvHOVRJ3rStn2m7ZBmWqaXZcqw4yE2x+MR9Z/jJaxUTTWrNlSEldNLRFx65ES+uep+Bc5mKnYuCsxv1ojcQ2kjPUbVNY5/WyFXpMBqm0IeveMcjUGtLTQ845MqjGRUcxAvq0ZaZaKeaUlCgEal1yPExZBY4Wp4TKpTQ/K56Nbw1gwSIIdmRhBipa8/0wqYntuBDIhKoKpdl1NnL8yEN1EQVJBojGEF/pl4QnBOF9cmZSrixSrYLlc9YwEhc3Xwr/UyCBOe9SNK/+TW6COnwxqUTX4jJIZnEjKXhv8rW+RVeyKesO8oH+5+XiO8AS9TYrc+1UY=
-  - secure: J3HerXS1715Ro6wt8mgUhrg/ThnM0reuf+J853w2yiSuqzrEzGyxBRYl4t2paTgp6foJ4nhMydxYKbVG08hAsv+gG/2DnVdMKFuNoRcSkBeWl7R/Kpe6xmxX8P/3NEfLpZM7Ati36XO35Cnn078ZPJkmE/k19hg+a3G4qnA5yolbmxh6vHHkv4n/aTDAsDZkXrzlPH0LPZmd6DNy7TRFLCZ2hDRoGzDdYYetAL8/AizGnoO8RZzxV3PDhC7VApR1+tlK0Phnt03WE8H0uYd8VvE4MFdx96jGjSd8oxoXfmJrnc/XQb9OJ4bGp6LBgmeLnVoVVQJsA2LKHcbs4Dmlv/+KjkAW+d92FyRLUVbcmNaGcnjj8piQXoH1EUxpbkao1IldGwQzRdl4+b4rJDGmHRTi+Tj2DEsqNl8NxP3JzYRKyTbvNhugwxNOwn5pHZolCgyoDOQsp+VHGhHjpT5aI9qZ6K8cdGHhKS4XwMOKZ5kPR4EkSeAFkMf1tvaVXnOGbVNqKZPxeY69dF76+Ac5+bVYJio+gj2Yq9VIgC7WfYVP7IOXkmBkq5i1h8iaXX6PnEF3jHTwRC7qGsJBGA9AQYIfhlWXYxW8ocJfqLbJCnxorkG6oWs47JB8ARsvsXmzrCUyFIeau7Ey5LPtDkHAPZzB8QIZU0/oLhbNGoiagjg=
-  - secure: G7edUWQ0GGrBC/MMxzw13ODnLiz5YKtEZqliKPDnS7nOQi3f/MVKN3VYQdj+yy5cx3W7hBhZKrYfwOVmp/O8jcaivsku2IfZbeGKwcSUP5+zIUvYAICo3ukjyY15RkSNAVIkI6s3Pj+zzF/3mDxdhO3Edd9/oY92j/VXvMXOGrvaA7e2pQR+bFm2viqzETI/5endtn+i7dXs5XksHd+hceFdPg4ZrQH4SC6SrMVHNwq3etom4qI5Mw5IP69kaCKJXXNFw5oD8/kWr5MmMXzQ8HVnitpIKTzraeQ6ZdQO9Z+NMEaQF4KKy9tGkDbNTwLHpAA9BzXrrv29XP/PYHLgh6RoaynkUBoRPCG8oNtX+loXFAiUdOVAp1QYmP7Dd9G1M5DPnLMC9cCnLToaOx6o6Kmw+xJSLT1TBQ13OnYI5k3O+BrRMrPb6VypQMZA3S+/W1ILZcUyU95jiA8tSVRY8IOTi2ZQlE3skSVGfloWEHLKHfr4CKj4N3TzraFcGcqrtQh2jJpPQ81+qVuGUlxmyoUBTe1yiBc7K/boJwPU3pm6OqTq3aVcZgBp0hfwpsxNLl+VC2PgbML+mk/mJnASJNaC7Z9MZH8jdLRnllpqXu5pSzQOqGf0Sj3Hx0v0RzQq+VW2Y8awzP/+k14hb0z5jAmOGjxPV8Pt47LQrGDi6J8=
-  - secure: gOhrGJtvonELM7Gb0T7nCsfShIKb4bcePj9L83v8zStgkBoRSYMFh052cXQqQ23Jq8vsoFd9ogRUJ31g/6GaXq7teVDBkYWorgj9duhaJzUO7d0FEpY/pezd5bnMDn+WtfULojjCpbzQY1n0kFxQYS79xzLc8H9tlD/4rFZi8nvoy8NAS9Tkc3Y5cvy/q5sT2Mvqyj7Pv6zkYmEN/e+37I3QWz5uz+EHaokFVHWw44XoyEhsL/D0gfb2+rto2XpoBs972ghDJC5To+Y3I8jWBINX0XQFWBdcIqmXS3nezXaEyZ2BsutaXdZEqAWE5uB7IYKXQ8lqeva6bofE7xCMDUFTWF+yJ9PChcpMJ71J4g1qO1mvMxgV8kb0gNdavMi3bgxQD+pVi0LL0YiEmMCgMHzaFLmg5l6oMmfzfD9DfSKIAHF8xvtAqTyWBuXkZ+RzH1xiLqnpkaSZtfygB1zgIp4U3lsxX2qd23OxVgRE8/goL+Iocagaoo4T2oxiNxX++iF/d4VncuIEi8yToU0Dspt4nVnpCqObbY7210R70B6iV0peAJMwknozFwLpIaZXrLYtLXx/h/mO0xxRxbNa5TH9YCO5xKpVPwGECL4t0dsnlSuK8fKzM3glNIjO43IlBjcCi/0+2NSXE+DGlgnWbniu/cu/gtNZU9+0i1+QRfU=
-  - secure: tEau99rvzy9ZEdAnNz6iH+Xe35aH8CFYLtWTCLNmIxns5iCmD7RbkItz/kNX4Tc+G4Yg9HQTeO0zU6fEI0uKm6nQMAm/nB8H/Yl/M4GlgIm+x7GXQIA/GK/z+2VFKdrJQYIX5us7LsaoSilOPButzZ3RaWdoN94qOE2YsNw8jQVoRvcSEcH/xoRAVaKv92kATMiSkLoMbJ1USGxs5ZlkJDGwNm2OPmRMOgs93urOxN86Od8Z3Hx2iKvvDKe1fg0z9L6XKq+FbdXx5ihMXtJRW+GKO0SD6RiwWJDGp/KmdxXPlms3unKmftcxrJaKiuQzIt0orVttcjoRgqmeu+EuD+ITzKYfWf+T6g/fPu4Cnm/3aGiPDN5O2Ti6g6I5ehbGcXA61ZiucwJ+PcH+cYHRACMKjO4BxdigFlVYfGSTswpfUpcNc+1p+gROUG9T7DbYbXrsLImYLYDgBPdxkL+ygi19Uwur5TXZC5IaKrfP/O4s0mU5iut5OEl7qjuYXi/TGPN35CLB+MzepCyBY7DZCY1xdTsSrOSSGkJRxxJQyUx9y7yOCCy+4r2nCDrjiGT7wV/dN5hm+i8ZGyX5nP6H7ujjuzzicrIQ7HDTL86RUGPww8QdsGgM8z1HnTXAQXqaonTzpLECSAck0rz56HH8lLjlaiDBFXsPYEKVSg+igTs=
+          - 8.12
+            # addons:
+            # #   apt:
+            # #     packages:
+            # #       # Ubuntu 16+ does not install this dependency by default, so we need to install it ourselves
+            # #       - libgconf-2-4
+            # # cache:
+            # #   # Caches $HOME/.npm when npm ci is default script command
+            # #   # Caches node_modules in all other cases
+            # #   npm: true
+            # #   directories:
+            # #     # we also need to cache folder with Cypress binary
+            # #     - ~/.cache
+            # # install:
+            # #   - npm ci
+            # # script:
+            # #   - npm run test -C client
