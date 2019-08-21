@@ -305,7 +305,7 @@ def track_annotation(id, conceptid, timeinvideo, videoid, image,
     url = getVideoURL(cursor, videoid)
     s3Image = getS3Image(image)
     if s3Image is None:
-        return
+        return False
 
     # initialize video for grabbing frames before annotation
     # start vidlen/2 secs before obj appears
@@ -342,4 +342,4 @@ def track_annotation(id, conceptid, timeinvideo, videoid, image,
     cv2.destroyAllWindows()
     con.close()
     print("Done tracking annotation: " + str(id))
-    return
+    return True

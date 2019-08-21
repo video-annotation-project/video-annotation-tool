@@ -42,8 +42,13 @@ def annotationMap(id, conceptid, timeinvideo, videoid, image,
     if 'Contents' in results:
         continue
     '''
-    tracking.track_annotation(id, conceptid, timeinvideo, videoid, image,
+    status = tracking.track_annotation(id, conceptid, timeinvideo, videoid, image,
                               videowidth, videoheight, x1, y1, x2, y2, comment, unsure)
+    # If something went wrong break
+    if not status:
+        print("Something went wrong with annotation id: ", id)
+        return
+
     # Update originalid so while loop doesn't reset tracking
     cursor.execute("UPDATE annotations SET originalid=%d WHERE id=%d;",
                    (id, id,))
