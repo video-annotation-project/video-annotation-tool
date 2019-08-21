@@ -157,7 +157,10 @@ class VerifySelection extends React.Component {
                         onChange={handleChangeSwitch('selectedTrackingFirst')}
                         value="selectedTrackingFirst"
                         color="primary"
-                        disabled={!excludeTracking}
+                        disabled={
+                          !excludeTracking &&
+                          selectedAnnotationCollections.length > 0
+                        }
                       />
                     }
                     label="Tracking Video Verification"
