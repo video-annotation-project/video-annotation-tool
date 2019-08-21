@@ -201,5 +201,5 @@ Follow these steps if changes are made to any env files
   1. Install Travis CI with `gem install travis` (Ruby required)
   2. Log in with GitHub credentials
   3. Compress env files with `tar cvf travis.tar .env ./client/cypress.env.json`
-  4. Encrypt the tar file with `travis encrypt-file travis.tar --add"
+  4. Encrypt the tar file with `travis encrypt-file travis.tar --add`
   5. Delete the tar file before pushing
