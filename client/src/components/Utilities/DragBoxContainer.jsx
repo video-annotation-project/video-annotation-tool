@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import Rnd from 'react-rnd';
+import { Rnd } from 'react-rnd';
 import { withStyles } from '@material-ui/core/styles';
 
 const styles = () => ({
