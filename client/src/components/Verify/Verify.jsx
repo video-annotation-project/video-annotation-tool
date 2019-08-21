@@ -378,6 +378,8 @@ class Verify extends Component {
 
   resetLocalStorage = () => {
     localStorage.setItem('selectionMounted', true);
+    localStorage.setItem('videoDialogOpen', false);
+    localStorage.setItem('selectedTrackingFirst', false);
     localStorage.setItem('curIndex', 0);
     localStorage.removeItem('verifyAnnotation');
     localStorage.removeItem('noAnnotations');
@@ -386,7 +388,8 @@ class Verify extends Component {
         selectionMounted: true,
         index: 0,
         noAnnotations: false,
-        annotations: []
+        annotations: [],
+        selectedTrackingFirst: false
       })
     );
   };
