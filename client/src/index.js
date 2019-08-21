@@ -18,5 +18,5 @@ ReactDOM.render(
       </BrowserRouter>
     </React.Fragment>
   </ThemeProvider>,
-    document.getElementById('root')
-  );
+  document.getElementById('root')
+);

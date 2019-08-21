@@ -8,10 +8,26 @@ import numpy as np
 import pandas as pd
 from keras_retinanet.models import convert_model
 from keras_retinanet.models import load_model
+import subprocess
 
-import config.config
+from config import config
 from train.preprocessing.annotation_generator import get_classmap
 from utils.query import s3, cursor, pd_query, con
+from ffmpy import FFmpeg
+from memory_profiler import profile
+
+fp = open('memory_profiler.log', 'w+')
+
+
+def get_classmap(concepts):
+    classmap = []
+    for concept in concepts:
+        name = pd_query("select name from concepts where id=" +
+                        str(concept)).iloc[0]["name"]
+        classmap.append([name, concepts.index(concept)])
+    classmap = pd.DataFrame(classmap)
+    classmap = classmap.to_dict()[0]
+    return classmap
 
 
 def printing_with_time(text):
@@ -96,6 +112,7 @@ def resize(row):
     return row
 
 
+@profile(stream=fp)
 def predict_on_video(videoid, model_weights, concepts, filename,
                      upload_annotations=False, userid=None):
 
@@ -141,9 +158,7 @@ def predict_on_video(videoid, model_weights, concepts, filename,
 
     printing_with_time("Predicting")
     results, frames = predict_frames(frames, fps, model, videoid)
-    print(results + " this is first one")
     results = propagate_conceptids(results, concepts)
-    print(results + " this is second one")
     results = length_limit_objects(results, config.MIN_FRAMES_THRESH)
     # interweb human annotations and predictions
     printing_with_time("Generating Video")
@@ -163,6 +178,7 @@ def predict_on_video(videoid, model_weights, concepts, filename,
     return results, fps, original_frames, annotations
 
 
+@profile(stream=fp)
 def get_video_frames(vid_filename, videoid):
     frames = []
     # grab video stream
@@ -388,6 +404,7 @@ def length_limit_objects(pred, frame_thresh):
 # Generates the video with the ground truth frames interlaced
 
 
+@profile(stream=fp)
 def generate_video(filename, frames, fps, results,
                    concepts, video_id, annotations):
 
@@ -401,30 +418,46 @@ def generate_video(filename, frames, fps, results,
     conceptsCounts = {concept: 0 for concept in concepts}
     total_length = len(results)
     one_percent_length = int(total_length / 100)
+    f = open('gen.txt', 'w')
+    f.write(str(frames[130]))
+    f.write(str(classmap))
     for pred_index, res in enumerate(results.itertuples()):
+        f.write(f'{pred_index}  {res} {type(frames)}')
 
         if pred_index % one_percent_length == 0:
             upload_predict_progress(pred_index, video_id, total_length, 3)
 
         x1, y1, x2, y2 = int(res.x1), int(res.y1), int(res.x2), int(res.y2)
-        if res.confidence:
+        # boxText init to concept name
+        boxText = classmap[concepts.index(res.label)]
+        seenObjects = []
+        if pd.isna(res.confidence):  # No confidence means user annotation
+            # Draws a (user) red box
+            # Note: opencv uses color as BGR
+            cv2.rectangle(frames[res.frame_num], (x1, y1),
+                          (x2, y2), (0, 0, 255), 2)
+        else:  # if confidence exists -> AI annotation
+            # Keeps count of concepts
+            if (res.objectidd not in seenObjects):
+                conceptsCounts[res.label] += 1
+                seenObjects.append(res.objectid)
+            # Draw an (AI) green box
             cv2.rectangle(frames[res.frame_num], (x1, y1),
                           (x2, y2), (0, 255, 0), 2)
+            # boxText = count concept-name (confidence) e.g. "1 Starfish (0.5)"
+            boxText = str(conceptsCounts[res.label]) + " " + boxText + \
+                " (" + str(round(res.confidence, 3)) + ")"
             cv2.putText(
                 frames[res.frame_num], str(res.confidence),
                 (x1, y1 + 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
-            cv2.putText(frames[res.frame_num], str(res.objectid), (x1, y2),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
-        else:
-            cv2.rectangle(frames[res.frame_num], (x1, y1),
-                          (x2, y2), (255, 0, 0), 2)
         cv2.putText(
-            frames[res.frame_num], classmap[concepts.index(res.label)],
-            (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+            frames[res.frame_num], boxText,
+            (x1-5, y2+10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
 
     save_video(filename, frames, fps)
 
 
+@profile(stream=fp)
 def save_video(filename, frames, fps):
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     out = cv2.VideoWriter(filename, fourcc, fps, frames[0].shape[::-1][1:3])
@@ -436,7 +469,16 @@ def save_video(filename, frames, fps):
     # requires temp so original not overwritten
     converted_file = 'temp.mp4'
     # Convert file so we can stream on s3
-    os.system(f'ffmpeg -i \'{filename}\' -codec:v libx264 -y {converted_file}')
+    ff = FFmpeg(
+        inputs={filename: ['-loglevel', '0']},
+        outputs={converted_file: ['-codec:v', 'libx264', '-y']}
+    )
+    print(ff.cmd)
+    ff.run()
+
+    # temp = ['ffmpeg', '-loglevel', '0', '-i', filename,
+    #         '-codec:v', 'libx264', '-y', converted_file]
+    # subprocess.call(temp)
     # upload video..
     s3.upload_file(
         converted_file, config.S3_BUCKET,

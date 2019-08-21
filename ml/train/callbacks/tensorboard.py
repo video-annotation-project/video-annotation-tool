@@ -5,7 +5,7 @@ import keras
 import boto3
 from psycopg2 import connect
 
-import config.config
+from config import config
 
 
 class TensorboardLog(keras.callbacks.Callback):

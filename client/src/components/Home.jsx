@@ -11,6 +11,7 @@ import TextField from '@material-ui/core/TextField';
 import { Grid, Typography } from '@material-ui/core';
 
 const STATUS_SUCESS_CODE = 200;
+const YEAR = new Date().getFullYear();
 
 const styles = theme => ({
   welcome: {
@@ -55,7 +56,7 @@ class Home extends Component {
   };
 
   componentWillMount() {
-    const fromDate = this.formatDate(new Date('1970-01-01T00:00:00'));
+    const fromDate = this.formatDate(new Date(`${YEAR}-01-01T00:00:00`));
     const toDate = this.formatDate(new Date());
     this.setState({ fromDate, toDate });
     this.getCounts(fromDate.ISOString, toDate.ISOString);
@@ -64,8 +65,9 @@ class Home extends Component {
   componentDidMount() {
     // These variables are for the varify tab checkpoint
     localStorage.setItem('selectionMounted', true);
+    localStorage.setItem('selectedTrackingFirst', false);
+    localStorage.setItem('videoDialogOpen', false);
     localStorage.setItem('curIndex', 0);
-    localStorage.setItem('collectionFlag', false);
     localStorage.removeItem('verifyAnnotation');
     localStorage.removeItem('noAnnotations');
   }
@@ -171,7 +173,7 @@ class Home extends Component {
       const { name } = event.target;
       let value = new Date(event.target.value);
       if (name === 'fromDate' && event.target.value === '') {
-        value = new Date('1970-01-01T00:00:00');
+        value = new Date(`${YEAR}-01-01T00:00:00`);
       } else if (name === 'toDate' && event.target.value === '') {
         value = new Date();
       }

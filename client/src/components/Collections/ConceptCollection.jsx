@@ -9,12 +9,12 @@ import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import Avatar from '@material-ui/core/Avatar';
 import Button from '@material-ui/core/Button';
-import Swal from 'sweetalert2';
 import FormControl from '@material-ui/core/FormControl';
 import InputLabel from '@material-ui/core/InputLabel';
 import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
 import FormHelperText from '@material-ui/core/FormHelperText';
+import Swal from 'sweetalert2/src/sweetalert2';
 
 import ConceptsSelected from '../Utilities/ConceptsSelected';
 
@@ -316,7 +316,11 @@ class ConceptCollection extends Component {
           >
             Delete This Collection
           </Button>
-          <Button className={classes.button} color="secondary" onClick={this.createCollection}>
+          <Button
+            className={classes.button}
+            color="secondary"
+            onClick={this.createCollection}
+          >
             New Concept Collection
           </Button>
         </div>

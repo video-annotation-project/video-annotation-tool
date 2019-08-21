@@ -14,7 +14,7 @@ import blue from '@material-ui/core/colors/blue';
 import Description from '@material-ui/icons/Description';
 import Avatar from '@material-ui/core/Avatar';
 import Grid from '@material-ui/core/Grid';
-import Swal from 'sweetalert2';
+import Swal from 'sweetalert2/src/sweetalert2';
 import Hotkeys from 'react-hot-keys';
 
 import Dialog from '@material-ui/core/Dialog';
@@ -80,6 +80,7 @@ class VerifyAnnotations extends Component {
   constructor(props) {
     super(props);
     const { annotation, resetLocalStorage } = this.props;
+    const videoDialogOpen = JSON.parse(localStorage.getItem('videoDialogOpen'));
 
     this.state = {
       disableVerify: false,
@@ -93,7 +94,7 @@ class VerifyAnnotations extends Component {
       y: annotation.y1,
       width: annotation.x2 - annotation.x1,
       height: annotation.y2 - annotation.y1,
-      videoDialogOpen: false /* Needed for dialog component */,
+      videoDialogOpen,
       drawDragBox: true,
       trackingStatus: null,
       detailDialogOpen: false
@@ -401,6 +402,7 @@ class VerifyAnnotations extends Component {
 
   videoDialogToggle = () => {
     const { videoDialogOpen } = this.state;
+    localStorage.setItem('videoDialogOpen', !videoDialogOpen);
     this.setState({
       videoDialogOpen: !videoDialogOpen
     });
@@ -624,7 +626,9 @@ class VerifyAnnotations extends Component {
       toggleSelection,
       socket,
       loadVideos,
-      includeTracking
+      excludeTracking,
+      collectionFlag,
+      resetLocalStorage
     } = this.props;
     const {
       x,
@@ -701,8 +705,16 @@ class VerifyAnnotations extends Component {
                     <Button
                       className={classes.button}
                       variant="contained"
+                      color="primary"
+                      onClick={resetLocalStorage}
+                    >
+                      Reset Selections
+                    </Button>
+                    <Button
+                      className={classes.button}
+                      variant="contained"
                       onClick={this.nextAnnotation}
-                      disabled={includeTracking}
+                      disabled={!excludeTracking && collectionFlag > 0}
                     >
                       Next
                     </Button>
@@ -722,7 +734,7 @@ class VerifyAnnotations extends Component {
                   <br />
                   <div>
                     <Typography variant="subtitle2" className={classes.button}>
-                      {includeTracking
+                      {!excludeTracking && collectionFlag > 0
                         ? 'Next disabled because the collection might contain tracking annotations'
                         : ''}
                     </Typography>
@@ -732,7 +744,7 @@ class VerifyAnnotations extends Component {
                         ? this.getStatus(annotation.tracking_flag)
                         : this.getStatus(trackingStatus)}
                     </Typography>
-                    <Typography className={classes.paper}>
+                    <Typography>
                       {index + 1} of {size}
                     </Typography>
                   </div>
@@ -740,7 +752,7 @@ class VerifyAnnotations extends Component {
                 <Grid item xs />
               </Grid>
             ) : (
-              <div style={{ marginLeft: '300px' }}>
+              <div style={{ marginLeft: '250px' }}>
                 <Hotkeys keyName="r, d, i, v" onKeyDown={this.handleKeyDown} />
                 <div
                   style={{
@@ -784,7 +796,7 @@ class VerifyAnnotations extends Component {
                     />
                   </DragBoxContainer>
                 </div>
-                <Typography className={classes.paper}>
+                <Typography>
                   {index + 1} of {size}
                 </Typography>
                 {this.optionButtons(annotation)}

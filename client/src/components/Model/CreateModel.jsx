@@ -14,7 +14,7 @@ import FormLabel from '@material-ui/core/FormLabel';
 import Checkbox from '@material-ui/core/Checkbox';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
-import Swal from 'sweetalert2';
+import Swal from 'sweetalert2/src/sweetalert2';
 import ListItem from '@material-ui/core/ListItem';
 import Tooltip from '@material-ui/core/Tooltip';
 import List from '@material-ui/core/List';
@@ -26,13 +26,13 @@ import VideoMetadata from '../Utilities/VideoMetadata';
 const styles = theme => ({
   checkSelector: {
     marginTop: theme.spacing(2),
-    maxHeight: '400px',
+    maxHeight: '300px',
     overflow: 'auto'
   },
   list: {
     marginTop: theme.spacing(2),
     overflow: 'auto',
-    maxHeight: `${400 - theme.spacing(2)}px`
+    maxHeight: `${350 - theme.spacing(2)}px`
   },
   textField: {
     marginLeft: theme.spacing(),

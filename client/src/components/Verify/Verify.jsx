@@ -49,7 +49,9 @@ class Verify extends Component {
     const annotations = JSON.parse(localStorage.getItem('verifyAnnotation'));
     const noAnnotations = JSON.parse(localStorage.getItem('noAnnotations'));
     const index = JSON.parse(localStorage.getItem('curIndex'));
-    const collectionFlag = JSON.parse(localStorage.getItem('collectionFlag'));
+    const selectedTrackingFirst = JSON.parse(
+      localStorage.getItem('selectedTrackingFirst')
+    );
 
     this.state = {
       selectedAnnotationCollections: [],
@@ -57,12 +59,11 @@ class Verify extends Component {
       selectedVideos: [],
       selectedConcepts: [],
       selectedUnsure: false,
-      selectedTrackingFirst: false,
-      collectionFlag,
+      selectedTrackingFirst,
       selectionMounted,
       noAnnotations,
       index,
-      includeTracking: false,
+      excludeTracking: false,
       annotations
     };
   }
@@ -85,10 +86,6 @@ class Verify extends Component {
     } else {
       if (selectedAnnotationCollections.length) {
         annotations = await this.getAnnotationsFromCollection();
-        localStorage.setItem('collectionFlag', true);
-        this.setState({
-          collectionFlag: true
-        });
       } else {
         annotations = await this.getAnnotations();
       }
@@ -124,20 +121,16 @@ class Verify extends Component {
   };
 
   getAnnotationsFromCollection = async () => {
-    const { selectedAnnotationCollections, includeTracking } = this.state;
+    const { selectedAnnotationCollections, excludeTracking } = this.state;
     return axios
       .get(
         `/api/annotations/collections?` +
-          `collectionids=${selectedAnnotationCollections}&tracking=${includeTracking}`,
+          `collectionids=${selectedAnnotationCollections}&tracking=${excludeTracking}`,
         {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         }
       )
       .then(res => {
-        localStorage.setItem('collectionFlag', false);
-        this.setState({
-          collectionFlag: false
-        });
         return res.data;
       })
       .catch(error => {
@@ -281,6 +274,9 @@ class Verify extends Component {
   };
 
   handleChangeSwitch = type => event => {
+    if (type === 'selectedTrackingFirst') {
+      localStorage.setItem('selectedTrackingFirst', event.target.checked);
+    }
     this.setState({
       [type]: event.target.checked
     });
@@ -341,6 +337,7 @@ class Verify extends Component {
         });
         return;
       case 4:
+        localStorage.setItem('selectedTrackingFirst', false);
         this.setState({
           selectedUnsure: false,
           selectedTrackingFirst: false
@@ -352,6 +349,7 @@ class Verify extends Component {
 
   resetState = callback => {
     localStorage.setItem('curIndex', 0);
+    localStorage.setItem('selectedTrackingFirst', false);
     this.setState(
       {
         selectedAnnotationCollections: [],
@@ -360,7 +358,7 @@ class Verify extends Component {
         selectedConcepts: [],
         selectedUnsure: false,
         selectedTrackingFirst: false,
-        includeTracking: false,
+        excludeTracking: false,
         index: 0
       },
       callback
@@ -380,6 +378,8 @@ class Verify extends Component {
 
   resetLocalStorage = () => {
     localStorage.setItem('selectionMounted', true);
+    localStorage.setItem('videoDialogOpen', false);
+    localStorage.setItem('selectedTrackingFirst', false);
     localStorage.setItem('curIndex', 0);
     localStorage.removeItem('verifyAnnotation');
     localStorage.removeItem('noAnnotations');
@@ -388,7 +388,8 @@ class Verify extends Component {
         selectionMounted: true,
         index: 0,
         noAnnotations: false,
-        annotations: []
+        annotations: [],
+        selectedTrackingFirst: false
       })
     );
   };
@@ -403,11 +404,11 @@ class Verify extends Component {
       selectedConcepts,
       selectedUnsure,
       selectedTrackingFirst,
-      includeTracking,
+      excludeTracking,
       annotations,
       noAnnotations,
-      index,
-      collectionFlag
+      index
+      // collectionFlag
     } = this.state;
     if (annotations && index >= annotations.length + 1) {
       this.resetLocalStorage();
@@ -424,7 +425,7 @@ class Verify extends Component {
           selectedConcepts={selectedConcepts}
           selectedUnsure={selectedUnsure}
           selectedTrackingFirst={selectedTrackingFirst}
-          includeTracking={includeTracking}
+          excludeTracking={excludeTracking}
           getAnnotationCollections={this.getAnnotationCollections}
           getAnnotationsFromCollection={this.getAnnotationsFromCollection}
           getUsers={this.getUsers}
@@ -467,16 +468,17 @@ class Verify extends Component {
       );
     } else {
       selection = (
-          <VerifyAnnotations
-            annotation={annotations[index]}
-            index={index}
-            handleNext={this.handleNext}
-            toggleSelection={this.toggleSelection}
-            size={annotations.length}
-            tracking={selectedTrackingFirst}
-            resetLocalStorage={this.resetLocalStorage}
-            collectionFlag={collectionFlag}
-          />
+        <VerifyAnnotations
+          annotation={annotations[index]}
+          index={index}
+          handleNext={this.handleNext}
+          toggleSelection={this.toggleSelection}
+          size={annotations.length}
+          tracking={selectedTrackingFirst}
+          resetLocalStorage={this.resetLocalStorage}
+          collectionFlag={selectedAnnotationCollections.length}
+          excludeTracking={excludeTracking}
+        />
       );
     }
 
