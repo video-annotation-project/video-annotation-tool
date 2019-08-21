@@ -6,8 +6,7 @@ from botocore.exceptions import ClientError
 
 from predict.evaluate_prediction_vid import evaluate
 from train.train import train_model
-import config.config
-
+from config import config
 from utils.query import s3, con, cursor, pd_query
 
 # get annotations from test
@@ -111,8 +110,9 @@ cursor.execute(
     SET status=4
     """
 )
+con.commit()
 
-subprocess.call(["rm", "*.mp4"])
+# subprocess.call(["rm", "*.mp4"])
 
 cursor.execute(
     """

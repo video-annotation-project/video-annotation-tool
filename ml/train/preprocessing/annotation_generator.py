@@ -11,8 +11,8 @@ from botocore.exceptions import ClientError
 from keras_retinanet.preprocessing.csv_generator import Generator
 from keras_retinanet.utils.image import read_image_bgr
 
-import config.config
 from utils.query import pd_query, cursor
+from config import config
 
 
 # Without this the program will crash
