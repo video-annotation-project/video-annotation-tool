@@ -17,7 +17,7 @@ from itertools import zip_longest
 from skimage.measure import compare_ssim
 
 # Load environment variables
-load_dotenv(dotenv_path="../.env")
+load_dotenv(dotenv_path="../../.env")
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 S3_BUCKET = os.getenv('AWS_S3_BUCKET_NAME')
@@ -33,7 +33,7 @@ DB_HOST = os.getenv("DB_HOST")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 
-config_path = "../config.json"
+config_path = "../../config.json"
 with open(config_path) as config_buffer:
     config = json.loads(config_buffer.read())['ml']
 
