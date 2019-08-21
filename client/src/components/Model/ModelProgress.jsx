@@ -69,13 +69,8 @@ class ModelProgress extends Component {
   };
 
   TrainingStatus = () => {
-    const {
-      handleTerminate,
-      onReady,
-      stopTraining,
-      handleReset,
-      startTraining
-    } = this.props;
+    const { terminateTraining, checkReady, stopTraining, handleReset, startTraining } = this.props;
+
     const {
       currentEpoch,
       stepsPerEpoch,
@@ -85,6 +80,7 @@ class ModelProgress extends Component {
       epochProgress,
       trainStatus
     } = this.state;
+    
     return (
       <React.Fragment>
         <Paper square elevation={0} className="resetContainer">
@@ -111,7 +107,7 @@ class ModelProgress extends Component {
               onClick={startTraining}
               variant="contained"
               color="secondary"
-              disabled={!onReady()}
+              disabled={!checkReady()}
             >
               Start Training
             </Button>
@@ -125,7 +121,7 @@ class ModelProgress extends Component {
               Stop Training
             </Button>
             <Button
-              onClick={handleTerminate}
+              onClick={terminateTraining}
               variant="contained"
               className="terminateButton"
             >

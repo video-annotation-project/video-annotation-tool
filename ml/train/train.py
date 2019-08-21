@@ -10,10 +10,10 @@ from keras.utils import multi_gpu_model
 from keras.callbacks import ModelCheckpoint, EarlyStopping
 from keras_retinanet.callbacks import RedirectModel
 
-import config.config
+from config import config
 from utils.query import s3
 from utils.timer import timer
-from preprocessing.annotation_generator import AnnotationGenerator
+from train.preprocessing.annotation_generator import AnnotationGenerator
 from train.evaluation.evaluate import evaluate_class_thresholds
 from train.callbacks.progress import Progress
 from train.callbacks.tensorboard import TensorboardLog

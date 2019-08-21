@@ -345,6 +345,7 @@ class TrainModel extends Component {
       command,
       modelInstanceId: 'i-011660b3e976035d8'
     };
+
     axios.post(`/api/models/train`, body, config).then(res => {
       console.log(res);
     });
@@ -485,8 +486,7 @@ class TrainModel extends Component {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
       };
-
-      axios.patch('/api/models/train/stop', config);
+      axios.patch('/api/models/train/stop', {}, config);  
     } catch (error) {
       console.log(error);
     }
@@ -649,7 +649,7 @@ class TrainModel extends Component {
               stopTraining={this.stopTraining}
               resetTraining={this.resetTraining}
               terminateTraining={() => this.postModelInstance('stop')}
-              onReady={this.checkReady}
+              checkReady={this.checkReady}
             />
           </div>
         </Paper>

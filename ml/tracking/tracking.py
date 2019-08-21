@@ -262,12 +262,19 @@ def track_object(frame_num, frames, box, track_forward, end,
         (success, boxes) = trackers.update(frame)
         if success:
             for box in boxes:
-                (x, y, w, h) = [int(v) for v in box]
-                cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+                (x1, y1, w, h) = [int(v) for v in box]
+                x2 = x1 + w
+                y2 = y1 + h
+                # Fix box if outside video frame
+                x1 = x1 if x1 > 0 else 0
+                y1 = y1 if y1 > 0 else 0
+                x2 = x2 if x2 < VIDEO_WIDTH else VIDEO_WIDTH
+                y2 = y2 if y2 < VIDEO_HEIGHT else VIDEO_HEIGHT
+                cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
             if index != 0:
                 upload_image(frame_num, frame_no_box, frame, id, videoid,
                              conceptid, comment, unsure,
-                             x, y, (x + w), (y + h),
+                             x1, y1, x2, y2,
                              cursor, con, TRACKING_ID,
                              round(timeinvideo + time_elapsed, 2))
         frame_list.append(frame)
