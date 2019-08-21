@@ -1,21 +1,20 @@
 language: node_js
 node_js:
-- 8.12
+  - 8.12
 addons:
   apt:
     packages:
-    - libgconf-2-4
+      - libgconf-2-4
 cache:
   npm: true
   directories:
-  - "~/.cache"
+    - '~/.cache'
 install:
-- npm i
-- "(cd client && npm i)"
+  - npm i
+  - '(cd client && npm i)'
 script:
-- npm run ci
+  - npm run ci
 before_install:
-- openssl aes-256-cbc -K $encrypted_64db488ef579_key -iv $encrypted_64db488ef579_iv
-  -in client/cypress.env.json.enc -out client/cypress.env.json -d
-- openssl aes-256-cbc -K $encrypted_64db488ef579_key -iv $encrypted_64db488ef579_iv
-  -in .env.enc -out .env -d
+  - openssl aes-256-cbc -K $encrypted_64db488ef579_key -iv $encrypted_64db488ef579_iv
+    -in travis.tar.enc -out travis.tar -d
+  - tar xvf travis.tar
