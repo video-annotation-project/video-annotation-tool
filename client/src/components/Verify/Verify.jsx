@@ -49,7 +49,9 @@ class Verify extends Component {
     const annotations = JSON.parse(localStorage.getItem('verifyAnnotation'));
     const noAnnotations = JSON.parse(localStorage.getItem('noAnnotations'));
     const index = JSON.parse(localStorage.getItem('curIndex'));
-    const collectionFlag = JSON.parse(localStorage.getItem('collectionFlag'));
+    const selectedTrackingFirst = JSON.parse(
+      localStorage.getItem('selectedTrackingFirst')
+    );
 
     this.state = {
       selectedAnnotationCollections: [],
@@ -57,8 +59,7 @@ class Verify extends Component {
       selectedVideos: [],
       selectedConcepts: [],
       selectedUnsure: false,
-      selectedTrackingFirst: false,
-      collectionFlag,
+      selectedTrackingFirst,
       selectionMounted,
       noAnnotations,
       index,
@@ -85,10 +86,6 @@ class Verify extends Component {
     } else {
       if (selectedAnnotationCollections.length) {
         annotations = await this.getAnnotationsFromCollection();
-        localStorage.setItem('collectionFlag', true);
-        this.setState({
-          collectionFlag: true
-        });
       } else {
         annotations = await this.getAnnotations();
       }
@@ -134,10 +131,6 @@ class Verify extends Component {
         }
       )
       .then(res => {
-        localStorage.setItem('collectionFlag', false);
-        this.setState({
-          collectionFlag: false
-        });
         return res.data;
       })
       .catch(error => {
@@ -281,6 +274,9 @@ class Verify extends Component {
   };
 
   handleChangeSwitch = type => event => {
+    if (type === 'selectedTrackingFirst') {
+      localStorage.setItem('selectedTrackingFirst', event.target.checked);
+    }
     this.setState({
       [type]: event.target.checked
     });
@@ -341,6 +337,7 @@ class Verify extends Component {
         });
         return;
       case 4:
+        localStorage.setItem('selectedTrackingFirst', false);
         this.setState({
           selectedUnsure: false,
           selectedTrackingFirst: false
@@ -352,6 +349,7 @@ class Verify extends Component {
 
   resetState = callback => {
     localStorage.setItem('curIndex', 0);
+    localStorage.setItem('selectedTrackingFirst', false);
     this.setState(
       {
         selectedAnnotationCollections: [],
@@ -406,8 +404,8 @@ class Verify extends Component {
       excludeTracking,
       annotations,
       noAnnotations,
-      index,
-      collectionFlag
+      index
+      // collectionFlag
     } = this.state;
     if (annotations && index >= annotations.length + 1) {
       this.resetLocalStorage();
@@ -475,7 +473,8 @@ class Verify extends Component {
           size={annotations.length}
           tracking={selectedTrackingFirst}
           resetLocalStorage={this.resetLocalStorage}
-          collectionFlag={collectionFlag}
+          collectionFlag={selectedAnnotationCollections.length}
+          excludeTracking={excludeTracking}
         />
       );
     }

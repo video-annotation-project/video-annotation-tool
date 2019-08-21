@@ -58,7 +58,7 @@ class ConceptsList extends React.Component {
     }
 
     // disabled eslint because forEach does not work for this situation
-    // eslint-disable-next-line no-restricted-syntax
+    // eslint-disable-next-line
     for (const concept of concepts) {
       // eslint-disable-next-line no-await-in-loop
       const children = await this.getChildrenConcepts(concept.id);
