@@ -16,4 +16,6 @@ script:
 - npm run ci
 before_install:
 - openssl aes-256-cbc -K $encrypted_64db488ef579_key -iv $encrypted_64db488ef579_iv
+  -in cypress.env.json.enc -out client/cypress.env.json -d
+- openssl aes-256-cbc -K $encrypted_64db488ef579_key -iv $encrypted_64db488ef579_iv
   -in .env.enc -out .env -d
