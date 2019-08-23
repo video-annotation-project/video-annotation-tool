@@ -113,8 +113,10 @@ class PreviousModels extends Component {
 
     if (launched !== null) {
       if (process.env.NODE_ENV === 'production') {
-        console.log(window.location);
-        const domain = this.getDomain(window.location.hostname);
+        const domain = window.location.hostname.replace(
+          /(https?:\/\/)?(www.)?/i,
+          ''
+        );
         window.open(`https://tensorboard.${domain}`, '_blank');
       } else {
         window.open('http://localhost:6008', '_blank');
@@ -172,20 +174,6 @@ class PreviousModels extends Component {
         }
       })
       .finally(() => this.setState({ loadingId: null }));
-  };
-
-  getDomain = url => {
-    console.log(url);
-
-    let newUrl = url.replace(/(https?:\/\/)?(www.)?/i, '');
-    newUrl = newUrl.split('.');
-    newUrl = newUrl.slice(url.length - 2).join('.');
-
-    if (newUrl.indexOf('/') !== -1) {
-      return newUrl.split('/')[0];
-    }
-
-    return newUrl;
   };
 
   render() {
