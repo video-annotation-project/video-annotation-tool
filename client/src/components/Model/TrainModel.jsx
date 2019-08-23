@@ -33,6 +33,9 @@ const styles = theme => ({
   options: {
     marginLeft: theme.spacing(1.5),
     marginRight: theme.spacing(1.5)
+  },
+  paper: {
+    minHeight: '100vh'
   }
 });
 
@@ -569,7 +572,7 @@ class TrainModel extends Component {
 
     return (
       <div className="root">
-        <Paper square>
+        <Paper className={classes.paper}>
           <div className="container">
             <div className="actionsContainer">
               <ModelsForm
