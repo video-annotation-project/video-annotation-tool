@@ -438,7 +438,7 @@ def generate_video(filename, frames, fps, results,
                           (x2, y2), (0, 0, 255), 2)
         else:  # if confidence exists -> AI annotation
             # Keeps count of concepts
-            if (res.objectidd not in seenObjects):
+            if (res.objectid not in seenObjects):
                 conceptsCounts[res.label] += 1
                 seenObjects.append(res.objectid)
             # Draw an (AI) green box
