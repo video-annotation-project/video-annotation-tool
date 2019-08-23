@@ -113,6 +113,7 @@ class PreviousModels extends Component {
 
     if (launched !== null) {
       if (process.env.NODE_ENV === 'production') {
+        console.log(window.location);
         const domain = this.getDomain(window.location.hostname);
         window.open(`https://tensorboard.${domain}`, '_blank');
       } else {
@@ -174,6 +175,8 @@ class PreviousModels extends Component {
   };
 
   getDomain = url => {
+    console.log(url);
+
     let newUrl = url.replace(/(https?:\/\/)?(www.)?/i, '');
     newUrl = newUrl.split('.');
     newUrl = newUrl.slice(url.length - 2).join('.');
