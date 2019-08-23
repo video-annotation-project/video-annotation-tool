@@ -427,6 +427,7 @@ class videoCollection extends Component {
         <Grid container className={classes.root} spacing={0}>
           <Grid item xs>
             <VideoList
+              createCollection={this.createCollection}
               handleVideoClick={this.handleVideoClick}
               startedVideos={startedVideos}
               unwatchedVideos={unwatchedVideos}

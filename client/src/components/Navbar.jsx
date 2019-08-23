@@ -55,6 +55,9 @@ class Navbar extends React.Component {
       splitStr[i] =
         splitStr[i].charAt(0).toUpperCase() + splitStr[i].substring(1);
     }
+    if (splitStr.includes('Collection')) {
+      return splitStr.reverse().join(' ');
+    }
     // Directly return the joined string
     return splitStr.join(' ');
   };
@@ -98,9 +101,9 @@ class Navbar extends React.Component {
                   name="Collections"
                   Link={Link}
                   items={[
-                    { name: 'Annotations', link: '/collection/annotations' },
-                    { name: 'Concepts', link: '/collection/concepts' },
-                    { name: 'Videos', link: '/collection/videos' }
+                    { name: 'Annotations', link: '/collection/annotation' },
+                    { name: 'Concepts', link: '/collection/concept' },
+                    { name: 'Videos', link: '/collection/video' }
                   ]}
                 />
                 <GeneralMenu
