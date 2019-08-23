@@ -8,24 +8,28 @@ import config.config
 from utils.query import s3, con, cursor
 from config import S3_BUCKET, S3_WEIGHTS_FOLDER, WEIGHTS_PATH
 
-# get annotations from test
-cursor.execute("SELECT * FROM MODELTAB WHERE option='runmodel'")
-info = cursor.fetchone()[1]
-if info['activeStep'] != 3:
-    exit()
+'''
+get predict params
+returns a list elements:
+model - string: name of the model
+userid - int: model's userid
+concepts - int[]: list of concept ids model is trying to find
+video - int: id of video to predict on
+upload_annotations - boolean: if true upload annotations to database
+'''
+cursor.execute("SELECT * FROM predict_params")
+params = cursor.fetchone()
+model_name = str(params[0])
+userid = int(params[1])
+concepts = params[2]
+videoid = int(params[3])
+upload_annotations = bool(params[4])
 
-model_name = str(info['modelSelected'])
 s3.download_file(S3_BUCKET, S3_WEIGHTS_FOLDER +
                  model_name + '.h5', WEIGHTS_PATH)
 
-cursor.execute("SELECT * FROM MODELS WHERE name='" + model_name + "'")
-model = cursor.fetchone()
-videoid = int(info['videoSelected'])
-concepts = model[2]
-userid = int(model[4])
-
 predict_on_video(videoid, WEIGHTS_PATH, concepts,
-                 upload_annotations=True, userid=userid)
+                 upload_annotations=upload_annotations, userid=userid)
 
 cursor.execute(
     "Update modeltab SET info =  '{\"activeStep\": 0, \"modelSelected\":\"\",\"videoSelected\":\"\",\"userSelected\":\"\"}' WHERE option = 'predictmodel'")
