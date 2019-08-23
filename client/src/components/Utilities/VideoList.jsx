@@ -20,17 +20,16 @@ import GeneralMenu from './GeneralMenu';
 const styles = theme => ({
   drawer: {
     width: '550px',
-    overflow: 'auto'
+    overflowX: 'hidden'
   },
   toggleButton: {
     marginTop: '5px'
   },
   addButton: {
-    marginTop: '10px',
-    marginLeft: '20px'
+    marginLeft: '10px'
   },
   retractDrawerButton: {
-    margin: '5px'
+    margin: '10px'
   },
   listText: {
     marginLeft: theme.spacing()
@@ -40,7 +39,7 @@ const styles = theme => ({
 class VideoList extends Component {
   constructor(props) {
     super(props);
-    const { insertToCollection } = this.props;
+    const { insertToCollection, createCollection } = this.props;
     this.state = {
       videoListOpen: false,
       startedListOpen: false,
@@ -52,6 +51,7 @@ class VideoList extends Component {
     };
 
     this.insertToCollection = insertToCollection;
+    this.createCollection = createCollection;
   }
 
   toggle = list => {
@@ -72,6 +72,11 @@ class VideoList extends Component {
     this.setState({
       openedVideo: null
     });
+  };
+
+  handleNewCollectionModal = () => {
+    this.toggle('videoListOpen');
+    this.createCollection();
   };
 
   handleCheckbox = (name, videoid) => event => {
@@ -129,7 +134,7 @@ class VideoList extends Component {
           color="primary"
           onClick={() => this.toggle('videoListOpen')}
         >
-          Video List
+          Videos
         </Button>
 
         <Drawer
@@ -138,19 +143,51 @@ class VideoList extends Component {
           onClose={() => this.toggle('videoListOpen')}
         >
           <div className={classes.drawer}>
-            <Grid
-              container
-              direction="row"
-              justify="flex-end"
-              alignItems="center"
-            >
-              <IconButton
-                id="close-video-list"
+            <Grid container alignItems="flex-end" justify="space-between">
+              {collection ? (
+                <Grid item xs>
+                  <Grid container alignItems="center" spacing={1}>
+                    <Grid item xs>
+                      <div className={classes.addButton}>
+                        <GeneralMenu
+                          name="Add to collection"
+                          variant="contained"
+                          color="primary"
+                          handleInsert={this.handleInsert}
+                          Link={false}
+                          items={data}
+                          disabled={!checkedVideos[0]}
+                        />
+                      </div>
+                    </Grid>
+                    <Grid item xs>
+                      <Button
+                        className={classes.addButton}
+                        variant="contained"
+                        color="primary"
+                        onClick={() => this.handleNewCollectionModal()}
+                      >
+                        New Collection
+                      </Button>
+                    </Grid>
+                  </Grid>
+                </Grid>
+              ) : (
+                <Grid item xs />
+              )}
+              <Grid
+                item
+                xs={1}
+                style={{ float: 'right' }}
                 className={classes.retractDrawerButton}
-                onClick={() => this.toggle('videoListOpen')}
               >
-                <ChevronLeft />
-              </IconButton>
+                <IconButton
+                  id="close-video-list"
+                  onClick={() => this.toggle('videoListOpen')}
+                >
+                  <ChevronLeft />
+                </IconButton>
+              </Grid>
             </Grid>
             <ListItem button onClick={() => this.toggle('startedListOpen')}>
               <ListItemText
@@ -324,22 +361,6 @@ class VideoList extends Component {
                 ))}
               </List>
             </Collapse>
-
-            {collection ? (
-              <div className={classes.addButton}>
-                <GeneralMenu
-                  name="Add to collection"
-                  variant="contained"
-                  color="primary"
-                  handleInsert={this.handleInsert}
-                  Link={false}
-                  items={data}
-                  disabled={!checkedVideos[0]}
-                />
-              </div>
-            ) : (
-              ''
-            )}
           </div>
         </Drawer>
         {openedVideo && (
