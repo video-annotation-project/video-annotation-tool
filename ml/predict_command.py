@@ -1,5 +1,5 @@
 from psycopg2 import connect
-import os
+import subprocess
 from dotenv import load_dotenv
 from predict import predict_on_video
 import boto3
@@ -22,7 +22,7 @@ cursor.execute("SELECT * FROM MODELS WHERE name='" + model_name + "'")
 model = cursor.fetchone()
 videoid = int(info['videoSelected'])
 concepts = model[2]
-userid = int(info['userSelected'])
+userid = int(model[4])
 
 predict_on_video(videoid, WEIGHTS_PATH, concepts,
                  upload_annotations=True, userid=userid)
@@ -31,4 +31,4 @@ cursor.execute(
     "Update modeltab SET info =  '{\"activeStep\": 0, \"modelSelected\":\"\",\"videoSelected\":\"\",\"userSelected\":\"\"}' WHERE option = 'predictmodel'")
 con.commit()
 con.close()
-os.system("sudo shutdown -h")
+subprocess.call(["sudo", "shutdown", "-h"])
