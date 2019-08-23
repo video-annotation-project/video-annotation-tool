@@ -192,7 +192,7 @@ class Annotations extends Component {
       return <List>Error: {error.message}</List>;
     }
     return (
-      <React.Fragment>
+      <>
         <List disablePadding className={classes.root}>
           {annotations.map(annotation => (
             <React.Fragment key={annotation.id}>
@@ -266,7 +266,7 @@ class Annotations extends Component {
             </React.Fragment>
           ))}
         </List>
-      </React.Fragment>
+      </>
     );
   }
 }

@@ -482,7 +482,7 @@ class Verify extends Component {
       );
     }
 
-    return <React.Fragment>{selection}</React.Fragment>;
+    return <>{selection}</>;
   }
 }
 

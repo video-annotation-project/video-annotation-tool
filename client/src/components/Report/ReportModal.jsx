@@ -38,7 +38,7 @@ class ReportModal extends Component {
   componentDidMount = () => {
     if (localStorage.getItem('admin')) {
       this.setState(prevState => ({
-        options: [...prevState.options, { name: 'User', selected: false }]
+        options: [{ name: 'User', selected: false }, ...prevState.options]
       }));
     }
   };
@@ -120,7 +120,7 @@ class ReportModal extends Component {
     } = this.props;
     const { options } = this.state;
     return (
-      <React.Fragment>
+      <>
         <Dialog
           disableBackdropClick
           open={openReportModal}
@@ -187,7 +187,7 @@ class ReportModal extends Component {
             </Button>
           </DialogActions>
         </Dialog>
-      </React.Fragment>
+      </>
     );
   }
 }

@@ -35,12 +35,15 @@ const styles = theme => ({
 });
 
 class Summary extends React.Component {
-  state = {
-    showTotal: false,
-    total: null,
-    anno: null,
-    km: false
-  };
+  constructor(props) {
+    super(props);
+    this.state = {
+      showTotal: false,
+      total: null,
+      anno: null,
+      km: false
+    };
+  }
 
   getTotal = data => {
     let count = 0;

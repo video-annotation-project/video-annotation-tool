@@ -73,7 +73,7 @@ class Navbar extends React.Component {
     }
 
     return (
-      <React.Fragment>
+      <>
         <AppBar position="static">
           <Toolbar>
             <Typography
@@ -87,7 +87,7 @@ class Navbar extends React.Component {
               Home
             </Button> */}
             {localStorage.getItem('isAuthed') ? (
-              <React.Fragment>
+              <>
                 <Button
                   id="navbar-concepts"
                   color="inherit"
@@ -132,7 +132,7 @@ class Navbar extends React.Component {
                   Report
                 </Button>
                 {localStorage.getItem('admin') ? (
-                  <React.Fragment>
+                  <>
                     <GeneralMenu
                       id="navbar-models"
                       name="Models"
@@ -152,7 +152,7 @@ class Navbar extends React.Component {
                     {/* <Button color="inherit" component={Link} to="/users">
                       Users
                     </Button> */}
-                  </React.Fragment>
+                  </>
                 ) : (
                   ''
                 )}
@@ -169,7 +169,7 @@ class Navbar extends React.Component {
                 >
                   Logout
                 </Button>
-              </React.Fragment>
+              </>
             ) : (
               <Button
                 id="navbar-login"
@@ -183,7 +183,7 @@ class Navbar extends React.Component {
           </Toolbar>
         </AppBar>
         {localStorage.getItem('isAuthed') && location.pathname !== '/' ? (
-          <React.Fragment>
+          <>
             <Typography
               variant="h4"
               color="textPrimary"
@@ -193,11 +193,11 @@ class Navbar extends React.Component {
               {this.titleCase(location.pathname)}
             </Typography>
             <Divider className={classes.divider} />
-          </React.Fragment>
+          </>
         ) : (
           ''
         )}
-      </React.Fragment>
+      </>
     );
   }
 }

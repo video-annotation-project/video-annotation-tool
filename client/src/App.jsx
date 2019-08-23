@@ -1,5 +1,6 @@
 import React from 'react';
 import { Redirect, Route, Switch } from 'react-router-dom';
+import '@sweetalert2/themes/dark';
 
 import Annotate from './components/Annotate';
 import Concepts from './components/SelectConcepts/Concepts';
@@ -22,20 +23,19 @@ import CreateModel from './components/Model/CreateModel';
 import ViewModels from './components/Model/ViewModels';
 import PredictModel from './components/Model/PredictModel';
 import TrainModel from './components/Model/TrainModel';
-import '@sweetalert2/themes/dark';
 
 require('dotenv').config();
 
 const App = () => {
   return (
-    <React.Fragment>
+    <>
       <Navbar />
       <Switch>
         <Route exact path="/" component={Home} />
         {localStorage.getItem('isAuthed') ? (
-          <React.Fragment>
+          <>
             {localStorage.getItem('admin') ? (
-              <React.Fragment>
+              <>
                 <Route exact path="/account/create" component={CreateUser} />
                 <Route exact path="/models/create" component={CreateModel} />
                 <Route exact path="/models/predict" component={PredictModel} />
@@ -44,7 +44,7 @@ const App = () => {
                 <Route exact path="/models/runs" component={PreviousModels} />
                 <Route exact path="/users" component={Users} />
                 <Route exact path="/aivideos" component={AIvideos} />
-              </React.Fragment>
+              </>
             ) : (
               ''
             )}
@@ -64,13 +64,13 @@ const App = () => {
             <Route exact path="/annotate/videos" component={Annotate} />
             <Route exact path="/annotate/verify" component={Verify} />
             <Route exact path="/account/profile" component={Profile} />
-          </React.Fragment>
+          </>
         ) : (
           <Route exact path="/login" component={Login} />
         )}
         <Route render={() => <Redirect to="/" />} />
       </Switch>
-    </React.Fragment>
+    </>
   );
 };
 

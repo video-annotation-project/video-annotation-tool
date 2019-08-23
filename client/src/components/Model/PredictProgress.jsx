@@ -5,9 +5,7 @@ import withStyles from '@material-ui/core/styles/withStyles';
 
 import './ModelProgress.css';
 
-const styles = theme => {
-
-};
+const styles = () => {};
 
 function PredictingStatus(props) {
   const {

@@ -503,7 +503,7 @@ class AnnotationCollection extends Component {
     });
     if (data.users[0]) {
       return (
-        <React.Fragment>
+        <>
           <Button
             className={classes.infoButton}
             variant="outlined"
@@ -518,7 +518,7 @@ class AnnotationCollection extends Component {
             counts={selectedCollectionCounts}
             data={data}
           />
-        </React.Fragment>
+        </>
       );
     }
     return (
@@ -584,7 +584,7 @@ class AnnotationCollection extends Component {
         );
       case 3:
         return (
-          <React.Fragment>
+          <>
             <Typography>
               Number of User Annotations: {annotationCount}
             </Typography>
@@ -603,7 +603,7 @@ class AnnotationCollection extends Component {
               }
               label="Include tracking annotations"
             />
-          </React.Fragment>
+          </>
         );
       default:
         return 'Unknown step';

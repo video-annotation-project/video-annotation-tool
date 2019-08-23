@@ -76,7 +76,7 @@ class AnnotationsGroup extends Component {
       return <List>Error: {error.message}</List>;
     }
     return (
-      <React.Fragment>
+      <>
         <List disablePadding className={classes.root}>
           {annotationGroups.map(group => (
             <React.Fragment key={group.offset}>
@@ -101,7 +101,7 @@ class AnnotationsGroup extends Component {
             </React.Fragment>
           ))}
         </List>
-      </React.Fragment>
+      </>
     );
   }
 }
