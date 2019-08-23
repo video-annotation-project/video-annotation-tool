@@ -117,7 +117,7 @@ class PreviousModels extends Component {
           /(https?:\/\/)?(www.)?/i,
           ''
         );
-        window.open(`https://tensorboard.${domain}`, '_blank');
+        setTimeout(window.open(`https://tensorboard.${domain}`, '_blank'), 500);
       } else {
         window.open('http://localhost:6008', '_blank');
       }
