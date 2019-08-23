@@ -26,8 +26,8 @@ const styles = theme => ({
     marginTop: '5px'
   },
   addButton: {
-    marginTop: '10px',
-    marginLeft: '20px'
+    marginTop: theme.spacing(2),
+    marginLeft: theme.spacing(2)
   },
   retractDrawerButton: {
     margin: '5px'
@@ -36,7 +36,7 @@ const styles = theme => ({
     marginLeft: theme.spacing()
   },
   collapse: {
-    maxHeight: 350,
+    maxHeight: 450,
     overflow: 'auto'
   }
 });
