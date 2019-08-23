@@ -26,8 +26,7 @@ const styles = theme => ({
     marginTop: '5px'
   },
   addButton: {
-    marginTop: theme.spacing(2),
-    marginLeft: theme.spacing(2)
+    marginLeft: '10px'
   },
   retractDrawerButton: {
     margin: '10px'
@@ -151,7 +150,7 @@ class VideoList extends Component {
             <Grid container alignItems="flex-end" justify="space-between">
               {collection ? (
                 <Grid item xs>
-                  <Grid container alignItems="center" spacing={1}>
+                  <Grid container alignItems="center">
                     <Grid item xs>
                       <div className={classes.addButton}>
                         <GeneralMenu
