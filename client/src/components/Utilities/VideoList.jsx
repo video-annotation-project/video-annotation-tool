@@ -25,9 +25,6 @@ const styles = theme => ({
   toggleButton: {
     marginTop: '5px'
   },
-  addButton: {
-    marginLeft: '10px'
-  },
   retractDrawerButton: {
     margin: '10px'
   },
@@ -146,9 +143,9 @@ class VideoList extends Component {
             <Grid container alignItems="flex-end" justify="space-between">
               {collection ? (
                 <Grid item xs>
-                  <Grid container alignItems="center" spacing={1}>
-                    <Grid item xs>
-                      <div className={classes.addButton}>
+                  <Grid container justify="flex-start" alignContent="center">
+                    <Grid item xs={5}>
+                      <div>
                         <GeneralMenu
                           name="Add to collection"
                           variant="contained"
@@ -160,9 +157,8 @@ class VideoList extends Component {
                         />
                       </div>
                     </Grid>
-                    <Grid item xs>
+                    <Grid item xs={4}>
                       <Button
-                        className={classes.addButton}
                         variant="contained"
                         color="primary"
                         onClick={() => this.handleNewCollectionModal()}
@@ -170,6 +166,7 @@ class VideoList extends Component {
                         New Collection
                       </Button>
                     </Grid>
+                    <Grid item xs />
                   </Grid>
                 </Grid>
               ) : (
