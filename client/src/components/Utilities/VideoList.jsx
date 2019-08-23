@@ -30,6 +30,10 @@ const styles = theme => ({
   },
   listText: {
     marginLeft: theme.spacing()
+  },
+  collapse: {
+    maxHeight: 450,
+    overflow: 'auto'
   }
 });
 
@@ -193,7 +197,12 @@ class VideoList extends Component {
               />
               {startedListOpen ? <ExpandLess /> : <ExpandMore />}
             </ListItem>
-            <Collapse in={startedListOpen} timeout="auto" unmountOnExit>
+            <Collapse
+              className={classes.collapse}
+              in={startedListOpen}
+              timeout="auto"
+              unmountOnExit
+            >
               <List disablePadding>
                 {startedVideos.map(video => (
                   <ListItem
@@ -237,7 +246,12 @@ class VideoList extends Component {
               />
               {unwatchedListOpen ? <ExpandLess /> : <ExpandMore />}
             </ListItem>
-            <Collapse in={unwatchedListOpen} timeout="auto" unmountOnExit>
+            <Collapse
+              className={classes.collapse}
+              in={unwatchedListOpen}
+              timeout="auto"
+              unmountOnExit
+            >
               <List component="div" disablePadding>
                 {unwatchedVideos.map(video => (
                   <ListItem
@@ -280,7 +294,12 @@ class VideoList extends Component {
               />
               {watchedListOpen ? <ExpandLess /> : <ExpandMore />}
             </ListItem>
-            <Collapse in={watchedListOpen} timeout="auto" unmountOnExit>
+            <Collapse
+              className={classes.collapse}
+              in={watchedListOpen}
+              timeout="auto"
+              unmountOnExit
+            >
               <List component="div" disablePadding>
                 {watchedVideos.map(video => (
                   <ListItem
@@ -323,7 +342,12 @@ class VideoList extends Component {
               />
               {inProgressListOpen ? <ExpandLess /> : <ExpandMore />}
             </ListItem>
-            <Collapse in={inProgressListOpen} timeout="auto" unmountOnExit>
+            <Collapse
+              className={classes.collapse}
+              in={inProgressListOpen}
+              timeout="auto"
+              unmountOnExit
+            >
               <List component="div" disablePadding>
                 {inProgressVideos.map(video => (
                   <ListItem
