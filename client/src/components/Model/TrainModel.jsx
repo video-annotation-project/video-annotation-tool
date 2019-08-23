@@ -126,7 +126,7 @@ function EpochsField(props) {
 }
 
 function ImagesField(props) {
-  const { className, minImages, onChange, getImageRange } = props;
+  const { className, minImages, onChange } = props;
 
   return (
     <TextField
@@ -136,7 +136,7 @@ function ImagesField(props) {
       label="# of Images"
       value={minImages}
       onChange={onChange}
-      helperText={getImageRange()}
+      // helperText={getImageRange()}
     />
   );
 }
@@ -367,33 +367,33 @@ class TrainModel extends Component {
     );
   };
 
-  getImageRange = () => {
-    const {
-      annotationCollections,
-      minCounts,
-      includeTracking,
-      verifiedOnly
-    } = this.state;
+  // getImageRange = () => {
+  //   const {
+  //     annotationCollections,
+  //     minCounts,
+  //     includeTracking,
+  //     verifiedOnly
+  //   } = this.state;
 
-    if (!annotationCollections.length || !minCounts.length) return '';
+  //   if (!annotationCollections.length || !minCounts.length) return '';
 
-    let selection;
-    if (verifiedOnly) {
-      if (includeTracking) {
-        selection = 3;
-      } else {
-        selection = 2;
-      }
-    } else if (includeTracking) {
-      selection = 1;
-    } else {
-      selection = 0;
-    }
+  //   let selection;
+  //   if (verifiedOnly) {
+  //     if (includeTracking) {
+  //       selection = 3;
+  //     } else {
+  //       selection = 2;
+  //     }
+  //   } else if (includeTracking) {
+  //     selection = 1;
+  //   } else {
+  //     selection = 0;
+  //   }
 
-    return minCounts[selection] === 1
-      ? `Must be 1`
-      : `Must be 1–${minCounts[selection]}`;
-  };
+  //   return minCounts[selection] === 1
+  //     ? `Must be 1`
+  //     : `Must be 1–${minCounts[selection]}`;
+  // };
 
   handleChangeMultiple = event => {
     const options = event.target.value;
@@ -486,7 +486,7 @@ class TrainModel extends Component {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
       };
-      axios.patch('/api/models/train/stop', {}, config);  
+      axios.patch('/api/models/train/stop', {}, config);
     } catch (error) {
       console.log(error);
     }
@@ -593,7 +593,7 @@ class TrainModel extends Component {
                 className="imagesField"
                 minImages={minImages}
                 onChange={this.handleChange}
-                getImageRange={this.getImageRange}
+                // getImageRange={this.getImageRange}
               />
             </div>
             {annotationCollections.length ? (
@@ -601,7 +601,7 @@ class TrainModel extends Component {
                 <Button
                   fullWidth
                   variant="outlined"
-                  color="primary"
+                  color="secondary"
                   className={classes.infoButton}
                   onClick={this.toggleInfo}
                 >
