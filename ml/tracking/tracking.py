@@ -15,7 +15,7 @@ from skimage.measure import compare_ssim
 
 from config.config import RESIZED_WIDTH, RESIZED_HEIGHT, S3_BUCKET, \
     S3_ANNOTATION_FOLDER, S3_VIDEO_FOLDER
-from utils.query import con, cursor
+from utils.query import con, cursor, s3
 
 # initialize a dictionary that maps strings to their corresponding
 # OpenCV object tracker implementations
@@ -311,5 +311,6 @@ def track_annotation(id, conceptid, timeinvideo, videoid, image,
     upload_video(priorFrames, postFrames, id)
 
     cv2.destroyAllWindows()
+    con.close()
     print("Done tracking annotation: " + str(id))
     return True

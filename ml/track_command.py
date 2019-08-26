@@ -1,9 +1,4 @@
-from pgdb import connect
-import os
-from dotenv import load_dotenv
-
 from multiprocessing import Pool
-import boto3
 import datetime
 import math
 import json
