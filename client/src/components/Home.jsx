@@ -41,19 +41,22 @@ const styles = theme => ({
 });
 
 class Home extends Component {
-  state = {
-    counts: [],
-    fromDate: {
-      date: null,
-      localeISOString: '',
-      ISOString: ''
-    },
-    toDate: {
-      date: null,
-      localeISOString: '',
-      ISOString: ''
-    }
-  };
+  constructor(props) {
+    super(props);
+    this.state = {
+      counts: [],
+      fromDate: {
+        date: null,
+        localeISOString: '',
+        ISOString: ''
+      },
+      toDate: {
+        date: null,
+        localeISOString: '',
+        ISOString: ''
+      }
+    };
+  }
 
   componentWillMount() {
     const fromDate = this.formatDate(new Date(`${YEAR}-01-01T00:00:00`));
@@ -202,7 +205,7 @@ class Home extends Component {
           Welcome {localStorage.username}
         </Typography>
         {localStorage.username ? (
-          <React.Fragment>
+          <>
             <Grid container alignItems="center" wrap="nowrap">
               <Grid item>
                 <TextField
@@ -253,7 +256,7 @@ class Home extends Component {
                 Total Verifications: {verificationTotal}
               </h3>
             </div>
-          </React.Fragment>
+          </>
         ) : (
           ''
         )}

@@ -24,6 +24,10 @@ TRACKING_IOU_THRESH = config["prediction_tracking_iou_threshold"]
 MIN_FRAMES_THRESH = config["min_frames_threshold"]
 MAX_TIME_BACK = config["max_seconds_back"]
 
+# Tracking
+LENGTH = config['tracking_vid_length']  # length of video in milliseconds
+TRACKING_USERS = config['tracking_users']
+
 # Model weights paths
 WEIGHTS_PATH = config["weights_path"]
 DEFAULT_WEIGHTS_PATH = config["default_weights"]

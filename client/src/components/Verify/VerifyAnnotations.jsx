@@ -651,7 +651,7 @@ class VerifyAnnotations extends Component {
     }
 
     return (
-      <React.Fragment>
+      <>
         {conceptDialogOpen && (
           <DialogModal
             title="Confirm Annotation Edit"
@@ -665,7 +665,7 @@ class VerifyAnnotations extends Component {
           />
         )}
         {!end ? (
-          <React.Fragment>
+          <>
             {tracking || videoDialogOpen ? (
               <Grid container>
                 <Grid item xs />
@@ -804,9 +804,9 @@ class VerifyAnnotations extends Component {
                 {this.annotationDetails(annotation)}
               </div>
             )}
-          </React.Fragment>
+          </>
         ) : (
-          <React.Fragment>
+          <>
             <Typography className={classes.paper}>Finished</Typography>
             <Button
               className={classes.button}
@@ -816,7 +816,7 @@ class VerifyAnnotations extends Component {
             >
               Filter Annotations
             </Button>
-          </React.Fragment>
+          </>
         )}
         {openedVideo && (
           <VideoMetadata
@@ -828,7 +828,7 @@ class VerifyAnnotations extends Component {
             model={false}
           />
         )}
-      </React.Fragment>
+      </>
     );
   }
 }

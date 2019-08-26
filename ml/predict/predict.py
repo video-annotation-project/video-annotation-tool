@@ -235,6 +235,11 @@ def predict_frames(video_frames, fps, model, videoid):
         # update tracking for currently tracked objects
         for obj in currently_tracked_objects:
             success = obj.update(frame, frame_num)
+            temp = list(currently_tracked_objects)
+            temp.remove(obj)
+            detection = (obj.box, 0, 0)
+            match, matched_object = does_match_existing_tracked_object(
+                detection, temp)
             if not success:
                 annotations.append(obj.annotations)
                 currently_tracked_objects.remove(obj)
@@ -421,6 +426,7 @@ def generate_video(filename, frames, fps, results,
     f = open('gen.txt', 'w')
     f.write(str(frames[130]))
     f.write(str(classmap))
+    seenObjects = []
     for pred_index, res in enumerate(results.itertuples()):
         f.write(f'{pred_index}  {res} {type(frames)}')
 
@@ -430,7 +436,7 @@ def generate_video(filename, frames, fps, results,
         x1, y1, x2, y2 = int(res.x1), int(res.y1), int(res.x2), int(res.y2)
         # boxText init to concept name
         boxText = classmap[concepts.index(res.label)]
-        seenObjects = []
+
         if pd.isna(res.confidence):  # No confidence means user annotation
             # Draws a (user) red box
             # Note: opencv uses color as BGR

@@ -274,7 +274,7 @@ class ConceptCollection extends Component {
     const { classes } = this.props;
     const { selectedCollection, collections, concepts } = this.state;
     return (
-      <React.Fragment>
+      <>
         <ConceptsSelected handleConceptClick={this.handleConceptClick} />
         <FormControl className={classes.formControl}>
           <InputLabel>Select collection</InputLabel>
@@ -387,7 +387,7 @@ class ConceptCollection extends Component {
         >
           Save
         </Button>
-      </React.Fragment>
+      </>
     );
   }
 }

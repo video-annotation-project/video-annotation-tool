@@ -31,6 +31,7 @@ const ConceptSearchMenu = props => {
           inputRef: ref,
           ...InputProps
         }}
+        // eslint-disable-next-line react/jsx-props-no-spreading
         {...other}
       />
     );
@@ -41,6 +42,7 @@ const ConceptSearchMenu = props => {
     const isHighlighted = highlightedIndex === index;
     return (
       <MenuItem
+        // eslint-disable-next-line react/jsx-props-no-spreading
         {...itemProps}
         key={suggestion.id}
         selected={isHighlighted}
@@ -93,6 +95,7 @@ const ConceptSearchMenu = props => {
               inputProps
             })}
 
+            {/* eslint-disable-next-line react/jsx-props-no-spreading */}
             <div {...getMenuProps()}>
               {isOpen ? (
                 <Paper square>

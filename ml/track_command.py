@@ -1,34 +1,15 @@
 from pgdb import connect
 import os
 from dotenv import load_dotenv
-import tracking
+
 from multiprocessing import Pool
 import boto3
 import datetime
 import math
 import json
 
-load_dotenv(dotenv_path="../../.env")
-
-# aws stuff
-AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
-AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
-S3_BUCKET = os.getenv('AWS_S3_BUCKET_NAME')
-s3 = boto3.client('s3', aws_access_key_id=AWS_ACCESS_KEY_ID,
-                  aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
-S3_VIDEO_FOLDER = os.getenv('AWS_S3_BUCKET_VIDEOS_FOLDER')
-
-# connect to db
-DB_NAME = os.getenv("DB_NAME")
-DB_HOST = os.getenv("DB_HOST")
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
-
-config_path = "../../config.json"
-with open(config_path) as config_buffer:
-    config = json.loads(config_buffer.read())['ml']
-
-tracking_users = config['tracking_users']
+from config import config
+from tracking import tracking
 
 
 def annotationMap(id, conceptid, timeinvideo, videoid, image,
@@ -42,8 +23,13 @@ def annotationMap(id, conceptid, timeinvideo, videoid, image,
     if 'Contents' in results:
         continue
     '''
-    tracking.track_annotation(id, conceptid, timeinvideo, videoid, image,
+    status = tracking.track_annotation(id, conceptid, timeinvideo, videoid, image,
                               videowidth, videoheight, x1, y1, x2, y2, comment, unsure)
+    # If something went wrong break
+    if not status:
+        print("Something went wrong with annotation id: ", id)
+        return
+
     # Update originalid so while loop doesn't reset tracking
     cursor.execute("UPDATE annotations SET originalid=%d WHERE id=%d;",
                    (id, id,))
@@ -64,7 +50,7 @@ while True:
             comment, unsure
         FROM annotations 
         WHERE originalid is NULL
-        AND userid in {str(tuple(tracking_users))}
+        AND userid in {str(tuple(TRACKING_USERS))}
     ''')
 
     print("Tracking " + str(cursor.rowcount) + " annotations.")

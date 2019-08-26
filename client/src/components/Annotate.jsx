@@ -247,7 +247,10 @@ class Annotate extends Component {
     // update SQL database
     return axios
       .put(`/api/videos/checkpoints/${currentVideo.id}`, body, config)
-      .then(() => {
+      .then(res => {
+        if (res.data === 'not a tracking user') {
+          return;
+        }
         if (reloadVideos) {
           this.loadVideos(doneClicked ? this.getCurrentVideo : null);
         }
@@ -473,7 +476,7 @@ class Annotate extends Component {
       return <div className={classes.text}>Error: {error}</div>;
     }
     return (
-      <React.Fragment>
+      <>
         <Hotkeys keyName="space, right, left" onKeyDown={this.handleKeyDown} />
         <Grid container className={classes.root} spacing={0}>
           <Grid item xs>
@@ -612,7 +615,7 @@ class Annotate extends Component {
             handleClose={this.handleDialogClose}
           />
         )}
-      </React.Fragment>
+      </>
     );
   }
 }

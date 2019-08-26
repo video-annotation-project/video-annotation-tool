@@ -16,32 +16,7 @@ import numpy as np
 from itertools import zip_longest
 from skimage.measure import compare_ssim
 
-# Load environment variables
-load_dotenv(dotenv_path="../.env")
-AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
-AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
-S3_BUCKET = os.getenv('AWS_S3_BUCKET_NAME')
-s3 = boto3.client('s3', aws_access_key_id=AWS_ACCESS_KEY_ID,
-                  aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
-S3_ANNOTATION_FOLDER = os.getenv("AWS_S3_BUCKET_ANNOTATIONS_FOLDER")
-S3_VIDEO_FOLDER = os.getenv('AWS_S3_BUCKET_VIDEOS_FOLDER')
-S3_TRACKING_FOLDER = os.getenv("AWS_S3_BUCKET_TRACKING_FOLDER")
-
-# connect to db
-DB_NAME = os.getenv("DB_NAME")
-DB_HOST = os.getenv("DB_HOST")
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
-
-config_path = "../config.json"
-with open(config_path) as config_buffer:
-    config = json.loads(config_buffer.read())['ml']
-
-# video/image properties
-LENGTH = config['tracking_vid_length']  # length of video in milliseconds
-IMAGES_PER_SEC = config['frames_between_predictions']
-VIDEO_WIDTH = config['resized_video_width']
-VIDEO_HEIGHT = config['resized_video_height']
+from config import config
 
 # initialize a dictionary that maps strings to their corresponding
 # OpenCV object tracker implementations
@@ -71,7 +46,7 @@ def getS3Image(image):
     img = img[:, :, :3]
     img = img[:, :, ::-1]
     # Resize to video width/height
-    img = cv2.resize(img, (VIDEO_WIDTH, VIDEO_HEIGHT))
+    img = cv2.resize(img, (RESIZED_WIDTH, RESIZED_HEIGHT))
     return img
 
 
@@ -115,7 +90,7 @@ def getVideoFrames(url, start, end):
         check, frame = cap.read()
         if check:
             frame_list.append(
-                cv2.resize(frame, (VIDEO_WIDTH, VIDEO_HEIGHT)))
+                cv2.resize(frame, (RESIZED_WIDTH, RESIZED_HEIGHT)))
         curr = cap.get(0)  # get time in milliseconds
     cap.release()
     return frame_list, fps, frame_num
@@ -145,7 +120,7 @@ def upload_image(frame_num, frame, frame_w_box,
       """,
         (
             frame_num, videoid, TRACKING_ID, conceptid, timeinvideo, x1, y1,
-            x2, y2, VIDEO_WIDTH, VIDEO_HEIGHT, datetime.datetime.now().date(), no_box, box,
+            x2, y2, RESIZED_WIDTH, RESIZED_HEIGHT, datetime.datetime.now().date(), no_box, box,
             comment, unsure, id
         )
     )
@@ -163,7 +138,7 @@ def upload_video(priorFrames, postFrames, id):
     output_file = str(uuid.uuid4()) + ".mp4"
     converted_file = str(uuid.uuid4()) + ".mp4"
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    out = cv2.VideoWriter(output_file, fourcc, 20, (VIDEO_WIDTH, VIDEO_HEIGHT))
+    out = cv2.VideoWriter(output_file, fourcc, 20, (RESIZED_WIDTH, RESIZED_HEIGHT))
     for frame in priorFrames:
         out.write(frame)
     out.release()
@@ -265,11 +240,14 @@ def track_object(frame_num, frames, box, track_forward, end,
                 (x1, y1, w, h) = [int(v) for v in box]
                 x2 = x1 + w
                 y2 = y1 + h
+                # Remove invalid bounding boxes
+                if (x1 > RESIZED_WIDTH or y1 > RESIZED_HEIGHT or x2 < 0 or y2 < 0):
+                    continue
                 # Fix box if outside video frame
                 x1 = x1 if x1 > 0 else 0
                 y1 = y1 if y1 > 0 else 0
-                x2 = x2 if x2 < VIDEO_WIDTH else VIDEO_WIDTH
-                y2 = y2 if y2 < VIDEO_HEIGHT else VIDEO_HEIGHT
+                x2 = x2 if x2 < RESIZED_WIDTH else RESIZED_WIDTH
+                y2 = y2 if y2 < RESIZED_HEIGHT else RESIZED_HEIGHT
                 cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
             if index != 0:
                 upload_image(frame_num, frame_no_box, frame, id, videoid,
@@ -290,8 +268,8 @@ def track_annotation(id, conceptid, timeinvideo, videoid, image,
     cursor = con.cursor()
 
     # Make bounding box adjusted to video width and height
-    x_ratio = (videowidth / VIDEO_WIDTH)
-    y_ratio = (videoheight / VIDEO_HEIGHT)
+    x_ratio = (videowidth / RESIZED_WIDTH)
+    y_ratio = (videoheight / RESIZED_HEIGHT)
     x1 = x1 / x_ratio
     y1 = y1 / y_ratio
     width = (x2 / x_ratio) - x1
@@ -302,7 +280,7 @@ def track_annotation(id, conceptid, timeinvideo, videoid, image,
     url = getVideoURL(cursor, videoid)
     s3Image = getS3Image(image)
     if s3Image is None:
-        return
+        return False
 
     # initialize video for grabbing frames before annotation
     # start vidlen/2 secs before obj appears
@@ -339,4 +317,4 @@ def track_annotation(id, conceptid, timeinvideo, videoid, image,
     cv2.destroyAllWindows()
     con.close()
     print("Done tracking annotation: " + str(id))
-    return
+    return True
