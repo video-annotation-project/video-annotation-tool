@@ -16,7 +16,13 @@ import numpy as np
 from itertools import zip_longest
 from skimage.measure import compare_ssim
 
-from config import config
+from config.config import RESIZED_WIDTH, RESIZED_HEIGHT, S3_BUCKET, \
+    S3_ANNOTATION_FOLDER, S3_VIDEO_FOLDER, DB_NAME, DB_USER, DB_PASSWORD, \
+    DB_HOST, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, LENGTH
+s3 = boto3.client(
+        's3',
+        aws_access_key_id=AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
 
 # initialize a dictionary that maps strings to their corresponding
 # OpenCV object tracker implementations

@@ -8,15 +8,13 @@ import datetime
 import math
 import json
 
-from config import config
+from config.config import TRACKING_USERS
 from tracking import tracking
+from utils.query import con, cursor
 
 
 def annotationMap(id, conceptid, timeinvideo, videoid, image,
                   videowidth, videoheight, x1, y1, x2, y2, comment, unsure):
-    con = connect(database=DB_NAME, host=DB_HOST,
-                  user=DB_USER, password=DB_PASSWORD)
-    cursor = con.cursor()
     '''
     results = s3.list_objects(
         Bucket=S3_BUCKET, Prefix=S3_VIDEO_FOLDER + str(i.id) + "_tracking.mp4")
@@ -39,9 +37,6 @@ def annotationMap(id, conceptid, timeinvideo, videoid, image,
 
 
 while True:
-    con = connect(database=DB_NAME, host=DB_HOST,
-                  user=DB_USER, password=DB_PASSWORD)
-    cursor = con.cursor()
     # get annotations from test
     cursor.execute(f'''
         SELECT
@@ -56,8 +51,5 @@ while True:
     print("Tracking " + str(cursor.rowcount) + " annotations.")
     with Pool() as p:
         p.starmap(annotationMap, map(
-            lambda x: (
-                x.id, x.conceptid, x.timeinvideo, x.videoid,
-                x.image, x.videowidth, x.videoheight,
-                x.x1, x.y1, x.x2, x.y2, x.comment, x.unsure), cursor.fetchall()))
+            lambda x: (x), cursor.fetchall()))
     con.close()
