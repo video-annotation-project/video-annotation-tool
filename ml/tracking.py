@@ -50,7 +50,7 @@ def getS3Image(image):
 
 
 def getTrackingUserid():
-    cursor.execute("SELECT id FROM users WHERE username=%s", ("tracking",))
+    cursor.execute("SELECT id FROM users WHERE username=tracking")
     return cursor.fetchone()[0]
 
 
