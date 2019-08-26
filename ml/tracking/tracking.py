@@ -49,12 +49,12 @@ def getS3Image(image):
     return img
 
 
-def getTrackingUserid(cursor):
+def getTrackingUserid():
     cursor.execute("SELECT id FROM users WHERE username=%s", ("tracking"))
     return cursor.fetchone()[0]
 
 
-def getVideoURL(cursor, videoid):
+def getVideoURL(videoid):
     """
     Returns
         url - video's secure streaming url
@@ -97,7 +97,7 @@ def getVideoFrames(url, start, end):
 
 def upload_image(frame_num, frame, frame_w_box,
                  id, videoid, conceptid, comment, unsure,
-                 x1, y1, x2, y2, cursor, con, TRACKING_ID, timeinvideo):
+                 x1, y1, x2, y2, TRACKING_ID, timeinvideo):
     # Uploads images and puts annotation in database
     no_box = str(videoid) + "_" + str(timeinvideo) + "_tracking.png"
     box = str(id) + "_" + str(timeinvideo) + "_box_tracking.png"
@@ -183,7 +183,7 @@ def matchS3Frame(priorFrames, postFrames, s3Image):
 
 
 def fix_offset(priorFrames, postFrames, s3Image, fps, timeinvideo,
-               frame_num, id, cursor, con):
+               frame_num, id):
     best_score, best_index = matchS3Frame(priorFrames, postFrames, s3Image)
     if best_index == 0:
         # No change necessary
@@ -218,7 +218,7 @@ def fix_offset(priorFrames, postFrames, s3Image, fps, timeinvideo,
 
 def track_object(frame_num, frames, box, track_forward, end,
                  id, videoid, conceptid, comment, unsure,
-                 cursor, con, TRACKING_ID, fps, timeinvideo):
+                 TRACKING_ID, fps, timeinvideo):
     # Tracks the object forwards and backwards in a video
     frame_list = []
     time_elapsed = 0
@@ -311,6 +311,5 @@ def track_annotation(id, conceptid, timeinvideo, videoid, image,
     upload_video(priorFrames, postFrames, id)
 
     cv2.destroyAllWindows()
-    con.close()
     print("Done tracking annotation: " + str(id))
     return True
