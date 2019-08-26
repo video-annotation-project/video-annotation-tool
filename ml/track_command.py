@@ -43,8 +43,5 @@ while True:
     print(f"Tracking {str(cursor.rowcount)} annotations.")
     with Pool() as p:
         p.starmap(annotationMap, map(
-            lambda x: (
-                x.id, x.conceptid, x.timeinvideo, x.videoid,
-                x.image, x.videowidth, x.videoheight,
-                x.x1, x.y1, x.x2, x.y2, x.comment, x.unsure), cursor.fetchall()))
+            lambda x: x, cursor.fetchall()))
     con.close()
