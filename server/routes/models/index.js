@@ -25,7 +25,7 @@ router.get(
   '/',
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
-    const queryText = `
+    let queryText = `
       SELECT 
         m.name, m.timestamp, array_agg(c.name) concepts, array_agg(c.id) conceptsid
       FROM 
@@ -35,6 +35,16 @@ router.get(
       GROUP BY
         (m.name, m.timestamp)
     `;
+    if (req.query.predict === 'true') {
+      queryText = `
+        SELECT
+          *
+        FROM
+          models
+        WHERE
+          userid is not null
+      `;
+    }
     try {
       let response = await psql.query(queryText);
       res.json(response.rows);

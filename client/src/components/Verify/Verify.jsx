@@ -6,6 +6,7 @@ import { Button, Typography } from '@material-ui/core';
 
 import VerifySelection from './VerifySelection';
 import VerifyAnnotations from './VerifyAnnotations';
+import Swal from 'sweetalert2/src/sweetalert2';
 
 const styles = theme => ({
   button: {
@@ -97,8 +98,16 @@ class Verify extends Component {
           selectionMounted: !selectionMounted
         });
       } else {
-        localStorage.setItem('selectionMounted', !selectionMounted);
-        localStorage.setItem('verifyAnnotation', JSON.stringify(annotations));
+        try {
+          localStorage.setItem('selectionMounted', !selectionMounted);
+          localStorage.setItem('verifyAnnotation', JSON.stringify(annotations));
+        } catch (error) {
+          Swal.fire(
+            'Storage is Full. Please select less annotations',
+            '',
+            'error'
+          );
+        }
         this.setState({
           selectionMounted: !selectionMounted,
           annotations
