@@ -130,6 +130,7 @@ class VideoList extends Component {
     return (
       <div className={classes.root}>
         <Button
+          id="video-list"
           className={classes.toggleButton}
           variant="contained"
           color="primary"
