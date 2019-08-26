@@ -272,8 +272,8 @@ def track_annotation(id, conceptid, timeinvideo, videoid, image,
     height = (y2 / y_ratio) - y1
     box = (x1, y1, width, height)
 
-    TRACKING_ID = getTrackingUserid(cursor)
-    url = getVideoURL(cursor, videoid)
+    TRACKING_ID = getTrackingUserid()
+    url = getVideoURL(videoid)
     s3Image = getS3Image(image)
     if s3Image is None:
         return False
@@ -294,19 +294,19 @@ def track_annotation(id, conceptid, timeinvideo, videoid, image,
     # Fix weird javascript video currentTime randomization
     priorFrames, postFrames, timeinvideo, frame_num = fix_offset(
         priorFrames, postFrames, s3Image, fps,
-        timeinvideo, frame_num, id, cursor, con)
+        timeinvideo, frame_num, id)
 
     # tracking forwards..
     postFrames = track_object(
         frame_num, postFrames, box, True, end,
         id, videoid, conceptid, comment, unsure,
-        cursor, con, TRACKING_ID, fps, timeinvideo)
+        TRACKING_ID, fps, timeinvideo)
 
     # tracking backwards
     priorFrames = track_object(
         frame_num, reversed(priorFrames), box, False, 0,
         id, videoid, conceptid, comment, unsure,
-        cursor, con, TRACKING_ID, fps, timeinvideo)
+        TRACKING_ID, fps, timeinvideo)
 
     upload_video(priorFrames, postFrames, id)
 
