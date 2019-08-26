@@ -1,7 +1,6 @@
 import cv2
 from pgdb import connect
 import boto3
-import os
 from dotenv import load_dotenv
 import datetime
 import copy
@@ -17,6 +16,7 @@ from itertools import zip_longest
 from skimage.measure import compare_ssim
 
 from config import config
+from utils.query import con, cursor
 
 # initialize a dictionary that maps strings to their corresponding
 # OpenCV object tracker implementations
@@ -263,9 +263,6 @@ def track_object(frame_num, frames, box, track_forward, end,
 def track_annotation(id, conceptid, timeinvideo, videoid, image,
                      videowidth, videoheight, x1, y1, x2, y2, comment, unsure):
     print("Start tracking annotation: " + str(id))
-    con = connect(database=DB_NAME, host=DB_HOST,
-                  user=DB_USER, password=DB_PASSWORD)
-    cursor = con.cursor()
 
     # Make bounding box adjusted to video width and height
     x_ratio = (videowidth / RESIZED_WIDTH)

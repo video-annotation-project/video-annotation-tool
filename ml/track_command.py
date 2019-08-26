@@ -10,22 +10,13 @@ import json
 
 from config import config
 from tracking import tracking
+from utils.query import con, cursor
 
 
 def annotationMap(id, conceptid, timeinvideo, videoid, image,
-                  videowidth, videoheight, x1, y1, x2, y2, comment, unsure):
-    con = connect(database=DB_NAME, host=DB_HOST,
-                  user=DB_USER, password=DB_PASSWORD)
-    cursor = con.cursor()
-    '''
-    results = s3.list_objects(
-        Bucket=S3_BUCKET, Prefix=S3_VIDEO_FOLDER + str(i.id) + "_tracking.mp4")
-    if 'Contents' in results:
-        continue
-    '''
+                  videowidth, videoheight, x1, y1, x2, y2, comment, unsure)
     status = tracking.track_annotation(id, conceptid, timeinvideo, videoid, image,
                               videowidth, videoheight, x1, y1, x2, y2, comment, unsure)
-    # If something went wrong break
     if not status:
         print("Something went wrong with annotation id: ", id)
         return
@@ -34,15 +25,11 @@ def annotationMap(id, conceptid, timeinvideo, videoid, image,
     cursor.execute("UPDATE annotations SET originalid=%d WHERE id=%d;",
                    (id, id,))
     con.commit()
-    con.close()
     return
 
 
 while True:
-    con = connect(database=DB_NAME, host=DB_HOST,
-                  user=DB_USER, password=DB_PASSWORD)
-    cursor = con.cursor()
-    # get annotations from test
+    # get annotations without tracking
     cursor.execute(f'''
         SELECT
             id, conceptid, timeinvideo, videoid, image,
@@ -53,7 +40,7 @@ while True:
         AND userid in {str(tuple(TRACKING_USERS))}
     ''')
 
-    print("Tracking " + str(cursor.rowcount) + " annotations.")
+    print(f"Tracking {str(cursor.rowcount)} annotations.")
     with Pool() as p:
         p.starmap(annotationMap, map(
             lambda x: (
