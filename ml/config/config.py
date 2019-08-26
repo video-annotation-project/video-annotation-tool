@@ -26,6 +26,7 @@ MAX_TIME_BACK = config["max_seconds_back"]
 
 # Tracking
 LENGTH = config['tracking_vid_length']  # length of video in milliseconds
+TRACKING_USERS = config['tracking_users']
 
 # Model weights paths
 WEIGHTS_PATH = config["weights_path"]
