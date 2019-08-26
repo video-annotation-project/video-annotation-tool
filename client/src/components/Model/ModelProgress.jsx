@@ -18,7 +18,6 @@ const styles = () => {};
 class ModelProgress extends Component {
   constructor(props) {
     super(props);
-
     this.state = {
       loaded: false,
       tab: 0,
@@ -53,7 +52,6 @@ class ModelProgress extends Component {
   };
 
   TabPanel = (props, value, index, children) => {
-    const { ...other } = props;
     return (
       <Typography
         component="div"
@@ -61,8 +59,6 @@ class ModelProgress extends Component {
         hidden={value !== index}
         id={`full-width-tabpanel-${index}`}
         aria-labelledby={`full-width-tab-${index}`}
-        // eslint-disable-next-line react/jsx-props-no-spreading
-        {...other}
       >
         <Box p={3}>{children}</Box>
       </Typography>
