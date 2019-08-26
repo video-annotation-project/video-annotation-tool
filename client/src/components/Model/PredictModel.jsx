@@ -19,11 +19,15 @@ import './TrainModel.css';
 
 const styles = theme => ({
   switches: {
-    marginTop: theme.spacing()
+    marginTop: theme.spacing(),
+    marginLeft: theme.spacing(7)
   },
   options: {
     marginLeft: theme.spacing(1.5),
     marginRight: theme.spacing(1.5)
+  },
+  paper: {
+    minHeight: 'calc(100vh - 130px)'
   }
 });
 
@@ -309,7 +313,7 @@ class PredictModel extends Component {
 
     return (
       <div className="root">
-        <Paper>
+        <Paper className={classes.paper}>
           <div className="container">
             <div className="actionsContainer">
               <ModelsForm
@@ -347,7 +351,7 @@ class PredictModel extends Component {
                   Start Training
                 </Button> */}
                 <Button
-                  style={{ float: 'right' }}
+                  style={{ float: 'right', marginRight: '60px' }}
                   className={loaded ? 'terminateButton' : ''}
                   onClick={
                     loaded
