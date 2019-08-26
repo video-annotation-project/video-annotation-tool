@@ -6,11 +6,6 @@ import Switch from '@material-ui/core/Switch';
 import FormControl from '@material-ui/core/FormControl';
 
 const styles = theme => ({
-  formControl: {
-    marginTop: theme.spacing(2),
-    maxHeight: '250px',
-    overflow: 'auto'
-  },
   switch: {
     marginLeft: theme.spacing(2)
   }
@@ -40,7 +35,7 @@ class SelectUnsure extends React.Component {
 
     return (
       <div>
-        <FormControl component="fieldset" className={classes.formControl}>
+        <FormControl>
           <FormGroup>
             <FormControlLabel
               control={

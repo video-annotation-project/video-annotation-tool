@@ -126,7 +126,7 @@ class ViewModels extends Component {
                   {model.timestamp}
                 </CustomTableCell>
                 <CustomTableCell align="right">
-                  {model.concepts.toString()}
+                  {models[0].concepts.join(', ')}
                 </CustomTableCell>
                 <CustomTableCell align="right">
                   {model.conceptsid.toString()}

@@ -249,7 +249,6 @@ class Annotate extends Component {
       .put(`/api/videos/checkpoints/${currentVideo.id}`, body, config)
       .then(res => {
         if (res.data === 'not a tracking user') {
-          console.log(res);
           return;
         }
         if (reloadVideos) {

@@ -3,12 +3,12 @@ import { withStyles } from '@material-ui/core/styles';
 import Stepper from '@material-ui/core/Stepper';
 import Step from '@material-ui/core/Step';
 import StepLabel from '@material-ui/core/StepLabel';
-import StepContent from '@material-ui/core/StepContent';
 import Button from '@material-ui/core/Button';
 import FormGroup from '@material-ui/core/FormGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Switch from '@material-ui/core/Switch';
 import FormControl from '@material-ui/core/FormControl';
+import Grid from '@material-ui/core/Grid';
 
 import SelectUser from '../Utilities/SelectUser';
 import SelectVideo from '../Utilities/SelectVideo';
@@ -21,19 +21,11 @@ const styles = theme => ({
     marginTop: theme.spacing(3),
     marginRight: theme.spacing()
   },
-  actionsContainer: {
-    marginBottom: theme.spacing(2)
-  },
-  resetContainer: {
-    padding: theme.spacing(3)
-  },
-  formControl: {
-    marginTop: theme.spacing(2),
-    maxHeight: '400px',
-    overflow: 'auto'
-  },
   switch: {
     marginLeft: theme.spacing(2)
+  },
+  grid: {
+    margin: theme.spacing(6)
   }
 });
 
@@ -147,7 +139,7 @@ class VerifySelection extends React.Component {
               />
             )}
             <div>
-              <FormControl component="fieldset" className={classes.formControl}>
+              <FormControl>
                 <FormGroup>
                   <FormControlLabel
                     control={
@@ -172,10 +164,7 @@ class VerifySelection extends React.Component {
               ''
             ) : (
               <div>
-                <FormControl
-                  component="fieldset"
-                  className={classes.formControl}
-                >
+                <FormControl>
                   <FormGroup>
                     <FormControlLabel
                       control={
@@ -265,69 +254,72 @@ class VerifySelection extends React.Component {
 
     return (
       <div>
-        <Stepper activeStep={activeStep} orientation="vertical">
-          {steps.map((label, index) => (
+        <Stepper activeStep={activeStep}>
+          {steps.map(label => (
             <Step key={label}>
               <StepLabel>{label}</StepLabel>
-              <StepContent>
-                {this.getStepForm(index)}
-                <div className={classes.actionsContainer}>
-                  <div>
-                    <Button
-                      variant="contained"
-                      onClick={this.resetState}
-                      className={classes.button}
-                    >
-                      Reset All
-                    </Button>
-                    <Button
-                      variant="contained"
-                      onClick={() => {
-                        this.handleBack(activeStep);
-                      }}
-                      className={classes.button}
-                      disabled={
-                        activeStep === 0 ||
-                        selectedAnnotationCollections.length > 0
-                      }
-                    >
-                      Back
-                    </Button>
-                    {activeStep === 0 &&
-                    selectedAnnotationCollections.length !== 0 ? (
-                      <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={this.handleCollection}
-                        className={classes.button}
-                      >
-                        Skip To Step 5
-                      </Button>
-                    ) : (
-                      <Button
-                        variant="contained"
-                        color="primary"
-                        disabled={this.didNotSelect(index)}
-                        onClick={
-                          activeStep === steps.length - 1
-                            ? toggleSelection
-                            : this.handleNext
-                        }
-                        className={classes.button}
-                      >
-                        {this.renderProgressButtonText(
-                          activeStep === steps.length - 1,
-                          activeStep === 0 &&
-                            selectedAnnotationCollections.length === 0
-                        )}
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </StepContent>
             </Step>
           ))}
         </Stepper>
+        <Grid container justify="center">
+          <Grid item className={classes.grid}>
+            {this.getStepForm(activeStep)}
+          </Grid>
+        </Grid>
+        <Grid container justify="center">
+          <Grid item>
+            <div>
+              <Button
+                variant="contained"
+                onClick={this.resetState}
+                className={classes.button}
+              >
+                Reset All
+              </Button>
+              <Button
+                variant="contained"
+                onClick={() => {
+                  this.handleBack(activeStep);
+                }}
+                className={classes.button}
+                disabled={
+                  activeStep === 0 || selectedAnnotationCollections.length > 0
+                }
+              >
+                Back
+              </Button>
+              {activeStep === 0 &&
+              selectedAnnotationCollections.length !== 0 ? (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={this.handleCollection}
+                  className={classes.button}
+                >
+                  Skip To Step 5
+                </Button>
+              ) : (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  disabled={this.didNotSelect(activeStep)}
+                  onClick={
+                    activeStep === steps.length - 1
+                      ? toggleSelection
+                      : this.handleNext
+                  }
+                  className={classes.button}
+                >
+                  {this.renderProgressButtonText(
+                    activeStep === steps.length - 1,
+                    activeStep === 0 &&
+                      selectedAnnotationCollections.length === 0
+                  )}
+                </Button>
+              )}
+            </div>
+          </Grid>
+        </Grid>
       </div>
     );
   }

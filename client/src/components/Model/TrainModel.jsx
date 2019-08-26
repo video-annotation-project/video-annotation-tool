@@ -35,7 +35,7 @@ const styles = theme => ({
     marginRight: theme.spacing(1.5)
   },
   paper: {
-    minHeight: '100vh'
+    minHeight: 'calc(100vh - 130px)'
   }
 });
 
