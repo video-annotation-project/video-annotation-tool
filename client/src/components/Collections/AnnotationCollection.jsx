@@ -668,7 +668,10 @@ class AnnotationCollection extends Component {
             </div>
           </Grid>
         </Grid>
-        <Stepper activeStep={activeStep}>
+        <Stepper
+          activeStep={activeStep}
+          style={{ backgroundColor: 'transparent' }}
+        >
           {steps.map(label => (
             <Step key={label}>
               <StepLabel>{label}</StepLabel>

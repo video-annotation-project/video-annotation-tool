@@ -254,7 +254,10 @@ class VerifySelection extends React.Component {
 
     return (
       <div>
-        <Stepper activeStep={activeStep}>
+        <Stepper
+          activeStep={activeStep}
+          style={{ backgroundColor: 'transparent' }}
+        >
           {steps.map(label => (
             <Step key={label}>
               <StepLabel>{label}</StepLabel>
