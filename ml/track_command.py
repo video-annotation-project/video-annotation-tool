@@ -8,13 +8,13 @@ import datetime
 import math
 import json
 
-from config import config
+from config.config import TRACKING_USERS
 from tracking import tracking
 from utils.query import con, cursor
 
 
 def annotationMap(id, conceptid, timeinvideo, videoid, image,
-                  videowidth, videoheight, x1, y1, x2, y2, comment, unsure)
+                  videowidth, videoheight, x1, y1, x2, y2, comment, unsure):
     status = tracking.track_annotation(id, conceptid, timeinvideo, videoid, image,
                               videowidth, videoheight, x1, y1, x2, y2, comment, unsure)
     if not status:

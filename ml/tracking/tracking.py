@@ -15,7 +15,8 @@ import numpy as np
 from itertools import zip_longest
 from skimage.measure import compare_ssim
 
-from config import config
+from config.config import RESIZED_WIDTH, RESIZED_HEIGHT, S3_BUCKET,
+    S3_ANNOTATION_FOLDER, S3_VIDEO_FOLDER
 from utils.query import con, cursor
 
 # initialize a dictionary that maps strings to their corresponding
