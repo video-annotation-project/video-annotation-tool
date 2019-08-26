@@ -18,13 +18,13 @@ describe('Annotate', () => {
 
   it('Find and open specific video', () => {
     cy.server();
-    cy.route('GET', '/api/videos').as('getVideos');
+    cy.route('PUT', '/api/videos/checkpoints/41').as('putVideo41');
 
-    cy.contains('Video List').click();
+    cy.get('#video-list').click();
     cy.contains('Annotated Videos').click();
     cy.get('#video-41').click();
     cy.get('#close-video-list').click();
-    cy.wait('@getVideos');
+    cy.wait('@putVideo41');
   });
 
   it('Draw box', () => {
