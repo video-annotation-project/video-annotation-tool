@@ -1,5 +1,5 @@
 import pandas as pd
-from psycopg2 import connect
+from pgdb import connect
 import boto3
 
 from config import config

@@ -1,7 +1,4 @@
 import cv2
-from pgdb import connect
-import boto3
-from dotenv import load_dotenv
 import datetime
 import copy
 import time
@@ -9,13 +6,14 @@ import uuid
 import sys
 import math
 import json
+import os
 import subprocess
 from PIL import Image
 import numpy as np
 from itertools import zip_longest
 from skimage.measure import compare_ssim
 
-from config.config import RESIZED_WIDTH, RESIZED_HEIGHT, S3_BUCKET,
+from config.config import RESIZED_WIDTH, RESIZED_HEIGHT, S3_BUCKET, \
     S3_ANNOTATION_FOLDER, S3_VIDEO_FOLDER
 from utils.query import con, cursor
 
