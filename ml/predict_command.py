@@ -1,12 +1,11 @@
 from psycopg2 import connect
 import subprocess
 from dotenv import load_dotenv
-from predict import predict_on_video
+from predict.evaluate_prediction_vid import evaluate
 import boto3
 import json
-import config.config
 from utils.query import s3, con, cursor
-from config import S3_BUCKET, S3_WEIGHTS_FOLDER, WEIGHTS_PATH
+from config.config import S3_BUCKET, S3_WEIGHTS_FOLDER, WEIGHTS_PATH
 
 '''
 get predict params
@@ -19,20 +18,44 @@ upload_annotations - boolean: if true upload annotations to database
 '''
 cursor.execute("SELECT * FROM predict_params")
 params = cursor.fetchone()
+print(params)
 model_name = str(params[0])
 userid = int(params[1])
 concepts = params[2]
-videoid = int(params[3])
-upload_annotations = bool(params[4])
+videoids = params[4]
+upload_annotations = bool(params[3])
 
 s3.download_file(S3_BUCKET, S3_WEIGHTS_FOLDER +
                  model_name + '.h5', WEIGHTS_PATH)
+print('weight file downloaded')
 
-predict_on_video(videoid, WEIGHTS_PATH, concepts,
-                 upload_annotations=upload_annotations, userid=userid)
+# cursor.execute("""DELETE FROM predict_progress""")
+# con.commit()
+# cursor.execute(
+#     """
+#     INSERT INTO predict_progress (videoid, current_video, total_videos)
+#     VALUES (%s, %s, %s)""",
+#     (0, 0, len(verifyVideos)),
+# )
+# con.commit()
 
-cursor.execute(
-    "Update modeltab SET info =  '{\"activeStep\": 0, \"modelSelected\":\"\",\"videoSelected\":\"\",\"userSelected\":\"\"}' WHERE option = 'predictmodel'")
+for video_id in videoids:
+    # cursor.execute(
+    #     f"""UPDATE predict_progress SET videoid = {video_id}, current_video = current_video + 1"""
+    # )
+    # con.commit()
+    evaluate(video_id, model_name + "_" + str(userid), concepts,
+             upload_annotations=upload_annotations)
+
+# cursor.execute(
+#     """
+#     UPDATE predict_progress
+#     SET status=4
+#     """
+# )
+
+# cursor.execute(
+#     "Update modeltab SET info =  '{\"activeStep\": 0, \"modelSelected\":\"\",\"videoSelected\":\"\",\"userSelected\":\"\"}' WHERE option = 'predictmodel'")
 con.commit()
 con.close()
 subprocess.call(["sudo", "shutdown", "-h"])
