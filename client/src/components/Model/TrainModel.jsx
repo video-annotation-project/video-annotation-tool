@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import axios from 'axios';
 import TextField from '@material-ui/core/TextField';
-import io from 'socket.io-client';
 import Input from '@material-ui/core/Input';
 import Paper from '@material-ui/core/Paper';
 import { FormControl } from '@material-ui/core';
@@ -18,7 +17,6 @@ import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Switch from '@material-ui/core/Switch';
 
 import ModelProgress from './ModelProgress';
-import VideoMetadata from '../Utilities/VideoMetadata';
 import CollectionInfo from '../Utilities/CollectionInfo';
 
 import './TrainModel.css';
@@ -33,6 +31,9 @@ const styles = theme => ({
   options: {
     marginLeft: theme.spacing(1.5),
     marginRight: theme.spacing(1.5)
+  },
+  paper: {
+    minHeight: 'calc(100vh - 130px)'
   }
 });
 
@@ -126,7 +127,7 @@ function EpochsField(props) {
 }
 
 function ImagesField(props) {
-  const { className, minImages, onChange, getImageRange } = props;
+  const { className, minImages, onChange } = props;
 
   return (
     <TextField
@@ -136,7 +137,7 @@ function ImagesField(props) {
       label="# of Images"
       value={minImages}
       onChange={onChange}
-      helperText={getImageRange()}
+      // helperText={getImageRange()}
     />
   );
 }
@@ -144,24 +145,6 @@ function ImagesField(props) {
 class TrainModel extends Component {
   constructor(props) {
     super(props);
-    // here we do a manual conditional proxy because React won't do it for us
-    let socket;
-    if (window.location.origin === 'http://localhost:3000') {
-      console.log('manually proxying socket');
-      socket = io('http://localhost:3001');
-    } else {
-      socket = io();
-    }
-    socket.on('connect', () => {
-      console.log('socket connected!');
-    });
-    socket.on('reconnect_attempt', attemptNumber => {
-      console.log('reconnect attempt', attemptNumber);
-    });
-    socket.on('disconnect', reason => {
-      console.log(reason);
-    });
-    socket.on('refresh trainmodel', this.loadOptionInfo);
 
     this.state = {
       models: [],
@@ -183,47 +166,6 @@ class TrainModel extends Component {
   componentDidMount = async () => {
     await this.loadExistingModels();
     this.loadCollectionList();
-  };
-
-  // Methods for video meta data
-  openVideoMetadata = (event, video) => {
-    event.stopPropagation();
-    this.setState({
-      openedVideo: video
-    });
-  };
-
-  closeVideoMetadata = () => {
-    this.setState({
-      openedVideo: null
-    });
-  };
-
-  loadOptionInfo = () => {
-    const config = {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    };
-    return axios
-      .get(`/api/models/train`, config)
-      .then(res => {
-        const params = res.data;
-
-        this.setState({
-          modelSelected: params.model,
-          minImages: params.min_images,
-          epochs: params.epochs,
-          selectedCollectionIds: params.annotation_collections
-        });
-      })
-      .catch(error => {
-        console.log('Error in get /api/models');
-        console.log(error);
-        if (error.response) {
-          console.log(error.response.data.detail);
-        }
-      });
   };
 
   loadExistingModels = () => {
@@ -351,49 +293,33 @@ class TrainModel extends Component {
     });
   };
 
-  handleChangeMultiple = event => {
-    const options = event.target.value;
-    const value = [];
-    for (let i = 0, l = options.length; i < l; i += 1) {
-      value.push(options[i]);
-    }
-    this.setState(
-      {
-        annotationCollections: value
-      },
-      () => {
-        this.getCollectionCounts();
-      }
-    );
-  };
+  // getImageRange = () => {
+  //   const {
+  //     annotationCollections,
+  //     minCounts,
+  //     includeTracking,
+  //     verifiedOnly
+  //   } = this.state;
 
-  getImageRange = () => {
-    const {
-      annotationCollections,
-      minCounts,
-      includeTracking,
-      verifiedOnly
-    } = this.state;
+  //   if (!annotationCollections.length || !minCounts.length) return '';
 
-    if (!annotationCollections.length || !minCounts.length) return '';
+  //   let selection;
+  //   if (verifiedOnly) {
+  //     if (includeTracking) {
+  //       selection = 3;
+  //     } else {
+  //       selection = 2;
+  //     }
+  //   } else if (includeTracking) {
+  //     selection = 1;
+  //   } else {
+  //     selection = 0;
+  //   }
 
-    let selection;
-    if (verifiedOnly) {
-      if (includeTracking) {
-        selection = 3;
-      } else {
-        selection = 2;
-      }
-    } else if (includeTracking) {
-      selection = 1;
-    } else {
-      selection = 0;
-    }
-
-    return minCounts[selection] === 1
-      ? `Must be 1`
-      : `Must be 1–${minCounts[selection]}`;
-  };
+  //   return minCounts[selection] === 1
+  //     ? `Must be 1`
+  //     : `Must be 1–${minCounts[selection]}`;
+  // };
 
   handleChangeMultiple = event => {
     const options = event.target.value;
@@ -486,7 +412,7 @@ class TrainModel extends Component {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
       };
-      axios.patch('/api/models/train/stop', {}, config);  
+      axios.patch('/api/models/train/stop', {}, config);
     } catch (error) {
       console.log(error);
     }
@@ -551,13 +477,12 @@ class TrainModel extends Component {
   };
 
   render() {
-    const { classes, socket, loadVideos } = this.props;
+    const { classes } = this.props;
     const {
       modelSelected,
       models,
       collections,
       annotationCollections,
-      openedVideo,
       infoDialogOpen,
       selectedCollectionCounts,
       includeTracking,
@@ -569,7 +494,7 @@ class TrainModel extends Component {
 
     return (
       <div className="root">
-        <Paper square>
+        <Paper className={classes.paper}>
           <div className="container">
             <div className="actionsContainer">
               <ModelsForm
@@ -593,7 +518,7 @@ class TrainModel extends Component {
                 className="imagesField"
                 minImages={minImages}
                 onChange={this.handleChange}
-                getImageRange={this.getImageRange}
+                // getImageRange={this.getImageRange}
               />
             </div>
             {annotationCollections.length ? (
@@ -601,7 +526,7 @@ class TrainModel extends Component {
                 <Button
                   fullWidth
                   variant="outlined"
-                  color="primary"
+                  color="secondary"
                   className={classes.infoButton}
                   onClick={this.toggleInfo}
                 >
@@ -653,16 +578,6 @@ class TrainModel extends Component {
             />
           </div>
         </Paper>
-        {openedVideo && (
-          <VideoMetadata
-            open
-            handleClose={this.closeVideoMetadata}
-            openedVideo={openedVideo}
-            socket={socket}
-            loadVideos={loadVideos}
-            modelTab
-          />
-        )}
       </div>
     );
   }

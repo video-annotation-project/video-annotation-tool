@@ -99,7 +99,7 @@ class AnnotationFrame extends Component {
       return <div>Error: {error}</div>;
     }
     return (
-      <React.Fragment>
+      <>
         <DialogModal
           title="Confirm Annotation Edit"
           message={dialogMsg}
@@ -119,7 +119,7 @@ class AnnotationFrame extends Component {
             alt="error"
           />
         </ListItem>
-      </React.Fragment>
+      </>
     );
   }
 }

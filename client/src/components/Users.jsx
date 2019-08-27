@@ -34,21 +34,24 @@ const styles = theme => ({
 });
 
 class Users extends Component {
-  state = {
-    selectedUser: '',
-    users: [],
-    counts: [],
-    fromDate: {
-      date: null,
-      localeISOString: '',
-      ISOString: ''
-    },
-    toDate: {
-      date: null,
-      localeISOString: '',
-      ISOString: ''
-    }
-  };
+  constructor(props) {
+    super(props);
+    this.state = {
+      selectedUser: '',
+      users: [],
+      counts: [],
+      fromDate: {
+        date: null,
+        localeISOString: '',
+        ISOString: ''
+      },
+      toDate: {
+        date: null,
+        localeISOString: '',
+        ISOString: ''
+      }
+    };
+  }
 
   componentWillMount() {
     this.getUsers();

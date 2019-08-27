@@ -2,6 +2,8 @@ const router = require('express').Router();
 const passport = require('passport');
 const psql = require('../../db/simpleConnect');
 
+var configData = require('../../../config.json');
+
 router.delete(
   '/:videoid',
   passport.authenticate('jwt', { session: false }),
@@ -32,6 +34,11 @@ router.put(
     const videoid = req.params.videoid;
     const { timeinvideo, finished } = req.body;
     const userId = req.user.id;
+    if (!configData.ml.tracking_users.includes(req.user.id)) {
+      res.json('not a tracking user');
+      return;
+    }
+
     const data = [timeinvideo, finished, userId, videoid];
     let queryText = `
       UPDATE 

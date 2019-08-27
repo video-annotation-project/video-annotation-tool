@@ -108,7 +108,7 @@ class CollectionInfo extends Component {
             </TableBody>
           </Table>
           {data ? (
-            <React.Fragment>
+            <>
               <Typography variant="body2" className={classes.users1}>
                 Users ({data.users.length}):
               </Typography>
@@ -121,7 +121,7 @@ class CollectionInfo extends Component {
               <Typography variant="body2" className={classes.videos2}>
                 {data.videos.join(', ')}
               </Typography>
-            </React.Fragment>
+            </>
           ) : (
             ''
           )}

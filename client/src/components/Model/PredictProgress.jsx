@@ -1,13 +1,8 @@
 import React from 'react';
 import LinearProgress from '@material-ui/core/LinearProgress';
 import { Typography } from '@material-ui/core';
-import withStyles from '@material-ui/core/styles/withStyles';
 
 import './ModelProgress.css';
-
-const styles = theme => {
-
-};
 
 function PredictingStatus(props) {
   const {
@@ -52,13 +47,18 @@ function PredictProgress(props) {
     totalFrames,
     videoProgress,
     predictionProgress,
-    videoId
+    videoId,
+    predictOnly
   } = props;
 
   return (
     <div className="predictProgress" hidden={status === 0}>
       <div>
-        <Typography variant="subtitle1">Step 2/2</Typography>
+        {predictOnly ? (
+          ' '
+        ) : (
+          <Typography variant="subtitle1">Step 2/2</Typography>
+        )}
         <Typography variant="subtitle2" gutterBottom>
           {status === 1 && `Currently resizing video ${videoId}...`}
           {status === 2 && `Currently predicting video ${videoId}...`}
@@ -78,4 +78,4 @@ function PredictProgress(props) {
   );
 }
 
-export default withStyles(styles)(PredictProgress);
+export default PredictProgress;

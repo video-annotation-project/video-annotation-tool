@@ -55,6 +55,9 @@ class Navbar extends React.Component {
       splitStr[i] =
         splitStr[i].charAt(0).toUpperCase() + splitStr[i].substring(1);
     }
+    if (splitStr.includes('Collection')) {
+      return splitStr.reverse().join(' ');
+    }
     // Directly return the joined string
     return splitStr.join(' ');
   };
@@ -70,7 +73,7 @@ class Navbar extends React.Component {
     }
 
     return (
-      <React.Fragment>
+      <>
         <AppBar position="static">
           <Toolbar>
             <Typography
@@ -84,7 +87,7 @@ class Navbar extends React.Component {
               Home
             </Button> */}
             {localStorage.getItem('isAuthed') ? (
-              <React.Fragment>
+              <>
                 <Button
                   id="navbar-concepts"
                   color="inherit"
@@ -98,9 +101,9 @@ class Navbar extends React.Component {
                   name="Collections"
                   Link={Link}
                   items={[
-                    { name: 'Annotations', link: '/collection/annotations' },
-                    { name: 'Concepts', link: '/collection/concepts' },
-                    { name: 'Videos', link: '/collection/videos' }
+                    { name: 'Annotations', link: '/collection/annotation' },
+                    { name: 'Concepts', link: '/collection/concept' },
+                    { name: 'Videos', link: '/collection/video' }
                   ]}
                 />
                 <GeneralMenu
@@ -129,7 +132,7 @@ class Navbar extends React.Component {
                   Report
                 </Button>
                 {localStorage.getItem('admin') ? (
-                  <React.Fragment>
+                  <>
                     <GeneralMenu
                       id="navbar-models"
                       name="Models"
@@ -149,7 +152,7 @@ class Navbar extends React.Component {
                     {/* <Button color="inherit" component={Link} to="/users">
                       Users
                     </Button> */}
-                  </React.Fragment>
+                  </>
                 ) : (
                   ''
                 )}
@@ -166,7 +169,7 @@ class Navbar extends React.Component {
                 >
                   Logout
                 </Button>
-              </React.Fragment>
+              </>
             ) : (
               <Button
                 id="navbar-login"
@@ -180,7 +183,7 @@ class Navbar extends React.Component {
           </Toolbar>
         </AppBar>
         {localStorage.getItem('isAuthed') && location.pathname !== '/' ? (
-          <React.Fragment>
+          <>
             <Typography
               variant="h4"
               color="textPrimary"
@@ -190,11 +193,11 @@ class Navbar extends React.Component {
               {this.titleCase(location.pathname)}
             </Typography>
             <Divider className={classes.divider} />
-          </React.Fragment>
+          </>
         ) : (
           ''
         )}
-      </React.Fragment>
+      </>
     );
   }
 }

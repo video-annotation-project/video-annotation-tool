@@ -13,12 +13,11 @@ import PredictProgress from './PredictProgress';
 
 import './ModelProgress.css';
 
-const styles = theme => {};
+const styles = () => {};
 
 class ModelProgress extends Component {
   constructor(props) {
     super(props);
-
     this.state = {
       loaded: false,
       tab: 0,
@@ -53,7 +52,6 @@ class ModelProgress extends Component {
   };
 
   TabPanel = (props, value, index, children) => {
-    const { ...other } = props;
     return (
       <Typography
         component="div"
@@ -61,7 +59,6 @@ class ModelProgress extends Component {
         hidden={value !== index}
         id={`full-width-tabpanel-${index}`}
         aria-labelledby={`full-width-tab-${index}`}
-        {...other}
       >
         <Box p={3}>{children}</Box>
       </Typography>
@@ -80,9 +77,9 @@ class ModelProgress extends Component {
       epochProgress,
       trainStatus
     } = this.state;
-    
+
     return (
-      <React.Fragment>
+      <>
         <Paper square elevation={0} className="resetContainer">
           <div>
             <Typography
@@ -153,7 +150,7 @@ class ModelProgress extends Component {
             color="secondary"
           />
         </div>
-      </React.Fragment>
+      </>
     );
   };
 

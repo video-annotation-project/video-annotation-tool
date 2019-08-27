@@ -1,8 +1,4 @@
 import cv2
-from pgdb import connect
-import boto3
-import os
-from dotenv import load_dotenv
 import datetime
 import copy
 import time
@@ -10,38 +6,16 @@ import uuid
 import sys
 import math
 import json
+import os
 import subprocess
 from PIL import Image
 import numpy as np
 from itertools import zip_longest
 from skimage.measure import compare_ssim
 
-# Load environment variables
-load_dotenv(dotenv_path="../.env")
-AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
-AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
-S3_BUCKET = os.getenv('AWS_S3_BUCKET_NAME')
-s3 = boto3.client('s3', aws_access_key_id=AWS_ACCESS_KEY_ID,
-                  aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
-S3_ANNOTATION_FOLDER = os.getenv("AWS_S3_BUCKET_ANNOTATIONS_FOLDER")
-S3_VIDEO_FOLDER = os.getenv('AWS_S3_BUCKET_VIDEOS_FOLDER')
-S3_TRACKING_FOLDER = os.getenv("AWS_S3_BUCKET_TRACKING_FOLDER")
-
-# connect to db
-DB_NAME = os.getenv("DB_NAME")
-DB_HOST = os.getenv("DB_HOST")
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
-
-config_path = "../config.json"
-with open(config_path) as config_buffer:
-    config = json.loads(config_buffer.read())['ml']
-
-# video/image properties
-LENGTH = config['tracking_vid_length']  # length of video in milliseconds
-IMAGES_PER_SEC = config['frames_between_predictions']
-VIDEO_WIDTH = config['resized_video_width']
-VIDEO_HEIGHT = config['resized_video_height']
+from config.config import RESIZED_WIDTH, RESIZED_HEIGHT, S3_BUCKET, \
+    S3_ANNOTATION_FOLDER, S3_VIDEO_FOLDER
+from utils.query import con, cursor, s3
 
 # initialize a dictionary that maps strings to their corresponding
 # OpenCV object tracker implementations
@@ -71,16 +45,16 @@ def getS3Image(image):
     img = img[:, :, :3]
     img = img[:, :, ::-1]
     # Resize to video width/height
-    img = cv2.resize(img, (VIDEO_WIDTH, VIDEO_HEIGHT))
+    img = cv2.resize(img, (RESIZED_WIDTH, RESIZED_HEIGHT))
     return img
 
 
-def getTrackingUserid(cursor):
-    cursor.execute("SELECT id FROM users WHERE username=%s", ("tracking",))
-    return cursor.fetchone().id
+def getTrackingUserid():
+    cursor.execute("SELECT id FROM users WHERE username=tracking")
+    return cursor.fetchone()[0]
 
 
-def getVideoURL(cursor, videoid):
+def getVideoURL(videoid):
     """
     Returns
         url - video's secure streaming url
@@ -91,7 +65,7 @@ def getVideoURL(cursor, videoid):
     # grab video stream
     url = s3.generate_presigned_url('get_object',
                                     Params={'Bucket': S3_BUCKET,
-                                            'Key': S3_VIDEO_FOLDER + cursor.fetchone().filename},
+                                            'Key': S3_VIDEO_FOLDER + cursor.fetchone()[0]},
                                     ExpiresIn=100)
     return url
 
@@ -115,7 +89,7 @@ def getVideoFrames(url, start, end):
         check, frame = cap.read()
         if check:
             frame_list.append(
-                cv2.resize(frame, (VIDEO_WIDTH, VIDEO_HEIGHT)))
+                cv2.resize(frame, (RESIZED_WIDTH, RESIZED_HEIGHT)))
         curr = cap.get(0)  # get time in milliseconds
     cap.release()
     return frame_list, fps, frame_num
@@ -123,7 +97,7 @@ def getVideoFrames(url, start, end):
 
 def upload_image(frame_num, frame, frame_w_box,
                  id, videoid, conceptid, comment, unsure,
-                 x1, y1, x2, y2, cursor, con, TRACKING_ID, timeinvideo):
+                 x1, y1, x2, y2, TRACKING_ID, timeinvideo):
     # Uploads images and puts annotation in database
     no_box = str(videoid) + "_" + str(timeinvideo) + "_tracking.png"
     box = str(id) + "_" + str(timeinvideo) + "_box_tracking.png"
@@ -145,7 +119,7 @@ def upload_image(frame_num, frame, frame_w_box,
       """,
         (
             frame_num, videoid, TRACKING_ID, conceptid, timeinvideo, x1, y1,
-            x2, y2, VIDEO_WIDTH, VIDEO_HEIGHT, datetime.datetime.now().date(), no_box, box,
+            x2, y2, RESIZED_WIDTH, RESIZED_HEIGHT, datetime.datetime.now().date(), no_box, box,
             comment, unsure, id
         )
     )
@@ -163,7 +137,7 @@ def upload_video(priorFrames, postFrames, id):
     output_file = str(uuid.uuid4()) + ".mp4"
     converted_file = str(uuid.uuid4()) + ".mp4"
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    out = cv2.VideoWriter(output_file, fourcc, 20, (VIDEO_WIDTH, VIDEO_HEIGHT))
+    out = cv2.VideoWriter(output_file, fourcc, 20, (RESIZED_WIDTH, RESIZED_HEIGHT))
     for frame in priorFrames:
         out.write(frame)
     out.release()
@@ -209,7 +183,7 @@ def matchS3Frame(priorFrames, postFrames, s3Image):
 
 
 def fix_offset(priorFrames, postFrames, s3Image, fps, timeinvideo,
-               frame_num, id, cursor, con):
+               frame_num, id):
     best_score, best_index = matchS3Frame(priorFrames, postFrames, s3Image)
     if best_index == 0:
         # No change necessary
@@ -244,7 +218,7 @@ def fix_offset(priorFrames, postFrames, s3Image, fps, timeinvideo,
 
 def track_object(frame_num, frames, box, track_forward, end,
                  id, videoid, conceptid, comment, unsure,
-                 cursor, con, TRACKING_ID, fps, timeinvideo):
+                 TRACKING_ID, fps, timeinvideo):
     # Tracks the object forwards and backwards in a video
     frame_list = []
     time_elapsed = 0
@@ -265,11 +239,14 @@ def track_object(frame_num, frames, box, track_forward, end,
                 (x1, y1, w, h) = [int(v) for v in box]
                 x2 = x1 + w
                 y2 = y1 + h
+                # Remove invalid bounding boxes
+                if (x1 > RESIZED_WIDTH or y1 > RESIZED_HEIGHT or x2 < 0 or y2 < 0):
+                    continue
                 # Fix box if outside video frame
                 x1 = x1 if x1 > 0 else 0
                 y1 = y1 if y1 > 0 else 0
-                x2 = x2 if x2 < VIDEO_WIDTH else VIDEO_WIDTH
-                y2 = y2 if y2 < VIDEO_HEIGHT else VIDEO_HEIGHT
+                x2 = x2 if x2 < RESIZED_WIDTH else RESIZED_WIDTH
+                y2 = y2 if y2 < RESIZED_HEIGHT else RESIZED_HEIGHT
                 cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
             if index != 0:
                 upload_image(frame_num, frame_no_box, frame, id, videoid,
@@ -285,24 +262,21 @@ def track_object(frame_num, frames, box, track_forward, end,
 def track_annotation(id, conceptid, timeinvideo, videoid, image,
                      videowidth, videoheight, x1, y1, x2, y2, comment, unsure):
     print("Start tracking annotation: " + str(id))
-    con = connect(database=DB_NAME, host=DB_HOST,
-                  user=DB_USER, password=DB_PASSWORD)
-    cursor = con.cursor()
 
     # Make bounding box adjusted to video width and height
-    x_ratio = (videowidth / VIDEO_WIDTH)
-    y_ratio = (videoheight / VIDEO_HEIGHT)
+    x_ratio = (videowidth / RESIZED_WIDTH)
+    y_ratio = (videoheight / RESIZED_HEIGHT)
     x1 = x1 / x_ratio
     y1 = y1 / y_ratio
     width = (x2 / x_ratio) - x1
     height = (y2 / y_ratio) - y1
     box = (x1, y1, width, height)
 
-    TRACKING_ID = getTrackingUserid(cursor)
-    url = getVideoURL(cursor, videoid)
+    TRACKING_ID = getTrackingUserid()
+    url = getVideoURL(videoid)
     s3Image = getS3Image(image)
     if s3Image is None:
-        return
+        return False
 
     # initialize video for grabbing frames before annotation
     # start vidlen/2 secs before obj appears
@@ -320,23 +294,23 @@ def track_annotation(id, conceptid, timeinvideo, videoid, image,
     # Fix weird javascript video currentTime randomization
     priorFrames, postFrames, timeinvideo, frame_num = fix_offset(
         priorFrames, postFrames, s3Image, fps,
-        timeinvideo, frame_num, id, cursor, con)
+        timeinvideo, frame_num, id)
 
     # tracking forwards..
     postFrames = track_object(
         frame_num, postFrames, box, True, end,
         id, videoid, conceptid, comment, unsure,
-        cursor, con, TRACKING_ID, fps, timeinvideo)
+        TRACKING_ID, fps, timeinvideo)
 
     # tracking backwards
     priorFrames = track_object(
         frame_num, reversed(priorFrames), box, False, 0,
         id, videoid, conceptid, comment, unsure,
-        cursor, con, TRACKING_ID, fps, timeinvideo)
+        TRACKING_ID, fps, timeinvideo)
 
     upload_video(priorFrames, postFrames, id)
 
     cv2.destroyAllWindows()
     con.close()
     print("Done tracking annotation: " + str(id))
-    return
+    return True

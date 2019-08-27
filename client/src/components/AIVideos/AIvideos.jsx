@@ -209,7 +209,7 @@ class Annotate extends Component {
       return <div>Error: {error}</div>;
     }
     return (
-      <React.Fragment>
+      <>
         <Hotkeys keyName="space, right, left" onKeyDown={this.handleKeyDown} />
         <Grid container className={classes.root} spacing={2}>
           <Grid item xs>
@@ -303,7 +303,7 @@ class Annotate extends Component {
           </Grid>
           <Grid item xs />
         </Grid>
-      </React.Fragment>
+      </>
     );
   }
 }

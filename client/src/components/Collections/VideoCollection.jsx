@@ -422,11 +422,12 @@ class videoCollection extends Component {
       collections
     } = this.state;
     return (
-      <React.Fragment>
+      <>
         <Hotkeys keyName="space, right, left" onKeyDown={this.handleKeyDown} />
         <Grid container className={classes.root} spacing={0}>
           <Grid item xs>
             <VideoList
+              createCollection={this.createCollection}
               handleVideoClick={this.handleVideoClick}
               startedVideos={startedVideos}
               unwatchedVideos={unwatchedVideos}
@@ -543,7 +544,7 @@ class videoCollection extends Component {
           </Grid>
           <Grid item xs />
         </Grid>
-      </React.Fragment>
+      </>
     );
   }
 }
