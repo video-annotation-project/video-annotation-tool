@@ -14,8 +14,12 @@ from itertools import zip_longest
 from skimage.measure import compare_ssim
 
 from config.config import RESIZED_WIDTH, RESIZED_HEIGHT, S3_BUCKET, \
-    S3_ANNOTATION_FOLDER, S3_VIDEO_FOLDER
-from utils.query import con, cursor, s3
+    S3_ANNOTATION_FOLDER, S3_VIDEO_FOLDER, DB_NAME, DB_USER, DB_PASSWORD, \
+    DB_HOST, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, LENGTH
+s3 = boto3.client(
+    's3',
+    aws_access_key_id=AWS_ACCESS_KEY_ID,
+    aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
 
 # initialize a dictionary that maps strings to their corresponding
 # OpenCV object tracker implementations
@@ -137,7 +141,8 @@ def upload_video(priorFrames, postFrames, id):
     output_file = str(uuid.uuid4()) + ".mp4"
     converted_file = str(uuid.uuid4()) + ".mp4"
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    out = cv2.VideoWriter(output_file, fourcc, 20, (RESIZED_WIDTH, RESIZED_HEIGHT))
+    out = cv2.VideoWriter(output_file, fourcc, 20,
+                          (RESIZED_WIDTH, RESIZED_HEIGHT))
     for frame in priorFrames:
         out.write(frame)
     out.release()
