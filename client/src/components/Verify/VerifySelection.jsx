@@ -271,56 +271,52 @@ class VerifySelection extends React.Component {
         </Grid>
         <Grid container justify="center">
           <Grid item>
-            <div>
+            <Button
+              variant="contained"
+              onClick={this.resetState}
+              className={classes.button}
+            >
+              Reset All
+            </Button>
+            <Button
+              variant="contained"
+              onClick={() => {
+                this.handleBack(activeStep);
+              }}
+              className={classes.button}
+              disabled={
+                activeStep === 0 || selectedAnnotationCollections.length > 0
+              }
+            >
+              Back
+            </Button>
+            {activeStep === 0 && selectedAnnotationCollections.length !== 0 ? (
               <Button
                 variant="contained"
-                onClick={this.resetState}
+                color="primary"
+                onClick={this.handleCollection}
                 className={classes.button}
               >
-                Reset All
+                Skip To Step 5
               </Button>
+            ) : (
               <Button
                 variant="contained"
-                onClick={() => {
-                  this.handleBack(activeStep);
-                }}
-                className={classes.button}
-                disabled={
-                  activeStep === 0 || selectedAnnotationCollections.length > 0
+                color="primary"
+                disabled={this.didNotSelect(activeStep)}
+                onClick={
+                  activeStep === steps.length - 1
+                    ? toggleSelection
+                    : this.handleNext
                 }
+                className={classes.button}
               >
-                Back
+                {this.renderProgressButtonText(
+                  activeStep === steps.length - 1,
+                  activeStep === 0 && selectedAnnotationCollections.length === 0
+                )}
               </Button>
-              {activeStep === 0 &&
-              selectedAnnotationCollections.length !== 0 ? (
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={this.handleCollection}
-                  className={classes.button}
-                >
-                  Skip To Step 5
-                </Button>
-              ) : (
-                <Button
-                  variant="contained"
-                  color="primary"
-                  disabled={this.didNotSelect(activeStep)}
-                  onClick={
-                    activeStep === steps.length - 1
-                      ? toggleSelection
-                      : this.handleNext
-                  }
-                  className={classes.button}
-                >
-                  {this.renderProgressButtonText(
-                    activeStep === steps.length - 1,
-                    activeStep === 0 &&
-                      selectedAnnotationCollections.length === 0
-                  )}
-                </Button>
-              )}
-            </div>
+            )}
           </Grid>
         </Grid>
       </div>

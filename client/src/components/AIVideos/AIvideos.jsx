@@ -203,10 +203,10 @@ class Annotate extends Component {
       videoPlaybackRate
     } = this.state;
     if (!isLoaded) {
-      return <div>Loading...</div>;
+      return <Typography style={{ margin: '20px' }}>Loading...</Typography>;
     }
     if (error) {
-      return <div>Error: {error}</div>;
+      return <Typography style={{ margin: '20px' }}>Error: {error}</Typography>;
     }
     return (
       <>

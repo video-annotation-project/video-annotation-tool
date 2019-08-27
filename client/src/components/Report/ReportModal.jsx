@@ -38,7 +38,7 @@ class ReportModal extends Component {
   componentDidMount = () => {
     if (localStorage.getItem('admin')) {
       this.setState(prevState => ({
-        options: [{ name: 'User', selected: false }, ...prevState.options]
+        options: [...prevState.options, { name: 'User', selected: false }]
       }));
     }
   };

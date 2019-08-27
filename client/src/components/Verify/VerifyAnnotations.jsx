@@ -25,7 +25,7 @@ import VideoMetadata from '../Utilities/VideoMetadata';
 
 const styles = theme => ({
   button: {
-    margin: theme.spacing()
+    marginRight: theme.spacing(2)
   },
   img: {
     top: '50px'
@@ -554,7 +554,9 @@ class VerifyAnnotations extends Component {
             />
           </Grid>
           <Grid item>
-            <h3>{!concept ? annotation.name : concept.name}</h3>
+            <Typography variant="subtitle1" style={{ marginLeft: '10px' }}>
+              {!concept ? annotation.name : concept.name}
+            </Typography>
           </Grid>
           <Grid item xs>
             <ConceptsSelected handleConceptClick={this.handleConceptClick} />
@@ -647,7 +649,7 @@ class VerifyAnnotations extends Component {
     } = this.state;
 
     if (x === null) {
-      return <div>Loading...</div>;
+      return <Typography style={{ margin: '20px' }}>Loading...</Typography>;
     }
 
     return (
@@ -744,7 +746,7 @@ class VerifyAnnotations extends Component {
                         ? this.getStatus(annotation.tracking_flag)
                         : this.getStatus(trackingStatus)}
                     </Typography>
-                    <Typography>
+                    <Typography style={{ marginTop: '10px' }}>
                       {index + 1} of {size}
                     </Typography>
                   </div>
@@ -796,7 +798,7 @@ class VerifyAnnotations extends Component {
                     />
                   </DragBoxContainer>
                 </div>
-                <Typography>
+                <Typography style={{ marginTop: '10px' }}>
                   {index + 1} of {size}
                 </Typography>
                 {this.optionButtons(annotation)}

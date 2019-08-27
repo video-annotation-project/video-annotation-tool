@@ -60,7 +60,8 @@ class SelectVideo extends React.Component {
     const { value } = this.props;
     const { loaded, videos } = this.state;
 
-    if (!loaded) return <Typography>Loading...</Typography>;
+    if (!loaded)
+      return <Typography style={{ margin: '20px' }}>Loading...</Typography>;
 
     if (videos.length === 0)
       return <Typography>No videos for current selection</Typography>;
