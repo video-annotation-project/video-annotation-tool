@@ -19,15 +19,15 @@ from memory_profiler import profile
 fp = open('memory_profiler.log', 'w+')
 
 
-def get_classmap(concepts):
-    classmap = []
-    for concept in concepts:
-        name = pd_query("select name from concepts where id=" +
-                        str(concept)).iloc[0]["name"]
-        classmap.append([name, concepts.index(concept)])
-    classmap = pd.DataFrame(classmap)
-    classmap = classmap.to_dict()[0]
-    return classmap
+# def get_classmap(concepts):
+#     classmap = []
+#     for concept in concepts:
+#         name = pd_query("select name from concepts where id=" +
+#                         str(concept)).iloc[0]["name"]
+#         classmap.append([name, concepts.index(concept)])
+#     classmap = pd.DataFrame(classmap)
+#     classmap = classmap.to_dict()[0]
+#     return classmap
 
 
 def printing_with_time(text):
@@ -127,6 +127,11 @@ def predict_on_video(videoid, model_weights, concepts, filename,
     # Get biologist annotations for video
 
     printing_with_time("Before database query")
+    tuple_concept = ''
+    if len(concepts) == 1:
+        tuple_concept = f''' = {str(concepts[0])}'''
+    else:
+        tuple_concept = f''' in {str(tuple(concepts))}'''
 
     annotations = pd_query(
         f'''
@@ -143,7 +148,7 @@ def predict_on_video(videoid, model_weights, concepts, filename,
           unsure=FALSE AND
           videoid={videoid} AND
           userid in {str(tuple(config.GOOD_USERS))} AND
-          conceptid in {str(tuple(concepts))} ''')
+          conceptid {tuple_concept}''')
     print(annotations)
 
     printing_with_time("After database query")
@@ -595,22 +600,22 @@ def upload_predict_progress(count, videoid, total_count, status):
     '''
     print(
         f'count: {count} total_count: {total_count} vid: {videoid} status: {status}')
-    if (count == 0):
-        cursor.execute('''
-            UPDATE predict_progress
-            SET framenum=%s, status=%s, totalframe=%s''',
-                       (count, status, total_count,))
-        con.commit()
-        return
+    # if (count == 0):
+    #     cursor.execute('''
+    #         UPDATE predict_progress
+    #         SET framenum=%s, status=%s, totalframe=%s''',
+    #                    (count, status, total_count,))
+    #     con.commit()
+    #     return
 
-    if (total_count == count):
-        count = -1
-    cursor.execute('''
-        UPDATE predict_progress
-        SET framenum=%s''',
-                   (count,)
-                   )
-    con.commit()
+    # if (total_count == count):
+    #     count = -1
+    # cursor.execute('''
+    #     UPDATE predict_progress
+    #     SET framenum=%s''',
+    #                (count,)
+    #                )
+    # con.commit()
 
 
 if __name__ == '__main__':
