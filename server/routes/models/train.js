@@ -37,7 +37,8 @@ router.patch(
       SET
         status = 0,
         std_out='',
-        std_err=''
+        std_err='',
+        stop_flag=False
     `;
 
     const resetPredicting = `DELETE FROM predict_progress;`;
@@ -111,8 +112,20 @@ router.put(
       verified_only=$5,
       include_tracking=$6 `;
 
+    const resetTraining = `
+      UPDATE
+        training_progress
+      SET
+        status = 0,
+        std_out='',
+        std_err='',
+        stop_flag=False
+    `;
+
     try {
       console.log(req.body);
+      await psql.query(resetTraining);
+
       let response = await psql.query(queryText, [
         req.body.epochs,
         req.body.minImages,
