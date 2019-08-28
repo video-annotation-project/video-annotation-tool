@@ -1,4 +1,4 @@
-from pgdb import connect
+from psycopg2 import connect
 from multiprocessing import Pool
 import datetime
 import math
