@@ -374,14 +374,46 @@ class Verify extends Component {
   };
 
   handleNext = callback => {
-    const { index } = this.state;
-    localStorage.setItem('curIndex', index + 1);
-    this.setState(
-      {
-        index: index + 1
-      },
-      callback
-    );
+    const { index, annotations } = this.state;
+
+    if (
+      annotations &&
+      annotations.length &&
+      (annotations[index].videoid !== annotations[index + 1].videoid ||
+        annotations[index].timeinvideo !== annotations[index + 1].timeinvideo)
+    ) {
+      Swal.fire({
+        title: 'Finished with current frame',
+        text: 'Move on to next frame?',
+        type: 'info',
+        showCancelButton: true,
+        cancelButtonText: 'Add annotations',
+        confirmButtonText: 'Next',
+        reverseButtons: true
+      }).then(result => {
+        if (result.value) {
+          localStorage.setItem('curIndex', index + 1);
+          this.setState(
+            {
+              index: index + 1
+            },
+            callback
+          );
+        }
+        if (result.dismiss === 'cancel') {
+          // Add annotations here
+          console.log('Add more annotations');
+        }
+      });
+    } else {
+      localStorage.setItem('curIndex', index + 1);
+      this.setState(
+        {
+          index: index + 1
+        },
+        callback
+      );
+    }
   };
 
   resetLocalStorage = () => {
@@ -420,16 +452,6 @@ class Verify extends Component {
     if (annotations && index >= annotations.length + 1) {
       this.resetLocalStorage();
       return <div />;
-    }
-
-    if (
-      annotations &&
-      annotations.length &&
-      (annotations[index].videoid !== annotations[index + 1].videoid ||
-        annotations[index].timeinvideo !== annotations[index + 1].timeinvideo)
-    ) {
-      console.log(annotations[index].videoid);
-      console.log(annotations[index].timeinvideo);
     }
 
     let selection = '';
