@@ -1,4 +1,8 @@
 import cv2
+from pgdb import connect
+import boto3
+import os
+from dotenv import load_dotenv
 import datetime
 import copy
 import time
@@ -6,7 +10,6 @@ import uuid
 import sys
 import math
 import json
-import os
 import subprocess
 from PIL import Image
 import numpy as np
@@ -53,12 +56,12 @@ def getS3Image(image):
     return img
 
 
-def getTrackingUserid():
-    cursor.execute("SELECT id FROM users WHERE username=tracking")
-    return cursor.fetchone()[0]
+def getTrackingUserid(cursor):
+    cursor.execute("SELECT id FROM users WHERE username=%s", ("tracking",))
+    return cursor.fetchone().id
 
 
-def getVideoURL(videoid):
+def getVideoURL(cursor, videoid):
     """
     Returns
         url - video's secure streaming url
@@ -69,7 +72,7 @@ def getVideoURL(videoid):
     # grab video stream
     url = s3.generate_presigned_url('get_object',
                                     Params={'Bucket': S3_BUCKET,
-                                            'Key': S3_VIDEO_FOLDER + cursor.fetchone()[0]},
+                                            'Key': S3_VIDEO_FOLDER + cursor.fetchone().filename},
                                     ExpiresIn=100)
     return url
 
@@ -101,7 +104,7 @@ def getVideoFrames(url, start, end):
 
 def upload_image(frame_num, frame, frame_w_box,
                  id, videoid, conceptid, comment, unsure,
-                 x1, y1, x2, y2, TRACKING_ID, timeinvideo):
+                 x1, y1, x2, y2, cursor, con, TRACKING_ID, timeinvideo):
     # Uploads images and puts annotation in database
     no_box = str(videoid) + "_" + str(timeinvideo) + "_tracking.png"
     box = str(id) + "_" + str(timeinvideo) + "_box_tracking.png"
@@ -188,7 +191,7 @@ def matchS3Frame(priorFrames, postFrames, s3Image):
 
 
 def fix_offset(priorFrames, postFrames, s3Image, fps, timeinvideo,
-               frame_num, id):
+               frame_num, id, cursor, con):
     best_score, best_index = matchS3Frame(priorFrames, postFrames, s3Image)
     if best_index == 0:
         # No change necessary
@@ -223,7 +226,7 @@ def fix_offset(priorFrames, postFrames, s3Image, fps, timeinvideo,
 
 def track_object(frame_num, frames, box, track_forward, end,
                  id, videoid, conceptid, comment, unsure,
-                 TRACKING_ID, fps, timeinvideo):
+                 cursor, con, TRACKING_ID, fps, timeinvideo):
     # Tracks the object forwards and backwards in a video
     frame_list = []
     time_elapsed = 0
@@ -267,6 +270,9 @@ def track_object(frame_num, frames, box, track_forward, end,
 def track_annotation(id, conceptid, timeinvideo, videoid, image,
                      videowidth, videoheight, x1, y1, x2, y2, comment, unsure):
     print("Start tracking annotation: " + str(id))
+    con = connect(database=DB_NAME, host=DB_HOST,
+                  user=DB_USER, password=DB_PASSWORD)
+    cursor = con.cursor()
 
     # Make bounding box adjusted to video width and height
     x_ratio = (videowidth / RESIZED_WIDTH)
@@ -277,8 +283,8 @@ def track_annotation(id, conceptid, timeinvideo, videoid, image,
     height = (y2 / y_ratio) - y1
     box = (x1, y1, width, height)
 
-    TRACKING_ID = getTrackingUserid()
-    url = getVideoURL(videoid)
+    TRACKING_ID = getTrackingUserid(cursor)
+    url = getVideoURL(cursor, videoid)
     s3Image = getS3Image(image)
     if s3Image is None:
         return False
@@ -299,19 +305,19 @@ def track_annotation(id, conceptid, timeinvideo, videoid, image,
     # Fix weird javascript video currentTime randomization
     priorFrames, postFrames, timeinvideo, frame_num = fix_offset(
         priorFrames, postFrames, s3Image, fps,
-        timeinvideo, frame_num, id)
+        timeinvideo, frame_num, id, cursor, con)
 
     # tracking forwards..
     postFrames = track_object(
         frame_num, postFrames, box, True, end,
         id, videoid, conceptid, comment, unsure,
-        TRACKING_ID, fps, timeinvideo)
+        cursor, con, TRACKING_ID, fps, timeinvideo)
 
     # tracking backwards
     priorFrames = track_object(
         frame_num, reversed(priorFrames), box, False, 0,
         id, videoid, conceptid, comment, unsure,
-        TRACKING_ID, fps, timeinvideo)
+        cursor, con, TRACKING_ID, fps, timeinvideo)
 
     upload_video(priorFrames, postFrames, id)
 
