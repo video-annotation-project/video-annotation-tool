@@ -20,7 +20,7 @@ def annotationMap(id, conceptid, timeinvideo, videoid, image,
         return
 
     # Update originalid so while loop doesn't reset tracking
-    cursor.execute("UPDATE annotations SET originalid=%d WHERE id=%d;",
+    cursor.execute("UPDATE annotations SET originalid=%s WHERE id=%s;",
                    (id, id,))
     con.commit()
     con.close()
