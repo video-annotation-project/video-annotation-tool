@@ -133,7 +133,8 @@ router.get(
         a.id=ai.annotationid
       WHERE
         ai.id = ANY($1::int[]) and a.verifiedby IS NOT NULL
-      ORDER BY a.timeinvideo
+      ORDER BY
+        a.videoid, a.timeinvideo
     `;
     if (req.query.tracking == 'true') {
       queryText += ` AND userid <> (SELECT id from users where username ='tracking')`;
@@ -440,7 +441,7 @@ router.get(
 
     if (selectedUsers && selectedVideos && selectedConcepts && selectedUnsure) {
       queryText += `a.*, c.name, c.picture, u.username, v.filename `;
-      orderBy = ' ORDER BY a.id';
+      orderBy = ' ORDER BY a.videoid, a.timeinvideo';
     } else if (selectedUsers && selectedVideos && selectedConcepts) {
       queryText += `a.unsure `;
     } else if (selectedUsers && selectedVideos) {

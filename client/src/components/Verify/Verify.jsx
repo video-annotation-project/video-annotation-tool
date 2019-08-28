@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import axios from 'axios';
 import { withStyles } from '@material-ui/core/styles';
-import Paper from '@material-ui/core/Paper';
 import { Button, Typography } from '@material-ui/core';
 
 import VerifySelection from './VerifySelection';
@@ -404,7 +403,6 @@ class Verify extends Component {
   };
 
   render() {
-    const { classes } = this.props;
     const {
       selectionMounted,
       selectedAnnotationCollections,
@@ -422,6 +420,16 @@ class Verify extends Component {
     if (annotations && index >= annotations.length + 1) {
       this.resetLocalStorage();
       return <div />;
+    }
+
+    if (
+      annotations &&
+      annotations.length &&
+      (annotations[index].videoid !== annotations[index + 1].videoid ||
+        annotations[index].timeinvideo !== annotations[index + 1].timeinvideo)
+    ) {
+      console.log(annotations[index].videoid);
+      console.log(annotations[index].timeinvideo);
     }
 
     let selection = '';
@@ -456,9 +464,10 @@ class Verify extends Component {
       );
     } else if (noAnnotations) {
       selection = (
-        <Paper square elevation={0} className={classes.resetContainer}>
+        <div style={{ margin: '30px' }}>
           <Typography>All Verified</Typography>
           <Button
+            style={{ marginTop: '15px' }}
             variant="contained"
             color="primary"
             onClick={() => {
@@ -473,7 +482,7 @@ class Verify extends Component {
           >
             Reset
           </Button>
-        </Paper>
+        </div>
       );
     } else {
       selection = (

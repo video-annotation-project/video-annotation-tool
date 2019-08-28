@@ -149,7 +149,6 @@ class VerifyAnnotations extends Component {
         config
       );
       if (data.data.length > 0) {
-        console.log('yes');
         this.setState({
           verifiedBoxes: data.data[0].box
         });
@@ -686,8 +685,6 @@ class VerifyAnnotations extends Component {
       return <Typography style={{ margin: '20px' }}>Loading...</Typography>;
     }
 
-    console.log(verifiedBoxes);
-    console.log(annotation);
     return (
       <>
         {conceptDialogOpen && (
