@@ -129,6 +129,7 @@ class VerifyAnnotations extends Component {
   };
 
   componentDidMount = async () => {
+    this.displayLoading();
     window.scrollTo({ top: 0, behavior: 'smooth' });
     this.displayLoading();
     await this.loadVerifiedBoxes();
@@ -148,16 +149,25 @@ class VerifyAnnotations extends Component {
         ?videoid=${annotation.videoid}&timeinvideo=${annotation.timeinvideo}`,
         config
       );
+      let boxes = [];
       if (data.data.length > 0) {
-        console.log('yes');
+        data.data.forEach(boxWithId => {
+          boxWithId.box.forEach(box => {
+            boxes.push(box);
+          });
+        });
+      }
+
+      if (boxes.length > 0) {
         this.setState({
-          verifiedBoxes: data.data[0].box
+          verifiedBoxes: boxes
         });
       } else {
         this.setState({
           verifiedBoxes: []
         });
       }
+      Swal.close();
     } catch (error) {
       console.log(error);
     }
@@ -684,8 +694,6 @@ class VerifyAnnotations extends Component {
       return <div>Loading...</div>;
     }
 
-    console.log(verifiedBoxes);
-    console.log(annotation);
     return (
       <>
         {conceptDialogOpen && (
@@ -820,7 +828,7 @@ class VerifyAnnotations extends Component {
                     {verifiedBoxes
                       ? verifiedBoxes.map(box => (
                           <div
-                            key={box.x1}
+                            key={verifiedBoxes.indexOf(box)}
                             style={{
                               position: 'relative',
                               width: 0,
