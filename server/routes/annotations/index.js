@@ -83,6 +83,35 @@ router.get(
 );
 
 router.get(
+  '/verifiedboxes/:id',
+  passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    let params = [req.query.videoid, req.query.timeinvideo, req.params.id];
+    let queryText = `
+      SELECT 
+        a.videoid, json_agg(json_build_object('x1',a.x1, 'y1',a.y1, 'x2',a.x2, 'y2',a.y2, 'resx', a.videowidth, 'resy', a.videoheight )) as box
+      FROM
+        annotations a
+      WHERE 
+        a.videoid = $1 AND a.timeinvideo = $2 AND id <> $3
+        AND a.verifiedby IS NOT NULL
+      GROUP BY
+          a.videoid, a.timeinvideo
+    `;
+    try {
+      let response = await psql.query(queryText, params);
+      if (response) {
+        res.json(response.rows);
+      }
+    } catch (error) {
+      console.log('Error in GET /api/annotations/verifiedboxes');
+      console.log(error);
+      res.json(error);
+    }
+  }
+);
+
+router.get(
   '/collections',
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
@@ -103,7 +132,8 @@ router.get(
       ON
         a.id=ai.annotationid
       WHERE
-        ai.id = ANY($1::int[]) and a.verifiedby IS NULL
+        ai.id = ANY($1::int[]) and a.verifiedby IS NOT NULL
+      ORDER BY a.timeinvideo
     `;
     if (req.query.tracking == 'true') {
       queryText += ` AND userid <> (SELECT id from users where username ='tracking')`;
