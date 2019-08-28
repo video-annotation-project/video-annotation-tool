@@ -1,15 +1,18 @@
+from pgdb import connect
 from multiprocessing import Pool
 import datetime
 import math
 import json
 
-from config.config import TRACKING_USERS
+from config.config import TRACKING_USERS, DB_HOST, DB_NAME, DB_PASSWORD, DB_USER
 from tracking import tracking
-from utils.query import con, cursor
 
 
 def annotationMap(id, conceptid, timeinvideo, videoid, image,
                   videowidth, videoheight, x1, y1, x2, y2, comment, unsure):
+    con = connect(database=DB_NAME, host=DB_HOST,
+                  user=DB_USER, password=DB_PASSWORD)
+    cursor = con.cursor()
     status = tracking.track_annotation(id, conceptid, timeinvideo, videoid, image,
                                        videowidth, videoheight, x1, y1, x2, y2, comment, unsure)
     if not status:
@@ -17,13 +20,17 @@ def annotationMap(id, conceptid, timeinvideo, videoid, image,
         return
 
     # Update originalid so while loop doesn't reset tracking
-    cursor.execute("UPDATE annotations SET originalid=%s WHERE id=%s;",
+    cursor.execute("UPDATE annotations SET originalid=%d WHERE id=%d;",
                    (id, id,))
     con.commit()
+    con.close()
     return
 
 
 while True:
+    con = connect(database=DB_NAME, host=DB_HOST,
+                  user=DB_USER, password=DB_PASSWORD)
+    cursor = con.cursor()
     # get annotations without tracking
     cursor.execute(f'''
         SELECT
