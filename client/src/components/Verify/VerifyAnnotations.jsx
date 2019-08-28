@@ -128,9 +128,39 @@ class VerifyAnnotations extends Component {
     Swal.close();
   };
 
-  componentDidMount = () => {
+  componentDidMount = async () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     this.displayLoading();
+    await this.loadVerifiedBoxes();
+  };
+
+  loadVerifiedBoxes = async () => {
+    const { annotation } = this.props;
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    };
+    try {
+      let data = await axios.get(
+        `/api/annotations/verifiedboxes/${annotation.id}
+        ?videoid=${annotation.videoid}&timeinvideo=${annotation.timeinvideo}`,
+        config
+      );
+      if (data.data.length > 0) {
+        console.log('yes');
+        this.setState({
+          verifiedBoxes: data.data[0].box
+        });
+      } else {
+        this.setState({
+          verifiedBoxes: []
+        });
+      }
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   handleKeyDown = (keyName, e) => {
@@ -190,17 +220,20 @@ class VerifyAnnotations extends Component {
   resetState = () => {
     const { annotation } = this.props;
 
-    this.setState({
-      drawDragBox: true,
-      disableVerify: false,
-      concept: null,
-      comment: annotation.comment,
-      unsure: annotation.unsure,
-      x: annotation.x1,
-      y: annotation.y1,
-      width: annotation.x2 - annotation.x1,
-      height: annotation.y2 - annotation.y1
-    });
+    this.setState(
+      {
+        drawDragBox: true,
+        disableVerify: false,
+        concept: null,
+        comment: annotation.comment,
+        unsure: annotation.unsure,
+        x: annotation.x1,
+        y: annotation.y1,
+        width: annotation.x2 - annotation.x1,
+        height: annotation.y2 - annotation.y1
+      },
+      async () => await this.loadVerifiedBoxes()
+    );
   };
 
   toggleDragBox = () => {
@@ -209,7 +242,7 @@ class VerifyAnnotations extends Component {
     });
   };
 
-  nextAnnotation = () => {
+  nextAnnotation = async () => {
     const { size, index, handleNext } = this.props;
 
     this.setState({
@@ -643,13 +676,16 @@ class VerifyAnnotations extends Component {
       width,
       height,
       openedVideo,
-      videoDialogOpen
+      videoDialogOpen,
+      verifiedBoxes
     } = this.state;
 
     if (x === null) {
       return <div>Loading...</div>;
     }
 
+    console.log(verifiedBoxes);
+    console.log(annotation);
     return (
       <>
         {conceptDialogOpen && (
@@ -781,6 +817,32 @@ class VerifyAnnotations extends Component {
                       });
                     }}
                   >
+                    {verifiedBoxes
+                      ? verifiedBoxes.map(box => (
+                          <div
+                            key={box.x1}
+                            style={{
+                              position: 'relative',
+                              width: 0,
+                              height: 0,
+                              top: box.y1 * (annotation.videoheight / box.resy),
+                              left: box.x1 * (annotation.videowidth / box.resx)
+                            }}
+                          >
+                            <div
+                              style={{
+                                width:
+                                  (box.x2 - box.x1) *
+                                  (annotation.videowidth / box.resx),
+                                height:
+                                  (box.y2 - box.y1) *
+                                  (annotation.videoheight / box.resy),
+                                border: '2px solid green'
+                              }}
+                            />
+                          </div>
+                        ))
+                      : ' '}
                     <img
                       id="image"
                       onLoad={this.loaded}
