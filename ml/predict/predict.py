@@ -584,22 +584,22 @@ def upload_predict_progress(count, videoid, total_count, status):
     '''
     print(
         f'count: {count} total_count: {total_count} vid: {videoid} status: {status}')
-    # if (count == 0):
-    #     cursor.execute('''
-    #         UPDATE predict_progress
-    #         SET framenum=%s, status=%s, totalframe=%s''',
-    #                    (count, status, total_count,))
-    #     con.commit()
-    #     return
+    if (count == 0):
+        cursor.execute('''
+            UPDATE predict_progress
+            SET framenum=%s, status=%s, totalframe=%s''',
+                       (count, status, total_count,))
+        con.commit()
+        return
 
-    # if (total_count == count):
-    #     count = -1
-    # cursor.execute('''
-    #     UPDATE predict_progress
-    #     SET framenum=%s''',
-    #                (count,)
-    #                )
-    # con.commit()
+    if (total_count == count):
+        count = -1
+    cursor.execute('''
+        UPDATE predict_progress
+        SET framenum=%s''',
+                   (count,)
+                   )
+    con.commit()
 
 
 if __name__ == '__main__':
