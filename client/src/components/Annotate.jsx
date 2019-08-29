@@ -33,6 +33,9 @@ const styles = theme => ({
   },
   text: {
     margin: theme.spacing(2)
+  },
+  videoName: {
+    marginTop: theme.spacing(1.5)
   }
 });
 
@@ -470,15 +473,15 @@ class Annotate extends Component {
       dialogMsg
     } = this.state;
     if (!isLoaded) {
-      return <div className={classes.text}>Loading...</div>;
+      return <Typography className={classes.text}>Loading...</Typography>;
     }
     if (error) {
-      return <div className={classes.text}>Error: {error}</div>;
+      return <Typography className={classes.text}>Error: {error}</Typography>;
     }
     return (
       <>
         <Hotkeys keyName="space, right, left" onKeyDown={this.handleKeyDown} />
-        <Grid container className={classes.root} spacing={0}>
+        <Grid container spacing={0}>
           <Grid item xs>
             <VideoList
               handleVideoClick={this.handleVideoClick}
@@ -490,8 +493,12 @@ class Annotate extends Component {
               loadVideos={this.loadVideos}
             />
           </Grid>
-          <Grid item xs={10}>
-            <Typography variant="h5" align="center">
+          <Grid item xs={8}>
+            <Typography
+              variant="h5"
+              align="center"
+              className={classes.videoName}
+            >
               {`${currentVideo.id} ${currentVideo.filename}`}
             </Typography>
           </Grid>
@@ -499,7 +506,7 @@ class Annotate extends Component {
             <ConceptsSelected handleConceptClick={this.handleConceptClick} />
           </Grid>
         </Grid>
-        <Grid container className={classes.root} spacing={0}>
+        <Grid container spacing={0}>
           <Grid item xs={1} />
           <Grid item xs>
             <DragBoxContainer
@@ -542,9 +549,6 @@ class Annotate extends Component {
           <Grid item xs={6}>
             <div
               style={{
-                // marginTop: '10px',
-                // marginLeft: '20px',
-                // marginBottom: '10px',
                 float: 'left'
               }}
             >

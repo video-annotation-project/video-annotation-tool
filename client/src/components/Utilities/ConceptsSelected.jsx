@@ -6,12 +6,13 @@ import { withStyles } from '@material-ui/core/styles';
 import AddIcon from '@material-ui/icons/Add';
 import { ChevronRight, Close } from '@material-ui/icons';
 import SearchModal from './SearchModal';
+import { Typography } from '@material-ui/core';
 
-const styles = () => ({
+const styles = theme => ({
   root: {},
   extendDrawerButton: {
     float: 'right',
-    marginTop: '5px'
+    margin: theme.spacing()
   },
   drawerContent: {
     position: 'relative',
@@ -249,7 +250,9 @@ class ConceptsSelected extends React.Component {
 
     let drawerContent = <div />;
     if (!isLoaded) {
-      drawerContent = <div>Loading...</div>;
+      drawerContent = (
+        <Typography style={{ margin: '20px' }}>Loading...</Typography>
+      );
     } else {
       drawerContent = (
         <div className={classes.drawerContent}>

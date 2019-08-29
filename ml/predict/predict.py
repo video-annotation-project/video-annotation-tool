@@ -19,15 +19,15 @@ from memory_profiler import profile
 fp = open('memory_profiler.log', 'w+')
 
 
-# def get_classmap(concepts):
-#     classmap = []
-#     for concept in concepts:
-#         name = pd_query("select name from concepts where id=" +
-#                         str(concept)).iloc[0]["name"]
-#         classmap.append([name, concepts.index(concept)])
-#     classmap = pd.DataFrame(classmap)
-#     classmap = classmap.to_dict()[0]
-#     return classmap
+def get_classmap(concepts):
+    classmap = []
+    for concept in concepts:
+        name = pd_query("select name from concepts where id=" +
+                        str(concept)).iloc[0]["name"]
+        classmap.append([name, concepts.index(concept)])
+    classmap = pd.DataFrame(classmap)
+    classmap = classmap.to_dict()[0]
+    return classmap
 
 
 def printing_with_time(text):
@@ -150,7 +150,6 @@ def predict_on_video(videoid, model_weights, concepts, filename,
           userid in {str(tuple(config.GOOD_USERS))} AND
           conceptid {tuple_concept}''')
     print(annotations)
-
     printing_with_time("After database query")
 
     printing_with_time("Resizing annotations.")

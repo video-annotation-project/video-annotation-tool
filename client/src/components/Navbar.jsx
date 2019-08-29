@@ -13,7 +13,8 @@ const styles = theme => ({
     flexGrow: 1
   },
   pathname: {
-    margin: theme.spacing(1.5)
+    margin: theme.spacing(1.5),
+    marginLeft: theme.spacing(3)
   },
   divider: {
     marginBottom: theme.spacing(0)
@@ -187,7 +188,6 @@ class Navbar extends React.Component {
             <Typography
               variant="h4"
               color="textPrimary"
-              align="left"
               className={classes.pathname}
             >
               {this.titleCase(location.pathname)}

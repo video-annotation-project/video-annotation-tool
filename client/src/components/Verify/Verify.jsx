@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import axios from 'axios';
 import { withStyles } from '@material-ui/core/styles';
-import Paper from '@material-ui/core/Paper';
 import { Button, Typography } from '@material-ui/core';
 
 import VerifySelection from './VerifySelection';
@@ -375,14 +374,46 @@ class Verify extends Component {
   };
 
   handleNext = callback => {
-    const { index } = this.state;
-    localStorage.setItem('curIndex', index + 1);
-    this.setState(
-      {
-        index: index + 1
-      },
-      callback
-    );
+    const { index, annotations } = this.state;
+
+    if (
+      annotations &&
+      annotations.length &&
+      (annotations[index].videoid !== annotations[index + 1].videoid ||
+        annotations[index].timeinvideo !== annotations[index + 1].timeinvideo)
+    ) {
+      Swal.fire({
+        title: 'Finished with current frame',
+        text: 'Move on to next frame?',
+        type: 'info',
+        showCancelButton: true,
+        cancelButtonText: 'Add annotations',
+        confirmButtonText: 'Next',
+        reverseButtons: true
+      }).then(result => {
+        if (result.value) {
+          localStorage.setItem('curIndex', index + 1);
+          this.setState(
+            {
+              index: index + 1
+            },
+            callback
+          );
+        }
+        if (result.dismiss === 'cancel') {
+          // Add annotations here
+          console.log('Add more annotations');
+        }
+      });
+    } else {
+      localStorage.setItem('curIndex', index + 1);
+      this.setState(
+        {
+          index: index + 1
+        },
+        callback
+      );
+    }
   };
 
   resetLocalStorage = () => {
@@ -404,7 +435,6 @@ class Verify extends Component {
   };
 
   render() {
-    const { classes } = this.props;
     const {
       selectionMounted,
       selectedAnnotationCollections,
@@ -456,9 +486,10 @@ class Verify extends Component {
       );
     } else if (noAnnotations) {
       selection = (
-        <Paper square elevation={0} className={classes.resetContainer}>
+        <div style={{ margin: '30px' }}>
           <Typography>All Verified</Typography>
           <Button
+            style={{ marginTop: '15px' }}
             variant="contained"
             color="primary"
             onClick={() => {
@@ -473,7 +504,7 @@ class Verify extends Component {
           >
             Reset
           </Button>
-        </Paper>
+        </div>
       );
     } else {
       selection = (

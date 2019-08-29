@@ -238,6 +238,7 @@ class AnnotationCollection extends Component {
           config
         )
         .then(async () => {
+          Swal.close();
           Swal.fire({
             title: 'Inserted!',
             confirmButtonText: 'Lovely!'
@@ -279,7 +280,10 @@ class AnnotationCollection extends Component {
           selectedUsers
         }
       })
-      .then(res => res.data)
+      .then(res => {
+        Swal.close();
+        return res.data;
+      })
       .catch(error => {
         console.log(error);
         this.promiseResolver(error);
@@ -291,7 +295,10 @@ class AnnotationCollection extends Component {
       .get(`/api/collections/videos`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       })
-      .then(res => res.data)
+      .then(res => {
+        Swal.close();
+        return res.data;
+      })
       .catch(error => {
         console.log(error);
         this.promiseResolver(error);
@@ -312,7 +319,10 @@ class AnnotationCollection extends Component {
           selectedVideos
         }
       })
-      .then(res => res.data)
+      .then(res => {
+        Swal.close();
+        return res.data;
+      })
       .catch(error => {
         console.log(error);
         this.promiseResolver(error);
@@ -324,7 +334,10 @@ class AnnotationCollection extends Component {
       .get(`/api/collections/concepts`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       })
-      .then(res => res.data)
+      .then(res => {
+        Swal.close();
+        return res.data;
+      })
       .catch(error => {
         console.log(error);
         this.promiseResolver(error);
@@ -350,6 +363,7 @@ class AnnotationCollection extends Component {
           annotationCount: res.data[0].annotationcount,
           trackingCount: res.data[0].trackingcount
         });
+        Swal.close();
       })
       .catch(error => {
         console.log(error);
@@ -592,6 +606,13 @@ class AnnotationCollection extends Component {
   };
 
   handleNext = () => {
+    Swal.fire({
+      title: 'Loading...',
+      showConfirmButton: false,
+      onBeforeOpen: () => {
+        Swal.showLoading();
+      }
+    });
     this.setState(state => ({
       activeStep: state.activeStep + 1
     }));
@@ -712,9 +733,16 @@ class AnnotationCollection extends Component {
                 variant="contained"
                 color="primary"
                 disabled={this.checkButtonDisabled(activeStep)}
-                onClick={() =>
-                  this.insertAnnotationsToCollection('annotations')
-                }
+                onClick={() => {
+                  Swal.fire({
+                    title: 'Loading...',
+                    showConfirmButton: false,
+                    onBeforeOpen: () => {
+                      Swal.showLoading();
+                    }
+                  });
+                  this.insertAnnotationsToCollection('annotations');
+                }}
                 className={classes.button}
               >
                 Add Annotations
@@ -727,8 +755,8 @@ class AnnotationCollection extends Component {
                 onClick={
                   activeStep === steps.length - 2
                     ? async () => {
-                        await this.getAnnotations();
                         this.handleNext();
+                        await this.getAnnotations();
                       }
                     : this.handleNext
                 }

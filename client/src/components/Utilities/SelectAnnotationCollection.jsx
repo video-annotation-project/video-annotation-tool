@@ -39,7 +39,8 @@ class SelectAnnotationCollection extends React.Component {
     const { classes, value, handleChangeList } = this.props;
     const { collections } = this.state;
 
-    if (!collections) return <div>Loading...</div>;
+    if (!collections)
+      return <Typography style={{ margin: '20px' }}>Loading...</Typography>;
 
     return (
       <>

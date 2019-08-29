@@ -10,16 +10,21 @@ import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
 import Description from '@material-ui/icons/Description';
 import Swal from 'sweetalert2/src/sweetalert2';
+import { ChevronLeft } from '@material-ui/icons';
+import Grid from '@material-ui/core/Grid';
 
 import Summary from '../Utilities/Summary';
 
-const styles = () => ({
+const styles = theme => ({
   drawer: {
     width: '550px',
     overflow: 'auto'
   },
   toggleButton: {
-    marginTop: '5px'
+    margin: theme.spacing()
+  },
+  retractDrawerButton: {
+    margin: theme.spacing()
   }
 });
 
@@ -175,6 +180,22 @@ class AIvideoList extends Component {
           onClose={() => this.toggle('videoListOpen')}
         >
           <div className={classes.drawer}>
+            <Grid container alignItems="flex-end" justify="space-between">
+              <Grid item xs />
+              <Grid
+                item
+                xs={1}
+                style={{ float: 'right' }}
+                className={classes.retractDrawerButton}
+              >
+                <IconButton
+                  id="close-video-list"
+                  onClick={() => this.toggle('videoListOpen')}
+                >
+                  <ChevronLeft />
+                </IconButton>
+              </Grid>
+            </Grid>
             <List disablePadding>
               {aiVideos.map(video => (
                 <ListItem

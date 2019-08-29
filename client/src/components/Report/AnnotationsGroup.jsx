@@ -8,6 +8,7 @@ import ExpandLess from '@material-ui/icons/ExpandLess';
 import ExpandMore from '@material-ui/icons/ExpandMore';
 
 import Annotations from './Annotations';
+import { Typography } from '@material-ui/core';
 
 const styles = theme => ({
   icons: {
@@ -70,10 +71,14 @@ class AnnotationsGroup extends Component {
       verifiedCondition
     } = this.props;
     if (!isLoaded) {
-      return <List>Loading...</List>;
+      return <Typography style={{ margin: '20px' }}>Loading...</Typography>;
     }
     if (error) {
-      return <List>Error: {error.message}</List>;
+      return (
+        <Typography style={{ margin: '20px' }}>
+          Error: {error.message}
+        </Typography>
+      );
     }
     return (
       <>

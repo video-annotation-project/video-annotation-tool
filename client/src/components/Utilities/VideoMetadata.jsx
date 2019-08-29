@@ -9,6 +9,7 @@ import DialogActions from '@material-ui/core/DialogActions';
 import Button from '@material-ui/core/Button';
 import Radio from '@material-ui/core/Radio';
 import { withStyles } from '@material-ui/core/styles';
+import { Typography } from '@material-ui/core';
 
 import Summary from './Summary';
 
@@ -188,7 +189,7 @@ class VideoMetadata extends Component {
       summary
     } = this.state;
     if (!isLoaded) {
-      return <div>Loading...</div>;
+      return <Typography style={{ margin: '20px' }}>Loading...</Typography>;
     }
     const {
       filename,

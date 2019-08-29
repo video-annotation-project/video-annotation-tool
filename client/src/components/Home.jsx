@@ -37,6 +37,9 @@ const styles = theme => ({
     marginLeft: theme.spacing(2),
     marginBottom: theme.spacing(2),
     minWidth: 120
+  },
+  info: {
+    margin: theme.spacing(2)
   }
 });
 
@@ -249,12 +252,20 @@ class Home extends Component {
               </Table>
             </Paper>
             <div style={{ clear: 'both' }}>
-              <h3 style={{ float: 'left' }}>
+              <Typography
+                variant="h6"
+                className={classes.info}
+                style={{ float: 'left' }}
+              >
                 Total Annotations: {annotationTotal}
-              </h3>
-              <h3 style={{ float: 'right' }}>
+              </Typography>
+              <Typography
+                variant="h6"
+                className={classes.info}
+                style={{ float: 'right' }}
+              >
                 Total Verifications: {verificationTotal}
-              </h3>
+              </Typography>
             </div>
           </>
         ) : (
