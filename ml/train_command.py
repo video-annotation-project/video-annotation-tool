@@ -69,17 +69,17 @@ cursor.execute(
 # Start training job
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 
-# train_model(
-#     concepts,
-#     verifyVideos,
-#     model_params["model"],
-#     model_params["annotation_collections"],
-#     int(model_params["min_images"]),
-#     int(model_params["epochs"]),
-#     download_data=True,
-#     verified_only=model_params["verified_only"],
-#     include_tracking=model_params["include_tracking"],
-# )
+train_model(
+    concepts,
+    verifyVideos,
+    model_params["model"],
+    model_params["annotation_collections"],
+    int(model_params["min_images"]),
+    int(model_params["epochs"]),
+    download_data=True,
+    verified_only=model_params["verified_only"],
+    include_tracking=model_params["include_tracking"],
+)
 
 # Run verifyVideos in parallel
 # with Pool(processes = 2) as p:
