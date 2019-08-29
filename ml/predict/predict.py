@@ -128,6 +128,7 @@ def predict_on_video(videoid, model_weights, concepts, filename,
 
     printing_with_time("Before database query")
 
+    print(concepts)
     annotations = pd_query(
         f'''
         SELECT
@@ -140,7 +141,6 @@ def predict_on_video(videoid, model_weights, concepts, filename,
         FROM
           annotations
         WHERE
-          unsure=FALSE AND
           videoid={videoid} AND
           userid in {str(tuple(config.GOOD_USERS))} AND
           conceptid in {str(tuple(concepts))} ''')
