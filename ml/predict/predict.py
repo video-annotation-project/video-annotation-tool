@@ -55,6 +55,7 @@ class Tracked_object(object):
         label = detection[2]
         confidence = detection[1]
         self.save_annotation(frame_num, label=label, confidence=confidence)
+        self.tracked_frames = 0
 
     def save_annotation(self, frame_num, label=None, confidence=None):
         annotation = {}
@@ -82,6 +83,7 @@ class Tracked_object(object):
         confidence = detection[1]
         self.annotations = self.annotations[:-1]
         self.save_annotation(frame_num, label=label, confidence=confidence)
+        self.tracked_frames = 0
 
     def update(self, frame, frame_num):
         success, box = self.tracker.update(frame)
@@ -93,6 +95,7 @@ class Tracked_object(object):
             self.y2 = y1 + h
             self.box = (x1, y1, w, h)
             self.save_annotation(frame_num)
+            self.tracked_frames += 1
         return success
 
     def change_id(self, matched_obj_id):
@@ -244,7 +247,7 @@ def predict_frames(video_frames, fps, model, videoid):
             detection = (obj.box, 0, 0)
             match, matched_object = does_match_existing_tracked_object(
                 detection, temp)
-            if not success:
+            if not success or obj.tracked_frames > 30:
                 annotations.append(obj.annotations)
                 currently_tracked_objects.remove(obj)
                 # Check if there is a matching prediction if the tracking fails?
