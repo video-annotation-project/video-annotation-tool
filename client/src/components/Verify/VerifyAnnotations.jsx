@@ -103,6 +103,12 @@ class VerifyAnnotations extends Component {
     this.resetLocalStorage = resetLocalStorage;
   }
 
+  componentDidUpdate(prevProps) {
+    if (this.props.annotating !== prevProps.annotating) {
+      this.loadVerifiedBoxes();
+    }
+  }
+
   displayLoading = () => {
     const { tracking } = this.props;
     const { videoDialogOpen } = this.state;
@@ -129,6 +135,7 @@ class VerifyAnnotations extends Component {
   };
 
   componentDidMount = async () => {
+    this.displayLoading();
     window.scrollTo({ top: 0, behavior: 'smooth' });
     this.displayLoading();
     await this.loadVerifiedBoxes();
@@ -148,16 +155,25 @@ class VerifyAnnotations extends Component {
         ?videoid=${annotation.videoid}&timeinvideo=${annotation.timeinvideo}`,
         config
       );
+      let boxes = [];
       if (data.data.length > 0) {
-        console.log('yes');
+        data.data.forEach(boxWithId => {
+          boxWithId.box.forEach(box => {
+            boxes.push(box);
+          });
+        });
+      }
+
+      if (boxes.length > 0) {
         this.setState({
-          verifiedBoxes: data.data[0].box
+          verifiedBoxes: boxes
         });
       } else {
         this.setState({
           verifiedBoxes: []
         });
       }
+      Swal.close();
     } catch (error) {
       console.log(error);
     }
@@ -313,7 +329,103 @@ class VerifyAnnotations extends Component {
     this.nextAnnotation();
   };
 
+  postAnnotation = (comment, unsure) => {
+    const { x, y, width, height, clickedConcept, currentVideo } = this.state;
+    const videoElement = document.getElementById('video');
+    const cTime = annotations.currentTime;
+
+    const dragBox = document.getElementById('dragBox');
+
+    if (dragBox === null) {
+      Swal.fire({
+        title: 'Error',
+        text: 'No bounding box exists.',
+        type: 'error',
+        confirmButtonText: 'Okay'
+      });
+      return;
+    }
+
+    const dragBoxCord = dragBox.getBoundingClientRect();
+
+    const vidCord = videoElement.getBoundingClientRect();
+
+    // Make video image
+    const canvas = document.createElement('canvas');
+    canvas.height = vidCord.height;
+    canvas.width = vidCord.width;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+    const videoImage = new window.Image();
+    videoImage.setAttribute('crossOrigin', 'use-credentials');
+    videoImage.src = canvas.toDataURL(1.0);
+
+    // Bouding box coordinates
+    const x1 = Math.max(x, 0);
+    const y1 = Math.max(y, 0);
+    const x2 = Math.min(x1 + parseInt(width, 0), 1599);
+    const y2 = Math.min(y1 + parseInt(height, 0), 899);
+
+    // draw video with and without bounding box to canvas and save as img
+    const date = Date.now().toString();
+
+    const body = {
+      conceptId: clickedConcept.id,
+      videoId: currentVideo.id,
+      timeinvideo: cTime,
+      x1,
+      y1,
+      x2,
+      y2,
+      videoWidth: 1600,
+      videoHeight: 900,
+      image: date,
+      imagewithbox: `${date}_box`,
+      comment,
+      unsure
+    };
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    };
+    axios
+      .post('/api/annotations', body, config)
+      .then(async res => {
+        console.log(res.data.message);
+        Swal.fire({
+          type: 'success',
+          title: res.data.message
+        });
+        this.handleDialogClose();
+        this.createAndUploadImages(
+          videoImage,
+          ctx,
+          canvas,
+          dragBoxCord,
+          date,
+          x1,
+          y1
+        );
+      })
+      .catch(error => {
+        console.log(error);
+        console.log(JSON.parse(JSON.stringify(error)));
+        if (!error.response) {
+          return;
+        }
+        const errMsg =
+          error.response.data.detail || error.response.data.message || 'Error';
+        console.log(errMsg);
+        this.setState({
+          error: errMsg
+        });
+      });
+  };
+
   postBoxImage = async dragBox => {
+    const { annotation } = this.props;
     const { x, y, width, height } = this.state;
     const dragBoxCord = dragBox.getBoundingClientRect();
     const imageElement = document.getElementById('image');
@@ -322,8 +434,6 @@ class VerifyAnnotations extends Component {
     const y1 = y;
     const x2 = x + parseInt(width, 0);
     const y2 = y + parseInt(height, 0);
-
-    const { annotation } = this.props;
 
     try {
       if (
@@ -502,45 +612,13 @@ class VerifyAnnotations extends Component {
   };
 
   optionButtons = annotation => {
-    const { classes, resetLocalStorage } = this.props;
+    const { classes, resetLocalStorage, annotating } = this.props;
     const { disableVerify } = this.state;
     return (
       <div
         className={classes.buttonsContainer1}
         style={{ width: (2 * annotation.videowidth) / 3 }}
       >
-        <MuiThemeProvider theme={theme}>
-          <Button
-            className={classes.button}
-            variant="contained"
-            color="secondary"
-            onClick={this.handleDelete}
-          >
-            Delete
-          </Button>
-        </MuiThemeProvider>
-        <Button
-          className={classes.button}
-          variant="contained"
-          onClick={this.resetState}
-        >
-          Reset Box
-        </Button>
-        <Button
-          className={classes.button}
-          variant="contained"
-          onClick={this.nextAnnotation}
-        >
-          Ignore
-        </Button>
-        <Button
-          className={classes.button}
-          variant="contained"
-          color="primary"
-          onClick={this.toggleDetails}
-        >
-          Details
-        </Button>
         <Button
           className={classes.button}
           variant="contained"
@@ -549,15 +627,57 @@ class VerifyAnnotations extends Component {
         >
           Reset Selections
         </Button>
+        {annotating ? (
+          ''
+        ) : (
+          <>
+            <Button
+              className={classes.button}
+              variant="contained"
+              color="primary"
+              onClick={this.toggleDetails}
+            >
+              Details
+            </Button>
+            <MuiThemeProvider theme={theme}>
+              <Button
+                className={classes.button}
+                variant="contained"
+                color="secondary"
+                onClick={this.handleDelete}
+              >
+                Delete
+              </Button>
+            </MuiThemeProvider>
+            <Button
+              className={classes.button}
+              variant="contained"
+              onClick={this.resetState}
+            >
+              Reset Box
+            </Button>
+          </>
+        )}
         <Button
           className={classes.button}
           variant="contained"
-          color="primary"
-          onClick={this.handleVerifyClick}
-          disabled={disableVerify}
+          onClick={this.nextAnnotation}
         >
-          Verify
+          {annotating ? 'Done' : 'Ignore'}
         </Button>
+        {annotating ? (
+          ''
+        ) : (
+          <Button
+            className={classes.button}
+            variant="contained"
+            color="primary"
+            onClick={this.handleVerifyClick}
+            disabled={disableVerify}
+          >
+            Annotate
+          </Button>
+        )}
         <IconButton
           onClick={this.videoDialogToggle}
           aria-label="OnDemandVideo"
@@ -651,6 +771,37 @@ class VerifyAnnotations extends Component {
     );
   };
 
+  loadDialogModal = () => {
+    const { annotating } = this.props;
+    const { unsure, conceptDialogMsg, comment } = this.state;
+    if (annotating) {
+      return (
+        <DialogModal
+          title="Confirm Annotation"
+          message={conceptDialogMsg}
+          placeholder="Comments"
+          comment=""
+          inputHandler={this.postAnnotation}
+          open
+          handleClose={this.handleConceptDialogClose}
+        />
+      );
+    } else {
+      return (
+        <DialogModal
+          title="Confirm Annotation Edit"
+          message={conceptDialogMsg}
+          placeholder="Comments"
+          comment={comment}
+          inputHandler={this.changeConcept}
+          open
+          handleClose={this.handleConceptDialogClose}
+          unsure={unsure}
+        />
+      );
+    }
+  };
+
   render() {
     const {
       classes,
@@ -668,10 +819,7 @@ class VerifyAnnotations extends Component {
     const {
       x,
       y,
-      unsure,
       conceptDialogOpen,
-      conceptDialogMsg,
-      comment,
       end,
       trackingStatus,
       drawDragBox,
@@ -686,22 +834,9 @@ class VerifyAnnotations extends Component {
       return <Typography style={{ margin: '20px' }}>Loading...</Typography>;
     }
 
-    console.log(verifiedBoxes);
-    console.log(annotation);
     return (
       <>
-        {conceptDialogOpen && (
-          <DialogModal
-            title="Confirm Annotation Edit"
-            message={conceptDialogMsg}
-            placeholder="Comments"
-            comment={comment}
-            inputHandler={this.changeConcept}
-            open
-            handleClose={this.handleConceptDialogClose}
-            unsure={unsure}
-          />
-        )}
+        {conceptDialogOpen && this.loadDialogModal()}
         {!end ? (
           <>
             {tracking || videoDialogOpen ? (
@@ -822,7 +957,7 @@ class VerifyAnnotations extends Component {
                     {verifiedBoxes
                       ? verifiedBoxes.map(box => (
                           <div
-                            key={box.x1}
+                            key={verifiedBoxes.indexOf(box)}
                             style={{
                               position: 'relative',
                               width: 0,
@@ -839,7 +974,7 @@ class VerifyAnnotations extends Component {
                                 height:
                                   (box.y2 - box.y1) *
                                   (annotation.videoheight / box.resy),
-                                border: '2px solid green'
+                                border: '2px solid DodgerBlue'
                               }}
                             />
                           </div>

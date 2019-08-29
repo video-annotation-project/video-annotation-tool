@@ -92,8 +92,10 @@ router.get(
         a.videoid, json_agg(json_build_object('x1',a.x1, 'y1',a.y1, 'x2',a.x2, 'y2',a.y2, 'resx', a.videowidth, 'resy', a.videoheight )) as box
       FROM
         annotations a
+      LEFT JOIN
+        videos v ON v.id = a.videoid
       WHERE 
-        a.videoid = $1 AND a.timeinvideo = $2 AND id <> $3
+        a.videoid = $1 AND ROUND(v.fps * a.timeinvideo) = ROUND(v.fps * $2) AND a.id <> $3
         AND a.verifiedby IS NOT NULL
       GROUP BY
           a.videoid, a.timeinvideo
@@ -132,12 +134,12 @@ router.get(
       ON
         a.id=ai.annotationid
       WHERE
-        ai.id = ANY($1::int[]) and a.verifiedby IS NOT NULL
-      ORDER BY a.timeinvideo
+        ai.id = ANY($1::int[]) and a.verifiedby IS NULL
     `;
-    if (req.query.tracking == 'true') {
+    if (req.query.tracking === 'true') {
       queryText += ` AND userid <> (SELECT id from users where username ='tracking')`;
     }
+    queryText += ` ORDER BY a.videoid, a.timeinvideo`;
     try {
       const annotations = await psql.query(queryText, [params]);
       res.json(annotations.rows);
@@ -440,7 +442,7 @@ router.get(
 
     if (selectedUsers && selectedVideos && selectedConcepts && selectedUnsure) {
       queryText += `a.*, c.name, c.picture, u.username, v.filename `;
-      orderBy = ' ORDER BY a.id';
+      orderBy = ' ORDER BY a.videoid, a.timeinvideo';
     } else if (selectedUsers && selectedVideos && selectedConcepts) {
       queryText += `a.unsure `;
     } else if (selectedUsers && selectedVideos) {
