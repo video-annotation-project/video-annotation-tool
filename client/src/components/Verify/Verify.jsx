@@ -64,7 +64,8 @@ class Verify extends Component {
       noAnnotations,
       index,
       excludeTracking: false,
-      annotations
+      annotations,
+      annotating: false
     };
   }
 
@@ -395,14 +396,20 @@ class Verify extends Component {
           localStorage.setItem('curIndex', index + 1);
           this.setState(
             {
-              index: index + 1
+              index: index + 1,
+              annotating: false
             },
             callback
           );
         }
         if (result.dismiss === 'cancel') {
           // Add annotations here
-          console.log('Add more annotations');
+          this.setState(
+            {
+              annotating: true
+            },
+            callback
+          );
         }
       });
     } else {
@@ -446,8 +453,8 @@ class Verify extends Component {
       excludeTracking,
       annotations,
       noAnnotations,
-      index
-      // collectionFlag
+      index,
+      annotating
     } = this.state;
     if (annotations && index >= annotations.length + 1) {
       this.resetLocalStorage();
@@ -518,6 +525,7 @@ class Verify extends Component {
           resetLocalStorage={this.resetLocalStorage}
           collectionFlag={selectedAnnotationCollections.length}
           excludeTracking={excludeTracking}
+          annotating={annotating}
         />
       );
     }
