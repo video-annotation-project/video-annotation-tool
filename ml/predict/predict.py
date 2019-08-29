@@ -571,21 +571,6 @@ def upload_annotation(frame, frame_w_box, x1, x2, y1, y2,
     )
 
 
-# post frame_num to predict_progress psql
-'''
-For updating the predict_progress psql database, which tracks prediction and 
-video generation status.
-
-Arguments:
-count - frame of video (or index of annotation) being processed
-videoid - video being processed
-con - sql connection
-total_count - total number of frames in the video 
-    (or number of predictions + annotations)
-status - Indicates whether processing video or drawing annotation boxes
-'''
-
-
 def upload_predict_progress(count, videoid, total_count, status):
     '''
     For updating the predict_progress psql database, which tracks prediction and 

@@ -151,7 +151,8 @@ class AnnotationGenerator(object):
         concept_count = {}
 
         annotations = AnnotationGenerator._get_annotations(
-            collection_ids, verified_only, include_tracking, verify_videos, concepts)
+            collection_ids, verified_only, include_tracking,
+            verify_videos, concepts, min_examples)
 
         for concept in concepts:
             concept_count[concept] = 0
@@ -196,7 +197,9 @@ class AnnotationGenerator(object):
                 # Gets all concepts that we have too many of
                 excess = list(
                     {key: value for (key, value) in concept_count.items() if value > min_examples})
-                # Don't save the annotation if it doens't include concept that we need more of
+
+                # if it doens't include concept that we need more of
+                # Don't save the annotation
                 if set(excess) >= set(in_annot):
                     for a in in_annot:
                         concept_count[a] -= 1
@@ -206,8 +209,9 @@ class AnnotationGenerator(object):
         return selected, concept_count
 
     @staticmethod
-    def _get_annotations(collection_ids, verified_only, include_tracking, verify_videos, concepts):
-        # Query that gets all annotations for given concepts (and child concepts)
+    def _get_annotations(collection_ids, verified_only, include_tracking,
+                         verify_videos, concepts, min_examples):
+        # Query that gets all annotations for given concepts
         # making sure that any tracking annotations originated from good users
         tracking_user = cursor.execute(
             """SELECT id FROM users WHERE username = 'tracking'""")
@@ -237,8 +241,27 @@ class AnnotationGenerator(object):
         if verified_only:
             annotations_query += """ AND a.verifiedby IS NOT NULL"""
 
+        # Filter collection so each concept has min_example annotations
         annotations_query += r'''
+            ),
+            filteredCollection AS (
+                SELECT
+                    *
+                FROM (
+                    SELECT
+                        ROW_NUMBER() OVER (
+                            PARTITION BY
+                                conceptid
+                            ORDER BY random()) AS r,
+                        c.*
+                    FROM
+                        collection c) t
+                WHERE
+                    t.r <= (%s)
             )
+        '''
+        # Add annotations that exist in the same frame
+        annotations_query += r'''
             SELECT
                 A.id,
                 image,
@@ -260,7 +283,7 @@ class AnnotationGenerator(object):
                     SELECT
                         1
                     FROM
-                        collection c
+                        filteredCollection c
                     WHERE
                         c.videoid=a.videoid
                         AND c.frame_num=ROUND(fps * timeinvideo))
@@ -269,7 +292,9 @@ class AnnotationGenerator(object):
         if not include_tracking:
             annotations_query += f''' AND a.userid <> {tracking_uid}'''
 
-        return pd_query(annotations_query, (collection_ids, verify_videos, concepts, ))
+        return pd_query(
+            annotations_query,
+            (collection_ids, verify_videos, min_examples, concepts, ))
 
 
 class S3Generator(Generator):
@@ -378,7 +403,8 @@ class S3Generator(Generator):
                 float(annot['y2']),
             ]]))
 
-        print(f'Num annotations: {annotations["bboxes"].shape[0]} in image {image["save_name"]} / {image["image"]}')
+        print(
+            f'Num annotations: {annotations["bboxes"].shape[0]} in image {image["save_name"]} / {image["image"]}')
 
         return annotations
 
