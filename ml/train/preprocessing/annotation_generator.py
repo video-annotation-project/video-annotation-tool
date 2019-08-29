@@ -6,10 +6,10 @@ import boto3
 import pandas as pd
 import numpy as np
 from six import raise_from
-from PIL import Image, ImageFile
+from PIL import Image, ImageFile, ImageDraw
 from botocore.exceptions import ClientError
 from keras_retinanet.preprocessing.csv_generator import Generator
-from keras_retinanet.utils.image import read_image_bgr
+from keras_retinanet.utils.image import read_image_bgr, resize_image
 
 from utils.query import pd_query, cursor
 from config import config
@@ -17,7 +17,6 @@ from config import config
 
 # Without this the program will crash
 ImageFile.LOAD_TRUNCATED_IMAGES = True
-
 
 def _parse(value, function, fmt):
     """
@@ -74,15 +73,15 @@ def get_classmap(classes):
     return classmap
 
 
-def _bound_coordinates(first, curr):
-    x_ratio = (curr['videowidth'] / first['videowidth'])
-    y_ratio = (curr['videoheight'] / first['videoheight'])
+def _bound_coordinates(curr):
+    x_ratio = (curr['videowidth'] / config.RESIZED_WIDTH)
+    y_ratio = (curr['videoheight'] / config.RESIZED_HEIGHT)
 
-    x1 = min(max(int(curr['x1'] / x_ratio), 0), int(first['videowidth']))
-    x2 = min(max(int(curr['x2'] / x_ratio), 0), int(first['videowidth']))
+    x1 = min(max(int(curr['x1'] / x_ratio), 0), config.RESIZED_WIDTH)
+    x2 = min(max(int(curr['x2'] / x_ratio), 0), config.RESIZED_WIDTH)
 
-    y1 = min(max(int(curr['y1'] / y_ratio), 0), int(first['videoheight']))
-    y2 = min(max(int(curr['y2'] / y_ratio), 0), int(first['videoheight']))
+    y1 = min(max(int(curr['y1'] / y_ratio), 0), config.RESIZED_HEIGHT)
+    y2 = min(max(int(curr['y2'] / y_ratio), 0), config.RESIZED_HEIGHT)
 
     return x1, x2, y1, y2
 
@@ -98,6 +97,7 @@ class AnnotationGenerator(object):
                  min_examples,
                  validation_split=0.8):
 
+        print("Grabbing annotations....")
         # Start with a list of all possible annotations, grouped by frame in video
         selected_frames, concept_counts = self._select_annotations(collection_ids,
                                                                    verified_only,
@@ -105,6 +105,7 @@ class AnnotationGenerator(object):
                                                                    verify_videos,
                                                                    min_examples,
                                                                    classes)
+        print(f"Found {sum(concept_counts.values())} annotations.")
         self.selected_frames = selected_frames
         self.classmap = get_classmap(classes)
 
@@ -178,19 +179,19 @@ class AnnotationGenerator(object):
             if not any(v < min_examples for v in concept_count.values()):
                 break
 
-            first = frame.iloc[0]
-
             in_annot = []
             for i, row in frame.iterrows():
                 concept_count[row['conceptid']] += 1
                 in_annot.append(row['conceptid'])
 
-                x1, x2, y1, y2 = _bound_coordinates(first, row)
+                x1, x2, y1, y2 = _bound_coordinates(row)
 
                 frame.at[i, 'x1'] = x1
                 frame.at[i, 'x2'] = x2
                 frame.at[i, 'y1'] = y1
                 frame.at[i, 'y2'] = y2
+                frame.at[i, 'videowidth'] = config.RESIZED_WIDTH
+                frame.at[i, 'videoheight'] = config.RESIZED_HEIGHT
 
             # Checks if frame has only concept we have too many of
             if any(v > min_examples for v in concept_count.values()):
@@ -205,7 +206,7 @@ class AnnotationGenerator(object):
                         concept_count[a] -= 1
                     continue
             selected.append(frame)
-
+        
         return selected, concept_count
 
     @staticmethod
@@ -402,9 +403,8 @@ class S3Generator(Generator):
                 float(annot['x2']),
                 float(annot['y2']),
             ]]))
-
-        print(
-            f'Num annotations: {annotations["bboxes"].shape[0]} in image {image["save_name"]} / {image["image"]}')
+            
+        print(f'Training frame with {annotations["bboxes"].shape[0]} annotations on image {image["save_name"]} ({image["image"]})')
 
         return annotations
 
@@ -420,10 +420,12 @@ class S3Generator(Generator):
             obj = self.client.get_object(
                 Bucket=config.S3_BUCKET, Key=config.S3_ANNOTATION_FOLDER + image_name)
             obj_image = Image.open(obj['Body'])
+            resized_image = obj_image.resize((config.RESIZED_WIDTH, config.RESIZED_HEIGHT))
         # ClientError is the exception class for a KeyNotFound error
         except ClientError:
-            raise IOError(
-                f'file {config.S3_ANNOTATION_FOLDER}{image_name} not found in S3 bucket')
+            self._download_image((image_index + 1) % self.size())
+            # raise IOError(
+            #    f'file {config.S3_ANNOTATION_FOLDER}{image_name} not found in S3 bucket')
 
         # Some files have a file extension, some don't. Let's fix that.
         if self.image_extension not in image_name:
@@ -434,7 +436,7 @@ class S3Generator(Generator):
         # Atomically check if the file has already been opened.
         # If we're good, save it
         if not _atomic_file_exists(image_path):
-            obj_image.save(image_path)
+            resized_image.save(image_path)
         else:
             # The file exists, lets make sure it's done downloading.
             # We spin while the file exists, but has no content
@@ -466,6 +468,11 @@ class S3Generator(Generator):
             x2 = _parse(x2, int, 'malformed x2: {{}}')
             y2 = _parse(y2, int, 'malformed y2: {{}}')
 
+            user_id = image['userid']
+            user_id = _parse(user_id, float, 'bad user id')
+
+            tracking = user_id == 32
+
             # If a row contains only an image path, it's an image without annotations.
             if (x1, y1, x2, y2, class_name) == ('', '', '', '', ''):
                 continue
@@ -484,7 +491,7 @@ class S3Generator(Generator):
                     class_name, set(self.classes)))
 
             result[image_file].append(
-                {'x1': x1, 'x2': x2, 'y1': y1, 'y2': y2, 'class': class_name})
+                    {'x1': x1, 'x2': x2, 'y1': y1, 'y2': y2, 'class': class_name, 'tracking': tracking})
         return result
 
     def _connect_s3(self):

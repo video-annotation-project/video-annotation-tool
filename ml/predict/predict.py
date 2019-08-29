@@ -136,6 +136,7 @@ def predict_on_video(videoid, model_weights, concepts, filename,
     else:
         tuple_concept = f''' in {str(tuple(concepts))}'''
 
+    print(concepts)
     annotations = pd_query(
         f'''
         SELECT
@@ -148,7 +149,6 @@ def predict_on_video(videoid, model_weights, concepts, filename,
         FROM
           annotations
         WHERE
-          unsure=FALSE AND
           videoid={videoid} AND
           userid in {str(tuple(config.GOOD_USERS))} AND
           conceptid {tuple_concept}''')
