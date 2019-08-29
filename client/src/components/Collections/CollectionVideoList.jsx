@@ -17,13 +17,13 @@ import Swal from 'sweetalert2/src/sweetalert2';
 
 import GeneralMenu from '../Utilities/GeneralMenu';
 
-const styles = () => ({
+const styles = theme => ({
   drawer: {
     width: '550px',
     overflow: 'auto'
   },
   toggleButton: {
-    marginTop: '5px',
+    margin: theme.spacing(),
     float: 'right'
   },
   createButton: {
@@ -174,7 +174,7 @@ class CollectionVideoList extends Component {
     const { classes, collType } = this.props;
     const { data, CollectionOpen } = this.state;
     if (!data) {
-      return <div>Loading...</div>;
+      return <Typography style={{ margin: '20px' }}>Loading...</Typography>;
     }
 
     return (

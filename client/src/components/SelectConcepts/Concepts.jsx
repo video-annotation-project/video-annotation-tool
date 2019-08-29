@@ -216,11 +216,13 @@ class Concepts extends React.Component {
     const { classes } = this.props;
 
     if (!isLoaded) {
-      return <Typography className={classes.path}>Loading...</Typography>;
+      return <Typography style={{ margin: '20px' }}>Loading...</Typography>;
     }
     if (error) {
       return (
-        <Typography className={classes.path}>Error: {error.message}</Typography>
+        <Typography style={{ margin: '20px' }}>
+          Error: {error.message}
+        </Typography>
       );
     }
     return (

@@ -23,7 +23,7 @@ const styles = theme => ({
     overflowX: 'hidden'
   },
   toggleButton: {
-    marginTop: '5px'
+    margin: theme.spacing()
   },
   retractDrawerButton: {
     margin: '10px'

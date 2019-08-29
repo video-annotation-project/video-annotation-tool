@@ -11,7 +11,7 @@ import Grid from '@material-ui/core/Grid';
 import DragBoxContainer from '../Utilities/DragBoxContainer';
 import AIvideoList from './AIvideoList';
 
-const styles = () => ({
+const styles = theme => ({
   videoContainer: {
     top: '60px',
     width: '1600px',
@@ -21,6 +21,9 @@ const styles = () => ({
     marginTop: '10px',
     marginLeft: '20px',
     marginBottom: '10px'
+  },
+  videoName: {
+    marginTop: theme.spacing(1.5)
   }
 });
 
@@ -203,10 +206,10 @@ class Annotate extends Component {
       videoPlaybackRate
     } = this.state;
     if (!isLoaded) {
-      return <div>Loading...</div>;
+      return <Typography style={{ margin: '20px' }}>Loading...</Typography>;
     }
     if (error) {
-      return <div>Error: {error}</div>;
+      return <Typography style={{ margin: '20px' }}>Error: {error}</Typography>;
     }
     return (
       <>
@@ -221,7 +224,11 @@ class Annotate extends Component {
             />
           </Grid>
           <Grid item xs>
-            <Typography variant="h5">
+            <Typography
+              variant="h5"
+              align="center"
+              className={classes.videoName}
+            >
               {`${currentVideo.id} ${currentVideo.filename}`}
             </Typography>
           </Grid>

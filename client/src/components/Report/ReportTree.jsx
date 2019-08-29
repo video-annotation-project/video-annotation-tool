@@ -7,6 +7,7 @@ import Collapse from '@material-ui/core/Collapse';
 import ExpandLess from '@material-ui/icons/ExpandLess';
 import ExpandMore from '@material-ui/icons/ExpandMore';
 import axios from 'axios';
+import { Typography } from '@material-ui/core';
 
 import AnnotationsGroup from './AnnotationsGroup';
 import Annotations from './Annotations';
@@ -15,6 +16,9 @@ const styles = theme => ({
   root: {
     backgroundColor: theme.palette.background.paper,
     paddingLeft: theme.spacing(2)
+  },
+  text: {
+    margin: theme.spacing(2)
   }
 });
 
@@ -130,10 +134,10 @@ class ReportTree extends Component {
     const { classes } = this.props;
 
     if (!isLoaded) {
-      return <List>Loading...</List>;
+      return <Typography className={classes.text}>Loading...</Typography>;
     }
     if (error) {
-      return <div>Error: {error}</div>;
+      return <Typography className={classes.text}>Error: {error}</Typography>;
     }
     return (
       <List disablePadding className={classes.root}>

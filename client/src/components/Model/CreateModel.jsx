@@ -3,7 +3,6 @@ import axios from 'axios';
 import Stepper from '@material-ui/core/Stepper';
 import Step from '@material-ui/core/Step';
 import StepLabel from '@material-ui/core/StepLabel';
-import StepContent from '@material-ui/core/StepContent';
 import Button from '@material-ui/core/Button';
 import Paper from '@material-ui/core/Paper';
 import TextField from '@material-ui/core/TextField';
@@ -43,7 +42,7 @@ const styles = theme => ({
     marginBottom: theme.spacing(2)
   },
   button: {
-    marginTop: theme.spacing(2),
+    marginTop: theme.spacing(3),
     marginRight: theme.spacing()
   },
   collectionButton: {
@@ -52,12 +51,15 @@ const styles = theme => ({
   resetContainer: {
     padding: theme.spacing(3)
   },
-  ModelNameForm: {
+  modelNameForm: {
     display: 'flex',
     flexWrap: 'wrap'
   },
   group: {
     marginLeft: 15
+  },
+  grid: {
+    margin: theme.spacing(6)
   }
 });
 
@@ -211,7 +213,7 @@ class CreateModel extends Component {
     const { modelName } = this.state;
 
     return (
-      <form className={classes.ModelNameForm} onSubmit={this.handleNext}>
+      <form className={classes.modelNameForm} onSubmit={this.handleNext}>
         <TextField
           margin="normal"
           name="modelName"
@@ -241,7 +243,7 @@ class CreateModel extends Component {
     const { classes } = this.props;
     const { concepts, conceptsSelected, conceptCollections } = this.state;
     if (!concepts) {
-      return <div>Loading...</div>;
+      return <Typography style={{ margin: '20px' }}>Loading...</Typography>;
     }
     return (
       <Grid container spacing={5}>
@@ -363,7 +365,7 @@ class CreateModel extends Component {
     const { videos, videosSelected, videoCollections } = this.state;
 
     if (!videos) {
-      return <div>Loading...</div>;
+      return <Typography style={{ margin: '20px' }}>Loading...</Typography>;
     }
     return (
       <Grid container spacing={5}>
@@ -537,46 +539,54 @@ class CreateModel extends Component {
       openedVideo
     } = this.state;
     if (!models) {
-      return <div>Loading...</div>;
+      return <Typography style={{ margin: '20px' }}>Loading...</Typography>;
     }
     return (
       <div className={classes.root}>
-        <Stepper activeStep={activeStep} orientation="vertical">
-          {steps.map((label, index) => (
+        <Stepper
+          activeStep={activeStep}
+          style={{ backgroundColor: 'transparent' }}
+        >
+          {steps.map(label => (
             <Step key={label}>
               <StepLabel>{label}</StepLabel>
-              <StepContent>
-                {this.getStepContent(index)}
-                <div className={classes.actionsContainer}>
-                  <div>
-                    <Button
-                      disabled={activeStep === 0}
-                      onClick={this.handleBack}
-                      className={classes.button}
-                    >
-                      Back
-                    </Button>
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      onClick={this.handleNext}
-                      className={classes.button}
-                      disabled={
-                        (activeStep === 0 && modelName === '') ||
-                        (activeStep === 1 && conceptsSelected.length < 1) ||
-                        (activeStep === 2 && videosSelected.length < 1)
-                      }
-                    >
-                      {activeStep === steps.length - 1
-                        ? 'Create Model'
-                        : 'Next'}
-                    </Button>
-                  </div>
-                </div>
-              </StepContent>
             </Step>
           ))}
         </Stepper>
+        <Grid container justify="center">
+          <Grid item className={classes.grid}>
+            {this.getStepContent(activeStep)}
+          </Grid>
+        </Grid>
+        <Grid container justify="center">
+          <Grid item>
+            <div className={classes.actionsContainer}>
+              <div>
+                <Button
+                  variant="contained"
+                  disabled={activeStep === 0}
+                  onClick={this.handleBack}
+                  className={classes.button}
+                >
+                  Back
+                </Button>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={this.handleNext}
+                  className={classes.button}
+                  disabled={
+                    (activeStep === 0 && modelName === '') ||
+                    (activeStep === 1 && conceptsSelected.length < 1) ||
+                    (activeStep === 2 && videosSelected.length < 1)
+                  }
+                >
+                  {activeStep === steps.length - 1 ? 'Create Model' : 'Next'}
+                </Button>
+              </div>
+            </div>
+          </Grid>
+        </Grid>
         {activeStep === steps.length && (
           <Paper square elevation={0} className={classes.resetContainer}>
             <Typography>Model has been created...</Typography>
