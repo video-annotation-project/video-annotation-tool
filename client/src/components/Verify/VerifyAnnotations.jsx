@@ -96,12 +96,6 @@ class Hover extends Component {
             confirmButtonText: 'Yes, delete it!'
           }).then(result => {
             if (result.value) {
-              this.setState({
-                x: 0,
-                y: 0,
-                width: 0,
-                height: 0
-              });
               handleDelete();
             }
           });
@@ -360,7 +354,7 @@ class VerifyAnnotations extends Component {
         if (annotation.id === annotationArg.id) {
           this.nextAnnotation();
         } else {
-          await this.resetState();
+          this.resetState();
         }
       })
       .catch(error => {
