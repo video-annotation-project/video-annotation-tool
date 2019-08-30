@@ -89,14 +89,14 @@ router.get(
     let params = [req.query.videoid, req.query.timeinvideo, req.params.id];
     let queryText = `
       SELECT 
-        a.videoid, json_agg(json_build_object('x1',a.x1, 'y1',a.y1, 'x2',a.x2, 'y2',a.y2, 'resx', a.videowidth, 'resy', a.videoheight )) as box
+        a.videoid, json_agg(json_build_object('id', a.id, 'x1',a.x1, 'y1',a.y1, 'x2',a.x2, 'y2',a.y2, 'resx', a.videowidth, 'resy', a.videoheight )) as box
       FROM
         annotations a
       LEFT JOIN
         videos v ON v.id = a.videoid
       WHERE 
         a.videoid = $1 AND ROUND(v.fps * a.timeinvideo) = ROUND(v.fps * $2) AND a.id <> $3
-        AND a.verifiedby IS NOT NULL
+        --AND a.verifiedby IS NOT NULL
       GROUP BY
           a.videoid, a.timeinvideo
     `;
