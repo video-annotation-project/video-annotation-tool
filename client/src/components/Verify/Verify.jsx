@@ -2,10 +2,12 @@ import React, { Component } from 'react';
 import axios from 'axios';
 import { withStyles } from '@material-ui/core/styles';
 import { Button, Typography } from '@material-ui/core';
+import Swal from 'sweetalert2/src/sweetalert2';
 
 import VerifySelection from './VerifySelection';
 import VerifyAnnotations from './VerifyAnnotations';
-import Swal from 'sweetalert2/src/sweetalert2';
+
+const FPS = 29.97002997002997;
 
 const styles = theme => ({
   button: {
@@ -381,7 +383,7 @@ class Verify extends Component {
       annotations &&
       annotations.length &&
       (annotations[index].videoid !== annotations[index + 1].videoid ||
-        annotations[index].timeinvideo !== annotations[index + 1].timeinvideo)
+        Math.round(annotations[index].timeinvideo*FPS) !== Math.round(annotations[index + 1].timeinvideo*FPS))
     ) {
       Swal.fire({
         title: 'Finished with current frame',

@@ -283,10 +283,12 @@ class VerifyAnnotations extends Component {
   };
 
   handleConceptClick = concept => {
-    const { annotation } = this.props;
+    const { annotation, annotating } = this.props;
 
     this.setState({
-      conceptDialogMsg: `Switch ${annotation.name} to ${concept.name}?`,
+      conceptDialogMsg: annotating
+        ? `Annotate as ${concept.name}?`
+        : `Switch ${annotation.name} to ${concept.name}?`,
       conceptDialogOpen: true,
       clickedConcept: annotation.conceptid === concept.id ? null : concept
     });
@@ -330,10 +332,10 @@ class VerifyAnnotations extends Component {
   };
 
   postAnnotation = (comment, unsure) => {
-    const { x, y, width, height, clickedConcept, currentVideo } = this.state;
-    const videoElement = document.getElementById('video');
-    const cTime = annotations.currentTime;
-
+    const { annotation } = this.props;
+    const { x, y, width, height, clickedConcept } = this.state;
+    const imageElement = document.getElementById('image');
+    const cTime = annotation.currentTime;
     const dragBox = document.getElementById('dragBox');
 
     if (dragBox === null) {
@@ -347,20 +349,23 @@ class VerifyAnnotations extends Component {
     }
 
     const dragBoxCord = dragBox.getBoundingClientRect();
-
-    const vidCord = videoElement.getBoundingClientRect();
+    const imageCord = imageElement.getBoundingClientRect();
 
     // Make video image
     const canvas = document.createElement('canvas');
-    canvas.height = vidCord.height;
-    canvas.width = vidCord.width;
+    canvas.height = imageCord.height;
+    canvas.width = imageCord.width;
     const ctx = canvas.getContext('2d');
-    ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-    const videoImage = new window.Image();
-    videoImage.setAttribute('crossOrigin', 'use-credentials');
-    videoImage.src = canvas.toDataURL(1.0);
+    ctx.drawImage(imageElement, 0, 0, canvas.width, canvas.height);
+    const img = new window.Image();
+    img.setAttribute('crossOrigin', 'use-credentials');
+    ctx.lineWidth = '2';
+    ctx.strokeStyle = 'coral';
+    ctx.rect(x, y, dragBoxCord.width, dragBoxCord.height);
+    ctx.stroke();
+    img.src = canvas.toDataURL(1.0);
 
-    // Bouding box coordinates
+    // Bounding box coordinates
     const x1 = Math.max(x, 0);
     const y1 = Math.max(y, 0);
     const x2 = Math.min(x1 + parseInt(width, 0), 1599);
@@ -371,7 +376,7 @@ class VerifyAnnotations extends Component {
 
     const body = {
       conceptId: clickedConcept.id,
-      videoId: currentVideo.id,
+      videoId: annotation.videoid,
       timeinvideo: cTime,
       x1,
       y1,
@@ -398,9 +403,9 @@ class VerifyAnnotations extends Component {
           type: 'success',
           title: res.data.message
         });
-        this.handleDialogClose();
-        this.createAndUploadImages(
-          videoImage,
+        this.handleConceptDialogClose();
+        this.createAndUploadImagesAnnotate(
+          img,
           ctx,
           canvas,
           dragBoxCord,
@@ -422,6 +427,44 @@ class VerifyAnnotations extends Component {
           error: errMsg
         });
       });
+  };
+
+  createAndUploadImagesAnnotate = (
+    videoImage,
+    ctx,
+    canvas,
+    dragBoxCord,
+    date,
+    x1,
+    y1
+  ) => {
+    ctx.lineWidth = '2';
+    ctx.strokeStyle = 'coral';
+    ctx.rect(x1, y1, dragBoxCord.width, dragBoxCord.height);
+    ctx.stroke();
+    videoImage.src = canvas.toDataURL(1.0);
+    this.uploadImageAnnotate(videoImage, date, true);
+  };
+
+  uploadImageAnnotate = (img, date, box) => {
+    const buf = Buffer.from(
+      img.src.replace(/^data:image\/\w+;base64,/, ''),
+      'base64'
+    );
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    };
+    const body = {
+      buf,
+      date,
+      box
+    };
+    return axios.post('/api/annotations/images', body, config).catch(error => {
+      console.log(error);
+    });
   };
 
   postBoxImage = async dragBox => {
