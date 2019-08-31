@@ -378,12 +378,12 @@ class Verify extends Component {
 
   handleNext = callback => {
     const { index, annotations } = this.state;
-
     if (
       annotations &&
       annotations.length &&
       (annotations[index].videoid !== annotations[index + 1].videoid ||
-        Math.round(annotations[index].timeinvideo*FPS) !== Math.round(annotations[index + 1].timeinvideo*FPS))
+        Math.round(annotations[index].timeinvideo * FPS) !==
+          Math.round(annotations[index + 1].timeinvideo * FPS))
     ) {
       Swal.fire({
         title: 'Finished with current frame',

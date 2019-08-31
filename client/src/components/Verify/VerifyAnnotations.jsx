@@ -104,7 +104,8 @@ class VerifyAnnotations extends Component {
   }
 
   componentDidUpdate(prevProps) {
-    if (this.props.annotating !== prevProps.annotating) {
+    const { annotating } = this.props;
+    if (annotating !== prevProps.annotating) {
       this.loadVerifiedBoxes();
     }
   }
@@ -150,12 +151,12 @@ class VerifyAnnotations extends Component {
       }
     };
     try {
-      let data = await axios.get(
+      const data = await axios.get(
         `/api/annotations/verifiedboxes/${annotation.id}
         ?videoid=${annotation.videoid}&timeinvideo=${annotation.timeinvideo}`,
         config
       );
-      let boxes = [];
+      const boxes = [];
       if (data.data.length > 0) {
         data.data.forEach(boxWithId => {
           boxWithId.box.forEach(box => {
@@ -248,7 +249,7 @@ class VerifyAnnotations extends Component {
         width: annotation.x2 - annotation.x1,
         height: annotation.y2 - annotation.y1
       },
-      async () => await this.loadVerifiedBoxes()
+      async () => this.loadVerifiedBoxes()
     );
   };
 
@@ -295,13 +296,31 @@ class VerifyAnnotations extends Component {
   };
 
   changeConcept = (comment, unsure) => {
+    const { annotating } = this.props;
     const { clickedConcept } = this.state;
 
-    this.setState({
-      concept: clickedConcept,
-      comment,
-      unsure
-    });
+    this.setState(
+      {
+        concept: clickedConcept,
+        comment,
+        unsure
+      },
+      () => {
+        if (annotating) {
+          const dragBox = document.getElementById('dragBox');
+          if (dragBox === null) {
+            Swal.fire({
+              title: 'Error',
+              text: 'No bounding box exists.',
+              type: 'error',
+              confirmButtonText: 'Okay'
+            });
+            return;
+          }
+          this.postBoxImage(dragBox);
+        }
+      }
+    );
   };
 
   handleDelete = () => {
@@ -331,70 +350,37 @@ class VerifyAnnotations extends Component {
     this.nextAnnotation();
   };
 
-  postAnnotation = (comment, unsure) => {
+  postAnnotation = date => {
     const { annotation } = this.props;
-    const { x, y, width, height, clickedConcept } = this.state;
-    const imageElement = document.getElementById('image');
-    const cTime = annotation.currentTime;
-    const dragBox = document.getElementById('dragBox');
-
-    if (dragBox === null) {
-      Swal.fire({
-        title: 'Error',
-        text: 'No bounding box exists.',
-        type: 'error',
-        confirmButtonText: 'Okay'
-      });
-      return;
-    }
-
-    const dragBoxCord = dragBox.getBoundingClientRect();
-    const imageCord = imageElement.getBoundingClientRect();
-
-    // Make video image
-    const canvas = document.createElement('canvas');
-    canvas.height = imageCord.height;
-    canvas.width = imageCord.width;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(imageElement, 0, 0, canvas.width, canvas.height);
-    const img = new window.Image();
-    img.setAttribute('crossOrigin', 'use-credentials');
-    ctx.lineWidth = '2';
-    ctx.strokeStyle = 'coral';
-    ctx.rect(x, y, dragBoxCord.width, dragBoxCord.height);
-    ctx.stroke();
-    img.src = canvas.toDataURL(1.0);
-
-    // Bounding box coordinates
-    const x1 = Math.max(x, 0);
-    const y1 = Math.max(y, 0);
-    const x2 = Math.min(x1 + parseInt(width, 0), 1599);
-    const y2 = Math.min(y1 + parseInt(height, 0), 899);
-
-    // draw video with and without bounding box to canvas and save as img
-    const date = Date.now().toString();
+    const { x, y, width, height, concept, comment, unsure } = this.state;
+    const x1 = x;
+    const y1 = y;
+    const x2 = x + parseInt(width, 0);
+    const y2 = y + parseInt(height, 0);
 
     const body = {
-      conceptId: clickedConcept.id,
+      conceptId: concept.id,
       videoId: annotation.videoid,
-      timeinvideo: cTime,
+      timeinvideo: annotation.timeinvideo,
       x1,
       y1,
       x2,
       y2,
-      videoWidth: 1600,
-      videoHeight: 900,
+      videoWidth: annotation.videowidth,
+      videoHeight: annotation.videoheight,
       image: date,
       imagewithbox: `${date}_box`,
       comment,
       unsure
     };
+
     const config = {
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${localStorage.getItem('token')}`
       }
     };
+
     axios
       .post('/api/annotations', body, config)
       .then(async res => {
@@ -403,16 +389,6 @@ class VerifyAnnotations extends Component {
           type: 'success',
           title: res.data.message
         });
-        this.handleConceptDialogClose();
-        this.createAndUploadImagesAnnotate(
-          img,
-          ctx,
-          canvas,
-          dragBoxCord,
-          date,
-          x1,
-          y1
-        );
       })
       .catch(error => {
         console.log(error);
@@ -423,52 +399,11 @@ class VerifyAnnotations extends Component {
         const errMsg =
           error.response.data.detail || error.response.data.message || 'Error';
         console.log(errMsg);
-        this.setState({
-          error: errMsg
-        });
       });
   };
 
-  createAndUploadImagesAnnotate = (
-    videoImage,
-    ctx,
-    canvas,
-    dragBoxCord,
-    date,
-    x1,
-    y1
-  ) => {
-    ctx.lineWidth = '2';
-    ctx.strokeStyle = 'coral';
-    ctx.rect(x1, y1, dragBoxCord.width, dragBoxCord.height);
-    ctx.stroke();
-    videoImage.src = canvas.toDataURL(1.0);
-    this.uploadImageAnnotate(videoImage, date, true);
-  };
-
-  uploadImageAnnotate = (img, date, box) => {
-    const buf = Buffer.from(
-      img.src.replace(/^data:image\/\w+;base64,/, ''),
-      'base64'
-    );
-    const config = {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    };
-    const body = {
-      buf,
-      date,
-      box
-    };
-    return axios.post('/api/annotations/images', body, config).catch(error => {
-      console.log(error);
-    });
-  };
-
   postBoxImage = async dragBox => {
-    const { annotation } = this.props;
+    const { annotation, annotating } = this.props;
     const { x, y, width, height } = this.state;
     const dragBoxCord = dragBox.getBoundingClientRect();
     const imageElement = document.getElementById('image');
@@ -477,6 +412,7 @@ class VerifyAnnotations extends Component {
     const y1 = y;
     const x2 = x + parseInt(width, 0);
     const y2 = y + parseInt(height, 0);
+    const date = annotating ? Date.now().toString() : null;
 
     try {
       if (
@@ -494,19 +430,31 @@ class VerifyAnnotations extends Component {
           dragBoxCord,
           imageElement,
           x1,
-          y1
+          y1,
+          date
         );
         this.updateBox(x1, y1, x2, y2);
       }
 
-      this.verifyAnnotation();
+      if (annotating) {
+        this.postAnnotation(date);
+      } else {
+        this.verifyAnnotation();
+      }
     } catch {
       console.log('Unable to Verify');
       this.nextAnnotation();
     }
   };
 
-  createAndUploadImages = (imageCord, dragBoxCord, imageElement, x1, y1) => {
+  createAndUploadImages = (
+    imageCord,
+    dragBoxCord,
+    imageElement,
+    x1,
+    y1,
+    date
+  ) => {
     const canvas = document.createElement('canvas');
     canvas.height = imageCord.height;
     canvas.width = imageCord.width;
@@ -519,10 +467,10 @@ class VerifyAnnotations extends Component {
     ctx.rect(x1, y1, dragBoxCord.width, dragBoxCord.height);
     ctx.stroke();
     img.src = canvas.toDataURL(1.0);
-    this.uploadImage(img);
+    this.uploadImage(img, date);
   };
 
-  uploadImage = img => {
+  uploadImage = (img, date) => {
     const { annotation } = this.props;
     const buf = Buffer.from(
       img.src.replace(/^data:image\/\w+;base64,/, ''),
@@ -534,10 +482,20 @@ class VerifyAnnotations extends Component {
         Authorization: `Bearer ${localStorage.getItem('token')}`
       }
     };
-    const body = {
-      buf,
-      name: annotation.imagewithbox
-    };
+    let body = {};
+    if (date) {
+      body = {
+        buf,
+        name: annotation.imagewithbox
+      };
+    } else {
+      body = {
+        buf,
+        date,
+        box: true
+      };
+    }
+
     try {
       axios.post('/api/annotations/images', body, config);
     } catch {
@@ -718,7 +676,7 @@ class VerifyAnnotations extends Component {
             onClick={this.handleVerifyClick}
             disabled={disableVerify}
           >
-            Annotate
+            Verify
           </Button>
         )}
         <IconButton
@@ -815,34 +773,19 @@ class VerifyAnnotations extends Component {
   };
 
   loadDialogModal = () => {
-    const { annotating } = this.props;
     const { unsure, conceptDialogMsg, comment } = this.state;
-    if (annotating) {
-      return (
-        <DialogModal
-          title="Confirm Annotation"
-          message={conceptDialogMsg}
-          placeholder="Comments"
-          comment=""
-          inputHandler={this.postAnnotation}
-          open
-          handleClose={this.handleConceptDialogClose}
-        />
-      );
-    } else {
-      return (
-        <DialogModal
-          title="Confirm Annotation Edit"
-          message={conceptDialogMsg}
-          placeholder="Comments"
-          comment={comment}
-          inputHandler={this.changeConcept}
-          open
-          handleClose={this.handleConceptDialogClose}
-          unsure={unsure}
-        />
-      );
-    }
+    return (
+      <DialogModal
+        title="Confirm Annotation Edit"
+        message={conceptDialogMsg}
+        placeholder="Comments"
+        comment={comment}
+        inputHandler={this.changeConcept}
+        open
+        handleClose={this.handleConceptDialogClose}
+        unsure={unsure}
+      />
+    );
   };
 
   render() {
