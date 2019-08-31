@@ -486,13 +486,13 @@ class VerifyAnnotations extends Component {
     if (date) {
       body = {
         buf,
-        name: annotation.imagewithbox
+        date,
+        box: true
       };
     } else {
       body = {
         buf,
-        date,
-        box: true
+        name: annotation.imagewithbox
       };
     }
 
