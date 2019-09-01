@@ -6,7 +6,7 @@
     "node": ">=10.10"
   },
   "dependencies": {
-    "aws-sdk": "^2.515.0",
+    "aws-sdk": "^2.521.0",
     "babel-cli": "^6.26.0",
     "babel-core": "6.26.3",
     "bcrypt": "^3.0.6",
