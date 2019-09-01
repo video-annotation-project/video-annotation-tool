@@ -659,38 +659,6 @@ class VerifyAnnotations extends Component {
         className={classes.buttonsContainer1}
         style={{ width: (2 * annotation.videowidth) / 3 }}
       >
-        <MuiThemeProvider theme={theme}>
-          <Button
-            className={classes.button}
-            variant="contained"
-            color="secondary"
-            onClick={() => this.handleDelete(annotation)}
-          >
-            Delete
-          </Button>
-        </MuiThemeProvider>
-        <Button
-          className={classes.button}
-          variant="contained"
-          onClick={this.resetState}
-        >
-          Reset Box
-        </Button>
-        <Button
-          className={classes.button}
-          variant="contained"
-          onClick={this.nextAnnotation}
-        >
-          Ignore
-        </Button>
-        <Button
-          className={classes.button}
-          variant="contained"
-          color="primary"
-          onClick={this.toggleDetails}
-        >
-          Details
-        </Button>
         <Button
           className={classes.button}
           variant="contained"
