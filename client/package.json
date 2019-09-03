@@ -6,7 +6,7 @@
   "dependencies": {
     "@material-ui/core": "^4.4.0",
     "@material-ui/icons": "^4.2.1",
-    "@material-ui/lab": "^4.0.0-alpha.24",
+    "@material-ui/lab": "^4.0.0-alpha.25",
     "@material-ui/styles": "^4.3.3",
     "@sweetalert/with-react": "^0.1.1",
     "@sweetalert2/themes": "^2.1.0",
