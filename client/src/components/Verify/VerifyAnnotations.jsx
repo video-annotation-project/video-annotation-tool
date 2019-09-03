@@ -110,7 +110,6 @@ class Hover extends Component {
 }
 
 class VerifyAnnotations extends Component {
-
   toastPopup = Swal.mixin({
     toast: true,
     position: 'top-end',
@@ -145,7 +144,6 @@ class VerifyAnnotations extends Component {
   componentDidMount = async () => {
     this.displayLoading();
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    this.displayLoading();
     await this.loadVerifiedBoxes();
   };
 
@@ -273,18 +271,17 @@ class VerifyAnnotations extends Component {
     const { annotation, annotating } = this.props;
 
     await this.loadVerifiedBoxes();
-    this.setState(
-      {
-        drawDragBox: true,
-        disableVerify: false,
-        concept: null,
-        comment: annotating ? '' : annotation.comment,
-        unsure: annotating ? false : annotation.unsure,
-        x: annotating ? 0 : annotation.x1,
-        y: annotating ? 0 : annotation.y1,
-        width: annotating ? 0 : annotation.x2 - annotation.x1,
-        height: annotating ? 0 : annotation.y2 - annotation.y1
-      });
+    this.setState({
+      drawDragBox: true,
+      disableVerify: false,
+      concept: null,
+      comment: annotating ? '' : annotation.comment,
+      unsure: annotating ? false : annotation.unsure,
+      x: annotating ? 0 : annotation.x1,
+      y: annotating ? 0 : annotation.y1,
+      width: annotating ? 0 : annotation.x2 - annotation.x1,
+      height: annotating ? 0 : annotation.y2 - annotation.y1
+    });
   };
 
   toggleDragBox = () => {
