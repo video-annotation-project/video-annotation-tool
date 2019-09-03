@@ -456,7 +456,7 @@ router.get(
       queryText = `
         SELECT DISTINCT ON (a.videoid, frame)
         a.*, c.name, c.picture, u.username, v.filename, ROUND(a.timeinvideo*v.fps) frame `;
-      orderBy = ' ORDER BY a.videoid, a.timeinvideo';
+      orderBy = ' ORDER BY a.videoid, frame';
     } else if (selectedUsers && selectedVideos && selectedConcepts) {
       queryText += `a.unsure `;
     } else if (selectedUsers && selectedVideos) {
@@ -778,5 +778,28 @@ let selectLevelQuery = level => {
   }
   return queryPass;
 };
+
+router.post(
+  '/verifyframe',
+  passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    try {
+      let result = await psql.query(
+        `INSERT INTO verified_frames 
+        (videoid, framenum) VALUES
+        ($1, ROUND($2))
+      `,
+        [req.body.videoid, req.body.framenum]
+      );
+      if (result) {
+        res.json('Inserted');
+      }
+    } catch (error) {
+      console.log('ERROR in /api/annotations/verifyframe');
+      console.log(error);
+      res.json('error');
+    }
+  }
+);
 
 module.exports = router;
