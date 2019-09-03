@@ -33,11 +33,13 @@ class SelectUser extends React.Component {
   componentDidMount = async () => {
     const { getUsers, selectUser } = this.props;
     let users = await getUsers();
+    console.log(config);
+    /*
+    users = users.filter(
+      user => config.client.annotator_users.indexOf(user.id) >= 0
+    );*/
     console.log(users);
 
-    users = users.filter(
-      user => !config.client.annotator_users.indexOf(user.id) < 0
-    );
     this.setState({
       users
     });
