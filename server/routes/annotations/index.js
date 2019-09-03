@@ -509,68 +509,6 @@ router.get(
   }
 );
 
-router.get(
-  '/collection/counts',
-  passport.authenticate('jwt', { session: false }),
-  async (req, res) => {
-    let params = [];
-    let good_users = configData.ml.tracking_users.filter(x =>
-      req.query.selectedUsers.includes(x.toString())
-    );
-
-    let queryText = `
-      SELECT
-        coalesce(
-          SUM(CASE WHEN userid=32 THEN 1 ELSE 0 END), 0
-        ) as trackingcount,
-        coalesce(
-          SUM(CASE WHEN userid!=32 THEN 1 ELSE 0 END), 0
-        ) as annotationcount
-      FROM annotations as A
-    `;
-
-    if (params.length === 0) {
-      queryText += ` WHERE `;
-    }
-    params.push(req.query.selectedConcepts);
-    queryText += ` conceptid::text = ANY($${params.length}) `;
-
-    if (params.length === 0) {
-      queryText += ` WHERE `;
-    } else {
-      queryText += ` AND `;
-    }
-    params.push(req.query.selectedVideos);
-    queryText += ` videoid::text = ANY($${params.length}) `;
-
-    if (params.length === 0) {
-      queryText += ` WHERE `;
-    } else {
-      queryText += ` AND `;
-    }
-    params.push(req.query.selectedUsers);
-
-    if (good_users.length > 0) {
-      queryText += `EXISTS ( 
-          SELECT id, userid 
-          FROM annotations 
-          WHERE (id=A.originalid OR A.originalid IS NULL)
-          AND unsure = False
-          AND userid::text = ANY($${params.length}))`;
-    } else {
-      queryText += `userid::text = ANY($${params.length})`;
-    }
-
-    try {
-      let response = await psql.query(queryText, params);
-      res.json(response.rows);
-    } catch (error) {
-      console.log(error);
-      res.status(500).json(error);
-    }
-  }
-);
-
 /**
  * @typedef treeData
  * @property {string} name - Name of the specific item in the current level
