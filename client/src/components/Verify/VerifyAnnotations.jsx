@@ -691,7 +691,7 @@ class VerifyAnnotations extends Component {
   };
 
   annotationConcept = annotation => {
-    const { classes } = this.props;
+    const { classes, annotating } = this.props;
     const { concept } = this.state;
 
     return (
@@ -700,18 +700,24 @@ class VerifyAnnotations extends Component {
         style={{ width: annotation.videowidth / 3 }}
       >
         <Grid container direction="row" alignItems="center">
-          <Grid item>
-            <Avatar
-              src={`https://cdn.deepseaannotations.com/concept_images/${
-                !concept ? annotation.picture : concept.picture
-              }`}
-            />
-          </Grid>
-          <Grid item>
-            <Typography variant="subtitle1" style={{ marginLeft: '10px' }}>
-              {!concept ? annotation.name : concept.name}
-            </Typography>
-          </Grid>
+          {annotating ? (
+            ''
+          ) : (
+            <>
+              <Grid item>
+                <Avatar
+                  src={`https://cdn.deepseaannotations.com/concept_images/${
+                    !concept ? annotation.picture : concept.picture
+                  }`}
+                />
+              </Grid>
+              <Grid item>
+                <Typography variant="subtitle1" style={{ marginLeft: '10px' }}>
+                  {!concept ? annotation.name : concept.name}
+                </Typography>
+              </Grid>
+            </>
+          )}
           <Grid item xs>
             <ConceptsSelected handleConceptClick={this.handleConceptClick} />
           </Grid>
@@ -801,7 +807,6 @@ class VerifyAnnotations extends Component {
       excludeTracking,
       collectionFlag,
       resetLocalStorage,
-      annotating,
       end
     } = this.props;
     const {
@@ -986,7 +991,7 @@ class VerifyAnnotations extends Component {
                   {index + 1} of {size}
                 </Typography>
                 {this.optionButtons(annotation)}
-                {annotating ? '' : this.annotationConcept(annotation)}
+                {this.annotationConcept(annotation)}
                 {this.annotationDetails(annotation)}
               </div>
             )}
