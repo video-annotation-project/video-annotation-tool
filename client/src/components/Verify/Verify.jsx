@@ -375,6 +375,29 @@ class Verify extends Component {
     );
   };
 
+  verifyFrame = async () => {
+    const { index, annotations } = this.state;
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    };
+    const body = {
+      framenum: annotations[index].timeinvideo * 29.97002997003,
+      videoid: annotations[index].videoid
+    };
+    try {
+      let res = await axios.post(`/api/annotations/verifyframe`, body, config);
+      if (res) {
+        console.log('frame inserted');
+        return;
+      }
+    } catch (error) {
+      Swal.fire('Error POSTING verify frame', '', 'error');
+    }
+  };
+
   handleNext = callback => {
     const { index, annotations } = this.state;
     if (
@@ -401,6 +424,7 @@ class Verify extends Component {
               end: true
             });
           } else {
+            this.verifyFrame();
             localStorage.setItem('curIndex', index + 1);
             this.setState(
               {

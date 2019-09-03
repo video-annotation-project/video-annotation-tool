@@ -89,7 +89,7 @@ router.get(
     let params = [req.query.videoid, req.query.timeinvideo, req.params.id];
     let queryText = `
       SELECT 
-        a.videoid, json_agg(json_build_object('x1',a.x1, 'y1',a.y1, 'x2',a.x2, 'y2',a.y2, 'resx', a.videowidth, 'resy', a.videoheight )) as box
+        a.videoid, json_agg(json_build_object('id', a.id, 'x1',a.x1, 'y1',a.y1, 'x2',a.x2, 'y2',a.y2, 'resx', a.videowidth, 'resy', a.videoheight )) as box
       FROM
         annotations a
       LEFT JOIN
@@ -98,7 +98,7 @@ router.get(
         a.videoid = $1 AND ROUND(v.fps * a.timeinvideo) = ROUND(v.fps * $2) AND a.id <> $3
         AND a.verifiedby IS NOT NULL
       GROUP BY
-          a.videoid, a.timeinvideo
+          a.videoid, ROUND(v.fps * a.timeinvideo)
     `;
     try {
       let response = await psql.query(queryText, params);
@@ -119,27 +119,39 @@ router.get(
   async (req, res) => {
     let params = '{' + req.query.collectionids + '}';
     let queryText = `
-      SELECT
-        a.*, c.name, c.picture, u.username, v.filename 
-      FROM
-        annotation_intermediate ai
-      LEFT JOIN
-        annotations a
-      LEFT JOIN
-        concepts c ON c.id=a.conceptid
-      LEFT JOIN
-        users u ON u.id=a.userid
-      LEFT JOIN
-        videos v ON v.id=a.videoid
-      ON
-        a.id=ai.annotationid
-      WHERE
-        ai.id = ANY($1::int[]) and a.verifiedby IS NULL
+      WITH collection AS (
+        SELECT
+            a.*, c.name, c.picture, u.username, v.filename, ROUND(a.timeinvideo * v.fps) as frame
+        FROM
+            annotation_intermediate ai
+        LEFT JOIN
+            annotations a ON a.id=ai.annotationid
+        LEFT JOIN
+            concepts c ON c.id=a.conceptid
+        LEFT JOIN
+            users u ON u.id=a.userid
+        LEFT JOIN
+            videos v ON v.id=a.videoid
+        WHERE
+            ai.id = ANY($1::int[]))
+        SELECT
+        *
+        FROM 
+          collection ac
+        WHERE
+          ac.verifiedby IS NULL
+        UNION
+        SELECT
+            DISTINCT ON (videoid, frame) *
+        FROM
+            collection b
+        WHERE
+            NOT EXISTS (SELECT 1 FROM verified_frames v WHERE b.videoid=v.videoid AND b.frame=v.framenum)
     `;
     if (req.query.tracking === 'true') {
-      queryText += ` AND userid <> (SELECT id from users where username ='tracking')`;
+      queryText += ` AND a.userid <> (SELECT id from users where username ='tracking')`;
     }
-    queryText += ` ORDER BY a.videoid, a.timeinvideo`;
+    queryText += ` ORDER BY videoid, timeinvideo`;
     try {
       const annotations = await psql.query(queryText, [params]);
       res.json(annotations.rows);
@@ -441,8 +453,10 @@ router.get(
     let orderBy = '';
 
     if (selectedUsers && selectedVideos && selectedConcepts && selectedUnsure) {
-      queryText += `a.*, c.name, c.picture, u.username, v.filename `;
-      orderBy = ' ORDER BY a.videoid, a.timeinvideo';
+      queryText = `
+        SELECT DISTINCT ON (a.videoid, frame)
+        a.*, c.name, c.picture, u.username, v.filename, ROUND(a.timeinvideo*v.fps) frame `;
+      orderBy = ' ORDER BY a.videoid, frame';
     } else if (selectedUsers && selectedVideos && selectedConcepts) {
       queryText += `a.unsure `;
     } else if (selectedUsers && selectedVideos) {
@@ -489,8 +503,15 @@ router.get(
       params.push(selectedConcepts);
     }
 
-    if (selectedUnsure === 'true') queryText += ` AND unsure`;
-    else if (selectedUnsure === 'not true') queryText += ` AND NOT unsure`;
+    if (selectedUnsure === 'true') {
+      queryText += ` AND unsure`;
+      queryText += ` AND NOT EXISTS
+      (SELECT 1 FROM verified_frames vf WHERE a.videoid=vf.videoid AND ROUND(a.timeinvideo * v.fps)=vf.framenum)`;
+    } else if (selectedUnsure === 'false') {
+      queryText += ` AND NOT unsure`;
+      queryText += ` AND NOT EXISTS
+      (SELECT 1 FROM verified_frames vf WHERE a.videoid=vf.videoid AND ROUND(a.timeinvideo * v.fps)=vf.framenum)`;
+    }
 
     if (selectedTrackingFirst === 'true') {
       queryText += ` AND a.verifiedby IS NULL AND a.tracking_flag IS NULL`;
@@ -502,68 +523,6 @@ router.get(
     try {
       let concepts = await psql.query(queryText, params);
       res.json(concepts.rows);
-    } catch (error) {
-      console.log(error);
-      res.status(500).json(error);
-    }
-  }
-);
-
-router.get(
-  '/collection/counts',
-  passport.authenticate('jwt', { session: false }),
-  async (req, res) => {
-    let params = [];
-    let good_users = configData.ml.tracking_users.filter(x =>
-      req.query.selectedUsers.includes(x.toString())
-    );
-
-    let queryText = `
-      SELECT
-        coalesce(
-          SUM(CASE WHEN userid=32 THEN 1 ELSE 0 END), 0
-        ) as trackingcount,
-        coalesce(
-          SUM(CASE WHEN userid!=32 THEN 1 ELSE 0 END), 0
-        ) as annotationcount
-      FROM annotations as A
-    `;
-
-    if (params.length === 0) {
-      queryText += ` WHERE `;
-    }
-    params.push(req.query.selectedConcepts);
-    queryText += ` conceptid::text = ANY($${params.length}) `;
-
-    if (params.length === 0) {
-      queryText += ` WHERE `;
-    } else {
-      queryText += ` AND `;
-    }
-    params.push(req.query.selectedVideos);
-    queryText += ` videoid::text = ANY($${params.length}) `;
-
-    if (params.length === 0) {
-      queryText += ` WHERE `;
-    } else {
-      queryText += ` AND `;
-    }
-    params.push(req.query.selectedUsers);
-
-    if (good_users.length > 0) {
-      queryText += `EXISTS ( 
-          SELECT id, userid 
-          FROM annotations 
-          WHERE (id=A.originalid OR A.originalid IS NULL)
-          AND unsure = False
-          AND userid::text = ANY($${params.length}))`;
-    } else {
-      queryText += `userid::text = ANY($${params.length})`;
-    }
-
-    try {
-      let response = await psql.query(queryText, params);
-      res.json(response.rows);
     } catch (error) {
       console.log(error);
       res.status(500).json(error);
@@ -757,5 +716,28 @@ let selectLevelQuery = level => {
   }
   return queryPass;
 };
+
+router.post(
+  '/verifyframe',
+  passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    try {
+      let result = await psql.query(
+        `INSERT INTO verified_frames 
+        (videoid, framenum) VALUES
+        ($1, ROUND($2))
+      `,
+        [req.body.videoid, req.body.framenum]
+      );
+      if (result) {
+        res.json('Inserted');
+      }
+    } catch (error) {
+      console.log('ERROR in /api/annotations/verifyframe');
+      console.log(error);
+      res.json('error');
+    }
+  }
+);
 
 module.exports = router;

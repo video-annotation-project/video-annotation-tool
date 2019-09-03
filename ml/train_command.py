@@ -110,6 +110,7 @@ cursor.execute(
     SET status=4
     """
 )
+
 con.commit()
 
 # subprocess.call(["rm", "*.mp4"])

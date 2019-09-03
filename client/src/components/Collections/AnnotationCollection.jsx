@@ -346,8 +346,9 @@ class AnnotationCollection extends Component {
 
   getAnnotations = async () => {
     const { selectedUsers, selectedVideos, selectedConcepts } = this.state;
+
     return axios
-      .get(`/api/annotations/collection/counts`, {
+      .get(`/api/collections/annotations/trackingCounts`, {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${localStorage.getItem('token')}`
@@ -366,7 +367,7 @@ class AnnotationCollection extends Component {
         Swal.close();
       })
       .catch(error => {
-        console.log(error);
+        console.log(JSON.stringify(error));
         this.promiseResolver(error);
       });
   };

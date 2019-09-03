@@ -1,6 +1,7 @@
 import cv2
 from pgdb import connect
 import boto3
+import os
 from dotenv import load_dotenv
 import datetime
 import copy
@@ -15,8 +16,13 @@ import numpy as np
 from itertools import zip_longest
 from skimage.measure import compare_ssim
 
-from config import config
-from utils.query import con, cursor
+from config.config import RESIZED_WIDTH, RESIZED_HEIGHT, S3_BUCKET, \
+    S3_ANNOTATION_FOLDER, S3_VIDEO_FOLDER, DB_NAME, DB_USER, DB_PASSWORD, \
+    DB_HOST, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, LENGTH
+s3 = boto3.client(
+    's3',
+    aws_access_key_id=AWS_ACCESS_KEY_ID,
+    aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
 
 # initialize a dictionary that maps strings to their corresponding
 # OpenCV object tracker implementations
@@ -113,10 +119,10 @@ def upload_image(frame_num, frame, frame_w_box,
     os.system('rm ' + temp_file)
     cursor.execute(
         """
-	 INSERT INTO annotations (
-	 framenum, videoid, userid, conceptid, timeinvideo, x1, y1, x2, y2,
-	 videowidth, videoheight, dateannotated, image, imagewithbox, comment, unsure, originalid)
-	 VALUES (%d, %d, %d, %d, %f, %f, %f, %f, %f, %d, %d, %s, %s, %s, %s, %s, %d)
+     INSERT INTO annotations (
+     framenum, videoid, userid, conceptid, timeinvideo, x1, y1, x2, y2,
+     videowidth, videoheight, dateannotated, image, imagewithbox, comment, unsure, originalid)
+     VALUES (%d, %d, %d, %d, %f, %f, %f, %f, %f, %d, %d, %s, %s, %s, %s, %s, %d)
       """,
         (
             frame_num, videoid, TRACKING_ID, conceptid, timeinvideo, x1, y1,
@@ -138,7 +144,8 @@ def upload_video(priorFrames, postFrames, id):
     output_file = str(uuid.uuid4()) + ".mp4"
     converted_file = str(uuid.uuid4()) + ".mp4"
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    out = cv2.VideoWriter(output_file, fourcc, 20, (RESIZED_WIDTH, RESIZED_HEIGHT))
+    out = cv2.VideoWriter(output_file, fourcc, 20,
+                          (RESIZED_WIDTH, RESIZED_HEIGHT))
     for frame in priorFrames:
         out.write(frame)
     out.release()
@@ -263,6 +270,9 @@ def track_object(frame_num, frames, box, track_forward, end,
 def track_annotation(id, conceptid, timeinvideo, videoid, image,
                      videowidth, videoheight, x1, y1, x2, y2, comment, unsure):
     print("Start tracking annotation: " + str(id))
+    con = connect(database=DB_NAME, host=DB_HOST,
+                  user=DB_USER, password=DB_PASSWORD)
+    cursor = con.cursor()
 
     # Make bounding box adjusted to video width and height
     x_ratio = (videowidth / RESIZED_WIDTH)

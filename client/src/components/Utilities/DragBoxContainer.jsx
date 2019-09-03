@@ -57,7 +57,7 @@ class DragBoxContainer extends Component {
 
   resetDragBox = async e => {
     const { onResize } = this.props;
-    const { disableDraw, boxCounter, dragBoxX, dragBoxY } = this.state;
+    const { disableDraw, boxCounter } = this.state;
     e.preventDefault();
 
     if (disableDraw) {
@@ -90,8 +90,8 @@ class DragBoxContainer extends Component {
       () => {
         if (onResize) {
           onResize(e, null, { style: { width: 0, height: 0 } }, null, {
-            x: dragBoxX,
-            y: dragBoxY
+            x,
+            y
           });
         }
       }
