@@ -89,7 +89,7 @@ router.get(
     let params = [req.query.videoid, req.query.timeinvideo, req.params.id];
     let queryText = `
       SELECT 
-        a.videoid, json_agg(json_build_object('id', a.id, 'x1',a.x1, 'y1',a.y1, 'x2',a.x2, 'y2',a.y2, 'resx', a.videowidth, 'resy', a.videoheight )) as box
+        a.videoid, ROUND(v.fps * a.timeinvideo), count(*) as count, json_agg(json_build_object('id', a.id, 'x1',a.x1, 'y1',a.y1, 'x2',a.x2, 'y2',a.y2, 'resx', a.videowidth, 'resy', a.videoheight )) as box
       FROM
         annotations a
       LEFT JOIN
@@ -485,7 +485,8 @@ router.get(
     if (verifiedOnly === '1') {
       concater = ` AND a.verifiedby IS NOT NULL`;
     } else if (verifiedOnly === '-1') {
-      concater += ` AND a.verifiedby IS NULL`;
+      concater += ` AND a.verifiedby IS NULL AND NOT EXISTS
+      (SELECT 1 FROM verified_frames vf WHERE a.videoid=vf.videoid AND ROUND(a.timeinvideo * v.fps)=vf.framenum)`;
     }
 
     if (selectedUsers) {
@@ -505,12 +506,8 @@ router.get(
 
     if (selectedUnsure === 'true') {
       queryText += ` AND unsure`;
-      queryText += ` AND NOT EXISTS
-      (SELECT 1 FROM verified_frames vf WHERE a.videoid=vf.videoid AND ROUND(a.timeinvideo * v.fps)=vf.framenum)`;
     } else if (selectedUnsure === 'false') {
       queryText += ` AND NOT unsure`;
-      queryText += ` AND NOT EXISTS
-      (SELECT 1 FROM verified_frames vf WHERE a.videoid=vf.videoid AND ROUND(a.timeinvideo * v.fps)=vf.framenum)`;
     }
 
     if (selectedTrackingFirst === 'true') {

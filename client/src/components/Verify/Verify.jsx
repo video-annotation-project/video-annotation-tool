@@ -90,6 +90,7 @@ class Verify extends Component {
       } else {
         annotations = await this.getAnnotations();
       }
+      console.log(annotations);
       if (annotations.length < 1) {
         localStorage.setItem('noAnnotations', true);
         localStorage.setItem('selectionMounted', !selectionMounted);
