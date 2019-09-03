@@ -77,16 +77,13 @@ class Hover extends Component {
   }
 
   render() {
-    const { style, handleDelete, id } = this.props;
+    const { style, handleDelete } = this.props;
     const { hover } = this.state;
     return (
       <div
         style={style}
-        onMouseEnter={() => {
-          this.setState({ hover: true });
-          console.log();
-        }}
-        onMouseLeave={() => this.setState({ hover: false }, console.log(id))}
+        onMouseEnter={() => this.setState({ hover: true })}
+        onMouseLeave={() => this.setState({ hover: false })}
         onClick={event => {
           event.stopPropagation();
           Swal.fire({
@@ -197,16 +194,6 @@ class VerifyAnnotations extends Component {
         ?videoid=${annotation.videoid}&timeinvideo=${annotation.timeinvideo}`,
         config
       );
-      console.log(data.data);
-      // const boxes = [];
-      // if (data.data.length > 0) {
-      //   data.data.forEach(boxWithId => {
-      //     boxWithId.box.forEach(box => {
-      //       boxes.push(box);
-      //     });
-      //   });
-      // }
-
       if (data.data.length > 0) {
         this.setState({
           verifiedBoxes: data.data[0].box

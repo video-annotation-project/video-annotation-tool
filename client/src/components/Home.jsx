@@ -46,30 +46,20 @@ const styles = theme => ({
 class Home extends Component {
   constructor(props) {
     super(props);
+    const fromDate = this.formatDate(new Date(`${YEAR}-01-01T00:00:00`));
+    const toDate = this.formatDate(new Date());
     this.state = {
       counts: [],
-      fromDate: {
-        date: null,
-        localeISOString: '',
-        ISOString: ''
-      },
-      toDate: {
-        date: null,
-        localeISOString: '',
-        ISOString: ''
-      }
+      fromDate,
+      toDate
     };
   }
 
-  componentWillMount() {
-    const fromDate = this.formatDate(new Date(`${YEAR}-01-01T00:00:00`));
-    const toDate = this.formatDate(new Date());
+  async componentDidMount() {
+    const { fromDate, toDate } = this.state;
     this.setState({ fromDate, toDate });
-    this.getCounts(fromDate.ISOString, toDate.ISOString);
-  }
-
-  componentDidMount() {
-    // These variables are for the varify tab checkpoint
+    await this.getCounts(fromDate.ISOString, toDate.ISOString);
+    // These variables are for the verify tab checkpoint
     localStorage.setItem('selectionMounted', true);
     localStorage.setItem('selectedTrackingFirst', false);
     localStorage.setItem('videoDialogOpen', false);
