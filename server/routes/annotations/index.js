@@ -96,10 +96,10 @@ router.get(
         videos v ON v.id = a.videoid
       WHERE 
         a.videoid = $1 AND ROUND(v.fps * a.timeinvideo) = ROUND(v.fps * $2) AND a.id <> $3
-        AND a.verifiedby IS NOT NULL
       GROUP BY
           a.videoid, ROUND(v.fps * a.timeinvideo)
     `;
+    // AND a.verifiedby IS NOT NULL
     try {
       let response = await psql.query(queryText, params);
       if (response) {
