@@ -260,15 +260,12 @@ class VerifyAnnotations extends Component {
   };
 
   nextAnnotation = async () => {
-    const { size, index, handleNext } = this.props;
+    const { end, handleNext } = this.props;
 
     this.setState({
       trackingStatus: null
     });
-    if (size === index + 1) {
-      this.setState({
-        end: true
-      });
+    if (end) {
       return;
     }
     this.displayLoading();
@@ -810,13 +807,13 @@ class VerifyAnnotations extends Component {
       excludeTracking,
       collectionFlag,
       resetLocalStorage,
-      annotating
+      annotating,
+      end
     } = this.props;
     const {
       x,
       y,
       conceptDialogOpen,
-      end,
       trackingStatus,
       drawDragBox,
       width,
