@@ -276,6 +276,7 @@ class VerifyAnnotations extends Component {
     const { annotation } = this.props;
 
     await this.loadVerifiedBoxes();
+    
     this.setState({
       drawDragBox: true,
       disableVerify: false,

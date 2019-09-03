@@ -21,6 +21,7 @@ const DragBox = props => {
     onDragStop,
     onResize
   } = props;
+
   return (
     <Rnd
       id="dragBox"
@@ -90,8 +91,8 @@ class DragBoxContainer extends Component {
       () => {
         if (onResize) {
           onResize(e, null, { style: { width: 0, height: 0 } }, null, {
-            x: dragBoxX,
-            y: dragBoxY
+            x: x,
+            y: y
           });
         }
       }

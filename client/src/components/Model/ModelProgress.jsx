@@ -167,7 +167,7 @@ class ModelProgress extends Component {
     axios
       .get(`/api/models/progress/train`, config)
       .then(res => {
-        const progress = res.data[0];
+        const progress = res.data;
 
         this.setState({
           currentEpoch: progress.curr_epoch + 1,
