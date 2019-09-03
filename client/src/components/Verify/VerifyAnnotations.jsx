@@ -235,7 +235,7 @@ class VerifyAnnotations extends Component {
   };
 
   resetState = () => {
-    const { annotation } = this.props;
+    const { annotation, annotating } = this.props;
 
     this.setState(
       {
@@ -244,10 +244,10 @@ class VerifyAnnotations extends Component {
         concept: null,
         comment: annotation.comment,
         unsure: annotation.unsure,
-        x: annotation.x1,
-        y: annotation.y1,
-        width: annotation.x2 - annotation.x1,
-        height: annotation.y2 - annotation.y1
+        x: annotating ? 0 : annotation.x1,
+        y: annotating ? 0 : annotation.y1,
+        width: annotating ? 0 : annotation.x2 - annotation.x1,
+        height: annotating ? 0 : annotation.y2 - annotation.y1
       },
       async () => this.loadVerifiedBoxes()
     );
@@ -503,6 +503,15 @@ class VerifyAnnotations extends Component {
     }
   };
 
+  noBox = () => {
+    this.setState({
+      x: 0,
+      y: 0,
+      width: 0,
+      height: 0
+    });
+  };
+
   updateBox = (x1, y1, x2, y2) => {
     const { annotation } = this.props;
     const body = {
@@ -620,18 +629,18 @@ class VerifyAnnotations extends Component {
         className={classes.buttonsContainer1}
         style={{ width: (2 * annotation.videowidth) / 3 }}
       >
-        <Button
-          className={classes.button}
-          variant="contained"
-          color="primary"
-          onClick={resetLocalStorage}
-        >
-          Reset Selections
-        </Button>
         {annotating ? (
           ''
         ) : (
           <>
+            <Button
+              className={classes.button}
+              variant="contained"
+              color="primary"
+              onClick={resetLocalStorage}
+            >
+              Reset Selections
+            </Button>
             <Button
               className={classes.button}
               variant="contained"
@@ -664,7 +673,7 @@ class VerifyAnnotations extends Component {
           variant="contained"
           onClick={this.nextAnnotation}
         >
-          {annotating ? 'Done' : 'Ignore'}
+          {annotating ? 'Done Annotating' : 'Ignore'}
         </Button>
         {annotating ? (
           ''
@@ -800,7 +809,8 @@ class VerifyAnnotations extends Component {
       loadVideos,
       excludeTracking,
       collectionFlag,
-      resetLocalStorage
+      resetLocalStorage,
+      annotating
     } = this.props;
     const {
       x,
@@ -985,7 +995,7 @@ class VerifyAnnotations extends Component {
                   {index + 1} of {size}
                 </Typography>
                 {this.optionButtons(annotation)}
-                {this.annotationConcept(annotation)}
+                {annotating ? '' : this.annotationConcept(annotation)}
                 {this.annotationDetails(annotation)}
               </div>
             )}
