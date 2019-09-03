@@ -16,8 +16,8 @@ import Avatar from '@material-ui/core/Avatar';
 import Grid from '@material-ui/core/Grid';
 import Swal from 'sweetalert2/src/sweetalert2';
 import Hotkeys from 'react-hot-keys';
-
 import Dialog from '@material-ui/core/Dialog';
+
 import DialogModal from '../Utilities/DialogModal';
 import ConceptsSelected from '../Utilities/ConceptsSelected';
 import DragBoxContainer from '../Utilities/DragBoxContainer';
@@ -70,16 +70,9 @@ const theme = createMuiTheme({
 });
 
 class VerifyAnnotations extends Component {
-  toastPopup = Swal.mixin({
-    toast: true,
-    position: 'top-end',
-    showConfirmButton: false,
-    timer: 3000
-  });
-
   constructor(props) {
     super(props);
-    const { annotation, resetLocalStorage } = this.props;
+    const { annotation } = this.props;
     const videoDialogOpen = JSON.parse(localStorage.getItem('videoDialogOpen'));
 
     this.state = {
@@ -99,16 +92,47 @@ class VerifyAnnotations extends Component {
       trackingStatus: null,
       detailDialogOpen: false
     };
-
-    this.resetLocalStorage = resetLocalStorage;
   }
 
-  componentDidUpdate(prevProps) {
+  toastPopup = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 3000
+  });
+
+  componentDidMount = async () => {
+    this.displayLoading();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    this.displayLoading();
+    await this.loadVerifiedBoxes();
+  };
+
+  componentDidUpdate = async prevProps => {
     const { annotating } = this.props;
     if (annotating !== prevProps.annotating) {
-      this.loadVerifiedBoxes();
+      await this.loadVerifiedBoxes();
     }
-  }
+  };
+
+  handleKeyDown = (keyName, e) => {
+    e.preventDefault();
+    if (e.target === document.body) {
+      if (keyName === 'r') {
+        // reset shortcut
+        this.resetState();
+      } else if (keyName === 'd') {
+        // delete shortcut
+        this.handleDelete();
+      } else if (keyName === 'i') {
+        // ignore shortcut
+        this.nextAnnotation();
+      } else if (keyName === 'v') {
+        // Verify shortcut
+        this.handleVerifyClick();
+      }
+    }
+  };
 
   displayLoading = () => {
     const { tracking } = this.props;
@@ -125,21 +149,19 @@ class VerifyAnnotations extends Component {
     }
   };
 
+  noBox = () => {
+    this.setState({
+      x: 0,
+      y: 0,
+      width: 0,
+      height: 0
+    });
+  };
+
   toggleDetails = () => {
     this.setState(prevState => ({
       detailDialogOpen: !prevState.detailDialogOpen
     }));
-  };
-
-  loaded = () => {
-    Swal.close();
-  };
-
-  componentDidMount = async () => {
-    this.displayLoading();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    this.displayLoading();
-    await this.loadVerifiedBoxes();
   };
 
   loadVerifiedBoxes = async () => {
@@ -177,25 +199,6 @@ class VerifyAnnotations extends Component {
       Swal.close();
     } catch (error) {
       console.log(error);
-    }
-  };
-
-  handleKeyDown = (keyName, e) => {
-    e.preventDefault();
-    if (e.target === document.body) {
-      if (keyName === 'r') {
-        // reset shortcut
-        this.resetState();
-      } else if (keyName === 'd') {
-        // delete shortcut
-        this.handleDelete();
-      } else if (keyName === 'i') {
-        // ignore shortcut
-        this.nextAnnotation();
-      } else if (keyName === 'v') {
-        // Verify shortcut
-        this.handleVerifyClick();
-      }
     }
   };
 
@@ -242,14 +245,14 @@ class VerifyAnnotations extends Component {
         drawDragBox: true,
         disableVerify: false,
         concept: null,
-        comment: annotation.comment,
-        unsure: annotation.unsure,
+        comment: annotating ? '' : annotation.comment,
+        unsure: annotating ? false : annotation.unsure,
         x: annotating ? 0 : annotation.x1,
         y: annotating ? 0 : annotation.y1,
         width: annotating ? 0 : annotation.x2 - annotation.x1,
         height: annotating ? 0 : annotation.y2 - annotation.y1
       },
-      async () => this.loadVerifiedBoxes()
+      async () => await this.loadVerifiedBoxes()
     );
   };
 
@@ -498,15 +501,6 @@ class VerifyAnnotations extends Component {
     } catch {
       Swal.fire('ERR: uploading image', '', 'error');
     }
-  };
-
-  noBox = () => {
-    this.setState({
-      x: 0,
-      y: 0,
-      width: 0,
-      height: 0
-    });
   };
 
   updateBox = (x1, y1, x2, y2) => {
@@ -975,7 +969,7 @@ class VerifyAnnotations extends Component {
                       : ' '}
                     <img
                       id="image"
-                      onLoad={this.loaded}
+                      onLoad={Swal.close}
                       onError={this.handleErrImage}
                       className={classes.img}
                       src={`https://cdn.deepseaannotations.com/test/${annotation.image}`}
