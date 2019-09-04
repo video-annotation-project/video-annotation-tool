@@ -7,6 +7,7 @@ import {
 } from '@material-ui/core/styles';
 import { Typography, DialogTitle, DialogContent } from '@material-ui/core';
 import Button from '@material-ui/core/Button';
+import Paper from '@material-ui/core/Paper';
 import OndemandVideo from '@material-ui/icons/OndemandVideo';
 import HighlightOff from '@material-ui/icons/HighlightOff';
 import Photo from '@material-ui/icons/Photo';
@@ -69,6 +70,36 @@ const theme = createMuiTheme({
     }
   }
 });
+
+function Legend(props) {
+  function LegendItem(props) {
+    return (
+      <div style={{padding: '10px'}}>
+        <div 
+          style = {{
+            display: 'inline-block',
+            marginRight: '10px',
+            backgroundColor: props.color,
+            width: '10px',
+            height: '10px'
+          }}
+        />
+        <Typography style={{display: 'inline'}}>{props.label}</Typography>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ position: 'absolute', top: '10px', left: '-220px'}}>
+      <Paper style={{width: '200px'}}>
+        <LegendItem color="red" label="Hovered" />
+        <LegendItem color="lightgreen" label="Verified in Collection" />
+        <LegendItem color="DodgerBlue" label="Ignored / Outside of Collection" />
+        <LegendItem color="orange" label="Current Unverified in Collection" />
+      </Paper>
+    </div>
+  );
+}
 
 class Hover extends Component {
   constructor(props) {
@@ -967,78 +998,79 @@ class VerifyAnnotations extends Component {
             ) : (
               <div>
                 <Hotkeys keyName="r, d, i, v" onKeyDown={this.handleKeyDown} />
-                <div style={{ marginLeft: '250px' }}>
+                <div style={{ position: 'absolute', left: '250px' }}>
                   <div
                     style={{
                       width: annotation.videowidth,
                       height: annotation.videoheight
                     }}
                   >
-                    <DragBoxContainer
-                      className={classes.img}
-                      dragBox={classes.dragBox}
-                      drawDragBoxProp={drawDragBox}
-                      toggleDragBox={this.toggleDragBox}
-                      size={{
-                        width,
-                        height
-                      }}
-                      position={{ x, y }}
-                      onDragStop={(e, d) => {
-                        this.setState({ x: d.x, y: d.y });
-                      }}
-                      onResize={(e, direction, ref, delta, position) => {
-                        this.setState({
-                          width: ref.style.width,
-                          height: ref.style.height,
-                          ...position
-                        });
-                      }}
-                    >
-                      {verifiedBoxes
-                        ? verifiedBoxes.map(box => (
-                            <div
-                              key={verifiedBoxes.indexOf(box)}
-                              style={{
-                                position: 'relative',
-                                width: 0,
-                                height: 0,
-                                top:
-                                  box.y1 * (annotation.videoheight / box.resy),
-                                left:
-                                  box.x1 * (annotation.videowidth / box.resx),
-                                border: '2px solid DodgerBlue'
-                              }}
-                            >
-                              <Hover
-                                handleDelete={() => this.handleDelete(box)}
-                                style={{
-                                  width:
-                                    (box.x2 - box.x1) *
-                                    (annotation.videowidth / box.resx),
-                                  height:
-                                    (box.y2 - box.y1) *
-                                    (annotation.videoheight / box.resy),
-                                  border: '2px solid green'
-                                }}
-                              />
-                            </div>
-                          ))
-                        : ' '}
-                      <img
-                        id="image"
-                        onLoad={this.loaded}
-                        onError={this.handleErrImage}
+                      <DragBoxContainer
                         className={classes.img}
-                        src={`https://cdn.deepseaannotations.com/test/${annotation.image}`}
-                        alt="error"
-                        crossOrigin="use-credentials"
-                        style={{
-                          width: annotation.videowidth,
-                          height: annotation.videoheight
+                        dragBox={classes.dragBox}
+                        drawDragBoxProp={drawDragBox}
+                        toggleDragBox={this.toggleDragBox}
+                        size={{
+                          width,
+                          height
                         }}
-                      />
-                    </DragBoxContainer>
+                        position={{ x, y }}
+                        onDragStop={(e, d) => {
+                          this.setState({ x: d.x, y: d.y });
+                        }}
+                        onResize={(e, direction, ref, delta, position) => {
+                          this.setState({
+                            width: ref.style.width,
+                            height: ref.style.height,
+                            ...position
+                          });
+                        }}
+                      >
+                        {verifiedBoxes
+                          ? verifiedBoxes.map(box => (
+                              <div
+                                key={verifiedBoxes.indexOf(box)}
+                                style={{
+                                  position: 'relative',
+                                  width: 0,
+                                  height: 0,
+                                  top:
+                                    box.y1 * (annotation.videoheight / box.resy),
+                                  left:
+                                    box.x1 * (annotation.videowidth / box.resx),
+                                  border: '2px solid DodgerBlue'
+                                }}
+                              >
+                                <Hover
+                                  handleDelete={() => this.handleDelete(box)}
+                                  style={{
+                                    width:
+                                      (box.x2 - box.x1) *
+                                      (annotation.videowidth / box.resx),
+                                    height:
+                                      (box.y2 - box.y1) *
+                                      (annotation.videoheight / box.resy),
+                                    border: '2px solid green'
+                                  }}
+                                />
+                              </div>
+                            ))
+                          : ' '}
+                        <img
+                          id="image"
+                          onLoad={this.loaded}
+                          onError={this.handleErrImage}
+                          className={classes.img}
+                          src={`https://cdn.deepseaannotations.com/test/${annotation.image}`}
+                          alt="error"
+                          crossOrigin="use-credentials"
+                          style={{
+                            width: annotation.videowidth,
+                            height: annotation.videoheight
+                          }}
+                        />
+                      </DragBoxContainer>
+                      <Legend />
                   </div>
                   <Typography style={{ marginTop: '10px' }}>
                     {index + 1} of {size}
