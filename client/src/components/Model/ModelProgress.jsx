@@ -66,13 +66,7 @@ class ModelProgress extends Component {
   };
 
   TrainingStatus = () => {
-    const {
-      terminateTraining,
-      checkReady,
-      stopTraining,
-      handleReset,
-      startTraining
-    } = this.props;
+    const { terminateTraining, checkReady, stopTraining, resetTraining, startTraining } = this.props;
 
     const {
       currentEpoch,
@@ -132,7 +126,7 @@ class ModelProgress extends Component {
             </Button>
           </div>
           <div hidden={this.getButtonStatus() !== 2}>
-            <Button onClick={handleReset} variant="contained" color="primary">
+            <Button onClick={resetTraining} variant="contained" color="primary">
               Reset Training
             </Button>
           </div>
@@ -173,7 +167,7 @@ class ModelProgress extends Component {
     axios
       .get(`/api/models/progress/train`, config)
       .then(res => {
-        const progress = res.data[0];
+        const progress = res.data;
 
         this.setState({
           currentEpoch: progress.curr_epoch + 1,

@@ -352,15 +352,6 @@ class VerifyAnnotations extends Component {
     }
   };
 
-  noBox = () => {
-    this.setState({
-      x: 0,
-      y: 0,
-      width: 0,
-      height: 0
-    });
-  };
-
   toggleDetails = () => {
     this.setState(prevState => ({
       detailDialogOpen: !prevState.detailDialogOpen
@@ -439,6 +430,7 @@ class VerifyAnnotations extends Component {
     const { annotation, annotating } = this.props;
 
     await this.loadVerifiedBoxes();
+    
     this.setState({
       drawDragBox: true,
       disableVerify: false,

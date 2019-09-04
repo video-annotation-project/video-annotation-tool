@@ -38,7 +38,8 @@ router.patch(
       SET
         status = 0,
         std_out='',
-        std_err=''
+        std_err='',
+        stop_flag=False
     `;
 
     const resetPredicting = `DELETE FROM predict_progress;`;
