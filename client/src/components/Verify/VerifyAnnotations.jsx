@@ -12,6 +12,8 @@ import Paper from '@material-ui/core/Paper';
 import OndemandVideo from '@material-ui/icons/OndemandVideo';
 
 import IconButton from '@material-ui/core/IconButton';
+import HighlightOff from '@material-ui/icons/HighlightOff';
+import Photo from '@material-ui/icons/Photo';
 import blue from '@material-ui/core/colors/blue';
 import Description from '@material-ui/icons/Description';
 import Avatar from '@material-ui/core/Avatar';
@@ -74,8 +76,6 @@ const theme = createMuiTheme({
   }
 });
 
-<<<<<<< HEAD
-=======
 function Legend(props) {
   function LegendItem(props) {
     return (
@@ -273,7 +273,6 @@ function AnnotateImage(props) {
   );
 }
 
->>>>>>> 95cd322f2e27201765ace2c5c710e78b605a02ed
 class VerifyAnnotations extends Component {
   toastPopup = Swal.mixin({
     toast: true,
@@ -777,20 +776,6 @@ class VerifyAnnotations extends Component {
     });
   };
 
-<<<<<<< HEAD
-=======
-  getStatus = flag => {
-    switch (flag) {
-      case false:
-        return 'Bad Tracking';
-      case true:
-        return 'Good Tracking';
-      default:
-        return 'Tracking Not Verified';
-    }
-  };
-
->>>>>>> 95cd322f2e27201765ace2c5c710e78b605a02ed
   optionButtons = annotation => {
     const { classes, resetLocalStorage, annotating } = this.props;
     const { disableVerify } = this.state;
