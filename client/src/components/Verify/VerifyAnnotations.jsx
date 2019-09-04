@@ -76,9 +76,9 @@ function Legend() {
   function LegendItem(props) {
     const {color, label} = props;
     return (
-      <div style={{padding: '10px'}}>
-        <div 
-          style = {{
+      <div style={{ padding: '10px' }}>
+        <div
+          style={{
             display: 'inline-block',
             marginRight: '10px',
             backgroundColor: color,
@@ -92,11 +92,14 @@ function Legend() {
   }
 
   return (
-    <div style={{ position: 'absolute', top: '10px', left: '-220px'}}>
-      <Paper style={{width: '200px'}}>
+    <div style={{ position: 'absolute', top: '10px', left: '-220px' }}>
+      <Paper style={{ width: '200px' }}>
         <LegendItem color="red" label="Hovered" />
         <LegendItem color="lightgreen" label="Verified in Collection" />
-        <LegendItem color="DodgerBlue" label="Ignored / Outside of Collection" />
+        <LegendItem
+          color="DodgerBlue"
+          label="Ignored / Outside of Collection"
+        />
         <LegendItem color="orange" label="Current Unverified in Collection" />
       </Paper>
     </div>
@@ -189,17 +192,20 @@ class VerifyAnnotations extends Component {
   };
 
   loadVerifiedBoxes = async () => {
-    const { annotation } = this.props;
+    const { annotation, selectedAnnotationCollections } = this.props;
     const config = {
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${localStorage.getItem('token')}`
+      },
+      params: {
+        selectedAnnotationCollections
       }
     };
     try {
       const data = await axios.get(
-        `/api/annotations/verifiedboxes/${annotation.id}
-        ?videoid=${annotation.videoid}&timeinvideo=${annotation.timeinvideo}`,
+        `/api/annotations/verifiedboxes/${annotation.id}` +
+          `?videoid=${annotation.videoid}&timeinvideo=${annotation.timeinvideo}`,
         config
       );
       if (data.data.length > 0) {
@@ -256,7 +262,7 @@ class VerifyAnnotations extends Component {
     const { annotation, annotating } = this.props;
 
     await this.loadVerifiedBoxes();
-    
+
     this.setState({
       drawDragBox: true,
       disableVerify: false,

@@ -57,10 +57,13 @@ class Verify extends Component {
     const selectedTrackingFirst = JSON.parse(
       localStorage.getItem('selectedTrackingFirst')
     );
+    const selectedAnnotationCollections = JSON.parse(
+      localStorage.getItem('selectedAnnotationCollections')
+    );
 
     this.state = {
       ignoredAnnotations,
-      selectedAnnotationCollections: [],
+      selectedAnnotationCollections,
       selectedUsers: [],
       selectedVideos: [],
       selectedConcepts: [],
@@ -317,15 +320,21 @@ class Verify extends Component {
   };
 
   handleChangeList = (stateVariable, type) => event => {
+    let value;
     if (!stateVariable.includes(event.target.value)) {
-      this.setState({
-        [type]: stateVariable.concat(event.target.value)
-      });
+      value = stateVariable.concat(event.target.value);
     } else {
-      this.setState({
-        [type]: stateVariable.filter(typeid => typeid !== event.target.value)
-      });
+      value = stateVariable.filter(typeid => typeid !== event.target.value);
     }
+    if (type === 'selectedAnnotationCollections') {
+      localStorage.setItem(
+        'selectedAnnotationCollections',
+        JSON.stringify(value)
+      );
+    }
+    this.setState({
+      [type]: value
+    });
   };
 
   handleSelectAll = (data, dataSelected, stepInfo) => {
@@ -351,6 +360,10 @@ class Verify extends Component {
   resetStep = step => {
     switch (step) {
       case 0:
+        localStorage.setItem(
+          'selectedAnnotationCollections',
+          JSON.stringify([])
+        );
         this.setState({
           selectedAnnotationCollections: []
         });
@@ -386,7 +399,6 @@ class Verify extends Component {
     localStorage.setItem('selectedTrackingFirst', false);
     this.setState(
       {
-        selectedAnnotationCollections: [],
         selectedUsers: [],
         selectedVideos: [],
         selectedConcepts: [],
@@ -573,6 +585,7 @@ class Verify extends Component {
     } else {
       selection = (
         <VerifyAnnotations
+          selectedAnnotationCollections={selectedAnnotationCollections}
           populateIgnoreList={this.populateIgnoreList}
           ignoredAnnotations={ignoredAnnotations}
           annotation={annotations[index]}
