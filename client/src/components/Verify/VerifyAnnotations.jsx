@@ -1,3 +1,4 @@
+// eslint-disable-next-line max-classes-per-file
 import React, { Component } from 'react';
 import axios from 'axios';
 import {
@@ -16,8 +17,8 @@ import Avatar from '@material-ui/core/Avatar';
 import Grid from '@material-ui/core/Grid';
 import Swal from 'sweetalert2/src/sweetalert2';
 import Hotkeys from 'react-hot-keys';
-
 import Dialog from '@material-ui/core/Dialog';
+
 import DialogModal from '../Utilities/DialogModal';
 import ConceptsSelected from '../Utilities/ConceptsSelected';
 import DragBoxContainer from '../Utilities/DragBoxContainer';
@@ -82,7 +83,7 @@ class VerifyAnnotations extends Component {
 
   constructor(props) {
     super(props);
-    const { annotation, resetLocalStorage } = this.props;
+    const { annotation } = this.props;
     const videoDialogOpen = JSON.parse(localStorage.getItem('videoDialogOpen'));
 
     this.state = {
@@ -102,16 +103,39 @@ class VerifyAnnotations extends Component {
       trackingStatus: null,
       detailDialogOpen: false
     };
-
-    this.resetLocalStorage = resetLocalStorage;
   }
 
-  componentDidUpdate(prevProps) {
+  componentDidMount = async () => {
+    this.displayLoading();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    await this.loadVerifiedBoxes();
+  };
+
+  componentDidUpdate = async prevProps => {
     const { annotating } = this.props;
     if (annotating !== prevProps.annotating) {
-      this.loadVerifiedBoxes();
+      await this.loadVerifiedBoxes();
     }
-  }
+  };
+
+  handleKeyDown = (keyName, e) => {
+    e.preventDefault();
+    if (e.target === document.body) {
+      if (keyName === 'r') {
+        // reset shortcut
+        this.resetState();
+      } else if (keyName === 'd') {
+        // delete shortcut
+        this.handleDelete();
+      } else if (keyName === 'i') {
+        // ignore shortcut
+        this.nextAnnotation();
+      } else if (keyName === 'v') {
+        // Verify shortcut
+        this.handleVerifyClick();
+      }
+    }
+  };
 
   displayLoading = () => {
     const { tracking } = this.props;
@@ -128,21 +152,19 @@ class VerifyAnnotations extends Component {
     }
   };
 
+  noBox = () => {
+    this.setState({
+      x: 0,
+      y: 0,
+      width: 0,
+      height: 0
+    });
+  };
+
   toggleDetails = () => {
     this.setState(prevState => ({
       detailDialogOpen: !prevState.detailDialogOpen
     }));
-  };
-
-  loaded = () => {
-    Swal.close();
-  };
-
-  componentDidMount = async () => {
-    this.displayLoading();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    this.displayLoading();
-    await this.loadVerifiedBoxes();
   };
 
   loadVerifiedBoxes = async () => {
@@ -171,26 +193,6 @@ class VerifyAnnotations extends Component {
       Swal.close();
     } catch (error) {
       console.log(error);
-    }
-  };
-
-  handleKeyDown = (keyName, e) => {
-    const { annotation } = this.props;
-    e.preventDefault();
-    if (e.target === document.body) {
-      if (keyName === 'r') {
-        // reset shortcut
-        this.resetState();
-      } else if (keyName === 'd') {
-        // delete shortcut
-        this.handleDelete(annotation);
-      } else if (keyName === 'i') {
-        // ignore shortcut
-        this.nextAnnotation(true);
-      } else if (keyName === 'v') {
-        // Verify shortcut
-        this.handleVerifyClick();
-      }
     }
   };
 
@@ -230,19 +232,19 @@ class VerifyAnnotations extends Component {
   };
 
   resetState = async () => {
-    const { annotation } = this.props;
+    const { annotation, annotating } = this.props;
 
     await this.loadVerifiedBoxes();
     this.setState({
       drawDragBox: true,
       disableVerify: false,
       concept: null,
-      comment: annotation.comment,
-      unsure: annotation.unsure,
-      x: annotation.x1,
-      y: annotation.y1,
-      width: annotation.x2 - annotation.x1,
-      height: annotation.y2 - annotation.y1
+      comment: annotating ? '' : annotation.comment,
+      unsure: annotating ? false : annotation.unsure,
+      x: annotating ? 0 : annotation.x1,
+      y: annotating ? 0 : annotation.y1,
+      width: annotating ? 0 : annotation.x2 - annotation.x1,
+      height: annotating ? 0 : annotation.y2 - annotation.y1
     });
   };
 
@@ -258,7 +260,8 @@ class VerifyAnnotations extends Component {
       index,
       handleNext,
       populateIgnoreList,
-      annotation
+      annotation,
+      end
     } = this.props;
 
     if (ignoreFlag) {
@@ -267,10 +270,7 @@ class VerifyAnnotations extends Component {
     this.setState({
       trackingStatus: null
     });
-    if (size === index + 1) {
-      this.setState({
-        end: true
-      });
+    if (end) {
       return;
     }
     this.displayLoading();
@@ -338,7 +338,7 @@ class VerifyAnnotations extends Component {
     };
     axios
       .delete('/api/annotations', config)
-      .then(async res => {
+      .then(async () => {
         this.toastPopup.fire({
           type: 'success',
           title: 'Deleted!!'
@@ -584,18 +584,18 @@ class VerifyAnnotations extends Component {
         className={classes.buttonsContainer1}
         style={{ width: (2 * annotation.videowidth) / 3 }}
       >
-        <Button
-          className={classes.button}
-          variant="contained"
-          color="primary"
-          onClick={resetLocalStorage}
-        >
-          Reset Selections
-        </Button>
         {annotating ? (
           ''
         ) : (
           <>
+            <Button
+              className={classes.button}
+              variant="contained"
+              color="primary"
+              onClick={resetLocalStorage}
+            >
+              Reset Selections
+            </Button>
             <Button
               className={classes.button}
               variant="contained"
@@ -628,7 +628,7 @@ class VerifyAnnotations extends Component {
           variant="contained"
           onClick={() => this.nextAnnotation(true)}
         >
-          {annotating ? 'Done' : 'Ignore'}
+          {annotating ? 'Done Annotating' : 'Ignore'}
         </Button>
         {annotating ? (
           ''
@@ -655,7 +655,7 @@ class VerifyAnnotations extends Component {
   };
 
   annotationConcept = annotation => {
-    const { classes } = this.props;
+    const { classes, annotating } = this.props;
     const { concept } = this.state;
 
     return (
@@ -664,33 +664,30 @@ class VerifyAnnotations extends Component {
         style={{ width: annotation.videowidth / 3 }}
       >
         <Grid container direction="row" alignItems="center">
-          <Grid item>
-            <Avatar
-              src={`https://cdn.deepseaannotations.com/concept_images/${
-                !concept ? annotation.picture : concept.picture
-              }`}
-            />
-          </Grid>
-          <Grid item>
-            <Typography variant="subtitle1" style={{ marginLeft: '10px' }}>
-              {!concept ? annotation.name : concept.name}
-            </Typography>
-          </Grid>
+          {annotating ? (
+            ''
+          ) : (
+            <>
+              <Grid item>
+                <Avatar
+                  src={`https://cdn.deepseaannotations.com/concept_images/${
+                    !concept ? annotation.picture : concept.picture
+                  }`}
+                />
+              </Grid>
+              <Grid item>
+                <Typography variant="subtitle1" style={{ marginLeft: '10px' }}>
+                  {!concept ? annotation.name : concept.name}
+                </Typography>
+              </Grid>
+            </>
+          )}
           <Grid item xs>
             <ConceptsSelected handleConceptClick={this.handleConceptClick} />
           </Grid>
         </Grid>
       </div>
     );
-  };
-
-  noBox = () => {
-    this.setState({
-      x: 0,
-      y: 0,
-      width: 0,
-      height: 0
-    });
   };
 
   annotationDetails = annotation => {
@@ -774,13 +771,13 @@ class VerifyAnnotations extends Component {
       excludeTracking,
       collectionFlag,
       resetLocalStorage,
-      ignoredAnnotations
+      ignoredAnnotations,
+      end
     } = this.props;
     const {
       x,
       y,
       conceptDialogOpen,
-      end,
       trackingStatus,
       drawDragBox,
       width,
