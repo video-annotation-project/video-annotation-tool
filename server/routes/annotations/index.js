@@ -454,7 +454,7 @@ router.get(
 
     if (selectedUsers && selectedVideos && selectedConcepts && selectedUnsure) {
       queryText = `
-        SELECT DISTINCT ON (a.videoid, frame)
+        SELECT DISTINCT
         a.*, c.name, c.picture, u.username, v.filename, ROUND(a.timeinvideo*v.fps) frame `;
       orderBy = ' ORDER BY a.videoid, frame';
     } else if (selectedUsers && selectedVideos && selectedConcepts) {

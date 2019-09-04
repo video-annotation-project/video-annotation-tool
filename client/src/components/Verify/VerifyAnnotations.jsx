@@ -8,8 +8,7 @@ import {
 import { Typography, DialogTitle, DialogContent } from '@material-ui/core';
 import Button from '@material-ui/core/Button';
 import OndemandVideo from '@material-ui/icons/OndemandVideo';
-import HighlightOff from '@material-ui/icons/HighlightOff';
-import Photo from '@material-ui/icons/Photo';
+
 import IconButton from '@material-ui/core/IconButton';
 import blue from '@material-ui/core/colors/blue';
 import Description from '@material-ui/icons/Description';
@@ -23,6 +22,9 @@ import DialogModal from '../Utilities/DialogModal';
 import ConceptsSelected from '../Utilities/ConceptsSelected';
 import DragBoxContainer from '../Utilities/DragBoxContainer';
 import VideoMetadata from '../Utilities/VideoMetadata';
+
+import Boxes from './Boxes';
+import TrackingVideos from './TrackingVideos';
 
 const styles = theme => ({
   button: {
@@ -69,43 +71,6 @@ const theme = createMuiTheme({
     }
   }
 });
-
-class Hover extends Component {
-  constructor(props) {
-    super(props);
-    this.state = { hover: false };
-  }
-
-  render() {
-    const { style, handleDelete } = this.props;
-    const { hover } = this.state;
-    return (
-      <div
-        style={style}
-        onMouseEnter={() => this.setState({ hover: true })}
-        onMouseLeave={() => this.setState({ hover: false })}
-        onClick={event => {
-          event.stopPropagation();
-          Swal.fire({
-            title: 'Are you sure?',
-            text: "You won't be able to revert this!",
-            type: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
-            confirmButtonText: 'Yes, delete it!'
-          }).then(result => {
-            if (result.value) {
-              handleDelete();
-            }
-          });
-        }}
-      >
-        {hover ? <HighlightOff /> : ''}
-      </div>
-    );
-  }
-}
 
 class VerifyAnnotations extends Component {
   toastPopup = Swal.mixin({
@@ -221,7 +186,7 @@ class VerifyAnnotations extends Component {
         this.handleDelete(annotation);
       } else if (keyName === 'i') {
         // ignore shortcut
-        this.nextAnnotation();
+        this.nextAnnotation(true);
       } else if (keyName === 'v') {
         // Verify shortcut
         this.handleVerifyClick();
@@ -256,7 +221,7 @@ class VerifyAnnotations extends Component {
           type: 'success',
           title: 'Verified!!'
         });
-        this.nextAnnotation();
+        this.nextAnnotation(false);
         return res.data;
       })
       .catch(error => {
@@ -287,9 +252,18 @@ class VerifyAnnotations extends Component {
     });
   };
 
-  nextAnnotation = async () => {
-    const { size, index, handleNext } = this.props;
+  nextAnnotation = async ignoreFlag => {
+    const {
+      size,
+      index,
+      handleNext,
+      populateIgnoreList,
+      annotation
+    } = this.props;
 
+    if (ignoreFlag) {
+      populateIgnoreList(annotation);
+    }
     this.setState({
       trackingStatus: null
     });
@@ -370,7 +344,7 @@ class VerifyAnnotations extends Component {
           title: 'Deleted!!'
         });
         if (annotation.id === annotationArg.id) {
-          this.nextAnnotation();
+          this.nextAnnotation(false);
         } else {
           this.resetState();
         }
@@ -473,7 +447,7 @@ class VerifyAnnotations extends Component {
       }
     } catch {
       console.log('Unable to Verify');
-      this.nextAnnotation();
+      this.nextAnnotation(false);
     }
   };
 
@@ -602,46 +576,6 @@ class VerifyAnnotations extends Component {
     });
   };
 
-  getStatus = flag => {
-    switch (flag) {
-      case false:
-        return 'Bad Tracking';
-      case true:
-        return 'Good Tracking';
-      default:
-        return 'Tracking Not Verified';
-    }
-  };
-
-  markTracking = async flag => {
-    const { annotation, tracking } = this.props;
-    const config = {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    };
-    const body = {
-      flag
-    };
-    try {
-      await axios.patch(
-        `/api/annotations/tracking/${annotation.id}`,
-        body,
-        config
-      );
-      this.setState({
-        trackingStatus: flag
-      });
-      Swal.fire('Successfully Marked', '', 'success');
-      if (tracking) {
-        this.nextAnnotation();
-      }
-    } catch (error) {
-      Swal.fire('Error marking video as bad', '', 'error');
-    }
-  };
-
   optionButtons = annotation => {
     const { classes, resetLocalStorage, annotating } = this.props;
     const { disableVerify } = this.state;
@@ -692,7 +626,7 @@ class VerifyAnnotations extends Component {
         <Button
           className={classes.button}
           variant="contained"
-          onClick={this.nextAnnotation}
+          onClick={() => this.nextAnnotation(true)}
         >
           {annotating ? 'Done' : 'Ignore'}
         </Button>
@@ -827,12 +761,6 @@ class VerifyAnnotations extends Component {
     );
   };
 
-  hover = box => {
-    if (!box.hovering) {
-      box.hovering = true;
-    }
-  };
-
   render() {
     const {
       classes,
@@ -845,7 +773,8 @@ class VerifyAnnotations extends Component {
       loadVideos,
       excludeTracking,
       collectionFlag,
-      resetLocalStorage
+      resetLocalStorage,
+      ignoredAnnotations
     } = this.props;
     const {
       x,
@@ -871,90 +800,18 @@ class VerifyAnnotations extends Component {
         {!end ? (
           <>
             {tracking || videoDialogOpen ? (
-              <Grid container>
-                <Grid item xs />
-                <Grid item xs>
-                  <DragBoxContainer>
-                    <video
-                      id="video"
-                      width="1300"
-                      height="730"
-                      src={`https://cdn.deepseaannotations.com/videos/${annotation.id}_tracking.mp4`}
-                      type="video/mp4"
-                      controls
-                    >
-                      Your browser does not support the video tag.
-                    </video>
-                  </DragBoxContainer>
-                  <div
-                    className={classes.buttonsContainer1}
-                    style={{ width: annotation.videowidth }}
-                  >
-                    <Button
-                      className={classes.button}
-                      variant="contained"
-                      color="primary"
-                      onClick={() => this.markTracking(true)}
-                    >
-                      Mark as Good Tracking Video
-                    </Button>
-                    <Button
-                      className={classes.button}
-                      variant="contained"
-                      color="secondary"
-                      onClick={() => this.markTracking(false)}
-                    >
-                      Mark as Bad Tracking Video
-                    </Button>
-                    <Button
-                      className={classes.button}
-                      variant="contained"
-                      color="primary"
-                      onClick={resetLocalStorage}
-                    >
-                      Reset Selections
-                    </Button>
-                    <Button
-                      className={classes.button}
-                      variant="contained"
-                      onClick={this.nextAnnotation}
-                      disabled={!excludeTracking && collectionFlag > 0}
-                    >
-                      Next
-                    </Button>
-                    {videoDialogOpen ? (
-                      <IconButton
-                        onClick={this.videoDialogToggle}
-                        aria-label="Photo"
-                      >
-                        <Photo />
-                      </IconButton>
-                    ) : (
-                      ''
-                    )}
-                  </div>
-                  <br />
-                  <br />
-                  <br />
-                  <div>
-                    <Typography variant="subtitle2" className={classes.button}>
-                      {!excludeTracking && collectionFlag > 0
-                        ? 'Next disabled because the collection might contain tracking annotations'
-                        : ''}
-                    </Typography>
-                    <Typography variant="subtitle1" className={classes.button}>
-                      <b>Status: </b>{' '}
-                      {!trackingStatus
-                        ? this.getStatus(annotation.tracking_flag)
-                        : this.getStatus(trackingStatus)}
-                    </Typography>
-                    <Typography style={{ marginTop: '10px' }}>
-                      {index + 1} of {size}
-                    </Typography>
-                  </div>
-                </Grid>
-                <Grid item xs />
-              </Grid>
+              <TrackingVideos
+                annotation={annotation}
+                excludeTracking={excludeTracking}
+                collectionFlag={collectionFlag}
+                videoDialogOpen={videoDialogOpen}
+                trackingStatus={trackingStatus}
+                index={index}
+                size={size}
+                resetLocalStorage={resetLocalStorage}
+                videoDialogToggle={this.videoDialogToggle}
+                nextAnnotation={this.nextAnnotation}
+              />
             ) : (
               <div style={{ marginLeft: '250px' }}>
                 <Hotkeys keyName="r, d, i, v" onKeyDown={this.handleKeyDown} />
@@ -985,34 +842,11 @@ class VerifyAnnotations extends Component {
                       });
                     }}
                   >
-                    {verifiedBoxes
-                      ? verifiedBoxes.map(box => (
-                          <div
-                            key={box.id}
-                            style={{
-                              position: 'relative',
-                              width: 0,
-                              height: 0,
-                              top: box.y1 * (annotation.videoheight / box.resy),
-                              left: box.x1 * (annotation.videowidth / box.resx)
-                            }}
-                          >
-                            <Hover
-                              id={box.id}
-                              handleDelete={() => this.handleDelete(box)}
-                              style={{
-                                width:
-                                  (box.x2 - box.x1) *
-                                  (annotation.videowidth / box.resx),
-                                height:
-                                  (box.y2 - box.y1) *
-                                  (annotation.videoheight / box.resy),
-                                border: '2px solid green'
-                              }}
-                            />
-                          </div>
-                        ))
-                      : ' '}
+                    <Boxes
+                      verifiedBoxes={verifiedBoxes}
+                      ignoredAnnotations={ignoredAnnotations}
+                      annotation={annotation}
+                    />
                     <img
                       id="image"
                       onLoad={this.loaded}
