@@ -10,10 +10,7 @@ import { Typography, DialogTitle, DialogContent } from '@material-ui/core';
 import Button from '@material-ui/core/Button';
 import Paper from '@material-ui/core/Paper';
 import OndemandVideo from '@material-ui/icons/OndemandVideo';
-
 import IconButton from '@material-ui/core/IconButton';
-import HighlightOff from '@material-ui/icons/HighlightOff';
-import Photo from '@material-ui/icons/Photo';
 import blue from '@material-ui/core/colors/blue';
 import Description from '@material-ui/icons/Description';
 import Avatar from '@material-ui/core/Avatar';
@@ -26,7 +23,6 @@ import DialogModal from '../Utilities/DialogModal';
 import ConceptsSelected from '../Utilities/ConceptsSelected';
 import DragBoxContainer from '../Utilities/DragBoxContainer';
 import VideoMetadata from '../Utilities/VideoMetadata';
-
 import Boxes from './Boxes';
 import TrackingVideos from './TrackingVideos';
 
@@ -76,20 +72,21 @@ const theme = createMuiTheme({
   }
 });
 
-function Legend(props) {
+function Legend() {
   function LegendItem(props) {
+    const {color, label} = props;
     return (
       <div style={{padding: '10px'}}>
         <div 
           style = {{
             display: 'inline-block',
             marginRight: '10px',
-            backgroundColor: props.color,
+            backgroundColor: color,
             width: '10px',
             height: '10px'
           }}
         />
-        <Typography style={{display: 'inline'}}>{props.label}</Typography>
+        <Typography style={{display: 'inline'}}>{label}</Typography>
       </div>
     );
   }
@@ -103,173 +100,6 @@ function Legend(props) {
         <LegendItem color="orange" label="Current Unverified in Collection" />
       </Paper>
     </div>
-  );
-}
-
-class Hover extends Component {
-  constructor(props) {
-    super(props);
-    this.state = { hover: false };
-  }
-
-  render() {
-    const { style, handleDelete } = this.props;
-    const { hover } = this.state;
-    return (
-      // eslint-disable-next-line jsx-a11y/click-events-have-key-events,jsx-a11y/no-static-element-interactions
-      <div
-        style={style}
-        onMouseEnter={() => this.setState({ hover: true })}
-        onMouseLeave={() => this.setState({ hover: false })}
-        onClick={event => {
-          event.stopPropagation();
-          Swal.fire({
-            title: 'Are you sure?',
-            text: "You won't be able to revert this!",
-            type: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
-            confirmButtonText: 'Yes, delete it!'
-          }).then(result => {
-            if (result.value) {
-              handleDelete();
-            }
-          });
-        }}
-      >
-        {hover ? <HighlightOff /> : ''}
-      </div>
-    );
-  }
-}
-
-function AnnotateImage(props) {
-
-  const { 
-    annotation, 
-    tracking, 
-    classes, 
-    resetLocalStorage,
-    excludeTracking, 
-    trackingStatus,
-    videoDialogOpen,
-    collectionFlag,
-    index,
-    size
-  } = props;
-
-  const markTracking = async flag => {
-    const config = {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    };
-    const body = {
-      flag
-    };
-    try {
-      await axios.patch(
-        `/api/annotations/tracking/${annotation.id}`,
-        body,
-        config
-      );
-      this.setState({
-        trackingStatus: flag
-      });
-      Swal.fire('Successfully Marked', '', 'success');
-      if (tracking) {
-        this.nextAnnotation();
-      }
-    } catch (error) {
-      Swal.fire('Error marking video as bad', '', 'error');
-    }
-  };
-
-  return (
-    
-    <Grid container>
-      <Grid item xs />
-      <Grid item xs>
-        <DragBoxContainer>
-          <video
-            id="video"
-            width="1300"
-            height="730"
-            src={`https://cdn.deepseaannotations.com/videos/${annotation.id}_tracking.mp4`}
-            type="video/mp4"
-            controls
-          >
-            Your browser does not support the video tag.
-          </video>
-        </DragBoxContainer>
-        <div
-          className={classes.buttonsContainer1}
-          style={{ width: annotation.videowidth }}
-        >
-          <Button
-            className={classes.button}
-            variant="contained"
-            color="primary"
-            onClick={() => this.markTracking(true)}
-          >
-            Mark as Good Tracking Video
-          </Button>
-          <Button
-            className={classes.button}
-            variant="contained"
-            color="secondary"
-            onClick={() => this.markTracking(false)}
-          >
-            Mark as Bad Tracking Video
-          </Button>
-          <Button
-            className={classes.button}
-            variant="contained"
-            color="primary"
-            onClick={resetLocalStorage}
-          >
-            Reset Selections
-          </Button>
-          <Button
-            className={classes.button}
-            variant="contained"
-            onClick={this.nextAnnotation}
-            disabled={!excludeTracking && collectionFlag > 0}
-          >
-            Next
-          </Button>
-          {videoDialogOpen ? (
-            <IconButton
-              onClick={this.videoDialogToggle}
-              aria-label="Photo"
-            >
-              <Photo />
-            </IconButton>
-          ) : (
-            ''
-          )}
-        </div>
-        <div>
-          <Typography variant="subtitle2" className={classes.button}>
-            {!excludeTracking && collectionFlag > 0
-              ? 'Next disabled because the collection might contain tracking annotations'
-              : ''}
-          </Typography>
-          <Typography variant="subtitle1" className={classes.button}>
-            <b>Status: </b>{' '}
-            {!trackingStatus
-              ? this.getStatus(annotation.tracking_flag)
-              : this.getStatus(trackingStatus)}
-          </Typography>
-          <Typography style={{ marginTop: '10px' }}>
-            {index + 1} of {size}
-          </Typography>
-        </div>
-      </Grid>
-      <Grid item xs />
-    </Grid>
   );
 }
 
