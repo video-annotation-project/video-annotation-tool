@@ -74,7 +74,7 @@ const theme = createMuiTheme({
 
 function Legend() {
   function LegendItem(props) {
-    const {color, label} = props;
+    const { color, label } = props;
     return (
       <div style={{ padding: '10px' }}>
         <div
@@ -86,7 +86,7 @@ function Legend() {
             height: '10px'
           }}
         />
-        <Typography style={{display: 'inline'}}>{label}</Typography>
+        <Typography style={{ display: 'inline' }}>{label}</Typography>
       </div>
     );
   }
