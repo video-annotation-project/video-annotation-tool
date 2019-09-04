@@ -413,7 +413,7 @@ class Verify extends Component {
       videoid: annotations[index].videoid
     };
     try {
-      let res = await axios.post(`/api/annotations/verifyframe`, body, config);
+      const res = await axios.post(`/api/annotations/verifyframe`, body, config);
       if (res) {
         console.log('frame inserted');
         return;

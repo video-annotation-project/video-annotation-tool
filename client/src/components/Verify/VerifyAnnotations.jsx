@@ -152,15 +152,6 @@ class VerifyAnnotations extends Component {
     }
   };
 
-  noBox = () => {
-    this.setState({
-      x: 0,
-      y: 0,
-      width: 0,
-      height: 0
-    });
-  };
-
   toggleDetails = () => {
     this.setState(prevState => ({
       detailDialogOpen: !prevState.detailDialogOpen
@@ -255,14 +246,7 @@ class VerifyAnnotations extends Component {
   };
 
   nextAnnotation = async ignoreFlag => {
-    const {
-      size,
-      index,
-      handleNext,
-      populateIgnoreList,
-      annotation,
-      end
-    } = this.props;
+    const { handleNext, populateIgnoreList, annotation, end } = this.props;
 
     if (ignoreFlag) {
       populateIgnoreList(annotation);
