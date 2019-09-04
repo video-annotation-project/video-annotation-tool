@@ -18,6 +18,7 @@ from config import config
 # Without this the program will crash
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
+
 def _parse(value, function, fmt):
     """
     Parse a string into a value, and format a nice ValueError if it fails.
@@ -206,7 +207,7 @@ class AnnotationGenerator(object):
                         concept_count[a] -= 1
                     continue
             selected.append(frame)
-        
+
         return selected, concept_count
 
     @staticmethod
@@ -403,8 +404,9 @@ class S3Generator(Generator):
                 float(annot['x2']),
                 float(annot['y2']),
             ]]))
-            
-        print(f'Training frame with {annotations["bboxes"].shape[0]} annotations on image {image["save_name"]} ({image["image"]})')
+
+        print(
+            f'Training frame with {annotations["bboxes"].shape[0]} annotations on image {image["save_name"]} ({image["image"]})')
 
         return annotations
 
@@ -420,7 +422,8 @@ class S3Generator(Generator):
             obj = self.client.get_object(
                 Bucket=config.S3_BUCKET, Key=config.S3_ANNOTATION_FOLDER + image_name)
             obj_image = Image.open(obj['Body'])
-            resized_image = obj_image.resize((config.RESIZED_WIDTH, config.RESIZED_HEIGHT))
+            resized_image = obj_image.resize(
+                (config.RESIZED_WIDTH, config.RESIZED_HEIGHT))
         # ClientError is the exception class for a KeyNotFound error
         except ClientError:
             self._download_image((image_index + 1) % self.size())
@@ -491,7 +494,7 @@ class S3Generator(Generator):
                     class_name, set(self.classes)))
 
             result[image_file].append(
-                    {'x1': x1, 'x2': x2, 'y1': y1, 'y2': y2, 'class': class_name, 'tracking': tracking})
+                {'x1': x1, 'x2': x2, 'y1': y1, 'y2': y2, 'class': class_name, 'tracking': tracking})
         return result
 
     def _connect_s3(self):
