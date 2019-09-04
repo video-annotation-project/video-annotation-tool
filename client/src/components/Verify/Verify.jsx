@@ -131,15 +131,23 @@ class Verify extends Component {
   };
 
   getAnnotationsFromCollection = async () => {
-    const { selectedAnnotationCollections, excludeTracking } = this.state;
+    const {
+      selectedAnnotationCollections,
+      excludeTracking,
+      selectedTrackingFirst
+    } = this.state;
     return axios
-      .get(
-        `/api/annotations/collections?` +
-          `collectionids=${selectedAnnotationCollections}&tracking=${excludeTracking}`,
-        {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      .get(`/api/annotations/collections`, {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        },
+        params: {
+          selectedAnnotationCollections,
+          excludeTracking,
+          selectedTrackingFirst
         }
-      )
+      })
       .then(res => {
         return res.data;
       })
@@ -246,22 +254,23 @@ class Verify extends Component {
       selectedUsers,
       selectedVideos,
       selectedConcepts,
-      selectedUnsure
+      selectedUnsure,
+      excludeTracking
     } = this.state;
 
     return axios
-      .get(`/api/annotations/verified`, {
+      .get(`/api/annotations/unverified`, {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${localStorage.getItem('token')}`
         },
         params: {
-          verifiedOnly: selectedTrackingFirst ? '1' : '-1',
           selectedUsers,
           selectedVideos,
           selectedConcepts,
           selectedUnsure,
-          selectedTrackingFirst
+          selectedTrackingFirst,
+          excludeTracking
         }
       })
       .then(res => res.data)
