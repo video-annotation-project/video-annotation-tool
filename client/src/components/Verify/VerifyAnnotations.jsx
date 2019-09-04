@@ -10,7 +10,6 @@ import { Typography, DialogTitle, DialogContent } from '@material-ui/core';
 import Button from '@material-ui/core/Button';
 import Paper from '@material-ui/core/Paper';
 import OndemandVideo from '@material-ui/icons/OndemandVideo';
-
 import IconButton from '@material-ui/core/IconButton';
 import blue from '@material-ui/core/colors/blue';
 import Description from '@material-ui/icons/Description';
@@ -24,7 +23,6 @@ import DialogModal from '../Utilities/DialogModal';
 import ConceptsSelected from '../Utilities/ConceptsSelected';
 import DragBoxContainer from '../Utilities/DragBoxContainer';
 import VideoMetadata from '../Utilities/VideoMetadata';
-
 import Boxes from './Boxes';
 import TrackingVideos from './TrackingVideos';
 
@@ -74,20 +72,21 @@ const theme = createMuiTheme({
   }
 });
 
-function Legend(props) {
+function Legend() {
   function LegendItem(props) {
+    const { color, label } = props;
     return (
       <div style={{ padding: '10px' }}>
         <div
           style={{
             display: 'inline-block',
             marginRight: '10px',
-            backgroundColor: props.color,
+            backgroundColor: color,
             width: '10px',
             height: '10px'
           }}
         />
-        <Typography style={{ display: 'inline' }}>{props.label}</Typography>
+        <Typography style={{ display: 'inline' }}>{label}</Typography>
       </div>
     );
   }
