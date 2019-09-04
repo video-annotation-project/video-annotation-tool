@@ -33,7 +33,7 @@ function VerifySelection(props) {
                 'selectedAnnotationCollections'
               )}
             />
-            <div style={{ marginTop: '30px' }}>
+            <div style={{ marginTop: '40px' }}>
               <FormControl>
                 <FormGroup>
                   <FormControlLabel
