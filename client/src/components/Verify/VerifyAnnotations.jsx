@@ -138,6 +138,135 @@ class Hover extends Component {
   }
 }
 
+function AnnotateImage(props) {
+
+  const { 
+    annotation, 
+    tracking, 
+    classes, 
+    resetLocalStorage,
+    excludeTracking, 
+    trackingStatus,
+    videoDialogOpen,
+    collectionFlag,
+    index,
+    size
+  } = props;
+
+  const markTracking = async flag => {
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    };
+    const body = {
+      flag
+    };
+    try {
+      await axios.patch(
+        `/api/annotations/tracking/${annotation.id}`,
+        body,
+        config
+      );
+      this.setState({
+        trackingStatus: flag
+      });
+      Swal.fire('Successfully Marked', '', 'success');
+      if (tracking) {
+        this.nextAnnotation();
+      }
+    } catch (error) {
+      Swal.fire('Error marking video as bad', '', 'error');
+    }
+  };
+
+  return (
+    
+    <Grid container>
+      <Grid item xs />
+      <Grid item xs>
+        <DragBoxContainer>
+          <video
+            id="video"
+            width="1300"
+            height="730"
+            src={`https://cdn.deepseaannotations.com/videos/${annotation.id}_tracking.mp4`}
+            type="video/mp4"
+            controls
+          >
+            Your browser does not support the video tag.
+          </video>
+        </DragBoxContainer>
+        <div
+          className={classes.buttonsContainer1}
+          style={{ width: annotation.videowidth }}
+        >
+          <Button
+            className={classes.button}
+            variant="contained"
+            color="primary"
+            onClick={() => this.markTracking(true)}
+          >
+            Mark as Good Tracking Video
+          </Button>
+          <Button
+            className={classes.button}
+            variant="contained"
+            color="secondary"
+            onClick={() => this.markTracking(false)}
+          >
+            Mark as Bad Tracking Video
+          </Button>
+          <Button
+            className={classes.button}
+            variant="contained"
+            color="primary"
+            onClick={resetLocalStorage}
+          >
+            Reset Selections
+          </Button>
+          <Button
+            className={classes.button}
+            variant="contained"
+            onClick={this.nextAnnotation}
+            disabled={!excludeTracking && collectionFlag > 0}
+          >
+            Next
+          </Button>
+          {videoDialogOpen ? (
+            <IconButton
+              onClick={this.videoDialogToggle}
+              aria-label="Photo"
+            >
+              <Photo />
+            </IconButton>
+          ) : (
+            ''
+          )}
+        </div>
+        <div>
+          <Typography variant="subtitle2" className={classes.button}>
+            {!excludeTracking && collectionFlag > 0
+              ? 'Next disabled because the collection might contain tracking annotations'
+              : ''}
+          </Typography>
+          <Typography variant="subtitle1" className={classes.button}>
+            <b>Status: </b>{' '}
+            {!trackingStatus
+              ? this.getStatus(annotation.tracking_flag)
+              : this.getStatus(trackingStatus)}
+          </Typography>
+          <Typography style={{ marginTop: '10px' }}>
+            {index + 1} of {size}
+          </Typography>
+        </div>
+      </Grid>
+      <Grid item xs />
+    </Grid>
+  );
+}
+
 class VerifyAnnotations extends Component {
   toastPopup = Swal.mixin({
     toast: true,
@@ -653,35 +782,6 @@ class VerifyAnnotations extends Component {
     }
   };
 
-  markTracking = async flag => {
-    const { annotation, tracking } = this.props;
-    const config = {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    };
-    const body = {
-      flag
-    };
-    try {
-      await axios.patch(
-        `/api/annotations/tracking/${annotation.id}`,
-        body,
-        config
-      );
-      this.setState({
-        trackingStatus: flag
-      });
-      Swal.fire('Successfully Marked', '', 'success');
-      if (tracking) {
-        this.nextAnnotation();
-      }
-    } catch (error) {
-      Swal.fire('Error marking video as bad', '', 'error');
-    }
-  };
-
   optionButtons = annotation => {
     const { classes, resetLocalStorage, annotating } = this.props;
     const { disableVerify } = this.state;
@@ -910,92 +1010,19 @@ class VerifyAnnotations extends Component {
         {conceptDialogOpen && this.loadDialogModal()}
         {!end ? (
           <>
-            {tracking || videoDialogOpen ? (
-              <Grid container>
-                <Grid item xs />
-                <Grid item xs>
-                  <DragBoxContainer>
-                    <video
-                      id="video"
-                      width="1300"
-                      height="730"
-                      src={`https://cdn.deepseaannotations.com/videos/${annotation.id}_tracking.mp4`}
-                      type="video/mp4"
-                      controls
-                    >
-                      Your browser does not support the video tag.
-                    </video>
-                  </DragBoxContainer>
-                  <div
-                    className={classes.buttonsContainer1}
-                    style={{ width: annotation.videowidth }}
-                  >
-                    <Button
-                      className={classes.button}
-                      variant="contained"
-                      color="primary"
-                      onClick={() => this.markTracking(true)}
-                    >
-                      Mark as Good Tracking Video
-                    </Button>
-                    <Button
-                      className={classes.button}
-                      variant="contained"
-                      color="secondary"
-                      onClick={() => this.markTracking(false)}
-                    >
-                      Mark as Bad Tracking Video
-                    </Button>
-                    <Button
-                      className={classes.button}
-                      variant="contained"
-                      color="primary"
-                      onClick={resetLocalStorage}
-                    >
-                      Reset Selections
-                    </Button>
-                    <Button
-                      className={classes.button}
-                      variant="contained"
-                      onClick={this.nextAnnotation}
-                      disabled={!excludeTracking && collectionFlag > 0}
-                    >
-                      Next
-                    </Button>
-                    {videoDialogOpen ? (
-                      <IconButton
-                        onClick={this.videoDialogToggle}
-                        aria-label="Photo"
-                      >
-                        <Photo />
-                      </IconButton>
-                    ) : (
-                      ''
-                    )}
-                  </div>
-                  <br />
-                  <br />
-                  <br />
-                  <div>
-                    <Typography variant="subtitle2" className={classes.button}>
-                      {!excludeTracking && collectionFlag > 0
-                        ? 'Next disabled because the collection might contain tracking annotations'
-                        : ''}
-                    </Typography>
-                    <Typography variant="subtitle1" className={classes.button}>
-                      <b>Status: </b>{' '}
-                      {!trackingStatus
-                        ? this.getStatus(annotation.tracking_flag)
-                        : this.getStatus(trackingStatus)}
-                    </Typography>
-                    <Typography style={{ marginTop: '10px' }}>
-                      {index + 1} of {size}
-                    </Typography>
-                  </div>
-                </Grid>
-                <Grid item xs />
-              </Grid>
-            ) : (
+            {tracking || videoDialogOpen ? 
+            <AnnotateImage>
+              tracking={tracking}
+              annotation={annotation}
+              classes={classes}
+              resetLocalStorage={resetLocalStorage}
+              excludeTracking={excludeTracking}
+              trackingStatus={trackingStatus}
+              videoDialogOpen={videoDialogOpen}
+              collectionFlag={collectionFlag}
+              index={index}
+              size={size}
+            </AnnotateImage> : (
               <div>
                 <Hotkeys keyName="r, d, i, v" onKeyDown={this.handleKeyDown} />
                 <div style={{ position: 'absolute', left: '250px' }}>
