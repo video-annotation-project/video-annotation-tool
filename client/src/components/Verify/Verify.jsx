@@ -285,6 +285,15 @@ class Verify extends Component {
       });
   };
 
+  removeFromIgnoreList = annotation => {
+    const { ignoredAnnotations } = this.state;
+    var ignored = ignoredAnnotations.filter(x => x.id !== annotation.id);
+    localStorage.setItem('ignoredAnnotations', JSON.stringify(ignored));
+    this.setState({
+      ignoredAnnotations: ignored
+    });
+  };
+
   populateIgnoreList = annotation => {
     const { ignoredAnnotations } = this.state;
     ignoredAnnotations.push(annotation);
@@ -425,7 +434,11 @@ class Verify extends Component {
       videoid: annotations[index].videoid
     };
     try {
-      const res = await axios.post(`/api/annotations/verifyframe`, body, config);
+      const res = await axios.post(
+        `/api/annotations/verifyframe`,
+        body,
+        config
+      );
       if (res) {
         console.log('frame inserted');
         return;
@@ -587,6 +600,7 @@ class Verify extends Component {
         <VerifyAnnotations
           selectedAnnotationCollections={selectedAnnotationCollections}
           populateIgnoreList={this.populateIgnoreList}
+          removeFromIgnoreList={this.removeFromIgnoreList}
           ignoredAnnotations={ignoredAnnotations}
           annotation={annotations[index]}
           index={index}

@@ -37,7 +37,7 @@ class Hover extends Component {
             confirmButtonText: 'Yes, delete it!'
           }).then(result => {
             if (result.value) {
-              handleDelete();
+              handleDelete(box);
             }
           });
         }}
@@ -50,7 +50,7 @@ class Hover extends Component {
 
 class Boxes extends Component {
   displayIgnoredBoxes = () => {
-    const { ignoredAnnotations, annotation } = this.props;
+    const { ignoredAnnotations, annotation, handleDelete } = this.props;
     return (
       <div>
         {ignoredAnnotations
@@ -67,10 +67,40 @@ class Boxes extends Component {
               >
                 <Hover
                   id={box.id}
-                  handleDelete={() => this.handleDelete(box)}
+                  handleDelete={handleDelete}
                   box={box}
                   annotation={annotation}
-                  color="2px solid #1241FE"
+                  color="2px solid DodgerBlue"
+                />
+              </div>
+            ))
+          : ' '}
+      </div>
+    );
+  };
+
+  displayOutsideBoxes = () => {
+    const { annotation, boxesOutsideCol, handleDelete } = this.props;
+    return (
+      <div>
+        {boxesOutsideCol
+          ? boxesOutsideCol.map(box => (
+              <div
+                key={box.id}
+                style={{
+                  position: 'relative',
+                  width: 0,
+                  height: 0,
+                  top: box.y1 * (annotation.videoheight / box.videoheight),
+                  left: box.x1 * (annotation.videowidth / box.videowidth)
+                }}
+              >
+                <Hover
+                  id={box.id}
+                  handleDelete={handleDelete}
+                  box={box}
+                  annotation={annotation}
+                  color="2px solid DodgerBlue"
                 />
               </div>
             ))
@@ -80,7 +110,7 @@ class Boxes extends Component {
   };
 
   displayVerifiedBoxes = () => {
-    const { annotation, verifiedBoxes } = this.props;
+    const { annotation, verifiedBoxes, handleDelete } = this.props;
     return (
       <div>
         {verifiedBoxes
@@ -97,10 +127,10 @@ class Boxes extends Component {
               >
                 <Hover
                   id={box.id}
-                  handleDelete={() => this.handleDelete(box)}
+                  handleDelete={handleDelete}
                   box={box}
                   annotation={annotation}
-                  color="2px solid green"
+                  color="2px solid lightgreen"
                 />
               </div>
             ))
@@ -112,6 +142,7 @@ class Boxes extends Component {
   render() {
     return (
       <div>
+        {this.displayOutsideBoxes()}
         {this.displayIgnoredBoxes()}
         {this.displayVerifiedBoxes()}
       </div>
