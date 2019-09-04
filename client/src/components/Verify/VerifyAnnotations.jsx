@@ -188,411 +188,10 @@ class VerifyAnnotations extends Component {
     }
   };
 
-  noBox = () => {
-    this.setState({
-      x: 0,
-      y: 0,
-      width: 0,
-      height: 0
-    });
-  };
-
   toggleDetails = () => {
     this.setState(prevState => ({
       detailDialogOpen: !prevState.detailDialogOpen
     }));
-  };
-
-  loadVerifiedBoxes = async () => {
-    const { annotation } = this.props;
-    const config = {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    };
-    try {
-      const data = await axios.get(
-        `/api/annotations/verifiedboxes/${annotation.id}
-        ?videoid=${annotation.videoid}&timeinvideo=${annotation.timeinvideo}`,
-        config
-      );
-      if (data.data.length > 0) {
-        this.setState({
-          verifiedBoxes: data.data[0].box
-        });
-      } else {
-        this.setState({
-          verifiedBoxes: []
-        });
-      }
-      Swal.close();
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  verifyAnnotation = async () => {
-    const { annotation } = this.props;
-    const { concept, comment, unsure } = this.state;
-
-    const body = {
-      op: 'verifyAnnotation',
-      id: annotation.id,
-      conceptId: !concept ? null : concept.id,
-      comment,
-      unsure,
-      oldConceptId: !concept ? null : annotation.conceptid
-    };
-
-    const config = {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    };
-
-    return axios
-      .patch(`/api/annotations/`, body, config)
-      .then(res => {
-        this.toastPopup.fire({
-          type: 'success',
-          title: 'Verified!!'
-        });
-        this.nextAnnotation();
-        return res.data;
-      })
-      .catch(error => {
-        Swal.fire(error, '', 'error');
-      });
-  };
-
-  resetState = async () => {
-    const { annotation, annotating } = this.props;
-
-    await this.loadVerifiedBoxes();
-    this.setState({
-      drawDragBox: true,
-      disableVerify: false,
-      concept: null,
-      comment: annotating ? '' : annotation.comment,
-      unsure: annotating ? false : annotation.unsure,
-      x: annotating ? 0 : annotation.x1,
-      y: annotating ? 0 : annotation.y1,
-      width: annotating ? 0 : annotation.x2 - annotation.x1,
-      height: annotating ? 0 : annotation.y2 - annotation.y1
-    });
-  };
-
-  toggleDragBox = () => {
-    this.setState({
-      drawDragBox: false
-    });
-  };
-
-  nextAnnotation = async () => {
-    const { end, handleNext } = this.props;
-
-    this.setState({
-      trackingStatus: null
-    });
-    if (end) {
-      return;
-    }
-    this.displayLoading();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    handleNext(this.resetState);
-  };
-
-  handleConceptDialogClose = () => {
-    this.setState({
-      conceptDialogOpen: false,
-      conceptDialogMsg: null
-    });
-  };
-
-  handleConceptClick = concept => {
-    const { annotation, annotating } = this.props;
-
-    this.setState({
-      conceptDialogMsg: annotating
-        ? `Annotate as ${concept.name}?`
-        : `Switch ${annotation.name} to ${concept.name}?`,
-      conceptDialogOpen: true,
-      clickedConcept: annotation.conceptid === concept.id ? null : concept
-    });
-  };
-
-  changeConcept = (comment, unsure) => {
-    const { annotating } = this.props;
-    const { clickedConcept } = this.state;
-
-    this.setState(
-      {
-        concept: clickedConcept,
-        comment,
-        unsure
-      },
-      () => {
-        if (annotating) {
-          const dragBox = document.getElementById('dragBox');
-          if (dragBox === null) {
-            Swal.fire({
-              title: 'Error',
-              text: 'No bounding box exists.',
-              type: 'error',
-              confirmButtonText: 'Okay'
-            });
-            return;
-          }
-          this.postBoxImage(dragBox);
-        }
-      }
-    );
-  };
-
-  handleDelete = async annotationArg => {
-    const { annotation } = this.props;
-    const config = {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      },
-      data: {
-        id: annotationArg.id
-      }
-    };
-    axios
-      .delete('/api/annotations', config)
-      .then(async () => {
-        this.toastPopup.fire({
-          type: 'success',
-          title: 'Deleted!!'
-        });
-        if (annotation.id === annotationArg.id) {
-          this.nextAnnotation();
-        } else {
-          this.resetState();
-        }
-      })
-      .catch(error => {
-        Swal.fire(error, '', 'error');
-      });
-  };
-
-  postAnnotation = date => {
-    const { annotation } = this.props;
-    const { x, y, width, height, concept, comment, unsure } = this.state;
-    const x1 = x;
-    const y1 = y;
-    const x2 = x + parseInt(width, 0);
-    const y2 = y + parseInt(height, 0);
-
-    const body = {
-      conceptId: concept.id,
-      videoId: annotation.videoid,
-      timeinvideo: annotation.timeinvideo,
-      x1,
-      y1,
-      x2,
-      y2,
-      videoWidth: annotation.videowidth,
-      videoHeight: annotation.videoheight,
-      image: date,
-      imagewithbox: `${date}_box`,
-      comment,
-      unsure
-    };
-
-    const config = {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    };
-
-    axios
-      .post('/api/annotations', body, config)
-      .then(async res => {
-        console.log(res.data.message);
-        Swal.fire({
-          type: 'success',
-          title: res.data.message
-        });
-      })
-      .catch(error => {
-        console.log(error);
-        console.log(JSON.parse(JSON.stringify(error)));
-        if (!error.response) {
-          return;
-        }
-        const errMsg =
-          error.response.data.detail || error.response.data.message || 'Error';
-        console.log(errMsg);
-      });
-  };
-
-  postBoxImage = async dragBox => {
-    const { annotation, annotating } = this.props;
-    const { x, y, width, height } = this.state;
-    const dragBoxCord = dragBox.getBoundingClientRect();
-    const imageElement = document.getElementById('image');
-    const imageCord = imageElement.getBoundingClientRect('dragBox');
-    const x1 = x;
-    const y1 = y;
-    const x2 = x + parseInt(width, 0);
-    const y2 = y + parseInt(height, 0);
-    const date = annotating ? Date.now().toString() : null;
-
-    try {
-      if (
-        Math.abs(
-          annotation.x1 -
-            x1 +
-            (annotation.y1 - y1) +
-            (annotation.x2 - x2) +
-            (annotation.y2 - y2)
-        ) > 0.1 &&
-        annotation.image
-      ) {
-        this.createAndUploadImages(
-          imageCord,
-          dragBoxCord,
-          imageElement,
-          x1,
-          y1,
-          date
-        );
-        this.updateBox(x1, y1, x2, y2);
-      }
-
-      if (annotating) {
-        this.postAnnotation(date);
-      } else {
-        this.verifyAnnotation();
-      }
-    } catch {
-      console.log('Unable to Verify');
-      this.nextAnnotation();
-    }
-  };
-
-  createAndUploadImages = (
-    imageCord,
-    dragBoxCord,
-    imageElement,
-    x1,
-    y1,
-    date
-  ) => {
-    const canvas = document.createElement('canvas');
-    canvas.height = imageCord.height;
-    canvas.width = imageCord.width;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(imageElement, 0, 0, canvas.width, canvas.height);
-    const img = new window.Image();
-    img.setAttribute('crossOrigin', 'use-credentials');
-    ctx.lineWidth = '2';
-    ctx.strokeStyle = 'coral';
-    ctx.rect(x1, y1, dragBoxCord.width, dragBoxCord.height);
-    ctx.stroke();
-    img.src = canvas.toDataURL(1.0);
-    this.uploadImage(img, date);
-  };
-
-  uploadImage = (img, date) => {
-    const { annotation } = this.props;
-    const buf = Buffer.from(
-      img.src.replace(/^data:image\/\w+;base64,/, ''),
-      'base64'
-    );
-    const config = {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    };
-    let body = {};
-    if (date) {
-      body = {
-        buf,
-        date,
-        box: true
-      };
-    } else {
-      body = {
-        buf,
-        name: annotation.imagewithbox
-      };
-    }
-
-    try {
-      axios.post('/api/annotations/images', body, config);
-    } catch {
-      Swal.fire('ERR: uploading image', '', 'error');
-    }
-  };
-
-  updateBox = (x1, y1, x2, y2) => {
-    const { annotation } = this.props;
-    const body = {
-      op: 'updateBoundingBox',
-      x1,
-      y1,
-      x2,
-      y2,
-      oldx1: annotation.x1,
-      oldy1: annotation.y1,
-      oldx2: annotation.x2,
-      oldy2: annotation.y2,
-      id: annotation.id
-    };
-    const config = {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    };
-    axios.patch(`/api/annotations/`, body, config).catch(error => {
-      Swal.fire(error, '', 'error');
-    });
-  };
-
-  handleVerifyClick = () => {
-    const dragBox = document.getElementById('dragBox');
-
-    if (dragBox === null) {
-      Swal.fire({
-        title: 'Error',
-        text: 'No bounding box exists.',
-        type: 'error',
-        confirmButtonText: 'Okay'
-      });
-      return;
-    }
-
-    this.postBoxImage(dragBox);
-  };
-
-  videoDialogToggle = () => {
-    const { videoDialogOpen } = this.state;
-    localStorage.setItem('videoDialogOpen', !videoDialogOpen);
-    this.setState({
-      videoDialogOpen: !videoDialogOpen
-    });
-  };
-
-  openVideoMetadata = (event, video) => {
-    event.stopPropagation();
-    this.setState({
-      openedVideo: video
-    });
-  };
-
-  closeVideoMetadata = () => {
-    this.setState({
-      openedVideo: null
-    });
   };
 
   handleErrImage = () => {
@@ -640,84 +239,6 @@ class VerifyAnnotations extends Component {
     } catch (error) {
       Swal.fire('Error marking video as bad', '', 'error');
     }
-  };
-
-  optionButtons = annotation => {
-    const { classes, resetLocalStorage, annotating } = this.props;
-    const { disableVerify } = this.state;
-    return (
-      <div
-        className={classes.buttonsContainer1}
-        style={{ width: (2 * annotation.videowidth) / 3 }}
-      >
-        {annotating ? (
-          ''
-        ) : (
-          <>
-            <Button
-              className={classes.button}
-              variant="contained"
-              color="primary"
-              onClick={resetLocalStorage}
-            >
-              Reset Selections
-            </Button>
-            <Button
-              className={classes.button}
-              variant="contained"
-              color="primary"
-              onClick={this.toggleDetails}
-            >
-              Details
-            </Button>
-            <MuiThemeProvider theme={theme}>
-              <Button
-                className={classes.button}
-                variant="contained"
-                color="secondary"
-                onClick={() => this.handleDelete(annotation)}
-              >
-                Delete
-              </Button>
-            </MuiThemeProvider>
-            <Button
-              className={classes.button}
-              variant="contained"
-              onClick={this.resetState}
-            >
-              Reset Box
-            </Button>
-          </>
-        )}
-        <Button
-          className={classes.button}
-          variant="contained"
-          onClick={this.nextAnnotation}
-        >
-          {annotating ? 'Done Annotating' : 'Ignore'}
-        </Button>
-        {annotating ? (
-          ''
-        ) : (
-          <Button
-            className={classes.button}
-            variant="contained"
-            color="primary"
-            onClick={this.handleVerifyClick}
-            disabled={disableVerify}
-          >
-            Verify
-          </Button>
-        )}
-        <IconButton
-          onClick={this.videoDialogToggle}
-          aria-label="OnDemandVideo"
-          disabled={annotation.id !== annotation.originalid}
-        >
-          <OndemandVideo />
-        </IconButton>
-      </div>
-    );
   };
 
   annotationConcept = annotation => {
@@ -808,6 +329,156 @@ class VerifyAnnotations extends Component {
     );
   };
 
+  optionButtons = annotation => {
+    const { classes, resetLocalStorage, annotating } = this.props;
+    const { disableVerify } = this.state;
+    return (
+      <div
+        className={classes.buttonsContainer1}
+        style={{ width: (2 * annotation.videowidth) / 3 }}
+      >
+        {annotating ? (
+          ''
+        ) : (
+          <>
+            <Button
+              className={classes.button}
+              variant="contained"
+              color="primary"
+              onClick={resetLocalStorage}
+            >
+              Reset Selections
+            </Button>
+            <Button
+              className={classes.button}
+              variant="contained"
+              color="primary"
+              onClick={this.toggleDetails}
+            >
+              Details
+            </Button>
+            <MuiThemeProvider theme={theme}>
+              <Button
+                className={classes.button}
+                variant="contained"
+                color="secondary"
+                onClick={() => this.handleDelete(annotation)}
+              >
+                Delete
+              </Button>
+            </MuiThemeProvider>
+            <Button
+              className={classes.button}
+              variant="contained"
+              onClick={this.resetState}
+            >
+              Reset Box
+            </Button>
+          </>
+        )}
+        <Button
+          className={classes.button}
+          variant="contained"
+          onClick={this.nextAnnotation}
+        >
+          {annotating ? 'Done Annotating' : 'Ignore'}
+        </Button>
+        {annotating ? (
+          ''
+        ) : (
+          <Button
+            className={classes.button}
+            variant="contained"
+            color="primary"
+            onClick={this.handleVerifyClick}
+            disabled={disableVerify}
+          >
+            Verify
+          </Button>
+        )}
+        <IconButton
+          onClick={this.videoDialogToggle}
+          aria-label="OnDemandVideo"
+          disabled={annotation.id !== annotation.originalid}
+        >
+          <OndemandVideo />
+        </IconButton>
+      </div>
+    );
+  };
+
+  // Drag box functions
+
+  toggleDragBox = () => {
+    this.setState({
+      drawDragBox: false
+    });
+  };
+
+  noBox = () => {
+    this.setState({
+      x: 0,
+      y: 0,
+      width: 0,
+      height: 0
+    });
+  };
+
+  hover = box => {
+    if (!box.hovering) {
+      box.hovering = true;
+    }
+  };
+
+  // Concept selecting functions
+
+  handleConceptDialogClose = () => {
+    this.setState({
+      conceptDialogOpen: false,
+      conceptDialogMsg: null
+    });
+  };
+
+  handleConceptClick = concept => {
+    const { annotation, annotating } = this.props;
+
+    this.setState({
+      conceptDialogMsg: annotating
+        ? `Annotate as ${concept.name}?`
+        : `Switch ${annotation.name} to ${concept.name}?`,
+      conceptDialogOpen: true,
+      clickedConcept: annotation.conceptid === concept.id ? null : concept
+    });
+  };
+
+  changeConcept = (comment, unsure) => {
+    const { annotating } = this.props;
+    const { clickedConcept } = this.state;
+
+    this.setState(
+      {
+        concept: clickedConcept,
+        comment,
+        unsure
+      },
+      () => {
+        if (annotating) {
+          const dragBox = document.getElementById('dragBox');
+          if (dragBox === null) {
+            Swal.fire({
+              title: 'Error',
+              text: 'No bounding box exists.',
+              type: 'error',
+              confirmButtonText: 'Okay'
+            });
+            return;
+          }
+          this.postBoxImage(dragBox);
+        }
+      }
+    );
+  };
+
   loadDialogModal = () => {
     const { unsure, conceptDialogMsg, comment } = this.state;
     return (
@@ -824,10 +495,347 @@ class VerifyAnnotations extends Component {
     );
   };
 
-  hover = box => {
-    if (!box.hovering) {
-      box.hovering = true;
+  // Video functions
+
+  videoDialogToggle = () => {
+    const { videoDialogOpen } = this.state;
+    localStorage.setItem('videoDialogOpen', !videoDialogOpen);
+    this.setState({
+      videoDialogOpen: !videoDialogOpen
+    });
+  };
+
+  openVideoMetadata = (event, video) => {
+    event.stopPropagation();
+    this.setState({
+      openedVideo: video
+    });
+  };
+
+  closeVideoMetadata = () => {
+    this.setState({
+      openedVideo: null
+    });
+  };
+
+  // Annotating and verifying functions
+
+  loadVerifiedBoxes = async () => {
+    const { annotation } = this.props;
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    };
+    try {
+      const data = await axios.get(
+        `/api/annotations/verifiedboxes/${annotation.id}
+        ?videoid=${annotation.videoid}&timeinvideo=${annotation.timeinvideo}`,
+        config
+      );
+      if (data.data.length > 0) {
+        this.setState({
+          verifiedBoxes: data.data[0].box
+        });
+      } else {
+        this.setState({
+          verifiedBoxes: []
+        });
+      }
+      Swal.close();
+    } catch (error) {
+      console.log(error);
     }
+  };
+
+  resetState = async () => {
+    const { annotation, annotating } = this.props;
+
+    await this.loadVerifiedBoxes();
+    this.setState({
+      drawDragBox: true,
+      disableVerify: false,
+      concept: null,
+      comment: annotating ? '' : annotation.comment,
+      unsure: annotating ? false : annotation.unsure,
+      x: annotating ? 0 : annotation.x1,
+      y: annotating ? 0 : annotation.y1,
+      width: annotating ? 0 : annotation.x2 - annotation.x1,
+      height: annotating ? 0 : annotation.y2 - annotation.y1
+    });
+  };
+
+  nextAnnotation = async () => {
+    const { end, handleNext } = this.props;
+
+    this.setState({
+      trackingStatus: null
+    });
+    if (end) {
+      return;
+    }
+    this.displayLoading();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    handleNext(this.resetState);
+  };
+
+  handleDelete = async annotationArg => {
+    const { annotation } = this.props;
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      },
+      data: {
+        id: annotationArg.id
+      }
+    };
+    axios
+      .delete('/api/annotations', config)
+      .then(async () => {
+        this.toastPopup.fire({
+          type: 'success',
+          title: 'Deleted!!'
+        });
+        if (annotation.id === annotationArg.id) {
+          this.nextAnnotation();
+        } else {
+          this.resetState();
+        }
+      })
+      .catch(error => {
+        Swal.fire(error, '', 'error');
+      });
+  };
+
+  uploadImage = (img, date) => {
+    const { annotation } = this.props;
+    const buf = Buffer.from(
+      img.src.replace(/^data:image\/\w+;base64,/, ''),
+      'base64'
+    );
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    };
+    let body = {};
+    if (date) {
+      body = {
+        buf,
+        date,
+        box: true
+      };
+    } else {
+      body = {
+        buf,
+        name: annotation.imagewithbox
+      };
+    }
+
+    try {
+      axios.post('/api/annotations/images', body, config);
+    } catch {
+      Swal.fire('ERR: uploading image', '', 'error');
+    }
+  };
+
+  handleVerifyClick = () => {
+    const dragBox = document.getElementById('dragBox');
+
+    if (dragBox === null) {
+      Swal.fire({
+        title: 'Error',
+        text: 'No bounding box exists.',
+        type: 'error',
+        confirmButtonText: 'Okay'
+      });
+      return;
+    }
+
+    this.postBoxImage(dragBox);
+  };
+
+  postBoxImage = async dragBox => {
+    const { annotation, annotating } = this.props;
+    const { x, y, width, height } = this.state;
+    const dragBoxCord = dragBox.getBoundingClientRect();
+    const imageElement = document.getElementById('image');
+    const imageCord = imageElement.getBoundingClientRect('dragBox');
+    const x1 = x;
+    const y1 = y;
+    const x2 = x + parseInt(width, 0);
+    const y2 = y + parseInt(height, 0);
+    const date = annotating ? Date.now().toString() : null;
+
+    try {
+      if (
+        Math.abs(
+          annotation.x1 -
+            x1 +
+            (annotation.y1 - y1) +
+            (annotation.x2 - x2) +
+            (annotation.y2 - y2)
+        ) > 0.1 &&
+        annotation.image
+      ) {
+        this.createAndUploadImages(
+          imageCord,
+          dragBoxCord,
+          imageElement,
+          x1,
+          y1,
+          date
+        );
+        this.updateBox(x1, y1, x2, y2);
+      }
+
+      if (annotating) {
+        this.postAnnotation(date);
+      } else {
+        this.verifyAnnotation();
+      }
+    } catch {
+      console.log('Unable to Verify');
+      this.nextAnnotation();
+    }
+  };
+
+  createAndUploadImages = (
+    imageCord,
+    dragBoxCord,
+    imageElement,
+    x1,
+    y1,
+    date
+  ) => {
+    const canvas = document.createElement('canvas');
+    canvas.height = imageCord.height;
+    canvas.width = imageCord.width;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(imageElement, 0, 0, canvas.width, canvas.height);
+    const img = new window.Image();
+    img.setAttribute('crossOrigin', 'use-credentials');
+    ctx.lineWidth = '2';
+    ctx.strokeStyle = 'coral';
+    ctx.rect(x1, y1, dragBoxCord.width, dragBoxCord.height);
+    ctx.stroke();
+    img.src = canvas.toDataURL(1.0);
+    this.uploadImage(img, date);
+  };
+
+  updateBox = (x1, y1, x2, y2) => {
+    const { annotation } = this.props;
+    const body = {
+      op: 'updateBoundingBox',
+      x1,
+      y1,
+      x2,
+      y2,
+      oldx1: annotation.x1,
+      oldy1: annotation.y1,
+      oldx2: annotation.x2,
+      oldy2: annotation.y2,
+      id: annotation.id
+    };
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    };
+    axios.patch(`/api/annotations/`, body, config).catch(error => {
+      Swal.fire(error, '', 'error');
+    });
+  };
+
+  verifyAnnotation = async () => {
+    const { annotation } = this.props;
+    const { concept, comment, unsure } = this.state;
+
+    const body = {
+      op: 'verifyAnnotation',
+      id: annotation.id,
+      conceptId: !concept ? null : concept.id,
+      comment,
+      unsure,
+      oldConceptId: !concept ? null : annotation.conceptid
+    };
+
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    };
+
+    return axios
+      .patch(`/api/annotations/`, body, config)
+      .then(res => {
+        this.toastPopup.fire({
+          type: 'success',
+          title: 'Verified!!'
+        });
+        this.nextAnnotation();
+        return res.data;
+      })
+      .catch(error => {
+        Swal.fire(error, '', 'error');
+      });
+  };
+
+  postAnnotation = date => {
+    const { annotation } = this.props;
+    const { x, y, width, height, concept, comment, unsure } = this.state;
+    const x1 = x;
+    const y1 = y;
+    const x2 = x + parseInt(width, 0);
+    const y2 = y + parseInt(height, 0);
+
+    const body = {
+      conceptId: concept.id,
+      videoId: annotation.videoid,
+      timeinvideo: annotation.timeinvideo,
+      x1,
+      y1,
+      x2,
+      y2,
+      videoWidth: annotation.videowidth,
+      videoHeight: annotation.videoheight,
+      image: date,
+      imagewithbox: `${date}_box`,
+      comment,
+      unsure
+    };
+
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    };
+
+    axios
+      .post('/api/annotations', body, config)
+      .then(async res => {
+        console.log(res.data.message);
+        Swal.fire({
+          type: 'success',
+          title: res.data.message
+        });
+      })
+      .catch(error => {
+        console.log(error);
+        console.log(JSON.parse(JSON.stringify(error)));
+        if (!error.response) {
+          return;
+        }
+        const errMsg =
+          error.response.data.detail || error.response.data.message || 'Error';
+        console.log(errMsg);
+      });
   };
 
   render() {
