@@ -86,16 +86,23 @@ router.get(
   '/verifiedboxes/:id',
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
-    let params = [req.query.videoid, req.query.timeinvideo, req.params.id];
+    let params = [
+      req.query.videoid,
+      req.query.timeinvideo,
+      req.params.id,
+      req.query.selectedAnnotationCollections
+    ];
     let queryText = `
       SELECT 
-        a.videoid, ROUND(v.fps * a.timeinvideo), count(*) as count, json_agg(json_build_object('id', a.id, 'x1',a.x1, 'y1',a.y1, 'x2',a.x2, 'y2',a.y2, 'resx', a.videowidth, 'resy', a.videoheight )) as box
+        a.videoid, ROUND(v.fps * a.timeinvideo), count(*) as count, json_agg(json_build_object('id', a.id, 'x1',a.x1, 'y1',a.y1, 'x2',a.x2, 'y2',a.y2, 'videowidth', a.videowidth, 'videoheight', a.videoheight )) as box
       FROM
         annotations a
       LEFT JOIN
         videos v ON v.id = a.videoid
       WHERE 
         a.videoid = $1 AND ROUND(v.fps * a.timeinvideo) = ROUND(v.fps * $2) AND a.id <> $3
+        AND a.conceptid::INT = ANY(SELECT unnest(ARRAY(SELECT unnest(conceptid) FROM annotation_collection WHERE
+          id::INT = ANY($4))))
         AND a.verifiedby IS NOT NULL
       GROUP BY
           a.videoid, ROUND(v.fps * a.timeinvideo)

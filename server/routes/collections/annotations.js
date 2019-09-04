@@ -331,6 +331,7 @@ router.post(
               FROM
               concepts
           WHERE id = ANY($4))) c),
+          conceptid = $4,
         tracking = $5
       WHERE
         id=$1

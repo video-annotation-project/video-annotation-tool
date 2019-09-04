@@ -168,19 +168,23 @@ class VerifyAnnotations extends Component {
   };
 
   loadVerifiedBoxes = async () => {
-    const { annotation } = this.props;
+    const { annotation, selectedAnnotationCollections } = this.props;
     const config = {
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${localStorage.getItem('token')}`
+      },
+      params: {
+        selectedAnnotationCollections
       }
     };
     try {
       const data = await axios.get(
-        `/api/annotations/verifiedboxes/${annotation.id}
-        ?videoid=${annotation.videoid}&timeinvideo=${annotation.timeinvideo}`,
+        `/api/annotations/verifiedboxes/${annotation.id}` +
+          `?videoid=${annotation.videoid}&timeinvideo=${annotation.timeinvideo}`,
         config
       );
+      console.log(data.data);
       if (data.data.length > 0) {
         this.setState({
           verifiedBoxes: data.data[0].box
@@ -255,14 +259,7 @@ class VerifyAnnotations extends Component {
   };
 
   nextAnnotation = async ignoreFlag => {
-    const {
-      size,
-      index,
-      handleNext,
-      populateIgnoreList,
-      annotation,
-      end
-    } = this.props;
+    const { handleNext, populateIgnoreList, annotation, end } = this.props;
 
     if (ignoreFlag) {
       populateIgnoreList(annotation);

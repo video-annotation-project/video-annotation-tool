@@ -91,8 +91,8 @@ class Boxes extends Component {
                   position: 'relative',
                   width: 0,
                   height: 0,
-                  top: box.y1 * (annotation.videoheight / box.resy),
-                  left: box.x1 * (annotation.videowidth / box.resx)
+                  top: box.y1 * (annotation.videoheight / box.videoheight),
+                  left: box.x1 * (annotation.videowidth / box.videowidth)
                 }}
               >
                 <Hover

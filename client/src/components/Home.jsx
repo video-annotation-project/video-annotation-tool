@@ -61,6 +61,7 @@ class Home extends Component {
     await this.getCounts(fromDate.ISOString, toDate.ISOString);
     // These variables are for the verify tab checkpoint
     localStorage.setItem('ignoredAnnotations', JSON.stringify([]));
+    localStorage.setItem('selectedAnnotationCollections', JSON.stringify([]));
     localStorage.setItem('selectionMounted', true);
     localStorage.setItem('selectedTrackingFirst', false);
     localStorage.setItem('videoDialogOpen', false);
