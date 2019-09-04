@@ -48,6 +48,9 @@ class Verify extends Component {
     const selectionMounted = JSON.parse(
       localStorage.getItem('selectionMounted')
     );
+    const ignoredAnnotations = JSON.parse(
+      localStorage.getItem('ignoredAnnotations')
+    );
     const annotations = JSON.parse(localStorage.getItem('verifyAnnotation'));
     const noAnnotations = JSON.parse(localStorage.getItem('noAnnotations'));
     const index = JSON.parse(localStorage.getItem('curIndex'));
@@ -56,6 +59,7 @@ class Verify extends Component {
     );
 
     this.state = {
+      ignoredAnnotations,
       selectedAnnotationCollections: [],
       selectedUsers: [],
       selectedVideos: [],
@@ -90,7 +94,6 @@ class Verify extends Component {
       } else {
         annotations = await this.getAnnotations();
       }
-      console.log(annotations);
       if (annotations.length < 1) {
         localStorage.setItem('noAnnotations', true);
         localStorage.setItem('selectionMounted', !selectionMounted);
@@ -279,6 +282,18 @@ class Verify extends Component {
       });
   };
 
+  populateIgnoreList = annotation => {
+    const { ignoredAnnotations } = this.state;
+    ignoredAnnotations.push(annotation);
+    localStorage.setItem(
+      'ignoredAnnotations',
+      JSON.stringify(ignoredAnnotations)
+    );
+    this.setState({
+      ignoredAnnotations
+    });
+  };
+
   selectUser = user => {
     const { selectedUsers } = this.state;
     this.setState({
@@ -428,22 +443,17 @@ class Verify extends Component {
         reverseButtons: true
       }).then(result => {
         if (result.value) {
-          if (annotations.length === index + 1) {
-            localStorage.setItem('noAnnotations', true);
-            this.setState({
-              end: true
-            });
-          } else {
-            this.verifyFrame();
-            localStorage.setItem('curIndex', index + 1);
-            this.setState(
-              {
-                index: index + 1,
-                annotating: false
-              },
-              callback
-            );
-          }
+          this.verifyFrame();
+          localStorage.setItem('ignoredAnnotations', JSON.stringify([]));
+          localStorage.setItem('curIndex', index + 1);
+          this.setState(
+            {
+              ignoredAnnotations: [],
+              index: index + 1,
+              annotating: false
+            },
+            callback
+          );
         }
         if (result.dismiss === 'cancel') {
           // Add annotations here
@@ -467,6 +477,7 @@ class Verify extends Component {
   };
 
   resetLocalStorage = () => {
+    localStorage.setItem('ignoredAnnotations', JSON.stringify([]));
     localStorage.setItem('selectionMounted', true);
     localStorage.setItem('videoDialogOpen', false);
     localStorage.setItem('selectedTrackingFirst', false);
@@ -475,6 +486,7 @@ class Verify extends Component {
     localStorage.removeItem('noAnnotations');
     this.resetState(
       this.setState({
+        ignoredAnnotations: [],
         selectionMounted: true,
         index: 0,
         noAnnotations: false,
@@ -498,6 +510,7 @@ class Verify extends Component {
       noAnnotations,
       index,
       annotating,
+      ignoredAnnotations,
       end
     } = this.state;
     if (annotations && index >= annotations.length + 1) {
@@ -560,6 +573,8 @@ class Verify extends Component {
     } else {
       selection = (
         <VerifyAnnotations
+          populateIgnoreList={this.populateIgnoreList}
+          ignoredAnnotations={ignoredAnnotations}
           annotation={annotations[index]}
           index={index}
           handleNext={this.handleNext}
