@@ -133,7 +133,7 @@ class AnnotationCollection extends Component {
     return ret;
   };
 
-  createAnnotationCollection = () => {
+  createAnnotationCollection = async () => {
     Swal.mixin({
       confirmButtonText: 'Next',
       showCancelButton: true,
@@ -162,12 +162,19 @@ class AnnotationCollection extends Component {
             }
           };
           try {
-            await axios.post('/api/collections/annotations', body, config);
+            let data = await axios.post(
+              '/api/collections/annotations',
+              body,
+              config
+            );
             Swal.fire({
               title: 'Collection Created!',
               confirmButtonText: 'Lovely!'
             });
-            this.loadCollections();
+            await this.loadCollections();
+            this.setState({
+              selectedCollection: data.data.id
+            });
           } catch (error) {
             this.promiseResolver(error);
           }

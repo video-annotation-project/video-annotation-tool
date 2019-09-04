@@ -200,7 +200,7 @@ router.post(
         req.body.name,
         req.body.description
       ]);
-      res.status(200).json({ value: JSON.stringify(insert.rows) });
+      res.status(200).json(insert.rows[0]);
     } catch (error) {
       res.status(400).json(error);
     }
