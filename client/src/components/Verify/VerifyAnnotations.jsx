@@ -116,7 +116,7 @@ class VerifyAnnotations extends Component {
 
   constructor(props) {
     super(props);
-    const { annotation } = this.props;
+    const { annotation, displayLoading } = this.props;
     const videoDialogOpen = JSON.parse(localStorage.getItem('videoDialogOpen'));
 
     this.state = {
@@ -136,6 +136,8 @@ class VerifyAnnotations extends Component {
       trackingStatus: null,
       detailDialogOpen: false
     };
+
+    this.displayLoading = displayLoading;
   }
 
   componentDidMount = async () => {
@@ -171,21 +173,6 @@ class VerifyAnnotations extends Component {
     }
   };
 
-  displayLoading = () => {
-    const { tracking } = this.props;
-    const { videoDialogOpen } = this.state;
-
-    if (!tracking && !videoDialogOpen) {
-      Swal.fire({
-        title: 'Loading...',
-        showConfirmButton: false,
-        onBeforeOpen: () => {
-          Swal.showLoading();
-        }
-      });
-    }
-  };
-
   toggleDetails = () => {
     this.setState(prevState => ({
       detailDialogOpen: !prevState.detailDialogOpen
@@ -193,13 +180,6 @@ class VerifyAnnotations extends Component {
   };
 
   loadBoxes = async () => {
-    await Promise.all([
-      this.loadBoxesOutsideOfCollection(),
-      this.loadVerifiedBoxes()
-    ]);
-  };
-
-  loadBoxesOutsideOfCollection = async () => {
     const { annotation, selectedAnnotationCollections } = this.props;
     const config = {
       headers: {
@@ -213,46 +193,30 @@ class VerifyAnnotations extends Component {
     try {
       const data = await axios.get(
         `/api/annotations/boxes/${annotation.id}` +
-          `?videoid=${annotation.videoid}&timeinvideo=${annotation.timeinvideo}&notcol=true`,
+          `?videoid=${annotation.videoid}&timeinvideo=${annotation.timeinvideo}`,
         config
       );
       if (data.data.length > 0) {
-        this.setState({
-          boxesOutsideCol: data.data[0].box
-        });
+        console.log(data.data);
+        if (data.data[0].verified_flag === 1) {
+          this.setState({
+            verifiedBoxes: data.data[0].box,
+            boxesOutsideCol: []
+          });
+        } else if (data.data.length === 2) {
+          this.setState({
+            boxesOutsideCol: data.data[0].box,
+            verifiedBoxes: data.data[1].box
+          });
+        } else {
+          this.setState({
+            verifiedBoxes: [],
+            boxesOutsideCol: data.data[0].box
+          });
+        }
       } else {
         this.setState({
-          boxesOutsideCol: []
-        });
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  loadVerifiedBoxes = async () => {
-    const { annotation, selectedAnnotationCollections } = this.props;
-    const config = {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      },
-      params: {
-        selectedAnnotationCollections
-      }
-    };
-    try {
-      const data = await axios.get(
-        `/api/annotations/boxes/${annotation.id}` +
-          `?videoid=${annotation.videoid}&timeinvideo=${annotation.timeinvideo}&notcol=false`,
-        config
-      );
-      if (data.data.length > 0) {
-        this.setState({
-          verifiedBoxes: data.data[0].box
-        });
-      } else {
-        this.setState({
+          boxesOutsideCol: [],
           verifiedBoxes: []
         });
       }
@@ -298,6 +262,7 @@ class VerifyAnnotations extends Component {
   };
 
   resetState = async () => {
+    this.displayLoading();
     const { annotation, annotating } = this.props;
     await this.loadBoxes();
 

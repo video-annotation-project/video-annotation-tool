@@ -42,7 +42,14 @@ class Hover extends Component {
           });
         }}
       >
-        {hover ? <HighlightOff /> : ''}
+        {hover ? (
+          <div>
+            <HighlightOff />
+            <div>{box.concept ? box.concept : ''}</div>
+          </div>
+        ) : (
+          ''
+        )}
       </div>
     );
   }
@@ -97,6 +104,7 @@ class Boxes extends Component {
               >
                 <Hover
                   id={box.id}
+                  concept={box.concept}
                   handleDelete={handleDelete}
                   box={box}
                   annotation={annotation}
@@ -127,6 +135,7 @@ class Boxes extends Component {
               >
                 <Hover
                   id={box.id}
+                  concept={box.concept}
                   handleDelete={handleDelete}
                   box={box}
                   annotation={annotation}

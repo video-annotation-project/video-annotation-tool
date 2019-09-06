@@ -46,20 +46,36 @@ class Verify extends Component {
     if (prevLength !== 0 && prevLength !== annotations.length) {
       var newIndex = index - (prevLength - annotations.length);
       localStorage.setItem('curIndex', newIndex);
-      await this.setState({
+      this.setState({
         index: newIndex,
+        annotations
+      });
+    } else {
+      this.setState({
         annotations
       });
     }
     localStorage.setItem('totalAnnotations', annotations.length);
   };
 
+  displayLoading = () => {
+    const { tracking } = this.props;
+    const { videoDialogOpen } = this.state;
+
+    if (!tracking && !videoDialogOpen) {
+      Swal.fire({
+        title: 'Loading...',
+        showConfirmButton: false,
+        onBeforeOpen: () => {
+          Swal.showLoading();
+        }
+      });
+    }
+  };
+
   toggleSelection = async () => {
-    const {
-      selectedAnnotationCollections,
-      selectionMounted,
-      index
-    } = this.state;
+    this.displayLoading();
+    const { selectedAnnotationCollections, selectionMounted } = this.state;
     let annotations = [];
     if (!selectionMounted) {
       localStorage.setItem('selectionMounted', !selectionMounted);
@@ -360,7 +376,7 @@ class Verify extends Component {
       );
     } else {
       if (!annotations || annotations.length <= 0) {
-        selection = <div>Loading...</div>;
+        selection = <div>Loading Annotations...</div>;
       } else {
         selection = (
           <VerifyAnnotations
@@ -379,6 +395,7 @@ class Verify extends Component {
             excludeTracking={excludeTracking}
             annotating={annotating}
             end={end}
+            displayLoading={this.displayLoading}
           />
         );
       }
