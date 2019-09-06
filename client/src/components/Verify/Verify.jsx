@@ -142,7 +142,9 @@ class Verify extends Component {
 
   populateIgnoreList = annotation => {
     const { ignoredAnnotations } = this.state;
-    ignoredAnnotations.push(annotation);
+    if (!ignoredAnnotations.some(a => a.id === annotation.id)) {
+      ignoredAnnotations.push(annotation);
+    }
     localStorage.setItem(
       'ignoredAnnotations',
       JSON.stringify(ignoredAnnotations)
@@ -308,9 +310,6 @@ class Verify extends Component {
       ignoredAnnotations,
       end
     } = this.state;
-
-    console.log(selectedAnnotationCollections);
-    console.log(annotations);
 
     if (annotations && index >= annotations.length + 1) {
       this.resetLocalStorage();

@@ -229,7 +229,11 @@ class VerifyAnnotations extends Component {
   };
 
   loadVerifiedBoxes = async () => {
-    const { annotation, selectedAnnotationCollections } = this.props;
+    const {
+      annotation,
+      selectedAnnotationCollections,
+      annotating
+    } = this.props;
     const config = {
       headers: {
         'Content-Type': 'application/json',
@@ -241,7 +245,7 @@ class VerifyAnnotations extends Component {
     };
     try {
       const data = await axios.get(
-        `/api/annotations/boxes/${annotation.id}` +
+        `/api/annotations/boxes/${annotating ? -1 : annotation.id}` +
           `?videoid=${annotation.videoid}&timeinvideo=${annotation.timeinvideo}&notcol=false`,
         config
       );
@@ -396,7 +400,6 @@ class VerifyAnnotations extends Component {
     axios
       .delete('/api/annotations', config)
       .then(async res => {
-        console.log(res);
         this.toastPopup.fire({
           type: 'success',
           title: 'Deleted!!'
@@ -447,7 +450,6 @@ class VerifyAnnotations extends Component {
     axios
       .post('/api/annotations', body, config)
       .then(async res => {
-        console.log(res.data.message);
         Swal.fire({
           type: 'success',
           title: res.data.message
