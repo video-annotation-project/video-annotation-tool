@@ -137,7 +137,6 @@ function ImagesField(props) {
       label="# of Images"
       value={minImages}
       onChange={onChange}
-      // helperText={getImageRange()}
     />
   );
 }
@@ -159,7 +158,7 @@ class TrainModel extends Component {
       openedVideo: null,
       epochs: '',
       minImages: '',
-      ready: false
+      ready: false,
     };
   }
 
@@ -292,34 +291,6 @@ class TrainModel extends Component {
       console.log(res);
     });
   };
-
-  // getImageRange = () => {
-  //   const {
-  //     annotationCollections,
-  //     minCounts,
-  //     includeTracking,
-  //     verifiedOnly
-  //   } = this.state;
-
-  //   if (!annotationCollections.length || !minCounts.length) return '';
-
-  //   let selection;
-  //   if (verifiedOnly) {
-  //     if (includeTracking) {
-  //       selection = 3;
-  //     } else {
-  //       selection = 2;
-  //     }
-  //   } else if (includeTracking) {
-  //     selection = 1;
-  //   } else {
-  //     selection = 0;
-  //   }
-
-  //   return minCounts[selection] === 1
-  //     ? `Must be 1`
-  //     : `Must be 1–${minCounts[selection]}`;
-  // };
 
   handleChangeMultiple = event => {
     const options = event.target.value;
