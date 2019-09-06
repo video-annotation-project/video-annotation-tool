@@ -163,7 +163,7 @@ class VerifyAnnotations extends Component {
         this.handleDelete(annotation);
       } else if (keyName === 'i') {
         // ignore shortcut
-        this.nextAnnotation();
+        this.nextAnnotation(true);
       } else if (keyName === 'v') {
         // Verify shortcut
         this.handleVerifyClick();
@@ -193,8 +193,10 @@ class VerifyAnnotations extends Component {
   };
 
   loadBoxes = async () => {
-    await this.loadBoxesOutsideOfCollection();
-    await this.loadVerifiedBoxes();
+    await Promise.all([
+      this.loadBoxesOutsideOfCollection(),
+      this.loadVerifiedBoxes()
+    ]);
   };
 
   loadBoxesOutsideOfCollection = async () => {
