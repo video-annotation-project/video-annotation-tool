@@ -25,7 +25,9 @@ class Verify extends Component {
     const selectedAnnotationCollections = JSON.parse(
       localStorage.getItem('selectedAnnotationCollections')
     );
-    console.log('in render' + localStorage);
+    console.log('in render');
+    console.log(localStorage);
+    console.log(index);
 
     this.state = {
       ignoredAnnotations,
@@ -42,15 +44,37 @@ class Verify extends Component {
   }
 
   componentDidMount = async () => {
+    const { index } = this.state;
     console.log('did mount called');
-    this.setState({
-      annotations: await this.getAnnotationsFromCollection()
-    });
+    this.setState(
+      {
+        annotations: await this.getAnnotationsFromCollection()
+      },
+      () => {
+        const { annotations } = this.state;
+        const prevLength = JSON.parse(localStorage.getItem('totalAnnotations'));
+        console.log(annotations.length);
+        console.log(prevLength);
+        if (prevLength !== 0 && prevLength !== annotations.length) {
+          var newIndex = index - (prevLength - annotations.length);
+          console.log(newIndex);
+          localStorage.setItem('curIndex', newIndex);
+          this.setState({
+            index: newIndex
+          });
+        }
+        localStorage.setItem('totalAnnotations', annotations.length);
+      }
+    );
   };
 
   toggleSelection = async () => {
     console.log('toggled selection');
-    const { selectedAnnotationCollections, selectionMounted } = this.state;
+    const {
+      selectedAnnotationCollections,
+      selectionMounted,
+      index
+    } = this.state;
     let annotations = [];
     if (!selectionMounted) {
       console.log('if 1');
@@ -82,15 +106,23 @@ class Verify extends Component {
         });
       } else {
         console.log('if 5');
-        try {
-          localStorage.setItem('selectionMounted', !selectionMounted);
-        } catch (error) {
-          Swal.fire('Error', '', 'error');
-        }
+        localStorage.setItem('selectionMounted', !selectionMounted);
+        // const prevLength = JSON.parse(localStorage.getItem('totalAnnotations'));
+        // console.log(annotations.length);
+        // console.log(prevLength);
+        // if (prevLength !== 0 && prevLength !== annotations.length) {
+        //   var newIndex = index - (prevLength - annotations.length);
+        //   console.log(newIndex);
+        //   localStorage.setItem('curIndex', newIndex);
+        //   this.setState({
+        //     index: newIndex
+        //   });
+        // }
         this.setState({
           selectionMounted: !selectionMounted,
           annotations
         });
+        localStorage.setItem('totalAnnotations', annotations.length);
       }
     }
   };
@@ -282,6 +314,7 @@ class Verify extends Component {
   };
 
   resetLocalStorage = () => {
+    localStorage.setItem('totalAnnotations', 0);
     localStorage.setItem('ignoredAnnotations', JSON.stringify([]));
     localStorage.setItem('selectedAnnotationCollections', JSON.stringify([]));
     localStorage.setItem('selectionMounted', true);
@@ -316,9 +349,7 @@ class Verify extends Component {
       end
     } = this.state;
 
-    console.log(localStorage);
-
-    if (annotations && index >= annotations.length + 1) {
+    if (annotations.length > 0 && index >= annotations.length + 1) {
       this.resetLocalStorage();
       return <div />;
     }
