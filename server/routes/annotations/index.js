@@ -86,7 +86,6 @@ router.get(
   '/boxes/:id',
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
-    const { notcol } = req.query;
     let params = [
       req.query.videoid,
       req.query.timeinvideo,
@@ -94,23 +93,49 @@ router.get(
       req.query.selectedAnnotationCollections
     ];
     let queryText = `
-      SELECT 
-        a.videoid, ROUND(v.fps * a.timeinvideo), count(*) as count, json_agg(json_build_object('id', a.id, 'x1',a.x1, 'y1',a.y1, 'x2',a.x2, 'y2',a.y2, 'videowidth', a.videowidth, 'videoheight', a.videoheight )) as box
+      WITH conceptsInCollections AS (
+        SELECT 
+          unnest(
+            ARRAY(
+              SELECT
+                unnest(conceptid)
+              FROM
+                annotation_collection
+              WHERE
+                id::INT = ANY($4))) concepts
+      ), annotationsAtVideoFrame AS (
+        SELECT 
+          a.*
+        FROM
+          annotations a
+        LEFT JOIN
+          videos v ON v.id = a.videoid
+        WHERE 
+          a.videoid = $1
+          AND ROUND(v.fps * a.timeinvideo) = ROUND(v.fps * $2)
+          AND a.id <> $3
+          AND a.conceptid::INT = ANY(SELECT concepts FROM conceptsInCollections)
+      )
+      SELECT
+        c.verified_flag,
+        json_agg(
+        json_build_object(
+          'id', c.id, 'x1',c.x1, 'y1',c.y1, 'x2',c.x2, 'y2',c.y2,
+          'videowidth', c.videowidth, 'videoheight', c.videoheight )) as box
       FROM
-        annotations a
-      LEFT JOIN
-        videos v ON v.id = a.videoid
-      WHERE 
-        a.videoid = $1 AND ROUND(v.fps * a.timeinvideo) = ROUND(v.fps * $2) AND a.id <> $3
-        AND a.conceptid::INT = ANY(SELECT unnest(ARRAY(SELECT unnest(conceptid) FROM annotation_collection WHERE
-          id::INT = ANY($4))))
-          ${
-            notcol === 'true'
-              ? `AND a.id <> ALL(SELECT annotationid FROM annotation_intermediate WHERE id = ANY($4))`
-              : `AND a.verifiedby IS NOT NULL AND a.id = ANY(SELECT annotationid FROM annotation_intermediate WHERE id = ANY($4))`
-          }
-      GROUP BY
-          a.videoid, ROUND(v.fps * a.timeinvideo)
+        (SELECT 
+          a.id, a.x1, a.x2, a.y1, a.y2, a.videowidth, a.videoheight,
+          CASE WHEN
+            array_agg(ai.id) && $4 
+            AND a.verifiedby IS NOT NULL 
+          THEN 1 ELSE 0 
+          END AS verified_flag
+        FROM
+          annotationsAtVideoFrame a
+        INNER JOIN annotation_intermediate ai ON ai.annotationid=a.id
+        GROUP BY
+            a.id, a.x1, a.x2, a.y1, a.y2, a.videowidth, a.videoheight, a.verifiedby) c
+      GROUP BY c.verified_flag;
     `;
     try {
       let response = await psql.query(queryText, params);
