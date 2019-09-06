@@ -25,6 +25,7 @@ class Verify extends Component {
     const selectedAnnotationCollections = JSON.parse(
       localStorage.getItem('selectedAnnotationCollections')
     );
+    console.log('in render' + localStorage);
 
     this.state = {
       ignoredAnnotations,
@@ -41,15 +42,18 @@ class Verify extends Component {
   }
 
   componentDidMount = async () => {
+    console.log('did mount called');
     this.setState({
       annotations: await this.getAnnotationsFromCollection()
     });
   };
 
   toggleSelection = async () => {
+    console.log('toggled selection');
     const { selectedAnnotationCollections, selectionMounted } = this.state;
     let annotations = [];
     if (!selectionMounted) {
+      console.log('if 1');
       localStorage.setItem('selectionMounted', !selectionMounted);
       localStorage.setItem('noAnnotations', false);
       this.resetState(
@@ -59,12 +63,17 @@ class Verify extends Component {
         })
       );
     } else {
+      console.log('if 2');
       if (selectedAnnotationCollections.length) {
+        console.log('if 3');
+        localStorage.setItem(
+          'selectedAnnotationCollections',
+          JSON.stringify(selectedAnnotationCollections)
+        );
         annotations = await this.getAnnotationsFromCollection();
-      } else {
-        annotations = await this.getAnnotations();
       }
       if (annotations.length < 1) {
+        console.log('if 4');
         localStorage.setItem('noAnnotations', true);
         localStorage.setItem('selectionMounted', !selectionMounted);
         this.setState({
@@ -72,6 +81,7 @@ class Verify extends Component {
           selectionMounted: !selectionMounted
         });
       } else {
+        console.log('if 5');
         try {
           localStorage.setItem('selectionMounted', !selectionMounted);
         } catch (error) {
@@ -171,12 +181,6 @@ class Verify extends Component {
       value = stateVariable.concat(event.target.value);
     } else {
       value = stateVariable.filter(typeid => typeid !== event.target.value);
-    }
-    if (type === 'selectedAnnotationCollections') {
-      localStorage.setItem(
-        'selectedAnnotationCollections',
-        JSON.stringify(value)
-      );
     }
     this.setState({
       [type]: value
@@ -312,8 +316,7 @@ class Verify extends Component {
       end
     } = this.state;
 
-    console.log(selectedAnnotationCollections);
-    console.log(annotations);
+    console.log(localStorage);
 
     if (annotations && index >= annotations.length + 1) {
       this.resetLocalStorage();
