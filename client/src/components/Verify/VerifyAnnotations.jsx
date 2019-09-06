@@ -398,7 +398,6 @@ class VerifyAnnotations extends Component {
     axios
       .delete('/api/annotations', config)
       .then(async res => {
-        console.log(res);
         this.toastPopup.fire({
           type: 'success',
           title: 'Deleted!!'
@@ -449,7 +448,6 @@ class VerifyAnnotations extends Component {
     axios
       .post('/api/annotations', body, config)
       .then(async res => {
-        console.log(res.data.message);
         Swal.fire({
           type: 'success',
           title: res.data.message
