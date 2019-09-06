@@ -109,11 +109,7 @@ class Verify extends Component {
           localStorage.setItem('selectionMounted', !selectionMounted);
           localStorage.setItem('verifyAnnotation', JSON.stringify(annotations));
         } catch (error) {
-          Swal.fire(
-            'Storage is Full. Please select less annotations',
-            '',
-            'error'
-          );
+          Swal.fire('Error', '', 'error');
         }
         this.setState({
           selectionMounted: !selectionMounted,
@@ -503,6 +499,7 @@ class Verify extends Component {
 
   resetLocalStorage = () => {
     localStorage.setItem('ignoredAnnotations', JSON.stringify([]));
+    localStorage.setItem('selectedAnnotationCollections', JSON.stringify([]));
     localStorage.setItem('selectionMounted', true);
     localStorage.setItem('videoDialogOpen', false);
     localStorage.setItem('selectedTrackingFirst', false);
@@ -511,6 +508,7 @@ class Verify extends Component {
     localStorage.removeItem('noAnnotations');
     this.resetState(
       this.setState({
+        selectedAnnotationCollections: [],
         ignoredAnnotations: [],
         selectionMounted: true,
         index: 0,
@@ -538,6 +536,10 @@ class Verify extends Component {
       ignoredAnnotations,
       end
     } = this.state;
+
+    console.log(selectedAnnotationCollections);
+    console.log(annotations);
+
     if (annotations && index >= annotations.length + 1) {
       this.resetLocalStorage();
       return <div />;
