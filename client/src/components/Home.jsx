@@ -66,7 +66,6 @@ class Home extends Component {
     localStorage.setItem('selectedTrackingFirst', false);
     localStorage.setItem('videoDialogOpen', false);
     localStorage.setItem('curIndex', 0);
-    localStorage.removeItem('verifyAnnotation');
     localStorage.removeItem('noAnnotations');
   }
 

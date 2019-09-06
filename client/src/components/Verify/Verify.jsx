@@ -17,7 +17,6 @@ class Verify extends Component {
     const ignoredAnnotations = JSON.parse(
       localStorage.getItem('ignoredAnnotations')
     );
-    const annotations = JSON.parse(localStorage.getItem('verifyAnnotation'));
     const noAnnotations = JSON.parse(localStorage.getItem('noAnnotations'));
     const index = JSON.parse(localStorage.getItem('curIndex'));
     const selectedTrackingFirst = JSON.parse(
@@ -35,11 +34,17 @@ class Verify extends Component {
       noAnnotations,
       index,
       excludeTracking: false,
-      annotations,
       annotating: false,
+      annotations: [],
       end: false
     };
   }
+
+  componentDidMount = async () => {
+    this.setState({
+      annotations: await this.getAnnotationsFromCollection()
+    });
+  };
 
   toggleSelection = async () => {
     const { selectedAnnotationCollections, selectionMounted } = this.state;
@@ -69,7 +74,6 @@ class Verify extends Component {
       } else {
         try {
           localStorage.setItem('selectionMounted', !selectionMounted);
-          localStorage.setItem('verifyAnnotation', JSON.stringify(annotations));
         } catch (error) {
           Swal.fire('Error', '', 'error');
         }
@@ -280,7 +284,6 @@ class Verify extends Component {
     localStorage.setItem('videoDialogOpen', false);
     localStorage.setItem('selectedTrackingFirst', false);
     localStorage.setItem('curIndex', 0);
-    localStorage.removeItem('verifyAnnotation');
     localStorage.removeItem('noAnnotations');
     this.resetState(
       this.setState({
@@ -353,25 +356,29 @@ class Verify extends Component {
         </div>
       );
     } else {
-      selection = (
-        <VerifyAnnotations
-          selectedAnnotationCollections={selectedAnnotationCollections}
-          populateIgnoreList={this.populateIgnoreList}
-          removeFromIgnoreList={this.removeFromIgnoreList}
-          ignoredAnnotations={ignoredAnnotations}
-          annotation={annotations[index]}
-          index={index}
-          handleNext={this.handleNext}
-          toggleSelection={this.toggleSelection}
-          size={annotations.length}
-          tracking={selectedTrackingFirst}
-          resetLocalStorage={this.resetLocalStorage}
-          collectionFlag={selectedAnnotationCollections.length}
-          excludeTracking={excludeTracking}
-          annotating={annotating}
-          end={end}
-        />
-      );
+      if (!annotations || annotations.length <= 0) {
+        selection = <div>Loading...</div>;
+      } else {
+        selection = (
+          <VerifyAnnotations
+            selectedAnnotationCollections={selectedAnnotationCollections}
+            populateIgnoreList={this.populateIgnoreList}
+            removeFromIgnoreList={this.removeFromIgnoreList}
+            ignoredAnnotations={ignoredAnnotations}
+            annotation={annotations[index]}
+            index={index}
+            handleNext={this.handleNext}
+            toggleSelection={this.toggleSelection}
+            size={annotations.length}
+            tracking={selectedTrackingFirst}
+            resetLocalStorage={this.resetLocalStorage}
+            collectionFlag={selectedAnnotationCollections.length}
+            excludeTracking={excludeTracking}
+            annotating={annotating}
+            end={end}
+          />
+        );
+      }
     }
 
     return <>{selection}</>;
