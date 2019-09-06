@@ -203,7 +203,7 @@ router.get(
             WHERE 
               b.videoid=v.videoid 
               AND b.frame=v.framenum)
-        ORDER BY videoid, timeinvideo`;
+        ORDER BY videoid, timeinvideo, id`;
 
     if (selectedTrackingFirst === 'true') {
       queryText = `
