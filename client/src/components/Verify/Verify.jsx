@@ -25,6 +25,7 @@ class Verify extends Component {
     const selectedAnnotationCollections = JSON.parse(
       localStorage.getItem('selectedAnnotationCollections')
     );
+    const excludeTracking = JSON.parse(localStorage.getItem('excludeTracking'));
     this.state = {
       ignoredAnnotations,
       selectedAnnotationCollections,
@@ -32,7 +33,7 @@ class Verify extends Component {
       selectionMounted,
       noAnnotations,
       index,
-      excludeTracking: false,
+      excludeTracking,
       annotating: false,
       annotations: [],
       end: false
@@ -41,10 +42,10 @@ class Verify extends Component {
 
   componentDidMount = async () => {
     const { index } = this.state;
-    let annotations = await this.getAnnotationsFromCollection();
+    const annotations = await this.getAnnotationsFromCollection();
     const prevLength = JSON.parse(localStorage.getItem('totalAnnotations'));
     if (prevLength !== 0 && prevLength !== annotations.length) {
-      var newIndex = index - (prevLength - annotations.length);
+      const newIndex = index - (prevLength - annotations.length);
       localStorage.setItem('curIndex', newIndex);
       this.setState({
         index: newIndex,
@@ -131,6 +132,7 @@ class Verify extends Component {
       excludeTracking,
       selectedTrackingFirst
     } = this.state;
+
     return axios
       .get(`/api/annotations/collections`, {
         headers: {
@@ -173,7 +175,9 @@ class Verify extends Component {
 
   populateIgnoreList = annotation => {
     const { ignoredAnnotations } = this.state;
-    ignoredAnnotations.push(annotation);
+    if (!ignoredAnnotations.some(a => a.id === annotation.id)) {
+      ignoredAnnotations.push(annotation);
+    }
     localStorage.setItem(
       'ignoredAnnotations',
       JSON.stringify(ignoredAnnotations)
@@ -186,6 +190,10 @@ class Verify extends Component {
   handleChangeSwitch = type => event => {
     if (type === 'selectedTrackingFirst') {
       localStorage.setItem('selectedTrackingFirst', event.target.checked);
+    }
+    if (type === 'excludeTracking') {
+      console.log('hello');
+      localStorage.setItem('excludeTracking', event.target.checked);
     }
     this.setState({
       [type]: event.target.checked
@@ -307,6 +315,7 @@ class Verify extends Component {
     localStorage.setItem('selectedTrackingFirst', false);
     localStorage.setItem('curIndex', 0);
     localStorage.removeItem('noAnnotations');
+    localStorage.setItem('excludeTracking', false);
     this.resetState(
       this.setState({
         selectedAnnotationCollections: [],
@@ -374,6 +383,8 @@ class Verify extends Component {
           </Button>
         </div>
       );
+    } else if (!annotations || annotations.length <= 0) {
+      selection = <div>Loading...</div>;
     } else {
       if (!annotations || annotations.length <= 0) {
         selection = <div>Loading Annotations...</div>;
