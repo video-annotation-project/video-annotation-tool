@@ -25,10 +25,6 @@ class Verify extends Component {
     const selectedAnnotationCollections = JSON.parse(
       localStorage.getItem('selectedAnnotationCollections')
     );
-    console.log('in render');
-    console.log(localStorage);
-    console.log(index);
-
     this.state = {
       ignoredAnnotations,
       selectedAnnotationCollections,
@@ -45,31 +41,20 @@ class Verify extends Component {
 
   componentDidMount = async () => {
     const { index } = this.state;
-    console.log('did mount called');
-    this.setState(
-      {
-        annotations: await this.getAnnotationsFromCollection()
-      },
-      () => {
-        const { annotations } = this.state;
-        const prevLength = JSON.parse(localStorage.getItem('totalAnnotations'));
-        console.log(annotations.length);
-        console.log(prevLength);
-        if (prevLength !== 0 && prevLength !== annotations.length) {
-          var newIndex = index - (prevLength - annotations.length);
-          console.log(newIndex);
-          localStorage.setItem('curIndex', newIndex);
-          this.setState({
-            index: newIndex
-          });
-        }
-        localStorage.setItem('totalAnnotations', annotations.length);
-      }
-    );
+    let annotations = await this.getAnnotationsFromCollection();
+    const prevLength = JSON.parse(localStorage.getItem('totalAnnotations'));
+    if (prevLength !== 0 && prevLength !== annotations.length) {
+      var newIndex = index - (prevLength - annotations.length);
+      localStorage.setItem('curIndex', newIndex);
+      await this.setState({
+        index: newIndex,
+        annotations
+      });
+    }
+    localStorage.setItem('totalAnnotations', annotations.length);
   };
 
   toggleSelection = async () => {
-    console.log('toggled selection');
     const {
       selectedAnnotationCollections,
       selectionMounted,
@@ -77,7 +62,6 @@ class Verify extends Component {
     } = this.state;
     let annotations = [];
     if (!selectionMounted) {
-      console.log('if 1');
       localStorage.setItem('selectionMounted', !selectionMounted);
       localStorage.setItem('noAnnotations', false);
       this.resetState(
@@ -87,9 +71,7 @@ class Verify extends Component {
         })
       );
     } else {
-      console.log('if 2');
       if (selectedAnnotationCollections.length) {
-        console.log('if 3');
         localStorage.setItem(
           'selectedAnnotationCollections',
           JSON.stringify(selectedAnnotationCollections)
@@ -97,7 +79,6 @@ class Verify extends Component {
         annotations = await this.getAnnotationsFromCollection();
       }
       if (annotations.length < 1) {
-        console.log('if 4');
         localStorage.setItem('noAnnotations', true);
         localStorage.setItem('selectionMounted', !selectionMounted);
         this.setState({
@@ -105,19 +86,7 @@ class Verify extends Component {
           selectionMounted: !selectionMounted
         });
       } else {
-        console.log('if 5');
         localStorage.setItem('selectionMounted', !selectionMounted);
-        // const prevLength = JSON.parse(localStorage.getItem('totalAnnotations'));
-        // console.log(annotations.length);
-        // console.log(prevLength);
-        // if (prevLength !== 0 && prevLength !== annotations.length) {
-        //   var newIndex = index - (prevLength - annotations.length);
-        //   console.log(newIndex);
-        //   localStorage.setItem('curIndex', newIndex);
-        //   this.setState({
-        //     index: newIndex
-        //   });
-        // }
         this.setState({
           selectionMounted: !selectionMounted,
           annotations
