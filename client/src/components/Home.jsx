@@ -68,6 +68,7 @@ class Home extends Component {
     localStorage.setItem('curIndex', 0);
     localStorage.setItem('totalAnnotations', 0);
     localStorage.removeItem('noAnnotations');
+    localStorage.setItem('excludeTracking', false);
   }
 
   /*
