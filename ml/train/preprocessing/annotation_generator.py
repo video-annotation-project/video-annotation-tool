@@ -1,4 +1,6 @@
 import os
+import sys
+import time
 import random
 from collections import OrderedDict
 
@@ -17,6 +19,12 @@ from config import config
 
 # Without this the program will crash
 ImageFile.LOAD_TRUNCATED_IMAGES = True
+
+
+def raise_warning(warning):
+    """ Print a warning to stderr without raising an error """
+    print(f'Warning: {warning}', file=sys.stderr)
+
 
 def _parse(value, function, fmt):
     """
@@ -181,9 +189,12 @@ class AnnotationGenerator(object):
 
             in_annot = []
             for i, row in frame.iterrows():
+                if row['conceptid'] not in concept_count:
+                    continue
+
                 concept_count[row['conceptid']] += 1
                 in_annot.append(row['conceptid'])
-
+    
                 x1, x2, y1, y2 = _bound_coordinates(row)
 
                 frame.at[i, 'x1'] = x1
@@ -280,7 +291,8 @@ class AnnotationGenerator(object):
             LEFT JOIN
                 videos ON videos.id=videoid
             WHERE
-                EXISTS (
+                (ABS(y2-y1)>25 AND ABS(x2-x1)>25)
+                AND EXISTS (
                     SELECT
                         1
                     FROM
@@ -288,14 +300,13 @@ class AnnotationGenerator(object):
                     WHERE
                         c.videoid=a.videoid
                         AND c.frame_num=ROUND(fps * timeinvideo))
-                AND a.conceptid = ANY(%s)
         '''
         if not include_tracking:
             annotations_query += f''' AND a.userid <> {tracking_uid}'''
 
         return pd_query(
             annotations_query,
-            (collection_ids, verify_videos, min_examples, concepts, ))
+            (collection_ids, verify_videos, min_examples))
 
 
 class S3Generator(Generator):
@@ -404,7 +415,8 @@ class S3Generator(Generator):
                 float(annot['y2']),
             ]]))
             
-        print(f'Training frame with {annotations["bboxes"].shape[0]} annotations on image {image["save_name"]} ({image["image"]})')
+        print(f'[Training] Using frame with {annotations["bboxes"].shape[0]} located at {config.S3_ANNOTATION_FOLDER}{image["image"]}',
+                f'from video {image["videoid"]} at frame {image["frame_num"]}')
 
         return annotations
 
@@ -423,9 +435,8 @@ class S3Generator(Generator):
             resized_image = obj_image.resize((config.RESIZED_WIDTH, config.RESIZED_HEIGHT))
         # ClientError is the exception class for a KeyNotFound error
         except ClientError:
-            self._download_image((image_index + 1) % self.size())
-            # raise IOError(
-            #    f'file {config.S3_ANNOTATION_FOLDER}{image_name} not found in S3 bucket')
+            raise IOError(
+                f'file {config.S3_ANNOTATION_FOLDER}{image_name} not found in S3 bucket')
 
         # Some files have a file extension, some don't. Let's fix that.
         if self.image_extension not in image_name:
@@ -441,7 +452,7 @@ class S3Generator(Generator):
             # The file exists, lets make sure it's done downloading.
             # We spin while the file exists, but has no content
             while os.path.getsize(image_path) == 0:
-                pass
+                time.sleep(10)
 
     def _read_annotations(self):
         """ Read annotations from our selected annotations.
@@ -473,6 +484,11 @@ class S3Generator(Generator):
 
             tracking = user_id == 32
 
+            # Check if the current class name is a class we are predicting on
+            # If not, use the image but not the annotation
+            if class_name not in self.classes:
+                continue
+
             # If a row contains only an image path, it's an image without annotations.
             if (x1, y1, x2, y2, class_name) == ('', '', '', '', ''):
                 continue
@@ -485,13 +501,9 @@ class S3Generator(Generator):
                 raise ValueError(
                     'y2 ({}) must be higher than y1 ({})'.format(y2, y1))
 
-            # Check if the current class name is correctly present
-            if class_name not in self.classes:
-                raise ValueError('unknown class name: \'{}\' (classes: {})'.format(
-                    class_name, set(self.classes)))
-
             result[image_file].append(
-                    {'x1': x1, 'x2': x2, 'y1': y1, 'y2': y2, 'class': class_name, 'tracking': tracking})
+                {'x1': x1, 'x2': x2, 'y1': y1, 'y2': y2, 'class': class_name})
+
         return result
 
     def _connect_s3(self):
