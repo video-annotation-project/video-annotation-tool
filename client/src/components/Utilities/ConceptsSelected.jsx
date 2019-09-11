@@ -5,8 +5,9 @@ import IconButton from '@material-ui/core/IconButton';
 import { withStyles } from '@material-ui/core/styles';
 import AddIcon from '@material-ui/icons/Add';
 import { ChevronRight, Close } from '@material-ui/icons';
-import SearchModal from './SearchModal';
 import { Typography } from '@material-ui/core';
+
+import SearchModal from './SearchModal';
 
 const styles = theme => ({
   root: {},

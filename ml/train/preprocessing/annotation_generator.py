@@ -21,11 +21,6 @@ from config import config
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 
-def raise_warning(warning):
-    """ Print a warning to stderr without raising an error """
-    print(f'Warning: {warning}', file=sys.stderr)
-
-
 def _parse(value, function, fmt):
     """
     Parse a string into a value, and format a nice ValueError if it fails.
@@ -217,7 +212,7 @@ class AnnotationGenerator(object):
                         concept_count[a] -= 1
                     continue
             selected.append(frame)
-        
+
         return selected, concept_count
 
     @staticmethod
@@ -415,7 +410,7 @@ class S3Generator(Generator):
                 float(annot['y2']),
             ]]))
             
-        print(f'[Training] Using frame with {annotations["bboxes"].shape[0]} located at {config.S3_ANNOTATION_FOLDER}{image["image"]}',
+        print(f'[Training] Training with {annotations["bboxes"].shape[0]} annotations located at {config.S3_ANNOTATION_FOLDER}{image["image"]}',
                 f'from video {image["videoid"]} at frame {image["frame_num"]}')
 
         return annotations
@@ -432,7 +427,8 @@ class S3Generator(Generator):
             obj = self.client.get_object(
                 Bucket=config.S3_BUCKET, Key=config.S3_ANNOTATION_FOLDER + image_name)
             obj_image = Image.open(obj['Body'])
-            resized_image = obj_image.resize((config.RESIZED_WIDTH, config.RESIZED_HEIGHT))
+            resized_image = obj_image.resize(
+                (config.RESIZED_WIDTH, config.RESIZED_HEIGHT))
         # ClientError is the exception class for a KeyNotFound error
         except ClientError:
             raise IOError(
@@ -503,7 +499,6 @@ class S3Generator(Generator):
 
             result[image_file].append(
                 {'x1': x1, 'x2': x2, 'y1': y1, 'y2': y2, 'class': class_name})
-
         return result
 
     def _connect_s3(self):

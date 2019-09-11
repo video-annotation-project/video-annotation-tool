@@ -190,12 +190,13 @@ router.patch(
   '/:videoid',
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
-    let queryText = 'UPDATE videos SET description=$1 WHERE id=$2 RETURNING *';
+    const { description, goodvideo } = req.body;
+    const { videoid } = req.params;
+    const params = [description, goodvideo, videoid];
+    let queryText =
+      'UPDATE videos SET description=$1, goodvideo=$2 WHERE id=$3 RETURNING *';
     try {
-      const updateRes = await psql.query(queryText, [
-        req.body.description,
-        req.params.videoid
-      ]);
+      const updateRes = await psql.query(queryText, params);
       res.json(updateRes.rows);
     } catch (error) {
       res.status(500).json(error);
