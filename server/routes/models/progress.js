@@ -30,7 +30,7 @@ router.get(
     `;
     try {
       let response = await psql.query(queryText);
-      res.json(response.rows);
+      res.json(response.rows[0]);
     } catch (error) {
       console.log('Error on GET /api/models/progress/train');
       console.log(error);
