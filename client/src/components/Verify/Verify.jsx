@@ -35,8 +35,7 @@ class Verify extends Component {
       index,
       excludeTracking,
       annotating: false,
-      annotations: [],
-      end: false
+      annotations: []
     };
   }
 
@@ -219,8 +218,7 @@ class Verify extends Component {
       {
         selectedTrackingFirst: false,
         excludeTracking: false,
-        index: 0,
-        end: false
+        index: 0
       },
       callback
     );
@@ -273,17 +271,25 @@ class Verify extends Component {
         reverseButtons: true
       }).then(result => {
         if (result.value) {
-          this.verifyFrame();
-          localStorage.setItem('ignoredAnnotations', JSON.stringify([]));
-          localStorage.setItem('curIndex', index + 1);
-          this.setState(
-            {
-              ignoredAnnotations: [],
-              index: index + 1,
-              annotating: false
-            },
-            callback
-          );
+          if (annotations.length === index + 1) {
+            this.resetLocalStorage();
+            Swal.fire({
+              title: 'Finished annotating'
+            });
+          }
+          else {
+            this.verifyFrame();
+            localStorage.setItem('ignoredAnnotations', JSON.stringify([]));
+            localStorage.setItem('curIndex', index + 1);
+            this.setState(
+              {
+                ignoredAnnotations: [],
+                index: index + 1,
+                annotating: false
+              },
+              callback
+            );
+          }
         }
         if (result.dismiss === 'cancel') {
           // Add annotations here
@@ -339,8 +345,7 @@ class Verify extends Component {
       noAnnotations,
       index,
       annotating,
-      ignoredAnnotations,
-      end
+      ignoredAnnotations
     } = this.state;
 
     if (annotations.length > 0 && index >= annotations.length + 1) {
@@ -385,8 +390,7 @@ class Verify extends Component {
       );
     } else if (!annotations || annotations.length <= 0) {
       selection = <div>Loading...</div>;
-    } else {
-      if (!annotations || annotations.length <= 0) {
+    } else if (!annotations || annotations.length <= 0) {
         selection = <div>Loading Annotations...</div>;
       } else {
         selection = (
@@ -405,12 +409,10 @@ class Verify extends Component {
             collectionFlag={selectedAnnotationCollections.length}
             excludeTracking={excludeTracking}
             annotating={annotating}
-            end={end}
             displayLoading={this.displayLoading}
           />
         );
       }
-    }
 
     return <>{selection}</>;
   }

@@ -286,7 +286,7 @@ class VerifyAnnotations extends Component {
   };
 
   nextAnnotation = async ignoreFlag => {
-    const { handleNext, populateIgnoreList, annotation, end } = this.props;
+    const { handleNext, populateIgnoreList, annotation} = this.props;
 
     if (ignoreFlag) {
       populateIgnoreList(annotation);
@@ -294,9 +294,6 @@ class VerifyAnnotations extends Component {
     this.setState({
       trackingStatus: null
     });
-    if (end) {
-      return;
-    }
     this.displayLoading();
     window.scrollTo({ top: 0, behavior: 'smooth' });
     handleNext(this.resetState);
@@ -362,7 +359,7 @@ class VerifyAnnotations extends Component {
     };
     axios
       .delete('/api/annotations', config)
-      .then(async res => {
+      .then(async () => {
         this.toastPopup.fire({
           type: 'success',
           title: 'Deleted!!'
@@ -789,14 +786,12 @@ class VerifyAnnotations extends Component {
       tracking,
       index,
       size,
-      toggleSelection,
       socket,
       loadVideos,
       excludeTracking,
       collectionFlag,
       resetLocalStorage,
-      ignoredAnnotations,
-      end
+      ignoredAnnotations
     } = this.props;
     const {
       x,
@@ -819,7 +814,6 @@ class VerifyAnnotations extends Component {
     return (
       <>
         {conceptDialogOpen && this.loadDialogModal()}
-        {!end ? (
           <>
             {tracking || videoDialogOpen ? (
               <TrackingVideos
@@ -896,19 +890,6 @@ class VerifyAnnotations extends Component {
               </div>
             )}
           </>
-        ) : (
-          <>
-            <Typography className={classes.paper}>Finished</Typography>
-            <Button
-              className={classes.button}
-              variant="contained"
-              color="primary"
-              onClick={toggleSelection}
-            >
-              Filter Annotations
-            </Button>
-          </>
-        )}
         {openedVideo && (
           <VideoMetadata
             open
