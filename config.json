@@ -1,6 +1,6 @@
 {
   "ml": {
-    "prediction_confidence_thresholds": [0.5, 0.5],
+    "prediction_confidence_thresholds": [0.8, 0.5],
     "train_annot_file": "train_annot_file.csv",
     "valid_annot_file": "valid_annot_file.csv",
     "image_folder": "image_folder",
@@ -12,11 +12,11 @@
     "prediction_tracking_iou_threshold": 0.2,
     "evaluation_iou_threshold": 0.2,
     "min_frames_threshold": 15,
-    "resized_video_width": 640,
-    "resized_video_height": 480,
+    "resized_video_width": 1280,
+    "resized_video_height": 720,
     "max_seconds_back": 5,
     "tracking_vid_length": 6000,
-    "biologist_users": [11, 12, 6, 15, 16],
-    "tracking_users": [11, 12, 6, 15, 16, 7, 8, 125]
+    "biologist_users": [11, 12, 6, 15, 16, 13],
+    "tracking_users": [11, 12, 6, 15, 16, 7, 8, 13, 125]
   }
 }
