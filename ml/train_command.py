@@ -4,10 +4,14 @@ import subprocess
 
 from botocore.exceptions import ClientError
 
+import upload_stdout
 from predict.evaluate_prediction_vid import evaluate
 from train.train import train_model
 from config import config
 from utils.query import s3, con, cursor, pd_query
+
+
+upload_process = upload_stdout.start_uploading()
 
 # get annotations from test
 model_params = pd_query(
@@ -32,7 +36,6 @@ model = pd_query(
     """SELECT * FROM models WHERE name=%s""", (str(model_params["model"]),)
 ).iloc[0]
 
-# model = cursor.fetchone()
 concepts = model["concepts"]
 verifyVideos = model["verificationvideos"]
 
@@ -127,3 +130,4 @@ cursor.execute(
 con.commit()
 con.close()
 subprocess.call(["sudo", "shutdown", "-h"])
+
