@@ -180,7 +180,7 @@ class VerifyAnnotations extends Component {
   };
 
   loadBoxes = async () => {
-    const { annotation, selectedAnnotationCollections } = this.props;
+    const { annotation, selectedAnnotationCollections, annotating } = this.props;
     const config = {
       headers: {
         'Content-Type': 'application/json',
@@ -192,7 +192,7 @@ class VerifyAnnotations extends Component {
     };
     try {
       const data = await axios.get(
-        `/api/annotations/boxes/${annotation.id}` +
+        `/api/annotations/boxes/${annotating ? -1 : annotation.id}` +
           `?videoid=${annotation.videoid}&timeinvideo=${annotation.timeinvideo}`,
         config
       );
