@@ -201,7 +201,6 @@ class VerifyAnnotations extends Component {
         config
       );
       if (data.data.length > 0) {
-        console.log(data.data);
         if (data.data[0].verified_flag === 1) {
           this.setState({
             verifiedBoxes: data.data[0].box,
