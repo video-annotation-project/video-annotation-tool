@@ -3,13 +3,14 @@ import axios from 'axios';
 import Input from '@material-ui/core/Input';
 import Dialog from '@material-ui/core/Dialog';
 import DialogContent from '@material-ui/core/DialogContent';
-import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import DialogActions from '@material-ui/core/DialogActions';
 import Button from '@material-ui/core/Button';
 import Radio from '@material-ui/core/Radio';
 import { withStyles } from '@material-ui/core/styles';
 import { Typography } from '@material-ui/core';
+import Checkbox from '@material-ui/core/Checkbox';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
 
 import Summary from './Summary';
 
@@ -20,6 +21,10 @@ const styles = theme => ({
     boxShadow: theme.shadows[5],
     margin: 'auto',
     outline: 'none'
+  },
+  descriptionInput: {
+    float: 'left',
+    marginRight: '10px'
   }
 });
 
@@ -84,7 +89,7 @@ class VideoMetadata extends Component {
   update = () => {
     const { handleClose } = this.props;
     this.updateVideoDescription();
-    this.updateVideoStatus();
+    this.updateVideoCheckpoint();
     handleClose();
   };
 
@@ -92,7 +97,8 @@ class VideoMetadata extends Component {
     const { openedVideo } = this.props;
     const { videoMetadata } = this.state;
     const body = {
-      description: videoMetadata.description
+      description: videoMetadata.description,
+      goodvideo: videoMetadata.goodvideo
     };
     const config = {
       headers: {
@@ -110,7 +116,7 @@ class VideoMetadata extends Component {
       });
   };
 
-  updateVideoStatus = () => {
+  updateVideoCheckpoint = () => {
     const { openedVideo, socket, loadVideos } = this.props;
     const { videoStatus } = this.state;
 
@@ -200,43 +206,32 @@ class VideoMetadata extends Component {
       enddepth,
       starttime,
       endtime,
-      userswatching
+      userswatching,
+      goodvideo
     } = videoMetadata;
 
     return (
       <Dialog
-        onClose={handleClose}
+        onClose={this.update}
         open={open}
         aria-labelledby="form-dialog-title"
       >
         <div className={classes.dialogStyle}>
           <DialogTitle id="form-dialog-title">
-            <small>
-              Video:{openedVideo.id}
-              <br />
-              {filename}
-            </small>
+            <Typography>Video {openedVideo.id + ': ' + filename}</Typography>
           </DialogTitle>
           <DialogContent>
-            <DialogContentText>
-              Users Watching: {userswatching.join(', ')}
-              <br />
-              GPS start: {`${gpsstart.x}, ${gpsstart.y}`}
-              <br />
-              GPS stop: {`${gpsstop.x}, ${gpsstop.y}`}
-              <br />
-              Start Depth: {startdepth}
-              <br />
-              End Depth: {enddepth}
-              <br />
-              Start Time: {starttime}
-              <br />
-              End Time: {endtime}
-              <br />
-            </DialogContentText>
-            <br />
+            <Typography>Users Watching: {userswatching.join(', ')}</Typography>
+            <Typography>GPS start: {`${gpsstart.x}, ${gpsstart.y}`}</Typography>
+            <Typography>GPS stop: {`${gpsstop.x}, ${gpsstop.y}`}</Typography>
+            <Typography>Start Depth: {startdepth}</Typography>
+            <Typography>End Depth: {enddepth}</Typography>
+            <Typography>Start Time: {starttime}</Typography>
+            <Typography>End Time: {endtime}</Typography>
+
             <Input
               onKeyPress={this.handleKeyPress}
+              className={classes.descriptionInput}
               autoFocus
               id="concept"
               type="text"
@@ -244,6 +239,27 @@ class VideoMetadata extends Component {
               placeholder="Description"
               multiline
               disabled={modelTab}
+            />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={goodvideo}
+                  onChange={() => {
+                    let deepMetaData = JSON.parse(
+                      JSON.stringify(videoMetadata)
+                    );
+                    deepMetaData.goodvideo = !goodvideo;
+                    console.log(deepMetaData);
+
+                    this.setState({
+                      videoMetadata: deepMetaData
+                    });
+                  }}
+                  value="goodVideo"
+                  color="secondary"
+                />
+              }
+              label="Good Video"
             />
           </DialogContent>
           <Radio
