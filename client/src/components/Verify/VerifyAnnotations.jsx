@@ -470,7 +470,8 @@ class VerifyAnnotations extends Component {
         this.updateBox(x1, y1, x2, y2);
         this.verifyAnnotation();
       }
-    } catch {
+    } catch (error) {
+      console.log(error);
       console.log('Unable to Verify');
       this.nextAnnotation(false);
     }
