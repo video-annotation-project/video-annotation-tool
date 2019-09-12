@@ -100,7 +100,7 @@ function Legend() {
           color="DodgerBlue"
           label="Ignored / Outside of Collection"
         />
-        <LegendItem color="orange" label="Current Unverified in Collection" />
+        <LegendItem color="coral" label="Current Unverified in Collection" />
       </Paper>
     </div>
   );
@@ -494,7 +494,7 @@ class VerifyAnnotations extends Component {
     ctx.strokeStyle = 'coral';
     ctx.rect(x1, y1, dragBoxCord.width, dragBoxCord.height);
     ctx.stroke();
-    img.src = canvas.toDataURL(1.0);
+    img.src = canvas.toDataURL('image/png', 1.0);
     this.uploadImage(img, date);
   };
 
