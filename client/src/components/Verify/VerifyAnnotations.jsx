@@ -344,7 +344,7 @@ class VerifyAnnotations extends Component {
       });
   };
 
-  postAnnotation = date => {
+  postAnnotation = () => {
     const { annotation } = this.props;
     const { x, y, width, height, concept, comment, unsure } = this.state;
     const x1 = x;
@@ -362,8 +362,7 @@ class VerifyAnnotations extends Component {
       y2,
       videoWidth: annotation.videowidth,
       videoHeight: annotation.videoheight,
-      image: date,
-      imagewithbox: `${date}_box`,
+      image: annotation.image,
       comment,
       unsure
     };
@@ -398,101 +397,33 @@ class VerifyAnnotations extends Component {
   postBoxImage = async dragBox => {
     const { annotation, annotating } = this.props;
     const { x, y, width, height } = this.state;
-    const dragBoxCord = dragBox.getBoundingClientRect();
-    const imageElement = document.getElementById('image');
-    const imageCord = imageElement.getBoundingClientRect('dragBox');
     const x1 = x;
     const y1 = y;
     const x2 = x + parseInt(width, 0);
     const y2 = y + parseInt(height, 0);
-    const date = annotating ? Date.now().toString() : null;
 
     try {
       if (annotating) {
+        this.postAnnotation();
+      } else {
         if (
           Math.abs(
             annotation.x1 -
-            x1 +
-            (annotation.y1 - y1) +
-            (annotation.x2 - x2) +
-            (annotation.y2 - y2)
+              x1 +
+              (annotation.y1 - y1) +
+              (annotation.x2 - x2) +
+              (annotation.y2 - y2)
           ) > 0.1 &&
           annotation.image
         ) {
-          this.createAndUploadImages(
-            imageCord,
-            dragBoxCord,
-            imageElement,
-            x1,
-            y1,
-            date
-          );
+          this.updateBox(x1, y1, x2, y2);
         }
-        this.postAnnotation(date);
-      } else {
-        this.updateBox(x1, y1, x2, y2);
         this.verifyAnnotation();
       }
     } catch (error) {
       console.log(error);
       console.log('Unable to Verify');
       this.nextAnnotation(false);
-    }
-  };
-
-  createAndUploadImages = (
-    imageCord,
-    dragBoxCord,
-    imageElement,
-    x1,
-    y1,
-    date
-  ) => {
-    const canvas = document.createElement('canvas');
-    canvas.height = imageCord.height;
-    canvas.width = imageCord.width;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(imageElement, 0, 0, canvas.width, canvas.height);
-    const img = new window.Image();
-    img.setAttribute('crossOrigin', 'use-credentials');
-    ctx.lineWidth = '2';
-    ctx.strokeStyle = 'coral';
-    ctx.rect(x1, y1, dragBoxCord.width, dragBoxCord.height);
-    ctx.stroke();
-    img.src = canvas.toDataURL('image/png', 1.0);
-    this.uploadImage(img, date);
-  };
-
-  uploadImage = (img, date) => {
-    const { annotation } = this.props;
-    const buf = Buffer.from(
-      img.src.replace(/^data:image\/\w+;base64,/, ''),
-      'base64'
-    );
-    const config = {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    };
-    let body = {};
-    if (date) {
-      body = {
-        buf,
-        date,
-        box: true
-      };
-    } else {
-      body = {
-        buf,
-        name: annotation.imagewithbox
-      };
-    }
-
-    try {
-      axios.post('/api/annotations/images', body, config);
-    } catch {
-      Swal.fire('ERR: uploading image', '', 'error');
     }
   };
 

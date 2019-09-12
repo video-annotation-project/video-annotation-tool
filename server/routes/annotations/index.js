@@ -37,33 +37,29 @@ router.get(
     let params = [];
     let queryPass = `
       SELECT
-        annotations.id, annotations.comment, 
-        annotations.verifiedby, annotations.priority,
-        annotations.unsure, annotations.timeinvideo, 
-        annotations.imagewithbox, concepts.name, 
+        a.*, c.name, 
         false as extended 
       FROM
-        annotations
+        annotations a
       LEFT JOIN
-        concepts ON concepts.id=annotations.conceptid
+        concepts c ON a.conceptid=c.id
       WHERE 
-        annotations.userid NOT IN (17, 32)`;
+        a.userid NOT IN (17, 32)`;
     if (req.query.unsureOnly === 'true') {
-      queryPass += ` AND annotations.unsure = true`;
+      queryPass += ` AND a.unsure = true`;
     }
     if (req.query.verifiedCondition === 'verified only') {
-      queryPass += ` AND annotations.verifiedby IS NOT NULL`;
+      queryPass += ` AND a.verifiedby IS NOT NULL`;
     } else if (req.query.verifiedCondition === 'unverified only') {
-      queryPass += ` AND annotations.verifiedby IS NULL`;
+      queryPass += ` AND a.verifiedby IS NULL`;
     }
     if (!req.user.admin) {
-      queryPass += ` AND annotations.userid = $1`;
+      queryPass += ` AND a.userid = $1`;
       params.push(req.user.id);
     }
     // Adds query conditions from Report tree
     if (req.query.queryConditions) {
-      queryPass +=
-        req.query.queryConditions + ` ORDER BY annotations.timeinvideo`;
+      queryPass += req.query.queryConditions + ` ORDER BY a.timeinvideo`;
     }
     // Retrieves only selected 100 if queryLimit exists
     if (
@@ -439,15 +435,8 @@ router.post(
   (req, res) => {
     let s3 = new AWS.S3();
     let key = process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER;
-    if (req.body.name) {
-      key += req.body.name;
-    } else {
-      key += req.body.date;
-      if (req.body.box) {
-        key += '_box';
-      }
-      key += '.png';
-    }
+    key += req.body.date;
+    key += '.png';
 
     const params = {
       Key: key,

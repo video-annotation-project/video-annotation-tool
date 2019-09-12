@@ -314,8 +314,6 @@ class Annotate extends Component {
       return;
     }
 
-    const dragBoxCord = dragBox.getBoundingClientRect();
-
     const vidCord = videoElement.getBoundingClientRect();
 
     // Make video image
@@ -348,7 +346,6 @@ class Annotate extends Component {
       videoWidth: 1600,
       videoHeight: 900,
       image: date,
-      imagewithbox: `${date}_box`,
       comment,
       unsure
     };
@@ -367,15 +364,7 @@ class Annotate extends Component {
           title: res.data.message
         });
         this.handleDialogClose();
-        this.createAndUploadImages(
-          videoImage,
-          ctx,
-          canvas,
-          dragBoxCord,
-          date,
-          x1,
-          y1
-        );
+        this.uploadImage(videoImage, date);
       })
       .catch(error => {
         console.log(error);
@@ -392,25 +381,7 @@ class Annotate extends Component {
       });
   };
 
-  createAndUploadImages = (
-    videoImage,
-    ctx,
-    canvas,
-    dragBoxCord,
-    date,
-    x1,
-    y1
-  ) => {
-    this.uploadImage(videoImage, date, false);
-    ctx.lineWidth = '2';
-    ctx.strokeStyle = 'coral';
-    ctx.rect(x1, y1, dragBoxCord.width, dragBoxCord.height);
-    ctx.stroke();
-    videoImage.src = canvas.toDataURL(1.0);
-    this.uploadImage(videoImage, date, true);
-  };
-
-  uploadImage = (img, date, box) => {
+  uploadImage = (img, date) => {
     const buf = Buffer.from(
       img.src.replace(/^data:image\/\w+;base64,/, ''),
       'base64'
@@ -423,8 +394,7 @@ class Annotate extends Component {
     };
     const body = {
       buf,
-      date,
-      box
+      date
     };
     return axios.post('/api/annotations/images', body, config).catch(error => {
       console.log(error);
