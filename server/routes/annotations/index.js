@@ -37,29 +37,30 @@ router.get(
     let params = [];
     let queryPass = `
       SELECT
-        a.*, c.name, 
+        annotations.*, concepts.name, 
         false as extended 
       FROM
-        annotations a
+        annotations
       LEFT JOIN
-        concepts c ON a.conceptid=c.id
+        concepts ON annotations.conceptid=concepts.id
       WHERE 
-        a.userid NOT IN (17, 32)`;
+        annotations.userid NOT IN (17, 32)`;
     if (req.query.unsureOnly === 'true') {
-      queryPass += ` AND a.unsure = true`;
+      queryPass += ` AND annotations.unsure = true`;
     }
     if (req.query.verifiedCondition === 'verified only') {
-      queryPass += ` AND a.verifiedby IS NOT NULL`;
+      queryPass += ` AND annotations.verifiedby IS NOT NULL`;
     } else if (req.query.verifiedCondition === 'unverified only') {
-      queryPass += ` AND a.verifiedby IS NULL`;
+      queryPass += ` AND annotations.verifiedby IS NULL`;
     }
     if (!req.user.admin) {
-      queryPass += ` AND a.userid = $1`;
+      queryPass += ` AND annotations.userid = $1`;
       params.push(req.user.id);
     }
     // Adds query conditions from Report tree
     if (req.query.queryConditions) {
-      queryPass += req.query.queryConditions + ` ORDER BY a.timeinvideo`;
+      queryPass +=
+        req.query.queryConditions + ` ORDER BY annotations.timeinvideo`;
     }
     // Retrieves only selected 100 if queryLimit exists
     if (

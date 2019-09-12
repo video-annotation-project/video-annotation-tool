@@ -102,7 +102,7 @@ class ReportTree extends Component {
       return (
         <ReportTree
           treeDepth={treeDepth + 1}
-          queryConditions={`${queryConditions} AND a.${levelName}id=${data.key}`}
+          queryConditions={`${queryConditions} AND annotations.${levelName}id=${data.key}`}
           levels={levels}
           unsureOnly={unsureOnly}
           classes={classes}
@@ -113,7 +113,7 @@ class ReportTree extends Component {
     if (data.count > 100) {
       return (
         <AnnotationsGroup
-          queryConditions={`${queryConditions} AND a.${levelName}id=${data.key}`}
+          queryConditions={`${queryConditions} AND annotations.${levelName}id=${data.key}`}
           unsureOnly={unsureOnly}
           count={data.count}
           verifiedCondition={verifiedCondition}
@@ -122,7 +122,7 @@ class ReportTree extends Component {
     }
     return (
       <Annotations
-        queryConditions={`${queryConditions} AND a.${levelName}id=${data.key}`}
+        queryConditions={`${queryConditions} AND annotations.${levelName}id=${data.key}`}
         unsureOnly={unsureOnly}
         verifiedCondition={verifiedCondition}
       />
