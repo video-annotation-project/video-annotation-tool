@@ -46,6 +46,7 @@ class Hover extends Component {
           <div>
             <HighlightOff />
             <div>{box.concept ? box.concept : ''}</div>
+            {/* <div>{box.id ? box.id : ''}</div> */}
           </div>
         ) : (
           ''

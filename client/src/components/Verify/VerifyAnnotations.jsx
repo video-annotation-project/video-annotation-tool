@@ -772,7 +772,6 @@ class VerifyAnnotations extends Component {
                 }}
               >
                 <DragBoxContainer
-                  className={classes.img}
                   dragBox={classes.dragBox}
                   drawDragBoxProp={drawDragBox}
                   toggleDragBox={this.toggleDragBox}
@@ -780,6 +779,7 @@ class VerifyAnnotations extends Component {
                     width,
                     height
                   }}
+                  annotation={annotation}
                   position={{ x, y }}
                   onDragStop={(e, d) => {
                     this.setState({ x: d.x, y: d.y });
