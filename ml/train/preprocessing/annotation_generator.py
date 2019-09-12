@@ -281,6 +281,11 @@ class AnnotationGenerator(object):
             LEFT JOIN
                 videos ON videos.id=videoid
             WHERE
+                ABS(x2-x1)>25 AND ABS(y2-y1)>25 AND
+                x1>=0 AND x1<videowidth AND
+                x2>0 AND x2<=videowidth AND
+                y1>=0 AND y1<videowidth AND
+                y2>0 AND y2<=videowidth AND
                 EXISTS (
                     SELECT
                         1
@@ -289,7 +294,6 @@ class AnnotationGenerator(object):
                     WHERE
                         c.videoid=a.videoid
                         AND c.frame_num=ROUND(fps * timeinvideo))
-                AND a.conceptid = ANY(%s)
         '''
         if not include_tracking:
             annotations_query += f''' AND a.userid <> {tracking_uid}'''
