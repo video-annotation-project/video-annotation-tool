@@ -105,8 +105,6 @@ class AnnotationFrame extends Component {
       videowidth
     } = annotation;
 
-    console.log(annotation);
-
     if (error) {
       return <div>Error: {error}</div>;
     }
