@@ -229,41 +229,6 @@ class VerifyAnnotations extends Component {
     }
   };
 
-  verifyAnnotation = async () => {
-    const { annotation } = this.props;
-    const { concept, comment, unsure } = this.state;
-
-    const body = {
-      op: 'verifyAnnotation',
-      id: annotation.id,
-      conceptId: !concept ? null : concept.id,
-      comment,
-      unsure,
-      oldConceptId: !concept ? null : annotation.conceptid
-    };
-
-    const config = {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    };
-
-    return axios
-      .patch(`/api/annotations/`, body, config)
-      .then(res => {
-        this.toastPopup.fire({
-          type: 'success',
-          title: 'Verified!!'
-        });
-        this.nextAnnotation(false);
-        return res.data;
-      })
-      .catch(error => {
-        Swal.fire(error, '', 'error');
-      });
-  };
-
   resetState = async () => {
     this.displayLoading();
     const { annotation, annotating } = this.props;
@@ -443,27 +408,26 @@ class VerifyAnnotations extends Component {
     const date = annotating ? Date.now().toString() : null;
 
     try {
-      if (
-        Math.abs(
-          annotation.x1 -
+      if (annotating) {
+        if (
+          Math.abs(
+            annotation.x1 -
             x1 +
             (annotation.y1 - y1) +
             (annotation.x2 - x2) +
             (annotation.y2 - y2)
-        ) > 0.1 &&
-        annotation.image
-      ) {
-        this.createAndUploadImages(
-          imageCord,
-          dragBoxCord,
-          imageElement,
-          x1,
-          y1,
-          date
-        );
-      }
-
-      if (annotating) {
+          ) > 0.1 &&
+          annotation.image
+        ) {
+          this.createAndUploadImages(
+            imageCord,
+            dragBoxCord,
+            imageElement,
+            x1,
+            y1,
+            date
+          );
+        }
         this.postAnnotation(date);
       } else {
         this.updateBox(x1, y1, x2, y2);
@@ -554,6 +518,41 @@ class VerifyAnnotations extends Component {
     axios.patch(`/api/annotations/`, body, config).catch(error => {
       Swal.fire(error, '', 'error');
     });
+  };
+
+  verifyAnnotation = async () => {
+    const { annotation } = this.props;
+    const { concept, comment, unsure } = this.state;
+
+    const body = {
+      op: 'verifyAnnotation',
+      id: annotation.id,
+      conceptId: !concept ? null : concept.id,
+      comment,
+      unsure,
+      oldConceptId: !concept ? null : annotation.conceptid
+    };
+
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    };
+
+    return axios
+      .patch(`/api/annotations/`, body, config)
+      .then(res => {
+        this.toastPopup.fire({
+          type: 'success',
+          title: 'Verified!!'
+        });
+        this.nextAnnotation(false);
+        return res.data;
+      })
+      .catch(error => {
+        Swal.fire(error, '', 'error');
+      });
   };
 
   handleVerifyClick = () => {
