@@ -256,7 +256,8 @@ class AnnotationGenerator(object):
             LEFT JOIN
                 videos ON videos.id=videoid
             WHERE
-                EXISTS (
+                (abs(x2-x1)>25 AND abs(y2-y1)>25)
+                AND EXISTS (
                     SELECT
                         1
                     FROM
