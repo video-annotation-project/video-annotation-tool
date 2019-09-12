@@ -394,7 +394,7 @@ class VerifyAnnotations extends Component {
       });
   };
 
-  postBoxImage = async dragBox => {
+  postBoxImage = async () => {
     const { annotation, annotating } = this.props;
     const { x, y, width, height } = this.state;
     const x1 = x;

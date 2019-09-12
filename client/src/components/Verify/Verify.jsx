@@ -191,7 +191,6 @@ class Verify extends Component {
       localStorage.setItem('selectedTrackingFirst', event.target.checked);
     }
     if (type === 'excludeTracking') {
-      console.log('hello');
       localStorage.setItem('excludeTracking', event.target.checked);
     }
     this.setState({
