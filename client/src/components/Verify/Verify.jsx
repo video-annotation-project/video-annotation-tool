@@ -270,14 +270,14 @@ class Verify extends Component {
         confirmButtonText: 'Next',
         reverseButtons: true
       }).then(result => {
+        this.displayLoading();
         if (result.value) {
           if (annotations.length === index + 1) {
             this.resetLocalStorage();
             Swal.fire({
               title: 'Finished annotating'
             });
-          }
-          else {
+          } else {
             this.verifyFrame();
             localStorage.setItem('ignoredAnnotations', JSON.stringify([]));
             localStorage.setItem('curIndex', index + 1);
@@ -391,28 +391,28 @@ class Verify extends Component {
     } else if (!annotations || annotations.length <= 0) {
       selection = <div>Loading...</div>;
     } else if (!annotations || annotations.length <= 0) {
-        selection = <div>Loading Annotations...</div>;
-      } else {
-        selection = (
-          <VerifyAnnotations
-            selectedAnnotationCollections={selectedAnnotationCollections}
-            populateIgnoreList={this.populateIgnoreList}
-            removeFromIgnoreList={this.removeFromIgnoreList}
-            ignoredAnnotations={ignoredAnnotations}
-            annotation={annotations[index]}
-            index={index}
-            handleNext={this.handleNext}
-            toggleSelection={this.toggleSelection}
-            size={annotations.length}
-            tracking={selectedTrackingFirst}
-            resetLocalStorage={this.resetLocalStorage}
-            collectionFlag={selectedAnnotationCollections.length}
-            excludeTracking={excludeTracking}
-            annotating={annotating}
-            displayLoading={this.displayLoading}
-          />
-        );
-      }
+      selection = <div>Loading Annotations...</div>;
+    } else {
+      selection = (
+        <VerifyAnnotations
+          selectedAnnotationCollections={selectedAnnotationCollections}
+          populateIgnoreList={this.populateIgnoreList}
+          removeFromIgnoreList={this.removeFromIgnoreList}
+          ignoredAnnotations={ignoredAnnotations}
+          annotation={annotations[index]}
+          index={index}
+          handleNext={this.handleNext}
+          toggleSelection={this.toggleSelection}
+          size={annotations.length}
+          tracking={selectedTrackingFirst}
+          resetLocalStorage={this.resetLocalStorage}
+          collectionFlag={selectedAnnotationCollections.length}
+          excludeTracking={excludeTracking}
+          annotating={annotating}
+          displayLoading={this.displayLoading}
+        />
+      );
+    }
 
     return <>{selection}</>;
   }
