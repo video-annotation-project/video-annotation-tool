@@ -1,3 +1,4 @@
+// eslint-disable-next-line max-classes-per-file
 import React, { Component } from 'react';
 import Swal from 'sweetalert2/src/sweetalert2';
 import HighlightOff from '@material-ui/icons/HighlightOff';
@@ -16,6 +17,7 @@ class Hover extends Component {
       col = '2px solid red';
     }
     return (
+      // eslint-disable-next-line
       <div
         style={{
           width: (box.x2 - box.x1) * (annotation.videowidth / box.videowidth),
@@ -104,6 +106,7 @@ class Boxes extends Component {
               >
                 <Hover
                   id={box.id}
+                  concept={box.concept}
                   handleDelete={handleDelete}
                   box={box}
                   annotation={annotation}
@@ -134,6 +137,7 @@ class Boxes extends Component {
               >
                 <Hover
                   id={box.id}
+                  concept={box.concept}
                   handleDelete={handleDelete}
                   box={box}
                   annotation={annotation}

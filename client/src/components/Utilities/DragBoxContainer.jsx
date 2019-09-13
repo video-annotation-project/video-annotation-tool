@@ -175,21 +175,28 @@ class DragBoxContainer extends Component {
 
   render() {
     const {
-      className,
       children,
       size,
       position,
       dragBox,
       onResize,
       onDragStop,
-      drawDragBoxProp
+      drawDragBoxProp,
+      annotation
     } = this.props;
     const { drawDragBox, boxCounter, disabledMouse } = this.state;
     return (
-      <div className={className}>
-        {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
+      <div
+        style={{
+          width: annotation.videowidth,
+          height: annotation.videoheight
+        }}
+      >
         <div
-          className={className}
+          style={{
+            width: annotation.videowidth,
+            height: annotation.videoheight
+          }}
           onMouseDown={e => this.resetDragBox(e)}
           onMouseMove={e => this.drawDragBox(e)}
           onMouseUp={e => this.createDragBox(e)}
