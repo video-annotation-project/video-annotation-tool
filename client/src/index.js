@@ -11,12 +11,12 @@ const darkTheme = createMuiTheme(theme);
 
 ReactDOM.render(
   <ThemeProvider theme={darkTheme}>
-    <React.Fragment>
+    <>
       <CssBaseline />
       <BrowserRouter>
         <App />
       </BrowserRouter>
-    </React.Fragment>
+    </>
   </ThemeProvider>,
   document.getElementById('root')
 );

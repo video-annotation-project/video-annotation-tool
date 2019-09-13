@@ -1,6 +1,6 @@
 {
   "ml": {
-    "prediction_confidence_thresholds": [0.22, 0.24, 0.21, 0.25, 0.24],
+    "prediction_confidence_thresholds": [0.5, 0.5],
     "train_annot_file": "train_annot_file.csv",
     "valid_annot_file": "valid_annot_file.csv",
     "image_folder": "image_folder",
@@ -16,7 +16,8 @@
     "resized_video_height": 720,
     "max_seconds_back": 5,
     "tracking_vid_length": 6000,
-    "biologist_users": [11, 12, 6, 15, 16],
-    "tracking_users": [11, 12, 6, 15, 16, 7, 8, 125]
+    "biologist_users": [11, 13, 12, 6, 15, 16],
+    "tracking_users": [11, 13, 12, 6, 15, 16, 7, 8, 125],
+    "tracking_userid": 32
   }
 }

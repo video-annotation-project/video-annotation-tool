@@ -5,11 +5,12 @@ import FormControl from '@material-ui/core/FormControl';
 import FormGroup from '@material-ui/core/FormGroup';
 import { Checkbox, Button } from '@material-ui/core';
 import Typography from '@material-ui/core/Typography';
+const config = require('../../client-config.json');
 
 const styles = theme => ({
   formControl: {
     marginTop: theme.spacing(1.5),
-    maxHeight: '250px',
+    maxHeight: '300px',
     overflow: 'auto'
   },
   group: {
@@ -31,7 +32,10 @@ class SelectUser extends React.Component {
 
   componentDidMount = async () => {
     const { getUsers, selectUser } = this.props;
-    const users = await getUsers();
+    let users = await getUsers();
+    users = users.filter(
+      user => config.client.annotator_users.indexOf(user.id) >= 0
+    );
 
     this.setState({
       users

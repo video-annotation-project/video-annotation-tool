@@ -17,14 +17,15 @@ const styles = theme => ({
     width: '100%'
   },
   search: {
-    marginBottom: theme.spacing(4)
+    marginBottom: theme.spacing(4),
+    marginRight: theme.spacing(4)
   },
   path: {
     marginTop: theme.spacing(),
     marginLeft: theme.spacing(4)
   },
   shiftRight: {
-    paddingRight: theme.spacing(5)
+    paddingRight: theme.spacing()
   },
   nested: {
     paddingLeft: theme.spacing(2)
@@ -215,19 +216,19 @@ class Concepts extends React.Component {
     const { classes } = this.props;
 
     if (!isLoaded) {
-      return <Typography className={classes.path}>Loading...</Typography>;
+      return <Typography style={{ margin: '20px' }}>Loading...</Typography>;
     }
     if (error) {
       return (
-        <Typography className={classes.path}>Error: {error.message}</Typography>
+        <Typography style={{ margin: '20px' }}>
+          Error: {error.message}
+        </Typography>
       );
     }
     return (
       <div className={classes.root}>
         <div className={classes.search}>
           <ConceptSearchMenu
-            className={classes.input}
-            classes={classes}
             handleKeyUp={this.handleKeyUp}
             searchConcepts={this.searchConcepts}
           />

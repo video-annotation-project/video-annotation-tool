@@ -34,27 +34,21 @@ const styles = theme => ({
 });
 
 class Users extends Component {
-  state = {
-    selectedUser: '',
-    users: [],
-    counts: [],
-    fromDate: {
-      date: null,
-      localeISOString: '',
-      ISOString: ''
-    },
-    toDate: {
-      date: null,
-      localeISOString: '',
-      ISOString: ''
-    }
-  };
-
-  componentWillMount() {
-    this.getUsers();
+  constructor(props) {
+    super(props);
     const fromDate = this.formatDate(new Date(`${YEAR}-01-01T00:00:00`));
     const toDate = this.formatDate(new Date());
-    this.setState({ fromDate, toDate });
+    this.state = {
+      selectedUser: '',
+      users: [],
+      counts: [],
+      fromDate,
+      toDate
+    };
+  }
+
+  componentDidMount() {
+    this.getUsers();
   }
 
   /**

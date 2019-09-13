@@ -9,6 +9,7 @@ import Table from '@material-ui/core/Table';
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
 import Swal from 'sweetalert2/src/sweetalert2';
+import { Typography } from '@material-ui/core';
 
 const CustomTableCell = withStyles(theme => ({
   head: {
@@ -101,7 +102,7 @@ class ViewModels extends Component {
     const { classes } = this.props;
     const { models } = this.state;
     if (!models) {
-      return <div>Loading...</div>;
+      return <Typography style={{ margin: '20px' }}>Loading...</Typography>;
     }
     return (
       <div className={classes.root}>
@@ -126,7 +127,7 @@ class ViewModels extends Component {
                   {model.timestamp}
                 </CustomTableCell>
                 <CustomTableCell align="right">
-                  {model.concepts.toString()}
+                  {models[0].concepts.join(', ')}
                 </CustomTableCell>
                 <CustomTableCell align="right">
                   {model.conceptsid.toString()}

@@ -33,6 +33,9 @@ const styles = theme => ({
   },
   text: {
     margin: theme.spacing(2)
+  },
+  videoName: {
+    marginTop: theme.spacing(1.5)
   }
 });
 
@@ -247,7 +250,10 @@ class Annotate extends Component {
     // update SQL database
     return axios
       .put(`/api/videos/checkpoints/${currentVideo.id}`, body, config)
-      .then(() => {
+      .then(res => {
+        if (res.data === 'not a tracking user') {
+          return;
+        }
         if (reloadVideos) {
           this.loadVideos(doneClicked ? this.getCurrentVideo : null);
         }
@@ -308,8 +314,6 @@ class Annotate extends Component {
       return;
     }
 
-    const dragBoxCord = dragBox.getBoundingClientRect();
-
     const vidCord = videoElement.getBoundingClientRect();
 
     // Make video image
@@ -342,7 +346,6 @@ class Annotate extends Component {
       videoWidth: 1600,
       videoHeight: 900,
       image: date,
-      imagewithbox: `${date}_box`,
       comment,
       unsure
     };
@@ -361,15 +364,7 @@ class Annotate extends Component {
           title: res.data.message
         });
         this.handleDialogClose();
-        this.createAndUploadImages(
-          videoImage,
-          ctx,
-          canvas,
-          dragBoxCord,
-          date,
-          x1,
-          y1
-        );
+        this.uploadImage(videoImage, date);
       })
       .catch(error => {
         console.log(error);
@@ -386,25 +381,7 @@ class Annotate extends Component {
       });
   };
 
-  createAndUploadImages = (
-    videoImage,
-    ctx,
-    canvas,
-    dragBoxCord,
-    date,
-    x1,
-    y1
-  ) => {
-    this.uploadImage(videoImage, date, false);
-    ctx.lineWidth = '2';
-    ctx.strokeStyle = 'coral';
-    ctx.rect(x1, y1, dragBoxCord.width, dragBoxCord.height);
-    ctx.stroke();
-    videoImage.src = canvas.toDataURL(1.0);
-    this.uploadImage(videoImage, date, true);
-  };
-
-  uploadImage = (img, date, box) => {
+  uploadImage = (img, date) => {
     const buf = Buffer.from(
       img.src.replace(/^data:image\/\w+;base64,/, ''),
       'base64'
@@ -417,8 +394,7 @@ class Annotate extends Component {
     };
     const body = {
       buf,
-      date,
-      box
+      date
     };
     return axios.post('/api/annotations/images', body, config).catch(error => {
       console.log(error);
@@ -467,15 +443,15 @@ class Annotate extends Component {
       dialogMsg
     } = this.state;
     if (!isLoaded) {
-      return <div className={classes.text}>Loading...</div>;
+      return <Typography className={classes.text}>Loading...</Typography>;
     }
     if (error) {
-      return <div className={classes.text}>Error: {error}</div>;
+      return <Typography className={classes.text}>Error: {error}</Typography>;
     }
     return (
-      <React.Fragment>
+      <>
         <Hotkeys keyName="space, right, left" onKeyDown={this.handleKeyDown} />
-        <Grid container className={classes.root} spacing={0}>
+        <Grid container spacing={0}>
           <Grid item xs>
             <VideoList
               handleVideoClick={this.handleVideoClick}
@@ -487,8 +463,12 @@ class Annotate extends Component {
               loadVideos={this.loadVideos}
             />
           </Grid>
-          <Grid item xs={10}>
-            <Typography variant="h5" align="center">
+          <Grid item xs={8}>
+            <Typography
+              variant="h5"
+              align="center"
+              className={classes.videoName}
+            >
               {`${currentVideo.id} ${currentVideo.filename}`}
             </Typography>
           </Grid>
@@ -496,11 +476,12 @@ class Annotate extends Component {
             <ConceptsSelected handleConceptClick={this.handleConceptClick} />
           </Grid>
         </Grid>
-        <Grid container className={classes.root} spacing={0}>
+        <Grid container spacing={0}>
           <Grid item xs={1} />
           <Grid item xs>
             <DragBoxContainer
-              className={classes.videoContainer}
+              videoHeight="900"
+              videoWidth="1600"
               dragBox={classes.dragBox}
               drawDragBoxProp={false}
               size={{
@@ -539,9 +520,6 @@ class Annotate extends Component {
           <Grid item xs={6}>
             <div
               style={{
-                // marginTop: '10px',
-                // marginLeft: '20px',
-                // marginBottom: '10px',
                 float: 'left'
               }}
             >
@@ -612,7 +590,7 @@ class Annotate extends Component {
             handleClose={this.handleDialogClose}
           />
         )}
-      </React.Fragment>
+      </>
     );
   }
 }

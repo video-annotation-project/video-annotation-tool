@@ -20,7 +20,8 @@ router.patch(
       let result = await psql.query(queryText);
       if (result) {
         res.status(200).json(result.rows);
-      }a
+      }
+      a;
     } catch (error) {
       res.json(error);
     }
@@ -37,7 +38,8 @@ router.patch(
       SET
         status = 0,
         std_out='',
-        std_err=''
+        std_err='',
+        stop_flag=False
     `;
 
     const resetPredicting = `DELETE FROM predict_progress;`;
@@ -99,28 +101,46 @@ router.put(
   '/',
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
-
-    let queryText = `
-    UPDATE 
-      model_params 
-    SET
-      epochs=$1,
-      min_images=$2,
-      model=$3,
-      annotation_collections=$4,
-      verified_only=$5,
-      include_tracking=$6 `;
-
-    try {
-      console.log(req.body);
-      let response = await psql.query(queryText, [
+    let tableName;
+    let paramValues;
+    let params;
+    if (req.query.predictmodel === 'true') {
+      tableName = `predict_params`;
+      paramValues = `
+        model=$1, 
+        userid=$2, 
+        concepts=$3, 
+        videos=$4,
+        upload_annotations=$5`;
+      params = [
+        req.body.model,
+        req.body.userid,
+        req.body.concepts,
+        req.body.videos,
+        req.body.uploadAnnotations
+      ];
+    } else {
+      tableName = `model_params`;
+      paramValues = `
+        epochs=$1,
+        min_images=$2,
+        model=$3,
+        annotation_collections=$4,
+        verified_only=$5,
+        include_tracking=$6`;
+      params = [
         req.body.epochs,
         req.body.minImages,
         req.body.modelSelected,
         req.body.annotationCollections,
         req.body.verifiedOnly,
         req.body.includeTracking
-      ]);
+      ];
+    }
+    let queryText = `UPDATE ${tableName} SET ${paramValues} RETURNING *`;
+
+    try {
+      let response = await psql.query(queryText, params);
       res.json(response.rows);
     } catch (error) {
       console.log('Error on put /api/models/train');

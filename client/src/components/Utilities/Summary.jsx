@@ -4,7 +4,7 @@ import Modal from '@material-ui/core/Modal';
 import Button from '@material-ui/core/Button';
 import Avatar from '@material-ui/core/Avatar';
 import Paper from '@material-ui/core/Paper';
-import geoLib from 'geolib';
+import { getDistance } from 'geolib';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
@@ -35,12 +35,15 @@ const styles = theme => ({
 });
 
 class Summary extends React.Component {
-  state = {
-    showTotal: false,
-    total: null,
-    anno: null,
-    km: false
-  };
+  constructor(props) {
+    super(props);
+    this.state = {
+      showTotal: false,
+      total: null,
+      anno: null,
+      km: false
+    };
+  }
 
   getTotal = data => {
     let count = 0;
@@ -104,7 +107,7 @@ class Summary extends React.Component {
         longitude: gpsstart.y
       };
       end = { latitude: gpsstop.x, longitude: gpsstop.y };
-      dist = geoLib.getDistance(start, end, 1, 3);
+      dist = getDistance(start, end, 1, 3);
     } else {
       dist = 1;
     }

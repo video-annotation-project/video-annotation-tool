@@ -8,7 +8,7 @@ import DialogModal from '../Utilities/DialogModal';
 
 const styles = () => ({
   item: {
-    display: 'inline',
+    // display: 'inline',
     paddingTop: 0,
     width: '1300px',
     height: '730px',
@@ -93,13 +93,23 @@ class AnnotationFrame extends Component {
   render() {
     const { error, dialogMsg, dialogOpen } = this.state;
     const { classes, annotation } = this.props;
-    const { unsure, comment, imagewithbox } = annotation;
+    const {
+      unsure,
+      comment,
+      image,
+      x1,
+      y1,
+      x2,
+      y2,
+      videoheight,
+      videowidth
+    } = annotation;
 
     if (error) {
       return <div>Error: {error}</div>;
     }
     return (
-      <React.Fragment>
+      <>
         <DialogModal
           title="Confirm Annotation Edit"
           message={dialogMsg}
@@ -112,14 +122,33 @@ class AnnotationFrame extends Component {
         />
         <ConceptsSelected handleConceptClick={this.handleConceptClick} />
         <ListItem className={classes.item}>
-          <img
-            className={classes.img}
-            id="imageId"
-            src={`https://cdn.deepseaannotations.com/test/${imagewithbox}`}
-            alt="error"
-          />
+          <div className={classes.img}>
+            <div
+              style={{
+                position: 'relative',
+                width: 0,
+                height: 0,
+                top: y1 * (720 / videoheight),
+                left: x1 * (1280 / videowidth)
+              }}
+            >
+              <div
+                style={{
+                  width: (x2 - x1) * (1280 / videowidth),
+                  height: (y2 - y1) * (720 / videoheight),
+                  border: '2px solid coral'
+                }}
+              ></div>
+            </div>
+            <img
+              className={classes.img}
+              id="imageId"
+              src={`https://cdn.deepseaannotations.com/test/${image}`}
+              alt="error"
+            />
+          </div>
         </ListItem>
-      </React.Fragment>
+      </>
     );
   }
 }

@@ -14,8 +14,9 @@ import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
 import IconButton from '@material-ui/core/IconButton';
 import Icon from '@material-ui/core/Icon';
 import DoneAll from '@material-ui/icons/DoneAll';
-
+import { Typography } from '@material-ui/core';
 import Swal from 'sweetalert2/src/sweetalert2';
+
 import AnnotationFrame from './AnnotationFrame';
 
 const styles = theme => ({
@@ -186,13 +187,17 @@ class Annotations extends Component {
     const { error, isLoaded, annotations } = this.state;
     const { classes } = this.props;
     if (!isLoaded) {
-      return <List>Loading...</List>;
+      return <Typography style={{ margin: '20px' }}>Loading...</Typography>;
     }
     if (error) {
-      return <List>Error: {error.message}</List>;
+      return (
+        <Typography style={{ margin: '20px' }}>
+          Error: {error.message}
+        </Typography>
+      );
     }
     return (
-      <React.Fragment>
+      <>
         <List disablePadding className={classes.root}>
           {annotations.map(annotation => (
             <React.Fragment key={annotation.id}>
@@ -266,7 +271,7 @@ class Annotations extends Component {
             </React.Fragment>
           ))}
         </List>
-      </React.Fragment>
+      </>
     );
   }
 }

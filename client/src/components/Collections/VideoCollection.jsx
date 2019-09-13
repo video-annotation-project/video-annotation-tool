@@ -13,9 +13,9 @@ import VideoList from '../Utilities/VideoList';
 import CollectionList from './CollectionVideoList';
 import Annotate from '../Annotate';
 
-const styles = () => ({
+const styles = theme => ({
   videoContainer: {
-    top: '70px',
+    top: '50px',
     width: '1600px',
     height: '900px'
   },
@@ -30,13 +30,8 @@ const styles = () => ({
     marginLeft: '20px',
     marginBottom: '10px'
   },
-  drawer: {
-    width: '550px',
-    overflow: 'auto'
-  },
-  toggleButton: {
-    float: 'right',
-    marginTop: '5px'
+  videoName: {
+    marginTop: theme.spacing(1.5)
   }
 });
 
@@ -406,10 +401,10 @@ class videoCollection extends Component {
     const { isLoaded, error } = this.state;
 
     if (!isLoaded) {
-      return <div>Loading...</div>;
+      return <Typography style={{ margin: '20px' }}>Loading...</Typography>;
     }
     if (error) {
-      return <div>Error: {error}</div>;
+      return <Typography style={{ margin: '20px' }}>Error: {error}</Typography>;
     }
     const {
       socket,
@@ -422,11 +417,12 @@ class videoCollection extends Component {
       collections
     } = this.state;
     return (
-      <React.Fragment>
+      <>
         <Hotkeys keyName="space, right, left" onKeyDown={this.handleKeyDown} />
-        <Grid container className={classes.root} spacing={0}>
+        <Grid container spacing={0}>
           <Grid item xs>
             <VideoList
+              createCollection={this.createCollection}
               handleVideoClick={this.handleVideoClick}
               startedVideos={startedVideos}
               unwatchedVideos={unwatchedVideos}
@@ -441,7 +437,11 @@ class videoCollection extends Component {
             />
           </Grid>
           <Grid item xs={8}>
-            <Typography variant="h5" align="center">
+            <Typography
+              className={classes.videoName}
+              variant="h5"
+              align="center"
+            >
               {`${currentVideo.id} ${currentVideo.filename}`}
             </Typography>
           </Grid>
@@ -456,8 +456,8 @@ class videoCollection extends Component {
             />
           </Grid>
         </Grid>
-        <Grid container className={classes.root} spacing={0}>
-          <Grid item xs />
+        <Grid container spacing={0}>
+          <Grid item xs={1} />
           <Grid item xs>
             <div className={classes.videoContainer}>
               <video
@@ -476,20 +476,16 @@ class videoCollection extends Component {
           <Grid item xs />
         </Grid>
         <Grid container className={classes.root} spacing={0}>
-          <Grid item xs />
+          <Grid item xs={1} />
           <Grid item xs={6}>
             <div
               style={{
-                // marginTop: '10px',
-                // marginLeft: '20px',
-                // marginBottom: '10px',
                 float: 'left'
               }}
             >
               <Slider
                 style={{
-                  width: 200,
-                  marginTop: 10
+                  width: 200
                 }}
                 value={videoPlaybackRate}
                 min={0}
@@ -543,7 +539,7 @@ class videoCollection extends Component {
           </Grid>
           <Grid item xs />
         </Grid>
-      </React.Fragment>
+      </>
     );
   }
 }

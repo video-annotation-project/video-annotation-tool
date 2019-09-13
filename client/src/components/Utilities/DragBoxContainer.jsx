@@ -21,6 +21,7 @@ const DragBox = props => {
     onDragStop,
     onResize
   } = props;
+
   return (
     <Rnd
       id="dragBox"
@@ -57,7 +58,7 @@ class DragBoxContainer extends Component {
 
   resetDragBox = async e => {
     const { onResize } = this.props;
-    const { disableDraw, boxCounter, dragBoxX, dragBoxY } = this.state;
+    const { disableDraw, boxCounter } = this.state;
     e.preventDefault();
 
     if (disableDraw) {
@@ -90,8 +91,8 @@ class DragBoxContainer extends Component {
       () => {
         if (onResize) {
           onResize(e, null, { style: { width: 0, height: 0 } }, null, {
-            x: dragBoxX,
-            y: dragBoxY
+            x,
+            y
           });
         }
       }
@@ -174,21 +175,29 @@ class DragBoxContainer extends Component {
 
   render() {
     const {
-      className,
       children,
       size,
       position,
       dragBox,
       onResize,
       onDragStop,
-      drawDragBoxProp
+      drawDragBoxProp,
+      videoWidth,
+      videoHeight
     } = this.props;
     const { drawDragBox, boxCounter, disabledMouse } = this.state;
     return (
-      <div className={className}>
-        {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
+      <div
+        style={{
+          width: videoWidth,
+          height: videoHeight
+        }}
+      >
         <div
-          className={className}
+          style={{
+            width: videoWidth,
+            height: videoHeight
+          }}
           onMouseDown={e => this.resetDragBox(e)}
           onMouseMove={e => this.drawDragBox(e)}
           onMouseUp={e => this.createDragBox(e)}

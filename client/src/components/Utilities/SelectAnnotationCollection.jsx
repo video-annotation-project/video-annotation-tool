@@ -8,8 +8,8 @@ import Typography from '@material-ui/core/Typography';
 
 const styles = theme => ({
   formControl: {
-    marginTop: theme.spacing(2),
-    maxHeight: '250px',
+    marginTop: theme.spacing(1.5),
+    maxHeight: '320px',
     overflow: 'auto'
   },
   group: {
@@ -39,7 +39,8 @@ class SelectAnnotationCollection extends React.Component {
     const { classes, value, handleChangeList } = this.props;
     const { collections } = this.state;
 
-    if (!collections) return <div>Loading...</div>;
+    if (!collections)
+      return <Typography style={{ margin: '20px' }}>Loading...</Typography>;
 
     return (
       <>

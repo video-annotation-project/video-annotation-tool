@@ -55,6 +55,7 @@ class Tracked_object(object):
         label = detection[2]
         confidence = detection[1]
         self.save_annotation(frame_num, label=label, confidence=confidence)
+        self.tracked_frames = 0
 
     def save_annotation(self, frame_num, label=None, confidence=None):
         annotation = {}
@@ -82,6 +83,7 @@ class Tracked_object(object):
         confidence = detection[1]
         self.annotations = self.annotations[:-1]
         self.save_annotation(frame_num, label=label, confidence=confidence)
+        self.tracked_frames = 0
 
     def update(self, frame, frame_num):
         success, box = self.tracker.update(frame)
@@ -93,6 +95,7 @@ class Tracked_object(object):
             self.y2 = y1 + h
             self.box = (x1, y1, w, h)
             self.save_annotation(frame_num)
+            self.tracked_frames += 1
         return success
 
     def change_id(self, matched_obj_id):
@@ -127,7 +130,13 @@ def predict_on_video(videoid, model_weights, concepts, filename,
     # Get biologist annotations for video
 
     printing_with_time("Before database query")
+    tuple_concept = ''
+    if len(concepts) == 1:
+        tuple_concept = f''' = {str(concepts[0])}'''
+    else:
+        tuple_concept = f''' in {str(tuple(concepts))}'''
 
+    print(concepts)
     annotations = pd_query(
         f'''
         SELECT
@@ -140,12 +149,10 @@ def predict_on_video(videoid, model_weights, concepts, filename,
         FROM
           annotations
         WHERE
-          unsure=FALSE AND
           videoid={videoid} AND
           userid in {str(tuple(config.GOOD_USERS))} AND
-          conceptid in {str(tuple(concepts))} ''')
+          conceptid {tuple_concept}''')
     print(annotations)
-
     printing_with_time("After database query")
 
     printing_with_time("Resizing annotations.")
@@ -158,6 +165,8 @@ def predict_on_video(videoid, model_weights, concepts, filename,
 
     printing_with_time("Predicting")
     results, frames = predict_frames(frames, fps, model, videoid)
+    if (results.shape[0] == 0):
+        return
     results = propagate_conceptids(results, concepts)
     results = length_limit_objects(results, config.MIN_FRAMES_THRESH)
     # interweb human annotations and predictions
@@ -235,7 +244,12 @@ def predict_frames(video_frames, fps, model, videoid):
         # update tracking for currently tracked objects
         for obj in currently_tracked_objects:
             success = obj.update(frame, frame_num)
-            if not success:
+            temp = list(currently_tracked_objects)
+            temp.remove(obj)
+            detection = (obj.box, 0, 0)
+            match, matched_object = does_match_existing_tracked_object(
+                detection, temp)
+            if not success or obj.tracked_frames > 30:
                 annotations.append(obj.annotations)
                 currently_tracked_objects.remove(obj)
                 # Check if there is a matching prediction if the tracking fails?
@@ -421,6 +435,7 @@ def generate_video(filename, frames, fps, results,
     f = open('gen.txt', 'w')
     f.write(str(frames[130]))
     f.write(str(classmap))
+    seenObjects = []
     for pred_index, res in enumerate(results.itertuples()):
         f.write(f'{pred_index}  {res} {type(frames)}')
 
@@ -430,7 +445,7 @@ def generate_video(filename, frames, fps, results,
         x1, y1, x2, y2 = int(res.x1), int(res.y1), int(res.x2), int(res.y2)
         # boxText init to concept name
         boxText = classmap[concepts.index(res.label)]
-        seenObjects = []
+
         if pd.isna(res.confidence):  # No confidence means user annotation
             # Draws a (user) red box
             # Note: opencv uses color as BGR
@@ -438,7 +453,7 @@ def generate_video(filename, frames, fps, results,
                           (x2, y2), (0, 0, 255), 2)
         else:  # if confidence exists -> AI annotation
             # Keeps count of concepts
-            if (res.objectidd not in seenObjects):
+            if (res.objectid not in seenObjects):
                 conceptsCounts[res.label] += 1
                 seenObjects.append(res.objectid)
             # Draw an (AI) green box
@@ -559,21 +574,6 @@ def upload_annotation(frame, frame_w_box, x1, x2, y1, y2,
             x2, y2, videowidth, videoheight, datetime.datetime.now().date(), no_box, box
         )
     )
-
-
-# post frame_num to predict_progress psql
-'''
-For updating the predict_progress psql database, which tracks prediction and 
-video generation status.
-
-Arguments:
-count - frame of video (or index of annotation) being processed
-videoid - video being processed
-con - sql connection
-total_count - total number of frames in the video 
-    (or number of predictions + annotations)
-status - Indicates whether processing video or drawing annotation boxes
-'''
 
 
 def upload_predict_progress(count, videoid, total_count, status):

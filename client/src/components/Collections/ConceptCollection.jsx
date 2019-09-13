@@ -22,22 +22,19 @@ const styles = theme => ({
   button: {
     marginTop: theme.spacing(2),
     marginBottom: theme.spacing(2),
-    marginLeft: theme.spacing(2)
+    marginLeft: theme.spacing()
   },
   deleteButton: {
     marginRight: '450px'
   },
   description: {
-    marginLeft: theme.spacing(2)
+    marginLeft: theme.spacing()
   },
   formControl: {
     marginBottom: theme.spacing(2),
     marginTop: theme.spacing(3),
-    marginLeft: theme.spacing(3),
+    marginLeft: theme.spacing(2),
     minWidth: 200
-  },
-  list: {
-    marginLeft: theme.spacing(1)
   }
 });
 
@@ -274,7 +271,7 @@ class ConceptCollection extends Component {
     const { classes } = this.props;
     const { selectedCollection, collections, concepts } = this.state;
     return (
-      <React.Fragment>
+      <div style={{ marginLeft: '20px' }}>
         <ConceptsSelected handleConceptClick={this.handleConceptClick} />
         <FormControl className={classes.formControl}>
           <InputLabel>Select collection</InputLabel>
@@ -324,7 +321,7 @@ class ConceptCollection extends Component {
             New Concept Collection
           </Button>
         </div>
-        <List className={classes.list}>
+        <List>
           {concepts.length > 0
             ? concepts.map(concept => {
                 return (
@@ -359,6 +356,7 @@ class ConceptCollection extends Component {
           Undo Changes
         </Button>
         <Button
+          variant="contained"
           className={classes.button}
           onClick={this.handleRemoveAll}
           disabled={concepts.length === 0}
@@ -387,7 +385,7 @@ class ConceptCollection extends Component {
         >
           Save
         </Button>
-      </React.Fragment>
+      </div>
     );
   }
 }

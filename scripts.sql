@@ -1,192 +1,324 @@
-/*
-  Create SQL Tables
-  The following lines of code initialize tables in mySQL. Each
-  block has information about a table's column names, variable
-  types... etc.
-*/
+create database dbname
+	with owner "psMaster";
 
-/*
-  Videos
-  This table will represent each video from MBARI.
-  id - Primary Key
-  fileName - Video's name
-  gpsStart - Coordinates where the video starts
-  gpsStop - Coordinates where the video ends
-*/
-CREATE TABLE Videos (
-  id SERIAL PRIMARY KEY,
-  fileName text NOT NULL,
-  gpsStart Point,
-  gpsStop Point,
-  startTime TIMESTAMP WITHOUT TIME ZONE,
-  endTime TIMESTAMP WITHOUT TIME ZONE,
-  startDepth int,
-  endDepth int,
-  description text,
-  fps DOUBLE PRECISION 
+create sequence concept_id_seq;
+
+alter sequence concept_id_seq owner to "psMaster";
+
+create table concepts
+(
+	id serial not null
+		constraint concepts_pkey
+			primary key,
+	name text not null
+		constraint unique_name
+			unique,
+	rank text,
+	parent integer default 0,
+	picture text default 'none.png'::text
 );
 
-/*
-  Users
-  This table will represent each user.
-  id - Primary Key
-  username - user's login name
-  passsword - user's login password
-  admin - Boolean - Whether user is admin
-*/
-CREATE TABLE Users (
-  id SERIAL PRIMARY KEY,
-  username text NOT NULL UNIQUE,
-  password text NOT NULL,
-  admin BOOLEAN DEFAULT FALSE
+alter table concepts owner to "psMaster";
+
+create table videos
+(
+	id serial not null
+		constraint videos_pkey
+			primary key,
+	filename text not null,
+	gpsstart point,
+	gpsstop point,
+	starttime timestamp,
+	endtime timestamp,
+	startdepth integer,
+	enddepth integer,
+	description text default ''::text,
+	fps double precision,
+	goodvideo boolean default false
 );
 
-/*
-  Concepts
-  This table will represent each node in
-  the hierarchical species tree.
-  id - Primary Key
-  name - node's name
-  parent - name of node's parent node
-  picture - filename for species image
-*/
-CREATE TABLE Concepts (
-  id SERIAL PRIMARY KEY,
-  name text NOT NULL,
-  rank text NOT NULL,
-  parent int DEFAULT 0,
-  picture text,
-  foreign key (parent) references Concepts
+alter table videos owner to "psMaster";
+
+create table users
+(
+	id serial not null
+		constraint users_pkey
+			primary key,
+	username text not null
+		constraint users_username_key
+			unique,
+	password text not null,
+	admin boolean default false
 );
 
-/*
-  Profile
-  This table represents each user and what they
-  are trying to profile during the video.
-  id - Primary Key
-  userID - Foreign Key references Users(id)
-  conceptID - Foreign key references Concepts(id)
-*/
-CREATE TABLE Profile (
-  id SERIAL PRIMARY KEY,
-  userID int NOT NULL,
-  conceptID int NOT NULL,
-  FOREIGN KEY (userID) REFERENCES Users,
-  FOREIGN KEY (conceptID) REFERENCES Concepts
+alter table users owner to "psMaster";
+
+create table profile
+(
+	id serial not null
+		constraint profile_pkey
+			primary key,
+	userid integer not null
+		constraint profile_userid_fkey
+			references users,
+	conceptid integer not null,
+	conceptidx integer default 0,
+	constraint uniqueconceptid
+		unique (userid, conceptid)
 );
 
-/*
-  Annotations
-  This table represents each classified box.
-  id - Primary Key
-  videoID - Foreign Key references Videos(id)
-  userID - Foreign Key references Users(id)
-  conceptID - Foreign Key references Concepts(id)
-  TimeInVideo - The number of ms in the video the profile was made
-  topRightX - pixel representing profile box
-  topRightY - Profile box
-  botLeftX - Profile box
-  botLeftY - Profile box
-  DateAnnotated - Date of classification
-  image - name of annotation image in s3 bucket
-  imagewithbox - name of annotation image with bounding box in s3 bucket
-  comment - comment left by annotator
-  unsure - t/f value left by annotator
-  originalid - id of original annotation used for tracking annotations
-  framenum - frame number of annotation
-  speed - used for filtering out bad tracking annotations 
-*/
-CREATE TABLE Annotations (
-  id SERIAL PRIMARY KEY,
-  videoID int NOT NULL,
-  userID int NOT NULL,
-  conceptID int NOT NULL,
-  TimeInVideo DOUBLE PRECISION NOT NULL,
-  x1 DOUBLE PRECISION NOT NULL,
-  y1 DOUBLE PRECISION NOT NULL,
-  x2 DOUBLE PRECISION NOT NULL,
-  y2 DOUBLE PRECISION NOT NULL,
-  videoWidth DOUBLE PRECISION NOT NULL,
-  videoHeight DOUBLE PRECISION NOT NULL,
-  DateAnnotated DATE NOT NULL,
-  image TEXT NOT NULL,
-  imagewithbox TEXT NOT NULL,
-  comment TEXT,
-  unsure BOOLEAN,
-  originalid int,
-  framenum int,
-  speed DOUBLE PRECISION,
-  verifieddate TIMESTAMP WITHOUT TIME ZONE,
-  verifiedby int,
-  FOREIGN KEY (videoID) REFERENCES Videos,
-  FOREIGN KEY (userID) REFERENCES Users,
-  FOREIGN KEY (conceptID) REFERENCES Concepts
+alter table profile owner to "psMaster";
+
+create table annotations
+(
+	id serial not null
+		constraint annotations_pkey
+			primary key,
+	videoid integer not null
+		constraint annotations_videoid_fkey
+			references videos,
+	userid integer not null
+		constraint annotations_userid_fk
+			references users
+				on delete cascade,
+	conceptid integer not null
+		constraint annotations_conceptid_fk
+			references concepts,
+	timeinvideo double precision not null,
+	x1 double precision not null,
+	y1 double precision not null,
+	x2 double precision not null,
+	y2 double precision not null,
+	videowidth double precision not null,
+	videoheight double precision not null,
+	dateannotated date not null,
+	image text,
+	imagewithbox text,
+	comment text,
+	unsure boolean default false,
+	originalid integer,
+	framenum integer,
+	speed double precision,
+	verifieddate timestamp,
+	verifiedby integer,
+	priority integer default 0,
+	oldconceptid integer
+		constraint annotations_oldconceptid_fk
+			references concepts,
+	oldx1 double precision,
+	oldy1 double precision,
+	oldx2 double precision,
+	oldy2 double precision,
+	tracking_flag boolean
 );
 
-/*
-  Checkpoints
-  This table updates where a user is time-wise in each video.
-  userid - Foreign Key references Users(id)
-  videoid - Foreign Key references Videos(id)
-  timeinvideo - user's time in specific video
-  timestamp - time logged
-  finished - boolean, states whether user has finished video or not
-*/
+alter table annotations owner to "psMaster";
 
-CREATE TABLE Checkpoints (
-  userid int NOT NULL,
-  videoid int NOT NULL,
-  timeinvideo DOUBLE PRECISION NOT NULL,
-  timestamp text NOT NULL,
-  finished BOOLEAN DEFAULT FALSE,
-  FOREIGN KEY (videoid) REFERENCES Videos,
-  FOREIGN KEY (userid) REFERENCES Users
+create table checkpoints
+(
+	userid integer not null
+		constraint checkpoints_userid_fkey
+			references users,
+	videoid integer not null
+		constraint checkpoints_videoid_fkey
+			references videos,
+	timeinvideo double precision not null,
+	timestamp text not null,
+	finished boolean default false
 );
 
-/*
-  previous_runs
-  This table keeps track of previous training
-  runs of a particular model.
-*/
-CREATE TABLE previous_runs (
-  id serial PRIMARY KEY,
-  model_name text,
-  start_train timestamp,
-  end_train timestamp,
-  min_examples integer,
-  epochs integer,
-  concepts integer[],
-  videos integer[],
-  users integer[],
-  std_out text,
-  std_err text
+alter table checkpoints owner to "psMaster";
+
+create table models
+(
+	name text not null
+		constraint unqiue_model_name
+			unique,
+	timestamp timestamp not null,
+	concepts integer[],
+	verificationvideos integer[],
+	userid integer
 );
 
-/* 
-  training_progress
-  This table keeps track of the current progress
-  on a training model.
-*/
+alter table models owner to "psMaster";
 
-CREATE TABLE training_progress (
-  id serial PRIMARY KEY,
-  running bool,
-  curr_epoch integer,
-  max_epoch integer,
-  curr_batch integer,
-  steps_per_epoch integer
+create table training_progress
+(
+	status integer,
+	curr_epoch integer,
+	max_epoch integer,
+	curr_batch integer,
+	steps_per_epoch integer,
+	std_out text default ''::text,
+	std_err text default ''::text,
+	job_id text,
+	stop_flag boolean default false
 );
 
+alter table training_progress owner to "psMaster";
 
-CREATE TABLE model_params (
-  option text,
-  epochs integer,
-  min_images integer,
-  model_selected integer,
-  annotation_collections integer,
-  verified_only bool,
-  include_tracking bool
+create table ai_videos
+(
+	id serial not null
+		constraint ai_videos_pkey
+			primary key,
+	name text not null
+		constraint ai_videos_name_key
+			unique
 );
 
+alter table ai_videos owner to "psMaster";
 
-INSERT INTO users(username, password, admin) VALUES('admin', '$2b$10$cTBlJX8aQC8joysM78ZTtuAj5vW55Trwuy6kYe.PbY/m1wzQFsA1a', true);
+create table predict_progress
+(
+	videoid integer not null
+		constraint predict_progress_videoid_key
+			unique,
+	framenum integer,
+	totalframe integer,
+	status integer,
+	current_video integer default 0,
+	total_videos integer default 0
+);
+
+alter table predict_progress owner to "psMaster";
+
+create table previous_runs
+(
+	id serial not null
+		constraint previous_runs_pkey
+			primary key,
+	model_name text,
+	start_train timestamp,
+	end_train timestamp,
+	min_examples integer,
+	epochs integer,
+	collection_ids integer[],
+	job_id text
+);
+
+alter table previous_runs owner to "psMaster";
+
+create table video_collection
+(
+	id serial not null
+		constraint video_collection_pkey
+			primary key,
+	name text
+		constraint video_collection_name_key
+			unique,
+	description text
+);
+
+alter table video_collection owner to "psMaster";
+
+create table video_intermediate
+(
+	id integer
+		constraint video_intermediate_id_fkey
+			references video_collection
+				on delete cascade,
+	videoid integer
+		constraint video_intermediate_videoid_fkey
+			references videos,
+	constraint two_columns_u
+		unique (id, videoid)
+);
+
+alter table video_intermediate owner to "psMaster";
+
+create table annotation_collection
+(
+	id serial not null
+		constraint annotation_collection_pkey
+			primary key,
+	name text
+		constraint annotation_collection_name_key
+			unique,
+	description text,
+	users text[] default '{}'::text[],
+	videos integer[] default '{}'::integer[],
+	concepts text[] default '{}'::text[],
+	tracking boolean default false,
+	conceptid integer[]
+);
+
+alter table annotation_collection owner to "psMaster";
+
+create table annotation_intermediate
+(
+	id integer
+		constraint annotation_intermediate_id_fkey
+			references annotation_collection
+				on delete cascade,
+	annotationid integer
+		constraint annotation_intermediate_annotationid_fk
+			references annotations
+				on delete cascade,
+	constraint two_columns_u_annotation
+		unique (id, annotationid)
+);
+
+alter table annotation_intermediate owner to "psMaster";
+
+create table concept_collection
+(
+	id serial not null
+		constraint concept_collection_pkey
+			primary key,
+	name text
+		constraint concept_collection_name_key
+			unique,
+	description text
+);
+
+alter table concept_collection owner to "psMaster";
+
+create table concept_intermediate
+(
+	id integer
+		constraint concept_intermediate_id_fkey
+			references concept_collection
+				on delete cascade,
+	conceptid integer
+		constraint concept_intermediate_conceptid_fkey
+			references concepts,
+	constraint two_columns_u_concepts
+		unique (id, conceptid)
+);
+
+alter table concept_intermediate owner to "psMaster";
+
+create table model_params
+(
+	option text,
+	epochs integer,
+	min_images integer,
+	model text,
+	annotation_collections integer[],
+	verified_only boolean,
+	include_tracking boolean
+);
+
+alter table model_params owner to "psMaster";
+
+create table predict_params
+(
+	model text,
+	userid integer,
+	concepts integer[],
+	upload_annotations boolean,
+	videos integer[]
+);
+
+alter table predict_params owner to "psMaster";
+
+create table verified_frames
+(
+	videoid integer not null,
+	framenum integer not null,
+	constraint verified_frame
+		primary key (videoid, framenum)
+);
+
+alter table verified_frames owner to "psMaster";

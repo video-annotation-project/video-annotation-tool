@@ -8,10 +8,9 @@ import { withStyles } from '@material-ui/core/styles';
 import Hotkeys from 'react-hot-keys';
 import Grid from '@material-ui/core/Grid';
 
-import DragBoxContainer from '../Utilities/DragBoxContainer';
 import AIvideoList from './AIvideoList';
 
-const styles = () => ({
+const styles = theme => ({
   videoContainer: {
     top: '60px',
     width: '1600px',
@@ -21,6 +20,9 @@ const styles = () => ({
     marginTop: '10px',
     marginLeft: '20px',
     marginBottom: '10px'
+  },
+  videoName: {
+    marginTop: theme.spacing(1.5)
   }
 });
 
@@ -203,13 +205,13 @@ class Annotate extends Component {
       videoPlaybackRate
     } = this.state;
     if (!isLoaded) {
-      return <div>Loading...</div>;
+      return <Typography style={{ margin: '20px' }}>Loading...</Typography>;
     }
     if (error) {
-      return <div>Error: {error}</div>;
+      return <Typography style={{ margin: '20px' }}>Error: {error}</Typography>;
     }
     return (
-      <React.Fragment>
+      <>
         <Hotkeys keyName="space, right, left" onKeyDown={this.handleKeyDown} />
         <Grid container className={classes.root} spacing={2}>
           <Grid item xs>
@@ -221,7 +223,11 @@ class Annotate extends Component {
             />
           </Grid>
           <Grid item xs>
-            <Typography variant="h5">
+            <Typography
+              variant="h5"
+              align="center"
+              className={classes.videoName}
+            >
               {`${currentVideo.id} ${currentVideo.filename}`}
             </Typography>
           </Grid>
@@ -231,7 +237,7 @@ class Annotate extends Component {
           <Grid item xs />
           <Grid item xs>
             <div>
-              <DragBoxContainer className={classes.videoContainer}>
+              <div className={classes.videoContainer}>
                 <video
                   className={classes.videoContainer}
                   //   onPause={() => this.updateCheckpoint(false, true)}
@@ -244,7 +250,7 @@ class Annotate extends Component {
                 >
                   Your browser does not support the video tag.
                 </video>
-              </DragBoxContainer>
+              </div>
               <div
                 style={{
                   // marginTop: '10px',
@@ -303,7 +309,7 @@ class Annotate extends Component {
           </Grid>
           <Grid item xs />
         </Grid>
-      </React.Fragment>
+      </>
     );
   }
 }

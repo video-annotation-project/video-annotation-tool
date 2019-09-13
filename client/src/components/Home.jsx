@@ -37,39 +37,38 @@ const styles = theme => ({
     marginLeft: theme.spacing(2),
     marginBottom: theme.spacing(2),
     minWidth: 120
+  },
+  info: {
+    margin: theme.spacing(2)
   }
 });
 
 class Home extends Component {
-  state = {
-    counts: [],
-    fromDate: {
-      date: null,
-      localeISOString: '',
-      ISOString: ''
-    },
-    toDate: {
-      date: null,
-      localeISOString: '',
-      ISOString: ''
-    }
-  };
-
-  componentWillMount() {
+  constructor(props) {
+    super(props);
     const fromDate = this.formatDate(new Date(`${YEAR}-01-01T00:00:00`));
     const toDate = this.formatDate(new Date());
-    this.setState({ fromDate, toDate });
-    this.getCounts(fromDate.ISOString, toDate.ISOString);
+    this.state = {
+      counts: [],
+      fromDate,
+      toDate
+    };
   }
 
-  componentDidMount() {
-    // These variables are for the varify tab checkpoint
+  async componentDidMount() {
+    const { fromDate, toDate } = this.state;
+    this.setState({ fromDate, toDate });
+    await this.getCounts(fromDate.ISOString, toDate.ISOString);
+    // These variables are for the verify tab checkpoint
+    localStorage.setItem('ignoredAnnotations', JSON.stringify([]));
+    localStorage.setItem('selectedAnnotationCollections', JSON.stringify([]));
     localStorage.setItem('selectionMounted', true);
     localStorage.setItem('selectedTrackingFirst', false);
     localStorage.setItem('videoDialogOpen', false);
     localStorage.setItem('curIndex', 0);
-    localStorage.removeItem('verifyAnnotation');
+    localStorage.setItem('totalAnnotations', 0);
     localStorage.removeItem('noAnnotations');
+    localStorage.setItem('excludeTracking', false);
   }
 
   /*
@@ -202,7 +201,7 @@ class Home extends Component {
           Welcome {localStorage.username}
         </Typography>
         {localStorage.username ? (
-          <React.Fragment>
+          <>
             <Grid container alignItems="center" wrap="nowrap">
               <Grid item>
                 <TextField
@@ -246,14 +245,22 @@ class Home extends Component {
               </Table>
             </Paper>
             <div style={{ clear: 'both' }}>
-              <h3 style={{ float: 'left' }}>
+              <Typography
+                variant="h6"
+                className={classes.info}
+                style={{ float: 'left' }}
+              >
                 Total Annotations: {annotationTotal}
-              </h3>
-              <h3 style={{ float: 'right' }}>
+              </Typography>
+              <Typography
+                variant="h6"
+                className={classes.info}
+                style={{ float: 'right' }}
+              >
                 Total Verifications: {verificationTotal}
-              </h3>
+              </Typography>
             </div>
-          </React.Fragment>
+          </>
         ) : (
           ''
         )}

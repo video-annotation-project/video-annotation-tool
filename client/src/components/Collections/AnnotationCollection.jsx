@@ -4,7 +4,6 @@ import { withStyles } from '@material-ui/core/styles';
 import Stepper from '@material-ui/core/Stepper';
 import Step from '@material-ui/core/Step';
 import StepLabel from '@material-ui/core/StepLabel';
-import StepContent from '@material-ui/core/StepContent';
 import Button from '@material-ui/core/Button';
 import { Grid, Typography } from '@material-ui/core';
 import InputLabel from '@material-ui/core/InputLabel';
@@ -22,23 +21,9 @@ import VerifySelectConcept from '../Utilities/SelectConcept';
 import CollectionInfo from '../Utilities/CollectionInfo';
 
 const styles = theme => ({
-  list: {
-    width: '100%',
-    backgroundColor: theme.palette.background.paper
-  },
-  item: {
-    display: 'inline',
-    paddingTop: 0,
-    width: '1300px',
-    height: '730px',
-    paddingLeft: 0
-  },
   button: {
-    marginTop: theme.spacing(3),
-    marginRight: theme.spacing()
-  },
-  actionsContainer: {
-    marginBottom: theme.spacing(2)
+    marginLeft: theme.spacing(0.5),
+    marginRight: theme.spacing(0.5)
   },
   formControl: {
     minWidth: 200,
@@ -46,43 +31,18 @@ const styles = theme => ({
     marginBottom: theme.spacing(2),
     marginLeft: theme.spacing()
   },
-  collection: {
-    marginTop: theme.spacing()
-  },
-  stepper: {
-    display: 'block',
-    flex: 1,
-    flexDirection: 'column',
-    justifyContent: 'left',
-    width: '70%'
-  },
-  models: {
-    display: 'flex',
-    flex: 1,
-    flexDirection: 'column',
-    justifyContent: 'right',
-    alignItems: 'right',
-    width: '30%'
-  },
-  container: {
-    display: 'flex',
-    flexDirection: 'row'
-  },
-  stats1: {
-    marginTop: theme.spacing(),
-    marginLeft: theme.spacing(),
-    marginRight: theme.spacing(4)
-  },
-  stats2: {
-    marginLeft: theme.spacing(4),
-    marginRight: theme.spacing(4),
-    marginBottom: theme.spacing()
-  },
-  info: {
-    marginTop: theme.spacing(2)
+  text: {
+    marginTop: theme.spacing(4.5)
   },
   infoButton: {
-    marginLeft: theme.spacing()
+    marginTop: theme.spacing(4)
+  },
+  grid: {
+    margin: theme.spacing(6)
+  },
+  collectionButton: {
+    marginRight: theme.spacing(),
+    marginBottom: theme.spacing(2)
   }
 });
 
@@ -173,7 +133,7 @@ class AnnotationCollection extends Component {
     return ret;
   };
 
-  createAnnotationCollection = () => {
+  createAnnotationCollection = async () => {
     Swal.mixin({
       confirmButtonText: 'Next',
       showCancelButton: true,
@@ -202,12 +162,19 @@ class AnnotationCollection extends Component {
             }
           };
           try {
-            await axios.post('/api/collections/annotations', body, config);
+            let data = await axios.post(
+              '/api/collections/annotations',
+              body,
+              config
+            );
             Swal.fire({
               title: 'Collection Created!',
               confirmButtonText: 'Lovely!'
             });
-            this.loadCollections();
+            await this.loadCollections();
+            this.setState({
+              selectedCollection: data.data.id
+            });
           } catch (error) {
             this.promiseResolver(error);
           }
@@ -278,6 +245,7 @@ class AnnotationCollection extends Component {
           config
         )
         .then(async () => {
+          Swal.close();
           Swal.fire({
             title: 'Inserted!',
             confirmButtonText: 'Lovely!'
@@ -319,7 +287,10 @@ class AnnotationCollection extends Component {
           selectedUsers
         }
       })
-      .then(res => res.data)
+      .then(res => {
+        Swal.close();
+        return res.data;
+      })
       .catch(error => {
         console.log(error);
         this.promiseResolver(error);
@@ -331,7 +302,10 @@ class AnnotationCollection extends Component {
       .get(`/api/collections/videos`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       })
-      .then(res => res.data)
+      .then(res => {
+        Swal.close();
+        return res.data;
+      })
       .catch(error => {
         console.log(error);
         this.promiseResolver(error);
@@ -352,7 +326,10 @@ class AnnotationCollection extends Component {
           selectedVideos
         }
       })
-      .then(res => res.data)
+      .then(res => {
+        Swal.close();
+        return res.data;
+      })
       .catch(error => {
         console.log(error);
         this.promiseResolver(error);
@@ -364,7 +341,10 @@ class AnnotationCollection extends Component {
       .get(`/api/collections/concepts`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       })
-      .then(res => res.data)
+      .then(res => {
+        Swal.close();
+        return res.data;
+      })
       .catch(error => {
         console.log(error);
         this.promiseResolver(error);
@@ -373,8 +353,9 @@ class AnnotationCollection extends Component {
 
   getAnnotations = async () => {
     const { selectedUsers, selectedVideos, selectedConcepts } = this.state;
+
     return axios
-      .get(`/api/annotations/collection/counts`, {
+      .get(`/api/collections/annotations/trackingCounts`, {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${localStorage.getItem('token')}`
@@ -390,9 +371,10 @@ class AnnotationCollection extends Component {
           annotationCount: res.data[0].annotationcount,
           trackingCount: res.data[0].trackingcount
         });
+        Swal.close();
       })
       .catch(error => {
-        console.log(error);
+        console.log(JSON.stringify(error));
         this.promiseResolver(error);
       });
   };
@@ -503,7 +485,7 @@ class AnnotationCollection extends Component {
     });
     if (data.users[0]) {
       return (
-        <React.Fragment>
+        <>
           <Button
             className={classes.infoButton}
             variant="outlined"
@@ -518,11 +500,11 @@ class AnnotationCollection extends Component {
             counts={selectedCollectionCounts}
             data={data}
           />
-        </React.Fragment>
+        </>
       );
     }
     return (
-      <Typography variant="subtitle1" className={classes.stats1}>
+      <Typography variant="subtitle1" className={classes.text}>
         No annotations
       </Typography>
     );
@@ -584,7 +566,7 @@ class AnnotationCollection extends Component {
         );
       case 3:
         return (
-          <React.Fragment>
+          <>
             <Typography>
               Number of User Annotations: {annotationCount}
             </Typography>
@@ -603,7 +585,7 @@ class AnnotationCollection extends Component {
               }
               label="Include tracking annotations"
             />
-          </React.Fragment>
+          </>
         );
       default:
         return 'Unknown step';
@@ -632,6 +614,13 @@ class AnnotationCollection extends Component {
   };
 
   handleNext = () => {
+    Swal.fire({
+      title: 'Loading...',
+      showConfirmButton: false,
+      onBeforeOpen: () => {
+        Swal.showLoading();
+      }
+    });
     this.setState(state => ({
       activeStep: state.activeStep + 1
     }));
@@ -650,126 +639,143 @@ class AnnotationCollection extends Component {
     const steps = getSteps();
 
     return (
-      <Grid container spacing={1}>
-        <Grid item xs={9}>
-          <div className={classes.container}>
-            <Stepper
-              activeStep={activeStep}
-              orientation="vertical"
-              className={classes.stepper}
-            >
-              {steps.map((label, index) => (
-                <Step key={label}>
-                  <StepLabel>{label}</StepLabel>
-                  <StepContent>
-                    {this.getStepForm(index)}
-                    <div className={classes.actionsContainer}>
-                      <Button
-                        variant="contained"
-                        onClick={this.resetState}
-                        className={classes.button}
-                      >
-                        Reset All
-                      </Button>
-                      {activeStep !== 0 ? (
-                        <Button
-                          variant="contained"
-                          onClick={() => {
-                            this.handleBack(activeStep);
-                          }}
-                          className={classes.button}
-                        >
-                          Back
-                        </Button>
-                      ) : (
-                        ''
-                      )}
-                      {activeStep === steps.length - 1 ? (
-                        <Button
-                          variant="contained"
-                          color="primary"
-                          disabled={this.checkButtonDisabled(index)}
-                          onClick={() =>
-                            this.insertAnnotationsToCollection('annotations')
-                          }
-                          className={classes.button}
-                        >
-                          Add Annotations
-                        </Button>
-                      ) : (
-                        <Button
-                          variant="contained"
-                          color="primary"
-                          disabled={this.checkButtonDisabled(index)}
-                          onClick={
-                            activeStep === steps.length - 2
-                              ? async () => {
-                                  await this.getAnnotations();
-                                  this.handleNext();
-                                }
-                              : this.handleNext
-                          }
-                          className={classes.button}
-                        >
-                          Next
-                        </Button>
-                      )}
-                    </div>
-                  </StepContent>
-                </Step>
-              ))}
-            </Stepper>
-          </div>
-        </Grid>
-        <Grid item xs={3} className={classes.collection}>
-          <FormControl className={classes.formControl}>
-            <InputLabel>Select collection</InputLabel>
-            <Select
-              value={selectedCollection}
-              onChange={this.handleChangeCollection}
-              autoWidth
-            >
-              <MenuItem value="">Select collection</MenuItem>
-              {collections.map(collection => {
-                return (
-                  <MenuItem key={collection.id} value={collection.id}>
-                    {collection.name}
-                  </MenuItem>
-                );
-              })}
-            </Select>
-            {selectedCollection === '' ||
-            !collections.filter(collection => {
-              return collection.id === selectedCollection;
-            })[0].description ? (
-              ''
-            ) : (
-              <FormHelperText>
-                {
-                  collections.filter(collection => {
+      <>
+        <Grid container justify="center">
+          <Grid item>
+            <Grid container spacing={4}>
+              <Grid item>
+                <FormControl className={classes.formControl}>
+                  <InputLabel>Select collection</InputLabel>
+                  <Select
+                    value={selectedCollection}
+                    onChange={this.handleChangeCollection}
+                    autoWidth
+                  >
+                    <MenuItem value="">Select collection</MenuItem>
+                    {collections.map(collection => {
+                      return (
+                        <MenuItem key={collection.id} value={collection.id}>
+                          {collection.name}
+                        </MenuItem>
+                      );
+                    })}
+                  </Select>
+                  {selectedCollection === '' ||
+                  !collections.filter(collection => {
                     return collection.id === selectedCollection;
-                  })[0].description
-                }
-              </FormHelperText>
-            )}
-          </FormControl>
-          <div>
-            <Button
-              disabled={selectedCollection === ''}
-              onClick={this.deleteAnnotationCollection}
-            >
-              Delete This Collection
-            </Button>
-            <Button onClick={this.createAnnotationCollection}>
-              New Annotation Collection
-            </Button>
-          </div>
-
-          <div className={classes.info}>
-            {selectedCollection ? this.showCollection() : ''}
-          </div>
+                  })[0].description ? (
+                    ''
+                  ) : (
+                    <FormHelperText>
+                      {
+                        collections.filter(collection => {
+                          return collection.id === selectedCollection;
+                        })[0].description
+                      }
+                    </FormHelperText>
+                  )}
+                </FormControl>
+              </Grid>
+              <Grid item>
+                {selectedCollection ? this.showCollection() : ''}
+              </Grid>
+            </Grid>
+            <div>
+              <Button
+                className={classes.collectionButton}
+                disabled={selectedCollection === ''}
+                onClick={this.deleteAnnotationCollection}
+              >
+                Delete This Collection
+              </Button>
+              <Button
+                className={classes.collectionButton}
+                onClick={this.createAnnotationCollection}
+              >
+                New Annotation Collection
+              </Button>
+            </div>
+          </Grid>
         </Grid>
-      </Grid>
+        <Stepper
+          activeStep={activeStep}
+          style={{ backgroundColor: 'transparent' }}
+        >
+          {steps.map(label => (
+            <Step key={label}>
+              <StepLabel>{label}</StepLabel>
+            </Step>
+          ))}
+        </Stepper>
+
+        <Grid container justify="center">
+          <Grid item className={classes.grid}>
+            {this.getStepForm(activeStep)}
+          </Grid>
+        </Grid>
+
+        <Grid container justify="center">
+          <Grid item>
+            <Button
+              variant="contained"
+              onClick={this.resetState}
+              className={classes.button}
+            >
+              Reset All
+            </Button>
+            {activeStep !== 0 ? (
+              <Button
+                variant="contained"
+                onClick={() => {
+                  this.handleBack(activeStep);
+                }}
+                className={classes.button}
+              >
+                Back
+              </Button>
+            ) : (
+              ''
+            )}
+            {activeStep === steps.length - 1 ? (
+              <Button
+                variant="contained"
+                color="primary"
+                disabled={this.checkButtonDisabled(activeStep)}
+                onClick={() => {
+                  Swal.fire({
+                    title: 'Loading...',
+                    showConfirmButton: false,
+                    onBeforeOpen: () => {
+                      Swal.showLoading();
+                    }
+                  });
+                  this.insertAnnotationsToCollection('annotations');
+                }}
+                className={classes.button}
+              >
+                Add Annotations
+              </Button>
+            ) : (
+              <Button
+                variant="contained"
+                color="primary"
+                disabled={this.checkButtonDisabled(activeStep)}
+                onClick={
+                  activeStep === steps.length - 2
+                    ? async () => {
+                        this.handleNext();
+                        await this.getAnnotations();
+                      }
+                    : this.handleNext
+                }
+                className={classes.button}
+              >
+                Next
+              </Button>
+            )}
+          </Grid>
+        </Grid>
+      </>
     );
   }
 }
