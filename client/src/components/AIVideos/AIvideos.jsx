@@ -8,7 +8,6 @@ import { withStyles } from '@material-ui/core/styles';
 import Hotkeys from 'react-hot-keys';
 import Grid from '@material-ui/core/Grid';
 
-import DragBoxContainer from '../Utilities/DragBoxContainer';
 import AIvideoList from './AIvideoList';
 
 const styles = theme => ({
@@ -238,7 +237,7 @@ class Annotate extends Component {
           <Grid item xs />
           <Grid item xs>
             <div>
-              <DragBoxContainer className={classes.videoContainer}>
+              <div className={classes.videoContainer}>
                 <video
                   className={classes.videoContainer}
                   //   onPause={() => this.updateCheckpoint(false, true)}
@@ -251,7 +250,7 @@ class Annotate extends Component {
                 >
                   Your browser does not support the video tag.
                 </video>
-              </DragBoxContainer>
+              </div>
               <div
                 style={{
                   // marginTop: '10px',

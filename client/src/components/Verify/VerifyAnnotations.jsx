@@ -780,7 +780,8 @@ class VerifyAnnotations extends Component {
                     width,
                     height
                   }}
-                  annotation={annotation}
+                  videoWidth={annotation.videowidth}
+                  videoHeight={annotation.videoheight}
                   position={{ x, y }}
                   onDragStop={(e, d) => {
                     this.setState({ x: d.x, y: d.y });

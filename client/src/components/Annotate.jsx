@@ -480,7 +480,8 @@ class Annotate extends Component {
           <Grid item xs={1} />
           <Grid item xs>
             <DragBoxContainer
-              className={classes.videoContainer}
+              videoHeight="900"
+              videoWidth="1600"
               dragBox={classes.dragBox}
               drawDragBoxProp={false}
               size={{

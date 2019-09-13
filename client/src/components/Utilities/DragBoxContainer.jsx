@@ -182,20 +182,21 @@ class DragBoxContainer extends Component {
       onResize,
       onDragStop,
       drawDragBoxProp,
-      annotation
+      videoWidth,
+      videoHeight
     } = this.props;
     const { drawDragBox, boxCounter, disabledMouse } = this.state;
     return (
       <div
         style={{
-          width: annotation.videowidth,
-          height: annotation.videoheight
+          width: videoWidth,
+          height: videoHeight
         }}
       >
         <div
           style={{
-            width: annotation.videowidth,
-            height: annotation.videoheight
+            width: videoWidth,
+            height: videoHeight
           }}
           onMouseDown={e => this.resetDragBox(e)}
           onMouseMove={e => this.drawDragBox(e)}
