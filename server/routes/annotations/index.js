@@ -90,19 +90,7 @@ router.get(
       req.query.selectedAnnotationCollections
     ];
     let queryText = `
-      WITH 
-      -- conceptsInCollections AS (
-      --   SELECT 
-      --     unnest(
-      --       ARRAY(
-      --         SELECT
-      --           unnest(conceptid)
-      --         FROM
-      --           annotation_collection
-      --         WHERE
-      --           id::INT = ANY($4))) concepts
-      -- ), 
-      annotationsAtVideoFrame AS (
+      WITH annotationsAtVideoFrame AS (
         SELECT 
           a.*
         FROM
@@ -113,14 +101,13 @@ router.get(
           a.videoid = $1
           AND ROUND(v.fps * a.timeinvideo) = ROUND(v.fps * $2)
           AND a.id <> $3
-          -- AND a.conceptid::INT = ANY(SELECT concepts FROM conceptsInCollections)
       )
       SELECT
         c.verified_flag,
         json_agg(
         json_build_object(
           'id', c.id, 'x1',c.x1, 'y1',c.y1, 'x2',c.x2, 'y2',c.y2,
-          'videowidth', c.videowidth, 'videoheight', c.videoheight, 'concept', c.name )) as box
+          'videowidth', c.videowidth, 'videoheight', c.videoheight, 'name', c.name )) as box
       FROM
         (SELECT 
           a.id, a.x1, a.x2, a.y1, a.y2, a.videowidth, a.videoheight, cc.name,

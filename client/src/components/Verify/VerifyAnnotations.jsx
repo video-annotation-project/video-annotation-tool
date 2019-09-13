@@ -381,6 +381,7 @@ class VerifyAnnotations extends Component {
           type: 'success',
           title: res.data.message
         });
+        this.loadBoxes();
       })
       .catch(error => {
         console.log(error);
@@ -394,7 +395,7 @@ class VerifyAnnotations extends Component {
       });
   };
 
-  postBoxImage = async dragBox => {
+  postBoxImage = async () => {
     const { annotation, annotating } = this.props;
     const { x, y, width, height } = this.state;
     const x1 = x;
