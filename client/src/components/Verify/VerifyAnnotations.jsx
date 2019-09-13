@@ -381,6 +381,7 @@ class VerifyAnnotations extends Component {
           type: 'success',
           title: res.data.message
         });
+        this.loadBoxes();
       })
       .catch(error => {
         console.log(error);
