@@ -8,8 +8,10 @@ import TableRow from '@material-ui/core/TableRow';
 import Table from '@material-ui/core/Table';
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
+import Description from '@material-ui/icons/Description';
 import Swal from 'sweetalert2/src/sweetalert2';
 import { Typography } from '@material-ui/core';
+import Dialog from '@material-ui/core/Dialog';
 
 const CustomTableCell = withStyles(theme => ({
   head: {
@@ -38,7 +40,9 @@ class ViewModels extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      models: []
+      models: [],
+      infoOpen: false,
+      selectedModel: ''
     };
   }
 
@@ -66,6 +70,19 @@ class ViewModels extends Component {
           console.log(error.response.data.detail);
         }
       });
+  };
+
+  handleCloseInfo = () => {
+    this.setState({
+      infoOpen: false
+    });
+  };
+
+  handleOpenInfo = model => {
+    this.setState({
+      infoOpen: true,
+      selectedModel: model
+    });
   };
 
   deleteModel = async model => {
@@ -100,7 +117,7 @@ class ViewModels extends Component {
 
   render() {
     const { classes } = this.props;
-    const { models } = this.state;
+    const { models, infoOpen, selectedModel } = this.state;
     if (!models) {
       return <Typography style={{ margin: '20px' }}>Loading...</Typography>;
     }
@@ -110,11 +127,8 @@ class ViewModels extends Component {
           <TableHead>
             <TableRow>
               <CustomTableCell>Name</CustomTableCell>
-              <CustomTableCell align="right">Date Created</CustomTableCell>
-              <CustomTableCell>Concepts</CustomTableCell>
-              <CustomTableCell>ConceptIDs</CustomTableCell>
-              <CustomTableCell>Verification Videos</CustomTableCell>
-              <CustomTableCell>Delete</CustomTableCell>
+              <CustomTableCell>Date Created</CustomTableCell>
+              <CustomTableCell />
             </TableRow>
           </TableHead>
           <TableBody>
@@ -123,19 +137,14 @@ class ViewModels extends Component {
                 <CustomTableCell component="th" scope="row">
                   {model.name}
                 </CustomTableCell>
+                <CustomTableCell>{model.timestamp}</CustomTableCell>
                 <CustomTableCell align="right">
-                  {model.timestamp}
-                </CustomTableCell>
-                <CustomTableCell align="right">
-                  {models[0].concepts.join(', ')}
-                </CustomTableCell>
-                <CustomTableCell align="right">
-                  {model.conceptsid.toString()}
-                </CustomTableCell>
-                <CustomTableCell>
-                  {model.videos ? model.videos.toString() : 'NON'}
-                </CustomTableCell>
-                <CustomTableCell>
+                  <IconButton
+                    onClick={() => this.handleOpenInfo(model)}
+                    aria-label="Description"
+                  >
+                    <Description />
+                  </IconButton>
                   <IconButton
                     onClick={() => this.deleteModel(model)}
                     aria-label="Delete"
@@ -147,6 +156,34 @@ class ViewModels extends Component {
             ))}
           </TableBody>
         </Table>
+        {infoOpen && (
+          <Dialog onClose={this.handleCloseInfo} open={infoOpen}>
+            <Table className={classes.table}>
+              <TableHead>
+                <TableRow>
+                  <CustomTableCell>Concepts</CustomTableCell>
+                  <CustomTableCell>ConceptIDs</CustomTableCell>
+                  <CustomTableCell>Verification Videos</CustomTableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                <TableRow>
+                  <CustomTableCell align="right">
+                    {selectedModel.concepts.join(', ')}
+                  </CustomTableCell>
+                  <CustomTableCell align="right">
+                    {selectedModel.conceptsid.toString()}
+                  </CustomTableCell>
+                  <CustomTableCell>
+                    {selectedModel.videos
+                      ? selectedModel.videos.toString()
+                      : 'NON'}
+                  </CustomTableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </Dialog>
+        )}
       </div>
     );
   }
