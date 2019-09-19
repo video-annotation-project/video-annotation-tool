@@ -34,6 +34,24 @@ router.get(
 );
 
 router.get(
+  '/:previous_run_id',
+  passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    console.log(req.params);
+    let queryText = `SELECT * FROM ai_videos where previous_run_id = $1`;
+    try {
+      let ai_videos = await psql.query(queryText, [
+        parseInt(req.params.previous_run_id)
+      ]);
+      res.json(ai_videos);
+    } catch (error) {
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
+);
+
+router.get(
   '/metrics',
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {

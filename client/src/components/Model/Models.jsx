@@ -9,7 +9,7 @@ import Table from '@material-ui/core/Table';
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
 import Swal from 'sweetalert2/src/sweetalert2';
-import { Typography } from '@material-ui/core';
+import { Typography, Button } from '@material-ui/core';
 
 const CustomTableCell = withStyles(theme => ({
   head: {
@@ -44,6 +44,22 @@ class Models extends Component {
 
   componentDidMount = () => {
     this.loadExistingModels();
+  };
+
+  loadVideos = () => {
+    const config = {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    };
+    return axios
+      .get('/api/videos/aivideos/1', config)
+      .then(res => {
+        this.setState({
+          aiVideos: res.data.rows
+        });
+      })
+      .catch(error => console.log(error));
   };
 
   loadExistingModels = () => {
@@ -116,7 +132,8 @@ class Models extends Component {
 
   render() {
     const { classes } = this.props;
-    const { models } = this.state;
+    const { models, aiVideos } = this.state;
+    console.log(aiVideos);
     if (!models) {
       return <Typography style={{ margin: '20px' }}>Loading...</Typography>;
     }
@@ -165,6 +182,13 @@ class Models extends Component {
             ))}
           </TableBody>
         </Table>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => this.loadVideos()}
+        >
+          Ai
+        </Button>
       </div>
     );
   }
