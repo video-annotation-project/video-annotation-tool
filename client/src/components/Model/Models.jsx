@@ -10,8 +10,9 @@ import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
 import Description from '@material-ui/icons/Description';
 import Swal from 'sweetalert2/src/sweetalert2';
-import { Typography } from '@material-ui/core';
+import { Typography, MenuItem } from '@material-ui/core';
 import Dialog from '@material-ui/core/Dialog';
+import Select from '@material-ui/core/Select';
 
 const CustomTableCell = withStyles(theme => ({
   head: {
@@ -115,20 +116,9 @@ class Models extends Component {
     });
   };
 
-  handleExpand = model => {
-    console.log(model);
-
-    let copyModels = JSON.parse(JSON.stringify(this.state.models));
-    let selectedModel = copyModels.find(cmodel => cmodel.name === model.name);
-    selectedModel.opened = !selectedModel.opened;
-    this.setState(
-      {
-        models: copyModels
-      },
-      () => {
-        console.log(this.state.models);
-      }
-    );
+  formatDate = date => {
+    let d = new Date(date);
+    return d.toUTCString().replace(' GMT', '');
   };
 
   render() {
@@ -143,6 +133,7 @@ class Models extends Component {
           <TableHead>
             <TableRow>
               <CustomTableCell>Name</CustomTableCell>
+              <CustomTableCell>Versions #</CustomTableCell>
               <CustomTableCell>Date Created</CustomTableCell>
               <CustomTableCell />
             </TableRow>
@@ -153,7 +144,18 @@ class Models extends Component {
                 <CustomTableCell component="th" scope="row">
                   {model.name}
                 </CustomTableCell>
-                <CustomTableCell>{model.timestamp}</CustomTableCell>
+                <CustomTableCell>
+                  <Select value={'test'}>
+                    {model.versions.map((version, index) => (
+                      <MenuItem key={index + version}>
+                        {index + ' : ' + this.formatDate(version)}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </CustomTableCell>
+                <CustomTableCell>
+                  {this.formatDate(model.timestamp)}
+                </CustomTableCell>
                 <CustomTableCell align="right">
                   <IconButton
                     onClick={() => this.handleOpenInfo(model)}
