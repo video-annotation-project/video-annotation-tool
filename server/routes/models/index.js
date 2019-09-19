@@ -27,13 +27,30 @@ router.get(
   async (req, res) => {
     let queryText = `
       SELECT 
-        m.name, m.timestamp, array_agg(c.name) concepts, array_agg(c.id) conceptsid
+        m.name,
+        m.timestamp,
+        array_agg(c.name) concepts,
+        array_agg(c.id) conceptsid,
+        verificationvideos
       FROM 
-        (SELECT name, timestamp, UNNEST(concepts) concept FROM models) m
+        (SELECT
+           name,
+           timestamp,
+           UNNEST(concepts) concept,
+           verificationvideos
+         FROM
+           models) m
       JOIN 
         concepts c ON c.id=m.concept
+      JOIN (
+        SELECT
+          model_name,
+          array_agg(start_train)
+        FROM
+          previous_runs
+        GROUP BY model_name) v ON v.model_name=m.name
       GROUP BY
-        (m.name, m.timestamp)
+        (m.name, m.timestamp, verificationvideos)
     `;
     if (req.query.predict === 'true') {
       queryText = `
