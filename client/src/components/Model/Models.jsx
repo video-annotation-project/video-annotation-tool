@@ -11,6 +11,9 @@ import DeleteIcon from '@material-ui/icons/Delete';
 import Swal from 'sweetalert2/src/sweetalert2';
 import { Typography, Button } from '@material-ui/core';
 
+import AIvideos from '../AIVideos/AIvideos';
+import GeneralMenu from '../Utilities/GeneralMenu';
+
 const CustomTableCell = withStyles(theme => ({
   head: {
     backgroundColor: theme.palette.common.black,
@@ -38,11 +41,13 @@ class Models extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      models: []
+      models: [],
+      videoModalOpen: false
     };
   }
 
   componentDidMount = () => {
+    this.loadVideos();
     this.loadExistingModels();
   };
 
@@ -54,11 +59,7 @@ class Models extends Component {
     };
     return axios
       .get('/api/videos/aivideos/1', config)
-      .then(res => {
-        this.setState({
-          aiVideos: res.data.rows
-        });
-      })
+      .then(res => this.setState({ aiVideos: res.data.rows }))
       .catch(error => console.log(error));
   };
 
@@ -114,6 +115,12 @@ class Models extends Component {
     });
   };
 
+  toggleAiVideos = condition => {
+    this.setState({
+      videoModalOpen: condition
+    });
+  };
+
   handleExpand = model => {
     console.log(model);
 
@@ -130,9 +137,19 @@ class Models extends Component {
     );
   };
 
+  handleClick = async id => {
+    const { aiVideos } = this.state;
+    await this.setState({
+      videoModalOpen: true,
+      currentVideo: await aiVideos.find(video => {
+        return video.id === id;
+      })
+    });
+  };
+
   render() {
     const { classes } = this.props;
-    const { models, aiVideos } = this.state;
+    const { models, aiVideos, videoModalOpen, currentVideo } = this.state;
     console.log(aiVideos);
     if (!models) {
       return <Typography style={{ margin: '20px' }}>Loading...</Typography>;
@@ -182,13 +199,31 @@ class Models extends Component {
             ))}
           </TableBody>
         </Table>
+        <GeneralMenu
+          name="AiVideos"
+          variant="contained"
+          color="primary"
+          handleInsert={this.handleClick}
+          Link={false}
+          items={aiVideos}
+        />
         <Button
           variant="contained"
           color="primary"
-          onClick={() => this.loadVideos()}
+          onClick={() => this.toggleAiVideos(true)}
         >
-          Ai
+          Ai1
         </Button>
+        {videoModalOpen ? (
+          <AIvideos
+            videoModalOpen={videoModalOpen}
+            toggleAiVideos={this.toggleAiVideos}
+            // testing={true}
+            video={currentVideo}
+          />
+        ) : (
+          ''
+        )}
       </div>
     );
   }

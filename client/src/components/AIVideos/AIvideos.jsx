@@ -10,6 +10,7 @@ import Grid from '@material-ui/core/Grid';
 
 import AIvideoList from './AIvideoList';
 
+import Modal from '@material-ui/core/Modal';
 const styles = theme => ({
   videoContainer: {
     top: '60px',
@@ -23,6 +24,12 @@ const styles = theme => ({
   },
   videoName: {
     marginTop: theme.spacing(1.5)
+  },
+  modal: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.palette.background.paper
   }
 });
 
@@ -65,30 +72,30 @@ class Annotate extends Component {
     // add event listener for closing or reloading window
     window.addEventListener('beforeunload', this.handleUnload);
 
-    try {
-      this.loadVideos(this.getCurrentVideo);
-    } catch (error) {
-      console.log(error);
-      console.log(JSON.parse(JSON.stringify(error)));
-      if (!error.response) {
-        return;
-      }
-      const errMsg =
-        error.response.data.detail || error.response.data.message || 'Error';
-      console.log(errMsg);
-      this.setState({
-        isLoaded: true,
-        error: errMsg
-      });
-    }
+    // try {
+    //   this.loadVideos(this.getCurrentVideo);
+    // } catch (error) {
+    //   console.log(error);
+    //   console.log(JSON.parse(JSON.stringify(error)));
+    //   if (!error.response) {
+    //     return;
+    //   }
+    //   const errMsg =
+    //     error.response.data.detail || error.response.data.message || 'Error';
+    //   console.log(errMsg);
+    //   this.setState({
+    //     isLoaded: true,
+    //     error: errMsg
+    //   });
+    // }
   };
 
-  componentWillUnmount = () => {
-    const { socket } = this.state;
-    // this.updateCheckpoint(false, false);
-    socket.disconnect();
-    window.removeEventListener('beforeunload', this.handleUnload);
-  };
+  // componentWillUnmount = () => {
+  //   const { socket } = this.state;
+  //   // this.updateCheckpoint(false, false);
+  //   socket.disconnect();
+  //   window.removeEventListener('beforeunload', this.handleUnload);
+  // };
 
   handleUnload = ev => {
     const event = ev;
@@ -148,168 +155,206 @@ class Annotate extends Component {
     );
   };
 
-  loadVideos = () => {
-    const config = {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    };
-    return axios.get('/api/videos/aivideos', config).then(res => {
-      this.setState({
-        aiVideos: res.data.rows
-      });
-      this.getCurrentVideo();
-    });
-  };
+  // loadVideos = () => {
+  //   const config = {
+  //     headers: {
+  //       Authorization: `Bearer ${localStorage.getItem('token')}`
+  //     }
+  //   };
+  //   return axios.get('/api/videos/aivideos', config).then(res => {
+  //     this.setState({
+  //       aiVideos: res.data.rows
+  //     });
+  //     this.getCurrentVideo();
+  //   });
+  // };
 
-  getCurrentVideo = () => {
-    const { aiVideos } = this.state;
-    // if user does not have a video to be played, return default video 1
-    const firstVideo = {
-      id: aiVideos[0].id,
-      filename: aiVideos[0].name,
-      timeinvideo: 0
-    };
-    this.setState(
-      {
-        currentVideo: firstVideo,
-        isLoaded: true
-      },
-      () => {
-        const { currentVideo } = this.state;
-        const videoElement = document.getElementById('video');
-        videoElement.currentTime = currentVideo.timeinvideo;
-      }
-    );
-  };
+  // getCurrentVideo = () => {
+  //   const { aiVideos } = this.state;
+  //   // if user does not have a video to be played, return default video 1
+  //   const firstVideo = {
+  //     id: aiVideos[0].id,
+  //     name: aiVideos[0].name,
+  //     timeinvideo: 0
+  //   };
+  //   this.setState(
+  //     {
+  //       currentVideo: firstVideo,
+  //       isLoaded: true
+  //     },
+  //     () => {
+  //       const { currentVideo } = this.state;
+  //       const videoElement = document.getElementById('video');
+  //       videoElement.currentTime = currentVideo.timeinvideo;
+  //     }
+  //   );
+  // };
 
-  handleVideoClick = async clickedVideo => {
-    const currentVideo = {
-      id: clickedVideo.id,
-      filename: clickedVideo.name,
-      timeinvideo: 0
-    };
-    this.setState({
-      currentVideo
-    });
-  };
+  // handleVideoClick = async clickedVideo => {
+  //   const currentVideo = {
+  //     id: clickedVideo.id,
+  //     name: clickedVideo.name,
+  //     timeinvideo: 0
+  //   };
+  //   this.setState({
+  //     currentVideo
+  //   });
+  // };
+
+  // tav = condition => {
+  //   this.setState({
+  //     modal: condition
+  //   });
+  // };
 
   render() {
-    const { classes } = this.props;
+    const {
+      classes,
+      videoModalOpen,
+      toggleAiVideos,
+      testing,
+      video
+    } = this.props;
     const {
       currentVideo,
       aiVideos,
       isLoaded,
       error,
       socket,
-      videoPlaybackRate
+      videoPlaybackRate,
+      modal
     } = this.state;
-    if (!isLoaded) {
-      return <Typography style={{ margin: '20px' }}>Loading...</Typography>;
-    }
+
     if (error) {
-      return <Typography style={{ margin: '20px' }}>Error: {error}</Typography>;
+      return (
+        <Modal
+          className={classes.modal}
+          aria-labelledby="simple-modal-title"
+          aria-describedby="simple-modal-description"
+          open={videoModalOpen}
+          onClose={() => toggleAiVideos(false)}
+        >
+          <Typography style={{ margin: '20px' }}>Error: {error}</Typography>
+        </Modal>
+      );
     }
     return (
-      <>
-        <Hotkeys keyName="space, right, left" onKeyDown={this.handleKeyDown} />
-        <Grid container className={classes.root} spacing={2}>
-          <Grid item xs>
-            <AIvideoList
+      <Modal
+        className={classes.modal}
+        aria-labelledby="simple-modal-title"
+        aria-describedby="simple-modal-description"
+        open={videoModalOpen}
+        onClose={() => toggleAiVideos(false)}
+      >
+        <div>
+          <Hotkeys
+            keyName="space, right, left"
+            onKeyDown={this.handleKeyDown}
+          />
+          <Grid container className={classes.root} spacing={2}>
+            <Grid item xs>
+              {/* <AIvideoList
               handleVideoClick={this.handleVideoClick}
               aiVideos={aiVideos}
               socket={socket}
               loadVideos={this.loadVideos}
-            />
-          </Grid>
-          <Grid item xs>
-            <Typography
-              variant="h5"
-              align="center"
-              className={classes.videoName}
-            >
-              {`${currentVideo.id} ${currentVideo.filename}`}
-            </Typography>
-          </Grid>
-          <Grid item xs />
-        </Grid>
-        <Grid container className={classes.root} spacing={2}>
-          <Grid item xs />
-          <Grid item xs>
-            <div>
-              <div className={classes.videoContainer}>
-                <video
-                  className={classes.videoContainer}
-                  //   onPause={() => this.updateCheckpoint(false, true)}
-                  id="video"
-                  width="1600"
-                  height="900"
-                  src={`https://cdn.deepseaannotations.com/ai_videos/${currentVideo.filename}`}
-                  type="video/mp4"
-                  crossOrigin="use-credentials"
-                >
-                  Your browser does not support the video tag.
-                </video>
-              </div>
-              <div
-                style={{
-                  // marginTop: '10px',
-                  // marginLeft: '20px',
-                  // marginBottom: '10px',
-                  float: 'left'
-                }}
+            /> */}
+            </Grid>
+            <Grid item xs>
+              <Typography
+                variant="h5"
+                align="center"
+                className={classes.videoName}
               >
-                <Slider
+                {`${video.id} ${video.name}`}
+              </Typography>
+            </Grid>
+            <Grid item xs />
+          </Grid>
+          <Grid container className={classes.root} spacing={2}>
+            <Grid item xs />
+            <Grid item xs>
+              <div>
+                <div className={classes.videoContainer}>
+                  <video
+                    className={classes.videoContainer}
+                    //   onPause={() => this.updateCheckpoint(false, true)}
+                    id="video"
+                    width="1600"
+                    height="900"
+                    src={`https://cdn.deepseaannotations.com/ai_videos/${video.name}`}
+                    type="video/mp4"
+                    crossOrigin="use-credentials"
+                  >
+                    Your browser does not support the video tag.
+                  </video>
+                </div>
+                <div
                   style={{
-                    width: 200,
-                    marginTop: 0
+                    float: 'left'
                   }}
-                  value={videoPlaybackRate}
-                  min={0}
-                  max={4}
-                  step={0.1}
-                  onChange={this.handleChangeSpeed}
-                />
-                <Typography>Play Rate: {videoPlaybackRate}</Typography>
+                >
+                  <Slider
+                    style={{
+                      width: 200,
+                      marginTop: 0
+                    }}
+                    value={videoPlaybackRate}
+                    min={0}
+                    max={4}
+                    step={0.1}
+                    onChange={this.handleChangeSpeed}
+                  />
+                  <Typography>Play Rate: {videoPlaybackRate}</Typography>
+                </div>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  className={classes.button}
+                  onClick={() => this.skipVideoTime(-5)}
+                >
+                  -5 sec
+                </Button>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  className={classes.button}
+                  onClick={this.playPause}
+                >
+                  Play/Pause
+                </Button>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  className={classes.button}
+                  onClick={() => this.skipVideoTime(5)}
+                >
+                  +5 sec
+                </Button>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  className={classes.button}
+                  onClick={() => toggleAiVideos(false)}
+                  style={{ float: 'right' }}
+                >
+                  Back
+                </Button>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  className={classes.button}
+                  onClick={() => this.toggleVideoControls()}
+                  style={{ float: 'right' }}
+                >
+                  Toggle Controls
+                </Button>
               </div>
-              <Button
-                variant="contained"
-                color="primary"
-                className={classes.button}
-                onClick={() => this.skipVideoTime(-5)}
-              >
-                -5 sec
-              </Button>
-              <Button
-                variant="contained"
-                color="primary"
-                className={classes.button}
-                onClick={this.playPause}
-              >
-                Play/Pause
-              </Button>
-              <Button
-                variant="contained"
-                color="primary"
-                className={classes.button}
-                onClick={() => this.skipVideoTime(5)}
-              >
-                +5 sec
-              </Button>
-              <Button
-                variant="contained"
-                color="primary"
-                className={classes.button}
-                onClick={() => this.toggleVideoControls()}
-                style={{ float: 'right' }}
-              >
-                Toggle Controls
-              </Button>
-            </div>
+            </Grid>
+            <Grid item xs />
           </Grid>
-          <Grid item xs />
-        </Grid>
-      </>
+        </div>
+      </Modal>
     );
   }
 }

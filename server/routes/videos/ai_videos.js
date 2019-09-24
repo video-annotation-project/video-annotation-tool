@@ -38,7 +38,7 @@ router.get(
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     console.log(req.params);
-    let queryText = `SELECT * FROM ai_videos where previous_run_id = $1`;
+    let queryText = `SELECT *, 0 as timeinvideo FROM ai_videos where previous_run_id = $1`;
     try {
       let ai_videos = await psql.query(queryText, [
         parseInt(req.params.previous_run_id)

@@ -40,23 +40,25 @@ const GeneralMenu = props => {
         open={Boolean(anchorEl)}
         onClose={handleClose}
       >
-        {Link
-          ? items.map(item => (
-              <MenuItem
-                id={item.id}
-                key={item.name}
-                component={props.Link}
-                to={item.link}
-                onClick={() => handleClose()}
-              >
-                {item.name}
-              </MenuItem>
-            ))
-          : items.map(item => (
-              <MenuItem key={item.name} onClick={() => handleInsert(item.id)}>
-                {`${item.id} ${item.name}`}
-              </MenuItem>
-            ))}
+        {items && items.length > 0
+          ? Link
+            ? items.map(item => (
+                <MenuItem
+                  id={item.id}
+                  key={item.name}
+                  component={props.Link}
+                  to={item.link}
+                  onClick={() => handleClose()}
+                >
+                  {item.name}
+                </MenuItem>
+              ))
+            : items.map(item => (
+                <MenuItem key={item.name} onClick={() => handleInsert(item.id)}>
+                  {`${item.id} ${item.name}`}
+                </MenuItem>
+              ))
+          : ''}
       </Menu>
     </div>
   );
