@@ -2,17 +2,25 @@ import React, { Component } from 'react';
 import axios from 'axios';
 import { withStyles } from '@material-ui/core/styles';
 import TableBody from '@material-ui/core/TableBody';
-import TableCell from '@material-ui/core/TableCell';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import Table from '@material-ui/core/Table';
-import IconButton from '@material-ui/core/IconButton';
-import DeleteIcon from '@material-ui/icons/Delete';
 import Swal from 'sweetalert2/src/sweetalert2';
 import { Typography, Button } from '@material-ui/core';
 
 import AIvideos from '../AIVideos/AIvideos';
 import GeneralMenu from '../Utilities/GeneralMenu';
+import Dialog from '@material-ui/core/Dialog';
+import TableCell from '@material-ui/core/TableCell';
+
+import ModelsTable from './ModelsTable';
+
+const styles = theme => ({
+  root: {
+    margins: 'auto',
+    padding: '20px 12%'
+  }
+});
 
 const CustomTableCell = withStyles(theme => ({
   head: {
@@ -25,24 +33,14 @@ const CustomTableCell = withStyles(theme => ({
   }
 }))(TableCell);
 
-const styles = theme => ({
-  root: {
-    margins: 'auto',
-    padding: '20px 12%'
-  },
-  row: {
-    '&:nth-of-type(odd)': {
-      backgroundColor: theme.palette.background.default
-    }
-  }
-});
-
 class Models extends Component {
   constructor(props) {
     super(props);
     this.state = {
       models: [],
-      videoModalOpen: false
+      videoModalOpen: false,
+      infoOpen: false,
+      selectedModel: ''
     };
   }
 
@@ -85,6 +83,19 @@ class Models extends Component {
       });
   };
 
+  handleCloseInfo = () => {
+    this.setState({
+      infoOpen: false
+    });
+  };
+
+  handleOpenInfo = model => {
+    this.setState({
+      infoOpen: true,
+      selectedModel: model
+    });
+  };
+
   deleteModel = async model => {
     const config = {
       headers: {
@@ -123,18 +134,12 @@ class Models extends Component {
 
   handleExpand = model => {
     console.log(model);
+  handleSelectVersion = (event, model) => {
+    const { models } = this.state;
+    let selectedModel = models.find(m => m.name === model.name);
+    selectedModel.version_selected = event.target.value;
 
-    let copyModels = JSON.parse(JSON.stringify(this.state.models));
-    let selectedModel = copyModels.find(cmodel => cmodel.name === model.name);
-    selectedModel.opened = !selectedModel.opened;
-    this.setState(
-      {
-        models: copyModels
-      },
-      () => {
-        console.log(this.state.models);
-      }
-    );
+    this.setState({ models });
   };
 
   handleClick = async id => {
@@ -149,7 +154,7 @@ class Models extends Component {
 
   render() {
     const { classes } = this.props;
-    const { models, aiVideos, videoModalOpen, currentVideo } = this.state;
+    const { models, aiVideos, videoModalOpen, currentVideo, models, infoOpen, selectedModel } = this.state;
     console.log(aiVideos);
     if (!models) {
       return <Typography style={{ margin: '20px' }}>Loading...</Typography>;
@@ -223,6 +228,39 @@ class Models extends Component {
           />
         ) : (
           ''
+        <ModelsTable
+          models={models}
+          handleSelectVersion={this.handleSelectVersion}
+          handleOpenInfo={this.handleOpenInfo}
+          deleteModel={this.deleteModel}
+        />
+        {infoOpen && (
+          <Dialog onClose={this.handleCloseInfo} open={infoOpen}>
+            <Table className={classes.table}>
+              <TableHead>
+                <TableRow>
+                  <CustomTableCell>Concepts</CustomTableCell>
+                  <CustomTableCell>ConceptIDs</CustomTableCell>
+                  <CustomTableCell>Verification Videos</CustomTableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                <TableRow>
+                  <CustomTableCell align="right">
+                    {selectedModel.concepts.join(', ')}
+                  </CustomTableCell>
+                  <CustomTableCell align="right">
+                    {selectedModel.conceptsid.toString()}
+                  </CustomTableCell>
+                  <CustomTableCell>
+                    {selectedModel.verificationvideos
+                      ? selectedModel.verificationvideos.toString()
+                      : 'NON'}
+                  </CustomTableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </Dialog>
         )}
       </div>
     );

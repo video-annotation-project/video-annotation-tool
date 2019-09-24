@@ -66,7 +66,13 @@ class ModelProgress extends Component {
   };
 
   TrainingStatus = () => {
-    const { terminateTraining, checkReady, stopTraining, resetTraining, startTraining } = this.props;
+    const {
+      terminateTraining,
+      checkReady,
+      stopTraining,
+      resetTraining,
+      startTraining
+    } = this.props;
 
     const {
       currentEpoch,

@@ -43,7 +43,7 @@ const paramFields = [
   'modelSelected',
   'annotationCollections',
   'includeTracking',
-  'verifiedOnly',
+  'verifiedOnly'
 ];
 
 function ModelsForm(props) {
@@ -68,7 +68,13 @@ function ModelsForm(props) {
 }
 
 function CollectionsForm(props) {
-  const { className, annotationCollections, onChange, collections, training } = props;
+  const {
+    className,
+    annotationCollections,
+    onChange,
+    collections,
+    training
+  } = props;
   return (
     <FormControl component="fieldset" className={className}>
       <InputLabel shrink>Annotations</InputLabel>
@@ -163,7 +169,7 @@ class TrainModel extends Component {
       epochs: '',
       minImages: '',
       ready: false,
-      training: false,
+      training: false
     };
   }
 
@@ -311,32 +317,35 @@ class TrainModel extends Component {
       axios.get(`/api/models/progress/train`, config).then(progressRes => {
         const training = progressRes.data.status !== 0;
 
-        if (training){
+        if (training) {
           axios.get(`/api/models/train`, config).then(res => {
             const params = res.data;
 
-            const annotationCollections = params.annotation_collections.map(id =>
-              this.state.collections.find((coll) => coll.id === id)
+            const annotationCollections = params.annotation_collections.map(
+              id => this.state.collections.find(coll => coll.id === id)
             );
 
             console.log(this.state.collections);
 
-            this.setState({
-              modelSelected: params.model,
-              annotationCollections: annotationCollections,
-              includeTracking: params.include_tracking,
-              verifiedOnly: params.verified_only,
-              epochs: params.epochs,
-              minImages:  params.min_images,
-              training: true,
-            }, () => this.getCollectionCounts());
+            this.setState(
+              {
+                modelSelected: params.model,
+                annotationCollections: annotationCollections,
+                includeTracking: params.include_tracking,
+                verifiedOnly: params.verified_only,
+                epochs: params.epochs,
+                minImages: params.min_images,
+                training: true
+              },
+              () => this.getCollectionCounts()
+            );
           });
         }
       });
     } catch (error) {
       console.log(error);
     }
-  }
+  };
 
   handleChangeMultiple = event => {
     const options = event.target.value;
@@ -429,10 +438,10 @@ class TrainModel extends Component {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
       };
-      axios.patch('/api/models/train/stop', {}, config).then((res) => 
-        this.setState({ training: false })
-      );
-  } catch (error) {
+      axios
+        .patch('/api/models/train/stop', {}, config)
+        .then(res => this.setState({ training: false }));
+    } catch (error) {
       console.log(error);
     }
   };
@@ -445,9 +454,9 @@ class TrainModel extends Component {
         }
       };
 
-      axios.patch('/api/models/train/reset', {}, config).then((res) => 
-        this.setState({ training: false })
-      );
+      axios
+        .patch('/api/models/train/reset', {}, config)
+        .then(res => this.setState({ training: false }));
     } catch (error) {
       console.log(error);
     }
