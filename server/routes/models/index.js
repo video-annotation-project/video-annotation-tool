@@ -32,7 +32,8 @@ router.get(
         array_agg(c.name) concepts,
         array_agg(c.id) conceptsid,
         verificationvideos,
-        versions
+        versions,
+        version_selected
       FROM 
         (SELECT
            name,
@@ -46,12 +47,13 @@ router.get(
       JOIN (
         SELECT
           model_name,
-          array_agg(start_train) AS versions
+          array_agg(start_train) AS versions,
+          count(*)-1 AS version_selected
         FROM
           previous_runs
         GROUP BY model_name) v ON v.model_name=m.name
       GROUP BY
-        (m.name, m.timestamp, verificationvideos, versions)
+        (m.name, m.timestamp, verificationvideos, versions, version_selected)
     `;
     if (req.query.predict === 'true') {
       queryText = `

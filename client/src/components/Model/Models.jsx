@@ -2,17 +2,22 @@ import React, { Component } from 'react';
 import axios from 'axios';
 import { withStyles } from '@material-ui/core/styles';
 import TableBody from '@material-ui/core/TableBody';
-import TableCell from '@material-ui/core/TableCell';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import Table from '@material-ui/core/Table';
-import IconButton from '@material-ui/core/IconButton';
-import DeleteIcon from '@material-ui/icons/Delete';
-import Description from '@material-ui/icons/Description';
 import Swal from 'sweetalert2/src/sweetalert2';
-import { Typography, MenuItem } from '@material-ui/core';
+import { Typography } from '@material-ui/core';
 import Dialog from '@material-ui/core/Dialog';
-import Select from '@material-ui/core/Select';
+import TableCell from '@material-ui/core/TableCell';
+
+import ModelsTable from './ModelsTable';
+
+const styles = theme => ({
+  root: {
+    margins: 'auto',
+    padding: '20px 12%'
+  }
+});
 
 const CustomTableCell = withStyles(theme => ({
   head: {
@@ -24,18 +29,6 @@ const CustomTableCell = withStyles(theme => ({
     fontSize: 14
   }
 }))(TableCell);
-
-const styles = theme => ({
-  root: {
-    margins: 'auto',
-    padding: '20px 12%'
-  },
-  row: {
-    '&:nth-of-type(odd)': {
-      backgroundColor: theme.palette.background.default
-    }
-  }
-});
 
 class Models extends Component {
   constructor(props) {
@@ -116,9 +109,12 @@ class Models extends Component {
     });
   };
 
-  formatDate = date => {
-    let d = new Date(date);
-    return d.toUTCString().replace(' GMT', '');
+  handleSelectVersion = (event, model) => {
+    const { models } = this.state;
+    let selectedModel = models.find(m => m.name === model.name);
+    selectedModel.version_selected = event.target.value;
+
+    this.setState({ models });
   };
 
   render() {
@@ -129,51 +125,12 @@ class Models extends Component {
     }
     return (
       <div className={classes.root}>
-        <Table className={classes.table}>
-          <TableHead>
-            <TableRow>
-              <CustomTableCell>Name</CustomTableCell>
-              <CustomTableCell>Versions #</CustomTableCell>
-              <CustomTableCell>Date Created</CustomTableCell>
-              <CustomTableCell />
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {models.map(model => (
-              <TableRow key={model.name}>
-                <CustomTableCell component="th" scope="row">
-                  {model.name}
-                </CustomTableCell>
-                <CustomTableCell>
-                  <Select value={'test'}>
-                    {model.versions.map((version, index) => (
-                      <MenuItem key={index + version}>
-                        {index + ' : ' + this.formatDate(version)}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </CustomTableCell>
-                <CustomTableCell>
-                  {this.formatDate(model.timestamp)}
-                </CustomTableCell>
-                <CustomTableCell align="right">
-                  <IconButton
-                    onClick={() => this.handleOpenInfo(model)}
-                    aria-label="Description"
-                  >
-                    <Description />
-                  </IconButton>
-                  <IconButton
-                    onClick={() => this.deleteModel(model)}
-                    aria-label="Delete"
-                  >
-                    <DeleteIcon />
-                  </IconButton>
-                </CustomTableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <ModelsTable
+          models={models}
+          handleSelectVersion={this.handleSelectVersion}
+          handleOpenInfo={this.handleOpenInfo}
+          deleteModel={this.deleteModel}
+        />
         {infoOpen && (
           <Dialog onClose={this.handleCloseInfo} open={infoOpen}>
             <Table className={classes.table}>
