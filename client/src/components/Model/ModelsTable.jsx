@@ -11,6 +11,8 @@ import Description from '@material-ui/icons/Description';
 import { Typography, MenuItem } from '@material-ui/core';
 import Select from '@material-ui/core/Select';
 import FormControl from '@material-ui/core/FormControl';
+import GeneralMenu from '../Utilities/GeneralMenu';
+import AIvideos from '../AIVideos/AIvideos';
 
 const CustomTableCell = withStyles(theme => ({
   head: {
@@ -23,68 +25,111 @@ const CustomTableCell = withStyles(theme => ({
   }
 }))(TableCell);
 
-const formatDate = version => {
-  let d = new Date(version);
-  return d.toUTCString().replace(' GMT', '');
+const aiDisable = model => {
+  if (model.runs.find(run => run.id === model.selectedId).videos[0]) {
+    return false;
+  } else {
+    return true;
+  }
 };
 
 const ModelsTable = props => {
-  const { models, handleSelectVersion, handleOpenInfo, deleteModel } = props;
+  const {
+    models,
+    handleSelectVersion,
+    handleOpenInfo,
+    deleteModel,
+    aiVideos,
+    aiEnable,
+    formatDate,
+    handleClickVideo,
+    videoModalOpen,
+    toggleAiVideos,
+    currentVideo
+  } = props;
 
   if (!models) {
     return <Typography style={{ margin: '20px' }}>Loading...</Typography>;
   }
 
   return (
-    <Table>
-      <TableHead>
-        <TableRow>
-          <CustomTableCell>Name</CustomTableCell>
-          <CustomTableCell>Versions #</CustomTableCell>
-          <CustomTableCell>Date Created</CustomTableCell>
-          <CustomTableCell />
-        </TableRow>
-      </TableHead>
-      <TableBody>
-        {models.map(model => (
-          <TableRow key={model.name}>
-            <CustomTableCell component="th" scope="row">
-              {model.name}
-            </CustomTableCell>
-            <CustomTableCell>
-              <FormControl>
-                <Select
-                  value={model.version_selected}
-                  renderValue={value => `${parseInt(value) + 1}`}
-                  onChange={event => handleSelectVersion(event, model)}
-                >
-                  {model.versions.map((version, index) => (
-                    <MenuItem key={index + version} value={index}>
-                      {index + 1 + ' : ' + formatDate(version)}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </CustomTableCell>
-            <CustomTableCell>{formatDate(model.timestamp)}</CustomTableCell>
-            <CustomTableCell align="right">
-              <IconButton
-                onClick={() => handleOpenInfo(model)}
-                aria-label="Description"
-              >
-                <Description />
-              </IconButton>
-              <IconButton
-                onClick={() => deleteModel(model)}
-                aria-label="Delete"
-              >
-                <DeleteIcon />
-              </IconButton>
-            </CustomTableCell>
+    <div>
+      <Table>
+        <TableHead>
+          <TableRow>
+            <CustomTableCell>Name</CustomTableCell>
+            <CustomTableCell>Versions #</CustomTableCell>
+            <CustomTableCell>Date Created</CustomTableCell>
+            <CustomTableCell />
           </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+        </TableHead>
+        <TableBody>
+          {models.map(model => (
+            <TableRow key={model.name}>
+              <CustomTableCell component="th" scope="row">
+                {model.name}
+              </CustomTableCell>
+              <CustomTableCell>
+                <FormControl>
+                  <Select
+                    value={model.version_selected}
+                    renderValue={value => `${parseInt(value) + 1}`}
+                    onChange={event => handleSelectVersion(event, model)}
+                  >
+                    {model.runs.map((version, index) => (
+                      <MenuItem key={version.id} value={index}>
+                        {index + 1 + ' : ' + formatDate(version.time)}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </CustomTableCell>
+              <CustomTableCell>{formatDate(model.timestamp)}</CustomTableCell>
+              <CustomTableCell align="right">
+                {model.selectedId ? (
+                  <GeneralMenu
+                    name="AiVideos"
+                    variant="contained"
+                    color="primary"
+                    Link={false}
+                    handleInsert={handleClickVideo}
+                    items={
+                      model.runs.find(run => run.id === model.selectedId).videos
+                    }
+                    aivideos={true}
+                    disabled={aiDisable(model)}
+                  />
+                ) : (
+                  ''
+                )}
+                <IconButton
+                  onClick={() => handleOpenInfo(model)}
+                  aria-label="Description"
+                >
+                  <Description />
+                </IconButton>
+                <IconButton
+                  onClick={() => deleteModel(model)}
+                  aria-label="Delete"
+                >
+                  <DeleteIcon />
+                </IconButton>
+              </CustomTableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+      {videoModalOpen ? (
+        <AIvideos
+          videoModalOpen={videoModalOpen}
+          toggleAiVideos={toggleAiVideos}
+          // testing={true}
+          video={currentVideo}
+        />
+      ) : (
+        ''
+      )}
+    </div>
   );
 };
 

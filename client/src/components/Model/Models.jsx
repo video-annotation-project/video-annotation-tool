@@ -6,9 +6,10 @@ import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import Table from '@material-ui/core/Table';
 import Swal from 'sweetalert2/src/sweetalert2';
+import DeleteIcon from '@material-ui/icons/Delete';
+import IconButton from '@material-ui/core/IconButton';
 import { Typography, Button } from '@material-ui/core';
 
-import AIvideos from '../AIVideos/AIvideos';
 import GeneralMenu from '../Utilities/GeneralMenu';
 import Dialog from '@material-ui/core/Dialog';
 import TableCell from '@material-ui/core/TableCell';
@@ -43,23 +44,33 @@ class Models extends Component {
       selectedModel: ''
     };
   }
+  formatDate = version => {
+    let d = new Date(version);
+    return d.toUTCString().replace(' GMT', '');
+  };
 
   componentDidMount = () => {
-    this.loadVideos();
     this.loadExistingModels();
+    // await this.loadVideos();
   };
 
-  loadVideos = () => {
-    const config = {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    };
-    return axios
-      .get('/api/videos/aivideos/1', config)
-      .then(res => this.setState({ aiVideos: res.data.rows }))
-      .catch(error => console.log(error));
-  };
+  // loadVideos = () => {
+  //   const { models } = this.state;
+  //   const config = {
+  //     headers: {
+  //       Authorization: `Bearer ${localStorage.getItem('token')}`
+  //     }
+  //   };
+  //   return axios
+  //     .get('/api/videos/aivideos', config)
+  //     .then(res => {
+  //       let result = res.data.rows;
+  //       this.setState({
+  //         aiVideos: result
+  //       });
+  //     })
+  //     .catch(error => console.log(error));
+  // };
 
   loadExistingModels = () => {
     const config = {
@@ -132,107 +143,52 @@ class Models extends Component {
     });
   };
 
-  handleExpand = model => {
-    console.log(model);
   handleSelectVersion = (event, model) => {
     const { models } = this.state;
     let selectedModel = models.find(m => m.name === model.name);
+
     selectedModel.version_selected = event.target.value;
+    selectedModel.selectedId = selectedModel.runs[event.target.value].id;
 
     this.setState({ models });
   };
 
-  handleClick = async id => {
-    const { aiVideos } = this.state;
-    await this.setState({
+  handleClickVideo = async (id, videos) => {
+    let currentVideo = await videos.find(video => video.id === id);
+    this.setState({
       videoModalOpen: true,
-      currentVideo: await aiVideos.find(video => {
-        return video.id === id;
-      })
+      currentVideo
     });
   };
 
   render() {
     const { classes } = this.props;
-    const { models, aiVideos, videoModalOpen, currentVideo, models, infoOpen, selectedModel } = this.state;
-    console.log(aiVideos);
+    const {
+      models,
+      aiVideos,
+      videoModalOpen,
+      currentVideo,
+      infoOpen,
+      selectedModel
+    } = this.state;
+
     if (!models) {
       return <Typography style={{ margin: '20px' }}>Loading...</Typography>;
     }
     return (
       <div className={classes.root}>
-        <Table className={classes.table}>
-          <TableHead>
-            <TableRow>
-              <CustomTableCell>Name</CustomTableCell>
-              <CustomTableCell align="right">Date Created</CustomTableCell>
-              <CustomTableCell>Concepts</CustomTableCell>
-              <CustomTableCell>ConceptIDs</CustomTableCell>
-              <CustomTableCell>Verification Videos</CustomTableCell>
-              <CustomTableCell>Delete</CustomTableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {models.map(model => (
-              <TableRow key={model.name}>
-                <CustomTableCell component="th" scope="row">
-                  {model.name}
-                </CustomTableCell>
-                <CustomTableCell align="right">
-                  {model.timestamp}
-                </CustomTableCell>
-                <CustomTableCell align="right">
-                  {models[0].concepts.join(', ')}
-                </CustomTableCell>
-                <CustomTableCell align="right">
-                  {model.conceptsid.toString()}
-                </CustomTableCell>
-                <CustomTableCell>
-                  {model.verificationvideos
-                    ? model.verificationvideos.toString()
-                    : 'NON'}
-                </CustomTableCell>
-                <CustomTableCell>
-                  <IconButton
-                    onClick={() => this.deleteModel(model)}
-                    aria-label="Delete"
-                  >
-                    <DeleteIcon />
-                  </IconButton>
-                </CustomTableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-        <GeneralMenu
-          name="AiVideos"
-          variant="contained"
-          color="primary"
-          handleInsert={this.handleClick}
-          Link={false}
-          items={aiVideos}
-        />
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={() => this.toggleAiVideos(true)}
-        >
-          Ai1
-        </Button>
-        {videoModalOpen ? (
-          <AIvideos
-            videoModalOpen={videoModalOpen}
-            toggleAiVideos={this.toggleAiVideos}
-            // testing={true}
-            video={currentVideo}
-          />
-        ) : (
-          ''
         <ModelsTable
           models={models}
+          aiVideos={aiVideos}
           handleSelectVersion={this.handleSelectVersion}
           handleOpenInfo={this.handleOpenInfo}
           deleteModel={this.deleteModel}
+          aiEnable={this.aiEnable}
+          formatDate={this.formatDate}
+          videoModalOpen={videoModalOpen}
+          handleClickVideo={this.handleClickVideo}
+          toggleAiVideos={this.toggleAiVideos}
+          currentVideo={currentVideo}
         />
         {infoOpen && (
           <Dialog onClose={this.handleCloseInfo} open={infoOpen}>

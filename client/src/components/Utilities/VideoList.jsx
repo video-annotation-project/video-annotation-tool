@@ -127,8 +127,6 @@ class VideoList extends Component {
       checkedVideos
     } = this.state;
 
-    console.log(data);
-
     return (
       <div className={classes.root}>
         <Button

@@ -4,7 +4,7 @@ import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 
 const GeneralMenu = props => {
-  const { disabled, buttonid, name, Link, items } = props;
+  const { disabled, buttonid, name, Link, items, aivideos } = props;
   let { color, variant } = props;
   const [anchorEl, setAnchorEl] = React.useState(null);
   color = color || 'inherit';
@@ -18,10 +18,11 @@ const GeneralMenu = props => {
     setAnchorEl(null);
   }
 
-  function handleInsert(id) {
+  function handleInsert(id, videos) {
     handleClose();
-    props.handleInsert(id);
+    props.handleInsert(id, videos);
   }
+
   return (
     <div>
       <Button
@@ -40,7 +41,7 @@ const GeneralMenu = props => {
         open={Boolean(anchorEl)}
         onClose={handleClose}
       >
-        {items && items.length > 0
+        {items && items.length > 0 && items[0]
           ? Link
             ? items.map(item => (
                 <MenuItem
@@ -54,7 +55,14 @@ const GeneralMenu = props => {
                 </MenuItem>
               ))
             : items.map(item => (
-                <MenuItem key={item.name} onClick={() => handleInsert(item.id)}>
+                <MenuItem
+                  key={item.name}
+                  onClick={
+                    aivideos
+                      ? () => handleInsert(item.id, items)
+                      : () => handleInsert(item.id)
+                  }
+                >
                   {`${item.id} ${item.name}`}
                 </MenuItem>
               ))

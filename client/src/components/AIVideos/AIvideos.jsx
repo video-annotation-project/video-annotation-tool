@@ -8,8 +8,6 @@ import { withStyles } from '@material-ui/core/styles';
 import Hotkeys from 'react-hot-keys';
 import Grid from '@material-ui/core/Grid';
 
-import AIvideoList from './AIvideoList';
-
 import Modal from '@material-ui/core/Modal';
 const styles = theme => ({
   videoContainer: {
