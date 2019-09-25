@@ -6,11 +6,8 @@ import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import Table from '@material-ui/core/Table';
 import Swal from 'sweetalert2/src/sweetalert2';
-import DeleteIcon from '@material-ui/icons/Delete';
-import IconButton from '@material-ui/core/IconButton';
-import { Typography, Button } from '@material-ui/core';
+import { Typography } from '@material-ui/core';
 
-import GeneralMenu from '../Utilities/GeneralMenu';
 import Dialog from '@material-ui/core/Dialog';
 import TableCell from '@material-ui/core/TableCell';
 
@@ -51,26 +48,7 @@ class Models extends Component {
 
   componentDidMount = () => {
     this.loadExistingModels();
-    // await this.loadVideos();
   };
-
-  // loadVideos = () => {
-  //   const { models } = this.state;
-  //   const config = {
-  //     headers: {
-  //       Authorization: `Bearer ${localStorage.getItem('token')}`
-  //     }
-  //   };
-  //   return axios
-  //     .get('/api/videos/aivideos', config)
-  //     .then(res => {
-  //       let result = res.data.rows;
-  //       this.setState({
-  //         aiVideos: result
-  //       });
-  //     })
-  //     .catch(error => console.log(error));
-  // };
 
   loadExistingModels = () => {
     const config = {
@@ -148,7 +126,6 @@ class Models extends Component {
     let selectedModel = models.find(m => m.name === model.name);
 
     selectedModel.version_selected = event.target.value;
-    selectedModel.selectedId = selectedModel.runs[event.target.value].id;
 
     this.setState({ models });
   };
@@ -165,7 +142,6 @@ class Models extends Component {
     const { classes } = this.props;
     const {
       models,
-      aiVideos,
       videoModalOpen,
       currentVideo,
       infoOpen,
@@ -179,11 +155,9 @@ class Models extends Component {
       <div className={classes.root}>
         <ModelsTable
           models={models}
-          aiVideos={aiVideos}
           handleSelectVersion={this.handleSelectVersion}
           handleOpenInfo={this.handleOpenInfo}
           deleteModel={this.deleteModel}
-          aiEnable={this.aiEnable}
           formatDate={this.formatDate}
           videoModalOpen={videoModalOpen}
           handleClickVideo={this.handleClickVideo}

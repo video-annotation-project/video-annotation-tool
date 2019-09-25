@@ -49,7 +49,7 @@ router.get(
         SELECT
           model_name,
           array_agg(start_train) AS versions,
-          -1 AS version_selected
+          count(*)-1 AS version_selected
         FROM
           previous_runs
         GROUP BY model_name) v ON v.model_name=m.name
