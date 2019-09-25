@@ -25,22 +25,12 @@ const CustomTableCell = withStyles(theme => ({
   }
 }))(TableCell);
 
-const aiDisable = model => {
-  if (model.runs.find(run => run.id === model.selectedId).videos[0]) {
-    return false;
-  } else {
-    return true;
-  }
-};
-
 const ModelsTable = props => {
   const {
     models,
     handleSelectVersion,
     handleOpenInfo,
     deleteModel,
-    aiVideos,
-    aiEnable,
     formatDate,
     handleClickVideo,
     videoModalOpen,
@@ -92,14 +82,9 @@ const ModelsTable = props => {
                   color="primary"
                   Link={false}
                   handleInsert={handleClickVideo}
-                  items={
-                    model.runs.length > 0
-                      ? model.runs.find(run => run.id === model.selectedId)
-                          .videos
-                      : []
-                  }
+                  items={model.runs[model.version_selected].videos}
                   aivideos={true}
-                  disabled={aiDisable(model)}
+                  disabled={!model.runs[model.version_selected].videos[0]}
                 />
                 <IconButton
                   onClick={() => handleOpenInfo(model)}
