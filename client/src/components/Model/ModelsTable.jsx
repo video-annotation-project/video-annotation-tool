@@ -76,16 +76,6 @@ const ModelsTable = props => {
               </CustomTableCell>
               <CustomTableCell>{formatDate(model.timestamp)}</CustomTableCell>
               <CustomTableCell align="right">
-                <GeneralMenu
-                  name="AiVideos"
-                  variant="contained"
-                  color="primary"
-                  Link={false}
-                  handleInsert={handleClickVideo}
-                  items={model.runs[model.version_selected].videos}
-                  aivideos={true}
-                  disabled={!model.runs[model.version_selected].videos[0]}
-                />
                 <IconButton
                   onClick={() => handleOpenInfo(model)}
                   aria-label="Description"
@@ -98,6 +88,16 @@ const ModelsTable = props => {
                 >
                   <DeleteIcon />
                 </IconButton>
+                <GeneralMenu
+                  name="AiVideos"
+                  variant="contained"
+                  color="primary"
+                  Link={false}
+                  handleInsert={handleClickVideo}
+                  items={model.runs[model.version_selected].videos}
+                  aivideos={true}
+                  disabled={!model.runs[model.version_selected].videos[0]}
+                />
               </CustomTableCell>
             </TableRow>
           ))}

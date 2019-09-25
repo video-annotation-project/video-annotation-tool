@@ -26,11 +26,11 @@ const GeneralMenu = props => {
   }
 
   return (
-    <div>
+    <span>
       {aivideos ? (
         <IconButton
           onClick={handleClick}
-          aria-label="Description"
+          aria-label="Ai Videos"
           disabled={disabled}
         >
           <OndemandVideo />
@@ -80,7 +80,7 @@ const GeneralMenu = props => {
               ))
           : ''}
       </Menu>
-    </div>
+    </span>
   );
 };
 
