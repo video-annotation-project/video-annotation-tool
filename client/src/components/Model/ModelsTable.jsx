@@ -86,22 +86,21 @@ const ModelsTable = props => {
               </CustomTableCell>
               <CustomTableCell>{formatDate(model.timestamp)}</CustomTableCell>
               <CustomTableCell align="right">
-                {model.selectedId ? (
-                  <GeneralMenu
-                    name="AiVideos"
-                    variant="contained"
-                    color="primary"
-                    Link={false}
-                    handleInsert={handleClickVideo}
-                    items={
-                      model.runs.find(run => run.id === model.selectedId).videos
-                    }
-                    aivideos={true}
-                    disabled={aiDisable(model)}
-                  />
-                ) : (
-                  ''
-                )}
+                <GeneralMenu
+                  name="AiVideos"
+                  variant="contained"
+                  color="primary"
+                  Link={false}
+                  handleInsert={handleClickVideo}
+                  items={
+                    model.runs.length > 0
+                      ? model.runs.find(run => run.id === model.selectedId)
+                          .videos
+                      : []
+                  }
+                  aivideos={true}
+                  disabled={aiDisable(model)}
+                />
                 <IconButton
                   onClick={() => handleOpenInfo(model)}
                   aria-label="Description"

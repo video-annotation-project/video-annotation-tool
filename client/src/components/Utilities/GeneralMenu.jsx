@@ -2,6 +2,8 @@ import React from 'react';
 import Button from '@material-ui/core/Button';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
+import OndemandVideo from '@material-ui/icons/OndemandVideo';
+import IconButton from '@material-ui/core/IconButton';
 
 const GeneralMenu = props => {
   const { disabled, buttonid, name, Link, items, aivideos } = props;
@@ -25,15 +27,25 @@ const GeneralMenu = props => {
 
   return (
     <div>
-      <Button
-        id={buttonid}
-        variant={variant}
-        color={color}
-        onClick={handleClick}
-        disabled={disabled}
-      >
-        {name}
-      </Button>
+      {aivideos ? (
+        <IconButton
+          onClick={handleClick}
+          aria-label="Description"
+          disabled={disabled}
+        >
+          <OndemandVideo />
+        </IconButton>
+      ) : (
+        <Button
+          id={buttonid}
+          variant={variant}
+          color={color}
+          onClick={handleClick}
+          disabled={disabled}
+        >
+          {name}
+        </Button>
+      )}
       <Menu
         id="simple-menu"
         style={{ top: '30px' }}
