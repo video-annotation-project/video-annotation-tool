@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import axios from 'axios';
 import io from 'socket.io-client';
 import Slider from '@material-ui/core/Slider';
 import Button from '@material-ui/core/Button';
@@ -9,6 +8,7 @@ import Hotkeys from 'react-hot-keys';
 import Grid from '@material-ui/core/Grid';
 
 import Modal from '@material-ui/core/Modal';
+
 const styles = theme => ({
   videoContainer: {
     top: '60px',
@@ -27,6 +27,9 @@ const styles = theme => ({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
+    outline: 'none'
+  },
+  modaldiv: {
     backgroundColor: theme.palette.background.paper
   }
 });
@@ -69,31 +72,7 @@ class Annotate extends Component {
   componentDidMount = async () => {
     // add event listener for closing or reloading window
     window.addEventListener('beforeunload', this.handleUnload);
-
-    // try {
-    //   this.loadVideos(this.getCurrentVideo);
-    // } catch (error) {
-    //   console.log(error);
-    //   console.log(JSON.parse(JSON.stringify(error)));
-    //   if (!error.response) {
-    //     return;
-    //   }
-    //   const errMsg =
-    //     error.response.data.detail || error.response.data.message || 'Error';
-    //   console.log(errMsg);
-    //   this.setState({
-    //     isLoaded: true,
-    //     error: errMsg
-    //   });
-    // }
   };
-
-  // componentWillUnmount = () => {
-  //   const { socket } = this.state;
-  //   // this.updateCheckpoint(false, false);
-  //   socket.disconnect();
-  //   window.removeEventListener('beforeunload', this.handleUnload);
-  // };
 
   handleUnload = ev => {
     const event = ev;
@@ -153,84 +132,16 @@ class Annotate extends Component {
     );
   };
 
-  // loadVideos = () => {
-  //   const config = {
-  //     headers: {
-  //       Authorization: `Bearer ${localStorage.getItem('token')}`
-  //     }
-  //   };
-  //   return axios.get('/api/videos/aivideos', config).then(res => {
-  //     this.setState({
-  //       aiVideos: res.data.rows
-  //     });
-  //     this.getCurrentVideo();
-  //   });
-  // };
-
-  // getCurrentVideo = () => {
-  //   const { aiVideos } = this.state;
-  //   // if user does not have a video to be played, return default video 1
-  //   const firstVideo = {
-  //     id: aiVideos[0].id,
-  //     name: aiVideos[0].name,
-  //     timeinvideo: 0
-  //   };
-  //   this.setState(
-  //     {
-  //       currentVideo: firstVideo,
-  //       isLoaded: true
-  //     },
-  //     () => {
-  //       const { currentVideo } = this.state;
-  //       const videoElement = document.getElementById('video');
-  //       videoElement.currentTime = currentVideo.timeinvideo;
-  //     }
-  //   );
-  // };
-
-  // handleVideoClick = async clickedVideo => {
-  //   const currentVideo = {
-  //     id: clickedVideo.id,
-  //     name: clickedVideo.name,
-  //     timeinvideo: 0
-  //   };
-  //   this.setState({
-  //     currentVideo
-  //   });
-  // };
-
-  // tav = condition => {
-  //   this.setState({
-  //     modal: condition
-  //   });
-  // };
-
   render() {
-    const {
-      classes,
-      videoModalOpen,
-      toggleAiVideos,
-      testing,
-      video
-    } = this.props;
-    const {
-      currentVideo,
-      aiVideos,
-      isLoaded,
-      error,
-      socket,
-      videoPlaybackRate,
-      modal
-    } = this.state;
+    const { classes, videoModalOpen, toggleStateVariable, video } = this.props;
+    const { error, videoPlaybackRate } = this.state;
 
     if (error) {
       return (
         <Modal
           className={classes.modal}
-          aria-labelledby="simple-modal-title"
-          aria-describedby="simple-modal-description"
           open={videoModalOpen}
-          onClose={() => toggleAiVideos(false)}
+          onClose={() => toggleStateVariable(false, 'videoModalOpen')}
         >
           <Typography style={{ margin: '20px' }}>Error: {error}</Typography>
         </Modal>
@@ -239,25 +150,16 @@ class Annotate extends Component {
     return (
       <Modal
         className={classes.modal}
-        aria-labelledby="simple-modal-title"
-        aria-describedby="simple-modal-description"
         open={videoModalOpen}
-        onClose={() => toggleAiVideos(false)}
+        onClose={() => toggleStateVariable(false, 'videoModalOpen')}
       >
-        <div>
+        <div className={classes.modaldiv}>
           <Hotkeys
             keyName="space, right, left"
             onKeyDown={this.handleKeyDown}
           />
           <Grid container className={classes.root} spacing={2}>
-            <Grid item xs>
-              {/* <AIvideoList
-              handleVideoClick={this.handleVideoClick}
-              aiVideos={aiVideos}
-              socket={socket}
-              loadVideos={this.loadVideos}
-            /> */}
-            </Grid>
+            <Grid item xs></Grid>
             <Grid item xs>
               <Typography
                 variant="h5"
@@ -276,7 +178,6 @@ class Annotate extends Component {
                 <div className={classes.videoContainer}>
                   <video
                     className={classes.videoContainer}
-                    //   onPause={() => this.updateCheckpoint(false, true)}
                     id="video"
                     width="1600"
                     height="900"
@@ -333,7 +234,7 @@ class Annotate extends Component {
                   variant="contained"
                   color="primary"
                   className={classes.button}
-                  onClick={() => toggleAiVideos(false)}
+                  onClick={() => toggleStateVariable(false, 'videoModalOpen')}
                   style={{ float: 'right' }}
                 >
                   Back

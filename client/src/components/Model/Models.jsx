@@ -6,13 +6,13 @@ import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import Table from '@material-ui/core/Table';
 import Swal from 'sweetalert2/src/sweetalert2';
-import { Typography } from '@material-ui/core';
+import { Typography, Button } from '@material-ui/core';
 
 import Dialog from '@material-ui/core/Dialog';
 import TableCell from '@material-ui/core/TableCell';
 
 import ModelsTable from './ModelsTable';
-
+import CreateModel from './CreateModel';
 const styles = theme => ({
   root: {
     margins: 'auto',
@@ -37,6 +37,7 @@ class Models extends Component {
     this.state = {
       models: [],
       videoModalOpen: false,
+      createOpen: false,
       infoOpen: false,
       selectedModel: ''
     };
@@ -115,9 +116,9 @@ class Models extends Component {
     });
   };
 
-  toggleAiVideos = condition => {
+  toggleStateVariable = (condition, variable) => {
     this.setState({
-      videoModalOpen: condition
+      [variable]: condition
     });
   };
 
@@ -145,7 +146,8 @@ class Models extends Component {
       videoModalOpen,
       currentVideo,
       infoOpen,
-      selectedModel
+      selectedModel,
+      createOpen
     } = this.state;
 
     if (!models) {
@@ -153,6 +155,18 @@ class Models extends Component {
     }
     return (
       <div className={classes.root}>
+        <Button
+          style={{ marginBottom: '20px' }}
+          variant="contained"
+          color="primary"
+          onClick={() => this.toggleStateVariable(true, 'createOpen')}
+        >
+          Create Model
+        </Button>
+        <CreateModel
+          createOpen={createOpen}
+          toggleStateVariable={this.toggleStateVariable}
+        />
         <ModelsTable
           models={models}
           handleSelectVersion={this.handleSelectVersion}
@@ -161,7 +175,7 @@ class Models extends Component {
           formatDate={this.formatDate}
           videoModalOpen={videoModalOpen}
           handleClickVideo={this.handleClickVideo}
-          toggleAiVideos={this.toggleAiVideos}
+          toggleStateVariable={this.toggleStateVariable}
           currentVideo={currentVideo}
         />
         {infoOpen && (

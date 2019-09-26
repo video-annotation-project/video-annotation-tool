@@ -34,7 +34,7 @@ const ModelsTable = props => {
     formatDate,
     handleClickVideo,
     videoModalOpen,
-    toggleAiVideos,
+    toggleStateVariable,
     currentVideo
   } = props;
 
@@ -106,7 +106,7 @@ const ModelsTable = props => {
       {videoModalOpen ? (
         <AIvideos
           videoModalOpen={videoModalOpen}
-          toggleAiVideos={toggleAiVideos}
+          toggleStateVariable={toggleStateVariable}
           // testing={true}
           video={currentVideo}
         />
