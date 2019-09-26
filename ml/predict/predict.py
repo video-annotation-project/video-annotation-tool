@@ -55,6 +55,7 @@ class Tracked_object(object):
         label = detection[2]
         confidence = detection[1]
         self.save_annotation(frame_num, label=label, confidence=confidence)
+        self.tracked_frames = 0
 
     def save_annotation(self, frame_num, label=None, confidence=None):
         annotation = {}
@@ -82,6 +83,7 @@ class Tracked_object(object):
         confidence = detection[1]
         self.annotations = self.annotations[:-1]
         self.save_annotation(frame_num, label=label, confidence=confidence)
+        self.tracked_frames = 0
 
     def update(self, frame, frame_num):
         success, box = self.tracker.update(frame)
@@ -93,6 +95,7 @@ class Tracked_object(object):
             self.y2 = y1 + h
             self.box = (x1, y1, w, h)
             self.save_annotation(frame_num)
+            self.tracked_frames += 1
         return success
 
     def change_id(self, matched_obj_id):
@@ -133,6 +136,7 @@ def predict_on_video(videoid, model_weights, concepts, filename,
     else:
         tuple_concept = f''' in {str(tuple(concepts))}'''
 
+    print(concepts)
     annotations = pd_query(
         f'''
         SELECT
@@ -145,7 +149,6 @@ def predict_on_video(videoid, model_weights, concepts, filename,
         FROM
           annotations
         WHERE
-          unsure=FALSE AND
           videoid={videoid} AND
           userid in {str(tuple(config.GOOD_USERS))} AND
           conceptid {tuple_concept}''')
@@ -162,6 +165,8 @@ def predict_on_video(videoid, model_weights, concepts, filename,
 
     printing_with_time("Predicting")
     results, frames = predict_frames(frames, fps, model, videoid)
+    if (results.shape[0] == 0):
+        return
     results = propagate_conceptids(results, concepts)
     results = length_limit_objects(results, config.MIN_FRAMES_THRESH)
     # interweb human annotations and predictions
@@ -244,7 +249,7 @@ def predict_frames(video_frames, fps, model, videoid):
             detection = (obj.box, 0, 0)
             match, matched_object = does_match_existing_tracked_object(
                 detection, temp)
-            if not success:
+            if not success or obj.tracked_frames > 30:
                 annotations.append(obj.annotations)
                 currently_tracked_objects.remove(obj)
                 # Check if there is a matching prediction if the tracking fails?
@@ -571,21 +576,6 @@ def upload_annotation(frame, frame_w_box, x1, x2, y1, y2,
     )
 
 
-# post frame_num to predict_progress psql
-'''
-For updating the predict_progress psql database, which tracks prediction and 
-video generation status.
-
-Arguments:
-count - frame of video (or index of annotation) being processed
-videoid - video being processed
-con - sql connection
-total_count - total number of frames in the video 
-    (or number of predictions + annotations)
-status - Indicates whether processing video or drawing annotation boxes
-'''
-
-
 def upload_predict_progress(count, videoid, total_count, status):
     '''
     For updating the predict_progress psql database, which tracks prediction and 
@@ -599,22 +589,22 @@ def upload_predict_progress(count, videoid, total_count, status):
     '''
     print(
         f'count: {count} total_count: {total_count} vid: {videoid} status: {status}')
-    # if (count == 0):
-    #     cursor.execute('''
-    #         UPDATE predict_progress
-    #         SET framenum=%s, status=%s, totalframe=%s''',
-    #                    (count, status, total_count,))
-    #     con.commit()
-    #     return
+    if (count == 0):
+        cursor.execute('''
+            UPDATE predict_progress
+            SET framenum=%s, status=%s, totalframe=%s''',
+                       (count, status, total_count,))
+        con.commit()
+        return
 
-    # if (total_count == count):
-    #     count = -1
-    # cursor.execute('''
-    #     UPDATE predict_progress
-    #     SET framenum=%s''',
-    #                (count,)
-    #                )
-    # con.commit()
+    if (total_count == count):
+        count = -1
+    cursor.execute('''
+        UPDATE predict_progress
+        SET framenum=%s''',
+                   (count,)
+                   )
+    con.commit()
 
 
 if __name__ == '__main__':

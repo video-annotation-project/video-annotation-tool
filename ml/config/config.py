@@ -7,7 +7,6 @@ from dotenv import load_dotenv
 
 config_path = "../config.json"
 load_dotenv(dotenv_path="../.env")
-print(os.environ)
 
 config_file = open(config_path)
 config = json.load(config_file)["ml"]
