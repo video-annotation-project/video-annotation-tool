@@ -67,14 +67,7 @@ class ModelProgress extends Component {
   };
 
   TrainingStatus = () => {
-    const {
-      terminateTraining,
-      checkReady,
-      stopTraining,
-      handleReset,
-      startTraining,
-      resetTraining
-    } = this.props;
+    const { terminateTraining, checkReady, stopTraining, resetTraining, startTraining } = this.props;
 
     const {
       currentEpoch,
@@ -119,11 +112,14 @@ class ModelProgress extends Component {
                 Start Training
               </span>
               <span hidden={serverStatus !== 'pending'}>
-                <CircularProgress size={15} style={{position: 'relative', top: '5px', marginRight: '10px'}}/>
+                <CircularProgress size={17} style={{position: 'relative', top: '5px', marginRight: '10px'}}/>
                 Starting...
               </span>
-              <span hidden={serverStatus !== 'running' && serverStatus !== 'stopping'}>
+              <span hidden={serverStatus !== 'running'}>
                 Waiting...
+              </span>
+              <span hidden={serverStatus !== 'stopping'}>
+                Stopping...
               </span>
             </Button>
           </div>
@@ -181,11 +177,43 @@ class ModelProgress extends Component {
     );
   };
 
-  loadProgressInfoTrain = () => {
-    const { activeStep } = this.props;
-    if (activeStep < 3) {
-      return;
+  loadStdOut = () => {
+    const config = {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    };
+    axios
+      .get(`/api/models/train/stdout`, config)
+      .then(res => {
+        this.setState({
+          stdout: res.data
+        });
+      })
+      .catch(error => {
+        console.log(error);
+      });
+  }
+
+  loadStdErr = () => {
+    const config = {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    };
+    axios
+      .get(`/api/models/train/stderr`, config)
+      .then(res => {
+        this.setState({
+          stderr: res.data
+        });
+      })
+      .catch(error => {
+        console.log(error);
+      });
     }
+
+  loadProgressInfoTrain = () => {
     const config = {
       headers: {
         Authorization: `Bearer ${localStorage.getItem('token')}`
@@ -194,7 +222,7 @@ class ModelProgress extends Component {
     axios
       .get(`/api/models/progress/train`, config)
       .then(res => {
-        const progress = res.data[0];
+        const progress = res.data;
 
         this.setState({
           currentEpoch: progress.curr_epoch + 1,
@@ -204,8 +232,6 @@ class ModelProgress extends Component {
           epochProgress: ((progress.curr_epoch + 1) / progress.max_epoch) * 100,
           batchProgress:
             ((progress.curr_batch + 1) / progress.steps_per_epoch) * 100,
-          stdout: progress.std_out,
-          stderr: progress.std_err,
           trainStatus: progress.status
         });
       })
@@ -220,6 +246,12 @@ class ModelProgress extends Component {
 
   handleChange = (event, newValue) => {
     this.setState({ tab: newValue });
+    if (newValue === 1){
+      this.loadStdOut();
+    }
+    else if (newValue === 2){
+      this.loadStdErr();
+    }
   };
 
   loadProgressInfoPredict = async () => {
@@ -292,7 +324,6 @@ class ModelProgress extends Component {
     try {
       axios.get(`/api/models/instance/status`, config).then(res => {
         this.setState({ serverStatus: res.data });
-        console.log(res.data);
       });
     } catch (error) {
       console.log(error);

@@ -12,7 +12,7 @@
     "@sweetalert2/themes": "^2.1.0",
     "axios": "^0.19.0",
     "dotenv": "^8.1.0",
-    "downshift": "^3.2.12",
+    "downshift": "^3.2.13",
     "geolib": "^3.0.4",
     "html2canvas": "^1.0.0-rc.3",
     "node-sass": "^4.12.0",

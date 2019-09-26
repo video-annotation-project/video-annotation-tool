@@ -43,11 +43,11 @@ const paramFields = [
   'modelSelected',
   'annotationCollections',
   'includeTracking',
-  'verifiedOnly'
+  'verifiedOnly',
 ];
 
 function ModelsForm(props) {
-  const { className, modelSelected, handleChange, models } = props;
+  const { className, modelSelected, handleChange, models, training } = props;
   return (
     <FormControl component="fieldset" className={className}>
       <InputLabel shrink>Model</InputLabel>
@@ -55,6 +55,7 @@ function ModelsForm(props) {
         name="modelSelected"
         value={modelSelected || 'Loading...'}
         onChange={handleChange}
+        disabled={training}
       >
         {models.map(model => (
           <MenuItem key={model.name} value={model.name}>
@@ -67,7 +68,7 @@ function ModelsForm(props) {
 }
 
 function CollectionsForm(props) {
-  const { className, annotationCollections, onChange, collections } = props;
+  const { className, annotationCollections, onChange, collections, training } = props;
   return (
     <FormControl component="fieldset" className={className}>
       <InputLabel shrink>Annotations</InputLabel>
@@ -77,7 +78,8 @@ function CollectionsForm(props) {
         value={annotationCollections}
         onChange={onChange}
         input={<Input id="select-multiple" />}
-        renderValue={selected =>
+        disabled={training}
+        renderValue={selected => 
           selected.map(collection => collection.name).join(', ') || 'Loading...'
         }
       >
@@ -85,25 +87,12 @@ function CollectionsForm(props) {
           <MenuItem
             key={collection.id}
             value={collection}
-            disabled={collection.disable}
           >
             <Checkbox
               checked={annotationCollections.indexOf(collection) > -1}
             />
             <ListItemText>
               {collection.name}
-              {collection.validConcepts ? (
-                <Typography variant="subtitle2" gutterBottom color="secondary">
-                  {collection.validConcepts.map((concept, index) => {
-                    if (index === collection.validConcepts.length - 1) {
-                      return concept.f1;
-                    }
-                    return `${concept.f1}, `;
-                  })}
-                </Typography>
-              ) : (
-                ''
-              )}
             </ListItemText>
           </MenuItem>
         ))}
@@ -113,7 +102,7 @@ function CollectionsForm(props) {
 }
 
 function EpochsField(props) {
-  const { className, epochs, onChange } = props;
+  const { className, epochs, onChange, training } = props;
   return (
     <TextField
       margin="normal"
@@ -122,12 +111,13 @@ function EpochsField(props) {
       label="Epochs"
       value={epochs}
       onChange={onChange}
+      disabled={training}
     />
   );
 }
 
 function ImagesField(props) {
-  const { className, minImages, onChange } = props;
+  const { className, minImages, onChange, training } = props;
 
   return (
     <TextField
@@ -137,6 +127,7 @@ function ImagesField(props) {
       label="# of Images"
       value={minImages}
       onChange={onChange}
+      disabled={training}
     />
   );
 }
@@ -159,12 +150,14 @@ class TrainModel extends Component {
       epochs: '',
       minImages: '',
       ready: false,
+      training: false,
     };
   }
 
   componentDidMount = async () => {
     await this.loadExistingModels();
-    this.loadCollectionList();
+    await this.loadCollectionList();
+    this.loadModelParams();
   };
 
   loadExistingModels = () => {
@@ -190,8 +183,6 @@ class TrainModel extends Component {
   };
 
   loadCollectionList = () => {
-    const { models, modelSelected } = this.state;
-
     const config = {
       headers: {
         Authorization: `Bearer ${localStorage.getItem('token')}`
@@ -201,31 +192,8 @@ class TrainModel extends Component {
     return axios
       .get(`/api/collections/annotations?train=true`, config)
       .then(res => {
-        const selectedModelTuple = models.find(model => {
-          return model.name === modelSelected;
-        });
-
-        let modelConcepts;
-
-        if (modelSelected === undefined) {
-          modelConcepts = [];
-        } else {
-          modelConcepts = selectedModelTuple.conceptsid;
-        }
-
-        res.data.forEach(col => {
-          const filtered = modelConcepts.filter(x => col.ids.includes(x));
-          if (filtered.length > 0) {
-            col.disable = false;
-            col.validConcepts = col.concepts.filter(y =>
-              filtered.includes(y.f2)
-            );
-          } else {
-            col.disable = true;
-          }
-        });
         this.setState({
-          collections: res.data.sort(a => (a.validConcepts ? -1 : 1)),
+          collections: res.data,
           annotationCollections: [],
           selectedCollectionCounts: [],
           minCounts: [],
@@ -255,11 +223,6 @@ class TrainModel extends Component {
       {
         [event.target.name]: event.target.value
       },
-      () => {
-        if (event.target.name === 'modelSelected') {
-          this.loadCollectionList();
-        }
-      }
     );
   };
 
@@ -292,6 +255,42 @@ class TrainModel extends Component {
     });
   };
 
+  loadModelParams = () => {
+    const config = {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    };
+
+    try {
+      axios.get(`/api/models/progress/train`, config).then(progressRes => {
+        const training = progressRes.data.status !== 0;
+
+        if (training){
+          axios.get(`/api/models/train`, config).then(res => {
+            const params = res.data;
+
+            const annotationCollections = params.annotation_collections.map(id =>
+              this.state.collections.find((coll) => coll.id === id)
+            );
+
+            this.setState({
+              modelSelected: params.model,
+              annotationCollections: annotationCollections,
+              includeTracking: params.include_tracking,
+              verifiedOnly: params.verified_only,
+              epochs: params.epochs,
+              minImages:  params.min_images,
+              training: true,
+            }, () => this.getCollectionCounts());
+          });
+        }
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
   handleChangeMultiple = event => {
     const options = event.target.value;
     const value = [];
@@ -320,7 +319,7 @@ class TrainModel extends Component {
     const validConcepts = [];
 
     annotationCollections.forEach(collection => {
-      collection.validConcepts.forEach(concept => {
+      collection.concepts.forEach(concept => {
         validConcepts.push(concept.f2);
       });
     });
@@ -383,8 +382,10 @@ class TrainModel extends Component {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
       };
-      axios.patch('/api/models/train/stop', {}, config);
-    } catch (error) {
+      axios.patch('/api/models/train/stop', {}, config).then((res) => 
+        this.setState({ training: false })
+      );
+  } catch (error) {
       console.log(error);
     }
   };
@@ -397,7 +398,9 @@ class TrainModel extends Component {
         }
       };
 
-      axios.patch('/api/models/train/reset', {}, config);
+      axios.patch('/api/models/train/reset', {}, config).then((res) => 
+        this.setState({ training: false })
+      );
     } catch (error) {
       console.log(error);
     }
@@ -460,7 +463,8 @@ class TrainModel extends Component {
       verifiedOnly,
       epochs,
       minImages,
-      minCounts
+      minCounts,
+      training
     } = this.state;
 
     return (
@@ -473,23 +477,26 @@ class TrainModel extends Component {
                 modelSelected={modelSelected}
                 handleChange={this.handleChange}
                 models={models}
+                training={training}
               />
               <CollectionsForm
                 className="collectionsForm"
                 collections={collections}
                 annotationCollections={annotationCollections}
                 onChange={this.handleChangeMultiple}
+                training={training}
               />
               <EpochsField
                 className="epochsField"
                 epochs={epochs}
                 onChange={this.handleChange}
+                training={training}
               />
               <ImagesField
                 className="imagesField"
                 minImages={minImages}
                 onChange={this.handleChange}
-                // getImageRange={this.getImageRange}
+                training={training}
               />
             </div>
             {annotationCollections.length ? (
@@ -511,6 +518,7 @@ class TrainModel extends Component {
                         onChange={this.handleChangeSwitch}
                         value="includeTracking"
                         color="primary"
+                        disabled={training}
                       />
                     }
                     label="Include tracking annotations"
@@ -522,7 +530,7 @@ class TrainModel extends Component {
                         onChange={this.handleChangeSwitch}
                         value="verifiedOnly"
                         color="primary"
-                        disabled={!minCounts[2]}
+                        disabled={!minCounts[2] || training}
                       />
                     }
                     label="Verified annotations only"

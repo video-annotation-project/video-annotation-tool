@@ -15,18 +15,23 @@ router.get('/status',
       IncludeAllInstances: true
     };
 
-    ec2.describeInstanceStatus(params, function(error, data) {
-      if (error){
-        console.log('Error on GET /api/models/progress/train');
-        console.log(error);
-        res.status(500).json(error);
-      }
-      if (data.InstanceStatuses.length === 0){
-        res.status(500).json({error: 'No instanced found.'});
-      } else {
-        res.json(data.InstanceStatuses[0].InstanceState.Name);
-      }
-    });
+    try {
+      ec2.describeInstanceStatus(params, function(error, data) {
+        if (error){
+          console.log('Error on GET /api/models/progress/train');
+          console.log(error);
+          res.status(500).json(error);
+          return;
+        }
+        if (!data || data.InstanceStatuses.length === 0){
+          res.status(500).json({error: 'No instanced found.'});
+        } else {
+          res.json(data.InstanceStatuses[0].InstanceState.Name);
+        }
+      });
+    } catch (error) {
+      res.status(500).json(error);
+    }
   }
 );
 

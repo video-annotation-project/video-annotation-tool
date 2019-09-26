@@ -21,6 +21,7 @@ const DragBox = props => {
     onDragStop,
     onResize
   } = props;
+
   return (
     <Rnd
       id="dragBox"
