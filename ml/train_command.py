@@ -15,20 +15,20 @@ def main():
     # This process periodically uploads the stdout and stderr files
     # To the S3 bucket. The website uses these to display stdout and stderr
     upload_process = upload_stdout.start_uploading()
-    model, model_params = _get_model_and_params()
+    model, model_params = get_model_and_params()
 
     concepts = model["concepts"]
     verify_videos = model["verificationvideos"]
     user_model = model["name"] + "-" + time.ctime()
     
     delete_old_model_user(model)
-    create_model_user(concepts, verify_videos, user_model)
+    create_model_user(model_params, user_model)
 
     # This removes all of the [INFO] outputs from tensorflow.
     # We still see [WARNING] and [ERROR], but there's a lot less clutter
     os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 
-    start_training(model_params)
+    start_training(concepts, verify_videos, model_params)
     setup_predict_progress(verify_videos)
 
     evaluate_videos(concepts, verify_videos, user_model)
@@ -80,7 +80,7 @@ def delete_old_model_user(model):
         )
 
 
-def create_model_user(user_model):
+def create_model_user(model_params, user_model):
     """Insert a new user for this model, then update the models table
        with the new user's id
     """
