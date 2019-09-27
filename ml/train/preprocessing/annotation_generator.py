@@ -21,6 +21,10 @@ from config import config
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 
+def error_print(message):
+    print(f'[Warning] {message}', file=sys.stderr)
+
+
 def _parse(value, function, fmt):
     """
     Parse a string into a value, and format a nice ValueError if it fails.
@@ -286,8 +290,12 @@ class AnnotationGenerator(object):
             LEFT JOIN
                 videos ON videos.id=videoid
             WHERE
-                (ABS(y2-y1)>25 AND ABS(x2-x1)>25)
-                AND EXISTS (
+                ABS(x2-x1)>25 AND ABS(y2-y1)>25 AND
+                x1>=0 AND x1<videowidth AND
+                x2>0 AND x2<=videowidth AND
+                y1>=0 AND y1<videowidth AND
+                y2>0 AND y2<=videowidth AND
+                EXISTS (
                     SELECT
                         1
                     FROM
@@ -329,6 +337,7 @@ class S3Generator(Generator):
         self.classes = classes
 
         self.labelmap = _get_labelmap(list(classes))
+        self.failed_downloads = set()
 
         # Make a reverse dictionary so that we can lookup the other way
         self.labels = {}
@@ -382,8 +391,9 @@ class S3Generator(Generator):
     def load_image(self, image_index):
         """ Load an image at the image_index.
         """
-        self._download_image(image_index)
-        return read_image_bgr(self.image_path(image_index))
+        if self._download_image(image_index):
+            return read_image_bgr(self.image_path(image_index))
+        return self.load_image((image_index + 1) % self.size())
 
     def image_path(self, image_index):
         """ Returns the image path for image_index.
@@ -394,6 +404,11 @@ class S3Generator(Generator):
     def load_annotations(self, image_index):
         """ Load annotations for an image_index.
         """
+
+        # If we couldn't download this image, go onto the next one
+        if image_index in self.failed_downloads:
+            return self.load_annotations((image_index + 1) % self.size())
+
         image = self.selected_annotations.iloc[image_index]
         annotations = {'labels': np.empty((0,)), 'bboxes': np.empty((0, 4))}
         image_name = image['save_name']
@@ -420,7 +435,7 @@ class S3Generator(Generator):
         saved_image_name = image['save_name'] + self.image_extension
 
         if saved_image_name in self.downloaded_images:
-            return
+            return True
 
         image_name = str(image['image'])
         try:
@@ -431,8 +446,10 @@ class S3Generator(Generator):
                 (config.RESIZED_WIDTH, config.RESIZED_HEIGHT))
         # ClientError is the exception class for a KeyNotFound error
         except ClientError:
-            raise IOError(
-                f'file {config.S3_ANNOTATION_FOLDER}{image_name} not found in S3 bucket')
+            # Image doesnt exist, use the next index
+            error_print(f'file {config.S3_ANNOTATION_FOLDER}{image_name} not found in S3 bucket, using next image instead')
+            self.failed_downloads.add(image_index)
+            return False
 
         # Some files have a file extension, some don't. Let's fix that.
         if self.image_extension not in image_name:
@@ -449,6 +466,8 @@ class S3Generator(Generator):
             # We spin while the file exists, but has no content
             while os.path.getsize(image_path) == 0:
                 time.sleep(10)
+
+        return True
 
     def _read_annotations(self):
         """ Read annotations from our selected annotations.

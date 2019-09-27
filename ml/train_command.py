@@ -11,123 +11,173 @@ from config import config
 from utils.query import s3, con, cursor, pd_query
 
 
-upload_process = upload_stdout.start_uploading()
+def main():
+    # This process periodically uploads the stdout and stderr files
+    # To the S3 bucket. The website uses these to display stdout and stderr
+    upload_process = upload_stdout.start_uploading()
+    model, model_params = _get_model_and_params()
 
-# get annotations from test
-model_params = pd_query(
+    concepts = model["concepts"]
+    verify_videos = model["verificationvideos"]
+    user_model = model["name"] + "-" + time.ctime()
+    
+    delete_old_model_user(model)
+    create_model_user(concepts, verify_videos, user_model)
+
+    # This removes all of the [INFO] outputs from tensorflow.
+    # We still see [WARNING] and [ERROR], but there's a lot less clutter
+    os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
+
+    start_training(model_params)
+    setup_predict_progress(verify_videos)
+
+    evaluate_videos(concepts, verify_videos, user_model)
+
+    reset_model_params()
+    shutdown_server()
+
+def get_model_and_params():
+    """ If they exist, get the selected model's old weights.
+        Also grab the current training parameters from the database.
     """
-    SELECT * FROM model_params WHERE option='train'"""
-).iloc[0]
 
-try:
-    s3.download_file(
-        config.S3_BUCKET,
-        config.S3_WEIGHTS_FOLDER + str(model_params["model"]) + ".h5",
-        config.WEIGHTS_PATH,
-    )
-except ClientError:
-    s3.download_file(
-        config.S3_BUCKET,
-        config.S3_WEIGHTS_FOLDER + config.DEFAULT_WEIGHTS_PATH,
-        config.WEIGHTS_PATH,
-    )
+    # Get annotation info from the model_params table
+    model_params = pd_query(
+        """
+        SELECT * FROM model_params WHERE option='train'"""
+    ).iloc[0]
 
-model = pd_query(
-    """SELECT * FROM models WHERE name=%s""", (str(model_params["model"]),)
-).iloc[0]
+    # Try to get the previously saved weights for the model,
+    # If they don't exist (ClientError), use the default weights
+    try:
+        s3.download_file(
+            config.S3_BUCKET,
+            config.S3_WEIGHTS_FOLDER + str(model_params["model"]) + ".h5",
+            config.WEIGHTS_PATH,
+        )
+    except ClientError:
+        s3.download_file(
+            config.S3_BUCKET,
+            config.S3_WEIGHTS_FOLDER + config.DEFAULT_WEIGHTS_PATH,
+            config.WEIGHTS_PATH,
+        )
 
-concepts = model["concepts"]
-verifyVideos = model["verificationvideos"]
+    model = pd_query(
+        """SELECT * FROM models WHERE name=%s""", (str(model_params["model"]),)
+    ).iloc[0]
 
-user_model = model["name"] + "-" + time.ctime()
+    return model, model_params
 
-# Delete old model user
-if model["userid"] != None:
+def delete_old_model_user(model):
+    """ Delete the old model's user
+    """
+    if model["userid"] != None:
+        cursor.execute(
+            """
+             DELETE FROM users
+             WHERE id=%s""",
+            (int(model["userid"]),),
+        )
+
+
+def create_model_user(user_model):
+    """Insert a new user for this model, then update the models table
+       with the new user's id
+    """
+
     cursor.execute(
         """
-         DELETE FROM users
-         WHERE id=%s""",
-        (int(model["userid"]),),
+        INSERT INTO users (username, password, admin)
+        VALUES (%s, 0, null)
+        RETURNING *""",
+        (user_model,),
+    )
+    model_user_id = int(cursor.fetchone()[0])
+
+    # Update the models table with the new user
+    cursor.execute(
+        """
+        UPDATE models
+        SET userid=%s
+        WHERE name=%s
+        RETURNING *""",
+        (model_user_id, model_params["model"]),
     )
 
-cursor.execute(
+    return model_user_id
+
+def start_training(concepts, verify_videos, model_params):
+    """Start a training job with the correct parameters
     """
-    INSERT INTO users (username, password, admin)
-    VALUES (%s, 0, null)
-    RETURNING *""",
-    (user_model,),
-)
-model_user_id = int(cursor.fetchone()[0])
 
-# update models
-cursor.execute(
-    """
-    UPDATE models
-    SET userid=%s
-    WHERE name=%s
-    RETURNING *""",
-    (model_user_id, model_params["model"]),
-)
+    train_model(
+        concepts,
+        verify_videos,
+        model_params["model"],
+        model_params["annotation_collections"],
+        int(model_params["min_images"]),
+        int(model_params["epochs"]),
+        download_data=True,
+        verified_only=model_params["verified_only"],
+        include_tracking=model_params["include_tracking"],
+    )
 
-# Start training job
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
+def setup_predict_progress(verify_videos):
+    """Reset the predict progress table for new predictions"""
 
-train_model(
-    concepts,
-    verifyVideos,
-    model_params["model"],
-    model_params["annotation_collections"],
-    int(model_params["min_images"]),
-    int(model_params["epochs"]),
-    download_data=True,
-    verified_only=model_params["verified_only"],
-    include_tracking=model_params["include_tracking"],
-)
-
-# Run verifyVideos in parallel
-# with Pool(processes = 2) as p:
-#     p.starmap(evaluate, map(lambda video: (video, user_model, concepts), verifyVideos))
-
-# Just to be sure in case of web app not deleting the progress
-cursor.execute("""DELETE FROM predict_progress""")
-con.commit()
-cursor.execute(
-    """
-    INSERT INTO predict_progress (videoid, current_video, total_videos)
-    VALUES (%s, %s, %s)""",
-    (0, 0, len(verifyVideos)),
-)
-con.commit()
-# Run evaluate on all the videos in verifyVideos
-# Using for loop due to memory issues
-for video_id in verifyVideos:
+    # Just to be sure in case of web app not deleting the progress
+    # we clear the prediction progress table
+    cursor.execute("""DELETE FROM predict_progress""")
+    con.commit()
     cursor.execute(
-        f"""UPDATE predict_progress SET videoid = {video_id}, current_video = current_video + 1"""
+        """
+        INSERT INTO predict_progress (videoid, current_video, total_videos)
+        VALUES (%s, %s, %s)""",
+        (0, 0, len(verify_videos)),
     )
     con.commit()
-    evaluate(video_id, user_model, concepts)
 
-cursor.execute(
+def evaluate_videos(concepts, verify_videos, user_model):
+    """ Run evaluate on all the evaluation videos
     """
-    UPDATE predict_progress
-    SET status=4
+
+    # We go one by one as multiprocessing ran into memory issues
+    for video_id in verify_videos:
+        cursor.execute(
+            f"""UPDATE predict_progress SET videoid = {video_id}, current_video = current_video + 1"""
+        )
+        con.commit()
+        evaluate(video_id, user_model, concepts)
+
+    # Status level 4 on a video means that predictions have completed.
+    cursor.execute(
+        """
+        UPDATE predict_progress
+        SET status=4
+        """
+    )
+    con.commit()
+
+def reset_model_params():
+    """ Reset the model_params table
     """
-)
+    cursor.execute(
+        """
+        Update model_params
+        SET epochs = 0, min_images=0, model='', annotation_collections=ARRAY[]:: integer[],
+            verified_only=null, include_tracking=null
+        WHERE option='train'
+        """
+    )
+    con.commit()
+    con.close()
 
-con.commit()
-
-# subprocess.call(["rm", "*.mp4"])
-
-cursor.execute(
+def shutdown_server():
+    """ Shutdown this EC2 instance
     """
-    Update model_params
-    SET epochs = 0, min_images=0, model='', annotation_collections=ARRAY[]: : integer[],
-        verified_only=null, include_tracking=null
-    WHERE option='train'
-    """
-)
 
-con.commit()
-con.close()
-subprocess.call(["sudo", "shutdown", "-h"])
+    subprocess.call(["sudo", "shutdown", "-h"])
 
+
+if __name__ == '__main__':
+    main()
