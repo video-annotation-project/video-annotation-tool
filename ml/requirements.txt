@@ -1,9 +1,0 @@
-tensorflow-gpu
-psycopg2-binary
-boto3
-pandas
-numpy
-python-dotenv
-pascal-voc-writer
-scikit-image
-keras
