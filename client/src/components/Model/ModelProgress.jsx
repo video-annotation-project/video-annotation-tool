@@ -9,6 +9,7 @@ import Tab from '@material-ui/core/Tab';
 import SwipeableViews from 'react-swipeable-views';
 import Box from '@material-ui/core/Box';
 import withStyles from '@material-ui/core/styles/withStyles';
+import CircularProgress from '@material-ui/core/CircularProgress';
 import PredictProgress from './PredictProgress';
 
 import './ModelProgress.css';
@@ -75,7 +76,8 @@ class ModelProgress extends Component {
       currentBatch,
       batchProgress,
       epochProgress,
-      trainStatus
+      trainStatus,
+      serverStatus
     } = this.state;
 
     return (
@@ -92,7 +94,7 @@ class ModelProgress extends Component {
               hidden={this.getButtonStatus() !== 0}
               variant="subtitle1"
             >
-              Not currently training.
+             {serverStatus === 'running' ? 'Training process starting...' : 'Not currently training.' }
             </Typography>
             <Typography variant="subtitle2" gutterBottom>
               {trainStatus === 1 && 'Model has started training...'}
@@ -104,9 +106,21 @@ class ModelProgress extends Component {
               onClick={startTraining}
               variant="contained"
               color="secondary"
-              disabled={!checkReady()}
+              disabled={!checkReady() || serverStatus !== 'stopped'}
             >
-              Start Training
+              <span hidden={serverStatus !== 'stopped'}>
+                Start Training
+              </span>
+              <span hidden={serverStatus !== 'pending'}>
+                <CircularProgress size={17} style={{position: 'relative', top: '5px', marginRight: '10px'}}/>
+                Starting...
+              </span>
+              <span hidden={serverStatus !== 'running'}>
+                Waiting...
+              </span>
+              <span hidden={serverStatus !== 'stopping'}>
+                Stopping...
+              </span>
             </Button>
           </div>
           <div hidden={this.getButtonStatus() !== 1}>
@@ -115,7 +129,16 @@ class ModelProgress extends Component {
               variant="contained"
               className="stopButton"
             >
-              Stop Training
+              <span hidden={serverStatus !== 'running'}>
+                Stop Training
+              </span>
+              <span hidden={serverStatus !== 'stopping'}>
+                <CircularProgress size={20} style={{position: 'relative', top: '5px', marginRight: '10px'}}/>
+                Stopping...
+              </span>
+              <span hidden={serverStatus !== 'stopped'}>
+                Stopped
+              </span>
             </Button>
             <Button
               onClick={terminateTraining}
@@ -154,11 +177,43 @@ class ModelProgress extends Component {
     );
   };
 
-  loadProgressInfoTrain = () => {
-    const { activeStep } = this.props;
-    if (activeStep < 3) {
-      return;
+  loadStdOut = () => {
+    const config = {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    };
+    axios
+      .get(`/api/models/train/stdout`, config)
+      .then(res => {
+        this.setState({
+          stdout: res.data
+        });
+      })
+      .catch(error => {
+        console.log(error);
+      });
+  }
+
+  loadStdErr = () => {
+    const config = {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    };
+    axios
+      .get(`/api/models/train/stderr`, config)
+      .then(res => {
+        this.setState({
+          stderr: res.data
+        });
+      })
+      .catch(error => {
+        console.log(error);
+      });
     }
+
+  loadProgressInfoTrain = () => {
     const config = {
       headers: {
         Authorization: `Bearer ${localStorage.getItem('token')}`
@@ -177,8 +232,6 @@ class ModelProgress extends Component {
           epochProgress: ((progress.curr_epoch + 1) / progress.max_epoch) * 100,
           batchProgress:
             ((progress.curr_batch + 1) / progress.steps_per_epoch) * 100,
-          stdout: progress.std_out,
-          stderr: progress.std_err,
           trainStatus: progress.status
         });
       })
@@ -193,6 +246,12 @@ class ModelProgress extends Component {
 
   handleChange = (event, newValue) => {
     this.setState({ tab: newValue });
+    if (newValue === 1){
+      this.loadStdOut();
+    }
+    else if (newValue === 2){
+      this.loadStdErr();
+    }
   };
 
   loadProgressInfoPredict = async () => {
@@ -251,9 +310,26 @@ class ModelProgress extends Component {
   };
 
   loadProgressInfo() {
+    this.getInstanceStatus();
     this.loadProgressInfoTrain();
     this.loadProgressInfoPredict();
   }
+
+  getInstanceStatus = () => {
+    const config = {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    };
+    try {
+      axios.get(`/api/models/instance/status`, config).then(res => {
+        this.setState({ serverStatus: res.data });
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
 
   render() {
     const { className } = this.props;

@@ -141,17 +141,18 @@ class VerifyAnnotations extends Component {
   componentDidMount = async () => {
     this.displayLoading();
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    await this.loadVerifiedBoxes();
+    await this.loadBoxes();
   };
 
   componentDidUpdate = async prevProps => {
     const { annotating } = this.props;
     if (annotating !== prevProps.annotating) {
-      await this.loadVerifiedBoxes();
+      await this.loadBoxes();
     }
   };
 
   handleKeyDown = (keyName, e) => {
+    const { annotation } = this.props;
     e.preventDefault();
     if (e.target === document.body) {
       if (keyName === 'r') {
@@ -159,7 +160,7 @@ class VerifyAnnotations extends Component {
         this.resetState();
       } else if (keyName === 'd') {
         // delete shortcut
-        this.handleDelete();
+        this.handleDelete(annotation);
       } else if (keyName === 'i') {
         // ignore shortcut
         this.nextAnnotation();
@@ -191,6 +192,42 @@ class VerifyAnnotations extends Component {
     }));
   };
 
+  loadBoxes = async () => {
+    await this.loadBoxesOutsideOfCollection();
+    await this.loadVerifiedBoxes();
+  };
+
+  loadBoxesOutsideOfCollection = async () => {
+    const { annotation, selectedAnnotationCollections } = this.props;
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      },
+      params: {
+        selectedAnnotationCollections
+      }
+    };
+    try {
+      const data = await axios.get(
+        `/api/annotations/boxes/${annotation.id}` +
+          `?videoid=${annotation.videoid}&timeinvideo=${annotation.timeinvideo}&notcol=true`,
+        config
+      );
+      if (data.data.length > 0) {
+        this.setState({
+          boxesOutsideCol: data.data[0].box
+        });
+      } else {
+        this.setState({
+          boxesOutsideCol: []
+        });
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   loadVerifiedBoxes = async () => {
     const { annotation, selectedAnnotationCollections } = this.props;
     const config = {
@@ -204,8 +241,8 @@ class VerifyAnnotations extends Component {
     };
     try {
       const data = await axios.get(
-        `/api/annotations/verifiedboxes/${annotation.id}` +
-          `?videoid=${annotation.videoid}&timeinvideo=${annotation.timeinvideo}`,
+        `/api/annotations/boxes/${annotation.id}` +
+          `?videoid=${annotation.videoid}&timeinvideo=${annotation.timeinvideo}&notcol=false`,
         config
       );
       if (data.data.length > 0) {
@@ -260,8 +297,7 @@ class VerifyAnnotations extends Component {
 
   resetState = async () => {
     const { annotation, annotating } = this.props;
-
-    await this.loadVerifiedBoxes();
+    await this.loadBoxes();
 
     this.setState({
       drawDragBox: true,
@@ -347,7 +383,7 @@ class VerifyAnnotations extends Component {
   };
 
   handleDelete = async annotationArg => {
-    const { annotation } = this.props;
+    const { annotation, removeFromIgnoreList } = this.props;
     const config = {
       headers: {
         'Content-Type': 'application/json',
@@ -359,7 +395,8 @@ class VerifyAnnotations extends Component {
     };
     axios
       .delete('/api/annotations', config)
-      .then(async () => {
+      .then(async res => {
+        console.log(res);
         this.toastPopup.fire({
           type: 'success',
           title: 'Deleted!!'
@@ -367,6 +404,7 @@ class VerifyAnnotations extends Component {
         if (annotation.id === annotationArg.id) {
           this.nextAnnotation(false);
         } else {
+          removeFromIgnoreList(annotationArg);
           this.resetState();
         }
       })
@@ -439,36 +477,31 @@ class VerifyAnnotations extends Component {
     const y2 = y + parseInt(height, 0);
     const date = annotating ? Date.now().toString() : null;
 
-    try {
-      if (
-        Math.abs(
-          annotation.x1 -
-            x1 +
-            (annotation.y1 - y1) +
-            (annotation.x2 - x2) +
-            (annotation.y2 - y2)
-        ) > 0.1 &&
-        annotation.image
-      ) {
-        this.createAndUploadImages(
-          imageCord,
-          dragBoxCord,
-          imageElement,
-          x1,
-          y1,
-          date
-        );
-        this.updateBox(x1, y1, x2, y2);
-      }
+    if (
+      Math.abs(
+        annotation.x1 -
+          x1 +
+          (annotation.y1 - y1) +
+          (annotation.x2 - x2) +
+          (annotation.y2 - y2)
+      ) > 0.1 &&
+      annotation.image
+    ) {
+      this.createAndUploadImages(
+        imageCord,
+        dragBoxCord,
+        imageElement,
+        x1,
+        y1,
+        date
+      );
+      this.updateBox(x1, y1, x2, y2);
+    }
 
-      if (annotating) {
-        this.postAnnotation(date);
-      } else {
-        this.verifyAnnotation();
-      }
-    } catch {
-      console.log('Unable to Verify');
-      this.nextAnnotation(false);
+    if (annotating) {
+      this.postAnnotation(date);
+    } else {
+      this.verifyAnnotation();
     }
   };
 
@@ -486,7 +519,7 @@ class VerifyAnnotations extends Component {
     const ctx = canvas.getContext('2d');
     ctx.drawImage(imageElement, 0, 0, canvas.width, canvas.height);
     const img = new window.Image();
-    img.setAttribute('crossOrigin', 'use-credentials');
+    img.setAttribute('crossOrigin', 'anonymous');
     ctx.lineWidth = '2';
     ctx.strokeStyle = 'coral';
     ctx.rect(x1, y1, dragBoxCord.width, dragBoxCord.height);
@@ -565,7 +598,6 @@ class VerifyAnnotations extends Component {
       });
       return;
     }
-
     this.postBoxImage(dragBox);
   };
 
@@ -805,7 +837,8 @@ class VerifyAnnotations extends Component {
       height,
       openedVideo,
       videoDialogOpen,
-      verifiedBoxes
+      verifiedBoxes,
+      boxesOutsideCol
     } = this.state;
 
     if (x === null) {
@@ -861,6 +894,8 @@ class VerifyAnnotations extends Component {
                     }}
                   >
                     <Boxes
+                      handleDelete={this.handleDelete}
+                      boxesOutsideCol={boxesOutsideCol}
                       verifiedBoxes={verifiedBoxes}
                       ignoredAnnotations={ignoredAnnotations}
                       annotation={annotation}

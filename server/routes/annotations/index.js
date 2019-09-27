@@ -83,9 +83,10 @@ router.get(
 );
 
 router.get(
-  '/verifiedboxes/:id',
+  '/boxes/:id',
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
+    const { notcol } = req.query;
     let params = [
       req.query.videoid,
       req.query.timeinvideo,
@@ -103,7 +104,11 @@ router.get(
         a.videoid = $1 AND ROUND(v.fps * a.timeinvideo) = ROUND(v.fps * $2) AND a.id <> $3
         AND a.conceptid::INT = ANY(SELECT unnest(ARRAY(SELECT unnest(conceptid) FROM annotation_collection WHERE
           id::INT = ANY($4))))
-        AND a.verifiedby IS NOT NULL
+          ${
+            notcol === 'true'
+              ? `AND a.id <> ALL(SELECT annotationid FROM annotation_intermediate WHERE id = ANY($4))`
+              : `AND a.verifiedby IS NOT NULL AND a.id = ANY(SELECT annotationid FROM annotation_intermediate WHERE id = ANY($4))`
+          }
       GROUP BY
           a.videoid, ROUND(v.fps * a.timeinvideo)
     `;
