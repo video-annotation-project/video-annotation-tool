@@ -425,9 +425,6 @@ class S3Generator(Generator):
                 float(annot['y2']),
             ]]))
             
-        print(f'[Training] Training with {annotations["bboxes"].shape[0]} annotations located at {config.S3_ANNOTATION_FOLDER}{image["image"]}',
-                f'from video {image["videoid"]} at frame {image["frame_num"]}')
-
         return annotations
 
     def _download_image(self, image_index):
