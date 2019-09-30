@@ -23,6 +23,7 @@ from train.callbacks.tensorboard import TensorboardLog
 def train_model(concepts,
                 verify_videos,
                 model_name,
+                model_version,
                 collection_ids,
                 min_examples,
                 epochs,
@@ -92,7 +93,7 @@ def train_model(concepts,
     )
 
     # Upload the weights file to the S3 bucket
-    _upload_weights(model_name)
+    _upload_weights(model_name, model_version)
 
     # Evaluate the best confidence thresholds for the model
     evaluate_class_thresholds(model, test_generator)
@@ -165,13 +166,13 @@ def _get_callbacks(model,
     return [stopping, checkpoint, progress_callback, log_callback, tensorboard_callback]
 
 
-def _upload_weights(model_name):
+def _upload_weights(model_name, model_version):
     """ Upload model weights to s3 bucket
     """
     s3.upload_file(
         config.WEIGHTS_PATH,
         config.S3_BUCKET,
-        config.S3_WEIGHTS_FOLDER + model_name + ".h5"
+        config.S3_WEIGHTS_FOLDER + model_name + "_" + model_version + ".h5"
     )
 
 

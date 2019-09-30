@@ -15,18 +15,26 @@ model_params = pd_query(
     SELECT * FROM model_params WHERE option='train'"""
 ).iloc[0]
 
-try:
-    s3.download_file(
-        config.S3_BUCKET,
-        config.S3_WEIGHTS_FOLDER + str(model_params["model"]) + ".h5",
-        config.WEIGHTS_PATH,
-    )
-except ClientError:
+model_version = model_params["version"].replace(".", "-")
+if model_version != "0":
+    try:
+        s3.download_file(
+            config.S3_BUCKET,
+            config.S3_WEIGHTS_FOLDER + str(model_params["model"]) + "_" + model_version + ".h5",
+            config.WEIGHTS_PATH,
+        )
+    except ClientError:
+        s3.download_file(
+            config.S3_BUCKET,
+            config.S3_WEIGHTS_FOLDER + config.DEFAULT_WEIGHTS_PATH,
+            config.WEIGHTS_PATH,
+        )
+else:
     s3.download_file(
         config.S3_BUCKET,
         config.S3_WEIGHTS_FOLDER + config.DEFAULT_WEIGHTS_PATH,
         config.WEIGHTS_PATH,
-    )
+    ) 
 
 model = pd_query(
     """SELECT * FROM models WHERE name=%s""", (str(model_params["model"]),)
@@ -56,6 +64,19 @@ cursor.execute(
 )
 model_user_id = int(cursor.fetchone()[0])
 
+# get new model version number
+
+# get 'versions' from model in db
+# from model_version, go one level down in versions
+# if version == 0, one level down = first level
+# if no current level down
+#   create new list, new version = <model_version>.1
+# else
+#   get element at end of list one level down
+#   new version = this element's version with last integer incremented by 1
+# append new version to end of this list
+new_version = "1-1" #replace '.' with '-' for filename in S3
+
 # update models
 cursor.execute(
     """
@@ -73,6 +94,7 @@ train_model(
     concepts,
     verifyVideos,
     model_params["model"],
+    new_version,
     model_params["annotation_collections"],
     int(model_params["min_images"]),
     int(model_params["epochs"]),
@@ -119,7 +141,7 @@ cursor.execute(
     """
     Update model_params
     SET epochs = 0, min_images=0, model='', annotation_collections=ARRAY[]: : integer[],
-        verified_only=null, include_tracking=null
+        verified_only=null, include_tracking=null, version=null
     WHERE option='train'
     """
 )
