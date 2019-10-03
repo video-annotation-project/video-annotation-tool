@@ -15,12 +15,13 @@ model_params = pd_query(
     SELECT * FROM model_params WHERE option='train'"""
 ).iloc[0]
 
-model_version = model_params["version"].replace(".", "-")
+model_version = model_params["version"]
+model_file_version = model_version.replace(".", "-")
 if model_version != "0":
     try:
         s3.download_file(
             config.S3_BUCKET,
-            config.S3_WEIGHTS_FOLDER + str(model_params["model"]) + "_" + model_version + ".h5",
+            config.S3_WEIGHTS_FOLDER + str(model_params["model"]) + "_" + model_file_version + ".h5",
             config.WEIGHTS_PATH,
         )
     except ClientError:
@@ -66,16 +67,27 @@ model_user_id = int(cursor.fetchone()[0])
 
 # get new model version number
 
-# get 'versions' from model in db
-# from model_version, go one level down in versions
-# if version == 0, one level down = first level
-# if no current level down
-#   create new list, new version = <model_version>.1
-# else
-#   get element at end of list one level down
-#   new version = this element's version with last integer incremented by 1
-# append new version to end of this list
-new_version = "1-1" #replace '.' with '-' for filename in S3
+# from model_version, select versions one level down
+level_down = pd_query(
+    """ SELECT versions FROM models WHERE name=%s AND versions ~ '%s.*{1}' """,
+    ((str(model_params["model"]),
+    model_version)
+)
+num_rows = len(level_down)
+if num_rows == 0:
+    new_version = model_version + ".1"
+else:
+    latest_version = level_down.iloc[num_rows - 1]["versions"]
+    last_num = str(int(latest_version[-1]) + 1)
+    new_version = latest_version[:-1] + last_num
+
+cursor.execute(
+    """ INSERT INTO models (versions) VALUES (%s) WHERE name=%s""",
+    (new_version,
+    (str(model_params["model"]))
+)
+# reformat for weights filename in s3
+new_version = new_version.replace(".", "-'") 
 
 # update models
 cursor.execute(
@@ -141,7 +153,7 @@ cursor.execute(
     """
     Update model_params
     SET epochs = 0, min_images=0, model='', annotation_collections=ARRAY[]: : integer[],
-        verified_only=null, include_tracking=null, version=null
+        verified_only=null, include_tracking=null, version=0
     WHERE option='train'
     """
 )
