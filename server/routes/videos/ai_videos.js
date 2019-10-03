@@ -22,7 +22,13 @@ router.get(
   '/',
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
-    let queryText = `SELECT * FROM ai_videos`;
+    let queryText = `
+      SELECT
+        *
+      FROM
+        ai_videos
+      ORDER BY
+        id`;
     try {
       let ai_videos = await psql.query(queryText);
       res.json(ai_videos);
