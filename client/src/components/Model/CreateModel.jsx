@@ -19,7 +19,6 @@ import Tooltip from '@material-ui/core/Tooltip';
 import List from '@material-ui/core/List';
 import IconButton from '@material-ui/core/IconButton';
 import Description from '@material-ui/icons/Description';
-import DialogTitle from '@material-ui/core/DialogTitle';
 import Dialog from '@material-ui/core/Dialog';
 
 import VideoMetadata from '../Utilities/VideoMetadata';

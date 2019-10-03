@@ -12,7 +12,6 @@ import Profile from './components/Profile';
 import Report from './components/Report/Report';
 import Verify from './components/Verify/Verify';
 import Users from './components/Users';
-import AIvideos from './components/AIVideos/AIvideos';
 
 import AnnotationCollection from './components/Collections/AnnotationCollection';
 import ConceptCollection from './components/Collections/ConceptCollection';
@@ -35,7 +34,6 @@ const App = () => {
                 <Route exact path="/account/create" component={CreateUser} />
                 <Route exact path="/models" component={Models} />
                 <Route exact path="/users" component={Users} />
-                <Route exact path="/aivideos" component={AIvideos} />
               </>
             ) : (
               ''

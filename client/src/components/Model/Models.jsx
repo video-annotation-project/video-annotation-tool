@@ -13,6 +13,7 @@ import TableCell from '@material-ui/core/TableCell';
 
 import ModelsTable from './ModelsTable';
 import CreateModel from './CreateModel';
+
 const styles = theme => ({
   root: {
     margins: 'auto',
@@ -38,6 +39,8 @@ class Models extends Component {
       models: [],
       videoModalOpen: false,
       createOpen: false,
+      trainOpen: false,
+      predictOpen: false,
       infoOpen: false,
       selectedModel: ''
     };
@@ -147,7 +150,9 @@ class Models extends Component {
       currentVideo,
       infoOpen,
       selectedModel,
-      createOpen
+      createOpen,
+      trainOpen,
+      predictOpen
     } = this.state;
 
     if (!models) {
@@ -177,6 +182,8 @@ class Models extends Component {
           handleClickVideo={this.handleClickVideo}
           toggleStateVariable={this.toggleStateVariable}
           currentVideo={currentVideo}
+          trainOpen={trainOpen}
+          predictOpen={predictOpen}
         />
         {infoOpen && (
           <Dialog onClose={this.handleCloseInfo} open={infoOpen}>

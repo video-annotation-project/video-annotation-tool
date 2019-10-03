@@ -20,7 +20,7 @@ router.get(
     if (req.query.train === 'true') {
       queryText = `
       SELECT 
-          name, id, count(*), array_agg(conceptid) as ids, json_agg((conceptname, conceptid)) as concepts
+          name, id, count(*), array_agg(conceptid) as ids, json_agg((conceptname, conceptid)) as concepts    
       FROM
       (SELECT ac.name, a.conceptid, ai.id, count(a.conceptid), c.name as conceptname
           FROM 

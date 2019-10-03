@@ -15,8 +15,9 @@ import Button from '@material-ui/core/Button';
 import { withStyles } from '@material-ui/core/styles';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Switch from '@material-ui/core/Switch';
+import Dialog from '@material-ui/core/Dialog';
 
-import ModelProgress from './ModelProgress';
+import ModelProgress from '../OldModel/ModelProgress';
 import CollectionInfo from '../Utilities/CollectionInfo';
 
 import './TrainModel.css';
@@ -40,32 +41,10 @@ const styles = theme => ({
 const paramFields = [
   'epochs',
   'minImages',
-  'modelSelected',
   'annotationCollections',
   'includeTracking',
   'verifiedOnly'
 ];
-
-function ModelsForm(props) {
-  const { className, modelSelected, handleChange, models, training } = props;
-  return (
-    <FormControl component="fieldset" className={className}>
-      <InputLabel shrink>Model</InputLabel>
-      <Select
-        name="modelSelected"
-        value={modelSelected || 'Loading...'}
-        onChange={handleChange}
-        disabled={training}
-      >
-        {models.map(model => (
-          <MenuItem key={model.name} value={model.name}>
-            {model.name}
-          </MenuItem>
-        ))}
-      </Select>
-    </FormControl>
-  );
-}
 
 function CollectionsForm(props) {
   const {
@@ -156,8 +135,6 @@ class TrainModel extends Component {
     super(props);
 
     this.state = {
-      models: [],
-      modelSelected: undefined,
       collections: [],
       annotationCollections: [],
       selectedCollectionCounts: [],
@@ -174,36 +151,11 @@ class TrainModel extends Component {
   }
 
   componentDidMount = async () => {
-    await this.loadExistingModels();
     await this.loadCollectionList();
     this.loadModelParams();
   };
 
-  loadExistingModels = () => {
-    const config = {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    };
-    return axios
-      .get(`/api/models`, config)
-      .then(res => {
-        this.setState({
-          models: res.data
-        });
-      })
-      .catch(error => {
-        console.log('Error in get /api/models');
-        console.log(error);
-        if (error.response) {
-          console.log(error.response.data.detail);
-        }
-      });
-  };
-
   loadCollectionList = () => {
-    const { models, modelSelected } = this.state;
-
     const config = {
       headers: {
         Authorization: `Bearer ${localStorage.getItem('token')}`
@@ -213,33 +165,8 @@ class TrainModel extends Component {
     return axios
       .get(`/api/collections/annotations?train=true`, config)
       .then(res => {
-        const selectedModelTuple = models.find(model => {
-          return model.name === modelSelected;
-        });
-
-        let modelConcepts;
-
-        if (modelSelected === undefined) {
-          modelConcepts = [];
-        } else {
-          modelConcepts = selectedModelTuple.conceptsid;
-        }
-
-        res.data.forEach(col => {
-          const filtered = modelConcepts.filter(x => col.ids.includes(x));
-          if (filtered.length > 0) {
-            col.disable = false;
-            col.validConcepts = col.concepts.filter(y =>
-              filtered.includes(y.f2)
-            );
-          } else {
-            col.disable = true;
-            col.validConcepts = [];
-          }
-        });
-        console.log(res.data);
         this.setState({
-          collections: res.data.sort(a => (a.validConcepts ? -1 : 1)),
+          collections: res.data,
           annotationCollections: [],
           selectedCollectionCounts: [],
           minCounts: [],
@@ -265,16 +192,9 @@ class TrainModel extends Component {
   // Used to handle changes in the hyperparameters and in the select model
   handleChange = event => {
     event.persist();
-    this.setState(
-      {
-        [event.target.name]: event.target.value
-      },
-      () => {
-        if (event.target.name === 'modelSelected') {
-          this.loadCollectionList();
-        }
-      }
-    );
+    this.setState({
+      [event.target.name]: event.target.value
+    });
   };
 
   handleChangeSwitch = event => {
@@ -329,7 +249,6 @@ class TrainModel extends Component {
 
             this.setState(
               {
-                modelSelected: params.model,
                 annotationCollections: annotationCollections,
                 includeTracking: params.include_tracking,
                 verifiedOnly: params.verified_only,
@@ -375,7 +294,7 @@ class TrainModel extends Component {
     const validConcepts = [];
 
     annotationCollections.forEach(collection => {
-      collection.validConcepts.forEach(concept => {
+      collection.concepts.forEach(concept => {
         validConcepts.push(concept.f2);
       });
     });
@@ -463,6 +382,7 @@ class TrainModel extends Component {
   };
 
   updateModelParams = async () => {
+    const { model } = this.props;
     const config = {
       headers: {
         Authorization: `Bearer ${localStorage.getItem('token')}`
@@ -473,7 +393,6 @@ class TrainModel extends Component {
       epochs,
       minImages,
       annotationCollections,
-      modelSelected,
       verifiedOnly,
       includeTracking
     } = this.state;
@@ -483,7 +402,7 @@ class TrainModel extends Component {
       minImages,
       includeTracking,
       verifiedOnly,
-      modelSelected,
+      modelSelected: model,
       annotationCollections: annotationCollections.map(c => c.id)
     };
 
@@ -507,10 +426,8 @@ class TrainModel extends Component {
   };
 
   render() {
-    const { classes } = this.props;
+    const { classes, toggleStateVariable, trainOpen, model } = this.props;
     const {
-      modelSelected,
-      models,
       collections,
       annotationCollections,
       infoDialogOpen,
@@ -524,17 +441,17 @@ class TrainModel extends Component {
     } = this.state;
 
     return (
-      <div className="root">
+      <Dialog
+        fullWidth={true}
+        maxWidth="md"
+        className={classes.root}
+        open={trainOpen}
+        onClose={() => toggleStateVariable(false, 'trainOpen')}
+      >
         <Paper className={classes.paper}>
           <div className="container">
             <div className="actionsContainer">
-              <ModelsForm
-                className="modelsForm"
-                modelSelected={modelSelected}
-                handleChange={this.handleChange}
-                models={models}
-                training={training}
-              />
+              <Typography className="collectionsForm">{model.name}</Typography>
               <CollectionsForm
                 className="collectionsForm"
                 collections={collections}
@@ -613,7 +530,7 @@ class TrainModel extends Component {
             />
           </div>
         </Paper>
-      </div>
+      </Dialog>
     );
   }
 }

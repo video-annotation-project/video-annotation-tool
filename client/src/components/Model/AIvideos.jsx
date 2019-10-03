@@ -6,8 +6,12 @@ import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
 import Hotkeys from 'react-hot-keys';
 import Grid from '@material-ui/core/Grid';
+import axios from 'axios';
+import IconButton from '@material-ui/core/IconButton';
+import Description from '@material-ui/icons/Description';
 
 import Modal from '@material-ui/core/Modal';
+import Summary from '../Utilities/Summary';
 
 const styles = theme => ({
   videoContainer: {
@@ -65,13 +69,82 @@ class Annotate extends Component {
       isLoaded: false,
       videoPlaybackRate: 1.0,
       error: null,
-      socket
+      socket,
+      descriptionOpen: false,
+      summary: null,
+      metrics: null
     };
   }
 
   componentDidMount = async () => {
     // add event listener for closing or reloading window
     window.addEventListener('beforeunload', this.handleUnload);
+  };
+
+  openVideoSummary = async (event, video) => {
+    event.stopPropagation();
+
+    this.setState({
+      descriptionOpen: true,
+      summary: await this.getSummary(video),
+      metrics: await this.getMetrics(video)
+    });
+  };
+
+  getSummary = async video => {
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    };
+    let ret;
+    try {
+      const summary = await axios.get(
+        `/api/videos/aivideos/summary/${video.name}`,
+        config
+      );
+
+      if (summary) {
+        ret = summary;
+      }
+    } catch (error) {
+      console.log('Error in summary.jsx get /api/videos/aivideos/summary');
+      console.log(error.response.data);
+      ret = error.response;
+    }
+    return ret;
+  };
+
+  getMetrics = async video => {
+    const config = {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    };
+    let ret;
+    try {
+      const metrics = await axios.get(
+        `/api/videos/aivideos/metrics?filename=${video.name}`,
+        config
+      );
+      if (metrics) {
+        ret = metrics.data;
+      }
+    } catch (error) {
+      console.error('Error in summary.jsx get /api/videos/aivideos/metrics');
+      console.error(error.response.data);
+      ret = error.response;
+    }
+    return ret;
+  };
+
+  closeVideoSummary = () => {
+    this.setState({
+      descriptionOpen: false,
+      summary: null,
+      metrics: null
+    });
   };
 
   handleUnload = ev => {
@@ -134,7 +207,13 @@ class Annotate extends Component {
 
   render() {
     const { classes, videoModalOpen, toggleStateVariable, video } = this.props;
-    const { error, videoPlaybackRate } = this.state;
+    const {
+      error,
+      videoPlaybackRate,
+      summary,
+      descriptionOpen,
+      metrics
+    } = this.state;
 
     if (error) {
       return (
@@ -230,6 +309,11 @@ class Annotate extends Component {
                 >
                   +5 sec
                 </Button>
+                <IconButton
+                  onClick={event => this.openVideoSummary(event, video)}
+                >
+                  <Description />
+                </IconButton>
                 <Button
                   variant="contained"
                   color="primary"
@@ -252,6 +336,15 @@ class Annotate extends Component {
             </Grid>
             <Grid item xs />
           </Grid>
+          {descriptionOpen && (
+            <Summary
+              open
+              handleClose={this.closeVideoSummary}
+              summary={summary}
+              aiSummary
+              metrics={metrics}
+            />
+          )}
         </div>
       </Modal>
     );
