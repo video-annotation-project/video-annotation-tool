@@ -45,16 +45,24 @@ model = pd_query(
 concepts = model["concepts"]
 verifyVideos = model["verificationvideos"]
 
-user_model = model["name"] + "-" + time.ctime()
+# --- get new model version number ---
 
-# Delete old model user
-if model["userid"] != None:
-    cursor.execute(
-        """
-         DELETE FROM users
-         WHERE id=%s""",
-        (int(model["userid"]),),
-    )
+# from model_version, select versions one level down
+level_down = pd_query(
+    """ SELECT version FROM model_versions WHERE model=%s AND version ~ '%s.*{1}' """,
+    ((str(model_params["model"]),
+    model_version)
+)
+num_rows = len(level_down)
+if num_rows == 0:
+    new_version = model_version + ".1"
+else:
+    latest_version = level_down.iloc[num_rows - 1]["version"]
+    last_num = int(latest_version[-1]) + 1
+    new_version = latest_version[:-1] + str(last_num)
+
+# create new model-version user
+user_model = model["name"] + "-" + new_version
 
 cursor.execute(
     """
@@ -65,39 +73,23 @@ cursor.execute(
 )
 model_user_id = int(cursor.fetchone()[0])
 
-# get new model version number
-
-# from model_version, select versions one level down
-level_down = pd_query(
-    """ SELECT versions FROM models WHERE name=%s AND versions ~ '%s.*{1}' """,
-    ((str(model_params["model"]),
-    model_version)
-)
-num_rows = len(level_down)
-if num_rows == 0:
-    new_version = model_version + ".1"
-else:
-    latest_version = level_down.iloc[num_rows - 1]["versions"]
-    last_num = str(int(latest_version[-1]) + 1)
-    new_version = latest_version[:-1] + last_num
-
+# insert new version into model_versions table
 cursor.execute(
-    """ INSERT INTO models (versions) VALUES (%s) WHERE name=%s""",
-    (new_version,
-    (str(model_params["model"]))
+    """ INSERT INTO model_versions VALUES (%d, %d, %s, %s, %r, %r, %s, %d) """,
+    (
+        int(model_params["epochs"]),
+        int(model_params["min_images"]),
+        model_params["model"],
+        model_params["annotation_collections"],
+        model_params["verified_only"],
+        model_params["include_tracking"],
+        new_version,
+        model_user_id
+    )
 )
-# reformat for weights filename in s3
+
+# reformat version name for weights filename in s3 
 new_version = new_version.replace(".", "-'") 
-
-# update models
-cursor.execute(
-    """
-    UPDATE models
-    SET userid=%s
-    WHERE name=%s
-    RETURNING *""",
-    (model_user_id, model_params["model"]),
-)
 
 # Start training job
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
