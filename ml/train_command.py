@@ -53,11 +53,16 @@ verifyVideos = model["verificationvideos"]
 
 # --- get new model version number ---
 
+if model_version == '0':
+    num_model_version = 0
+else:
+    num_model_version = float(model_version)
+
 # from model_version, select versions one level down
 level_down = pd_query(
     """ SELECT version FROM model_versions WHERE model=%s AND version ~ '%s.*{1}' """,
     (model_params["model"],
-    model_version)
+    num_model_version
 )
 
 num_rows = len(level_down)
