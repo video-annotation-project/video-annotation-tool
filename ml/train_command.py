@@ -15,7 +15,7 @@ model_params = pd_query(
     SELECT * FROM model_params WHERE option='train'"""
 ).iloc[0]
 
-model_version = model_params["version"]
+model_version = str(model_params["version"])
 print("model version: %s", model_version)
 model_file_version = model_version.replace(".", "-")
 print("model file version: %s", model_file_version)
