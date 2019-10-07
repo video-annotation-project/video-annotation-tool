@@ -91,7 +91,7 @@ model_user_id = int(cursor.fetchone()[0])
 print("inserting row in model_versions")
 # insert new version into model_versions table
 cursor.execute(
-    """ INSERT INTO model_versions VALUES (%d, %d, %s, %s, %r, %r, %s, %d) """,
+    """ INSERT INTO model_versions VALUES (%d, %d, %s, %s, %r, %r, %d, %s) """,
     (
         int(model_params["epochs"]),
         int(model_params["min_images"]),
