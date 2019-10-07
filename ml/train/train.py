@@ -169,6 +169,7 @@ def _get_callbacks(model,
 def _upload_weights(model_name, model_version):
     """ Upload model weights to s3 bucket
     """
+    print("uploading weights file to S3")
     s3.upload_file(
         config.WEIGHTS_PATH,
         config.S3_BUCKET,

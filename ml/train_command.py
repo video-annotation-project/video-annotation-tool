@@ -16,7 +16,10 @@ model_params = pd_query(
 ).iloc[0]
 
 model_version = model_params["version"]
+print("model version: %s", model_version)
 model_file_version = model_version.replace(".", "-")
+print("model file version: %s", model_file_version)
+
 if model_version != "0":
     try:
         s3.download_file(
@@ -24,13 +27,16 @@ if model_version != "0":
             config.S3_WEIGHTS_FOLDER + str(model_params["model"]) + "_" + model_file_version + ".h5",
             config.WEIGHTS_PATH,
         )
+        print("downloaded file: %s", str(model_params["model"]) + "_" + model_file_version + ".h5")
     except ClientError:
         s3.download_file(
             config.S3_BUCKET,
             config.S3_WEIGHTS_FOLDER + config.DEFAULT_WEIGHTS_PATH,
             config.WEIGHTS_PATH,
         )
+        print("exception occurred, downloading default weights file")
 else:
+    print("downloading default weights file")
     s3.download_file(
         config.S3_BUCKET,
         config.S3_WEIGHTS_FOLDER + config.DEFAULT_WEIGHTS_PATH,
@@ -61,6 +67,8 @@ else:
     last_num = int(latest_version[-1]) + 1
     new_version = latest_version[:-1] + str(last_num)
 
+print("new version: %s", new_version)
+
 # create new model-version user
 user_model = model["name"] + "-" + new_version
 
@@ -73,6 +81,7 @@ cursor.execute(
 )
 model_user_id = int(cursor.fetchone()[0])
 
+print("inserting row in model_versions")
 # insert new version into model_versions table
 cursor.execute(
     """ INSERT INTO model_versions VALUES (%d, %d, %s, %s, %r, %r, %s, %d) """,
@@ -141,6 +150,7 @@ con.commit()
 
 # subprocess.call(["rm", "*.mp4"])
 
+print("reseting model_params")
 cursor.execute(
     """
     Update model_params
