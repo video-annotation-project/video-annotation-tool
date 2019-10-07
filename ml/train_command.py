@@ -68,11 +68,11 @@ level_down = pd_query(
 
 num_rows = len(level_down)
 if num_rows == 0:
-    new_version = "'" + model_version + ".1'"
+    new_version = model_version + ".1"
 else:
     latest_version = level_down.iloc[num_rows - 1]["version"]
     last_num = int(latest_version[-1]) + 1
-    new_version = "'" +  latest_version[:-1] + str(last_num) + "'"
+    new_version = latest_version[:-1] + str(last_num)
 
 print(f"new version: {new_version}")
 
@@ -104,6 +104,7 @@ cursor.execute(
         new_version
     )
 )
+con.commit()
 
 # reformat version name for weights filename in s3 
 new_version = new_version.replace(".", "-'") 
