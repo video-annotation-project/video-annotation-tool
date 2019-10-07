@@ -89,7 +89,8 @@ cursor.execute(
 model_user_id = int(cursor.fetchone()[0])
 
 print("inserting row in model_versions")
-print(f"model_params include tracking: {model_params["include_tracking"]}")
+incl_track = model_params["include_tracking"]
+print(f"model_params include tracking: {incl_track}")
 
 # insert new version into model_versions table
 cursor.execute(
