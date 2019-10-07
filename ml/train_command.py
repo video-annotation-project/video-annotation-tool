@@ -60,7 +60,7 @@ else:
 
 # from model_version, select versions one level down
 level_down = pd_query(
-    """ SELECT version FROM model_versions WHERE model=%s AND version ~ '%s.*{1}' """,
+    """ SELECT version FROM model_versions WHERE model=%s AND version ~ '%d.*{1}' """,
     (str(model_params["model"]),
     num_model_version)
 )
