@@ -56,9 +56,10 @@ verifyVideos = model["verificationvideos"]
 # from model_version, select versions one level down
 level_down = pd_query(
     """ SELECT version FROM model_versions WHERE model=%s AND version ~ '%s.*{1}' """,
-    ((str(model_params["model"]),
+    (str(model_params["model"]),
     model_version)
 )
+
 num_rows = len(level_down)
 if num_rows == 0:
     new_version = model_version + ".1"
