@@ -98,8 +98,8 @@ cursor.execute(
         int(model_params["min_images"]),
         model_params["model"],
         model_params["annotation_collections"],
-        model_params["verified_only"],
-        model_params["include_tracking"],
+        bool(model_params["verified_only"]),
+        bool(model_params["include_tracking"]),
         model_user_id,
         new_version
     )
