@@ -16,9 +16,9 @@ model_params = pd_query(
 ).iloc[0]
 
 model_version = str(model_params["version"])
-print("model version: %s", model_version)
+print(f"model version: {model_version}")
 model_file_version = model_version.replace(".", "-")
-print("model file version: %s", model_file_version)
+print(f"model file version: {model_file_version}")
 
 if model_version != "0":
     try:
@@ -74,7 +74,7 @@ else:
     last_num = int(latest_version[-1]) + 1
     new_version = latest_version[:-1] + str(last_num)
 
-print("new version: %s", new_version)
+print(f"new version: {new_version}")
 
 # create new model-version user
 user_model = model["name"] + "-" + new_version
@@ -99,8 +99,8 @@ cursor.execute(
         model_params["annotation_collections"],
         model_params["verified_only"],
         model_params["include_tracking"],
-        new_version,
-        model_user_id
+        model_user_id,
+        new_version
     )
 )
 
