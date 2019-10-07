@@ -438,6 +438,11 @@ class S3Generator(Generator):
         try:
             obj = self.client.get_object(
                 Bucket=config.S3_BUCKET, Key=config.S3_ANNOTATION_FOLDER + image_name)
+            if (obj['ContentLength'] == 0):
+                # Image is empty, use the next index
+                error_print(f'file {config.S3_ANNOTATION_FOLDER}{image_name} has size 0, using next image instead')
+                self.failed_downloads.add(image_index)
+                return False
             obj_image = Image.open(obj['Body'])
             resized_image = obj_image.resize(
                 (config.RESIZED_WIDTH, config.RESIZED_HEIGHT))

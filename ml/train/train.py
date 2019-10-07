@@ -177,5 +177,5 @@ def _get_num_workers():
     """ Returns the number of cores on this machine.
         1 worker per core should give us maximum preformance.
     """
-    # Subtract 1 for the main thread
-    return multiprocessing.cpu_count() - 1
+    # Subtract 1 for the main thread 
+    return multiprocessing.cpu_count() - 2

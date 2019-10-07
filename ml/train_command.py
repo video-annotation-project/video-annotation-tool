@@ -12,9 +12,12 @@ from utils.query import s3, con, cursor, pd_query
 
 
 def main():
+    """ We train a model and then use it to predict on the specified videos
+    """
     # This process periodically uploads the stdout and stderr files
     # To the S3 bucket. The website uses these to display stdout and stderr
-    upload_process = upload_stdout.start_uploading()
+    pid = os.getpid()
+    upload_process = upload_stdout.start_uploading(pid)
     model, model_params = get_model_and_params()
 
     concepts = model["concepts"]
@@ -27,6 +30,9 @@ def main():
     # This removes all of the [INFO] outputs from tensorflow.
     # We still see [WARNING] and [ERROR], but there's a lot less clutter
     os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
+
+    # If set, training will sometimes be unable to save the model
+    os.environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
 
     start_training(concepts, verify_videos, model_params)
     setup_predict_progress(verify_videos)
@@ -78,6 +84,7 @@ def delete_old_model_user(model):
              WHERE id=%s""",
             (int(model["userid"]),),
         )
+        con.commit()
 
 
 def create_model_user(model_params, user_model):
@@ -92,6 +99,7 @@ def create_model_user(model_params, user_model):
         RETURNING *""",
         (user_model,),
     )
+    con.commit()
     model_user_id = int(cursor.fetchone()[0])
 
     # Update the models table with the new user
@@ -100,7 +108,7 @@ def create_model_user(model_params, user_model):
         UPDATE models
         SET userid=%s
         WHERE name=%s
-        RETURNING *""",
+        """,
         (model_user_id, model_params["model"]),
     )
 
