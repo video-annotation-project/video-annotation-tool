@@ -68,11 +68,11 @@ level_down = pd_query(
 
 num_rows = len(level_down)
 if num_rows == 0:
-    new_version = model_version + ".1"
+    new_version = "'" + model_version + ".1'"
 else:
     latest_version = level_down.iloc[num_rows - 1]["version"]
     last_num = int(latest_version[-1]) + 1
-    new_version = latest_version[:-1] + str(last_num)
+    new_version = "'" +  latest_version[:-1] + str(last_num) + "'"
 
 print(f"new version: {new_version}")
 
@@ -89,8 +89,6 @@ cursor.execute(
 model_user_id = int(cursor.fetchone()[0])
 
 print("inserting row in model_versions")
-incl_track = model_params["include_tracking"]
-print(f"model_params include tracking: {incl_track}")
 
 # insert new version into model_versions table
 cursor.execute(
