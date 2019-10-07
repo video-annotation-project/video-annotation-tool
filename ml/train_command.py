@@ -61,8 +61,8 @@ else:
 # from model_version, select versions one level down
 level_down = pd_query(
     f""" SELECT version FROM model_versions WHERE model={0} AND version ~ '{1}.*{{1}}' """.format(
-        (str(model_params["model"]),
-        num_model_version)
+        str(model_params["model"]),
+        num_model_version
     )
 )
 
