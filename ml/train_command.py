@@ -92,14 +92,14 @@ print("inserting row in model_versions")
 
 # insert new version into model_versions table
 cursor.execute(
-    """ INSERT INTO model_versions VALUES (%d, %d, %s, %s, %r, %r, %d, %s) """,
+    """ INSERT INTO model_versions VALUES (%s, %s, %s, %s, %s, %s, %s, %s) """,
     (
         int(model_params["epochs"]),
         int(model_params["min_images"]),
         model_params["model"],
         model_params["annotation_collections"],
-        bool(model_params["verified_only"]),
-        bool(model_params["include_tracking"]),
+        model_params["verified_only"],
+        model_params["include_tracking"],
         model_user_id,
         new_version
     )
