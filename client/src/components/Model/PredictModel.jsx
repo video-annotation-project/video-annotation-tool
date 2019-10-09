@@ -79,9 +79,12 @@ class PredictModel extends Component {
   }
 
   componentDidMount = async () => {
-    await this.loadExistingModels();
-    await this.loadVideoList();
-    this.interval = setInterval(() => this.loadProgressInfoPredict(), 500);
+    const { predictOpen } = this.props;
+    if (predictOpen) {
+      await this.loadExistingModels();
+      await this.loadVideoList();
+      this.interval = setInterval(() => this.loadProgressInfoPredict(), 500);
+    }
   };
 
   loadExistingModels = () => {
@@ -283,7 +286,14 @@ class PredictModel extends Component {
         <Paper className={classes.paper}>
           <div className="container">
             <div className="actionsContainer">
-              <Typography className="collectionsForm">{model.name}</Typography>
+              <div>
+                <Typography align="left" variant="h4">
+                  {model.name}
+                </Typography>
+                <Typography align="left" variant="caption">
+                  Version: {model.version_selected}
+                </Typography>
+              </div>
               <VideoForm
                 className="collectionsForm"
                 videos={videos}
@@ -301,6 +311,7 @@ class PredictModel extends Component {
                       onChange={this.handleChangeSwitch}
                       value="postAnnotation"
                       color="primary"
+                      align="center"
                     />
                   }
                   label="Post Annotations"

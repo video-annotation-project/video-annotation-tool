@@ -42,7 +42,8 @@ class Models extends Component {
       trainOpen: false,
       predictOpen: false,
       infoOpen: false,
-      selectedModel: ''
+      selectedModel: '',
+      versionOpen: false
     };
   }
   formatDate = version => {
@@ -125,11 +126,11 @@ class Models extends Component {
     });
   };
 
-  handleSelectVersion = (event, model) => {
+  handleSelectVersion = (id, model) => {
     const { models } = this.state;
-    let selectedModel = models.find(m => m.name === model.name);
+    let selectedModel = models.find(m => m.name === model);
 
-    selectedModel.version_selected = event.target.value;
+    selectedModel.version_selected = id;
 
     this.setState({ models });
   };
@@ -152,7 +153,8 @@ class Models extends Component {
       selectedModel,
       createOpen,
       trainOpen,
-      predictOpen
+      predictOpen,
+      versionOpen
     } = this.state;
 
     if (!models) {
@@ -184,6 +186,7 @@ class Models extends Component {
           currentVideo={currentVideo}
           trainOpen={trainOpen}
           predictOpen={predictOpen}
+          versionOpen={versionOpen}
         />
         {infoOpen && (
           <Dialog onClose={this.handleCloseInfo} open={infoOpen}>

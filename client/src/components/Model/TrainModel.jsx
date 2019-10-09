@@ -151,8 +151,11 @@ class TrainModel extends Component {
   }
 
   componentDidMount = async () => {
-    await this.loadCollectionList();
-    this.loadModelParams();
+    const { trainOpen } = this.props;
+    if (trainOpen) {
+      await this.loadCollectionList();
+      this.loadModelParams();
+    }
   };
 
   loadCollectionList = () => {
@@ -451,7 +454,14 @@ class TrainModel extends Component {
         <Paper className={classes.paper}>
           <div className="container">
             <div className="actionsContainer">
-              <Typography className="collectionsForm">{model.name}</Typography>
+              <div>
+                <Typography align="left" variant="h4">
+                  {model.name}
+                </Typography>
+                <Typography align="left" variant="caption">
+                  Version: {model.version_selected}
+                </Typography>
+              </div>
               <CollectionsForm
                 className="collectionsForm"
                 collections={collections}
@@ -519,15 +529,19 @@ class TrainModel extends Component {
               counts={selectedCollectionCounts}
             />
             <Divider style={{ marginTop: '30px' }} variant="middle" />
-            <ModelProgress
-              className="progress"
-              postStopFlag={this.postStopFlag}
-              startTraining={this.startTraining}
-              stopTraining={this.stopTraining}
-              resetTraining={this.resetTraining}
-              terminateTraining={() => this.postModelInstance('stop')}
-              checkReady={this.checkReady}
-            />
+            {trainOpen ? (
+              <ModelProgress
+                className="progress"
+                postStopFlag={this.postStopFlag}
+                startTraining={this.startTraining}
+                stopTraining={this.stopTraining}
+                resetTraining={this.resetTraining}
+                terminateTraining={() => this.postModelInstance('stop')}
+                checkReady={this.checkReady}
+              />
+            ) : (
+              ''
+            )}
           </div>
         </Paper>
       </Dialog>

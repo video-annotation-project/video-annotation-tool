@@ -1,4 +1,6 @@
 import React, { Component } from 'react';
+import axios from 'axios';
+
 import { withStyles } from '@material-ui/core/styles';
 import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
@@ -8,13 +10,14 @@ import Table from '@material-ui/core/Table';
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
 import Description from '@material-ui/icons/Description';
-import { Typography, MenuItem, Button } from '@material-ui/core';
-import Select from '@material-ui/core/Select';
+import { Typography, Button } from '@material-ui/core';
 import FormControl from '@material-ui/core/FormControl';
+
 import GeneralMenu from '../Utilities/GeneralMenu';
 import AIvideos from './AIvideos';
 import TrainModel from './TrainModel';
 import PredictModel from './PredictModel';
+import ModelTreeView from '../Utilities/ModelTreeView';
 
 const CustomTableCell = withStyles(theme => ({
   head: {
@@ -31,9 +34,33 @@ class ModelsTable extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      modelSelected: ''
+      modelSelected: '',
+      anchorEl: null
     };
   }
+
+  componentDidMount() {
+    this.getStatus();
+    this.interval = setInterval(() => this.getStatus(), 5000);
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.interval);
+  }
+
+  getStatus = async () => {
+    const config = {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    };
+    try {
+      let res = await axios.get(`/api/models/progress/status`, config);
+      this.setState(res.data);
+    } catch (err) {
+      console.log(err);
+    }
+  };
 
   render = () => {
     const {
@@ -47,9 +74,16 @@ class ModelsTable extends Component {
       toggleStateVariable,
       currentVideo,
       trainOpen,
-      predictOpen
+      predictOpen,
+      versionOpen
     } = this.props;
-    const { modelSelected } = this.state;
+    const {
+      modelSelected,
+      anchorEl,
+      train,
+      predict,
+      modelClicked
+    } = this.state;
     if (!models) {
       return <Typography style={{ margin: '20px' }}>Loading...</Typography>;
     }
@@ -61,6 +95,7 @@ class ModelsTable extends Component {
             <TableRow>
               <CustomTableCell>Name</CustomTableCell>
               <CustomTableCell>Versions #</CustomTableCell>
+              {/* <CustomTableCell>New Versions</CustomTableCell> */}
               <CustomTableCell>Date Created</CustomTableCell>
               <CustomTableCell />
             </TableRow>
@@ -71,7 +106,7 @@ class ModelsTable extends Component {
                 <CustomTableCell component="th" scope="row">
                   {model.name}
                 </CustomTableCell>
-                <CustomTableCell>
+                {/* <CustomTableCell>
                   <FormControl>
                     <Select
                       value={model.version_selected}
@@ -84,6 +119,26 @@ class ModelsTable extends Component {
                         </MenuItem>
                       ))}
                     </Select>
+                  </FormControl>
+                </CustomTableCell> */}
+                <CustomTableCell>
+                  <FormControl>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      color="secondary"
+                      onClick={e => {
+                        this.setState(
+                          {
+                            anchorEl: e.currentTarget,
+                            modelClicked: model
+                          },
+                          toggleStateVariable(true, 'versionOpen')
+                        );
+                      }}
+                    >
+                      {model.version_selected}
+                    </Button>
                   </FormControl>
                 </CustomTableCell>
                 <CustomTableCell>{formatDate(model.timestamp)}</CustomTableCell>
@@ -101,16 +156,18 @@ class ModelsTable extends Component {
                     <DeleteIcon />
                   </IconButton>
                   <GeneralMenu
-                    name="AiVideos"
-                    variant="contained"
-                    color="primary"
-                    Link={false}
-                    handleInsert={handleClickVideo}
-                    items={model.runs[model.version_selected].videos}
-                    aivideos={true}
-                    disabled={!model.runs[model.version_selected].videos[0]}
+                    disabled
+                    // name="AiVideos"
+                    // variant="contained"
+                    // color="primary"
+                    // Link={false}
+                    // handleInsert={handleClickVideo}
+                    // items={model.runs[model.version_selected].videos}
+                    // aivideos={true}
+                    // disabled={!model.runs[model.version_selected].videos[0]}
                   />
                   <Button
+                    disabled={train ? model.name !== train.model : false}
                     size="small"
                     variant="contained"
                     color="primary"
@@ -126,6 +183,7 @@ class ModelsTable extends Component {
                     Train
                   </Button>
                   <Button
+                    disabled={predict ? model.name !== predict.model : false}
                     style={{ marginLeft: '10px' }}
                     size="small"
                     variant="contained"
@@ -146,6 +204,13 @@ class ModelsTable extends Component {
             ))}
           </TableBody>
         </Table>
+        <ModelTreeView
+          anchorEl={anchorEl}
+          model={modelClicked}
+          open={versionOpen}
+          toggleStateVariable={toggleStateVariable}
+          handleSelectVersion={handleSelectVersion}
+        />
         <TrainModel
           trainOpen={trainOpen}
           toggleStateVariable={toggleStateVariable}
