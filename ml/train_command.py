@@ -118,7 +118,7 @@ def get_user_model(model_params):
     print(f"new version: {new_version}")
 
     # create new model-version user
-    user_model = model["name"] + "-" + new_version
+    user_model = model_params["model"] + "-" + new_version
 
     return user_model, new_version
 
