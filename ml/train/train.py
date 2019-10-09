@@ -41,8 +41,6 @@ def train_model(concepts,
 
     num_workers = _get_num_workers()
 
-    _redirect_outputs(job_id)
-
     training_model.compile(
         loss={
             'regression': losses.smooth_l1(),
@@ -139,7 +137,7 @@ def _get_callbacks(model,
 
     # Stops training if val_loss stops improving
     stopping = EarlyStopping(
-        monitor='val_loss', min_delta=0, patience=10, restore_best_weights=True)
+        monitor='val_loss', min_delta=0, patience=3, restore_best_weights=True)
 
     # Every epoch upload tensorboard logs to the S3 bucket
     log_callback = TensorboardLog(
@@ -177,17 +175,9 @@ def _upload_weights(model_name, model_version):
     )
 
 
-def _redirect_outputs(job_id):
-    """ The DatabaseOutput class will redirect this programs output to a column
-        in out training_progress databse (as well as into a file)
-    """
-    # sys.stdout = DatabaseOutput(job_id, 'out')
-    # sys.stderr = DatabaseOutput(job_id, 'err')
-
-
 def _get_num_workers():
     """ Returns the number of cores on this machine.
         1 worker per core should give us maximum preformance.
     """
-    # Subtract 1 for the main thread
-    return multiprocessing.cpu_count() - 1
+    # Subtract 1 for the main thread 
+    return multiprocessing.cpu_count() - 2
