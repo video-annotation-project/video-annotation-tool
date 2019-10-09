@@ -126,7 +126,7 @@ def create_model_user(new_version, model_params, user_model):
     """Insert a new user for this model version, then update the model_versions table
        with the new model version
     """
-
+    print("creating new user, updating model_versions table")
     cursor.execute(
         """
         INSERT INTO users (username, password, admin)
@@ -163,7 +163,7 @@ def start_training(new_version, concepts, verify_videos, model_params):
 
     # reformat version name for weights filename in s3 
     new_version = new_version.replace(".", "-'") 
-
+    print("training")
     train_model(
         concepts,
         verifyVideos,
@@ -216,6 +216,7 @@ def evaluate_videos(concepts, verify_videos, user_model):
 def reset_model_params():
     """ Reset the model_params table
     """
+    print("resetting model_params")
     cursor.execute(
         """
         Update model_params
@@ -231,7 +232,7 @@ def shutdown_server():
     """ Shutdown this EC2 instance
     """
 
-    subprocess.call(["sudo", "shutdown", "-h"])
+    #subprocess.call(["sudo", "shutdown", "-h"])
 
 
 if __name__ == '__main__':
