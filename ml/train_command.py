@@ -166,7 +166,7 @@ def start_training(new_version, concepts, verify_videos, model_params):
     print("training")
     train_model(
         concepts,
-        verifyVideos,
+        verify_videos,
         model_params["model"],
         new_version,
         model_params["annotation_collections"],
