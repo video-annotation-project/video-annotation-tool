@@ -35,7 +35,7 @@ def main():
     setup_predict_progress(verify_videos)
     create_model_user(new_version, model_params, user_model)
 
-    #evaluate_videos(concepts, verify_videos, user_model)
+    evaluate_videos(concepts, verify_videos, user_model)
 
     reset_model_params()
     shutdown_server()
@@ -231,7 +231,7 @@ def shutdown_server():
     """ Shutdown this EC2 instance
     """
 
-    #subprocess.call(["sudo", "shutdown", "-h"])
+    subprocess.call(["sudo", "shutdown", "-h"])
 
 
 if __name__ == '__main__':
