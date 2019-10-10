@@ -67,7 +67,7 @@ def get_model_and_params():
                 config.S3_WEIGHTS_FOLDER + str(model_params["model"]) + "_" + model_file_version + ".h5",
                 config.WEIGHTS_PATH,
             )
-            print("downloaded file: %s", str(model_params["model"]) + "_" + model_file_version + ".h5")
+            print("downloaded file: {0}".format(str(model_params["model"]) + "_" + model_file_version + ".h5"))
         except ClientError:
             s3.download_file(
                 config.S3_BUCKET,
