@@ -5,39 +5,63 @@ const AWS = require('aws-sdk');
 
 const csv = require('csvtojson');
 
-/**
- * @typedef ai_video
- * @property {integer} id - id of the video
- * @property {string} name - the name of the video following videoid_nameofmodel.mp4
- */
+// /**
+//  * @typedef ai_video
+//  * @property {integer} id - id of the video
+//  * @property {string} name - the name of the video following videoid_nameofmodel.mp4
+//  */
 
-/**
- * @route GET /api/videos/ai_videos
- * @group ai_videos
- * @summary Get a list of all ai_videos
- * @returns {Array.<ai_video>} 200 - List of ai videos
- * @returns {Error} 500 - Unexpected database error
- */
-router.get(
-  '/',
-  passport.authenticate('jwt', { session: false }),
-  async (req, res) => {
-    let queryText = `
-      SELECT
-        *
-      FROM
-        ai_videos
-      ORDER BY
-        id`;
-    try {
-      let ai_videos = await psql.query(queryText);
-      res.json(ai_videos);
-    } catch (error) {
-      console.log(error);
-      res.status(500).json(error);
-    }
-  }
-);
+// /**
+//  * @route GET /api/videos/ai_videos
+//  * @group ai_videos
+//  * @summary Get a list of all ai_videos
+//  * @returns {Array.<ai_video>} 200 - List of ai videos
+//  * @returns {Error} 500 - Unexpected database error
+//  */
+// router.get(
+//   '/',
+//   passport.authenticate('jwt', { session: false }),
+//   async (req, res) => {
+//     let queryText = `
+//     select model_name, json_agg(json_build_object(
+//         'id', id, 'time', start_train, 'videos', videos
+//     )) previous_runs
+//     from (
+//         select pr.id, pr.start_train, pr.model_name,
+//             json_agg(av.*) videos
+//             from ai_videos av
+//             join previous_runs pr on av.previous_run_id=pr.id
+//             group by pr.id, pr.start_train
+//     ) t
+//     group by model_name
+//       `;
+//     try {
+//       let ai_videos = await psql.query(queryText);
+//       res.json(ai_videos);
+//     } catch (error) {
+//       console.log(error);
+//       res.status(500).json(error);
+//     }
+//   }
+// );
+
+// router.get(
+//   '/:previous_run_id',
+//   passport.authenticate('jwt', { session: false }),
+//   async (req, res) => {
+//     console.log(req.params);
+//     let queryText = `SELECT *, 0 as timeinvideo FROM ai_videos where previous_run_id = $1`;
+//     try {
+//       let ai_videos = await psql.query(queryText, [
+//         parseInt(req.params.previous_run_id)
+//       ]);
+//       res.json(ai_videos);
+//     } catch (error) {
+//       console.log(error);
+//       res.status(500).json(error);
+//     }
+//   }
+// );
 
 router.get(
   '/metrics',

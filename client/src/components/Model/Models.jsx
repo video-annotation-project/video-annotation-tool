@@ -7,6 +7,7 @@ import TableRow from '@material-ui/core/TableRow';
 import Table from '@material-ui/core/Table';
 import Swal from 'sweetalert2/src/sweetalert2';
 import { Typography } from '@material-ui/core';
+
 import Dialog from '@material-ui/core/Dialog';
 import TableCell from '@material-ui/core/TableCell';
 
@@ -35,10 +36,15 @@ class Models extends Component {
     super(props);
     this.state = {
       models: [],
+      videoModalOpen: false,
       infoOpen: false,
       selectedModel: ''
     };
   }
+  formatDate = version => {
+    let d = new Date(version);
+    return d.toUTCString().replace(' GMT', '');
+  };
 
   componentDidMount = () => {
     this.loadExistingModels();
@@ -109,17 +115,39 @@ class Models extends Component {
     });
   };
 
+  toggleAiVideos = condition => {
+    this.setState({
+      videoModalOpen: condition
+    });
+  };
+
   handleSelectVersion = (event, model) => {
     const { models } = this.state;
     let selectedModel = models.find(m => m.name === model.name);
+
     selectedModel.version_selected = event.target.value;
 
     this.setState({ models });
   };
 
+  handleClickVideo = async (id, videos) => {
+    let currentVideo = await videos.find(video => video.id === id);
+    this.setState({
+      videoModalOpen: true,
+      currentVideo
+    });
+  };
+
   render() {
     const { classes } = this.props;
-    const { models, infoOpen, selectedModel } = this.state;
+    const {
+      models,
+      videoModalOpen,
+      currentVideo,
+      infoOpen,
+      selectedModel
+    } = this.state;
+
     if (!models) {
       return <Typography style={{ margin: '20px' }}>Loading...</Typography>;
     }
@@ -130,6 +158,11 @@ class Models extends Component {
           handleSelectVersion={this.handleSelectVersion}
           handleOpenInfo={this.handleOpenInfo}
           deleteModel={this.deleteModel}
+          formatDate={this.formatDate}
+          videoModalOpen={videoModalOpen}
+          handleClickVideo={this.handleClickVideo}
+          toggleAiVideos={this.toggleAiVideos}
+          currentVideo={currentVideo}
         />
         {infoOpen && (
           <Dialog onClose={this.handleCloseInfo} open={infoOpen}>
