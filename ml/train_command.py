@@ -21,8 +21,6 @@ def main():
     model, model_params = get_model_and_params()
     user_model, new_version = get_user_model(model_params)
     
-    create_model_user(new_version, model_params, user_model)
-
     # This removes all of the [INFO] outputs from tensorflow.
     # We still see [WARNING] and [ERROR], but there's a lot less clutter
     os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
@@ -35,8 +33,9 @@ def main():
 
     start_training(new_version, concepts, verify_videos, model_params)
     setup_predict_progress(verify_videos)
+    create_model_user(new_version, model_params, user_model)
 
-    evaluate_videos(concepts, verify_videos, user_model)
+    #evaluate_videos(concepts, verify_videos, user_model)
 
     reset_model_params()
     shutdown_server()
@@ -162,7 +161,7 @@ def start_training(new_version, concepts, verify_videos, model_params):
     """
 
     # reformat version name for weights filename in s3 
-    new_version = new_version.replace(".", "-'") 
+    new_version = new_version.replace(".", "-") 
     print("training")
     train_model(
         concepts,
