@@ -12,6 +12,7 @@ import DeleteIcon from '@material-ui/icons/Delete';
 import Description from '@material-ui/icons/Description';
 import { Typography, Button } from '@material-ui/core';
 import FormControl from '@material-ui/core/FormControl';
+import AssessmentIcon from '@material-ui/icons/Assessment';
 
 import GeneralMenu from '../Utilities/GeneralMenu';
 import AIvideos from './AIvideos';
@@ -75,7 +76,8 @@ class ModelsTable extends Component {
       currentVideo,
       trainOpen,
       predictOpen,
-      versionOpen
+      versionOpen,
+      launchTensorboard
     } = this.props;
     const {
       modelSelected,
@@ -148,6 +150,14 @@ class ModelsTable extends Component {
                     aria-label="Description"
                   >
                     <Description />
+                  </IconButton>
+                  <IconButton
+                    onClick={() =>
+                      launchTensorboard('c3abc29b105b4bc0b2e666ecc0b53aea')
+                    }
+                    aria-label="Assessment"
+                  >
+                    <AssessmentIcon />
                   </IconButton>
                   <IconButton
                     onClick={() => deleteModel(model)}
