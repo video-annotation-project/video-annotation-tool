@@ -181,92 +181,101 @@ class Summary extends React.Component {
                 </Paper>
               </div>
             ) : (
-              ''
-            )}
-            <Typography variant="h5" color="primary">
-              Summary Table
-            </Typography>
-            <Paper style={{ maxHeight: 400, overflow: 'auto' }}>
-              <Table className={classes.table}>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Picture</TableCell>
-                    <TableCell>Name</TableCell>
-                    <TableCell align="right"># of Annotations</TableCell>
+              <div>
+                <Typography variant="h5" color="primary">
+                  Summary Table
+                </Typography>
+                <Paper style={{ maxHeight: 400, overflow: 'auto' }}>
+                  <Table className={classes.table}>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Picture</TableCell>
+                        <TableCell>Name</TableCell>
+                        <TableCell align="right"># of Annotations</TableCell>
 
-                    <TableCell align="right">
-                      {aiSummary
-                        ? '# of Annotations by Non-AI'
-                        : this.kmOrsqMeter(km, true)}
-                    </TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {summary
-                    ? summary.data.map(row => (
-                        <TableRow key={row.id}>
-                          <TableCell>
-                            <Avatar
-                              src={`https://cdn.deepseaannotations.com/concept_images/${row.picture}`}
-                            />
-                          </TableCell>
-                          <TableCell component="th" scope="row">
-                            {row.name}
-                          </TableCell>
-                          <TableCell align="right">{row.count}</TableCell>
+                        <TableCell align="right">
+                          {aiSummary
+                            ? '# of Annotations by Non-AI'
+                            : this.kmOrsqMeter(km, true)}
+                        </TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {summary
+                        ? summary.data.map(row => (
+                            <TableRow key={row.id}>
+                              <TableCell>
+                                <Avatar
+                                  src={`https://cdn.deepseaannotations.com/concept_images/${row.picture}`}
+                                />
+                              </TableCell>
+                              <TableCell component="th" scope="row">
+                                {row.name}
+                              </TableCell>
+                              <TableCell align="right">{row.count}</TableCell>
 
-                          <TableCell align="right">
-                            {aiSummary
-                              ? row.notai
-                              : this.kmOrsqMeter(km, false, row.count, dist)}
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    : ''}
-                </TableBody>
-              </Table>
-            </Paper>
-            <div>
-              {summary && !aiSummary && (
-                <Button
-                  onClick={() => this.getTotal(summary.data)}
-                  color="primary"
-                >
-                  Total
-                </Button>
-              )}
-              {summary && !aiSummary && (
-                <Button onClick={() => this.convertDistance()} color="primary">
-                  Convert
-                </Button>
-              )}
-              {showTotal ? (
+                              <TableCell align="right">
+                                {aiSummary
+                                  ? row.notai
+                                  : this.kmOrsqMeter(
+                                      km,
+                                      false,
+                                      row.count,
+                                      dist
+                                    )}
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        : ''}
+                    </TableBody>
+                  </Table>
+                </Paper>
                 <div>
-                  <Typography variant="body2" gutterBottom>
-                    {`total species: ${total}`}
-                  </Typography>
-                  <Typography variant="body2" gutterBottom>
-                    {`total annotations: ${anno}`}
-                  </Typography>
-                  <Typography variant="body2" gutterBottom>
-                    {`total density(cr/m^2): ${this.setDecimal(
-                      anno / (dist * 2)
-                    )}`}
-                  </Typography>
-                  <Typography variant="body2" gutterBottom>
-                    {`total distance covered(m): ${dist}`}
-                  </Typography>
-                  <Typography variant="body2" gutterBottom>
-                    total depth covered(m):{' '}
-                    {depth < 0
-                      ? `descended ${Math.abs(depth)}`
-                      : `ascended ${Math.abs(depth)}`}
-                  </Typography>
+                  {summary && !aiSummary && (
+                    <Button
+                      onClick={() => this.getTotal(summary.data)}
+                      color="primary"
+                    >
+                      Total
+                    </Button>
+                  )}
+                  {summary && !aiSummary && (
+                    <Button
+                      onClick={() => this.convertDistance()}
+                      color="primary"
+                    >
+                      Convert
+                    </Button>
+                  )}
+                  {showTotal ? (
+                    <div>
+                      <Typography variant="body2" gutterBottom>
+                        {`total species: ${total}`}
+                      </Typography>
+                      <Typography variant="body2" gutterBottom>
+                        {`total annotations: ${anno}`}
+                      </Typography>
+                      <Typography variant="body2" gutterBottom>
+                        {`total density(cr/m^2): ${this.setDecimal(
+                          anno / (dist * 2)
+                        )}`}
+                      </Typography>
+                      <Typography variant="body2" gutterBottom>
+                        {`total distance covered(m): ${dist}`}
+                      </Typography>
+                      <Typography variant="body2" gutterBottom>
+                        total depth covered(m):{' '}
+                        {depth < 0
+                          ? `descended ${Math.abs(depth)}`
+                          : `ascended ${Math.abs(depth)}`}
+                      </Typography>
+                    </div>
+                  ) : (
+                    ''
+                  )}
                 </div>
-              ) : (
-                ''
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </Modal>
       </div>

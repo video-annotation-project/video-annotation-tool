@@ -29,9 +29,6 @@ class ModelProgress extends Component {
       stdout: '',
       stderr: ''
     };
-
-    this.loadProgressInfo();
-    this.loadProgressInfo = this.loadProgressInfo.bind(this);
   }
 
   componentDidMount() {

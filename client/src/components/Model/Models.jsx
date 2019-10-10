@@ -6,12 +6,13 @@ import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import Table from '@material-ui/core/Table';
 import Swal from 'sweetalert2/src/sweetalert2';
-import { Typography } from '@material-ui/core';
+import { Typography, Button } from '@material-ui/core';
 
 import Dialog from '@material-ui/core/Dialog';
 import TableCell from '@material-ui/core/TableCell';
 
 import ModelsTable from './ModelsTable';
+import CreateModel from './CreateModel';
 
 const styles = theme => ({
   root: {
@@ -37,8 +38,12 @@ class Models extends Component {
     this.state = {
       models: [],
       videoModalOpen: false,
+      createOpen: false,
+      trainOpen: false,
+      predictOpen: false,
       infoOpen: false,
-      selectedModel: ''
+      selectedModel: '',
+      versionOpen: false
     };
   }
   formatDate = version => {
@@ -115,17 +120,17 @@ class Models extends Component {
     });
   };
 
-  toggleAiVideos = condition => {
+  toggleStateVariable = (condition, variable) => {
     this.setState({
-      videoModalOpen: condition
+      [variable]: condition
     });
   };
 
-  handleSelectVersion = (event, model) => {
+  handleSelectVersion = (id, model) => {
     const { models } = this.state;
-    let selectedModel = models.find(m => m.name === model.name);
+    let selectedModel = models.find(m => m.name === model);
 
-    selectedModel.version_selected = event.target.value;
+    selectedModel.version_selected = id;
 
     this.setState({ models });
   };
@@ -145,7 +150,11 @@ class Models extends Component {
       videoModalOpen,
       currentVideo,
       infoOpen,
-      selectedModel
+      selectedModel,
+      createOpen,
+      trainOpen,
+      predictOpen,
+      versionOpen
     } = this.state;
 
     if (!models) {
@@ -153,6 +162,18 @@ class Models extends Component {
     }
     return (
       <div className={classes.root}>
+        <Button
+          style={{ marginBottom: '20px' }}
+          variant="contained"
+          color="primary"
+          onClick={() => this.toggleStateVariable(true, 'createOpen')}
+        >
+          Create Model
+        </Button>
+        <CreateModel
+          createOpen={createOpen}
+          toggleStateVariable={this.toggleStateVariable}
+        />
         <ModelsTable
           models={models}
           handleSelectVersion={this.handleSelectVersion}
@@ -161,8 +182,11 @@ class Models extends Component {
           formatDate={this.formatDate}
           videoModalOpen={videoModalOpen}
           handleClickVideo={this.handleClickVideo}
-          toggleAiVideos={this.toggleAiVideos}
+          toggleStateVariable={this.toggleStateVariable}
           currentVideo={currentVideo}
+          trainOpen={trainOpen}
+          predictOpen={predictOpen}
+          versionOpen={versionOpen}
         />
         {infoOpen && (
           <Dialog onClose={this.handleCloseInfo} open={infoOpen}>
