@@ -33,17 +33,44 @@ class Verify extends Component {
       selectionMounted,
       noAnnotations,
       index,
-      excludeTracking: false,
+      excludeTracking,
       annotating: false,
-      annotations: [],
-      end: false
+      annotations: []
     };
   }
 
   componentDidMount = async () => {
-    this.setState({
-      annotations: await this.getAnnotationsFromCollection()
-    });
+    const { index } = this.state;
+    const annotations = await this.getAnnotationsFromCollection();
+    const prevLength = JSON.parse(localStorage.getItem('totalAnnotations'));
+    if (prevLength !== 0 && prevLength !== annotations.length) {
+      const newIndex = index - (prevLength - annotations.length);
+      localStorage.setItem('curIndex', newIndex);
+      this.setState({
+        index: newIndex,
+        annotations
+      });
+    } else {
+      this.setState({
+        annotations
+      });
+    }
+    localStorage.setItem('totalAnnotations', annotations.length);
+  };
+
+  displayLoading = () => {
+    const { tracking } = this.props;
+    const { videoDialogOpen } = this.state;
+
+    if (!tracking && !videoDialogOpen) {
+      Swal.fire({
+        title: 'Loading...',
+        showConfirmButton: false,
+        onBeforeOpen: () => {
+          Swal.showLoading();
+        }
+      });
+    }
   };
 
   toggleSelection = async () => {
@@ -75,11 +102,7 @@ class Verify extends Component {
           selectionMounted: !selectionMounted
         });
       } else {
-        try {
-          localStorage.setItem('selectionMounted', !selectionMounted);
-        } catch (error) {
-          Swal.fire('Error', '', 'error');
-        }
+        localStorage.setItem('selectionMounted', !selectionMounted);
         this.setState({
           selectionMounted: !selectionMounted,
           annotations
@@ -324,10 +347,7 @@ class Verify extends Component {
       ignoredAnnotations
     } = this.state;
 
-    console.log(selectedAnnotationCollections);
-    console.log(annotations);
-
-    if (annotations && index >= annotations.length + 1) {
+    if (annotations.length > 0 && index >= annotations.length + 1) {
       this.resetLocalStorage();
       return <div />;
     }
@@ -372,29 +392,25 @@ class Verify extends Component {
     } else if (!annotations || annotations.length <= 0) {
       selection = <div>Loading Annotations...</div>;
     } else {
-      if (!annotations || annotations.length <= 0) {
-        selection = <div>Loading...</div>;
-      } else {
-        selection = (
-          <VerifyAnnotations
-            selectedAnnotationCollections={selectedAnnotationCollections}
-            populateIgnoreList={this.populateIgnoreList}
-            removeFromIgnoreList={this.removeFromIgnoreList}
-            ignoredAnnotations={ignoredAnnotations}
-            annotation={annotations[index]}
-            index={index}
-            handleNext={this.handleNext}
-            toggleSelection={this.toggleSelection}
-            size={annotations.length}
-            tracking={selectedTrackingFirst}
-            resetLocalStorage={this.resetLocalStorage}
-            collectionFlag={selectedAnnotationCollections.length}
-            excludeTracking={excludeTracking}
-            annotating={annotating}
-            end={end}
-          />
-        );
-      }
+      selection = (
+        <VerifyAnnotations
+          selectedAnnotationCollections={selectedAnnotationCollections}
+          populateIgnoreList={this.populateIgnoreList}
+          removeFromIgnoreList={this.removeFromIgnoreList}
+          ignoredAnnotations={ignoredAnnotations}
+          annotation={annotations[index]}
+          index={index}
+          handleNext={this.handleNext}
+          toggleSelection={this.toggleSelection}
+          size={annotations.length}
+          tracking={selectedTrackingFirst}
+          resetLocalStorage={this.resetLocalStorage}
+          collectionFlag={selectedAnnotationCollections.length}
+          excludeTracking={excludeTracking}
+          annotating={annotating}
+          displayLoading={this.displayLoading}
+        />
+      );
     }
 
     return <>{selection}</>;

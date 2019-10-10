@@ -180,12 +180,11 @@ class VerifyAnnotations extends Component {
   };
 
   loadBoxes = async () => {
-    await this.loadBoxesOutsideOfCollection();
-    await this.loadVerifiedBoxes();
-  };
-
-  loadBoxesOutsideOfCollection = async () => {
-    const { annotation, selectedAnnotationCollections } = this.props;
+    const {
+      annotation,
+      selectedAnnotationCollections,
+      annotating
+    } = this.props;
     const config = {
       headers: {
         'Content-Type': 'application/json',
@@ -197,39 +196,8 @@ class VerifyAnnotations extends Component {
     };
     try {
       const data = await axios.get(
-        `/api/annotations/boxes/${annotation.id}` +
-          `?videoid=${annotation.videoid}&timeinvideo=${annotation.timeinvideo}&notcol=true`,
-        config
-      );
-      if (data.data.length > 0) {
-        this.setState({
-          boxesOutsideCol: data.data[0].box
-        });
-      } else {
-        this.setState({
-          boxesOutsideCol: []
-        });
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  loadVerifiedBoxes = async () => {
-    const { annotation, selectedAnnotationCollections } = this.props;
-    const config = {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      },
-      params: {
-        selectedAnnotationCollections
-      }
-    };
-    try {
-      const data = await axios.get(
-        `/api/annotations/boxes/${annotation.id}` +
-          `?videoid=${annotation.videoid}&timeinvideo=${annotation.timeinvideo}&notcol=false`,
+        `/api/annotations/boxes/${annotating ? -1 : annotation.id}` +
+          `?videoid=${annotation.videoid}&timeinvideo=${annotation.timeinvideo}`,
         config
       );
       if (data.data.length > 0) {
@@ -359,8 +327,7 @@ class VerifyAnnotations extends Component {
     };
     axios
       .delete('/api/annotations', config)
-      .then(async res => {
-        console.log(res);
+      .then(async () => {
         this.toastPopup.fire({
           type: 'success',
           title: 'Deleted!!'
@@ -436,87 +403,28 @@ class VerifyAnnotations extends Component {
     const x2 = x + parseInt(width, 0);
     const y2 = y + parseInt(height, 0);
 
-    if (
-      Math.abs(
-        annotation.x1 -
-          x1 +
-          (annotation.y1 - y1) +
-          (annotation.x2 - x2) +
-          (annotation.y2 - y2)
-      ) > 0.1 &&
-      annotation.image
-    ) {
-      this.createAndUploadImages(
-        imageCord,
-        dragBoxCord,
-        imageElement,
-        x1,
-        y1,
-        date
-      );
-      this.updateBox(x1, y1, x2, y2);
-    }
-
-    if (annotating) {
-      this.postAnnotation(date);
-    } else {
-      this.verifyAnnotation();
-    }
-  };
-
-  createAndUploadImages = (
-    imageCord,
-    dragBoxCord,
-    imageElement,
-    x1,
-    y1,
-    date
-  ) => {
-    const canvas = document.createElement('canvas');
-    canvas.height = imageCord.height;
-    canvas.width = imageCord.width;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(imageElement, 0, 0, canvas.width, canvas.height);
-    const img = new window.Image();
-    img.setAttribute('crossOrigin', 'anonymous');
-    ctx.lineWidth = '2';
-    ctx.strokeStyle = 'coral';
-    ctx.rect(x1, y1, dragBoxCord.width, dragBoxCord.height);
-    ctx.stroke();
-    img.src = canvas.toDataURL(1.0);
-    this.uploadImage(img, date);
-  };
-
-  uploadImage = (img, date) => {
-    const { annotation } = this.props;
-    const buf = Buffer.from(
-      img.src.replace(/^data:image\/\w+;base64,/, ''),
-      'base64'
-    );
-    const config = {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    };
-    let body = {};
-    if (date) {
-      body = {
-        buf,
-        date,
-        box: true
-      };
-    } else {
-      body = {
-        buf,
-        name: annotation.imagewithbox
-      };
-    }
-
     try {
-      axios.post('/api/annotations/images', body, config);
-    } catch {
-      Swal.fire('ERR: uploading image', '', 'error');
+      if (annotating) {
+        this.postAnnotation();
+      } else {
+        if (
+          Math.abs(
+            annotation.x1 -
+              x1 +
+              (annotation.y1 - y1) +
+              (annotation.x2 - x2) +
+              (annotation.y2 - y2)
+          ) > 0.1 &&
+          annotation.image
+        ) {
+          this.updateBox(x1, y1, x2, y2);
+        }
+        this.verifyAnnotation();
+      }
+    } catch (error) {
+      console.log(error);
+      console.log('Unable to Verify');
+      this.nextAnnotation(false);
     }
   };
 
@@ -592,6 +500,7 @@ class VerifyAnnotations extends Component {
       });
       return;
     }
+
     this.postBoxImage(dragBox);
   };
 
