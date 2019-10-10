@@ -11,6 +11,8 @@ from config import config
 class TensorboardLog(keras.callbacks.Callback):
 
     def __init__(self, model_name, job_id, min_examples, epochs, collection_ids):
+        """ The purpose of this class is to keep track of the training parameters,
+            tensorboard log files, and other useful info for every training job thats ran """
 
         self.table_name = 'previous_runs'
         self.job_id = job_id
@@ -67,6 +69,7 @@ class TensorboardLog(keras.callbacks.Callback):
     def on_epoch_end(self, epoch, logs={}):
         path = f'./logs/{self.job_id}'
 
+        # Upload all log files to the correct folder in the s3 bucket
         for root, dirs, files in os.walk(path):
             for file in files:
                 self.client.upload_file(
@@ -80,6 +83,8 @@ class TensorboardLog(keras.callbacks.Callback):
         return
 
     def _create_log_entry(self, model_name, min_examples, epochs, collection_ids):
+        """ Create the log entry for the current training job """
+
         self.cursor.execute(
             f"""INSERT INTO {self.table_name}
                     (model_name, job_id, epochs, min_examples, collection_ids)

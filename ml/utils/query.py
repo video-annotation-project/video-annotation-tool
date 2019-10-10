@@ -11,6 +11,7 @@ con = connect(
     password=config.DB_PASSWORD,
     host=config.DB_HOST
 )
+
 cursor = con.cursor()
 
 s3 = boto3.client(

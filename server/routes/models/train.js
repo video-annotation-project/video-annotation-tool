@@ -2,6 +2,7 @@ const router = require('express').Router();
 const passport = require('passport');
 const psql = require('../../db/simpleConnect');
 const AWS = require('aws-sdk');
+const awsS3 = require('s3');
 
 router.patch(
   '/stop',
@@ -37,8 +38,6 @@ router.patch(
         training_progress
       SET
         status = 0,
-        std_out='',
-        std_err='',
         stop_flag=False
     `;
 
@@ -77,9 +76,7 @@ router.post(
             UPDATE 
               training_progress
             SET 
-              status = 0,
-              std_out = '',
-              std_err = ''`;
+              status = 0`;
 
       const predictStop = `DELETE FROM predict_progress`;
 
@@ -165,6 +162,47 @@ router.get(
     }
   }
 );
+
+router.get(
+  '/stdout',
+  passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    let s3 = new AWS.S3();
+    s3.getObject({
+        Bucket: process.env.AWS_S3_BUCKET_NAME,
+        Key: process.env.AWS_S3_BUCKET_STDOUT_FOLDER + `stdout.txt`
+    }, function(error, data) {
+      if (error) {
+        console.log(error, error.stack);
+        res.status(500).json(error);
+      } else {
+        const stdout = data.Body.toString('ascii');
+        res.json(stdout);
+      }
+    });
+  }
+);
+
+router.get(
+  '/stderr',
+  passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    let s3 = new AWS.S3();
+    s3.getObject({
+        Bucket: process.env.AWS_S3_BUCKET_NAME,
+        Key: process.env.AWS_S3_BUCKET_STDOUT_FOLDER + `stderr.txt`
+    }, function(error, data) {
+      if (error) {
+          console.log(error, error.stack);
+          res.status(500).json(error);
+      } else {
+        const stderr = data.Body.toString('ascii');
+        res.json(stderr);
+      }
+    });
+  }
+);
+
 
 // TODO: figure out trainmodel then document this
 

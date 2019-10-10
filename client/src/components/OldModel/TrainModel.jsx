@@ -90,29 +90,11 @@ function CollectionsForm(props) {
         }
       >
         {collections.map(collection => (
-          <MenuItem
-            key={collection.id}
-            value={collection}
-            disabled={collection.disable}
-          >
+          <MenuItem key={collection.id} value={collection}>
             <Checkbox
               checked={annotationCollections.indexOf(collection) > -1}
             />
-            <ListItemText>
-              {collection.name}
-              {collection.validConcepts ? (
-                <Typography variant="subtitle2" gutterBottom color="secondary">
-                  {collection.validConcepts.map((concept, index) => {
-                    if (index === collection.validConcepts.length - 1) {
-                      return concept.f1;
-                    }
-                    return `${concept.f1}, `;
-                  })}
-                </Typography>
-              ) : (
-                ''
-              )}
-            </ListItemText>
+            <ListItemText>{collection.name}</ListItemText>
           </MenuItem>
         ))}
       </Select>
@@ -202,8 +184,6 @@ class TrainModel extends Component {
   };
 
   loadCollectionList = () => {
-    const { models, modelSelected } = this.state;
-
     const config = {
       headers: {
         Authorization: `Bearer ${localStorage.getItem('token')}`
@@ -213,33 +193,8 @@ class TrainModel extends Component {
     return axios
       .get(`/api/collections/annotations?train=true`, config)
       .then(res => {
-        const selectedModelTuple = models.find(model => {
-          return model.name === modelSelected;
-        });
-
-        let modelConcepts;
-
-        if (modelSelected === undefined) {
-          modelConcepts = [];
-        } else {
-          modelConcepts = selectedModelTuple.conceptsid;
-        }
-
-        res.data.forEach(col => {
-          const filtered = modelConcepts.filter(x => col.ids.includes(x));
-          if (filtered.length > 0) {
-            col.disable = false;
-            col.validConcepts = col.concepts.filter(y =>
-              filtered.includes(y.f2)
-            );
-          } else {
-            col.disable = true;
-            col.validConcepts = [];
-          }
-        });
-        console.log(res.data);
         this.setState({
-          collections: res.data.sort(a => (a.validConcepts ? -1 : 1)),
+          collections: res.data,
           annotationCollections: [],
           selectedCollectionCounts: [],
           minCounts: [],
@@ -265,16 +220,9 @@ class TrainModel extends Component {
   // Used to handle changes in the hyperparameters and in the select model
   handleChange = event => {
     event.persist();
-    this.setState(
-      {
-        [event.target.name]: event.target.value
-      },
-      () => {
-        if (event.target.name === 'modelSelected') {
-          this.loadCollectionList();
-        }
-      }
-    );
+    this.setState({
+      [event.target.name]: event.target.value
+    });
   };
 
   handleChangeSwitch = event => {
@@ -325,8 +273,6 @@ class TrainModel extends Component {
               id => this.state.collections.find(coll => coll.id === id)
             );
 
-            console.log(this.state.collections);
-
             this.setState(
               {
                 modelSelected: params.model,
@@ -375,7 +321,7 @@ class TrainModel extends Component {
     const validConcepts = [];
 
     annotationCollections.forEach(collection => {
-      collection.validConcepts.forEach(concept => {
+      collection.concepts.forEach(concept => {
         validConcepts.push(concept.f2);
       });
     });
