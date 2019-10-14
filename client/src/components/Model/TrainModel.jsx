@@ -182,17 +182,9 @@ class TrainModel extends Component {
   // Used to handle changes in the hyperparameters and in the select model
   handleChange = event => {
     event.persist();
-<<<<<<< HEAD
-    this.setState(
-      {
-        [event.target.name]: event.target.value
-      },
-    );
-=======
     this.setState({
       [event.target.name]: event.target.value
     });
->>>>>>> origin/Soe
   };
 
   handleChangeSwitch = event => {
