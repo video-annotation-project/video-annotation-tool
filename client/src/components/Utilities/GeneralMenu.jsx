@@ -2,9 +2,11 @@ import React from 'react';
 import Button from '@material-ui/core/Button';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
+import OndemandVideo from '@material-ui/icons/OndemandVideo';
+import IconButton from '@material-ui/core/IconButton';
 
 const GeneralMenu = props => {
-  const { disabled, buttonid, name, Link, items } = props;
+  const { disabled, buttonid, name, Link, items, aivideos } = props;
   let { color, variant } = props;
   const [anchorEl, setAnchorEl] = React.useState(null);
   color = color || 'inherit';
@@ -18,21 +20,32 @@ const GeneralMenu = props => {
     setAnchorEl(null);
   }
 
-  function handleInsert(id) {
+  function handleInsert(id, videos) {
     handleClose();
-    props.handleInsert(id);
+    props.handleInsert(id, videos);
   }
+
   return (
-    <div>
-      <Button
-        id={buttonid}
-        variant={variant}
-        color={color}
-        onClick={handleClick}
-        disabled={disabled}
-      >
-        {name}
-      </Button>
+    <span>
+      {aivideos ? (
+        <IconButton
+          onClick={handleClick}
+          aria-label="Ai Videos"
+          disabled={disabled}
+        >
+          <OndemandVideo />
+        </IconButton>
+      ) : (
+        <Button
+          id={buttonid}
+          variant={variant}
+          color={color}
+          onClick={handleClick}
+          disabled={disabled}
+        >
+          {name}
+        </Button>
+      )}
       <Menu
         id="simple-menu"
         style={{ top: '30px' }}
@@ -40,25 +53,34 @@ const GeneralMenu = props => {
         open={Boolean(anchorEl)}
         onClose={handleClose}
       >
-        {Link
-          ? items.map(item => (
-              <MenuItem
-                id={item.id}
-                key={item.name}
-                component={props.Link}
-                to={item.link}
-                onClick={() => handleClose()}
-              >
-                {item.name}
-              </MenuItem>
-            ))
-          : items.map(item => (
-              <MenuItem key={item.name} onClick={() => handleInsert(item.id)}>
-                {`${item.id} ${item.name}`}
-              </MenuItem>
-            ))}
+        {items && items.length > 0 && items[0]
+          ? Link
+            ? items.map(item => (
+                <MenuItem
+                  id={item.id}
+                  key={item.name}
+                  component={props.Link}
+                  to={item.link}
+                  onClick={() => handleClose()}
+                >
+                  {item.name}
+                </MenuItem>
+              ))
+            : items.map(item => (
+                <MenuItem
+                  key={item.name}
+                  onClick={
+                    aivideos
+                      ? () => handleInsert(item.id, items)
+                      : () => handleInsert(item.id)
+                  }
+                >
+                  {`${item.id} ${item.name}`}
+                </MenuItem>
+              ))
+          : ''}
       </Menu>
-    </div>
+    </span>
   );
 };
 

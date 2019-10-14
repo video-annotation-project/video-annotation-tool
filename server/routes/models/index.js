@@ -28,13 +28,57 @@ router.get(
   async (req, res) => {
     let queryText = `
       SELECT 
-        m.name, m.timestamp, array_agg(c.name) concepts, array_agg(c.id) conceptsid
+        m.name,
+        m.timestamp,
+        array_agg(c.name) concepts,
+        array_agg(c.id) conceptsid,
+        verificationvideos,
+        versions,
+        version_selected,
+        (array_agg(t.previous_runs))[1] as runs
       FROM 
-        (SELECT name, timestamp, UNNEST(concepts) concept FROM models) m
+        (SELECT
+          name,
+          timestamp,
+          UNNEST(concepts) concept,
+          verificationvideos
+        FROM
+          models) m
       JOIN 
         concepts c ON c.id=m.concept
+      JOIN (
+        SELECT
+          model,
+          array_agg(version) AS versions,
+          0 AS version_selected
+        FROM
+          model_versions
+        GROUP BY model) mv ON mv.model=m.name
+      JOIN (
+        SELECT
+          model_name,
+          array_agg(start_train) AS new_versions,
+          count(*)-1 AS new_selected
+        FROM
+          previous_runs
+        GROUP BY model_name) v ON v.model_name=m.name
+      LEFT JOIN (
+        SELECT model_name, JSON_AGG(JSON_BUILD_OBJECT(
+          'id', id, 'time', start_train, 'videos', videos
+          )) previous_runs
+        FROM (
+          SELECT 
+            pr.id, pr.start_train, pr.model_name,
+            JSON_AGG(av.*) videos
+          FROM ai_videos av
+          RIGHT JOIN 
+            previous_runs pr ON av.previous_run_id=pr.id
+          GROUP BY pr.id, pr.start_train
+        ) t
+        GROUP BY model_name
+      ) t ON t.model_name=m.name
       GROUP BY
-        (m.name, m.timestamp)
+        (m.name, m.timestamp, verificationvideos, versions, version_selected)
     `;
     if (req.query.predict === 'true') {
       queryText = `

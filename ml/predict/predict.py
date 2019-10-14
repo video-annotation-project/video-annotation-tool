@@ -503,13 +503,6 @@ def save_video(filename, frames, fps):
     os.system('rm \'' + filename + '\'')
     os.system('rm ' + converted_file)
 
-    # add the entry to ai_videos
-    cursor.execute('''
-        INSERT INTO ai_videos (name)
-        VALUES (%s)''',
-                   (filename,)
-                   )
-    con.commit()
     cv2.destroyAllWindows()
 
 # Chooses single prediction for each object (the middle frame)

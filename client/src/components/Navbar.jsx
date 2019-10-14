@@ -132,31 +132,14 @@ class Navbar extends React.Component {
                 >
                   Report
                 </Button>
-                {localStorage.getItem('admin') ? (
-                  <>
-                    <GeneralMenu
-                      id="navbar-models"
-                      name="Models"
-                      Link={Link}
-                      items={[
-                        { name: 'Create Model', link: '/models/create' },
-                        { name: 'View Models', link: '/models/view' },
-                        { name: 'Train Models', link: '/models/train' },
-                        { name: 'Predict Models', link: '/models/predict' },
-                        { name: 'Previous Models', link: '/models/runs' },
-                        { name: 'AI Videos', link: '/aivideos' }
-                      ]}
-                    />
-                    {/* <Button color="inherit" component={Link} to="/aivideos">
-                      AI Videos
-                    </Button> */}
-                    {/* <Button color="inherit" component={Link} to="/users">
-                      Users
-                    </Button> */}
-                  </>
-                ) : (
-                  ''
-                )}
+                <Button
+                  id="navbar-models"
+                  name="Models"
+                  component={Link}
+                  to="/models"
+                >
+                  Models
+                </Button>
                 <GeneralMenu
                   buttonid="navbar-account"
                   name="Account"

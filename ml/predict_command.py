@@ -24,6 +24,7 @@ userid = int(params[1])
 concepts = params[2]
 videoids = params[4]
 upload_annotations = bool(params[3])
+previous_run_id = int(params[5])
 
 s3.download_file(S3_BUCKET, S3_WEIGHTS_FOLDER +
                  model_name + '.h5', WEIGHTS_PATH)
@@ -45,7 +46,7 @@ for video_id in videoids:
     # )
     # con.commit()
     evaluate(video_id, model_name + "_" + str(userid), concepts,
-             upload_annotations=upload_annotations)
+             upload_annotations=upload_annotations, previous_run_id=previous_run_id)
 
 # cursor.execute(
 #     """

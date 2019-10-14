@@ -15,8 +15,9 @@ import Button from '@material-ui/core/Button';
 import { withStyles } from '@material-ui/core/styles';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Switch from '@material-ui/core/Switch';
+import Dialog from '@material-ui/core/Dialog';
 
-import ModelProgress from './ModelProgress';
+import ModelProgress from '../OldModel/ModelProgress';
 import CollectionInfo from '../Utilities/CollectionInfo';
 
 import './TrainModel.css';
@@ -40,35 +41,19 @@ const styles = theme => ({
 const paramFields = [
   'epochs',
   'minImages',
-  'modelSelected',
   'annotationCollections',
   'includeTracking',
-  'verifiedOnly',
+  'verifiedOnly'
 ];
 
-function ModelsForm(props) {
-  const { className, modelSelected, handleChange, models, training } = props;
-  return (
-    <FormControl component="fieldset" className={className}>
-      <InputLabel shrink>Model</InputLabel>
-      <Select
-        name="modelSelected"
-        value={modelSelected || 'Loading...'}
-        onChange={handleChange}
-        disabled={training}
-      >
-        {models.map(model => (
-          <MenuItem key={model.name} value={model.name}>
-            {model.name}
-          </MenuItem>
-        ))}
-      </Select>
-    </FormControl>
-  );
-}
-
 function CollectionsForm(props) {
-  const { className, annotationCollections, onChange, collections, training } = props;
+  const {
+    className,
+    annotationCollections,
+    onChange,
+    collections,
+    training
+  } = props;
   return (
     <FormControl component="fieldset" className={className}>
       <InputLabel shrink>Annotations</InputLabel>
@@ -137,8 +122,6 @@ class TrainModel extends Component {
     super(props);
 
     this.state = {
-      models: [],
-      modelSelected: undefined,
       collections: [],
       annotationCollections: [],
       selectedCollectionCounts: [],
@@ -150,36 +133,16 @@ class TrainModel extends Component {
       epochs: '',
       minImages: '',
       ready: false,
-      training: false,
+      training: false
     };
   }
 
   componentDidMount = async () => {
-    await this.loadExistingModels();
-    await this.loadCollectionList();
-    this.loadModelParams();
-  };
-
-  loadExistingModels = () => {
-    const config = {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    };
-    return axios
-      .get(`/api/models`, config)
-      .then(res => {
-        this.setState({
-          models: res.data
-        });
-      })
-      .catch(error => {
-        console.log('Error in get /api/models');
-        console.log(error);
-        if (error.response) {
-          console.log(error.response.data.detail);
-        }
-      });
+    const { trainOpen } = this.props;
+    if (trainOpen) {
+      await this.loadCollectionList();
+      this.loadModelParams();
+    }
   };
 
   loadCollectionList = () => {
@@ -219,11 +182,17 @@ class TrainModel extends Component {
   // Used to handle changes in the hyperparameters and in the select model
   handleChange = event => {
     event.persist();
+<<<<<<< HEAD
     this.setState(
       {
         [event.target.name]: event.target.value
       },
     );
+=======
+    this.setState({
+      [event.target.name]: event.target.value
+    });
+>>>>>>> origin/Soe
   };
 
   handleChangeSwitch = event => {
@@ -266,30 +235,34 @@ class TrainModel extends Component {
       axios.get(`/api/models/progress/train`, config).then(progressRes => {
         const training = progressRes.data.status !== 0;
 
-        if (training){
+        if (training) {
           axios.get(`/api/models/train`, config).then(res => {
             const params = res.data;
 
-            const annotationCollections = params.annotation_collections.map(id =>
-              this.state.collections.find((coll) => coll.id === id)
+            const annotationCollections = params.annotation_collections.map(
+              id => this.state.collections.find(coll => coll.id === id)
             );
 
-            this.setState({
-              modelSelected: params.model,
-              annotationCollections: annotationCollections,
-              includeTracking: params.include_tracking,
-              verifiedOnly: params.verified_only,
-              epochs: params.epochs,
-              minImages:  params.min_images,
-              training: true,
-            }, () => this.getCollectionCounts());
+            console.log(this.state.collections);
+
+            this.setState(
+              {
+                annotationCollections: annotationCollections,
+                includeTracking: params.include_tracking,
+                verifiedOnly: params.verified_only,
+                epochs: params.epochs,
+                minImages: params.min_images,
+                training: true
+              },
+              () => this.getCollectionCounts()
+            );
           });
         }
       });
     } catch (error) {
       console.log(error);
     }
-  }
+  };
 
   handleChangeMultiple = event => {
     const options = event.target.value;
@@ -382,10 +355,10 @@ class TrainModel extends Component {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
       };
-      axios.patch('/api/models/train/stop', {}, config).then((res) => 
-        this.setState({ training: false })
-      );
-  } catch (error) {
+      axios
+        .patch('/api/models/train/stop', {}, config)
+        .then(res => this.setState({ training: false }));
+    } catch (error) {
       console.log(error);
     }
   };
@@ -398,15 +371,16 @@ class TrainModel extends Component {
         }
       };
 
-      axios.patch('/api/models/train/reset', {}, config).then((res) => 
-        this.setState({ training: false })
-      );
+      axios
+        .patch('/api/models/train/reset', {}, config)
+        .then(res => this.setState({ training: false }));
     } catch (error) {
       console.log(error);
     }
   };
 
   updateModelParams = async () => {
+    const { model } = this.props;
     const config = {
       headers: {
         Authorization: `Bearer ${localStorage.getItem('token')}`
@@ -417,7 +391,6 @@ class TrainModel extends Component {
       epochs,
       minImages,
       annotationCollections,
-      modelSelected,
       verifiedOnly,
       includeTracking
     } = this.state;
@@ -427,7 +400,7 @@ class TrainModel extends Component {
       minImages,
       includeTracking,
       verifiedOnly,
-      modelSelected,
+      modelSelected: model,
       annotationCollections: annotationCollections.map(c => c.id)
     };
 
@@ -451,10 +424,8 @@ class TrainModel extends Component {
   };
 
   render() {
-    const { classes } = this.props;
+    const { classes, toggleStateVariable, trainOpen, model } = this.props;
     const {
-      modelSelected,
-      models,
       collections,
       annotationCollections,
       infoDialogOpen,
@@ -468,17 +439,24 @@ class TrainModel extends Component {
     } = this.state;
 
     return (
-      <div className="root">
+      <Dialog
+        fullWidth={true}
+        maxWidth="md"
+        className={classes.root}
+        open={trainOpen}
+        onClose={() => toggleStateVariable(false, 'trainOpen')}
+      >
         <Paper className={classes.paper}>
           <div className="container">
             <div className="actionsContainer">
-              <ModelsForm
-                className="modelsForm"
-                modelSelected={modelSelected}
-                handleChange={this.handleChange}
-                models={models}
-                training={training}
-              />
+              <div>
+                <Typography align="left" variant="h4">
+                  {model.name}
+                </Typography>
+                <Typography align="left" variant="caption">
+                  Version: {model.version_selected}
+                </Typography>
+              </div>
               <CollectionsForm
                 className="collectionsForm"
                 collections={collections}
@@ -546,18 +524,22 @@ class TrainModel extends Component {
               counts={selectedCollectionCounts}
             />
             <Divider style={{ marginTop: '30px' }} variant="middle" />
-            <ModelProgress
-              className="progress"
-              postStopFlag={this.postStopFlag}
-              startTraining={this.startTraining}
-              stopTraining={this.stopTraining}
-              resetTraining={this.resetTraining}
-              terminateTraining={() => this.postModelInstance('stop')}
-              checkReady={this.checkReady}
-            />
+            {trainOpen ? (
+              <ModelProgress
+                className="progress"
+                postStopFlag={this.postStopFlag}
+                startTraining={this.startTraining}
+                stopTraining={this.stopTraining}
+                resetTraining={this.resetTraining}
+                terminateTraining={() => this.postModelInstance('stop')}
+                checkReady={this.checkReady}
+              />
+            ) : (
+              ''
+            )}
           </div>
         </Paper>
-      </div>
+      </Dialog>
     );
   }
 }

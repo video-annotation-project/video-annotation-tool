@@ -29,9 +29,6 @@ class ModelProgress extends Component {
       stdout: '',
       stderr: ''
     };
-
-    this.loadProgressInfo();
-    this.loadProgressInfo = this.loadProgressInfo.bind(this);
   }
 
   componentDidMount() {
@@ -67,7 +64,13 @@ class ModelProgress extends Component {
   };
 
   TrainingStatus = () => {
-    const { terminateTraining, checkReady, stopTraining, resetTraining, startTraining } = this.props;
+    const {
+      terminateTraining,
+      checkReady,
+      stopTraining,
+      resetTraining,
+      startTraining
+    } = this.props;
 
     const {
       currentEpoch,
