@@ -239,7 +239,7 @@ class AnnotationGenerator(object):
                 conceptid,
                 x1, x2, y1, y2,
                 speed,
-                ROUND(fps * timeinvideo) as frame_num
+                ROUND(fps * timeinvideo) as frame_num,
                 verifiedby
             FROM
                 annotation_intermediate inter
