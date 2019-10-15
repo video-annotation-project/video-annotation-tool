@@ -240,6 +240,7 @@ class AnnotationGenerator(object):
                 x1, x2, y1, y2,
                 speed,
                 ROUND(fps * timeinvideo) as frame_num
+                verifiedby
             FROM
                 annotation_intermediate inter
             LEFT JOIN
