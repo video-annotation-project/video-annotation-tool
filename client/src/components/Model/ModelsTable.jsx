@@ -157,14 +157,21 @@ class ModelsTable extends Component {
                   </IconButton>
                   <GeneralMenu
                     disabled
-                    // name="AiVideos"
-                    // variant="contained"
-                    // color="primary"
-                    // Link={false}
-                    // handleInsert={handleClickVideo}
-                    // items={model.runs[model.version_selected].videos}
-                    // aivideos={true}
-                    // disabled={!model.runs[model.version_selected].videos[0]}
+                    name="AiVideos"
+                    variant="contained"
+                    color="primary"
+                    Link={false}
+                    handleInsert={handleClickVideo}
+                    items={
+                      model.videos
+                        ? model.videos.find(
+                            version =>
+                              version.version ===
+                              model.version_selected.toString()
+                          ).videos
+                        : null
+                    }
+                    aivideos={true}
                   />
                   <Button
                     disabled={train ? model.name !== train.model : false}
