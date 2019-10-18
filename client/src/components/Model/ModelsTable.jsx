@@ -228,11 +228,15 @@ class ModelsTable extends Component {
           toggleStateVariable={toggleStateVariable}
           handleSelectVersion={handleSelectVersion}
         />
-        <TrainModel
-          trainOpen={trainOpen}
-          toggleStateVariable={toggleStateVariable}
-          model={modelSelected}
-        />
+        {trainOpen ? (
+          <TrainModel
+            trainOpen={trainOpen}
+            toggleStateVariable={toggleStateVariable}
+            model={modelSelected}
+          />
+        ) : (
+          ''
+        )}
         <PredictModel
           predictOpen={predictOpen}
           toggleStateVariable={toggleStateVariable}
