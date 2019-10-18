@@ -100,7 +100,9 @@ def get_counts(results, annotations):
     return counts
 
 
-def evaluate(video_id, model_username, concepts, upload_annotations=False, previous_run_id=None):
+def evaluate(
+        video_id, model_username, concepts, upload_annotations=False,
+        previous_run_id=None):
     # file format: (video_id)_(model_name)-(ctime).mp4
     filename = str(video_id) + "_" + model_username + ".mp4"
     print(filename)
