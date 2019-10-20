@@ -103,7 +103,7 @@ def get_counts(results, annotations):
 def evaluate(
         video_id, model_username, concepts, upload_annotations=False,
         previous_run_id=None):
-    # file format: (video_id)_(model_name)-(ctime).mp4
+    # file format: (video_id)_(model_name)-(version).mp4
     filename = str(video_id) + "_" + model_username + ".mp4"
     print(filename)
     results, fps, original_frames, annotations = predict.predict_on_video(

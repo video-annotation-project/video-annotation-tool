@@ -36,6 +36,7 @@ def main():
     create_model_user(new_version, model_params, user_model)
 
     evaluate_videos(concepts, verify_videos, user_model)
+    end_predictions()
 
     reset_model_params()
     shutdown_server()
@@ -191,7 +192,7 @@ def setup_predict_progress(verify_videos):
     )
     con.commit()
 
-def evaluate_videos(concepts, verify_videos, user_model):
+def evaluate_videos(concepts, verify_videos, user_model, upload_annotations=False, previous_run_id=None):
     """ Run evaluate on all the evaluation videos
     """
 
@@ -201,8 +202,9 @@ def evaluate_videos(concepts, verify_videos, user_model):
             f"""UPDATE predict_progress SET videoid = {video_id}, current_video = current_video + 1"""
         )
         con.commit()
-        evaluate(video_id, user_model, concepts)
+        evaluate(video_id, user_model, concepts, upload_annotations, previous_run_id)
 
+def end_predictions():
     # Status level 4 on a video means that predictions have completed.
     cursor.execute(
         """

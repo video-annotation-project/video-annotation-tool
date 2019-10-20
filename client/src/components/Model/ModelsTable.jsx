@@ -237,11 +237,15 @@ class ModelsTable extends Component {
         ) : (
           ''
         )}
-        <PredictModel
-          predictOpen={predictOpen}
-          toggleStateVariable={toggleStateVariable}
-          model={modelSelected}
-        />
+        {predictOpen ? (
+          <PredictModel
+            predictOpen={predictOpen}
+            toggleStateVariable={toggleStateVariable}
+            model={modelSelected}
+          />
+        ) : (
+          ''
+        )}
         {videoModalOpen ? (
           <AIvideos
             videoModalOpen={videoModalOpen}
