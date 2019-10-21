@@ -93,17 +93,13 @@ def get_model_and_params():
 def get_user_model(model_params):
     """ Get new model version number and user_model name
     """
-    model_version = str(model_params["version"])
-    if model_version == '0':
-        num_model_version = 0
-    else:
-        num_model_version = float(model_version)
+    model_version = model_params["version"]
 
     # from model_version, select versions one level down
     level_down = pd_query(
         """ SELECT version FROM model_versions WHERE model='{0}' AND version ~ '{1}.*{{1}}' """.format(
             str(model_params["model"]),
-            num_model_version
+            model_version
         )
     )
 
