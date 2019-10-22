@@ -104,8 +104,12 @@ def evaluate(
         video_id, model_username, concepts, upload_annotations=False,
         previous_run_id=None):
     # file format: (video_id)_(model_name)-(version).mp4
+    print("evaluate")
     filename = str(video_id) + "_" + model_username + ".mp4"
+    print(video_id)
     print(filename)
+    print(config.WEIGHTS_PATH)
+    print(concepts)
     results, fps, original_frames, annotations = predict.predict_on_video(
         video_id, config.WEIGHTS_PATH, concepts, filename
     )

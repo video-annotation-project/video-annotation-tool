@@ -31,6 +31,11 @@ def main():
 
     download_weights(model_name, version)
     setup_predict_progress(videoids)
+    print("predict_command")
+    print(concepts)
+    print(videoids)
+    print(user_model)
+    print(upload_annotations)
     evaluate_videos(concepts, videoids, user_model, upload_annotations)
     cleanup()
 

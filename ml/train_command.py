@@ -198,6 +198,12 @@ def evaluate_videos(concepts, verify_videos, user_model, upload_annotations=Fals
             f"""UPDATE predict_progress SET videoid = {video_id}, current_video = current_video + 1"""
         )
         con.commit()
+        print("evaluate_videos")
+        print(video_id)
+        print(user_model)
+        print(concepts)
+        print(upload_annotations)
+        print(previous_run_id)
         evaluate(video_id, user_model, concepts, upload_annotations, previous_run_id)
 
 def end_predictions():
