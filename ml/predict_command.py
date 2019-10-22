@@ -25,13 +25,13 @@ def main():
     concepts = params[2]
     videoids = params[4]
     upload_annotations = bool(params[3])
-    previous_run_id = int(params[5])
+ #   previous_run_id = int(params[5])
     version = params[6].replace(".", "-")
     user_model = model_name + "-" + version
 
     download_weights(model_name, version)
     setup_predict_progress(videoids)
-    evaluate_videos(concepts, videoids, user_model, upload_annotations, previous_run_id)
+    evaluate_videos(concepts, videoids, user_model, upload_annotations)
     cleanup()
 
 def download_weights(model_name, version):
