@@ -4,7 +4,6 @@ from utils.query import con, cursor
 
 
 class Progress(keras.callbacks.Callback):
-    """ This class serves to keep track of the current training job's progress """
 
     def __init__(self, job_id, steps_per_epoch, num_epochs):
         super(keras.callbacks.Callback, self).__init__()
@@ -27,15 +26,13 @@ class Progress(keras.callbacks.Callback):
                     curr_epoch=0,
                     max_epoch=%s,
                     curr_batch=0,
-                    steps_per_epoch=%s,
-                    stop_flag=False
+                    steps_per_epoch=%s
                 """,
             (self.job_id, self.max_epoch, self.steps_per_epoch))
 
         self.connection.commit()
 
     def on_train_end(self, logs={}):
-        # Status level 2 tells the frontend that we're done training.
         self.cursor.execute(
             f"""UPDATE {self.table_name} SET status = 2""")
         self.connection.commit()
@@ -47,6 +44,12 @@ class Progress(keras.callbacks.Callback):
 
     def on_epoch_end(self, epoch, logs={}):
         self.curr_epoch = epoch
+        self.cursor.execute(
+            f"""SELECT stop_flag FROM {self.table_name}""")
+        flag = self.cursor.fetchone()[0]
+        if flag:
+            print("ending training early")
+            self.model.stop_training = True
 
     def on_batch_begin(self, batch, logs={}):
         self.curr_batch = batch
@@ -64,15 +67,13 @@ class Progress(keras.callbacks.Callback):
         self.cursor.execute(
             f"""SELECT stop_flag FROM {self.table_name}""")
         flag = self.cursor.fetchone()[0]
-
-        # If the stop flag is set someone has requested that we end the training early
         if flag:
             print("ending training early")
             self.model.stop_training = True
         return
 
 
-# This simulates a small training job
+# Testing
 if __name__ == '__main__':
     steps_per_epoch = 100
     num_epochs = 3

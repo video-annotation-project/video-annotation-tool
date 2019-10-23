@@ -90,7 +90,10 @@ class DragBoxContainer extends Component {
       },
       () => {
         if (onResize) {
-          onResize(e, null, { style: { width: 0, height: 0 } }, null, { x, y });
+          onResize(e, null, { style: { width: 0, height: 0 } }, null, {
+            x,
+            y
+          });
         }
       }
     );

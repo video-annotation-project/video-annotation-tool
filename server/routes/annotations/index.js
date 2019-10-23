@@ -83,7 +83,6 @@ router.get(
   '/boxes/:id',
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
-    const { notcol } = req.query;
     let params = [
       req.query.videoid,
       req.query.timeinvideo,
@@ -110,20 +109,25 @@ router.get(
           'id', c.id, 'x1',c.x1, 'y1',c.y1, 'x2',c.x2, 'y2',c.y2,
           'videowidth', c.videowidth, 'videoheight', c.videoheight, 'name', c.name )) as box
       FROM
-        annotations a
-      LEFT JOIN
-        videos v ON v.id = a.videoid
-      WHERE 
-        a.videoid = $1 AND ROUND(v.fps * a.timeinvideo) = ROUND(v.fps * $2) AND a.id <> $3
-        AND a.conceptid::INT = ANY(SELECT unnest(ARRAY(SELECT unnest(conceptid) FROM annotation_collection WHERE
-          id::INT = ANY($4))))
-          ${
-            notcol === 'true'
-              ? `AND a.id <> ALL(SELECT annotationid FROM annotation_intermediate WHERE id = ANY($4))`
-              : `AND a.verifiedby IS NOT NULL AND a.id = ANY(SELECT annotationid FROM annotation_intermediate WHERE id = ANY($4))`
-          }
-      GROUP BY
-          a.videoid, ROUND(v.fps * a.timeinvideo)
+        (SELECT 
+          a.id, a.x1, a.x2, a.y1, a.y2, a.videowidth, a.videoheight, cc.name,
+          CASE WHEN
+            array_agg(ai.id) && $4 
+            AND a.verifiedby IS NOT NULL 
+          THEN 1 
+            WHEN array_agg(ai.id) && $4
+          THEN 2
+          ELSE 0 
+          END AS verified_flag
+        FROM
+          annotationsAtVideoFrame a
+        LEFT JOIN concepts cc ON cc.id = a.conceptid
+        LEFT JOIN annotation_intermediate ai ON ai.annotationid=a.id
+        GROUP BY
+            a.id, a.x1, a.x2, a.y1, a.y2, a.videowidth, a.videoheight, a.verifiedby, cc.name) c
+      WHERE c.verified_flag != 2
+      GROUP BY c.verified_flag
+      ORDER BY c.verified_flag;
     `;
     try {
       let response = await psql.query(queryText, params);
