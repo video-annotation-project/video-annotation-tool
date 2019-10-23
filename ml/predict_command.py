@@ -25,17 +25,11 @@ def main():
     concepts = params[2]
     videoids = params[4]
     upload_annotations = bool(params[3])
- #   previous_run_id = int(params[5])
     version = params[6].replace(".", "-")
     user_model = model_name + "-" + version
 
     download_weights(model_name, version)
     setup_predict_progress(videoids)
-    print("predict_command")
-    print(concepts)
-    print(videoids)
-    print(user_model)
-    print(upload_annotations)
     evaluate_videos(concepts, videoids, user_model, upload_annotations)
     cleanup()
 
@@ -49,7 +43,7 @@ def download_weights(model_name, version):
         )
         print("downloaded file: {0}".format(filename))
     except ClientError:
-        print("exception occurred, could not find file {0} in S3, exiting".format(filename))
+        print("Could not find weights file {0} in S3, exiting".format(filename))
         cleanup()
 
 def cleanup():
