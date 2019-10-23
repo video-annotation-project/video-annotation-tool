@@ -113,7 +113,8 @@ def evaluate(
     results, fps, original_frames, annotations = predict.predict_on_video(
         video_id, config.WEIGHTS_PATH, concepts, filename
     )
-
+    if (results.empty):
+        return
     # add the entry to ai_videos
     if (previous_run_id == None):
         cursor.execute('''
