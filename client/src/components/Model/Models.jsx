@@ -68,7 +68,7 @@ class Models extends Component {
     let videoJSON = await model.videos.find(group => {
       return group.version === model.version_selected.toString();
     });
-    if (videoJSON.videos.length > 0) {
+    if (videoJSON && videoJSON.videos.length > 0) {
       await Promise.all(
         videoJSON.videos.map(async video => {
           let metric = await this.getMetrics(video);
@@ -76,6 +76,8 @@ class Models extends Component {
         })
       );
       return allMetrics;
+    } else {
+      return null;
     }
   };
 
@@ -111,6 +113,7 @@ class Models extends Component {
     axios
       .get(`/api/models`, config)
       .then(res => {
+        console.log(res.data);
         this.setState({
           models: res.data
         });
@@ -361,7 +364,7 @@ class Models extends Component {
                     </div>
                   ))}
                 </React.Fragment>
-              ) : (
+              ) : selectedModel.version_selected !== 0 ? (
                 <div
                   style={{
                     margin: 'auto',
@@ -378,6 +381,8 @@ class Models extends Component {
                     </div>
                   )}
                 </div>
+              ) : (
+                ''
               )}
               <Table className={classes.table}>
                 <TableHead>

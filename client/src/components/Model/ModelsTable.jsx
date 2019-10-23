@@ -48,6 +48,18 @@ class ModelsTable extends Component {
     clearInterval(this.interval);
   }
 
+  videosGetter(model) {
+    if (!model.videos) return null;
+    let item = model.videos.find(
+      version => version.version === model.version_selected.toString()
+    );
+    if (item) {
+      return item.videos;
+    } else {
+      return null;
+    }
+  }
+
   getStatus = async () => {
     const config = {
       headers: {
@@ -87,7 +99,6 @@ class ModelsTable extends Component {
     if (!models) {
       return <Typography style={{ margin: '20px' }}>Loading...</Typography>;
     }
-
     return (
       <div>
         <Table>
@@ -162,15 +173,7 @@ class ModelsTable extends Component {
                     color="primary"
                     Link={false}
                     handleInsert={handleClickVideo}
-                    items={
-                      model.videos
-                        ? model.videos.find(
-                            version =>
-                              version.version ===
-                              model.version_selected.toString()
-                          ).videos
-                        : null
-                    }
+                    items={this.videosGetter(model)}
                     aivideos={true}
                   />
                   <Button
@@ -190,7 +193,10 @@ class ModelsTable extends Component {
                     Train
                   </Button>
                   <Button
-                    disabled={predict ? model.name !== predict.model : false}
+                    disabled={
+                      (predict ? model.name !== predict.model : false) ||
+                      model.version_selected === 0
+                    }
                     style={{ marginLeft: '10px' }}
                     size="small"
                     variant="contained"

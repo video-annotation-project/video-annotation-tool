@@ -61,7 +61,7 @@ const DisplayTree = props => {
             key={version.id}
             nodeId={version.id}
             label={version.id}
-            onClick={event => props.handleSelectVersion(version.id, props.name)}
+            onClick={() => props.handleSelectVersion(version.id, props.name)}
           >
             <DisplayTree
               data={version.children}
