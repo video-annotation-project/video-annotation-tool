@@ -36,9 +36,3 @@ def query(query_string, params=None):
     """
     con.cursor().execute(query_string, params)
     con.commit()
-
-
-
-
-
-
