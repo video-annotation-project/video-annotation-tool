@@ -11,6 +11,7 @@ con = connect(
     password=config.DB_PASSWORD,
     host=config.DB_HOST
 )
+
 cursor = con.cursor()
 
 s3 = boto3.client(
@@ -35,3 +36,9 @@ def query(query_string, params=None):
     """
     con.cursor().execute(query_string, params)
     con.commit()
+
+
+
+
+
+

@@ -64,7 +64,7 @@ function CollectionsForm(props) {
         onChange={onChange}
         input={<Input id="select-multiple" />}
         disabled={training}
-        renderValue={selected =>
+        renderValue={selected => 
           selected.map(collection => collection.name).join(', ') || 'Loading...'
         }
       >
@@ -72,25 +72,12 @@ function CollectionsForm(props) {
           <MenuItem
             key={collection.id}
             value={collection}
-            disabled={collection.disable}
           >
             <Checkbox
               checked={annotationCollections.indexOf(collection) > -1}
             />
             <ListItemText>
               {collection.name}
-              {collection.validConcepts ? (
-                <Typography variant="subtitle2" gutterBottom color="secondary">
-                  {collection.validConcepts.map((concept, index) => {
-                    if (index === collection.validConcepts.length - 1) {
-                      return concept.f1;
-                    }
-                    return `${concept.f1}, `;
-                  })}
-                </Typography>
-              ) : (
-                ''
-              )}
             </ListItemText>
           </MenuItem>
         ))}

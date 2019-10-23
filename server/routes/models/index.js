@@ -6,6 +6,7 @@ const AWS = require('aws-sdk');
 router.use('/progress', require('./progress'));
 router.use('/tensorboard', require('./tensorboard'));
 router.use('/train', require('./train'));
+router.use('/instance', require('./instance'));
 
 /**
  * @typedef model
