@@ -1,6 +1,4 @@
 import os
-import sys
-import time
 import random
 from collections import OrderedDict
 
@@ -19,10 +17,6 @@ from config import config
 
 # Without this the program will crash
 ImageFile.LOAD_TRUNCATED_IMAGES = True
-
-
-def error_print(message):
-    print(f'[Warning] {message}', file=sys.stderr)
 
 
 def _parse(value, function, fmt):
@@ -188,12 +182,9 @@ class AnnotationGenerator(object):
 
             in_annot = []
             for i, row in frame.iterrows():
-                if row['conceptid'] not in concept_count:
-                    continue
-
                 concept_count[row['conceptid']] += 1
                 in_annot.append(row['conceptid'])
-    
+
                 x1, x2, y1, y2 = _bound_coordinates(row)
 
                 frame.at[i, 'x1'] = x1
@@ -309,7 +300,7 @@ class AnnotationGenerator(object):
 
         return pd_query(
             annotations_query,
-            (collection_ids, verify_videos, min_examples))
+            (collection_ids, verify_videos, min_examples, concepts, ))
 
 
 class S3Generator(Generator):
@@ -337,7 +328,6 @@ class S3Generator(Generator):
         self.classes = classes
 
         self.labelmap = _get_labelmap(list(classes))
-        self.failed_downloads = set()
 
         # Make a reverse dictionary so that we can lookup the other way
         self.labels = {}
@@ -391,9 +381,8 @@ class S3Generator(Generator):
     def load_image(self, image_index):
         """ Load an image at the image_index.
         """
-        if self._download_image(image_index):
-            return read_image_bgr(self.image_path(image_index))
-        return self.load_image((image_index + 1) % self.size())
+        self._download_image(image_index)
+        return read_image_bgr(self.image_path(image_index))
 
     def image_path(self, image_index):
         """ Returns the image path for image_index.
@@ -404,11 +393,6 @@ class S3Generator(Generator):
     def load_annotations(self, image_index):
         """ Load annotations for an image_index.
         """
-
-        # If we couldn't download this image, go onto the next one
-        if image_index in self.failed_downloads:
-            return self.load_annotations((image_index + 1) % self.size())
-
         image = self.selected_annotations.iloc[image_index]
         annotations = {'labels': np.empty((0,)), 'bboxes': np.empty((0, 4))}
         image_name = image['save_name']
@@ -424,7 +408,10 @@ class S3Generator(Generator):
                 float(annot['x2']),
                 float(annot['y2']),
             ]]))
-            
+
+        print(
+            f'Training frame with {annotations["bboxes"].shape[0]} annotations on image {image["save_name"]} ({image["image"]})')
+
         return annotations
 
     def _download_image(self, image_index):
@@ -432,26 +419,20 @@ class S3Generator(Generator):
         saved_image_name = image['save_name'] + self.image_extension
 
         if saved_image_name in self.downloaded_images:
-            return True
+            return
 
         image_name = str(image['image'])
         try:
             obj = self.client.get_object(
                 Bucket=config.S3_BUCKET, Key=config.S3_ANNOTATION_FOLDER + image_name)
-            if (obj['ContentLength'] == 0):
-                # Image is empty, use the next index
-                error_print(f'file {config.S3_ANNOTATION_FOLDER}{image_name} has size 0, using next image instead')
-                self.failed_downloads.add(image_index)
-                return False
             obj_image = Image.open(obj['Body'])
             resized_image = obj_image.resize(
                 (config.RESIZED_WIDTH, config.RESIZED_HEIGHT))
         # ClientError is the exception class for a KeyNotFound error
         except ClientError:
-            # Image doesnt exist, use the next index
-            error_print(f'file {config.S3_ANNOTATION_FOLDER}{image_name} not found in S3 bucket, using next image instead')
-            self.failed_downloads.add(image_index)
-            return False
+            self._download_image((image_index + 1) % self.size())
+            # raise IOError(
+            #    f'file {config.S3_ANNOTATION_FOLDER}{image_name} not found in S3 bucket')
 
         # Some files have a file extension, some don't. Let's fix that.
         if self.image_extension not in image_name:
@@ -467,9 +448,7 @@ class S3Generator(Generator):
             # The file exists, lets make sure it's done downloading.
             # We spin while the file exists, but has no content
             while os.path.getsize(image_path) == 0:
-                time.sleep(10)
-
-        return True
+                pass
 
     def _read_annotations(self):
         """ Read annotations from our selected annotations.
@@ -501,11 +480,6 @@ class S3Generator(Generator):
 
             tracking = user_id == 32
 
-            # Check if the current class name is a class we are predicting on
-            # If not, use the image but not the annotation
-            if class_name not in self.classes:
-                continue
-
             # If a row contains only an image path, it's an image without annotations.
             if (x1, y1, x2, y2, class_name) == ('', '', '', '', ''):
                 continue
@@ -518,8 +492,13 @@ class S3Generator(Generator):
                 raise ValueError(
                     'y2 ({}) must be higher than y1 ({})'.format(y2, y1))
 
+            # Check if the current class name is correctly present
+            if class_name not in self.classes:
+                raise ValueError('unknown class name: \'{}\' (classes: {})'.format(
+                    class_name, set(self.classes)))
+
             result[image_file].append(
-                {'x1': x1, 'x2': x2, 'y1': y1, 'y2': y2, 'class': class_name})
+                {'x1': x1, 'x2': x2, 'y1': y1, 'y2': y2, 'class': class_name, 'tracking': tracking})
         return result
 
     def _connect_s3(self):

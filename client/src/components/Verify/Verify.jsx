@@ -416,5 +416,5 @@ class Verify extends Component {
     return <>{selection}</>;
   }
 }
-export default Verify;
 
+export default Verify;
