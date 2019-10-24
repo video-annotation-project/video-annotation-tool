@@ -73,7 +73,7 @@ def get_model_and_params():
                 config.S3_WEIGHTS_FOLDER + config.DEFAULT_WEIGHTS_PATH,
                 config.WEIGHTS_PATH,
             )
-            print("exception occurred, downloaded default weights file")
+            print("Could not find file {0}, downloaded default weights file".format(filename))
     else:
         print("downloading default weights file")
         s3.download_file(
