@@ -114,7 +114,7 @@ def evaluate(
     # add the entry to ai_videos
     if (previous_run_id == None):
         cursor.execute('''
-            INSERT INTO ai_videos (name, videoid, previous_run_id)
+            INSERT INTO ai_videos (name, videoid, version, model_name)
             VALUES (%s, %s, (SELECT id FROM previous_runs ORDER BY id DESC LIMIT 1))''',
                        (filename, video_id)
                        )
