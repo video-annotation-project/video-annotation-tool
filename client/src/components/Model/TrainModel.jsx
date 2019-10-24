@@ -64,16 +64,21 @@ function CollectionsForm(props) {
         onChange={onChange}
         input={<Input id="select-multiple" />}
         disabled={training}
-        renderValue={selected =>
+        renderValue={selected => 
           selected.map(collection => collection.name).join(', ') || 'Loading...'
         }
       >
         {collections.map(collection => (
-          <MenuItem key={collection.id} value={collection}>
+          <MenuItem
+            key={collection.id}
+            value={collection}
+          >
             <Checkbox
               checked={annotationCollections.indexOf(collection) > -1}
             />
-            <ListItemText>{collection.name}</ListItemText>
+            <ListItemText>
+              {collection.name}
+            </ListItemText>
           </MenuItem>
         ))}
       </Select>
@@ -230,6 +235,8 @@ class TrainModel extends Component {
               id => this.state.collections.find(coll => coll.id === id)
             );
 
+            console.log(this.state.collections);
+
             this.setState(
               {
                 annotationCollections: annotationCollections,
@@ -385,9 +392,8 @@ class TrainModel extends Component {
       minImages,
       includeTracking,
       verifiedOnly,
-      modelSelected: model.name,
-      annotationCollections: annotationCollections.map(c => c.id),
-      version: model.version_selected
+      modelSelected: model,
+      annotationCollections: annotationCollections.map(c => c.id)
     };
 
     return axios.put('/api/models/train', body, config);

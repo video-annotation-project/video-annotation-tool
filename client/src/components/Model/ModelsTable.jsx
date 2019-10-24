@@ -12,7 +12,6 @@ import DeleteIcon from '@material-ui/icons/Delete';
 import Description from '@material-ui/icons/Description';
 import { Typography, Button } from '@material-ui/core';
 import FormControl from '@material-ui/core/FormControl';
-import AssessmentIcon from '@material-ui/icons/Assessment';
 
 import GeneralMenu from '../Utilities/GeneralMenu';
 import AIvideos from './AIvideos';
@@ -76,8 +75,7 @@ class ModelsTable extends Component {
       currentVideo,
       trainOpen,
       predictOpen,
-      versionOpen,
-      launchTensorboard
+      versionOpen
     } = this.props;
     const {
       modelSelected,
@@ -152,14 +150,6 @@ class ModelsTable extends Component {
                     <Description />
                   </IconButton>
                   <IconButton
-                    onClick={() =>
-                      launchTensorboard('c3abc29b105b4bc0b2e666ecc0b53aea')
-                    }
-                    aria-label="Assessment"
-                  >
-                    <AssessmentIcon />
-                  </IconButton>
-                  <IconButton
                     onClick={() => deleteModel(model)}
                     aria-label="Delete"
                   >
@@ -167,21 +157,14 @@ class ModelsTable extends Component {
                   </IconButton>
                   <GeneralMenu
                     disabled
-                    name="AiVideos"
-                    variant="contained"
-                    color="primary"
-                    Link={false}
-                    handleInsert={handleClickVideo}
-                    items={
-                      model.videos
-                        ? model.videos.find(
-                            version =>
-                              version.version ===
-                              model.version_selected.toString()
-                          ).videos
-                        : null
-                    }
-                    aivideos={true}
+                    // name="AiVideos"
+                    // variant="contained"
+                    // color="primary"
+                    // Link={false}
+                    // handleInsert={handleClickVideo}
+                    // items={model.runs[model.version_selected].videos}
+                    // aivideos={true}
+                    // disabled={!model.runs[model.version_selected].videos[0]}
                   />
                   <Button
                     disabled={train ? model.name !== train.model : false}
@@ -228,24 +211,16 @@ class ModelsTable extends Component {
           toggleStateVariable={toggleStateVariable}
           handleSelectVersion={handleSelectVersion}
         />
-        {trainOpen ? (
-          <TrainModel
-            trainOpen={trainOpen}
-            toggleStateVariable={toggleStateVariable}
-            model={modelSelected}
-          />
-        ) : (
-          ''
-        )}
-        {predictOpen ? (
-          <PredictModel
-            predictOpen={predictOpen}
-            toggleStateVariable={toggleStateVariable}
-            model={modelSelected}
-          />
-        ) : (
-          ''
-        )}
+        <TrainModel
+          trainOpen={trainOpen}
+          toggleStateVariable={toggleStateVariable}
+          model={modelSelected}
+        />
+        <PredictModel
+          predictOpen={predictOpen}
+          toggleStateVariable={toggleStateVariable}
+          model={modelSelected}
+        />
         {videoModalOpen ? (
           <AIvideos
             videoModalOpen={videoModalOpen}

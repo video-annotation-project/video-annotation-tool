@@ -35,7 +35,7 @@ router.get(
         verificationvideos,
         versions,
         version_selected,
-        (array_agg(videos))[1] as videos
+        (array_agg(t.previous_runs))[1] as runs
       FROM 
         (SELECT
           name,
@@ -44,9 +44,9 @@ router.get(
           verificationvideos
         FROM
           models) m
-      LEFT JOIN 
+      JOIN 
         concepts c ON c.id=m.concept
-      LEFT JOIN (
+      JOIN (
         SELECT
           model,
           array_agg(version) AS versions,
@@ -54,16 +54,29 @@ router.get(
         FROM
           model_versions
         GROUP BY model) mv ON mv.model=m.name
+      JOIN (
+        SELECT
+          model_name,
+          array_agg(start_train) AS new_versions,
+          count(*)-1 AS new_selected
+        FROM
+          previous_runs
+        GROUP BY model_name) v ON v.model_name=m.name
       LEFT JOIN (
-        SELECT 
-          model_name, 
-          json_agg(json_build_object('version', version, 'videos', names)) AS videos 
+        SELECT model_name, JSON_AGG(JSON_BUILD_OBJECT(
+          'id', id, 'time', start_train, 'videos', videos
+          )) previous_runs
         FROM (
-          SELECT model_name, version, array_agg(name) AS names 
-          FROM ai_videos 
-          GROUP BY model_name, version)
-        av GROUP BY model_name
-      ) av ON av.model_name = m.name
+          SELECT 
+            pr.id, pr.start_train, pr.model_name,
+            JSON_AGG(av.*) videos
+          FROM ai_videos av
+          RIGHT JOIN 
+            previous_runs pr ON av.previous_run_id=pr.id
+          GROUP BY pr.id, pr.start_train
+        ) t
+        GROUP BY model_name
+      ) t ON t.model_name=m.name
       GROUP BY
         (m.name, m.timestamp, verificationvideos, versions, version_selected)
     `;

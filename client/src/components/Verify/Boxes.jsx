@@ -106,7 +106,6 @@ class Boxes extends Component {
               >
                 <Hover
                   id={box.id}
-                  concept={box.concept}
                   handleDelete={handleDelete}
                   box={box}
                   annotation={annotation}
@@ -137,7 +136,6 @@ class Boxes extends Component {
               >
                 <Hover
                   id={box.id}
-                  concept={box.concept}
                   handleDelete={handleDelete}
                   box={box}
                   annotation={annotation}
