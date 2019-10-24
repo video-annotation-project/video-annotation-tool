@@ -6,8 +6,7 @@ import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import Table from '@material-ui/core/Table';
 import Swal from 'sweetalert2/src/sweetalert2';
-import { Typography, Button, Paper } from '@material-ui/core';
-import CircularProgress from '@material-ui/core/CircularProgress';
+import { Typography, Button } from '@material-ui/core';
 
 import Dialog from '@material-ui/core/Dialog';
 import TableCell from '@material-ui/core/TableCell';
@@ -44,11 +43,7 @@ class Models extends Component {
       predictOpen: false,
       infoOpen: false,
       selectedModel: '',
-      versionOpen: false,
-      metricLoaded: false,
-      allMetrics: [],
-      total: [],
-      showTotal: false
+      versionOpen: false
     };
   }
   formatDate = version => {
@@ -128,112 +123,16 @@ class Models extends Component {
       });
   };
 
-  loadRunningTensorboard = () => {
-    const config = {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    };
-
-    axios
-      .get('/api/models/tensorboard/', config)
-      .then(res => {
-        this.setState({ launchedTB: parseInt(res.data.id, 10) });
-      })
-      .catch(error => {
-        console.log('Error in get /api/models/tensorboard/');
-        console.log(error);
-        if (error.response) {
-          console.log(error.response.data.detail);
-        }
-      });
-  };
-
-  openTensorboard = () => {
-    const { launched } = this.state;
-
-    if (launched !== null) {
-      if (process.env.NODE_ENV === 'production') {
-        const domain = window.location.hostname.replace(
-          /(https?:\/\/)?(www.)?/i,
-          ''
-        );
-        setTimeout(() => {
-          window.open(`https://tensorboard.${domain}`, '_blank');
-        }, 500);
-      } else {
-        window.open('http://localhost:6008', '_blank');
-      }
-    }
-  };
-
-  stopTensorboard = () => {
-    const config = {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    };
-
-    axios
-      .delete(`/api/models/tensorboard/`, config)
-      .then(() => {
-        this.setState({
-          launched: null
-        });
-      })
-      .catch(error => {
-        console.log('Error in get /api/models/tensorboard/');
-        console.log(error);
-        if (error.response) {
-          console.log(error.response.data.detail);
-        }
-      });
-  };
-
-  launchTensorboard = id => {
-    const config = {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    };
-
-    const body = {
-      command: 'launch'
-    };
-
-    this.setState({ loadingId: id });
-
-    axios
-      .post(`/api/models/tensorboard/${id}`, body, config)
-      .then(() => {
-        this.setState({ launched: id });
-        this.openTensorboard();
-      })
-      .catch(error => {
-        console.log('Error in get /api/models/tensorboard/');
-        console.log(error);
-        if (error.response) {
-          console.log(error.response.data.detail);
-        }
-      })
-      .finally(() => this.setState({ loadingId: null }));
-  };
-
   handleCloseInfo = () => {
     this.setState({
       infoOpen: false
     });
   };
 
-  handleOpenInfo = async model => {
+  handleOpenInfo = model => {
     this.setState({
       infoOpen: true,
       selectedModel: model
-    });
-    let result = await this.loadAllMetrics(model);
-    this.setState({
-      allMetrics: result,
-      metricLoaded: true
     });
   };
 
@@ -267,16 +166,6 @@ class Models extends Component {
     });
   };
 
-  setDecimal = data => {
-    if (data === '') {
-      return '0.0';
-    }
-    if (Number.isInteger(parseFloat(data))) {
-      return data;
-    }
-    return parseFloat(data).toFixed(3);
-  };
-
   toggleStateVariable = (condition, variable) => {
     this.setState({
       [variable]: condition
@@ -292,97 +181,12 @@ class Models extends Component {
     this.setState({ models });
   };
 
-  handleClickVideo = async (name, videos) => {
-    let currentVideo = await videos.find(video => video === name);
+  handleClickVideo = async (id, videos) => {
+    let currentVideo = await videos.find(video => video.id === id);
     this.setState({
       videoModalOpen: true,
       currentVideo
     });
-  };
-
-  showTotal = () => {
-    const { allMetrics } = this.state;
-
-    let total = [];
-    allMetrics.forEach(metric => {
-      metric.metric.forEach((concept, index) => {
-        if (!total[index]) {
-          total[index] = JSON.parse(JSON.stringify(concept));
-        } else {
-          total[index].TP = parseInt(total[index].TP) + parseInt(concept.TP);
-          total[index].FP = parseInt(total[index].FP) + parseInt(concept.FP);
-          total[index].FN = parseInt(total[index].FN) + parseInt(concept.FN);
-          total[index].pred_num =
-            parseInt(total[index].pred_num) + parseInt(concept.pred_num);
-          total[index].true_num =
-            parseInt(total[index].true_num) + parseInt(concept.true_num);
-        }
-      });
-    });
-    total.forEach(concept => {
-      concept.Precision = concept.TP / (concept.TP + concept.FP);
-      concept.Recall = concept.TP / (concept.TP + concept.FN);
-      concept.count_accuracy =
-        1 - Math.abs(concept.true_num - concept.pred_num) / concept.true_num;
-    });
-    this.setState({
-      total,
-      showTotal: true
-    });
-  };
-
-  displayTotal = () => {
-    const { showTotal, total } = this.state;
-    if (showTotal) {
-      return (
-        <Paper style={{ maxHeight: 400, overflow: 'auto' }}>
-          <Typography variant="h5" color="primary">
-            Total Metrics
-          </Typography>
-          {this.metrics(total)}
-        </Paper>
-      );
-    } else {
-      return '';
-    }
-  };
-
-  metrics = data => {
-    const { classes } = this.props;
-    return (
-      <Table className={classes.table}>
-        <TableHead>
-          <TableRow>
-            <TableCell>ConceptId</TableCell>
-            <TableCell>TP</TableCell>
-            <TableCell>FP</TableCell>
-            <TableCell>FN</TableCell>
-            <TableCell>Precision</TableCell>
-            <TableCell>Recall</TableCell>
-            <TableCell>F1</TableCell>
-            <TableCell>pred_num</TableCell>
-            <TableCell>true_num</TableCell>
-            <TableCell>count_accuracy</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {data.map(row => (
-            <TableRow key={row.conceptid}>
-              <TableCell>{row.conceptid}</TableCell>
-              <TableCell>{row.TP}</TableCell>
-              <TableCell>{row.FP}</TableCell>
-              <TableCell>{row.FN}</TableCell>
-              <TableCell>{this.setDecimal(row.Precision)}</TableCell>
-              <TableCell>{this.setDecimal(row.Recall)}</TableCell>
-              <TableCell>{this.setDecimal(row.F1)}</TableCell>
-              <TableCell>{this.setDecimal(row.pred_num)}</TableCell>
-              <TableCell>{this.setDecimal(row.true_num)}</TableCell>
-              <TableCell>{this.setDecimal(row.count_accuracy)}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    );
   };
 
   render() {
@@ -396,9 +200,7 @@ class Models extends Component {
       createOpen,
       trainOpen,
       predictOpen,
-      versionOpen,
-      allMetrics,
-      metricLoaded
+      versionOpen
     } = this.state;
 
     if (!models) {
@@ -431,7 +233,6 @@ class Models extends Component {
           trainOpen={trainOpen}
           predictOpen={predictOpen}
           versionOpen={versionOpen}
-          launchTensorboard={this.launchTensorboard}
         />
         {infoOpen && (
           <Dialog onClose={this.handleCloseInfo} open={infoOpen}>

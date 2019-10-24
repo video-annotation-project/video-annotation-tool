@@ -102,7 +102,7 @@ class Annotate extends Component {
     let ret;
     try {
       const summary = await axios.get(
-        `/api/videos/aivideos/summary/${video}`,
+        `/api/videos/aivideos/summary/${video.name}`,
         config
       );
 
@@ -143,7 +143,7 @@ class Annotate extends Component {
     let ret;
     try {
       const metrics = await axios.get(
-        `/api/videos/aivideos/metrics?filename=${video}`,
+        `/api/videos/aivideos/metrics?filename=${video.name}`,
         config
       );
       if (metrics) {
@@ -263,7 +263,7 @@ class Annotate extends Component {
                 align="center"
                 className={classes.videoName}
               >
-                {`${video}`}
+                {`${video.id} ${video.name}`}
               </Typography>
             </Grid>
             <Grid item xs />
@@ -278,7 +278,7 @@ class Annotate extends Component {
                     id="video"
                     width="1600"
                     height="900"
-                    src={`https://cdn.deepseaannotations.com/ai_videos/${video}`}
+                    src={`https://cdn.deepseaannotations.com/ai_videos/${video.name}`}
                     type="video/mp4"
                     crossOrigin="use-credentials"
                   >

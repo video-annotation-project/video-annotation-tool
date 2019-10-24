@@ -165,8 +165,7 @@ def predict_on_video(videoid, model_weights, concepts, filename,
 
     printing_with_time("Predicting")
     results, frames = predict_frames(frames, fps, model, videoid)
-    if (results.empty):
-        print("no predictions")
+    if (results.shape[0] == 0):
         return
     results = propagate_conceptids(results, concepts)
     results = length_limit_objects(results, config.MIN_FRAMES_THRESH)
@@ -249,7 +248,7 @@ def predict_frames(video_frames, fps, model, videoid):
             temp.remove(obj)
             detection = (obj.box, 0, 0)
             match, matched_object = does_match_existing_tracked_object(
-                detection[0], temp)
+                detection, temp)
             if not success or obj.tracked_frames > 30:
                 annotations.append(obj.annotations)
                 currently_tracked_objects.remove(obj)
@@ -265,7 +264,7 @@ def predict_frames(video_frames, fps, model, videoid):
                 if (x1 > x2 or y1 > y2):
                     continue
                 match, matched_object = does_match_existing_tracked_object(
-                    detection[0], currently_tracked_objects)
+                    detection, currently_tracked_objects)
                 if match:
                     matched_object.reinit(detection, frame, frame_num)
                 else:
@@ -300,13 +299,13 @@ def get_predictions(frame, model):
 
 
 def does_match_existing_tracked_object(detection, currently_tracked_objects):
-    (x1, y1, x2, y2) = detection
-    detection_series = pd.Series({'x1': x1, 'y1': y1, 'x2': x2, 'y2': y2})
+    (x1, y1, x2, y2) = detection[0]
+    detection = pd.Series({'x1': x1, 'y1': y1, 'x2': x2, 'y2': y2})
     # Compute IOU with each currently tracked object
     max_iou = 0
     match = None
     for obj in currently_tracked_objects:
-        iou = compute_IOU(obj, detection_series)
+        iou = compute_IOU(obj, detection)
         if (iou > max_iou):
             max_iou = iou
             match = obj
