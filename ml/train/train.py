@@ -188,4 +188,4 @@ def _get_num_workers():
         1 worker per core should give us maximum preformance.
     """
     # Subtract 1 for the main thread
-    return multiprocessing.cpu_count() - 1
+    return multiprocessing.cpu_count() - 2

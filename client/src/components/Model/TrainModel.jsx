@@ -248,8 +248,6 @@ class TrainModel extends Component {
               id => this.state.collections.find(coll => coll.id === id)
             );
 
-            console.log(this.state.collections);
-
             this.setState(
               {
                 annotationCollections: annotationCollections,
@@ -405,8 +403,9 @@ class TrainModel extends Component {
       minImages,
       includeTracking,
       verifiedOnly,
-      modelSelected: model,
-      annotationCollections: annotationCollections.map(c => c.id)
+      modelSelected: model.name,
+      annotationCollections: annotationCollections.map(c => c.id),
+      version: model.version_selected
     };
 
     return axios.put('/api/models/train', body, config);

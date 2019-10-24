@@ -58,6 +58,7 @@ class Models extends Component {
 
   componentDidMount = () => {
     this.loadExistingModels();
+    this.loadRunningTensorboard();
   };
 
   loadAllMetrics = async model => {
@@ -125,6 +126,97 @@ class Models extends Component {
           console.log(error.response.data.detail);
         }
       });
+  };
+
+  loadRunningTensorboard = () => {
+    const config = {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    };
+
+    axios
+      .get('/api/models/tensorboard/', config)
+      .then(res => {
+        this.setState({ launchedTB: parseInt(res.data.id, 10) });
+      })
+      .catch(error => {
+        console.log('Error in get /api/models/tensorboard/');
+        console.log(error);
+        if (error.response) {
+          console.log(error.response.data.detail);
+        }
+      });
+  };
+
+  openTensorboard = () => {
+    const { launched } = this.state;
+
+    if (launched !== null) {
+      if (process.env.NODE_ENV === 'production') {
+        const domain = window.location.hostname.replace(
+          /(https?:\/\/)?(www.)?/i,
+          ''
+        );
+        setTimeout(() => {
+          window.open(`https://tensorboard.${domain}`, '_blank');
+        }, 500);
+      } else {
+        window.open('http://localhost:6008', '_blank');
+      }
+    }
+  };
+
+  stopTensorboard = () => {
+    const config = {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    };
+
+    axios
+      .delete(`/api/models/tensorboard/`, config)
+      .then(() => {
+        this.setState({
+          launched: null
+        });
+      })
+      .catch(error => {
+        console.log('Error in get /api/models/tensorboard/');
+        console.log(error);
+        if (error.response) {
+          console.log(error.response.data.detail);
+        }
+      });
+  };
+
+  launchTensorboard = id => {
+    const config = {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    };
+
+    const body = {
+      command: 'launch'
+    };
+
+    this.setState({ loadingId: id });
+
+    axios
+      .post(`/api/models/tensorboard/${id}`, body, config)
+      .then(() => {
+        this.setState({ launched: id });
+        this.openTensorboard();
+      })
+      .catch(error => {
+        console.log('Error in get /api/models/tensorboard/');
+        console.log(error);
+        if (error.response) {
+          console.log(error.response.data.detail);
+        }
+      })
+      .finally(() => this.setState({ loadingId: null }));
   };
 
   handleCloseInfo = () => {
@@ -339,6 +431,7 @@ class Models extends Component {
           trainOpen={trainOpen}
           predictOpen={predictOpen}
           versionOpen={versionOpen}
+          launchTensorboard={this.launchTensorboard}
         />
         {infoOpen && (
           <Dialog onClose={this.handleCloseInfo} open={infoOpen}>

@@ -174,8 +174,7 @@ router.get(
             excludeTracking === 'true'
               ? `AND a.userid!=${configData.ml.tracking_userid}`
               : ``
-          }
-        LIMIT 1000)
+          })
         SELECT
           *
         FROM 
