@@ -12,6 +12,7 @@ import DeleteIcon from '@material-ui/icons/Delete';
 import Description from '@material-ui/icons/Description';
 import { Typography, Button } from '@material-ui/core';
 import FormControl from '@material-ui/core/FormControl';
+import AssessmentIcon from '@material-ui/icons/Assessment';
 
 import GeneralMenu from '../Utilities/GeneralMenu';
 import AIvideos from './AIvideos';
@@ -48,6 +49,18 @@ class ModelsTable extends Component {
     clearInterval(this.interval);
   }
 
+  videosGetter(model) {
+    if (!model.videos) return null;
+    let item = model.videos.find(
+      version => version.version === model.version_selected.toString()
+    );
+    if (item) {
+      return item.videos;
+    } else {
+      return null;
+    }
+  }
+
   getStatus = async () => {
     const config = {
       headers: {
@@ -75,7 +88,8 @@ class ModelsTable extends Component {
       currentVideo,
       trainOpen,
       predictOpen,
-      versionOpen
+      versionOpen,
+      launchTensorboard
     } = this.props;
     const {
       modelSelected,
@@ -87,7 +101,6 @@ class ModelsTable extends Component {
     if (!models) {
       return <Typography style={{ margin: '20px' }}>Loading...</Typography>;
     }
-
     return (
       <div>
         <Table>
@@ -95,7 +108,6 @@ class ModelsTable extends Component {
             <TableRow>
               <CustomTableCell>Name</CustomTableCell>
               <CustomTableCell>Versions #</CustomTableCell>
-              {/* <CustomTableCell>New Versions</CustomTableCell> */}
               <CustomTableCell>Date Created</CustomTableCell>
               <CustomTableCell />
             </TableRow>
@@ -106,21 +118,6 @@ class ModelsTable extends Component {
                 <CustomTableCell component="th" scope="row">
                   {model.name}
                 </CustomTableCell>
-                {/* <CustomTableCell>
-                  <FormControl>
-                    <Select
-                      value={model.version_selected}
-                      renderValue={value => `${parseInt(value) + 1}`}
-                      onChange={event => handleSelectVersion(event, model)}
-                    >
-                      {model.runs.map((version, index) => (
-                        <MenuItem key={version.id} value={index}>
-                          {index + 1 + ' : ' + formatDate(version.time)}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </CustomTableCell> */}
                 <CustomTableCell>
                   <FormControl>
                     <Button
@@ -150,6 +147,16 @@ class ModelsTable extends Component {
                     <Description />
                   </IconButton>
                   <IconButton
+                    onClick={() =>
+                      launchTensorboard(
+                        model.name + '_' + model.version_selected
+                      )
+                    }
+                    aria-label="Assessment"
+                  >
+                    <AssessmentIcon />
+                  </IconButton>
+                  <IconButton
                     onClick={() => deleteModel(model)}
                     aria-label="Delete"
                   >
@@ -157,14 +164,13 @@ class ModelsTable extends Component {
                   </IconButton>
                   <GeneralMenu
                     disabled
-                    // name="AiVideos"
-                    // variant="contained"
-                    // color="primary"
-                    // Link={false}
-                    // handleInsert={handleClickVideo}
-                    // items={model.runs[model.version_selected].videos}
-                    // aivideos={true}
-                    // disabled={!model.runs[model.version_selected].videos[0]}
+                    name="AiVideos"
+                    variant="contained"
+                    color="primary"
+                    Link={false}
+                    handleInsert={handleClickVideo}
+                    items={this.videosGetter(model)}
+                    aivideos={true}
                   />
                   <Button
                     disabled={train ? model.name !== train.model : false}
@@ -183,7 +189,10 @@ class ModelsTable extends Component {
                     Train
                   </Button>
                   <Button
-                    disabled={predict ? model.name !== predict.model : false}
+                    disabled={
+                      (predict ? model.name !== predict.model : false) ||
+                      model.version_selected.toString() === '0'
+                    }
                     style={{ marginLeft: '10px' }}
                     size="small"
                     variant="contained"

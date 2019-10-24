@@ -83,7 +83,6 @@ router.get(
   '/boxes/:id',
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
-    const { notcol } = req.query;
     let params = [
       req.query.videoid,
       req.query.timeinvideo,
@@ -110,20 +109,25 @@ router.get(
           'id', c.id, 'x1',c.x1, 'y1',c.y1, 'x2',c.x2, 'y2',c.y2,
           'videowidth', c.videowidth, 'videoheight', c.videoheight, 'name', c.name )) as box
       FROM
-        annotations a
-      LEFT JOIN
-        videos v ON v.id = a.videoid
-      WHERE 
-        a.videoid = $1 AND ROUND(v.fps * a.timeinvideo) = ROUND(v.fps * $2) AND a.id <> $3
-        AND a.conceptid::INT = ANY(SELECT unnest(ARRAY(SELECT unnest(conceptid) FROM annotation_collection WHERE
-          id::INT = ANY($4))))
-          ${
-            notcol === 'true'
-              ? `AND a.id <> ALL(SELECT annotationid FROM annotation_intermediate WHERE id = ANY($4))`
-              : `AND a.verifiedby IS NOT NULL AND a.id = ANY(SELECT annotationid FROM annotation_intermediate WHERE id = ANY($4))`
-          }
-      GROUP BY
-          a.videoid, ROUND(v.fps * a.timeinvideo)
+        (SELECT 
+          a.id, a.x1, a.x2, a.y1, a.y2, a.videowidth, a.videoheight, cc.name,
+          CASE WHEN
+            array_agg(ai.id) && $4 
+            AND a.verifiedby IS NOT NULL 
+          THEN 1 
+            WHEN array_agg(ai.id) && $4
+          THEN 2
+          ELSE 0 
+          END AS verified_flag
+        FROM
+          annotationsAtVideoFrame a
+        LEFT JOIN concepts cc ON cc.id = a.conceptid
+        LEFT JOIN annotation_intermediate ai ON ai.annotationid=a.id
+        GROUP BY
+            a.id, a.x1, a.x2, a.y1, a.y2, a.videowidth, a.videoheight, a.verifiedby, cc.name) c
+      WHERE c.verified_flag != 2
+      GROUP BY c.verified_flag
+      ORDER BY c.verified_flag;
     `;
     try {
       let response = await psql.query(queryText, params);
@@ -170,8 +174,7 @@ router.get(
             excludeTracking === 'true'
               ? `AND a.userid!=${configData.ml.tracking_userid}`
               : ``
-          }
-        LIMIT 1000)
+          })
         SELECT
           *
         FROM 
@@ -744,12 +747,56 @@ let updateBoundingBox = async (req, res) => {
   }
 };
 
+let deleteTrackingAnnotations = req => {
+  const id = req.body.id;
+  let s3 = new AWS.S3();
+  const queryText2 = `
+    DELETE FROM
+      annotations
+    WHERE 
+      originalid=$1 AND annotations.id<>$1
+    RETURNING *
+  `;
+  psql.query(queryText2, [id], (err, res) => {
+    if (err) {
+      console.log(error);
+      res.status(500).json(error);
+    }
+    //These are the s3 object we will be deleting
+    let Objects = [];
+
+    res.rows.forEach(element => {
+      Objects.push({
+        Key: process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + element.image
+      });
+      Objects.push({
+        Key: process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + element.imagewithbox
+      });
+    });
+    // add tracking video
+    Objects.push({
+      Key:
+        process.env.AWS_S3_BUCKET_VIDEOS_FOLDER + req.body.id + '_tracking.mp4'
+    });
+    params = {
+      Bucket: process.env.AWS_S3_BUCKET_NAME,
+      Delete: {
+        Objects: Objects
+      }
+    };
+    s3.deleteObjects(params, (err, data) => {
+      if (err) {
+        console.log(err);
+      }
+    });
+  });
+};
+
 let verifyAnnotation = async (req, res) => {
   delete req.body.op;
 
   const verifiedby = req.user.id;
   const id = req.body.id;
-  let s3 = new AWS.S3();
 
   let params = [id, verifiedby];
   let queryText1 = `
@@ -772,45 +819,9 @@ let verifyAnnotation = async (req, res) => {
   queryText1 += `, unsure=$` + params.length;
   queryText1 += ` WHERE id=$1`;
 
-  const queryText2 = `
-    DELETE FROM
-      annotations
-    WHERE 
-      originalid=$1 AND annotations.id<>$1
-    RETURNING *
-  `;
   try {
-    let deleteRes = await psql.query(queryText2, [id]);
     await psql.query(queryText1, params);
-
-    //These are the s3 object we will be deleting
-    let Objects = [];
-
-    deleteRes.rows.forEach(element => {
-      Objects.push({
-        Key: process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + element.image
-      });
-      Objects.push({
-        Key: process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + element.imagewithbox
-      });
-    });
-    // add tracking video
-    Objects.push({
-      Key:
-        process.env.AWS_S3_BUCKET_VIDEOS_FOLDER + req.body.id + '_tracking.mp4'
-    });
-    params = {
-      Bucket: process.env.AWS_S3_BUCKET_NAME,
-      Delete: {
-        Objects: Objects
-      }
-    };
-    await s3.deleteObjects(params, (err, data) => {
-      if (err) {
-        console.log(err);
-        res.status(500).json(err);
-      }
-    });
+    deleteTrackingAnnotations(req);
     res.json('success');
   } catch (error) {
     console.log(error);

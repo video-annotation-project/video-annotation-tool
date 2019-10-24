@@ -6,7 +6,6 @@ const AWS = require('aws-sdk');
 router.use('/progress', require('./progress'));
 router.use('/tensorboard', require('./tensorboard'));
 router.use('/train', require('./train'));
-router.use('/instance', require('./instance'));
 
 /**
  * @typedef model
@@ -35,7 +34,7 @@ router.get(
         verificationvideos,
         versions,
         version_selected,
-        (array_agg(t.previous_runs))[1] as runs
+        (array_agg(videos))[1] as videos
       FROM 
         (SELECT
           name,
@@ -44,9 +43,9 @@ router.get(
           verificationvideos
         FROM
           models) m
-      JOIN 
+      LEFT JOIN 
         concepts c ON c.id=m.concept
-      JOIN (
+      LEFT JOIN (
         SELECT
           model,
           array_agg(version) AS versions,
@@ -54,29 +53,16 @@ router.get(
         FROM
           model_versions
         GROUP BY model) mv ON mv.model=m.name
-      JOIN (
-        SELECT
-          model_name,
-          array_agg(start_train) AS new_versions,
-          count(*)-1 AS new_selected
-        FROM
-          previous_runs
-        GROUP BY model_name) v ON v.model_name=m.name
       LEFT JOIN (
-        SELECT model_name, JSON_AGG(JSON_BUILD_OBJECT(
-          'id', id, 'time', start_train, 'videos', videos
-          )) previous_runs
+        SELECT 
+          model_name, 
+          json_agg(json_build_object('version', version, 'videos', names)) AS videos 
         FROM (
-          SELECT 
-            pr.id, pr.start_train, pr.model_name,
-            JSON_AGG(av.*) videos
-          FROM ai_videos av
-          RIGHT JOIN 
-            previous_runs pr ON av.previous_run_id=pr.id
-          GROUP BY pr.id, pr.start_train
-        ) t
-        GROUP BY model_name
-      ) t ON t.model_name=m.name
+          SELECT model_name, version, array_agg(name) AS names 
+          FROM ai_videos 
+          GROUP BY model_name, version)
+        av GROUP BY model_name
+      ) av ON av.model_name = m.name
       GROUP BY
         (m.name, m.timestamp, verificationvideos, versions, version_selected)
     `;

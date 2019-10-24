@@ -353,7 +353,7 @@ class VerifyAnnotations extends Component {
     const y2 = y + parseInt(height, 0);
 
     const body = {
-      conceptId: concept.id,
+      conceptId: concept ? concept.id : annotation.conceptid,
       videoId: annotation.videoid,
       timeinvideo: annotation.timeinvideo,
       x1,
@@ -609,9 +609,11 @@ class VerifyAnnotations extends Component {
       </div>
     );
   };
+
   annotationConcept = annotation => {
     const { classes, annotating } = this.props;
     const { concept } = this.state;
+
     return (
       <div
         className={classes.buttonsContainer2}
@@ -643,6 +645,7 @@ class VerifyAnnotations extends Component {
       </div>
     );
   };
+
   annotationDetails = annotation => {
     const { classes } = this.props;
     const { concept, comment, unsure, detailDialogOpen } = this.state;
@@ -694,6 +697,7 @@ class VerifyAnnotations extends Component {
       </Dialog>
     );
   };
+
   loadDialogModal = () => {
     const { unsure, conceptDialogMsg, comment } = this.state;
     return (
@@ -709,6 +713,7 @@ class VerifyAnnotations extends Component {
       />
     );
   };
+
   render() {
     const {
       classes,
@@ -736,6 +741,7 @@ class VerifyAnnotations extends Component {
       verifiedBoxes,
       boxesOutsideCol
     } = this.state;
+
     if (x === null) {
       return <Typography style={{ margin: '20px' }}>Loading...</Typography>;
     }

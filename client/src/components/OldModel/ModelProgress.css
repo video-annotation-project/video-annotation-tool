@@ -45,15 +45,13 @@
   height: 430px;
   padding: 15px;
 
-  overflow-y: auto;
-  background: rgba(0, 0, 0, 0.6);
-  border: 2px black solid;
+  overflow: auto;
+  background: #1b324c;
+  border: 1px lightgrey solid;
 }
 
 .codeBlock pre {
   margin: 0;
-  white-space: pre-wrap;
-  font-size: 10pt;
 }
 
 .stopButton {

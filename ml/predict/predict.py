@@ -167,6 +167,7 @@ def predict_on_video(videoid, model_weights, concepts, filename,
     results, frames = predict_frames(frames, fps, model, videoid)
     if (results.empty):
         print("no predictions")
+        return
     results = propagate_conceptids(results, concepts)
     results = length_limit_objects(results, config.MIN_FRAMES_THRESH)
     # interweb human annotations and predictions

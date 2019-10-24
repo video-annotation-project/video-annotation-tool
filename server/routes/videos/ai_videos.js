@@ -99,9 +99,9 @@ router.delete(
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     let s3 = new AWS.S3();
-    let queryText = `DELETE FROM ai_videos WHERE id=$1 RETURNING *`;
+    let queryText = `DELETE FROM ai_videos WHERE name=$1 RETURNING *`;
     let queryText1 = `DELETE FROM users WHERE username=$1 RETURNING *`;
-    let videoName = req.body.video.name;
+    let videoName = req.body.video;
     let splitName = videoName.split('_');
     let modelNamewithMP4 = splitName[splitName.length - 1];
     const modelName = modelNamewithMP4.split('.mp4')[0];
@@ -109,7 +109,7 @@ router.delete(
     try {
       let Objects = [];
       Objects.push({
-        Key: process.env.AWS_S3_BUCKET_AIVIDEOS_FOLDER + req.body.video.name
+        Key: process.env.AWS_S3_BUCKET_AIVIDEOS_FOLDER + req.body.video
       });
       let params = {
         Bucket: process.env.AWS_S3_BUCKET_NAME,
@@ -126,7 +126,7 @@ router.delete(
         }
       });
 
-      let del = await psql.query(queryText, [req.body.video.id]);
+      let del = await psql.query(queryText, [req.body.video]);
 
       del = await psql.query(queryText1, [modelName]);
 

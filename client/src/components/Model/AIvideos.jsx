@@ -9,6 +9,7 @@ import Grid from '@material-ui/core/Grid';
 import axios from 'axios';
 import IconButton from '@material-ui/core/IconButton';
 import Description from '@material-ui/icons/Description';
+import DeleteIcon from '@material-ui/icons/Delete';
 
 import Modal from '@material-ui/core/Modal';
 import Summary from '../Utilities/Summary';
@@ -101,7 +102,7 @@ class Annotate extends Component {
     let ret;
     try {
       const summary = await axios.get(
-        `/api/videos/aivideos/summary/${video.name}`,
+        `/api/videos/aivideos/summary/${video}`,
         config
       );
 
@@ -116,6 +117,23 @@ class Annotate extends Component {
     return ret;
   };
 
+  deleteAiVideo = async video => {
+    const config = {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      },
+      data: {
+        video: video
+      }
+    };
+    try {
+      let res = await axios.delete('/api/videos/aivideos', config);
+      console.log(res.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   getMetrics = async video => {
     const config = {
       headers: {
@@ -125,7 +143,7 @@ class Annotate extends Component {
     let ret;
     try {
       const metrics = await axios.get(
-        `/api/videos/aivideos/metrics?filename=${video.name}`,
+        `/api/videos/aivideos/metrics?filename=${video}`,
         config
       );
       if (metrics) {
@@ -245,7 +263,7 @@ class Annotate extends Component {
                 align="center"
                 className={classes.videoName}
               >
-                {`${video.id} ${video.name}`}
+                {`${video}`}
               </Typography>
             </Grid>
             <Grid item xs />
@@ -260,7 +278,7 @@ class Annotate extends Component {
                     id="video"
                     width="1600"
                     height="900"
-                    src={`https://cdn.deepseaannotations.com/ai_videos/${video.name}`}
+                    src={`https://cdn.deepseaannotations.com/ai_videos/${video}`}
                     type="video/mp4"
                     crossOrigin="use-credentials"
                   >
@@ -313,6 +331,12 @@ class Annotate extends Component {
                   onClick={event => this.openVideoSummary(event, video)}
                 >
                   <Description />
+                </IconButton>
+                <IconButton
+                  aria-label="Delete"
+                  onClick={() => this.deleteAiVideo(video)}
+                >
+                  <DeleteIcon />
                 </IconButton>
                 <Button
                   variant="contained"

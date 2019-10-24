@@ -23,7 +23,6 @@ from train.callbacks.tensorboard import TensorboardLog
 def train_model(concepts,
                 verify_videos,
                 model_name,
-                model_version,
                 collection_ids,
                 min_examples,
                 epochs,
@@ -40,6 +39,8 @@ def train_model(concepts,
     model, training_model = _initilize_model(len(concepts))
 
     num_workers = _get_num_workers()
+
+    _redirect_outputs(job_id)
 
     training_model.compile(
         loss={
@@ -91,7 +92,7 @@ def train_model(concepts,
     )
 
     # Upload the weights file to the S3 bucket
-    _upload_weights(model_name, model_version)
+    _upload_weights(model_name)
 
     # Evaluate the best confidence thresholds for the model
     evaluate_class_thresholds(model, test_generator)
@@ -137,12 +138,11 @@ def _get_callbacks(model,
 
     # Stops training if val_loss stops improving
     stopping = EarlyStopping(
-        monitor='val_loss', min_delta=0, patience=3, restore_best_weights=True)
+        monitor='val_loss', min_delta=0, patience=10, restore_best_weights=True)
 
     # Every epoch upload tensorboard logs to the S3 bucket
     log_callback = TensorboardLog(
         model_name=model_name,
-        job_id=job_id,
         min_examples=min_examples,
         epochs=epochs,
         collection_ids=collection_ids
@@ -164,20 +164,27 @@ def _get_callbacks(model,
     return [stopping, checkpoint, progress_callback, log_callback, tensorboard_callback]
 
 
-def _upload_weights(model_name, model_version):
+def _upload_weights(model_name):
     """ Upload model weights to s3 bucket
     """
-    print("uploading weights file to S3")
     s3.upload_file(
         config.WEIGHTS_PATH,
         config.S3_BUCKET,
-        config.S3_WEIGHTS_FOLDER + model_name + "_" + model_version + ".h5"
+        config.S3_WEIGHTS_FOLDER + model_name + ".h5"
     )
+
+
+def _redirect_outputs(job_id):
+    """ The DatabaseOutput class will redirect this programs output to a column
+        in out training_progress databse (as well as into a file)
+    """
+    sys.stdout = DatabaseOutput(job_id, 'out')
+    sys.stderr = DatabaseOutput(job_id, 'err')
 
 
 def _get_num_workers():
     """ Returns the number of cores on this machine.
         1 worker per core should give us maximum preformance.
     """
-    # Subtract 1 for the main thread 
+    # Subtract 1 for the main thread
     return multiprocessing.cpu_count() - 2

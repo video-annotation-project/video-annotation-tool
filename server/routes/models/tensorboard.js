@@ -1,5 +1,6 @@
 const router = require('express').Router();
 const passport = require('passport');
+const psql = require('../../db/simpleConnect');
 const awsS3 = require('s3');
 const { spawn } = require('child_process');
 
@@ -98,6 +99,8 @@ router.post(
         Prefix: process.env.AWS_S3_BUCKET_LOGS_FOLDER + `${id}`
       }
     });
+
+    console.log(process.env.AWS_S3_BUCKET_LOGS_FOLDER );
 
     downloader.on('error', function(err) {
       res.status(400).json(err);

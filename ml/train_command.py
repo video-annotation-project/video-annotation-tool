@@ -11,6 +11,7 @@ from config import config
 from utils.query import s3, con, cursor, pd_query
 from datetime import datetime
 
+
 def main():
     """ We train a model and then use it to predict on the specified videos
     """
@@ -20,7 +21,7 @@ def main():
     upload_process = upload_stdout.start_uploading(pid)
     model, model_params = get_model_and_params()
     user_model, new_version = get_user_model(model_params)
-    
+
     # This removes all of the [INFO] outputs from tensorflow.
     # We still see [WARNING] and [ERROR], but there's a lot less clutter
     os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
@@ -31,7 +32,7 @@ def main():
     concepts = model["concepts"]
     verify_videos = model["verificationvideos"]
 
-    start_training(new_version, concepts, verify_videos, model_params)
+    start_training(user_model, concepts, verify_videos, model_params)
     setup_predict_progress(verify_videos)
     create_model_user(new_version, model_params, user_model)
 
@@ -40,6 +41,7 @@ def main():
 
     reset_model_params()
     shutdown_server()
+
 
 def get_model_and_params():
     """ If they exist, get the selected model's old weights.
@@ -88,6 +90,7 @@ def get_model_and_params():
 
     return model, model_params
 
+
 def get_user_model(model_params):
     """ Get new model version number and user_model name
     """
@@ -116,6 +119,7 @@ def get_user_model(model_params):
 
     return user_model, new_version
 
+
 def create_model_user(new_version, model_params, user_model):
     """Insert a new user for this model version, then update the model_versions table
        with the new model version
@@ -135,34 +139,27 @@ def create_model_user(new_version, model_params, user_model):
 
     cursor.execute(
         """ INSERT INTO model_versions VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) """,
-        (
-            int(model_params["epochs"]),
-            int(model_params["min_images"]),
-            model_params["model"],
-            model_params["annotation_collections"],
-            bool(model_params["verified_only"]),
-            bool(model_params["include_tracking"]),
-            model_user_id,
-            new_version,
-            datetime.now()
-        )
-    )
+        (int(model_params["epochs"]),
+         int(model_params["min_images"]),
+         model_params["model"],
+         model_params["annotation_collections"],
+         bool(model_params["verified_only"]),
+         bool(model_params["include_tracking"]),
+         model_user_id, new_version, datetime.now()))
     con.commit()
 
     return model_user_id
 
-def start_training(new_version, concepts, verify_videos, model_params):
+
+def start_training(user_model, concepts, verify_videos, model_params):
     """Start a training job with the correct parameters
     """
 
-    # reformat version name for weights filename in s3 
-    new_version = new_version.replace(".", "-") 
     print("training")
     train_model(
         concepts,
         verify_videos,
-        model_params["model"],
-        new_version,
+        user_model,
         model_params["annotation_collections"],
         int(model_params["min_images"]),
         int(model_params["epochs"]),
@@ -170,6 +167,7 @@ def start_training(new_version, concepts, verify_videos, model_params):
         verified_only=model_params["verified_only"],
         include_tracking=model_params["include_tracking"],
     )
+
 
 def setup_predict_progress(verify_videos):
     """Reset the predict progress table for new predictions"""
@@ -206,6 +204,7 @@ def evaluate_videos(concepts, verify_videos, user_model, upload_annotations=Fals
         """
     )
     con.commit()
+
 
 def reset_model_params():
     """ Reset the model_params table

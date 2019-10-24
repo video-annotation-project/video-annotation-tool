@@ -100,30 +100,25 @@ def get_counts(results, annotations):
     return counts
 
 
-def evaluate(video_id, model_username, concepts, upload_annotations=False, previous_run_id=None):
-    # file format: (video_id)_(model_name)-(ctime).mp4
+def evaluate(
+        video_id, model_username, concepts, upload_annotations=False):
+    # file format: (video_id)_(model_name)-(version).mp4
     filename = str(video_id) + "_" + model_username + ".mp4"
     print(f"video filename: {0}".format(filename))
     results, fps, original_frames, annotations = predict.predict_on_video(
         video_id, config.WEIGHTS_PATH, concepts, filename
     )
-
+    username_split = model_username.split('-')
+    version = username_split[1]
+    model_name = username_split[0]
     if (results.empty):
         return
-
     # add the entry to ai_videos
-    if (previous_run_id == None):
-        cursor.execute('''
-            INSERT INTO ai_videos (name, videoid, previous_run_id)
-            VALUES (%s, %s, (SELECT id FROM previous_runs ORDER BY id DESC LIMIT 1))''',
-                       (filename, video_id)
-                       )
-    else:
-        cursor.execute('''
-            INSERT INTO ai_videos (name, videoid, previous_run_id)
-            VALUES (%s, %s, %s)''',
-                       (filename, video_id, previous_run_id)
-                       )
+    cursor.execute('''
+        INSERT INTO ai_videos (name, videoid, version, model_name)
+        VALUES (%s, %s, %s, ''',
+                   (filename, video_id, version, model_name)
+                   )
 
     con.commit()
     print("done predicting")
