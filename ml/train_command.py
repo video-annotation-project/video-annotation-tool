@@ -32,7 +32,7 @@ def main():
     concepts = model["concepts"]
     verify_videos = model["verificationvideos"]
 
-    start_training(new_version, concepts, verify_videos, model_params)
+    start_training(user_model, concepts, verify_videos, model_params)
     setup_predict_progress(verify_videos)
     create_model_user(new_version, model_params, user_model)
 
@@ -156,18 +156,15 @@ def create_model_user(new_version, model_params, user_model):
     return model_user_id
 
 
-def start_training(new_version, concepts, verify_videos, model_params):
+def start_training(user_model, concepts, verify_videos, model_params):
     """Start a training job with the correct parameters
     """
 
-    # reformat version name for weights filename in s3
-    new_version = new_version.replace(".", "-")
     print("training")
     train_model(
         concepts,
         verify_videos,
-        model_params["model"],
-        new_version,
+        user_model,
         model_params["annotation_collections"],
         int(model_params["min_images"]),
         int(model_params["epochs"]),
