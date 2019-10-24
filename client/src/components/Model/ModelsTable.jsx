@@ -108,7 +108,6 @@ class ModelsTable extends Component {
             <TableRow>
               <CustomTableCell>Name</CustomTableCell>
               <CustomTableCell>Versions #</CustomTableCell>
-              {/* <CustomTableCell>New Versions</CustomTableCell> */}
               <CustomTableCell>Date Created</CustomTableCell>
               <CustomTableCell />
             </TableRow>
@@ -119,21 +118,6 @@ class ModelsTable extends Component {
                 <CustomTableCell component="th" scope="row">
                   {model.name}
                 </CustomTableCell>
-                {/* <CustomTableCell>
-                  <FormControl>
-                    <Select
-                      value={model.version_selected}
-                      renderValue={value => `${parseInt(value) + 1}`}
-                      onChange={event => handleSelectVersion(event, model)}
-                    >
-                      {model.runs.map((version, index) => (
-                        <MenuItem key={version.id} value={index}>
-                          {index + 1 + ' : ' + formatDate(version.time)}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </CustomTableCell> */}
                 <CustomTableCell>
                   <FormControl>
                     <Button
@@ -164,7 +148,9 @@ class ModelsTable extends Component {
                   </IconButton>
                   <IconButton
                     onClick={() =>
-                      launchTensorboard('c3abc29b105b4bc0b2e666ecc0b53aea')
+                      launchTensorboard(
+                        model.name + '_' + model.version_selected
+                      )
                     }
                     aria-label="Assessment"
                   >
@@ -205,7 +191,7 @@ class ModelsTable extends Component {
                   <Button
                     disabled={
                       (predict ? model.name !== predict.model : false) ||
-                      parseInt(model.version_selected) === 0
+                      model.version_selected.toString() === '0'
                     }
                     style={{ marginLeft: '10px' }}
                     size="small"
