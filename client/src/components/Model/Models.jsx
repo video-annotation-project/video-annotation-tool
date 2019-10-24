@@ -114,7 +114,6 @@ class Models extends Component {
     axios
       .get(`/api/models`, config)
       .then(res => {
-        console.log(res.data);
         this.setState({
           models: res.data
         });
