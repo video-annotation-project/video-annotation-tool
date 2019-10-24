@@ -11,18 +11,13 @@ import Navbar from './components/Navbar';
 import Profile from './components/Profile';
 import Report from './components/Report/Report';
 import Verify from './components/Verify/Verify';
-import PreviousModels from './components/Model/PreviousModels';
 import Users from './components/Users';
-import AIvideos from './components/AIVideos/AIvideos';
 
 import AnnotationCollection from './components/Collections/AnnotationCollection';
 import ConceptCollection from './components/Collections/ConceptCollection';
 import VideoCollection from './components/Collections/VideoCollection';
 
-import CreateModel from './components/Model/CreateModel';
-import ViewModels from './components/Model/ViewModels';
-import PredictModel from './components/Model/PredictModel';
-import TrainModel from './components/Model/TrainModel';
+import Models from './components/Model/Models';
 
 require('dotenv').config();
 
@@ -37,13 +32,8 @@ const App = () => {
             {localStorage.getItem('admin') ? (
               <>
                 <Route exact path="/account/create" component={CreateUser} />
-                <Route exact path="/models/create" component={CreateModel} />
-                <Route exact path="/models/predict" component={PredictModel} />
-                <Route exact path="/models/train" component={TrainModel} />
-                <Route exact path="/models/view" component={ViewModels} />
-                <Route exact path="/models/runs" component={PreviousModels} />
+                <Route exact path="/models" component={Models} />
                 <Route exact path="/users" component={Users} />
-                <Route exact path="/aivideos" component={AIvideos} />
               </>
             ) : (
               ''

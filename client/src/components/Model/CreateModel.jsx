@@ -19,6 +19,7 @@ import Tooltip from '@material-ui/core/Tooltip';
 import List from '@material-ui/core/List';
 import IconButton from '@material-ui/core/IconButton';
 import Description from '@material-ui/icons/Description';
+import Dialog from '@material-ui/core/Dialog';
 
 import VideoMetadata from '../Utilities/VideoMetadata';
 
@@ -528,7 +529,13 @@ class CreateModel extends Component {
   };
 
   render() {
-    const { classes, socket, loadVideos } = this.props;
+    const {
+      classes,
+      socket,
+      loadVideos,
+      createOpen,
+      toggleStateVariable
+    } = this.props;
     const steps = this.getSteps();
     const {
       models,
@@ -542,7 +549,11 @@ class CreateModel extends Component {
       return <Typography style={{ margin: '20px' }}>Loading...</Typography>;
     }
     return (
-      <div className={classes.root}>
+      <Dialog
+        className={classes.root}
+        open={createOpen}
+        onClose={() => toggleStateVariable(false, 'createOpen')}
+      >
         <Stepper
           activeStep={activeStep}
           style={{ backgroundColor: 'transparent' }}
@@ -613,7 +624,7 @@ class CreateModel extends Component {
             modelTab
           />
         )}
-      </div>
+      </Dialog>
     );
   }
 }

@@ -84,7 +84,6 @@ class AIvideoList extends Component {
 
     this.setState({
       descriptionOpen: true,
-      summary: await this.getSummary(video),
       metrics: await this.getMetrics(video)
     });
   };
@@ -92,7 +91,6 @@ class AIvideoList extends Component {
   closeVideoSummary = () => {
     this.setState({
       descriptionOpen: false,
-      summary: null,
       metrics: null
     });
   };
@@ -115,31 +113,6 @@ class AIvideoList extends Component {
     } catch (error) {
       console.error('Error in summary.jsx get /api/videos/aivideos/metrics');
       console.error(error.response.data);
-      ret = error.response;
-    }
-    return ret;
-  };
-
-  getSummary = async video => {
-    const config = {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    };
-    let ret;
-    try {
-      const summary = await axios.get(
-        `/api/videos/aivideos/summary/${video.name}`,
-        config
-      );
-
-      if (summary) {
-        ret = summary;
-      }
-    } catch (error) {
-      console.log('Error in summary.jsx get /api/videos/aivideos/summary');
-      console.log(error.response.data);
       ret = error.response;
     }
     return ret;
@@ -224,7 +197,6 @@ class AIvideoList extends Component {
           <Summary
             open
             handleClose={this.closeVideoSummary}
-            summary={summary}
             aiSummary
             metrics={metrics}
           />

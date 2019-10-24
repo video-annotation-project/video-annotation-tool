@@ -5,33 +5,63 @@ const AWS = require('aws-sdk');
 
 const csv = require('csvtojson');
 
-/**
- * @typedef ai_video
- * @property {integer} id - id of the video
- * @property {string} name - the name of the video following videoid_nameofmodel.mp4
- */
+// /**
+//  * @typedef ai_video
+//  * @property {integer} id - id of the video
+//  * @property {string} name - the name of the video following videoid_nameofmodel.mp4
+//  */
 
-/**
- * @route GET /api/videos/ai_videos
- * @group ai_videos
- * @summary Get a list of all ai_videos
- * @returns {Array.<ai_video>} 200 - List of ai videos
- * @returns {Error} 500 - Unexpected database error
- */
-router.get(
-  '/',
-  passport.authenticate('jwt', { session: false }),
-  async (req, res) => {
-    let queryText = `SELECT * FROM ai_videos`;
-    try {
-      let ai_videos = await psql.query(queryText);
-      res.json(ai_videos);
-    } catch (error) {
-      console.log(error);
-      res.status(500).json(error);
-    }
-  }
-);
+// /**
+//  * @route GET /api/videos/ai_videos
+//  * @group ai_videos
+//  * @summary Get a list of all ai_videos
+//  * @returns {Array.<ai_video>} 200 - List of ai videos
+//  * @returns {Error} 500 - Unexpected database error
+//  */
+// router.get(
+//   '/',
+//   passport.authenticate('jwt', { session: false }),
+//   async (req, res) => {
+//     let queryText = `
+//     select model_name, json_agg(json_build_object(
+//         'id', id, 'time', start_train, 'videos', videos
+//     )) previous_runs
+//     from (
+//         select pr.id, pr.start_train, pr.model_name,
+//             json_agg(av.*) videos
+//             from ai_videos av
+//             join previous_runs pr on av.previous_run_id=pr.id
+//             group by pr.id, pr.start_train
+//     ) t
+//     group by model_name
+//       `;
+//     try {
+//       let ai_videos = await psql.query(queryText);
+//       res.json(ai_videos);
+//     } catch (error) {
+//       console.log(error);
+//       res.status(500).json(error);
+//     }
+//   }
+// );
+
+// router.get(
+//   '/:previous_run_id',
+//   passport.authenticate('jwt', { session: false }),
+//   async (req, res) => {
+//     console.log(req.params);
+//     let queryText = `SELECT *, 0 as timeinvideo FROM ai_videos where previous_run_id = $1`;
+//     try {
+//       let ai_videos = await psql.query(queryText, [
+//         parseInt(req.params.previous_run_id)
+//       ]);
+//       res.json(ai_videos);
+//     } catch (error) {
+//       console.log(error);
+//       res.status(500).json(error);
+//     }
+//   }
+// );
 
 router.get(
   '/metrics',
@@ -69,9 +99,9 @@ router.delete(
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     let s3 = new AWS.S3();
-    let queryText = `DELETE FROM ai_videos WHERE id=$1 RETURNING *`;
+    let queryText = `DELETE FROM ai_videos WHERE name=$1 RETURNING *`;
     let queryText1 = `DELETE FROM users WHERE username=$1 RETURNING *`;
-    let videoName = req.body.video.name;
+    let videoName = req.body.video;
     let splitName = videoName.split('_');
     let modelNamewithMP4 = splitName[splitName.length - 1];
     const modelName = modelNamewithMP4.split('.mp4')[0];
@@ -79,7 +109,7 @@ router.delete(
     try {
       let Objects = [];
       Objects.push({
-        Key: process.env.AWS_S3_BUCKET_AIVIDEOS_FOLDER + req.body.video.name
+        Key: process.env.AWS_S3_BUCKET_AIVIDEOS_FOLDER + req.body.video
       });
       let params = {
         Bucket: process.env.AWS_S3_BUCKET_NAME,
@@ -96,7 +126,7 @@ router.delete(
         }
       });
 
-      let del = await psql.query(queryText, [req.body.video.id]);
+      let del = await psql.query(queryText, [req.body.video]);
 
       del = await psql.query(queryText1, [modelName]);
 

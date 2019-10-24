@@ -747,12 +747,56 @@ let updateBoundingBox = async (req, res) => {
   }
 };
 
+let deleteTrackingAnnotations = req => {
+  const id = req.body.id;
+  let s3 = new AWS.S3();
+  const queryText2 = `
+    DELETE FROM
+      annotations
+    WHERE 
+      originalid=$1 AND annotations.id<>$1
+    RETURNING *
+  `;
+  psql.query(queryText2, [id], (err, res) => {
+    if (err) {
+      console.log(error);
+      res.status(500).json(error);
+    }
+    //These are the s3 object we will be deleting
+    let Objects = [];
+
+    res.rows.forEach(element => {
+      Objects.push({
+        Key: process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + element.image
+      });
+      Objects.push({
+        Key: process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + element.imagewithbox
+      });
+    });
+    // add tracking video
+    Objects.push({
+      Key:
+        process.env.AWS_S3_BUCKET_VIDEOS_FOLDER + req.body.id + '_tracking.mp4'
+    });
+    params = {
+      Bucket: process.env.AWS_S3_BUCKET_NAME,
+      Delete: {
+        Objects: Objects
+      }
+    };
+    s3.deleteObjects(params, (err, data) => {
+      if (err) {
+        console.log(err);
+      }
+    });
+  });
+};
+
 let verifyAnnotation = async (req, res) => {
   delete req.body.op;
 
   const verifiedby = req.user.id;
   const id = req.body.id;
-  let s3 = new AWS.S3();
 
   let params = [id, verifiedby];
   let queryText1 = `
@@ -775,45 +819,9 @@ let verifyAnnotation = async (req, res) => {
   queryText1 += `, unsure=$` + params.length;
   queryText1 += ` WHERE id=$1`;
 
-  const queryText2 = `
-    DELETE FROM
-      annotations
-    WHERE 
-      originalid=$1 AND annotations.id<>$1
-    RETURNING *
-  `;
   try {
-    let deleteRes = await psql.query(queryText2, [id]);
     await psql.query(queryText1, params);
-
-    //These are the s3 object we will be deleting
-    let Objects = [];
-
-    deleteRes.rows.forEach(element => {
-      Objects.push({
-        Key: process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + element.image
-      });
-      Objects.push({
-        Key: process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + element.imagewithbox
-      });
-    });
-    // add tracking video
-    Objects.push({
-      Key:
-        process.env.AWS_S3_BUCKET_VIDEOS_FOLDER + req.body.id + '_tracking.mp4'
-    });
-    params = {
-      Bucket: process.env.AWS_S3_BUCKET_NAME,
-      Delete: {
-        Objects: Objects
-      }
-    };
-    await s3.deleteObjects(params, (err, data) => {
-      if (err) {
-        console.log(err);
-        res.status(500).json(err);
-      }
-    });
+    deleteTrackingAnnotations(req);
     res.json('success');
   } catch (error) {
     console.log(error);

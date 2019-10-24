@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import axios from 'axios';
 import Input from '@material-ui/core/Input';
-import { FormControl, Paper } from '@material-ui/core';
+import { FormControl, Paper, Typography } from '@material-ui/core';
 import InputLabel from '@material-ui/core/InputLabel';
 import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
@@ -12,8 +12,9 @@ import Button from '@material-ui/core/Button';
 import { withStyles } from '@material-ui/core/styles';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Switch from '@material-ui/core/Switch';
-import PredictProgress from './PredictProgress';
+import PredictProgress from '../OldModel/PredictProgress';
 import Swal from 'sweetalert2/src/sweetalert2';
+import Dialog from '@material-ui/core/Dialog';
 
 import './TrainModel.css';
 
@@ -30,28 +31,6 @@ const styles = theme => ({
     minHeight: 'calc(100vh - 130px)'
   }
 });
-
-const paramFields = ['modelSelected', 'selectedVideos'];
-
-function ModelsForm(props) {
-  const { className, modelSelected, handleChange, models } = props;
-  return (
-    <FormControl component="fieldset" className={className}>
-      <InputLabel shrink>Model</InputLabel>
-      <Select
-        name="modelSelected"
-        value={modelSelected || 'Loading...'}
-        onChange={handleChange}
-      >
-        {models.map(model => (
-          <MenuItem key={model.name} value={model}>
-            {model.name}
-          </MenuItem>
-        ))}
-      </Select>
-    </FormControl>
-  );
-}
 
 function VideoForm(props) {
   const { className, selectedVideos, onChange, videos } = props;
@@ -86,7 +65,6 @@ class PredictModel extends Component {
 
     this.state = {
       models: [],
-      modelSelected: undefined,
       videos: [],
       selectedVideos: [],
       videoSelected: '',
@@ -101,25 +79,12 @@ class PredictModel extends Component {
   }
 
   componentDidMount = async () => {
-    await this.loadExistingModels();
-    await this.loadVideoList();
-    this.interval = setInterval(() => this.loadProgressInfoPredict(), 500);
-  };
-
-  checkReady = () => {
-    const { state } = this;
-
-    const notReady = paramFields.find(key => {
-      return (
-        !Object.prototype.hasOwnProperty.call(state, key) ||
-        state[key] === null ||
-        state[key] === undefined ||
-        (Array.isArray(state[key]) && state[key].length === 0) ||
-        state[key] === ''
-      );
-    });
-
-    return !notReady;
+    const { predictOpen } = this.props;
+    if (predictOpen) {
+      await this.loadExistingModels();
+      await this.loadVideoList();
+      this.interval = setInterval(() => this.loadProgressInfoPredict(), 500);
+    }
   };
 
   loadExistingModels = () => {
@@ -166,7 +131,8 @@ class PredictModel extends Component {
   };
 
   updateBackendInfo = async () => {
-    const { modelSelected, postAnnotation, selectedVideos } = this.state;
+    const { model } = this.props;
+    const { postAnnotation, selectedVideos } = this.state;
     let vidArray = [];
     selectedVideos.forEach(video => {
       vidArray.push(video.id);
@@ -177,11 +143,12 @@ class PredictModel extends Component {
       }
     };
     const body = {
-      model: modelSelected.name,
+      model: model.name,
       uploadAnnotations: postAnnotation,
-      concepts: modelSelected.concepts,
+      concepts: model.conceptsid,
       videos: vidArray,
-      userid: modelSelected.userid
+      userid: model.userid,
+      version: model.version_selected
     };
 
     try {
@@ -191,7 +158,7 @@ class PredictModel extends Component {
         config
       );
       console.log(res);
-      if (res.data[0].userid === modelSelected.userid) {
+      if (res.data[0].userid === model.userid) {
         Swal.fire(`Started Predicting with ${body.model}`, '', 'success');
       }
     } catch (error) {
@@ -293,10 +260,8 @@ class PredictModel extends Component {
   };
 
   render() {
-    const { classes } = this.props;
+    const { classes, predictOpen, toggleStateVariable, model } = this.props;
     const {
-      modelSelected,
-      models,
       selectedVideos,
       videos,
       postAnnotation,
@@ -312,16 +277,24 @@ class PredictModel extends Component {
     } = this.state;
 
     return (
-      <div className="root">
+      <Dialog
+        fullWidth={true}
+        maxWidth="md"
+        className={classes.root}
+        open={predictOpen}
+        onClose={() => toggleStateVariable(false, 'predictOpen')}
+      >
         <Paper className={classes.paper}>
           <div className="container">
             <div className="actionsContainer">
-              <ModelsForm
-                className="modelsForm"
-                modelSelected={modelSelected}
-                handleChange={this.handleChange}
-                models={models}
-              />
+              <div>
+                <Typography align="left" variant="h4">
+                  {model.name}
+                </Typography>
+                <Typography align="left" variant="caption">
+                  Version: {model.version_selected}
+                </Typography>
+              </div>
               <VideoForm
                 className="collectionsForm"
                 videos={videos}
@@ -339,6 +312,7 @@ class PredictModel extends Component {
                       onChange={this.handleChangeSwitch}
                       value="postAnnotation"
                       color="primary"
+                      align="center"
                     />
                   }
                   label="Post Annotations"
@@ -360,7 +334,6 @@ class PredictModel extends Component {
                   }
                   variant="contained"
                   color="secondary"
-                  disabled={!this.checkReady()}
                 >
                   {loaded ? 'Stop Predicting' : 'Start Predicting'}
                 </Button>
@@ -385,7 +358,7 @@ class PredictModel extends Component {
             <Divider style={{ marginTop: '30px' }} variant="middle" />
           </div>
         </Paper>
-      </div>
+      </Dialog>
     );
   }
 }

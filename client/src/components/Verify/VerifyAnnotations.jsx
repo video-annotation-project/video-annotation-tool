@@ -353,7 +353,7 @@ class VerifyAnnotations extends Component {
     const y2 = y + parseInt(height, 0);
 
     const body = {
-      conceptId: concept.id,
+      conceptId: concept ? concept.id : annotation.conceptid,
       videoId: annotation.videoid,
       timeinvideo: annotation.timeinvideo,
       x1,

@@ -143,7 +143,6 @@ def _get_callbacks(model,
     # Every epoch upload tensorboard logs to the S3 bucket
     log_callback = TensorboardLog(
         model_name=model_name,
-        job_id=job_id,
         min_examples=min_examples,
         epochs=epochs,
         collection_ids=collection_ids
@@ -179,8 +178,8 @@ def _redirect_outputs(job_id):
     """ The DatabaseOutput class will redirect this programs output to a column
         in out training_progress databse (as well as into a file)
     """
-    # sys.stdout = DatabaseOutput(job_id, 'out')
-    # sys.stderr = DatabaseOutput(job_id, 'err')
+    sys.stdout = DatabaseOutput(job_id, 'out')
+    sys.stderr = DatabaseOutput(job_id, 'err')
 
 
 def _get_num_workers():
@@ -188,4 +187,4 @@ def _get_num_workers():
         1 worker per core should give us maximum preformance.
     """
     # Subtract 1 for the main thread
-    return multiprocessing.cpu_count() - 1
+    return multiprocessing.cpu_count() - 2

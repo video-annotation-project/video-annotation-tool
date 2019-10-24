@@ -100,13 +100,27 @@ def get_counts(results, annotations):
     return counts
 
 
-def evaluate(video_id, model_username, concepts, upload_annotations=False):
-    # file format: (video_id)_(model_name)-(ctime).mp4
+def evaluate(
+        video_id, model_username, concepts, upload_annotations=False):
+    # file format: (video_id)_(model_name)-(version).mp4
     filename = str(video_id) + "_" + model_username + ".mp4"
-    print(filename)
+    print(f"video filename: {0}".format(filename))
     results, fps, original_frames, annotations = predict.predict_on_video(
         video_id, config.WEIGHTS_PATH, concepts, filename
     )
+    username_split = model_username.split('-')
+    version = username_split[1]
+    model_name = username_split[0]
+    if (results.empty):
+        return
+    # add the entry to ai_videos
+    cursor.execute('''
+        INSERT INTO ai_videos (name, videoid, version, model_name)
+        VALUES (%s, %s, %s, ''',
+                   (filename, video_id, version, model_name)
+                   )
+
+    con.commit()
     print("done predicting")
 
     metrics = score_predictions(

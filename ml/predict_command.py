@@ -1,61 +1,58 @@
 from psycopg2 import connect
 import subprocess
 from dotenv import load_dotenv
-from predict.evaluate_prediction_vid import evaluate
 import boto3
 import json
 from utils.query import s3, con, cursor
 from config.config import S3_BUCKET, S3_WEIGHTS_FOLDER, WEIGHTS_PATH
+from train_command import setup_predict_progress, evaluate_videos, end_predictions
+from botocore.exceptions import ClientError
 
-'''
-get predict params
-returns a list elements:
-model - string: name of the model
-userid - int: model's userid
-concepts - int[]: list of concept ids model is trying to find
-video - int: id of video to predict on
-upload_annotations - boolean: if true upload annotations to database
-'''
-cursor.execute("SELECT * FROM predict_params")
-params = cursor.fetchone()
-print(params)
-model_name = str(params[0])
-userid = int(params[1])
-concepts = params[2]
-videoids = params[4]
-upload_annotations = bool(params[3])
 
-s3.download_file(S3_BUCKET, S3_WEIGHTS_FOLDER +
-                 model_name + '.h5', WEIGHTS_PATH)
-print('weight file downloaded')
+def main():
+    '''
+    get predict params
+    returns a list elements:
+    model - string: name of the model
+    userid - int: model's userid
+    concepts - int[]: list of concept ids model is trying to find
+    video - int: id of video to predict on
+    upload_annotations - boolean: if true upload annotations to database
+    '''
+    cursor.execute("SELECT * FROM predict_params")
+    params = cursor.fetchone()
+    model_name = str(params[0])
+    concepts = params[2]
+    videoids = params[4]
+    upload_annotations = bool(params[3])
+    version = params[6]
+    user_model = model_name + "-" + version
 
-# cursor.execute("""DELETE FROM predict_progress""")
-# con.commit()
-# cursor.execute(
-#     """
-#     INSERT INTO predict_progress (videoid, current_video, total_videos)
-#     VALUES (%s, %s, %s)""",
-#     (0, 0, len(verifyVideos)),
-# )
-# con.commit()
+    download_weights(model_name, version)
+    setup_predict_progress(videoids)
+    evaluate_videos(concepts, videoids, user_model, upload_annotations)
+    cleanup()
 
-for video_id in videoids:
-    # cursor.execute(
-    #     f"""UPDATE predict_progress SET videoid = {video_id}, current_video = current_video + 1"""
-    # )
-    # con.commit()
-    evaluate(video_id, model_name + "_" + str(userid), concepts,
-             upload_annotations=upload_annotations)
 
-# cursor.execute(
-#     """
-#     UPDATE predict_progress
-#     SET status=4
-#     """
-# )
+def download_weights(model_name, version):
+    filename = model_name + '_' + version + '.h5'
+    try:
+        s3.download_file(
+            S3_BUCKET,
+            S3_WEIGHTS_FOLDER + filename,
+            WEIGHTS_PATH
+        )
+        print("downloaded file: {0}".format(filename))
+    except ClientError:
+        print("Could not find weights file {0} in S3, exiting".format(filename))
+        cleanup()
 
-# cursor.execute(
-#     "Update modeltab SET info =  '{\"activeStep\": 0, \"modelSelected\":\"\",\"videoSelected\":\"\",\"userSelected\":\"\"}' WHERE option = 'predictmodel'")
-con.commit()
-con.close()
-subprocess.call(["sudo", "shutdown", "-h"])
+
+def cleanup():
+    end_predictions()
+    con.close()
+    subprocess.call(["sudo", "shutdown", "-h"])
+
+
+if __name__ == '__main__':
+    main()
