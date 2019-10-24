@@ -36,6 +36,7 @@ def main():
     create_model_user(new_version, model_params, user_model)
 
     evaluate_videos(concepts, verify_videos, user_model)
+    end_predictions()
 
     reset_model_params()
     shutdown_server()
@@ -55,19 +56,17 @@ def get_model_and_params():
     # If they don't exist (ClientError), use the default weights
 
     model_version = str(model_params["version"])
-    model_file_version = model_version.replace(".", "-")
-
-    print(f"model version: {model_version}")
-    print(f"model file version: {model_file_version}")
+    model_name = str(model_params["model"])
+    filename = model_name + "_" + model_version + ".h5"
 
     if model_version != "0":
         try:
             s3.download_file(
                 config.S3_BUCKET,
-                config.S3_WEIGHTS_FOLDER + str(model_params["model"]) + "_" + model_file_version + ".h5",
+                config.S3_WEIGHTS_FOLDER + filename,
                 config.WEIGHTS_PATH,
             )
-            print("downloaded file: {0}".format(str(model_params["model"]) + "_" + model_file_version + ".h5"))
+            print("downloaded file: {0}".format(filename))
         except ClientError:
             s3.download_file(
                 config.S3_BUCKET,
@@ -93,16 +92,12 @@ def get_user_model(model_params):
     """ Get new model version number and user_model name
     """
     model_version = str(model_params["version"])
-    if model_version == '0':
-        num_model_version = 0
-    else:
-        num_model_version = float(model_version)
 
     # from model_version, select versions one level down
     level_down = pd_query(
         """ SELECT version FROM model_versions WHERE model='{0}' AND version ~ '{1}.*{{1}}' """.format(
             str(model_params["model"]),
-            num_model_version
+            model_version
         )
     )
 
@@ -191,7 +186,7 @@ def setup_predict_progress(verify_videos):
     )
     con.commit()
 
-def evaluate_videos(concepts, verify_videos, user_model):
+def evaluate_videos(concepts, verify_videos, user_model, upload_annotations=False, previous_run_id=None):
     """ Run evaluate on all the evaluation videos
     """
 
@@ -201,7 +196,7 @@ def evaluate_videos(concepts, verify_videos, user_model):
             f"""UPDATE predict_progress SET videoid = {video_id}, current_video = current_video + 1"""
         )
         con.commit()
-        evaluate(video_id, user_model, concepts)
+        evaluate(video_id, user_model, concepts, upload_annotations, previous_run_id)
 
     # Status level 4 on a video means that predictions have completed.
     cursor.execute(
@@ -227,14 +222,21 @@ def reset_model_params():
     con.commit()
     con.close()
 
+def end_predictions():
+    # Status level 4 on a video means that predictions have completed.
+    cursor.execute(
+        """
+        UPDATE predict_progress
+        SET status=4
+        """
+    )
+    con.commit()
+
 def shutdown_server():
     """ Shutdown this EC2 instance
     """
 
     subprocess.call(["sudo", "shutdown", "-h"])
 
-
 if __name__ == '__main__':
     main()
-
-
