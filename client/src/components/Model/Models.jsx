@@ -199,6 +199,7 @@ class Models extends Component {
     const body = {
       command: 'launch'
     };
+    console.log(id);
 
     this.setState({ loadingId: id });
 
