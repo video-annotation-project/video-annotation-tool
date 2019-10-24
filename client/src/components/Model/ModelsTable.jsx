@@ -205,7 +205,7 @@ class ModelsTable extends Component {
                   <Button
                     disabled={
                       (predict ? model.name !== predict.model : false) ||
-                      model.version_selected === 0
+                      parseInt(model.version_selected) === 0
                     }
                     style={{ marginLeft: '10px' }}
                     size="small"
