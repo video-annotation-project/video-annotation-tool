@@ -143,7 +143,6 @@ def _get_callbacks(model,
     # Every epoch upload tensorboard logs to the S3 bucket
     log_callback = TensorboardLog(
         model_name=model_name,
-        job_id=job_id,
         min_examples=min_examples,
         epochs=epochs,
         collection_ids=collection_ids
