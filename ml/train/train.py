@@ -40,6 +40,8 @@ def train_model(concepts,
 
     num_workers = _get_num_workers()
 
+    _redirect_outputs(job_id)
+
     training_model.compile(
         loss={
             'regression': losses.smooth_l1(),
@@ -173,9 +175,17 @@ def _upload_weights(model_name):
     )
 
 
+def _redirect_outputs(job_id):
+    """ The DatabaseOutput class will redirect this programs output to a column
+        in out training_progress databse (as well as into a file)
+    """
+    # sys.stdout = DatabaseOutput(job_id, 'out')
+    # sys.stderr = DatabaseOutput(job_id, 'err')
+
+
 def _get_num_workers():
     """ Returns the number of cores on this machine.
         1 worker per core should give us maximum preformance.
     """
-    # Subtract 1 for the main thread 
+    # Subtract 1 for the main thread
     return multiprocessing.cpu_count() - 2

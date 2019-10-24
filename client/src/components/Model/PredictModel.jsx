@@ -147,7 +147,8 @@ class PredictModel extends Component {
       uploadAnnotations: postAnnotation,
       concepts: model.conceptsid,
       videos: vidArray,
-      userid: model.userid
+      userid: model.userid,
+      version: model.version_selected
     };
 
     try {

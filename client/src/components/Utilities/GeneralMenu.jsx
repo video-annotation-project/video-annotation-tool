@@ -24,14 +24,13 @@ const GeneralMenu = props => {
     handleClose();
     props.handleInsert(id, videos);
   }
-
   return (
     <span>
       {aivideos ? (
         <IconButton
           onClick={handleClick}
           aria-label="Ai Videos"
-          disabled={disabled}
+          disabled={!items}
         >
           <OndemandVideo />
         </IconButton>
@@ -68,14 +67,14 @@ const GeneralMenu = props => {
               ))
             : items.map(item => (
                 <MenuItem
-                  key={item.name}
+                  key={aivideos ? item : item.name}
                   onClick={
                     aivideos
-                      ? () => handleInsert(item.id, items)
+                      ? () => handleInsert(item, items)
                       : () => handleInsert(item.id)
                   }
                 >
-                  {`${item.id} ${item.name}`}
+                  {!aivideos ? `${item.id} ${item.name}` : `${item}`}
                 </MenuItem>
               ))
           : ''}

@@ -111,13 +111,15 @@ router.put(
         userid=$2, 
         concepts=$3, 
         videos=$4,
-        upload_annotations=$5`;
+        upload_annotations=$5,
+        version=$6`;
       params = [
         req.body.model,
         req.body.userid,
         req.body.concepts,
         req.body.videos,
-        req.body.uploadAnnotations
+        req.body.uploadAnnotations,
+        req.body.version
       ];
     } else {
       tableName = `model_params`;
@@ -127,14 +129,16 @@ router.put(
         model=$3,
         annotation_collections=$4,
         verified_only=$5,
-        include_tracking=$6`;
+        include_tracking=$6,
+        version=$7`;
       params = [
         req.body.epochs,
         req.body.minImages,
         req.body.modelSelected,
         req.body.annotationCollections,
         req.body.verifiedOnly,
-        req.body.includeTracking
+        req.body.includeTracking,
+        req.body.version
       ];
     }
     let queryText = `UPDATE ${tableName} SET ${paramValues} RETURNING *`;

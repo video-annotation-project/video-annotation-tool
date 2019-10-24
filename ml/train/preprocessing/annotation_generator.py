@@ -184,7 +184,7 @@ class AnnotationGenerator(object):
             for i, row in frame.iterrows():
                 concept_count[row['conceptid']] += 1
                 in_annot.append(row['conceptid'])
-    
+
                 x1, x2, y1, y2 = _bound_coordinates(row)
 
                 frame.at[i, 'x1'] = x1
@@ -230,7 +230,8 @@ class AnnotationGenerator(object):
                 conceptid,
                 x1, x2, y1, y2,
                 speed,
-                ROUND(fps * timeinvideo) as frame_num
+                ROUND(fps * timeinvideo) as frame_num,
+                verifiedby
             FROM
                 annotation_intermediate inter
             LEFT JOIN
@@ -254,7 +255,7 @@ class AnnotationGenerator(object):
                         ROW_NUMBER() OVER (
                             PARTITION BY
                                 conceptid
-                            ORDER BY random()) AS r,
+                            ORDER BY userid=32, verifiedby IS NULL) AS r,
                         c.*
                     FROM
                         collection c) t
@@ -408,7 +409,7 @@ class S3Generator(Generator):
                 float(annot['x2']),
                 float(annot['y2']),
             ]]))
-            
+
         return annotations
 
     def _download_image(self, image_index):
@@ -424,7 +425,8 @@ class S3Generator(Generator):
                 Bucket=config.S3_BUCKET, Key=config.S3_ANNOTATION_FOLDER + image_name)
             if (obj['ContentLength'] == 0):
                 # Image is empty, use the next index
-                error_print(f'file {config.S3_ANNOTATION_FOLDER}{image_name} has size 0, using next image instead')
+                error_print(
+                    f'file {config.S3_ANNOTATION_FOLDER}{image_name} has size 0, using next image instead')
                 self.failed_downloads.add(image_index)
                 return False
             obj_image = Image.open(obj['Body'])
@@ -433,7 +435,8 @@ class S3Generator(Generator):
         # ClientError is the exception class for a KeyNotFound error
         except ClientError:
             # Image doesnt exist, use the next index
-            error_print(f'file {config.S3_ANNOTATION_FOLDER}{image_name} not found in S3 bucket, using next image instead')
+            error_print(
+                f'file {config.S3_ANNOTATION_FOLDER}{image_name} not found in S3 bucket, using next image instead')
             self.failed_downloads.add(image_index)
             return False
 
