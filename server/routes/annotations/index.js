@@ -169,12 +169,13 @@ router.get(
         LEFT JOIN
           videos v ON v.id=a.videoid
         WHERE
-          ai.id::TEXT = ANY($1)              
+          ai.id::TEXT = ANY($1) AND a.verifiedby IS NULL         
           ${
             excludeTracking === 'true'
               ? `AND a.userid!=${configData.ml.tracking_userid}`
               : ``
-          })
+          }
+        LIMIT 1000)
         SELECT
           *
         FROM 
