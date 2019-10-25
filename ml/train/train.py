@@ -13,6 +13,7 @@ from keras_retinanet.callbacks import RedirectModel
 from config import config
 from utils.query import s3
 from utils.timer import timer
+from utils.output import DatabaseOutput
 from train.preprocessing.annotation_generator import AnnotationGenerator
 from train.evaluation.evaluate import evaluate_class_thresholds
 from train.callbacks.progress import Progress
