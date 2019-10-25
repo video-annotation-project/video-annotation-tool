@@ -147,7 +147,8 @@ def _get_callbacks(model,
         model_name=model_name,
         min_examples=min_examples,
         epochs=epochs,
-        collection_ids=collection_ids
+        collection_ids=collection_ids,
+        job_id=job_id
     )
 
     # Save tensorboard logs to appropriate folder
