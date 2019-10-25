@@ -10,8 +10,8 @@ from config import config
 # This file is run alongside the training process, 
 # Uploading the stdout and stderr files to the S3 bucket at a set interval
 
-STDOUT_FILE = "stdout.txt"
-STDERR_FILE = "stderr.txt"
+STDOUT_FILE = "results.txt"
+STDERR_FILE = "error.txt"
 
 def upload_stdout_stderr(main_pid):
     """ Continuously upload the stdout/stderr files to the s3 bucket """
