@@ -31,7 +31,6 @@ def main():
 
     concepts = model["concepts"]
     verify_videos = model["verificationvideos"]
-    print("verify videos: {0}".format(verify_videos))
 
     start_training(user_model, concepts, verify_videos, model_params)
     setup_predict_progress(verify_videos)

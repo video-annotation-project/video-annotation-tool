@@ -104,15 +104,15 @@ def evaluate(
         video_id, model_username, concepts, upload_annotations=False):
     # file format: (video_id)_(model_name)-(version).mp4
     filename = str(video_id) + "_" + model_username + ".mp4"
-    print(f"video filename: {0}".format(filename))
+    print("ai video filename: {0}".format(filename))
     results, fps, original_frames, annotations = predict.predict_on_video(
         video_id, config.WEIGHTS_PATH, concepts, filename
     )
+    if (results.empty):
+        return
     username_split = model_username.split('-')
     version = username_split[1]
     model_name = username_split[0]
-    if (results.empty):
-        return
     # add the entry to ai_videos
     cursor.execute('''
         INSERT INTO ai_videos (name, videoid, version, model_name)
