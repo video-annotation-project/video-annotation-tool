@@ -229,7 +229,6 @@ def reset_model_params():
         """
     )
     con.commit()
-    con.close()
 
 def end_predictions():
     # Status level 4 on a video means that predictions have completed.
@@ -244,7 +243,8 @@ def end_predictions():
 def shutdown_server():
     """ Shutdown this EC2 instance
     """
-
+    
+    con.close()
     subprocess.call(["sudo", "shutdown", "-h"])
 
 if __name__ == '__main__':
