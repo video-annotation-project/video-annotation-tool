@@ -116,7 +116,7 @@ def evaluate(
     # add the entry to ai_videos
     cursor.execute('''
         INSERT INTO ai_videos (name, videoid, version, model_name)
-        VALUES (%s, %s, %s, ''',
+        VALUES (%s, %s, %s, %s)''',
                    (filename, video_id, version, model_name)
                    )
 
