@@ -258,7 +258,7 @@ class Models extends Component {
       if (result.value) {
         try {
           await axios.delete('/api/models', config);
-          Swal.fire('Deleted!', 'Video has been deleted.', 'success');
+          Swal.fire('Deleted!', 'Model has been deleted.', 'success');
           this.loadExistingModels();
         } catch (error) {
           Swal.fire(error, '', 'error');
@@ -415,6 +415,7 @@ class Models extends Component {
           Create Model
         </Button>
         <CreateModel
+          loadExistingModels={this.loadExistingModels}
           createOpen={createOpen}
           toggleStateVariable={this.toggleStateVariable}
         />

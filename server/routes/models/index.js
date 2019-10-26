@@ -33,7 +33,7 @@ router.get(
         array_agg(c.id) conceptsid,
         verificationvideos,
         versions,
-        version_selected,
+        0 AS version_selected,
         (array_agg(videos))[1] as videos
       FROM 
         (SELECT
@@ -48,8 +48,7 @@ router.get(
       LEFT JOIN (
         SELECT
           model,
-          array_agg(version) AS versions,
-          0 AS version_selected
+          array_agg(version) AS versions
         FROM
           model_versions
         GROUP BY model) mv ON mv.model=m.name
