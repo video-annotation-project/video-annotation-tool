@@ -116,12 +116,20 @@ router.post(
         ($1, current_timestamp, $2, $3)
       RETURNING *
     `;
+    const postVersionZero = `
+      INSERT INTO
+        model_versions (model, version)
+      VALUES
+        ($1, '0')
+      RETURNING *
+    `
     try {
       let response = await psql.query(queryText, [
         req.body.name,
         req.body.concepts,
         req.body.videos
       ]);
+      await psql.query(postVersionZero, [req.body.name]);
       res.json(response.rows);
     } catch (error) {
       console.log(error);
