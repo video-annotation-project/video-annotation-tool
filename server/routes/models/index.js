@@ -256,11 +256,19 @@ router.delete(
         name LIKE $1
       RETURNING *
     `;
+    let deleteModelVersions = `
+      DELETE FROM 
+        model_versions
+      WHERE
+        model = $1
+      RETURNING *
+    `;
 
     try {
       var arg = req.body.model.name + '-%';
       await psql.query(deleteModel, [req.body.model.name]);
       await psql.query(deleteModelUser, [arg]);
+      await psql.query(deleteModelVersions, [req.body.model.name]);
 
       arg = '%_' + arg;
       let modelVideosRes = await psql.query(deleteModelVideos, [arg]);
