@@ -59,7 +59,7 @@ def get_model_and_params():
 
     model_version = str(model_params["version"])
     model_name = str(model_params["model"])
-    filename = model_name + "_" + model_version + ".h5"
+    filename = model_name + "-" + model_version + ".h5"
 
     if model_version != "0":
         try:
