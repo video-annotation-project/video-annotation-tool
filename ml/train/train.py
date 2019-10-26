@@ -1,4 +1,5 @@
 import uuid
+import sys
 
 import keras
 import tensorflow as tf
@@ -13,6 +14,7 @@ from keras_retinanet.callbacks import RedirectModel
 from config import config
 from utils.query import s3
 from utils.timer import timer
+from utils.output import DatabaseOutput
 from train.preprocessing.annotation_generator import AnnotationGenerator
 from train.evaluation.evaluate import evaluate_class_thresholds
 from train.callbacks.progress import Progress
@@ -145,7 +147,8 @@ def _get_callbacks(model,
         model_name=model_name,
         min_examples=min_examples,
         epochs=epochs,
-        collection_ids=collection_ids
+        collection_ids=collection_ids,
+        job_id=job_id
     )
 
     # Save tensorboard logs to appropriate folder

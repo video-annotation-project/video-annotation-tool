@@ -10,10 +10,12 @@ from config import config
 
 class TensorboardLog(keras.callbacks.Callback):
 
-    def __init__(self, model_name, min_examples, epochs, collection_ids):
+    def __init__(self, model_name, job_id, min_examples, epochs, collection_ids):
+        """ The purpose of this class is to keep track of the training parameters,
+            tensorboard log files, and other useful info for every training job thats ran """
 
-        self.table_name = 'model_versions'
-        self.model_name = model_name
+        self.table_name = 'previous_runs'
+        self.job_id = job_id
 
         self.connection = connect(
             database=config.DB_NAME,
@@ -30,6 +32,13 @@ class TensorboardLog(keras.callbacks.Callback):
             aws_secret_access_key=config.AWS_SECRET_ACCESS_KEY
         )
 
+        self._create_log_entry(
+            model_name=model_name,
+            min_examples=min_examples,
+            epochs=epochs,
+            collection_ids=collection_ids
+        )
+
     def on_train_begin(self, logs={}):
         self.cursor.execute(
             f"""UPDATE
@@ -37,8 +46,8 @@ class TensorboardLog(keras.callbacks.Callback):
             SET
                 start_train=%s
             WHERE
-                model_name=%s""",
-            (datetime.datetime.now(), self.model_name))
+                job_id=%s""",
+            (datetime.datetime.now(), self.job_id))
 
         self.connection.commit()
 
@@ -49,8 +58,8 @@ class TensorboardLog(keras.callbacks.Callback):
             SET
                 end_train=%s
             WHERE
-                model_name=%s""",
-            (datetime.datetime.now(), self.model_name))
+                job_id=%s""",
+            (datetime.datetime.now(), self.job_id))
 
         self.connection.commit()
 
@@ -58,13 +67,13 @@ class TensorboardLog(keras.callbacks.Callback):
         return
 
     def on_epoch_end(self, epoch, logs={}):
-        path = f'./logs/{self.model_name}'
+        path = f'./logs/{self.job_id}'
 
+        # Upload all log files to the correct folder in the s3 bucket
         for root, dirs, files in os.walk(path):
             for file in files:
                 self.client.upload_file(
-                    os.path.join(
-                        root, file), config.S3_BUCKET, f'{config.S3_LOGS_FOLDER}{self.model_name}/{file}'
+                    os.path.join(root, file), config.S3_BUCKET, f'{config.S3_LOGS_FOLDER}{self.job_id}/{file}'
                 )
 
     def on_batch_begin(self, batch, logs={}):
@@ -72,3 +81,15 @@ class TensorboardLog(keras.callbacks.Callback):
 
     def on_batch_end(self, batch, logs={}):
         return
+
+    def _create_log_entry(self, model_name, min_examples, epochs, collection_ids):
+        """ Create the log entry for the current training job """
+
+        self.cursor.execute(
+            f"""INSERT INTO {self.table_name}
+                    (model_name, job_id, epochs, min_examples, collection_ids)
+                VALUES
+                    (%s, %s, %s, %s, %s)""",
+            (model_name, self.job_id, epochs, min_examples, collection_ids))
+
+        self.connection.commit()
