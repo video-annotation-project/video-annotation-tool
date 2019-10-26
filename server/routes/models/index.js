@@ -33,7 +33,7 @@ router.get(
         array_agg(c.id) conceptsid,
         verificationvideos,
         versions,
-        version_selected,
+        0 AS version_selected,
         (array_agg(videos))[1] as videos
       FROM 
         (SELECT
@@ -48,8 +48,7 @@ router.get(
       LEFT JOIN (
         SELECT
           model,
-          array_agg(version) AS versions,
-          0 AS version_selected
+          array_agg(version) AS versions
         FROM
           model_versions
         GROUP BY model) mv ON mv.model=m.name
@@ -117,12 +116,20 @@ router.post(
         ($1, current_timestamp, $2, $3)
       RETURNING *
     `;
+    const postVersionZero = `
+      INSERT INTO
+        model_versions (model, version)
+      VALUES
+        ($1, '0')
+      RETURNING *
+    `
     try {
       let response = await psql.query(queryText, [
         req.body.name,
         req.body.concepts,
         req.body.videos
       ]);
+      await psql.query(postVersionZero, [req.body.name]);
       res.json(response.rows);
     } catch (error) {
       console.log(error);
@@ -256,11 +263,19 @@ router.delete(
         name LIKE $1
       RETURNING *
     `;
+    let deleteModelVersions = `
+      DELETE FROM 
+        model_versions
+      WHERE
+        model = $1
+      RETURNING *
+    `;
 
     try {
       var arg = req.body.model.name + '-%';
       await psql.query(deleteModel, [req.body.model.name]);
       await psql.query(deleteModelUser, [arg]);
+      await psql.query(deleteModelVersions, [req.body.model.name]);
 
       arg = '%_' + arg;
       let modelVideosRes = await psql.query(deleteModelVideos, [arg]);
