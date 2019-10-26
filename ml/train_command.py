@@ -31,6 +31,7 @@ def main():
 
     concepts = model["concepts"]
     verify_videos = model["verificationvideos"]
+    print("verify videos: {0}".format(verify_videos))
 
     start_training(user_model, concepts, verify_videos, model_params)
     setup_predict_progress(verify_videos)
@@ -138,7 +139,17 @@ def create_model_user(new_version, model_params, user_model):
     # Update the model_versions table with the new user
 
     cursor.execute(
-        """ INSERT INTO model_versions VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) """,
+        """ INSERT INTO model_versions 
+            (epochs, 
+            min_images, 
+            model, 
+            annotation_collections, 
+            verified_only,
+            include_tracking,
+            userid,
+            version,
+            timestamp)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) """,
         (int(model_params["epochs"]),
          int(model_params["min_images"]),
          model_params["model"],
@@ -184,7 +195,7 @@ def setup_predict_progress(verify_videos):
     )
     con.commit()
 
-def evaluate_videos(concepts, verify_videos, user_model, upload_annotations=False, previous_run_id=None):
+def evaluate_videos(concepts, verify_videos, user_model, upload_annotations=False):
     """ Run evaluate on all the evaluation videos
     """
 
@@ -194,7 +205,7 @@ def evaluate_videos(concepts, verify_videos, user_model, upload_annotations=Fals
             f"""UPDATE predict_progress SET videoid = {video_id}, current_video = current_video + 1"""
         )
         con.commit()
-        evaluate(video_id, user_model, concepts, upload_annotations, previous_run_id)
+        evaluate(video_id, user_model, concepts, upload_annotations)
 
     # Status level 4 on a video means that predictions have completed.
     cursor.execute(
