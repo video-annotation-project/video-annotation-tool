@@ -114,7 +114,6 @@ class VideoList extends Component {
       inProgressVideos,
       collection,
       socket,
-      loadVideos,
       data
     } = this.props;
     const {
@@ -391,7 +390,6 @@ class VideoList extends Component {
             handleClose={this.closeVideoMetadata}
             openedVideo={openedVideo}
             socket={socket}
-            loadVideos={loadVideos}
             model={false}
           />
         )}

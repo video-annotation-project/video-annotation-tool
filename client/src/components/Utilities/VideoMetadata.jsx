@@ -117,7 +117,7 @@ class VideoMetadata extends Component {
   };
 
   updateVideoCheckpoint = () => {
-    const { openedVideo, socket, loadVideos } = this.props;
+    const { openedVideo, socket } = this.props;
     const { videoStatus } = this.state;
 
     const config = {
@@ -135,7 +135,6 @@ class VideoMetadata extends Component {
     axios
       .request(config)
       .then(res => {
-        loadVideos();
         socket.emit('refresh videos');
         console.log(`Changed: ${res.data.message}`);
       })
@@ -195,7 +194,15 @@ class VideoMetadata extends Component {
       summary
     } = this.state;
     if (!isLoaded) {
-      return <Typography style={{ margin: '20px' }}>Loading...</Typography>;
+      return (
+        <Dialog
+          onClose={this.update}
+          open={open}
+          aria-labelledby="form-dialog-title"
+        >
+          <div>Loading...</div>
+        </Dialog>
+      );
     }
     const {
       filename,
