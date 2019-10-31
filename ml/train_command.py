@@ -75,7 +75,8 @@ def get_model_and_params():
                 config.S3_WEIGHTS_FOLDER + config.DEFAULT_WEIGHTS_PATH,
                 config.WEIGHTS_PATH,
             )
-            print("Could not find file {0}, downloaded default weights file".format(filename))
+            print(
+                "Could not find file {0}, downloaded default weights file".format(filename))
     else:
         print("downloading default weights file")
         s3.download_file(
@@ -194,7 +195,9 @@ def setup_predict_progress(verify_videos):
     )
     con.commit()
 
-def evaluate_videos(concepts, verify_videos, user_model, upload_annotations=False):
+
+def evaluate_videos(concepts, verify_videos, user_model,
+                    upload_annotations=False):
     """ Run evaluate on all the evaluation videos
     """
 
@@ -230,6 +233,7 @@ def reset_model_params():
     )
     con.commit()
 
+
 def end_predictions():
     # Status level 4 on a video means that predictions have completed.
     cursor.execute(
@@ -240,12 +244,14 @@ def end_predictions():
     )
     con.commit()
 
+
 def shutdown_server():
     """ Shutdown this EC2 instance
     """
-    
+
     con.close()
     subprocess.call(["sudo", "shutdown", "-h"])
+
 
 if __name__ == '__main__':
     main()

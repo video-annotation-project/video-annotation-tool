@@ -36,7 +36,9 @@ class ModelsTable extends Component {
     super(props);
     this.state = {
       modelSelected: '',
-      anchorEl: null
+      anchorEl: null,
+      train: { status: '', param: '' },
+      predict: { status: '', param: '' }
     };
   }
 
@@ -68,8 +70,18 @@ class ModelsTable extends Component {
       }
     };
     try {
-      let res = await axios.get(`/api/models/progress/status`, config);
-      this.setState(res.data);
+      let res = await axios.get(
+        `/api/models/progress/status/i-011660b3e976035d8?train=true`,
+        config
+      );
+      let res1 = await axios.get(
+        `/api/models/progress/status/i-0f2287cb0fc621b6d?train=false`,
+        config
+      );
+      this.setState({
+        train: res.data,
+        predict: res1.data
+      });
     } catch (err) {
       console.log(err);
     }
@@ -173,7 +185,11 @@ class ModelsTable extends Component {
                     aivideos={true}
                   />
                   <Button
-                    disabled={train ? model.name !== train.model : false}
+                    disabled={
+                      train.status !== 'stopped'
+                        ? model.name !== train.param
+                        : false
+                    }
                     size="small"
                     variant="contained"
                     color="primary"
@@ -190,8 +206,9 @@ class ModelsTable extends Component {
                   </Button>
                   <Button
                     disabled={
-                      (predict ? model.name !== predict.model : false) ||
-                      model.version_selected.toString() === '0'
+                      (predict.status !== 'stopped'
+                        ? model.name !== predict.param
+                        : false) || model.version_selected.toString() === '0'
                     }
                     style={{ marginLeft: '10px' }}
                     size="small"

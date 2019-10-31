@@ -238,7 +238,8 @@ class TrainModel extends Component {
 
     try {
       axios.get(`/api/models/progress/train`, config).then(progressRes => {
-        const training = progressRes.data.status !== 0;
+        const training =
+          progressRes.data.status !== 0 && progressRes.data.status !== 2;
 
         if (training) {
           axios.get(`/api/models/train`, config).then(res => {

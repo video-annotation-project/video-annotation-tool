@@ -442,6 +442,7 @@ class Annotate extends Component {
       dialogOpen,
       dialogMsg
     } = this.state;
+    const dragBox = document.getElementById('dragBox');
     if (!isLoaded) {
       return <Typography className={classes.text}>Loading...</Typography>;
     }
@@ -473,7 +474,10 @@ class Annotate extends Component {
             </Typography>
           </Grid>
           <Grid item xs>
-            <ConceptsSelected handleConceptClick={this.handleConceptClick} />
+            <ConceptsSelected
+              dragBox={dragBox}
+              handleConceptClick={this.handleConceptClick}
+            />
           </Grid>
         </Grid>
         <Grid container spacing={0}>

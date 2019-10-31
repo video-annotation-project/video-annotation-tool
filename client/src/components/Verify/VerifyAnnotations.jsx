@@ -613,6 +613,7 @@ class VerifyAnnotations extends Component {
   annotationConcept = annotation => {
     const { classes, annotating } = this.props;
     const { concept } = this.state;
+    const dragBox = document.getElementById('dragBox');
 
     return (
       <div
@@ -639,7 +640,10 @@ class VerifyAnnotations extends Component {
             </>
           )}
           <Grid item xs>
-            <ConceptsSelected handleConceptClick={this.handleConceptClick} />
+            <ConceptsSelected
+              dragBox={dragBox}
+              handleConceptClick={this.handleConceptClick}
+            />
           </Grid>
         </Grid>
       </div>

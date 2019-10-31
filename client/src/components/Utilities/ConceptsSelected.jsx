@@ -36,6 +36,11 @@ const styles = theme => ({
     width: '50%',
     cursor: 'pointer'
   },
+  conceptDisabled: {
+    width: '50%',
+    opacity: '0.5',
+    cursor: 'pointer'
+  },
   deleteConceptButton: {
     float: 'right',
     height: '25px',
@@ -240,7 +245,7 @@ class ConceptsSelected extends React.Component {
   };
 
   render() {
-    const { classes, handleConceptClick } = this.props;
+    const { classes, handleConceptClick, dragBox } = this.props;
     const {
       isLoaded,
       conceptsSelected,
@@ -280,15 +285,19 @@ class ConceptsSelected extends React.Component {
                 id={concept.name}
                 key={concept.id}
                 role="button"
-                className={classes.concept}
-                onClick={() => handleConceptClick(concept)}
+                className={dragBox ? classes.concept : classes.conceptDisabled}
+                onClick={() => (dragBox ? handleConceptClick(concept) : '')}
                 onKeyDown={() => handleConceptClick(concept)}
                 draggable
                 onDragStart={event => this.onDragStart(event, index)}
                 onDragOver={() => this.onDragOver(index)}
                 onDragEnd={this.onDragEnd}
-                onMouseEnter={event => this.onMouseEnter(event)}
-                onMouseLeave={event => this.onMouseLeave(event)}
+                onMouseEnter={event =>
+                  dragBox ? this.onMouseEnter(event) : ''
+                }
+                onMouseLeave={event =>
+                  dragBox ? this.onMouseLeave(event) : ''
+                }
               >
                 <IconButton
                   className={classes.deleteConceptButton}
