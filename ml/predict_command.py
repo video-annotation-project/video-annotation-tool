@@ -30,9 +30,23 @@ def main():
 
     download_weights(user_model)
     setup_predict_progress(videoids)
-    evaluate_videos(concepts, videoids, user_model, upload_annotations)
+    model_id = get_model_id(upload_annotations, model_name, version)
+    print(f'model id: {model_id}') # debug
+    evaluate_videos(concepts, videoids, user_model, upload_annotations, model_id)
     cleanup()
 
+def get_model_id(upload_annotations, model_name, version):
+    if upload_annotations:
+        cursor.execute(
+            f'''
+            SELECT model_id FROM model_versions WHERE 
+            model={model_name} AND version={version}
+            '''
+        )
+        cursor.commit()
+        return int(cursor.fetchone()[0])
+    else: # don't need model id
+        return None
 
 def download_weights(user_model):
     filename = user_model + '.h5'

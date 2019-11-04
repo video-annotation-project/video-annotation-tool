@@ -34,7 +34,7 @@ def main():
 
     start_training(user_model, concepts, verify_videos, model_params)
     setup_predict_progress(verify_videos)
-    create_model_user(new_version, model_params, user_model)
+    create_model_version(new_version, model_params)
 
     evaluate_videos(concepts, verify_videos, user_model)
     end_predictions()
@@ -114,29 +114,16 @@ def get_user_model(model_params):
 
     print(f"new version: {new_version}")
 
-    # create new model-version user
+    # create new model-version name
     user_model = model_params["model"] + "-" + new_version
 
     return user_model, new_version
 
 
-def create_model_user(new_version, model_params, user_model):
-    """Insert a new user for this model version, then update the model_versions table
-       with the new model version
+def create_model_version(new_version, model_params):
+    """Update the model_versions table with the new model version
     """
-    print("creating new user, updating model_versions table")
-    cursor.execute(
-        """
-        INSERT INTO users (username, password, admin)
-        VALUES (%s, 0, null)
-        RETURNING *""",
-        (user_model,),
-    )
-    con.commit()
-    model_user_id = int(cursor.fetchone()[0])
-
-    # Update the model_versions table with the new user
-
+    print("Updating model_versions table")
     cursor.execute(
         """ INSERT INTO model_versions 
             (epochs, 
@@ -145,20 +132,17 @@ def create_model_user(new_version, model_params, user_model):
             annotation_collections, 
             verified_only,
             include_tracking,
-            userid,
             version,
             timestamp)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) """,
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)""", 
         (int(model_params["epochs"]),
          int(model_params["min_images"]),
          model_params["model"],
          model_params["annotation_collections"],
          bool(model_params["verified_only"]),
          bool(model_params["include_tracking"]),
-         model_user_id, new_version, datetime.now()))
+         new_version, datetime.now()))
     con.commit()
-
-    return model_user_id
 
 
 def start_training(user_model, concepts, verify_videos, model_params):
@@ -194,7 +178,7 @@ def setup_predict_progress(verify_videos):
     )
     con.commit()
 
-def evaluate_videos(concepts, verify_videos, user_model, upload_annotations=False):
+def evaluate_videos(concepts, verify_videos, user_model, upload_annotations=False, model_id=None):
     """ Run evaluate on all the evaluation videos
     """
 
@@ -204,17 +188,9 @@ def evaluate_videos(concepts, verify_videos, user_model, upload_annotations=Fals
             f"""UPDATE predict_progress SET videoid = {video_id}, current_video = current_video + 1"""
         )
         con.commit()
-        evaluate(video_id, user_model, concepts, upload_annotations)
+        evaluate(video_id, user_model, concepts, upload_annotations, model_id)
 
-    # Status level 4 on a video means that predictions have completed.
-    cursor.execute(
-        """
-        UPDATE predict_progress
-        SET status=4
-        """
-    )
-    con.commit()
-
+    end_predictions()
 
 def reset_model_params():
     """ Reset the model_params table

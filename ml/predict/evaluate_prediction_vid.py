@@ -101,18 +101,18 @@ def get_counts(results, annotations):
 
 
 def evaluate(
-        video_id, model_username, concepts, upload_annotations=False):
+        video_id, model_username, concepts, upload_annotations=False, model_id=None):
     # file format: (video_id)_(model_name)-(version).mp4
     filename = str(video_id) + "_" + model_username + ".mp4"
     print("ai video filename: {0}".format(filename))
     results, fps, original_frames, annotations = predict.predict_on_video(
-        video_id, config.WEIGHTS_PATH, concepts, filename
+        video_id, config.WEIGHTS_PATH, concepts, filename, upload_annotations, model_id
     )
     if (results.empty):
         return
     username_split = model_username.split('-')
-    version = username_split[1]
     model_name = username_split[0]
+    version = username_split[1]
     # add the entry to ai_videos
     cursor.execute('''
         INSERT INTO ai_videos (name, videoid, version, model_name)
@@ -121,7 +121,7 @@ def evaluate(
                    )
 
     con.commit()
-    print("done predicting")
+    print("done predicting, scoring predictions")
 
     metrics = score_predictions(
         annotations, results, config.EVALUATION_IOU_THRESH, concepts
@@ -129,7 +129,7 @@ def evaluate(
     concept_counts = get_counts(results, annotations)
     metrics = metrics.set_index("conceptid").join(concept_counts)
     metrics.to_csv("metrics" + str(video_id) + ".csv")
-    # upload the data to s3 bucket
+
     print("uploading to s3 folder")
     s3.upload_file(
         "metrics" + str(video_id) + ".csv",
