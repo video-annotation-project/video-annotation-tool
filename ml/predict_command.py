@@ -40,7 +40,7 @@ def get_model_id(upload_annotations, model_name, version):
         cursor.execute(
             f'''
             SELECT modelid FROM model_versions WHERE 
-            model={model_name} AND version={version}
+            model='{model_name}' AND version='{version}'
             '''
         )
         cursor.commit()
