@@ -39,7 +39,7 @@ def get_model_id(upload_annotations, model_name, version):
     if upload_annotations:
         cursor.execute(
             f'''
-            SELECT model_id FROM model_versions WHERE 
+            SELECT modelid FROM model_versions WHERE 
             model={model_name} AND version={version}
             '''
         )

@@ -74,7 +74,8 @@ class PredictModel extends Component {
       openedVideo: null,
       ready: false,
       postAnnotation: false,
-      loaded: false
+      loaded: false,
+      createAnnotationCollection: false
     };
   }
 
@@ -132,7 +133,7 @@ class PredictModel extends Component {
 
   updateBackendInfo = async () => {
     const { model } = this.props;
-    const { postAnnotation, selectedVideos } = this.state;
+    const { postAnnotation, selectedVideos, createAnnotationCollection } = this.state;
     let vidArray = [];
     selectedVideos.forEach(video => {
       vidArray.push(video.id);
@@ -148,7 +149,8 @@ class PredictModel extends Component {
       concepts: model.conceptsid,
       videos: vidArray,
       userid: model.userid,
-      version: model.version_selected
+      version: model.version_selected,
+      createCollection: createAnnotationCollection
     };
 
     try {
@@ -273,7 +275,8 @@ class PredictModel extends Component {
       videoProgress,
       predictionProgress,
       predictStatus,
-      videoId
+      videoId,
+      createAnnotationCollection
     } = this.state;
 
     return (
@@ -317,6 +320,22 @@ class PredictModel extends Component {
                   }
                   label="Post Annotations"
                 />
+                 {postAnnotation ? (
+                  <FormControlLabel
+                  control={
+                    <Switch
+                      checked={createAnnotationCollection}
+                      onChange={this.handleChangeSwitch}
+                      value="createAnnotationCollection"
+                      color="primary"
+                      align="center"
+                    />
+                  }
+                  label="Create Annotation Collection"
+                />
+                ) : (
+                  ''
+                )}
                 {/* <Button
                   onClick={this.startTraining}
                   variant="contained"
