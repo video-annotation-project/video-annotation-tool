@@ -75,7 +75,7 @@ class PredictModel extends Component {
       ready: false,
       postAnnotation: false,
       loaded: false,
-      createAnnotationCollection: false
+      createCollection: false
     };
   }
 
@@ -133,7 +133,7 @@ class PredictModel extends Component {
 
   updateBackendInfo = async () => {
     const { model } = this.props;
-    const { postAnnotation, selectedVideos, createAnnotationCollection } = this.state;
+    const { postAnnotation, selectedVideos, createCollection } = this.state;
     let vidArray = [];
     selectedVideos.forEach(video => {
       vidArray.push(video.id);
@@ -150,7 +150,7 @@ class PredictModel extends Component {
       videos: vidArray,
       userid: model.userid,
       version: model.version_selected,
-      createCollection: createAnnotationCollection
+      createCollection: createCollection
     };
 
     try {
@@ -188,6 +188,14 @@ class PredictModel extends Component {
     event.persist();
     this.setState({
       [event.target.value]: event.target.checked
+    });
+  };
+
+  handleChangeTwoSwitch = event => {
+    event.persist();
+    this.setState({
+      [event.target.value]: event.target.checked,
+      createCollection: false
     });
   };
 
@@ -276,7 +284,7 @@ class PredictModel extends Component {
       predictionProgress,
       predictStatus,
       videoId,
-      createAnnotationCollection
+      createCollection
     } = this.state;
 
     return (
@@ -312,7 +320,7 @@ class PredictModel extends Component {
                   control={
                     <Switch
                       checked={postAnnotation}
-                      onChange={this.handleChangeSwitch}
+                      onChange={postAnnotation ? this.handleChangeTwoSwitch : this.handleChangeSwitch}
                       value="postAnnotation"
                       color="primary"
                       align="center"
@@ -320,22 +328,19 @@ class PredictModel extends Component {
                   }
                   label="Post Annotations"
                 />
-                 {postAnnotation ? (
-                  <FormControlLabel
+                <FormControlLabel
                   control={
                     <Switch
-                      checked={createAnnotationCollection}
+                      checked={postAnnotation ? createCollection : false}
                       onChange={this.handleChangeSwitch}
-                      value="createAnnotationCollection"
+                      disabled={!postAnnotation}
+                      value="createCollection"
                       color="primary"
                       align="center"
                     />
                   }
                   label="Create Annotation Collection"
                 />
-                ) : (
-                  ''
-                )}
                 {/* <Button
                   onClick={this.startTraining}
                   variant="contained"
