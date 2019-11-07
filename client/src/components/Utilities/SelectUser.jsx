@@ -5,7 +5,6 @@ import FormControl from '@material-ui/core/FormControl';
 import FormGroup from '@material-ui/core/FormGroup';
 import { Checkbox, Button } from '@material-ui/core';
 import Typography from '@material-ui/core/Typography';
-// const config = require('../../client-config.json');
 
 const styles = theme => ({
   formControl: {

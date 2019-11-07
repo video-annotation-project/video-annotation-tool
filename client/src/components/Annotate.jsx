@@ -443,7 +443,6 @@ class Annotate extends Component {
       dialogOpen,
       dialogMsg
     } = this.state;
-    const dragBox = document.getElementById('dragBox');
     if (!isLoaded) {
       return <Typography className={classes.text}>Loading...</Typography>;
     }

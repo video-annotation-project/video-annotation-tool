@@ -613,7 +613,6 @@ class VerifyAnnotations extends Component {
   annotationConcept = annotation => {
     const { classes, annotating } = this.props;
     const { concept } = this.state;
-    const dragBox = document.getElementById('dragBox');
 
     return (
       <div
@@ -641,7 +640,7 @@ class VerifyAnnotations extends Component {
           )}
           <Grid item xs>
             <ConceptsSelected
-              dragBox={dragBox}
+              disableConcept={this.state.disableConcept}
               handleConceptClick={this.handleConceptClick}
             />
           </Grid>
@@ -791,11 +790,21 @@ class VerifyAnnotations extends Component {
                     this.setState({ x: d.x, y: d.y });
                   }}
                   onResize={(e, direction, ref, delta, position) => {
-                    this.setState({
-                      width: ref.style.width,
-                      height: ref.style.height,
-                      ...position
-                    });
+                    this.setState(
+                      {
+                        width: ref.style.width,
+                        height: ref.style.height,
+                        ...position
+                      },
+                      () => {
+                        this.setState({
+                          disableConcept:
+                            ref.style.width === 0 && ref.style.height === 0
+                              ? true
+                              : false
+                        });
+                      }
+                    );
                   }}
                 >
                   <Boxes

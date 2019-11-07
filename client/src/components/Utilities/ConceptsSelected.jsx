@@ -244,13 +244,6 @@ class ConceptsSelected extends React.Component {
     event.currentTarget.style.backgroundColor = '#132232';
   };
 
-  dragBoxPresent = () => {
-    const { dragBox } = this.props;
-    return (
-      dragBox && dragBox.style.width !== '0px' && dragBox.style.height !== '0px'
-    );
-  };
-
   render() {
     const { classes, handleConceptClick, disableConcept } = this.props;
     const {
