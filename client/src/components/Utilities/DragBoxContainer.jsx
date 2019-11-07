@@ -211,6 +211,7 @@ class DragBoxContainer extends Component {
         </div>
         {drawDragBox || drawDragBoxProp ? (
           <DragBox
+            drawDragBox={drawDragBox}
             name={boxCounter}
             size={size}
             position={position}

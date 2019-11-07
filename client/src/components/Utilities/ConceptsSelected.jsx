@@ -244,8 +244,15 @@ class ConceptsSelected extends React.Component {
     event.currentTarget.style.backgroundColor = '#132232';
   };
 
+  dragBoxPresent = () => {
+    const { dragBox } = this.props;
+    return (
+      dragBox && dragBox.style.width !== '0px' && dragBox.style.height !== '0px'
+    );
+  };
+
   render() {
-    const { classes, handleConceptClick, dragBox } = this.props;
+    const { classes, handleConceptClick, disableConcept } = this.props;
     const {
       isLoaded,
       conceptsSelected,
@@ -285,18 +292,22 @@ class ConceptsSelected extends React.Component {
                 id={concept.name}
                 key={concept.id}
                 role="button"
-                className={dragBox ? classes.concept : classes.conceptDisabled}
-                onClick={() => (dragBox ? handleConceptClick(concept) : '')}
+                className={
+                  !disableConcept ? classes.concept : classes.conceptDisabled
+                }
+                onClick={() =>
+                  !disableConcept ? handleConceptClick(concept) : ''
+                }
                 onKeyDown={() => handleConceptClick(concept)}
                 draggable
                 onDragStart={event => this.onDragStart(event, index)}
                 onDragOver={() => this.onDragOver(index)}
                 onDragEnd={this.onDragEnd}
                 onMouseEnter={event =>
-                  dragBox ? this.onMouseEnter(event) : ''
+                  !disableConcept ? this.onMouseEnter(event) : ''
                 }
                 onMouseLeave={event =>
-                  dragBox ? this.onMouseLeave(event) : ''
+                  !disableConcept ? this.onMouseLeave(event) : ''
                 }
               >
                 <IconButton
