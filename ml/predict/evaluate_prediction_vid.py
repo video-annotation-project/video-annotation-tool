@@ -94,9 +94,12 @@ def get_counts(results, annotations):
     groundtruth_counts.columns = ["true_num"]
     counts = pd.concat((counts, groundtruth_counts),
                        axis=1, join="outer").fillna(0)
-    counts["count_accuracy"] = (
-        1 - abs(counts.true_num - counts.pred_num) / counts.true_num
-    )
+    if counts.true_num == 0:
+        counts["count_accuracy"] = 1.0 if counts.pred_num == 0 else 0
+    else:
+        counts["count_accuracy"] = (
+            1 - abs(counts.true_num - counts.pred_num) / counts.true_num
+        )
     return counts
 
 
