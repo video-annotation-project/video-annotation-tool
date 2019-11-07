@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const passport = require('passport');
 const psql = require('../../db/simpleConnect');
+const AWS = require('aws-sdk');
 
 /**
  * @typedef trainProgress
@@ -82,36 +83,41 @@ router.get(
 );
 
 router.get(
-  '/status',
+  '/status/:id',
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
-    const status1 = `SELECT videoid FROM predict_progress`;
-    const status2 = `SELECT status FROM training_progress`;
-    const train = `SELECT model FROM model_params`;
-    const predict = `SELECT model FROM predict_params`;
-    try {
-      let resJSON = [];
-      let res1 = await psql.query(status1);
-      let res2 = await psql.query(status2);
-
-      if (res1.rows.length === 0 && res2.rows[0].status === 0) {
-        resJSON = { predict: null, train: null };
-      } else if (res1.rows.length === 0) {
-        let trainStatus = await psql.query(train);
-        resJSON = { predict: null, train: trainStatus.rows[0] };
-      } else if (res2.rows[0].status === 0) {
-        let predictStatus = await psql.query(predict);
-        resJSON = { predict: predictStatus.rows[0], train: null };
-      } else {
-        let trainStatus = await psql.query(train);
-        let predictStatus = await psql.query(predict);
-        resJSON = { predict: predictStatus.rows[0], train: trainStatus.rows[0] };
+    let ec2 = new AWS.EC2({ region: 'us-west-1' });
+    var params = {
+      InstanceIds: [
+        req.params.id
+      ],
+      IncludeAllInstances: true
+    };
+    ec2.describeInstanceStatus(params, async (err, data) => {
+      let result = {
+        status: null,
+        param: null
+      };
+      if (err) {
+        console.log(err, err.stack);
+        res.status(400);
+      } // an error occurred
+      else {
+        status = data.InstanceStatuses[0].InstanceState.Name;
+        result.status = status;
+        if (status !== "stopped") {
+          let queryText = `
+            SELECT * FROM ${
+            req.query.train === "true" ?
+              "model_params" : "predict_params"
+            }
+          `
+          let model = await psql.query(queryText);
+          result.param = model.rows[0].model;
+        }
+        res.send(result);
       }
-      res.json(resJSON);
-    } catch (error) {
-      console.log(error);
-      res.status(500).json(error);
-    }
+    });
   }
 );
 
