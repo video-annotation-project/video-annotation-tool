@@ -11,7 +11,6 @@ import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
 import Description from '@material-ui/icons/Description';
 import { Typography, Button } from '@material-ui/core';
-import FormControl from '@material-ui/core/FormControl';
 import AssessmentIcon from '@material-ui/icons/Assessment';
 
 import GeneralMenu from '../Utilities/GeneralMenu';
@@ -100,16 +99,9 @@ class ModelsTable extends Component {
       currentVideo,
       trainOpen,
       predictOpen,
-      versionOpen,
       launchTensorboard
     } = this.props;
-    const {
-      modelSelected,
-      anchorEl,
-      train,
-      predict,
-      modelClicked
-    } = this.state;
+    const { modelSelected, train, predict } = this.state;
     if (!models) {
       return <Typography style={{ margin: '20px' }}>Loading...</Typography>;
     }
@@ -131,24 +123,18 @@ class ModelsTable extends Component {
                   {model.name}
                 </CustomTableCell>
                 <CustomTableCell>
-                  <FormControl>
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      color="secondary"
-                      onClick={e => {
-                        this.setState(
-                          {
-                            anchorEl: e.currentTarget,
-                            modelClicked: model
-                          },
-                          toggleStateVariable(true, 'versionOpen')
-                        );
-                      }}
-                    >
-                      {model.version_selected}
-                    </Button>
-                  </FormControl>
+                  <ModelTreeView
+                    model={model}
+                    toggleStateVariable={toggleStateVariable}
+                    handleSelectVersion={handleSelectVersion}
+                  />
+                  <Typography
+                    align="center"
+                    variant="subtitle2"
+                    color="secondary"
+                  >
+                    Selected: {model.version_selected}
+                  </Typography>
                 </CustomTableCell>
                 <CustomTableCell>{formatDate(model.timestamp)}</CustomTableCell>
                 <CustomTableCell align="right">
@@ -230,13 +216,6 @@ class ModelsTable extends Component {
             ))}
           </TableBody>
         </Table>
-        <ModelTreeView
-          anchorEl={anchorEl}
-          model={modelClicked}
-          open={versionOpen}
-          toggleStateVariable={toggleStateVariable}
-          handleSelectVersion={handleSelectVersion}
-        />
         {trainOpen ? (
           <TrainModel
             trainOpen={trainOpen}
