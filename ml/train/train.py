@@ -8,7 +8,7 @@ from tensorflow.python.client import device_lib
 from keras_retinanet import models
 from keras_retinanet import losses
 from keras.utils import multi_gpu_model
-from keras.callbacks import ModelCheckpoint, EarlyStopping
+from keras.callbacks import EarlyStopping
 from keras_retinanet.callbacks import RedirectModel
 
 from config import config
@@ -19,6 +19,7 @@ from train.preprocessing.annotation_generator import AnnotationGenerator
 from train.evaluation.evaluate import evaluate_class_thresholds
 from train.callbacks.progress import Progress
 from train.callbacks.tensorboard import TensorboardLog
+from train.callbacks.model_checkpoint import ModelCheckpoint
 
 
 @timer("training")
@@ -108,8 +109,7 @@ def _initilize_model(num_classes):
     # multi_gpu model to save gpu memory
     with tf.device('/cpu:0'):
         model = models.backbone('resnet50').retinanet(num_classes=num_classes)
-        model.load_weights(config.WEIGHTS_PATH,
-                           by_name=True, skip_mismatch=True)
+        ModelCheckpoint.load_weights(model, config.WEIGHTS_PATH)
 
     gpus = len([i for i in device_lib.list_local_devices()
                 if i.device_type == 'GPU'])
