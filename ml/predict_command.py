@@ -10,16 +10,16 @@ from botocore.exceptions import ClientError
 
 
 def main():
-    (model_name, concepts, video_ids, upload_annotations, version, 
-    create_collection = get_predict_params())
-    predict(model_name, concepts, video_ids, upload_annotations, version, 
-    create_collection)
+    (model_name, concept_ids, video_ids, upload_annotations, version, 
+    create_collection) = get_predict_params()
+    predict(model_name, concept_ids, video_ids, upload_annotations, version)
+    cleanup()
 
 def get_predict_params():
     '''
     get predict params
     model - string: name of the model
-    concepts - int[]: list of concept ids model is trying to find
+    concept_ids - int[]: list of concept ids model is trying to find
     video_ids - int[]: list of video ids model is trying to predict on
     upload_annotations - boolean: if true upload annotations to database
     version - string: model version
@@ -28,38 +28,70 @@ def get_predict_params():
     cursor.execute("SELECT * FROM predict_params")
     params = cursor.fetchone()
     model_name = str(params[0])
-    concepts = params[2]
+    concept_ids = params[2]
     video_ids = params[4]
     upload_annotations = bool(params[3])
     version = params[6]
     create_collection = params[7]
-    return model_name, concepts, video_ids, upload_annotations, version, create_collection
+    return model_name, concept_ids, video_ids, upload_annotations, version, create_collection
 
-def predict():
+def predict(model_name, concept_ids, video_ids, upload_annotations, version):
     user_model = model_name + "-" + version
     download_weights(user_model)
     setup_predict_progress(video_ids)
-    model_id = get_model_id(upload_annotations, model_name, version)
-    print(f'model id: {model_id}') # debug
-    evaluate_videos(concepts, video_ids, user_model, upload_annotations, model_id)
+    evaluate_videos(concept_ids, video_ids, user_model, upload_annotations)
     if create_collection:
-        create_collection(model_id)
-    cleanup()
+        model_id = get_model_id(model_name, version)
+        create_collection(user_model, model_id, video_ids, concept_ids)
+        add_to_collection(collection_id)
 
-def get_model_id(upload_annotations, model_name, version):
-    if upload_annotations:
-        cursor.execute(
-            f'''
-            SELECT modelid FROM model_versions WHERE 
-            model='{model_name}' AND version='{version}'
-            '''
+def create_collection(user_model, video_ids, concept_ids):
+    concept_names = get_concept_names(concept_ids)
+    cursor.execute(
+        f'''
+        INSERT INTO annotation_collection (
+            name, 
+            users, 
+            videos, 
+            concepts, 
+            tracking, 
+            conceptid
         )
-        cursor.commit()
-        return int(cursor.fetchone()[0])
-    else: # don't need model id
-        return None
+        VALUES (
+            '{user_model} on {video_ids}', 
+            '{user_model}', 
+            '{video_ids}', 
+            '{concept_names}', 
+            false,
+            '{concept_ids}'
+        )
+        RETURNING id
+        '''
+    )
+    cursor.commit()
+    collection_id = cursor.fetchone()[0]
+    return collection_id
 
-def create_collection(model_id, video_ids):
+def add_to_collection(model_id, video_ids, collection_id):
+    cursor.execute(
+        f'''
+        WITH annotation_ids AS (
+            SELECT id 
+            FROM annotations
+            WHERE userid={model_id}
+            AND videoid in {video_ids}
+        )
+        INSERT INTO 
+            annotation_intermediate (id, annotationid)
+        (
+            '{collection_id}', annotation_ids
+        )
+        '''
+    )
+    cursor.commit()
+    # need to test this
+
+def get_annotation_ids(model_id, video_ids):
     cursor.execute(
         f'''
         SELECT id FROM annotations WHERE userid={model_id}
@@ -68,13 +100,17 @@ def create_collection(model_id, video_ids):
     )
     cursor.commit()
     annotation_ids = cursor.fetchall()
+    return annotation_ids
+
+def get_concept_names(concept_ids):
     cursor.execute(
         f'''
-        INSERT INTO annotation_collection 
-        (name, description, users, videos, concepts, tracking, conceptid)
+        SELECT name FROM concepts WHERE id in {concept_ids}
         '''
     )
-    # finish this
+    cursor.commit()
+    concept_names = cursor.fetchall()
+    return concept_names
 
 def download_weights(user_model):
     filename = user_model + '.h5'
@@ -88,6 +124,19 @@ def download_weights(user_model):
     except ClientError:
         print("Could not find weights file {0} in S3, exiting".format(filename))
         cleanup()
+
+def get_model_id(model_name, version) {
+    cursor.execute(
+        f'''
+        SELECT userid FROM model_versions WHERE 
+        model='{model_name}' 
+        AND version='{version}'
+        '''
+    )
+    cursor.commit()
+    model_id = cursor.fetchone()[0]
+    return model_id
+}
 
 
 def cleanup():
