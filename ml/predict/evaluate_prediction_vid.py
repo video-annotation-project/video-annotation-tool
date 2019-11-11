@@ -86,6 +86,13 @@ def score_predictions(validation, predictions, iou_thresh, concepts):
     return metrics
 
 
+def count_accuracy(row):
+    if row.true_num == 0:
+        return 1.0 if row.pred_num == 0 else 0
+    else:
+        return 1 - abs(row.true_num - row.pred_num) / row.true_num
+
+
 def get_counts(results, annotations):
     grouped = results.groupby(["objectid"]).label.mean().reset_index()
     counts = grouped.groupby("label").count()
@@ -94,12 +101,7 @@ def get_counts(results, annotations):
     groundtruth_counts.columns = ["true_num"]
     counts = pd.concat((counts, groundtruth_counts),
                        axis=1, join="outer").fillna(0)
-    if counts.true_num == 0:
-        counts["count_accuracy"] = 1.0 if counts.pred_num == 0 else 0
-    else:
-        counts["count_accuracy"] = (
-            1 - abs(counts.true_num - counts.pred_num) / counts.true_num
-        )
+    counts["count_accuracy"] = counts.apply(count_accuracy, axis=1)
     return counts
 
 

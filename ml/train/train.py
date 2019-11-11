@@ -157,7 +157,7 @@ def _get_callbacks(model,
         num_epochs=epochs
     )
 
-    return [stopping, checkpoint, progress_callback, log_callback, tensorboard_callback]
+    return [stopping, progress_callback, log_callback, tensorboard_callback]
 
 
 def _upload_weights(model_name):
