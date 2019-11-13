@@ -16,18 +16,21 @@ def main():
 def predict():
     params = get_predict_params()
     user_model = params["model"] + "-" + str(params["version"])
+    download_weights(user_model)
+    setup_predict_progress(params["videos"])
+    evaluate_videos(params["concept_ids"], params["videos"], user_model, params["upload_annotations"])
     if params["create_collection"]:
         model_userid = get_model_userid(params)
         print(f"model userid: {model_userid}")
         collection_id = insert_collection(user_model, params)
-        #add_to_collection(model_userid, video_ids, collection_id)
+        add_to_collection(model_userid, collection_id, params)
 
 def get_predict_params():
     '''
     model - string: name of the model
-    concept_ids - int[]: list of concept ids model is trying to find
+    concepts - int[]: list of concept ids model is trying to find
     upload_annotations - boolean: if true upload annotations to database
-    video_ids - int[]: list of video ids model is trying to predict on
+    videos - int[]: list of video ids model is trying to predict on
     version - string: model version
     create_collection - boolean: if true create annotation collection
     '''
@@ -82,34 +85,27 @@ def insert_collection(user_model, params):
     print(f"collection id: {collection_id}")
     return collection_id
 
-def add_to_collection(model_id, video_ids, collection_id):
+def add_to_collection(model_id, collection_id, params):
+    video_ids = tuple(params["videos"])
     cursor.execute(
-        f'''
-        WITH annotation_ids AS (
-            SELECT id 
-            FROM annotations
-            WHERE userid={model_id}
-            AND videoid in {video_ids}
-        )
+        """
         INSERT INTO 
             annotation_intermediate (id, annotationid)
+        SELECT 
+            %s, id AS annotationid
+        FROM 
+            annotations
+        WHERE
+            userid=%s AND videoid in %s
+        
+        """,
         (
-            {collection_id}, annotation_ids
+            collection_id,
+            str(model_id),
+            (video_ids, )
         )
-        '''
     )
     con.commit()
-
-def get_annotation_ids(model_id, video_ids):
-    cursor.execute(
-        f'''
-        SELECT id FROM annotations WHERE userid={model_id}
-        AND videoid in {video_ids}
-        '''
-    )
-    con.commit()
-    annotation_ids = cursor.fetchall()
-    return annotation_ids
 
 def get_concept_names(params):
     concept_ids = tuple(params["concepts"])
