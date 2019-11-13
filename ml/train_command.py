@@ -112,7 +112,7 @@ def get_user_model(model_params):
         last_num = int(latest_version[-1]) + 1
         new_version = latest_version[:-1] + str(last_num)
 
-    print(f"new version: {new_version}")
+    print("new version: {0}".format(new_version))
 
     # create new model-version name
     user_model = model_params["model"] + "-" + new_version

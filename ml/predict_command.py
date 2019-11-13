@@ -3,52 +3,61 @@ import subprocess
 from dotenv import load_dotenv
 import boto3
 import json
-from utils.query import s3, con, cursor
+from utils.query import s3, con, cursor, pd_query
 from config.config import S3_BUCKET, S3_WEIGHTS_FOLDER, WEIGHTS_PATH
 from train_command import setup_predict_progress, evaluate_videos, end_predictions, shutdown_server
 from botocore.exceptions import ClientError
 
 
 def main():
-    (model_name, concept_ids, video_ids, upload_annotations, version, 
-    create_collection) = get_predict_params()
-    predict(model_name, concept_ids, video_ids, upload_annotations, version)
+    predict()
     cleanup()
+
+def predict():
+    params = get_predict_params()
+    user_model = params["model"] + "-" + str(params["version"])
+    if params["create_collection"]:
+        model_userid = get_model_userid(params)
+        print(f"model userid: {model_userid}")
+        collection_id = insert_collection(user_model, params)
+        #add_to_collection(model_userid, video_ids, collection_id)
 
 def get_predict_params():
     '''
-    get predict params
     model - string: name of the model
     concept_ids - int[]: list of concept ids model is trying to find
-    video_ids - int[]: list of video ids model is trying to predict on
     upload_annotations - boolean: if true upload annotations to database
+    video_ids - int[]: list of video ids model is trying to predict on
     version - string: model version
     create_collection - boolean: if true create annotation collection
     '''
-    cursor.execute("SELECT * FROM predict_params")
-    params = cursor.fetchone()
-    model_name = str(params[0])
-    concept_ids = params[2]
-    video_ids = params[4]
-    upload_annotations = bool(params[3])
-    version = params[6]
-    create_collection = params[7]
-    return model_name, concept_ids, video_ids, upload_annotations, version, create_collection
+    predict_params = pd_query(
+        "SELECT * FROM predict_params"
+    ).iloc[0]
+    return predict_params
 
-def predict(model_name, concept_ids, video_ids, upload_annotations, version):
-    user_model = model_name + "-" + version
-    download_weights(user_model)
-    setup_predict_progress(video_ids)
-    evaluate_videos(concept_ids, video_ids, user_model, upload_annotations)
-    if create_collection:
-        model_id = get_model_id(model_name, version)
-        create_collection(user_model, model_id, video_ids, concept_ids)
-        add_to_collection(collection_id)
-
-def create_collection(user_model, video_ids, concept_ids):
-    concept_names = get_concept_names(concept_ids)
+def get_model_userid(params):
     cursor.execute(
-        f'''
+        """
+        SELECT userid FROM model_versions WHERE 
+        model=%s 
+        AND version=%s
+        """,
+        (
+         params["model"],
+         params["version"]
+        )
+    )
+    con.commit()
+    model_userid = cursor.fetchone()[0]
+    return model_userid
+
+def insert_collection(user_model, params):
+    concept_names = get_concept_names(params)
+    collection_name = "{0} on {1}".format(user_model, params["videos"])
+    user_model = "{" + user_model + "}"
+    cursor.execute(
+        """
         INSERT INTO annotation_collection (
             name, 
             users, 
@@ -57,19 +66,20 @@ def create_collection(user_model, video_ids, concept_ids):
             tracking, 
             conceptid
         )
-        VALUES (
-            '{user_model} on {video_ids}', 
-            '{user_model}', 
-            '{video_ids}', 
-            '{concept_names}', 
-            false,
-            '{concept_ids}'
-        )
+        VALUES (%s, %s, %s, %s, false, %s)
         RETURNING id
-        '''
+        """,
+        (
+            collection_name,
+            user_model,
+            params["videos"],
+            concept_names,
+            params["concepts"]
+        )
     )
-    cursor.commit()
+    con.commit()
     collection_id = cursor.fetchone()[0]
+    print(f"collection id: {collection_id}")
     return collection_id
 
 def add_to_collection(model_id, video_ids, collection_id):
@@ -84,12 +94,11 @@ def add_to_collection(model_id, video_ids, collection_id):
         INSERT INTO 
             annotation_intermediate (id, annotationid)
         (
-            '{collection_id}', annotation_ids
+            {collection_id}, annotation_ids
         )
         '''
     )
-    cursor.commit()
-    # need to test this
+    con.commit()
 
 def get_annotation_ids(model_id, video_ids):
     cursor.execute(
@@ -98,17 +107,19 @@ def get_annotation_ids(model_id, video_ids):
         AND videoid in {video_ids}
         '''
     )
-    cursor.commit()
+    con.commit()
     annotation_ids = cursor.fetchall()
     return annotation_ids
 
-def get_concept_names(concept_ids):
+def get_concept_names(params):
+    concept_ids = tuple(params["concepts"])
     cursor.execute(
-        f'''
-        SELECT name FROM concepts WHERE id in {concept_ids}
-        '''
+        """
+        SELECT name FROM concepts WHERE id in %s
+        """,
+        (concept_ids, )
     )
-    cursor.commit()
+    con.commit()
     concept_names = cursor.fetchall()
     return concept_names
 
@@ -124,20 +135,6 @@ def download_weights(user_model):
     except ClientError:
         print("Could not find weights file {0} in S3, exiting".format(filename))
         cleanup()
-
-def get_model_id(model_name, version) {
-    cursor.execute(
-        f'''
-        SELECT userid FROM model_versions WHERE 
-        model='{model_name}' 
-        AND version='{version}'
-        '''
-    )
-    cursor.commit()
-    model_id = cursor.fetchone()[0]
-    return model_id
-}
-
 
 def cleanup():
     end_predictions()
