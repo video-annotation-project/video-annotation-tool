@@ -20,6 +20,7 @@ def predict():
     setup_predict_progress(params["videos"])
     evaluate_videos(params["concept_ids"], params["videos"], user_model, params["upload_annotations"])
     if params["create_collection"]:
+        print("creating annotation collection")
         model_userid = get_model_userid(params)
         print(f"model userid: {model_userid}")
         collection_id = insert_collection(user_model, params)
