@@ -18,7 +18,7 @@ def predict():
     user_model = params["model"] + "-" + str(params["version"])
     download_weights(user_model)
     setup_predict_progress(params["videos"])
-    evaluate_videos(params["concept_ids"], params["videos"], user_model, params["upload_annotations"])
+    evaluate_videos(params["concepts"], params["videos"], user_model, params["upload_annotations"])
     if params["create_collection"]:
         print("creating annotation collection")
         model_userid = get_model_userid(params)
