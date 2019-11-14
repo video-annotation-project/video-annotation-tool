@@ -155,14 +155,26 @@ class Navbar extends React.Component {
                 </Button>
               </>
             ) : (
-              <Button
-                id="navbar-login"
-                color="inherit"
-                component={Link}
-                to="/login"
-              >
-                Login
-              </Button>
+              <div>
+                <Button color="inherit" href="#team">
+                  Our Team
+                </Button>
+                <Button color="inherit" href="#project">
+                  Our Project
+                </Button>
+                <Button color="inherit" href="#software">
+                  Our Software
+                </Button>
+
+                <Button
+                  id="navbar-login"
+                  color="inherit"
+                  component={Link}
+                  to="/login"
+                >
+                  Login
+                </Button>
+              </div>
             )}
           </Toolbar>
         </AppBar>

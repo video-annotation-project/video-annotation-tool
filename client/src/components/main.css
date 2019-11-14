@@ -1,0 +1,73 @@
+body{
+    background-color:#132232;
+}
+
+h1{
+    color:#FFFFFF;
+    font-family: 'Source Sans Pro', sans-serif;
+    font-weight:500;
+    padding:0em 0em 0em 1em;
+}
+
+p{
+    color:#FFFFFF;
+    font-family: 'Source Sans Pro', sans-serif;
+    font-weight:100;
+}
+
+a{
+    text-decoration:none;
+    color:#FFFFFF;
+}
+
+.logo{
+    display:inline-block;
+    float:left;
+    height:inherit;
+    padding:0em 0em 0em .5em;
+}
+
+.jelly{
+    width:20%;
+    float:left;
+    padding:1em 0em 5em 0em;
+}
+
+
+.line{
+    width:100%;
+    padding:2em 0em 2em 0em;
+}
+
+.photo{
+    border-radius:50%;
+    padding:em 1em 1em 1em;
+    width:90%;
+}
+
+figure{
+    text-align:center;
+    color:#FFFFFF;
+    font-family: 'Source Sans Pro', sans-serif;
+    font-weight:100;
+    padding:0em 0em 5em 0em;
+}
+
+.column{
+    float:left;
+    width:25%;
+}
+
+.pen{
+    float:left;
+    width:4%;
+    padding:0em 1em 0em 1em;
+}
+
+.software{
+    padding:0em 0em 0em 2em;
+}
+
+.fish{
+    width:100%;
+}
