@@ -77,6 +77,12 @@ class Navbar extends React.Component {
       <>
         <AppBar position="static">
           <Toolbar>
+            <img
+              style={{ marginRight: 20 }}
+              class="logo"
+              src={`https://cdn.deepseaannotations.com/home_images/logo.png`}
+              alt="Deep Sea Annotations logo"
+            />
             <Typography
               variant="button"
               color="inherit"
