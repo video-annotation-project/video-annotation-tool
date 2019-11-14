@@ -428,25 +428,14 @@ class VideoList extends Component {
                           ) : (
                             <ExpandMore />
                           )}
-                          {/* <IconButton
-                          onClick={event =>
-                            this.openVideoMetadata(event, video)
-                          }
-                        >
-                          <Description />
-                        </IconButton> */}
                         </ListItem>
                         <Collapse
-                          className={classes.collapse}
+                          style={{ overflowY: 'hidden' }}
                           in={collection.dropdown}
                           timeout="auto"
                           unmountOnExit
                         >
-                          <List
-                            component="div"
-                            disablePadding
-                            style={{ marginLeft: 20 }}
-                          >
+                          <List style={{ marginLeft: 20 }}>
                             {collection.videos.map(video => (
                               <ListItem
                                 id={`video-${video.id}`}
