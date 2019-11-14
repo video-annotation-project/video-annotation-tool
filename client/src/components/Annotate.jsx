@@ -108,6 +108,7 @@ class Annotate extends Component {
       unwatchedVideos: [],
       watchedVideos: [],
       inProgressVideos: [],
+      videoCollections: [],
       videoPlaybackRate: 1.0,
       error: null,
       socket,
@@ -128,6 +129,9 @@ class Annotate extends Component {
 
     try {
       this.loadVideos(this.getCurrentVideo);
+      this.setState({
+        videoCollections: await this.loadCollections()
+      });
     } catch (error) {
       console.log(error);
       console.log(JSON.parse(JSON.stringify(error)));
@@ -178,6 +182,25 @@ class Annotate extends Component {
         videoElement.playbackRate = videoPlaybackRate;
       }
     );
+  };
+
+  loadCollections = async () => {
+    const config = {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    };
+    try {
+      const collections = await axios.get('/api/collections/videos', config);
+      if (collections) {
+        return collections.data;
+      }
+    } catch (error) {
+      console.log(error);
+      Swal.fire('Error Getting Collection', '', 'error');
+      return error;
+    }
+    return false;
   };
 
   loadVideos = callback => {
@@ -441,7 +464,8 @@ class Annotate extends Component {
       x,
       y,
       dialogOpen,
-      dialogMsg
+      dialogMsg,
+      videoCollections
     } = this.state;
     if (!isLoaded) {
       return <Typography className={classes.text}>Loading...</Typography>;
@@ -462,6 +486,7 @@ class Annotate extends Component {
               inProgressVideos={inProgressVideos}
               socket={socket}
               loadVideos={this.loadVideos}
+              videoCollections={videoCollections}
             />
           </Grid>
           <Grid item xs={8}>
