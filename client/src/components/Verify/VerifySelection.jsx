@@ -2,7 +2,7 @@ import React from 'react';
 import Button from '@material-ui/core/Button';
 import FormGroup from '@material-ui/core/FormGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
-import Switch from '@material-ui/core/Switch';
+import { Checkbox, Switch } from '@material-ui/core';
 import FormControl from '@material-ui/core/FormControl';
 import Grid from '@material-ui/core/Grid';
 
@@ -52,7 +52,13 @@ function VerifySelection(props) {
                 <FormGroup>
                   <FormControlLabel
                     control={
-                      <Switch
+                      //   <Checkbox
+                      //   checked={state.checkedA}
+                      //   onChange={handleChange('checkedA')}
+                      //     value="excludeTracking"
+
+                      // />
+                      <Checkbox
                         checked={excludeTracking}
                         onChange={handleChangeSwitch('excludeTracking')}
                         value="excludeTracking"
