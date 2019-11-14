@@ -25,19 +25,20 @@ class WebsiteDescription extends Component {
             alt="sketch of a jellyfish"
           />
 
+          <h1> Background</h1>
           <p>
-            As California explores opportunities to develop offshore renewable
-            energy capacity, there will be a growing need for pre-construction
-            biological surveys and post-construction monitoring in the
-            challenging marine environment. Underwater video is a powerful tool
-            to facilitate such surveys, but the interpretation of the imagery is
-            costly and time-consuming. Emerging technologies have greatly
-            improved automated analysis of underwater video, but these
-            technologies are not yet accurate or accessible enough for
-            widespread adoption in the scientific community or industries that
-            might benefit from these tools.
+            Recent discussions of installing Offshore Wind Farms (OFWF) along
+            the California coast drives the need for Environmental Impact
+            Assessment (EIA) of offshore, benthic environments. Current methods
+            for assessing benthic habitats include costly research cruises to
+            take benthic video that scientists then annotate by watching video
+            and digitally tagging, identifying and cataloging each deep-sea
+            organism. These methods are time consuming and expensive, which
+            presents the need for a more efficient way to collect and manage
+            benthic video data.
           </p>
 
+          <h1> Project </h1>
           <p>
             To address these challenges, we developed a website that allows us
             to: <br />
@@ -54,7 +55,7 @@ class WebsiteDescription extends Component {
             that was previously created.
             <br />
           </p>
-
+          <h1> Implementation </h1>
           <p>
             {' '}
             When using our website, the user first selects the concepts that
@@ -241,6 +242,27 @@ class WebsiteDescription extends Component {
               <a href="http://github.com/video-annotation-project">
                 here
               </a>.{' '}
+            </p>
+          </div>
+
+          <img
+            class="line"
+            src={`https://cdn.deepseaannotations.com/home_images/line.png`}
+            alt="divider line"
+          />
+
+          <h1 id="acknowledgments"> Acknowledgments </h1>
+
+          <div class="software">
+            <p>
+              {' '}
+              This work has been sponsored by the California Energy Commission,
+              Program: EPIC, Agreement Number: EPC-17-029. We would also like to
+              acknowledge the general support of Amazon Web Services (AWS), who
+              provided $50,000 in AWS credits. This work would also not be
+              possible without the help of the Monterey Bay Aquarium Research
+              Institute (MBARI), who provided 50 hours of high-definition
+              breathtaking underwater videos.
             </p>
           </div>
 
