@@ -17,6 +17,8 @@ class WebsiteDescription extends Component {
   constructor(props) {
     super(props);
     this.state = {
+      publicPath:
+        'https://public-files-deep-sea-annotations.s3-us-west-1.amazonaws.com/home_files/',
       members: [
         {
           name: 'Benjamin Ruttenberg',
@@ -78,13 +80,13 @@ class WebsiteDescription extends Component {
   }
   render() {
     const { classes } = this.props;
-    const { members } = this.state;
+    const { members, publicPath } = this.state;
     return (
       <div className="users body-container">
         <div>
           <img
-            class="jelly"
-            src={`http://localhost:3001/jelly.png`}
+            className="jelly"
+            src={`${publicPath}jelly.png`}
             alt="sketch of a jellyfish"
           />
 
@@ -147,18 +149,18 @@ class WebsiteDescription extends Component {
           </p>
 
           <img
-            class="line"
-            src={`http://localhost:3001/line.png`}
+            className="line"
+            src={`${publicPath}line.png`}
             alt="divider line"
           />
 
           <h1 id="team">Our Team</h1>
           <Grid container justify="center" alignItems="center">
             {members.map(member => (
-              <div>
+              <div key={member.name}>
                 <Avatar
                   className={classes.bigAvatar}
-                  src={`http://localhost:3001/${member.img}`}
+                  src={`${publicPath}${member.img}`}
                   alt={member.name}
                 />
                 <Typography variant="subtitle2" align="center">
@@ -169,8 +171,8 @@ class WebsiteDescription extends Component {
           </Grid>
 
           <img
-            class="line"
-            src={`http://localhost:3001/line.png`}
+            className="line"
+            src={`${publicPath}line.png`}
             alt="divider line"
           />
 
@@ -178,39 +180,39 @@ class WebsiteDescription extends Component {
 
           <iframe
             title="Our Project"
-            src={`http://localhost:3001/news.pdf`}
+            src={`${publicPath}news.pdf`}
             width="100%"
             height="1000px"
           ></iframe>
 
           <img
-            class="line"
-            src={`http://localhost:3001/line.png`}
+            className="line"
+            src={`${publicPath}line.png`}
             alt="divider line"
           />
 
           <h1 id="software">Our Software</h1>
-          <div class="software">
+          <div className="software">
             <p>
               {' '}
               We used reactJS/nodeJS to build our website. We used a PostgreSQL
               database and AWS S3 buckets as our backend. The complete source
               code, including setup instructions, can be found{' '}
-              <a href="http://github.com/video-annotation-project">
+              <a href="https://github.com/video-annotation-project">
                 here
               </a>.{' '}
             </p>
           </div>
 
           <img
-            class="line"
-            src={`http://localhost:3001/line.png`}
+            className="line"
+            src={`${publicPath}line.png`}
             alt="divider line"
           />
 
           <h1 id="acknowledgments"> Acknowledgments </h1>
 
-          <div class="software">
+          <div className="software">
             <p>
               {' '}
               This work has been sponsored by the California Energy Commission,
@@ -224,14 +226,14 @@ class WebsiteDescription extends Component {
           </div>
 
           <img
-            class="line"
-            src={`http://localhost:3001/line.png`}
+            className="line"
+            src={`${publicPath}line.png`}
             alt="divider line"
           />
 
           <img
-            class="fish"
-            src={`http://localhost:3001/fish.png`}
+            className="fish"
+            src={`${publicPath}fish.png`}
             alt="sketch of multiple fish"
           />
         </div>
