@@ -14,14 +14,77 @@ const styles = theme => ({
 });
 
 class WebsiteDescription extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      members: [
+        {
+          name: 'Benjamin Ruttenberg',
+          role: 'Principal Investigator',
+          img: 'ben.jpg'
+        },
+        {
+          name: 'Lubomir Stanchev',
+          role: 'Principal Investigator',
+          img: 'lubo.jpg'
+        },
+        {
+          name: 'Alexandra Wolman',
+          role: 'Project Supervisor',
+          img: 'ally.jpg'
+        },
+        {
+          name: 'Hanson Egbert',
+          role: 'Software Developer',
+          img: 'hanson.jpg'
+        },
+        {
+          name: 'Jacob Territo',
+          role: 'Software Developer',
+          img: 'jacob.jpg'
+        },
+        {
+          name: 'Samantha Gunzl',
+          role: 'Software Developer',
+          img: 'sam.jpg'
+        },
+        {
+          name: 'Kyle Maxwell',
+          role: 'Software Developer',
+          img: 'kyle.jpg'
+        },
+        {
+          name: 'Kyaw Soe',
+          role: 'Software Developer',
+          img: 'kyaw.jpg'
+        },
+        {
+          name: 'Trace Rainbolt',
+          role: 'Software Developer',
+          img: 'trace.jpg'
+        },
+        {
+          name: 'Justin Cho',
+          role: 'Software Developer',
+          img: 'justin.jpg'
+        },
+        {
+          name: 'Kevin Label',
+          role: 'Software Developer',
+          img: 'kevin.jpg'
+        }
+      ]
+    };
+  }
   render() {
     const { classes } = this.props;
+    const { members } = this.state;
     return (
       <div className="users body-container">
         <div>
           <img
             class="jelly"
-            src={`https://cdn.deepseaannotations.com/home_images/jelly.png`}
+            src={`http://localhost:3001/jelly.png`}
             alt="sketch of a jellyfish"
           />
 
@@ -85,135 +148,29 @@ class WebsiteDescription extends Component {
 
           <img
             class="line"
-            src={`https://cdn.deepseaannotations.com/home_images/line.png`}
+            src={`http://localhost:3001/line.png`}
             alt="divider line"
           />
 
           <h1 id="team">Our Team</h1>
           <Grid container justify="center" alignItems="center">
-            <div>
-              <Avatar
-                className={classes.bigAvatar}
-                src="https://content-calpoly-edu.s3.amazonaws.com/bio/1/documents/pdf/ruttenberg.jpg"
-                alt="Benjamin Ruttenberg"
-              />
-              <Typography variant="subtitle2" align="center">
-                Benjamin Ruttenberg <br /> Principal Investigator
-              </Typography>
-            </div>
-            <div>
-              <Avatar
-                className={classes.bigAvatar}
-                src={`https://cdn.deepseaannotations.com/home_images/lubo.jpg`}
-                alt="Lubomir Stanchev"
-              />
-              <Typography variant="subtitle2" align="center">
-                Lubomir Stanchev <br /> Principal Investigator
-              </Typography>
-            </div>
-            <div>
-              <Avatar
-                className={classes.bigAvatar}
-                src="https://media.licdn.com/dms/image/C5603AQH8LK16hu1EZA/profile-displayphoto-shrink_200_200/0?e=1575504000&v=beta&t=XP-ryHpaAjNHS5p2T45DwUSGDQlPext6Vls-ENUkZI8"
-                alt="Alexandra Wolman"
-              />
-              <Typography variant="subtitle2" align="center">
-                Alexandra Wolman
-                <br /> Project Supervisor
-              </Typography>
-            </div>
-            <div>
-              <Avatar
-                className={classes.bigAvatar}
-                src="https://media.licdn.com/dms/image/C5603AQHPZnPOvSJcNg/profile-displayphoto-shrink_200_200/0?e=1575504000&v=beta&t=ia-0useE3FYtIiOiUinLb-tLJaDOBAdmQNVGO-BcOyI"
-                alt="Hanson Egbert"
-              />
-              <Typography variant="subtitle2" align="center">
-                Hanson Egbert <br /> Software Developer
-              </Typography>
-            </div>
-            <div>
-              <Avatar
-                className={classes.bigAvatar}
-                src="https://media.licdn.com/dms/image/C5603AQEYQOwLmSX2Hw/profile-displayphoto-shrink_800_800/0?e=1575504000&v=beta&t=aw3aU1PZoUJnY-46pe4a13FmVflLowFYb9UVshCzx_c"
-                alt="Kyaw Soe"
-              />
-              <Typography variant="subtitle2" align="center">
-                Kyaw Soe
-                <br /> Software Developer
-              </Typography>
-            </div>
-            <div>
-              <Avatar
-                className={classes.bigAvatar}
-                src="https://media.licdn.com/dms/image/C5603AQG3bPB2RGh_Cg/profile-displayphoto-shrink_800_800/0?e=1575504000&v=beta&t=pFSo5aoPlwBjjdvOOzehx6u4BK6o7aREyEGOXaUWgwM"
-                alt="Kyle Maxwell"
-              />
-              <Typography variant="subtitle2" align="center">
-                Kyle Maxwell
-                <br /> Software Developer
-              </Typography>
-            </div>
-            <div>
-              <Avatar
-                className={classes.bigAvatar}
-                src={`https://cdn.deepseaannotations.com/home_images/trace.jpg`}
-                alt="Trace Rainbolt"
-              />
-              <Typography variant="subtitle2" align="center">
-                Trace Rainbolt
-                <br /> Software Developer
-              </Typography>
-            </div>
-            <div>
-              <Avatar
-                className={classes.bigAvatar}
-                src="https://media.licdn.com/dms/image/C5603AQHDuZzywarL9g/profile-displayphoto-shrink_200_200/0?e=1575504000&v=beta&t=SYIoWjJRugTIrCHXYENM1-b04tQwjyfXLIqMZsFZuZQ"
-                alt=" Samantha Gunzl"
-              />
-              <Typography variant="subtitle2" align="center">
-                Samantha Gunzl
-                <br /> Software Developer
-              </Typography>
-            </div>
-            <div>
-              <Avatar
-                className={classes.bigAvatar}
-                src={`https://cdn.deepseaannotations.com/home_images/jacob.jpg`}
-                alt="Jacob Territo"
-              />
-              <Typography variant="subtitle2" align="center">
-                Jacob Territo
-                <br /> Software Developer
-              </Typography>
-            </div>
-            <div>
-              <Avatar
-                className={classes.bigAvatar}
-                src={`https://cdn.deepseaannotations.com/home_images/justin.jpg`}
-                alt="Justin Cho"
-              />
-              <Typography variant="subtitle2" align="center">
-                Justin Cho
-                <br /> Software Developer
-              </Typography>
-            </div>
-            <div>
-              <Avatar
-                className={classes.bigAvatar}
-                src="https://media.licdn.com/dms/image/C5603AQFYvHgLASbWBA/profile-displayphoto-shrink_800_800/0?e=1575504000&v=beta&t=nayZ2NItYYWa0AcHA4JQRHKgQ0EqgkJPERq7bG5UpDs"
-                alt="Kevin Label"
-              />
-              <Typography variant="subtitle2" align="center">
-                Kevin Label
-                <br /> Software Developer
-              </Typography>
-            </div>
+            {members.map(member => (
+              <div>
+                <Avatar
+                  className={classes.bigAvatar}
+                  src={`http://localhost:3001/${member.img}`}
+                  alt={member.name}
+                />
+                <Typography variant="subtitle2" align="center">
+                  {member.name} <br /> {member.role}
+                </Typography>
+              </div>
+            ))}
           </Grid>
 
           <img
             class="line"
-            src={`https://cdn.deepseaannotations.com/home_images/line.png`}
+            src={`http://localhost:3001/line.png`}
             alt="divider line"
           />
 
@@ -221,14 +178,14 @@ class WebsiteDescription extends Component {
 
           <iframe
             title="Our Project"
-            src={`https://cdn.deepseaannotations.com/home_images/news.pdf`}
+            src={`http://localhost:3001/news.pdf`}
             width="100%"
             height="1000px"
           ></iframe>
 
           <img
             class="line"
-            src={`https://cdn.deepseaannotations.com/home_images/line.png`}
+            src={`http://localhost:3001/line.png`}
             alt="divider line"
           />
 
@@ -247,7 +204,7 @@ class WebsiteDescription extends Component {
 
           <img
             class="line"
-            src={`https://cdn.deepseaannotations.com/home_images/line.png`}
+            src={`http://localhost:3001/line.png`}
             alt="divider line"
           />
 
@@ -268,13 +225,13 @@ class WebsiteDescription extends Component {
 
           <img
             class="line"
-            src={`https://cdn.deepseaannotations.com/home_images/line.png`}
+            src={`http://localhost:3001/line.png`}
             alt="divider line"
           />
 
           <img
             class="fish"
-            src={`https://cdn.deepseaannotations.com/home_images/fish.png`}
+            src={`http://localhost:3001/fish.png`}
             alt="sketch of multiple fish"
           />
         </div>

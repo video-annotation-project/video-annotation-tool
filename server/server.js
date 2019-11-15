@@ -13,6 +13,8 @@ const expressSwagger = require('express-swagger-generator')(app);
 
 app.use(require('./config/passport').passport.initialize());
 
+app.use(express.static(__dirname + '/homeImages'));
+
 // Swagger will display documentation at the url /api-docs
 expressSwagger(swaggerOptions);
 
