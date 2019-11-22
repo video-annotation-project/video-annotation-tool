@@ -308,9 +308,6 @@ class AnnotationGenerator(object):
         if not include_tracking:
             annotations_query += f''' AND a.userid <> {tracking_uid}'''
 
-        print(annotations_query)
-        print((collection_ids, verify_videos, min_examples))
-
         return pd_query(
             annotations_query,
             (collection_ids, verify_videos, min_examples))
