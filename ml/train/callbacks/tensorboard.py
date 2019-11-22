@@ -15,6 +15,7 @@ class TensorboardLog(keras.callbacks.Callback):
 
         self.table_name = 'model_versions'
         self.model_name = model_name
+        self.job_id = job_id
 
         self.connection = connect(
             database=config.DB_NAME,
