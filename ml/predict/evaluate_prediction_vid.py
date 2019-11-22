@@ -91,6 +91,13 @@ def count_accuracy(row):
     else:
         return 1 - abs(row.true_num - row.pred_num) / row.true_num
 
+def count_accuracy(row):
+    if row.true_num == 0:
+        return 1.0 if row.pred_num == 0 else 0
+    else:
+        return 1 - abs(row.true_num - row.pred_num) / row.true_num
+
+
 def get_counts(results, annotations):
     grouped = results.groupby(["objectid"]).label.mean().reset_index()
     counts = grouped.groupby("label").count()
