@@ -39,7 +39,7 @@ class TensorboardLog(keras.callbacks.Callback):
                 start_train=%s
             WHERE
                 model_name=%s""",
-            (datetime.datetime.now(), self.model_name))
+            (datetime.datetime.now(), self.model_name.split('-')[0]))
 
         self.connection.commit()
 
@@ -51,7 +51,7 @@ class TensorboardLog(keras.callbacks.Callback):
                 end_train=%s
             WHERE
                 model_name=%s""",
-            (datetime.datetime.now(), self.model_name))
+            (datetime.datetime.now(), self.model_name.split('-')[0]))
 
         self.connection.commit()
 
