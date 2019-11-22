@@ -52,6 +52,8 @@ def train_model(concepts,
         optimizer=keras.optimizers.adam(lr=1e-5, clipnorm=0.001)
     )
 
+    print("initializing annotation generator")
+
     annotation_generator = AnnotationGenerator(
         collection_ids=collection_ids,
         verified_only=verified_only,
@@ -157,7 +159,7 @@ def _get_callbacks(model,
         num_epochs=epochs
     )
 
-    return [stopping, checkpoint, progress_callback, log_callback, tensorboard_callback]
+    return [stopping, progress_callback, log_callback, tensorboard_callback]
 
 
 def _upload_weights(model_name):
