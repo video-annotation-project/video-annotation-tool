@@ -147,7 +147,7 @@ class ModelsTable extends Component {
                   <IconButton
                     onClick={() =>
                       launchTensorboard(
-                        model.name + '_' + model.version_selected
+                        model.name + '-' + model.version_selected
                       )
                     }
                     aria-label="Assessment"
