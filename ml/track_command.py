@@ -1,4 +1,3 @@
-import subprocess
 from psycopg2 import connect
 from multiprocessing import Pool
 import datetime
@@ -48,4 +47,4 @@ while True:
         p.starmap(annotationMap, map(
             lambda x: x, cursor.fetchall()))
     con.close()
-    subprocess.call(["sudo", "shutdown", "-h"]
+    subprocess.call(["sudo", "shutdown", "-h"])
