@@ -253,8 +253,8 @@ def track_object(frame_num, frames, box, track_forward, end,
                         y1 >= RESIZED_HEIGHT or
                         x2 <= 0 or
                         y2 <= 0 or
-                        x1=x2 or
-                        y1=y2):
+                        x1 == x2 or
+                        y1 == y2):
                     continue
                 # Fix box if outside video frame
                 x1 = x1 if x1 > 0 else 0
