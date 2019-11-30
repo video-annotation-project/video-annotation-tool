@@ -1,3 +1,4 @@
+import subprocess
 from psycopg2 import connect
 from multiprocessing import Pool
 import datetime
@@ -37,7 +38,7 @@ while True:
             id, conceptid, timeinvideo, videoid, image,
             videowidth, videoheight, x1, y1, x2, y2,
             comment, unsure
-        FROM annotations 
+        FROM annotations
         WHERE originalid is NULL
         AND userid in {str(tuple(TRACKING_USERS))}
     ''')
@@ -47,3 +48,4 @@ while True:
         p.starmap(annotationMap, map(
             lambda x: x, cursor.fetchall()))
     con.close()
+    subprocess.call(["sudo", "shutdown", "-h"]
