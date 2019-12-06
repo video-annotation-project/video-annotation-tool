@@ -16,25 +16,7 @@ router.get(
   '/',
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
-    let queryText;
-    if (req.query.train === 'true') {
-      queryText = `
-      SELECT 
-          name, id, count(*), array_agg(conceptid) as ids, json_agg((conceptname, conceptid)) as concepts    
-      FROM
-      (SELECT ac.name, a.conceptid, ai.id, count(a.conceptid), c.name as conceptname
-          FROM 
-              annotation_collection ac
-          FULL JOIN
-              annotation_intermediate ai ON ac.id = ai.id
-          LEFT JOIN 
-              annotations a ON ai.annotationid = a.id
-          LEFT JOIN concepts c ON a.conceptid = c.id
-          GROUP BY ac.name, a.conceptid, ai.id, c.name ) t
-      GROUP BY name, id
-      `;
-    } else {
-      queryText = `
+    let queryText = `
       SELECT
         ac.*
       FROM
@@ -42,7 +24,6 @@ router.get(
       ORDER BY
         ac.name
     `;
-    }
 
     try {
       let annotationCollections = await psql.query(queryText);
