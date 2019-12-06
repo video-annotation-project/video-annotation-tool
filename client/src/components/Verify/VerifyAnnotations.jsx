@@ -362,7 +362,7 @@ class VerifyAnnotations extends Component {
       y2,
       videoWidth: annotation.videowidth,
       videoHeight: annotation.videoheight,
-      image: annotation.image,
+      image: annotation.image.split('.png')[0],
       comment,
       unsure
     };

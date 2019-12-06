@@ -8,7 +8,7 @@ from tensorflow.python.client import device_lib
 from keras_retinanet import models
 from keras_retinanet import losses
 from keras.utils import multi_gpu_model
-from keras.callbacks import ModelCheckpoint, EarlyStopping
+from keras.callbacks import EarlyStopping
 from keras_retinanet.callbacks import RedirectModel
 
 from config import config
@@ -52,6 +52,8 @@ def train_model(concepts,
         optimizer=keras.optimizers.adam(lr=1e-5, clipnorm=0.001)
     )
 
+    print("initializing annotation generator")
+
     annotation_generator = AnnotationGenerator(
         collection_ids=collection_ids,
         verified_only=verified_only,
@@ -93,6 +95,8 @@ def train_model(concepts,
         verbose=2
     )
 
+    model.save(config.WEIGHTS_PATH)
+
     # Upload the weights file to the S3 bucket
     _upload_weights(model_name)
 
@@ -129,15 +133,6 @@ def _get_callbacks(model,
     """ Returns a list of callbacks to use while training.
     """
 
-    # Save models that are improvements
-    checkpoint = ModelCheckpoint(
-        config.WEIGHTS_PATH,
-        monitor='val_loss',
-        save_best_only=True
-    )
-
-    checkpoint = RedirectModel(checkpoint, model)
-
     # Stops training if val_loss stops improving
     stopping = EarlyStopping(
         monitor='val_loss', min_delta=0, patience=10, restore_best_weights=True)
@@ -164,7 +159,7 @@ def _get_callbacks(model,
         num_epochs=epochs
     )
 
-    return [stopping, checkpoint, progress_callback, log_callback, tensorboard_callback]
+    return [stopping, progress_callback, log_callback, tensorboard_callback]
 
 
 def _upload_weights(model_name):
