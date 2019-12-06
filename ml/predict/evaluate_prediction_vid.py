@@ -85,11 +85,6 @@ def score_predictions(validation, predictions, iou_thresh, concepts):
                        "FN", "Precision", "Recall", "F1"]
     return metrics
 
-def count_accuracy(row):
-    if row.true_num == 0:
-        return 1.0 if row.pred_num == 0 else 0
-    else:
-        return 1 - abs(row.true_num - row.pred_num) / row.true_num
 
 def count_accuracy(row):
     if row.true_num == 0:
@@ -108,6 +103,7 @@ def get_counts(results, annotations):
                        axis=1, join="outer").fillna(0)
     counts["count_accuracy"] = counts.apply(count_accuracy, axis=1)
     return counts
+
 
 def evaluate(
         video_id, model_username, concepts, upload_annotations=False):
