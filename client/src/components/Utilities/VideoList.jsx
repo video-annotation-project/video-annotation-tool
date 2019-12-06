@@ -47,6 +47,7 @@ class VideoList extends Component {
       unwatchedListOpen: false,
       watchedListOpen: false,
       inProgressListOpen: false,
+      collectionListOpen: false,
       openedVideo: null,
       checkedVideos: []
     };
@@ -114,9 +115,11 @@ class VideoList extends Component {
       inProgressVideos,
       collection,
       socket,
-      data
+      data,
+      videoCollections
     } = this.props;
     const {
+      collectionListOpen,
       startedListOpen,
       unwatchedListOpen,
       watchedListOpen,
@@ -382,6 +385,87 @@ class VideoList extends Component {
                 ))}
               </List>
             </Collapse>
+
+            {/* videoCollection */}
+            {collection ? (
+              ''
+            ) : (
+              <div>
+                <ListItem
+                  button
+                  onClick={() => this.toggle('collectionListOpen')}
+                >
+                  <ListItemText
+                    className={classes.listText}
+                    primary="Collections"
+                  />
+                  {collectionListOpen ? <ExpandLess /> : <ExpandMore />}
+                </ListItem>
+                <Collapse
+                  className={classes.collapse}
+                  in={collectionListOpen}
+                  timeout="auto"
+                  unmountOnExit
+                >
+                  <List component="div" disablePadding>
+                    {videoCollections.map(collection => (
+                      <div key={collection.id}>
+                        <ListItem
+                          id={collection.id}
+                          button
+                          key={collection.id}
+                          onClick={() => {
+                            collection.dropdown = !collection.dropdown;
+                            this.forceUpdate();
+                          }}
+                        >
+                          <ListItemText
+                            className={classes.listText}
+                            primary={`${collection.id}. ${collection.name}`}
+                          />
+                          {collection.dropdown ? (
+                            <ExpandLess />
+                          ) : (
+                            <ExpandMore />
+                          )}
+                        </ListItem>
+                        <Collapse
+                          style={{ overflowY: 'hidden' }}
+                          in={collection.dropdown}
+                          timeout="auto"
+                          unmountOnExit
+                        >
+                          <List style={{ marginLeft: 20 }}>
+                            {collection.videos.map(video => (
+                              <ListItem
+                                id={`video-${video.id}`}
+                                button
+                                key={video.id}
+                                onClick={() =>
+                                  handleVideoClick(video, 'inProgressVideos')
+                                }
+                              >
+                                <ListItemText
+                                  className={classes.listText}
+                                  primary={`${video.id}. ${video.filename}`}
+                                />
+                                <IconButton
+                                  onClick={event =>
+                                    this.openVideoMetadata(event, video)
+                                  }
+                                >
+                                  <Description />
+                                </IconButton>
+                              </ListItem>
+                            ))}
+                          </List>
+                        </Collapse>
+                      </div>
+                    ))}
+                  </List>
+                </Collapse>
+              </div>
+            )}
           </div>
         </Drawer>
         {openedVideo && (

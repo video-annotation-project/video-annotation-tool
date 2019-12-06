@@ -82,7 +82,7 @@ class CreateModel extends Component {
   }
 
   getSteps = () => {
-    return ['Name model', 'Select species', 'Select test videos'];
+    return ['Name model', 'Select concepts', 'Select test videos'];
   };
 
   getStepContent = step => {

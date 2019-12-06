@@ -77,6 +77,11 @@ class Navbar extends React.Component {
       <>
         <AppBar position="static">
           <Toolbar>
+            <img
+              style={{ marginRight: 20 }}
+              src={`https://public-files-deep-sea-annotations.s3-us-west-1.amazonaws.com/home_files/logo.png`}
+              alt="Deep Sea Annotations logo"
+            />
             <Typography
               variant="button"
               color="inherit"
@@ -155,14 +160,26 @@ class Navbar extends React.Component {
                 </Button>
               </>
             ) : (
-              <Button
-                id="navbar-login"
-                color="inherit"
-                component={Link}
-                to="/login"
-              >
-                Login
-              </Button>
+              <div>
+                <Button color="inherit" href="#team">
+                  Our Team
+                </Button>
+                <Button color="inherit" href="#project">
+                  Our Project
+                </Button>
+                <Button color="inherit" href="#software">
+                  Our Software
+                </Button>
+
+                <Button
+                  id="navbar-login"
+                  color="inherit"
+                  component={Link}
+                  to="/login"
+                >
+                  Login
+                </Button>
+              </div>
             )}
           </Toolbar>
         </AppBar>

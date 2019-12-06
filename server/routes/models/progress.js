@@ -60,11 +60,11 @@ router.get(
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     const queryText = `
-    SELECT 
-      *
-    FROM 
-      predict_progress 
-    LIMIT 1
+      SELECT 
+        *
+      FROM 
+        predict_progress 
+      LIMIT 1
     `;
     try {
       let response = await psql.query(queryText);

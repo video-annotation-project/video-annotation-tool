@@ -11,8 +11,9 @@ router.get(
     let queryText = `
       SELECT 
         vc.*, 
-        json_agg((vi.videoid, v.filename)) as videos,
-        array_agg(vi.videoid) as videoids
+        json_agg(json_build_object('id', vi.videoid, 'filename', v.filename)) as videos,
+        array_agg(vi.videoid) as videoids,
+        false as dropdown
       FROM 
         video_collection vc
       LEFT JOIN 

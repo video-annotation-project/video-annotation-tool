@@ -10,6 +10,8 @@ import Paper from '@material-ui/core/Paper';
 import TextField from '@material-ui/core/TextField';
 import { Grid, Typography } from '@material-ui/core';
 
+import WebsiteDescription from './WebsiteDescription';
+
 const STATUS_SUCESS_CODE = 200;
 const YEAR = new Date().getFullYear();
 
@@ -193,15 +195,15 @@ class Home extends Component {
     const [annotationTotal, verificationTotal] = this.getTotalCount();
     return (
       <div className="users body-container">
-        <Typography
-          className={
-            localStorage.username ? classes.welcomeUser : classes.welcome
-          }
-        >
-          Welcome {localStorage.username}
-        </Typography>
         {localStorage.username ? (
           <>
+            <Typography
+              className={
+                localStorage.username ? classes.welcomeUser : classes.welcome
+              }
+            >
+              Welcome {localStorage.username}
+            </Typography>
             <Grid container alignItems="center" wrap="nowrap">
               <Grid item>
                 <TextField
@@ -262,7 +264,7 @@ class Home extends Component {
             </div>
           </>
         ) : (
-          ''
+          <WebsiteDescription />
         )}
       </div>
     );

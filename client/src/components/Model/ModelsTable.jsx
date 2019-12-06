@@ -107,6 +107,19 @@ class ModelsTable extends Component {
     }
     return (
       <div>
+        {train.status ? (
+          <Typography
+            variant="button"
+            display="block"
+            gutterBottom={true}
+            style={{ float: 'right' }}
+          >
+            Train Instance: <font color="orange">{train.status}</font> Predict
+            Instance: <font color="orange">{predict.status}</font>
+          </Typography>
+        ) : (
+          ''
+        )}
         <Table>
           <TableHead>
             <TableRow>
@@ -147,7 +160,7 @@ class ModelsTable extends Component {
                   <IconButton
                     onClick={() =>
                       launchTensorboard(
-                        model.name + '_' + model.version_selected
+                        model.name + '-' + model.version_selected
                       )
                     }
                     aria-label="Assessment"
@@ -218,6 +231,7 @@ class ModelsTable extends Component {
         </Table>
         {trainOpen ? (
           <TrainModel
+            status={train}
             trainOpen={trainOpen}
             toggleStateVariable={toggleStateVariable}
             model={modelSelected}
@@ -227,6 +241,7 @@ class ModelsTable extends Component {
         )}
         {predictOpen ? (
           <PredictModel
+            status={predict}
             predictOpen={predictOpen}
             toggleStateVariable={toggleStateVariable}
             model={modelSelected}

@@ -429,7 +429,13 @@ class TrainModel extends Component {
   };
 
   render() {
-    const { classes, toggleStateVariable, trainOpen, model } = this.props;
+    const {
+      classes,
+      toggleStateVariable,
+      trainOpen,
+      model,
+      status
+    } = this.props;
     const {
       collections,
       annotationCollections,
@@ -453,6 +459,14 @@ class TrainModel extends Component {
       >
         <Paper className={classes.paper}>
           <div className="container">
+            <Typography
+              variant="button"
+              display="block"
+              gutterBottom={true}
+              style={{ marginLeft: 10, position: 'absolute', bottom: 10 }}
+            >
+              Instance Status: <font color="orange">{status.status}</font>
+            </Typography>
             <div className="actionsContainer">
               <div>
                 <Typography align="left" variant="h4">

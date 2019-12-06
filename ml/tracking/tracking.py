@@ -236,6 +236,16 @@ def track_object(frame_num, frames, box, track_forward, end,
 
     # keep tracking object until its out of frame or time is up
     for index, frame in enumerate(frames):
+        (x1, y1, w, h) = [int(v) for v in box]
+        # Remove invalid bounding boxes
+        if (
+                x1 >= RESIZED_WIDTH or
+                y1 >= RESIZED_HEIGHT or
+                x2 <= 0 or
+                y2 <= 0 or
+                x1 == x2 or
+                y1 == y2):
+            continue
         time_elapsed += (1 / fps) if track_forward else - (1 / fps)
         frame_num += 1 if track_forward else -1
         frame_no_box = copy.deepcopy(frame)
@@ -253,8 +263,8 @@ def track_object(frame_num, frames, box, track_forward, end,
                         y1 >= RESIZED_HEIGHT or
                         x2 <= 0 or
                         y2 <= 0 or
-                        x1=x2 or
-                        y1=y2):
+                        x1 == x2 or
+                        y1 == y2):
                     continue
                 # Fix box if outside video frame
                 x1 = x1 if x1 > 0 else 0

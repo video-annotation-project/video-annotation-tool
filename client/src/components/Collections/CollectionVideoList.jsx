@@ -254,13 +254,13 @@ class CollectionVideoList extends Component {
                         <div>
                           <List disablePadding>
                             {collection.videos.map(video => (
-                              <ListItem key={video.f1}>
+                              <ListItem key={video.id}>
                                 <Checkbox
                                   checked={video.selected}
                                   onChange={this.handleChange(
                                     collection.id,
                                     video.selected,
-                                    video.f1
+                                    video.id
                                   )}
                                   value="selected"
                                   color="primary"
@@ -269,7 +269,7 @@ class CollectionVideoList extends Component {
                                   }}
                                 />
                                 <ListItemText
-                                  primary={`${video.f1} ${video.f2}`}
+                                  primary={`${video.id} ${video.filename}`}
                                 />
                               </ListItem>
                             ))}
