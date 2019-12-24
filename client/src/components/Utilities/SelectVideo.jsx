@@ -42,8 +42,10 @@ class SelectVideo extends React.Component {
     super(props);
     this.state = {
       videos: [],
+      oriVideos: [],
       videoCollections: [],
-      loaded: false
+      loaded: false,
+      goodVideosOnly: false
     };
   }
 
@@ -100,6 +102,22 @@ class SelectVideo extends React.Component {
     });
   };
 
+  filterVideos = () => {
+    const { videos, goodVideosOnly, oriVideos } = this.state;
+    if (!goodVideosOnly) {
+      this.setState({
+        videos: videos.filter(video => video.goodvideo),
+        oriVideos: videos,
+        goodVideosOnly: true
+      });
+    } else {
+      this.setState({
+        videos: oriVideos,
+        goodVideosOnly: false
+      });
+    }
+  };
+
   render() {
     const {
       classes,
@@ -109,12 +127,29 @@ class SelectVideo extends React.Component {
       handleUnselectAll,
       handleChangeList
     } = this.props;
-    const { videos, videoCollections, openedVideo } = this.state;
+    const {
+      videos,
+      videoCollections,
+      openedVideo,
+      goodVideosOnly
+    } = this.state;
 
     return (
       <Grid container spacing={5}>
         <Grid item>
-          <Typography>Select videos</Typography>
+          <Grid container spacing={2} alignItems="baseline">
+            <Grid item>
+              <Typography>Select videos</Typography>
+            </Grid>
+            <Grid item>
+              <FormControlLabel
+                value={goodVideosOnly}
+                control={<Checkbox color="secondary" />}
+                label={`Good Videos Only`}
+                onChange={this.filterVideos}
+              ></FormControlLabel>
+            </Grid>
+          </Grid>
           <div>
             <Button
               className={classes.button}
