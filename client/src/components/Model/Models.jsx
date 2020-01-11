@@ -332,7 +332,8 @@ class Models extends Component {
       let prediciton_error =
         concept.true_num <= 0
           ? 1
-          : Math.abs(concept.true_num - concept.pred_num) / concept.true_num;
+          : Math.abs(concept.true_num - concept.pred_num) / 
+            Math.max(concept.true_num, concept.pred_num);
       concept.count_accuracy = 1 - prediciton_error;
     });
     this.setState({
