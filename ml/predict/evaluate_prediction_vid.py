@@ -90,7 +90,7 @@ def count_accuracy(row):
     if row.true_num == 0:
         return 1.0 if row.pred_num == 0 else 0
     else:
-        return 1 - abs(row.true_num - row.pred_num) / row.true_num
+        return 1 - (abs(row.true_num - row.pred_num) / max(row.true_num, row.pred_num))
 
 
 def get_counts(results, annotations):

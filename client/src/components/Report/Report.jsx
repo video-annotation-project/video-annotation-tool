@@ -22,7 +22,7 @@ class Report extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      openReportModal: false,
+      openReportModal: true,
       level1: '',
       level2: '',
       level3: '',
@@ -90,15 +90,19 @@ class Report extends React.Component {
     } = this.state;
     return (
       <div className={classes.root}>
-        <Button
-          id="selector-button"
-          className={classes.openSelector}
-          variant="contained"
-          color="primary"
-          onClick={this.handleReportModalOpen}
-        >
-          Open Report Selector
-        </Button>
+        {openReportModal ? (
+          ''
+        ) : (
+          <Button
+            id="selector-button"
+            className={classes.openSelector}
+            variant="contained"
+            color="primary"
+            onClick={this.handleReportModalOpen}
+          >
+            Open Report Selector
+          </Button>
+        )}
         <ReportModal
           unsureOnly={unsureOnly}
           setUnsureOnly={this.setUnsureOnly}
