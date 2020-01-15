@@ -77,21 +77,7 @@ function CollectionsForm(props) {
             <Checkbox
               checked={annotationCollections.indexOf(collection) > -1}
             />
-            <ListItemText>
-              {collection.name}
-              {collection.validConcepts ? (
-                <Typography variant="subtitle2" gutterBottom color="secondary">
-                  {collection.validConcepts.map((concept, index) => {
-                    if (index === collection.validConcepts.length - 1) {
-                      return concept.f1;
-                    }
-                    return `${concept.f1}, `;
-                  })}
-                </Typography>
-              ) : (
-                ''
-              )}
-            </ListItemText>
+            <ListItemText>{collection.name}</ListItemText>
           </MenuItem>
         ))}
       </Select>
@@ -165,18 +151,16 @@ class TrainModel extends Component {
       }
     };
 
-    return axios
-      .get(`/api/collections/annotations?train=true`, config)
-      .then(res => {
-        this.setState({
-          collections: res.data,
-          annotationCollections: [],
-          selectedCollectionCounts: [],
-          minCounts: [],
-          includeTracking: false,
-          verifiedOnly: false
-        });
+    return axios.get(`/api/collections/annotations`, config).then(res => {
+      this.setState({
+        collections: res.data,
+        annotationCollections: [],
+        selectedCollectionCounts: [],
+        minCounts: [],
+        includeTracking: false,
+        verifiedOnly: false
       });
+    });
   };
 
   // Handle user, video, and concept checkbox selections
@@ -296,8 +280,8 @@ class TrainModel extends Component {
     const validConcepts = [];
 
     annotationCollections.forEach(collection => {
-      collection.concepts.forEach(concept => {
-        validConcepts.push(concept.f2);
+      collection.conceptid.forEach(concept => {
+        validConcepts.push(concept);
       });
     });
 

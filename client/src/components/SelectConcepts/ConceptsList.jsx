@@ -57,11 +57,13 @@ class ConceptsList extends React.Component {
       return;
     }
 
-    await Promise.all(concepts.map(async (concept) => {
-      const children = await this.getChildrenConcepts(concept.id);
-      concept.expandable = children && children.length;
-      concept.expanded = false;
-    }));
+    await Promise.all(
+      concepts.map(async concept => {
+        const children = await this.getChildrenConcepts(concept.id);
+        concept.expandable = children && children.length;
+        concept.expanded = false;
+      })
+    );
 
     this.setState({
       isLoaded: true,
@@ -117,16 +119,7 @@ class ConceptsList extends React.Component {
               <Avatar
                 src={`https://cdn.deepseaannotations.com/concept_images/${concept.picture}`}
               />
-              <ListItemText inset primary={concept.name} />
-              {/* {concept.expandable ? (
-                concept.expanded ? (
-                  <ExpandLess />
-                ) : (
-                  <ExpandMore />
-                )
-              ) : (
-                <div />
-              )} */}
+              <ListItemText inset primary={concept.id + '. ' + concept.name} />
               {this.ternaryOpLoop(concept.expandable, concept.expanded)}
               <ListItemSecondaryAction className={classes.shiftRight}>
                 <CheckBox

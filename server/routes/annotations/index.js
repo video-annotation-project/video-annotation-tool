@@ -517,7 +517,7 @@ router.get(
       queryText += `c.* `;
       orderBy = ' ORDER BY c.name';
     } else if (selectedUsers) {
-      queryText += `v.id, v.filename `;
+      queryText += `v.id, v.filename, v.goodvideo `;
       orderBy = ' ORDER BY v.id';
     } else {
       res.status(400).json({ error: 'Nothing selected.' });
