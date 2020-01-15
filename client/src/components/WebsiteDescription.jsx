@@ -41,6 +41,11 @@ class WebsiteDescription extends Component {
           img: 'hanson.jpg'
         },
         {
+          name: 'Ishaan Jain',
+          role: 'Software Developer',
+          img: 'ishaan0.jpg'
+        },
+        {
           name: 'Jacob Territo',
           role: 'Software Developer',
           img: 'jacob.jpg'
