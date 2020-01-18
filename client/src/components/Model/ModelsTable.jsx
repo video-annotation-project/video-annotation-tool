@@ -158,6 +158,7 @@ class ModelsTable extends Component {
                     <Description />
                   </IconButton>
                   <IconButton
+                    disabled={!model.start_trains[model.version_selected]}
                     onClick={() =>
                       launchTensorboard(
                         model.name + '-' + model.version_selected

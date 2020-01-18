@@ -114,8 +114,10 @@ class Models extends Component {
     axios
       .get(`/api/models`, config)
       .then(res => {
+        let models = res.data;
+        models.forEach(m => m.start_trains = JSON.parse(m.start_trains));
         this.setState({
-          models: res.data
+          models
         });
       })
       .catch(error => {
