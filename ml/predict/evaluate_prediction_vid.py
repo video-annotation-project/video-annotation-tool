@@ -85,6 +85,18 @@ def score_predictions(validation, predictions, iou_thresh, concepts):
                        "FN", "Precision", "Recall", "F1"]
     return metrics
 
+def count_accuracy(row):
+    if row.true_num == 0:
+        return 1.0 if row.pred_num == 0 else 0
+    else:
+        return 1 - abs(row.true_num - row.pred_num) / row.true_num
+
+def count_accuracy(row):
+    if row.true_num == 0:
+        return 1.0 if row.pred_num == 0 else 0
+    else:
+        return 1 - abs(row.true_num - row.pred_num) / row.true_num
+
 
 def get_counts(results, annotations):
     grouped = results.groupby(["objectid"]).label.mean().reset_index()
@@ -94,36 +106,28 @@ def get_counts(results, annotations):
     groundtruth_counts.columns = ["true_num"]
     counts = pd.concat((counts, groundtruth_counts),
                        axis=1, join="outer").fillna(0)
-    counts["count_accuracy"] = (
-        1 - abs(counts.true_num - counts.pred_num) / counts.true_num
-    )
+    counts["count_accuracy"] = counts.apply(count_accuracy, axis=1)
     return counts
 
-
 def evaluate(
-        video_id, model_username, concepts, upload_annotations=False,
-        previous_run_id=None):
+        video_id, model_username, concepts, upload_annotations=False):
     # file format: (video_id)_(model_name)-(version).mp4
     filename = str(video_id) + "_" + model_username + ".mp4"
-    print(f"video filename: {0}".format(filename))
+    print("ai video filename: {0}".format(filename))
     results, fps, original_frames, annotations = predict.predict_on_video(
         video_id, config.WEIGHTS_PATH, concepts, filename
     )
     if (results.empty):
         return
+    username_split = model_username.split('-')
+    version = username_split[1]
+    model_name = username_split[0]
     # add the entry to ai_videos
-    if (previous_run_id == None):
-        cursor.execute('''
-            INSERT INTO ai_videos (name, videoid, version, model_name)
-            VALUES (%s, %s, (SELECT id FROM previous_runs ORDER BY id DESC LIMIT 1))''',
-                       (filename, video_id)
-                       )
-    else:
-        cursor.execute('''
-            INSERT INTO ai_videos (name, videoid, previous_run_id)
-            VALUES (%s, %s, %s)''',
-                       (filename, video_id, previous_run_id)
-                       )
+    cursor.execute('''
+        INSERT INTO ai_videos (name, videoid, version, model_name)
+        VALUES (%s, %s, %s, %s)''',
+                   (filename, video_id, version, model_name)
+                   )
 
     con.commit()
     print("done predicting")

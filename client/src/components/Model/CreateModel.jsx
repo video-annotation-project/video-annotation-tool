@@ -99,37 +99,10 @@ class CreateModel extends Component {
   };
 
   componentDidMount = () => {
-    this.loadExistingModels();
     this.loadConcepts();
     this.loadConceptCollections();
     this.loadVideoList();
     this.loadVideoCollections();
-  };
-
-  loadExistingModels = () => {
-    const config = {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    };
-    axios
-      .get(`/api/models`, config)
-      .then(res => {
-        const models = [];
-        res.data.forEach(model => {
-          models.push(model.name);
-        });
-        this.setState({
-          models
-        });
-      })
-      .catch(error => {
-        console.log('Error in get /api/models');
-        console.log(error);
-        if (error.response) {
-          console.log(error.response.data.detail);
-        }
-      });
   };
 
   loadConcepts = () => {
@@ -470,6 +443,7 @@ class CreateModel extends Component {
   };
 
   postModel = async () => {
+    const { loadExistingModels } = this.props;
     const { modelName, conceptsSelected, videosSelected } = this.state;
     const config = {
       headers: {
@@ -483,7 +457,7 @@ class CreateModel extends Component {
     };
     try {
       await axios.post(`/api/models`, body, config);
-      this.loadExistingModels();
+      loadExistingModels();
     } catch (error) {
       console.log('Error in post /api/models');
       if (error.response) {
@@ -493,6 +467,7 @@ class CreateModel extends Component {
   };
 
   handleNext = event => {
+    const { toggleStateVariable } = this.props;
     const { activeStep, models, modelName } = this.state;
 
     event.preventDefault();
@@ -507,6 +482,7 @@ class CreateModel extends Component {
     // If step = 2 then model ready to submit
     if (activeStep === 2) {
       this.postModel();
+      toggleStateVariable(false, 'createOpen');
     }
 
     this.setState(state => ({

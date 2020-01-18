@@ -114,7 +114,6 @@ class Models extends Component {
     axios
       .get(`/api/models`, config)
       .then(res => {
-        console.log(res.data);
         this.setState({
           models: res.data
         });
@@ -200,6 +199,7 @@ class Models extends Component {
     const body = {
       command: 'launch'
     };
+    console.log(id);
 
     this.setState({ loadingId: id });
 
@@ -258,7 +258,7 @@ class Models extends Component {
       if (result.value) {
         try {
           await axios.delete('/api/models', config);
-          Swal.fire('Deleted!', 'Video has been deleted.', 'success');
+          Swal.fire('Deleted!', 'Model has been deleted.', 'success');
           this.loadExistingModels();
         } catch (error) {
           Swal.fire(error, '', 'error');
@@ -313,17 +313,19 @@ class Models extends Component {
           total[index].FP = parseInt(total[index].FP) + parseInt(concept.FP);
           total[index].FN = parseInt(total[index].FN) + parseInt(concept.FN);
           total[index].pred_num =
-            parseInt(total[index].pred_num) + parseInt(concept.pred_num);
+            parseInt(Math.floor(total[index].pred_num)) + parseInt(Math.floor(concept.pred_num));
           total[index].true_num =
-            parseInt(total[index].true_num) + parseInt(concept.true_num);
+            parseInt(Math.floor(total[index].true_num)) + parseInt(Math.floor(concept.true_num));
         }
       });
     });
     total.forEach(concept => {
       concept.Precision = concept.TP / (concept.TP + concept.FP);
       concept.Recall = concept.TP / (concept.TP + concept.FN);
-      concept.count_accuracy =
-        1 - Math.abs(concept.true_num - concept.pred_num) / concept.true_num;
+      concept.F1 = 2 * concept.Precision * concept.Recall / (concept.Precision + concept.Recall)
+      let prediciton_error = concept.true_num<=0 ? 1 : 
+        Math.abs(concept.true_num - concept.pred_num) / concept.true_num;
+      concept.count_accuracy = 1 - prediciton_error
     });
     this.setState({
       total,
@@ -415,6 +417,7 @@ class Models extends Component {
           Create Model
         </Button>
         <CreateModel
+          loadExistingModels={this.loadExistingModels}
           createOpen={createOpen}
           toggleStateVariable={this.toggleStateVariable}
         />

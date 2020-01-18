@@ -10,10 +10,12 @@ from config import config
 
 class TensorboardLog(keras.callbacks.Callback):
 
-    def __init__(self, model_name, min_examples, epochs, collection_ids):
+    def __init__(
+            self, model_name, min_examples, epochs, collection_ids, job_id):
 
         self.table_name = 'model_versions'
         self.model_name = model_name
+        self.job_id = job_id
 
         self.connection = connect(
             database=config.DB_NAME,
@@ -37,8 +39,8 @@ class TensorboardLog(keras.callbacks.Callback):
             SET
                 start_train=%s
             WHERE
-                model_name=%s""",
-            (datetime.datetime.now(), self.model_name))
+                model=%s""",
+            (datetime.datetime.now(), self.model_name.split('-')[0]))
 
         self.connection.commit()
 
@@ -49,8 +51,8 @@ class TensorboardLog(keras.callbacks.Callback):
             SET
                 end_train=%s
             WHERE
-                model_name=%s""",
-            (datetime.datetime.now(), self.model_name))
+                model=%s""",
+            (datetime.datetime.now(), self.model_name.split('-')[0]))
 
         self.connection.commit()
 
@@ -58,13 +60,13 @@ class TensorboardLog(keras.callbacks.Callback):
         return
 
     def on_epoch_end(self, epoch, logs={}):
-        path = f'./logs/{self.model_name}'
+        path = f'./logs/{self.job_id}'
 
         for root, dirs, files in os.walk(path):
             for file in files:
                 self.client.upload_file(
-                    os.path.join(
-                        root, file), config.S3_BUCKET, f'{config.S3_LOGS_FOLDER}{self.model_name}/{file}'
+                    os.path.join(root, file),
+                    config.S3_BUCKET, f'{config.S3_LOGS_FOLDER}{self.model_name}/{file}'
                 )
 
     def on_batch_begin(self, batch, logs={}):

@@ -5,7 +5,6 @@ import { fade, withStyles } from '@material-ui/core/styles';
 import TreeView from '@material-ui/lab/TreeView';
 import TreeItem from '@material-ui/lab/TreeItem';
 import Collapse from '@material-ui/core/Collapse';
-import Popover from '@material-ui/core/Popover';
 import { useSpring, animated } from 'react-spring';
 
 function MinusSquare(props) {
@@ -92,9 +91,6 @@ const styles = () => ({
 });
 
 TransitionComponent.propTypes = {
-  /**
-   * Show the component; triggers the enter or exit states
-   */
   in: PropTypes.bool
 };
 
@@ -115,15 +111,13 @@ class ModelTreeView extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      versions: null
+      versions: 0
     };
   }
 
-  async componentDidUpdate(prevProps) {
-    const { model, open } = this.props;
-    if (prevProps.open !== open) {
-      await this.TreeViewProcessor(model);
-    }
+  async componentDidMount() {
+    const { model } = this.props;
+    await this.TreeViewProcessor(model);
   }
 
   list_to_tree = list => {
@@ -138,7 +132,6 @@ class ModelTreeView extends Component {
     for (i = 0; i < list.length; i += 1) {
       node = list[i];
       if (node.parentId !== '') {
-        // if you have dangling branches check that map[node.parentId] exists
         list[map[node.parentId]].children.push(node);
       } else {
         roots.push(node);
@@ -165,29 +158,10 @@ class ModelTreeView extends Component {
   };
 
   render() {
-    const {
-      open,
-      toggleStateVariable,
-      anchorEl,
-      handleSelectVersion,
-      model,
-      classes
-    } = this.props;
+    const { handleSelectVersion, model, classes } = this.props;
     const { versions } = this.state;
     return (
-      <Popover
-        open={open}
-        onClose={() => toggleStateVariable(false, 'versionOpen')}
-        anchorEl={anchorEl}
-        anchorOrigin={{
-          vertical: 'top',
-          horizontal: 'left'
-        }}
-        transformOrigin={{
-          vertical: 'top',
-          horizontal: 'left'
-        }}
-      >
+      <div>
         {versions ? (
           <TreeView
             className={classes.root}
@@ -205,7 +179,7 @@ class ModelTreeView extends Component {
         ) : (
           <div>Loading...</div>
         )}
-      </Popover>
+      </div>
     );
   }
 }

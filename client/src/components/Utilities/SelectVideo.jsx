@@ -9,6 +9,10 @@ import Button from '@material-ui/core/Button';
 import ListItem from '@material-ui/core/ListItem';
 import List from '@material-ui/core/List';
 import Tooltip from '@material-ui/core/Tooltip';
+import IconButton from '@material-ui/core/IconButton';
+import Description from '@material-ui/icons/Description';
+
+import VideoMetadata from './VideoMetadata';
 
 const styles = theme => ({
   collection: {
@@ -52,7 +56,8 @@ class SelectVideo extends React.Component {
     this.setState({
       videos,
       videoCollections,
-      loaded: true
+      loaded: true,
+      openedVideo: null
     });
   };
 
@@ -67,14 +72,32 @@ class SelectVideo extends React.Component {
       return <Typography>No videos for current selection</Typography>;
 
     return videos.map(video => (
-      <FormControlLabel
-        key={video.id}
-        value={video.id.toString()}
-        control={<Checkbox color="secondary" />}
-        label={`${video.id} ${video.filename}`}
-        checked={value.includes(video.id.toString())}
-      />
+      <div key={video.id}>
+        <IconButton onClick={event => this.openVideoMetadata(event, video)}>
+          <Description />
+        </IconButton>
+        <FormControlLabel
+          value={video.id.toString()}
+          control={<Checkbox color="secondary" />}
+          label={`${video.id} ${video.filename}`}
+          checked={value.includes(video.id.toString())}
+        ></FormControlLabel>
+      </div>
     ));
+  };
+
+  // Methods for video meta data
+  openVideoMetadata = (event, video) => {
+    event.stopPropagation();
+    this.setState({
+      openedVideo: video
+    });
+  };
+
+  closeVideoMetadata = () => {
+    this.setState({
+      openedVideo: null
+    });
   };
 
   render() {
@@ -86,7 +109,7 @@ class SelectVideo extends React.Component {
       handleUnselectAll,
       handleChangeList
     } = this.props;
-    const { videos, videoCollections } = this.state;
+    const { videos, videoCollections, openedVideo } = this.state;
 
     return (
       <Grid container spacing={5}>
@@ -163,6 +186,14 @@ class SelectVideo extends React.Component {
             ))}
           </List>
         </Grid>
+        {openedVideo && (
+          <VideoMetadata
+            open
+            handleClose={this.closeVideoMetadata}
+            openedVideo={openedVideo}
+            model={false}
+          />
+        )}
       </Grid>
     );
   }

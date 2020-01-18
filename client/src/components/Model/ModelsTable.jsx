@@ -11,7 +11,6 @@ import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
 import Description from '@material-ui/icons/Description';
 import { Typography, Button } from '@material-ui/core';
-import FormControl from '@material-ui/core/FormControl';
 import AssessmentIcon from '@material-ui/icons/Assessment';
 
 import GeneralMenu from '../Utilities/GeneralMenu';
@@ -36,7 +35,9 @@ class ModelsTable extends Component {
     super(props);
     this.state = {
       modelSelected: '',
-      anchorEl: null
+      anchorEl: null,
+      train: { status: '', param: '' },
+      predict: { status: '', param: '' }
     };
   }
 
@@ -68,8 +69,18 @@ class ModelsTable extends Component {
       }
     };
     try {
-      let res = await axios.get(`/api/models/progress/status`, config);
-      this.setState(res.data);
+      let res = await axios.get(
+        `/api/models/progress/status/i-011660b3e976035d8?train=true`,
+        config
+      );
+      let res1 = await axios.get(
+        `/api/models/progress/status/i-0f2287cb0fc621b6d?train=false`,
+        config
+      );
+      this.setState({
+        train: res.data,
+        predict: res1.data
+      });
     } catch (err) {
       console.log(err);
     }
@@ -88,16 +99,9 @@ class ModelsTable extends Component {
       currentVideo,
       trainOpen,
       predictOpen,
-      versionOpen,
       launchTensorboard
     } = this.props;
-    const {
-      modelSelected,
-      anchorEl,
-      train,
-      predict,
-      modelClicked
-    } = this.state;
+    const { modelSelected, train, predict } = this.state;
     if (!models) {
       return <Typography style={{ margin: '20px' }}>Loading...</Typography>;
     }
@@ -108,7 +112,6 @@ class ModelsTable extends Component {
             <TableRow>
               <CustomTableCell>Name</CustomTableCell>
               <CustomTableCell>Versions #</CustomTableCell>
-              {/* <CustomTableCell>New Versions</CustomTableCell> */}
               <CustomTableCell>Date Created</CustomTableCell>
               <CustomTableCell />
             </TableRow>
@@ -119,40 +122,19 @@ class ModelsTable extends Component {
                 <CustomTableCell component="th" scope="row">
                   {model.name}
                 </CustomTableCell>
-                {/* <CustomTableCell>
-                  <FormControl>
-                    <Select
-                      value={model.version_selected}
-                      renderValue={value => `${parseInt(value) + 1}`}
-                      onChange={event => handleSelectVersion(event, model)}
-                    >
-                      {model.runs.map((version, index) => (
-                        <MenuItem key={version.id} value={index}>
-                          {index + 1 + ' : ' + formatDate(version.time)}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </CustomTableCell> */}
                 <CustomTableCell>
-                  <FormControl>
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      color="secondary"
-                      onClick={e => {
-                        this.setState(
-                          {
-                            anchorEl: e.currentTarget,
-                            modelClicked: model
-                          },
-                          toggleStateVariable(true, 'versionOpen')
-                        );
-                      }}
-                    >
-                      {model.version_selected}
-                    </Button>
-                  </FormControl>
+                  <ModelTreeView
+                    model={model}
+                    toggleStateVariable={toggleStateVariable}
+                    handleSelectVersion={handleSelectVersion}
+                  />
+                  <Typography
+                    align="center"
+                    variant="subtitle2"
+                    color="secondary"
+                  >
+                    Selected: {model.version_selected}
+                  </Typography>
                 </CustomTableCell>
                 <CustomTableCell>{formatDate(model.timestamp)}</CustomTableCell>
                 <CustomTableCell align="right">
@@ -164,7 +146,9 @@ class ModelsTable extends Component {
                   </IconButton>
                   <IconButton
                     onClick={() =>
-                      launchTensorboard('c3abc29b105b4bc0b2e666ecc0b53aea')
+                      launchTensorboard(
+                        model.name + '-' + model.version_selected
+                      )
                     }
                     aria-label="Assessment"
                   >
@@ -187,7 +171,11 @@ class ModelsTable extends Component {
                     aivideos={true}
                   />
                   <Button
-                    disabled={train ? model.name !== train.model : false}
+                    disabled={
+                      train.status !== 'stopped'
+                        ? model.name !== train.param
+                        : false
+                    }
                     size="small"
                     variant="contained"
                     color="primary"
@@ -204,8 +192,9 @@ class ModelsTable extends Component {
                   </Button>
                   <Button
                     disabled={
-                      (predict ? model.name !== predict.model : false) ||
-                      model.version_selected === 0
+                      (predict.status !== 'stopped'
+                        ? model.name !== predict.param
+                        : false) || model.version_selected.toString() === '0'
                     }
                     style={{ marginLeft: '10px' }}
                     size="small"
@@ -227,13 +216,6 @@ class ModelsTable extends Component {
             ))}
           </TableBody>
         </Table>
-        <ModelTreeView
-          anchorEl={anchorEl}
-          model={modelClicked}
-          open={versionOpen}
-          toggleStateVariable={toggleStateVariable}
-          handleSelectVersion={handleSelectVersion}
-        />
         {trainOpen ? (
           <TrainModel
             trainOpen={trainOpen}

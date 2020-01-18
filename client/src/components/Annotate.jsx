@@ -114,7 +114,8 @@ class Annotate extends Component {
       width: 0,
       height: 0,
       x: 0,
-      y: 0
+      y: 0,
+      disableConcept: true
     };
   }
 
@@ -473,7 +474,10 @@ class Annotate extends Component {
             </Typography>
           </Grid>
           <Grid item xs>
-            <ConceptsSelected handleConceptClick={this.handleConceptClick} />
+            <ConceptsSelected
+              disableConcept={this.state.disableConcept}
+              handleConceptClick={this.handleConceptClick}
+            />
           </Grid>
         </Grid>
         <Grid container spacing={0}>
@@ -493,11 +497,21 @@ class Annotate extends Component {
                 this.setState({ x: d.x, y: d.y });
               }}
               onResize={(e, direction, ref, delta, position) => {
-                this.setState({
-                  width: ref.style.width,
-                  height: ref.style.height,
-                  ...position
-                });
+                this.setState(
+                  {
+                    width: ref.style.width,
+                    height: ref.style.height,
+                    ...position
+                  },
+                  () => {
+                    this.setState({
+                      disableConcept:
+                        ref.style.width === 0 && ref.style.height === 0
+                          ? true
+                          : false
+                    });
+                  }
+                );
               }}
             >
               <video

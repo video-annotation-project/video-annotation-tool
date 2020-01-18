@@ -5,11 +5,11 @@ import boto3
 import json
 from utils.query import s3, con, cursor
 from config.config import S3_BUCKET, S3_WEIGHTS_FOLDER, WEIGHTS_PATH
-from train_command import setup_predict_progress, evaluate_videos, end_predictions
+from train_command import setup_predict_progress, evaluate_videos, end_predictions, shutdown_server
 from botocore.exceptions import ClientError
 
-def main():
 
+def main():
     '''
     get predict params
     returns a list elements:
@@ -25,16 +25,17 @@ def main():
     concepts = params[2]
     videoids = params[4]
     upload_annotations = bool(params[3])
-    version = params[6].replace(".", "-")
+    version = params[6]
     user_model = model_name + "-" + version
 
-    download_weights(model_name, version)
+    download_weights(user_model)
     setup_predict_progress(videoids)
     evaluate_videos(concepts, videoids, user_model, upload_annotations)
     cleanup()
 
-def download_weights(model_name, version):
-    filename = model_name + '_' + version + '.h5'
+
+def download_weights(user_model):
+    filename = user_model + '.h5'
     try:
         s3.download_file(
             S3_BUCKET,
@@ -46,10 +47,10 @@ def download_weights(model_name, version):
         print("Could not find weights file {0} in S3, exiting".format(filename))
         cleanup()
 
+
 def cleanup():
     end_predictions()
-    con.close()
-    subprocess.call(["sudo", "shutdown", "-h"])
+    shutdown_server()
 
 
 if __name__ == '__main__':

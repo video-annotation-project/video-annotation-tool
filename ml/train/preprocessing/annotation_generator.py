@@ -1,4 +1,6 @@
 import os
+import sys
+import time
 import random
 from collections import OrderedDict
 
@@ -17,6 +19,10 @@ from config import config
 
 # Without this the program will crash
 ImageFile.LOAD_TRUNCATED_IMAGES = True
+
+
+def error_print(message):
+    print(f'[Warning] {message}', file=sys.stderr)
 
 
 def _parse(value, function, fmt):
@@ -182,6 +188,9 @@ class AnnotationGenerator(object):
 
             in_annot = []
             for i, row in frame.iterrows():
+                if row['conceptid'] not in concept_count:
+                    continue
+
                 concept_count[row['conceptid']] += 1
                 in_annot.append(row['conceptid'])
 
@@ -301,7 +310,7 @@ class AnnotationGenerator(object):
 
         return pd_query(
             annotations_query,
-            (collection_ids, verify_videos, min_examples, concepts, ))
+            (collection_ids, verify_videos, min_examples))
 
 
 class S3Generator(Generator):
@@ -329,6 +338,7 @@ class S3Generator(Generator):
         self.classes = classes
 
         self.labelmap = _get_labelmap(list(classes))
+        self.failed_downloads = set()
 
         # Make a reverse dictionary so that we can lookup the other way
         self.labels = {}
@@ -382,8 +392,9 @@ class S3Generator(Generator):
     def load_image(self, image_index):
         """ Load an image at the image_index.
         """
-        self._download_image(image_index)
-        return read_image_bgr(self.image_path(image_index))
+        if self._download_image(image_index):
+            return read_image_bgr(self.image_path(image_index))
+        return self.load_image((image_index + 1) % self.size())
 
     def image_path(self, image_index):
         """ Returns the image path for image_index.
@@ -394,6 +405,11 @@ class S3Generator(Generator):
     def load_annotations(self, image_index):
         """ Load annotations for an image_index.
         """
+
+        # If we couldn't download this image, go onto the next one
+        if image_index in self.failed_downloads:
+            return self.load_annotations((image_index + 1) % self.size())
+
         image = self.selected_annotations.iloc[image_index]
         annotations = {'labels': np.empty((0,)), 'bboxes': np.empty((0, 4))}
         image_name = image['save_name']
@@ -417,7 +433,7 @@ class S3Generator(Generator):
         saved_image_name = image['save_name'] + self.image_extension
 
         if saved_image_name in self.downloaded_images:
-            return
+            return True
 
         image_name = str(image['image'])
         try:
@@ -454,7 +470,9 @@ class S3Generator(Generator):
             # The file exists, lets make sure it's done downloading.
             # We spin while the file exists, but has no content
             while os.path.getsize(image_path) == 0:
-                pass
+                time.sleep(10)
+
+        return True
 
     def _read_annotations(self):
         """ Read annotations from our selected annotations.
@@ -486,6 +504,11 @@ class S3Generator(Generator):
 
             tracking = user_id == 32
 
+            # Check if the current class name is a class we are predicting on
+            # If not, use the image but not the annotation
+            if class_name not in self.classes:
+                continue
+
             # If a row contains only an image path, it's an image without annotations.
             if (x1, y1, x2, y2, class_name) == ('', '', '', '', ''):
                 continue
@@ -498,13 +521,8 @@ class S3Generator(Generator):
                 raise ValueError(
                     'y2 ({}) must be higher than y1 ({})'.format(y2, y1))
 
-            # Check if the current class name is correctly present
-            if class_name not in self.classes:
-                raise ValueError('unknown class name: \'{}\' (classes: {})'.format(
-                    class_name, set(self.classes)))
-
             result[image_file].append(
-                {'x1': x1, 'x2': x2, 'y1': y1, 'y2': y2, 'class': class_name, 'tracking': tracking})
+                {'x1': x1, 'x2': x2, 'y1': y1, 'y2': y2, 'class': class_name})
         return result
 
     def _connect_s3(self):
