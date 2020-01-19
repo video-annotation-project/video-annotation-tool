@@ -20,9 +20,6 @@ describe('Account', () => {
   });
 
   it('Go to account page', () => {
-    Cypress.env('cookies').forEach(cookie => {
-      cy.setCookie(cookie.name, cookie.value, cookie.options);
-    });
     expect(localStorage.getItem('username')).to.eq(
       Cypress.env('test_username')
     );

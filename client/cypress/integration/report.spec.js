@@ -10,12 +10,12 @@ describe('Report', () => {
     cy.visit('/');
     cy.get('#navbar-report').click();
     cy.get('button')
-      .contains('Open Report Selector')
+      .contains('Ok')
       .should('be.visible');
   });
 
   it('Configure selector', () => {
-    cy.get('#selector-button').click();
+    cy.get('button').contains('Ok').click();
     cy.get('#Level-1').select('Video');
     cy.get('#Level-2').select('Concept');
     cy.get('#ok-button').click();
@@ -40,9 +40,9 @@ describe('Report', () => {
     cy.visit('/');
     cy.get('#navbar-report').click();
     cy.get('button')
-      .contains('Open Report Selector')
+      .contains('Ok')
       .should('be.visible');
-    cy.get('#selector-button').click();
+    cy.get('button').contains('Ok').click();
     cy.get('#Level-1').select('User');
     cy.get('#Level-2').select('Video');
     cy.get('#Level-3').select('Concept');
