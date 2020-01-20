@@ -22,3 +22,6 @@ before_install:
 - tar xvf travis.tar
 notifications:
   email: false
+env.global:
+- openssl aes-256-cbc -K $encrypted_3e247b9e1911_key -iv $encrypted_3e247b9e1911_iv
+  -in travis.tar.enc -out travis.tar -d

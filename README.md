@@ -197,8 +197,9 @@ server {
 This file should be placed in the `/etc/nginx/conf.d/`folder. This will allow the tensorboard server to be located at tensorboard.yourdomain.com .
 
 ## Setting up Travis CI
-Follow these steps if changes are made to any env files
+Follow these steps if changes are made to any env 
+  1. Install ruby dev with `sudo apt-get install ruby-dev`
   1. Install Travis CI with `gem install travis` (Ruby required)
   2. Compress env files with `tar cvf travis.tar .env ./client/cypress.env.json`
-  3. Encrypt the tar file with `travis encrypt-file travis.tar --add`
+  3. Encrypt the tar file with `travis encrypt-file travis.tar --add env.global`
   4. Log in with GitHub credentials (if prompted)
