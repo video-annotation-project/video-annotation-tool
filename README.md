@@ -202,4 +202,3 @@ Follow these steps if changes are made to any env files
   2. Compress env files with `tar cvf travis.tar .env ./client/cypress.env.json`
   3. Encrypt the tar file with `travis encrypt-file travis.tar --add`
   4. Log in with GitHub credentials (if prompted)
-  5. Delete the tar file before pushing

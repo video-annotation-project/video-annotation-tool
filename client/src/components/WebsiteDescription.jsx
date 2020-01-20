@@ -183,12 +183,12 @@ class WebsiteDescription extends Component {
 
           <h1 id="project">Our Project</h1>
 
-          <iframe
+          <embed
             title="Our Project"
             src={`${publicPath}news.pdf`}
             width="100%"
             height="1000px"
-          ></iframe>
+          ></embed>
 
           <img
             className="line"
