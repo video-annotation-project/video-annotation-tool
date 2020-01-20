@@ -62,7 +62,9 @@ describe('Annotate', () => {
   });
 
   it('Check if in report selector', () => {
-    cy.get('button').contains('Ok').click();
+    cy.get('button')
+      .contains('Ok')
+      .click();
     cy.get('#Level-1').select('Video');
     cy.get('#Level-2').select('Concept');
     cy.get('#ok-button').click();

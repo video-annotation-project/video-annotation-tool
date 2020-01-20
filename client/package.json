@@ -60,7 +60,7 @@
     "eslint-plugin-react": "^7.14.3",
     "husky": "^3.0.5",
     "lint-staged": "^9.2.5",
-    "prettier": "^1.18.2",
+    "prettier": "^1.19.1",
     "pretty-quick": "^1.11.1"
   },
   "precommit": "NODE_ENV=production lint-staged",

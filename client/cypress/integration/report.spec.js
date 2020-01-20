@@ -15,7 +15,9 @@ describe('Report', () => {
   });
 
   it('Configure selector', () => {
-    cy.get('button').contains('Ok').click();
+    cy.get('button')
+      .contains('Ok')
+      .click();
     cy.get('#Level-1').select('Video');
     cy.get('#Level-2').select('Concept');
     cy.get('#ok-button').click();
@@ -42,7 +44,9 @@ describe('Report', () => {
     cy.get('button')
       .contains('Ok')
       .should('be.visible');
-    cy.get('button').contains('Ok').click();
+    cy.get('button')
+      .contains('Ok')
+      .click();
     cy.get('#Level-1').select('User');
     cy.get('#Level-2').select('Video');
     cy.get('#Level-3').select('Concept');
