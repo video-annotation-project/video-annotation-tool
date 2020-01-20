@@ -201,5 +201,5 @@ Follow these steps if changes are made to any env
   1. Install ruby dev with `sudo apt-get install ruby-dev`
   1. Install Travis CI with `gem install travis` (Ruby required)
   2. Compress env files with `tar cvf travis.tar .env ./client/cypress.env.json`
-  3. Encrypt the tar file with `travis encrypt-file travis.tar --add env.global`
+  3. Encrypt the tar file with `travis encrypt-file travis.tar --add --pro`
   4. Log in with GitHub credentials (if prompted)
