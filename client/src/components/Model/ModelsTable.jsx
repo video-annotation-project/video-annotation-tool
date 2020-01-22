@@ -159,6 +159,7 @@ class ModelsTable extends Component {
                   </IconButton>
                   <IconButton
                     disabled={
+                      !model.version_selected ||
                       model.version_selected === '0' ||
                       !model.start_trains[model.version_selected]
                     }
