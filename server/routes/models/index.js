@@ -33,6 +33,7 @@ router.get(
         array_agg(c.id) conceptsid,
         verificationvideos,
         versions,
+        start_trains,
         0 AS version_selected,
         (array_agg(videos))[1] as videos
       FROM 
@@ -48,7 +49,8 @@ router.get(
       LEFT JOIN (
         SELECT
           model,
-          array_agg(version) AS versions
+          array_agg(version) AS versions,
+          json_object_agg(version, start_train) #>> '{}' AS start_trains
         FROM
           model_versions
         GROUP BY model) mv ON mv.model=m.name
@@ -63,7 +65,7 @@ router.get(
         av GROUP BY model_name
       ) av ON av.model_name = m.name
       GROUP BY
-        (m.name, m.timestamp, verificationvideos, versions, version_selected)
+        (m.name, m.timestamp, verificationvideos, versions, start_trains, version_selected)
     `;
     if (req.query.predict === 'true') {
       queryText = `

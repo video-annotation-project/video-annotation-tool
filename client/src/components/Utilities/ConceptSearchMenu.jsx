@@ -7,9 +7,9 @@ import MenuItem from '@material-ui/core/MenuItem';
 
 const styles = theme => ({
   input: {
-    marginLeft: theme.spacing(4),
-    marginTop: theme.spacing(4),
-    marginBottom: theme.spacing()
+    marginLeft: theme.spacing(2),
+    marginRight: theme.spacing(2),
+    marginBottom: theme.spacing(2)
   }
 });
 
@@ -27,6 +27,7 @@ const ConceptSearchMenu = props => {
 
     return (
       <TextField
+        autoFocus
         InputProps={{
           inputRef: ref,
           ...InputProps
