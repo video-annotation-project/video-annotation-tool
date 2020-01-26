@@ -186,6 +186,7 @@ class Concepts extends React.Component {
 
   searchConcepts = search => {
     const { concepts } = this.state;
+    search = search.replace(/\\/g, '\\\\');
     const conceptsMatchID = concepts.filter(concept => {
       return concept.id.toString() === search;
     })
