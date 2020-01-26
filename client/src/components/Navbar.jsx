@@ -137,14 +137,18 @@ class Navbar extends React.Component {
                 >
                   Report
                 </Button>
-                <Button
-                  id="navbar-models"
-                  name="Models"
-                  component={Link}
-                  to="/models"
-                >
-                  Models
-                </Button>
+                {localStorage.getItem('admin') ? (
+                  <Button
+                    id="navbar-models"
+                    name="Models"
+                    component={Link}
+                    to="/models"
+                  >
+                    Models
+                  </Button>
+                ) : (
+                  ''
+                )}
                 <GeneralMenu
                   buttonid="navbar-account"
                   name="Account"
