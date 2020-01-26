@@ -7,7 +7,7 @@ import ConceptSearchMenu from './ConceptSearchMenu';
 
 const styles = () => ({
   dialogTitle: {
-    padding: 10,
+    marginTop: '10px',
     textAlign: 'center'
   }
 });

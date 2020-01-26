@@ -17,8 +17,8 @@ const styles = theme => ({
     width: '100%'
   },
   search: {
-    marginBottom: theme.spacing(4),
-    marginRight: theme.spacing(4)
+    margin: theme.spacing(2),
+    marginTop: theme.spacing(4)
   },
   path: {
     marginTop: theme.spacing(),
