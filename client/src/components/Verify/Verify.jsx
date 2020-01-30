@@ -269,7 +269,9 @@ class Verify extends Component {
         confirmButtonText: 'Next',
         reverseButtons: true
       }).then(result => {
-        this.displayLoading();
+        if (result.dismiss !== "backdrop") {
+          this.displayLoading()
+        }
         if (result.value) {
           if (annotations.length === index + 1) {
             this.resetLocalStorage();
@@ -289,8 +291,7 @@ class Verify extends Component {
               callback
             );
           }
-        }
-        if (result.dismiss === 'cancel') {
+        } else if (result.dismiss === 'cancel') {
           // Add annotations here
           this.setState(
             {
