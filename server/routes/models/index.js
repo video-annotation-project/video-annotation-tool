@@ -66,7 +66,6 @@ router.get(
       ) av ON av.model_name = m.name
       GROUP BY
         (m.name, m.timestamp, verificationvideos, versions, start_trains, version_selected)
-      ORDER BY m.timestamp DESC
     `;
     if (req.query.predict === 'true') {
       queryText = `
