@@ -175,7 +175,7 @@ class ModelsTable extends Component {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell sortDirection={orderBy === 'name' ? order : false}>
+              <CustomTableCell sortDirection={orderBy === 'name' ? order : false}>
                 <TableSortLabel
                   active={orderBy === 'name'}
                   direction={orderBy === 'name' ? order : 'asc'}
@@ -183,9 +183,9 @@ class ModelsTable extends Component {
                 >
                   Name
                 </TableSortLabel>
-              </TableCell>
-              <TableCell>Version #</TableCell>
-              <TableCell
+              </CustomTableCell>
+              <CustomTableCell>Version #</CustomTableCell>
+              <CustomTableCell
                 sortDirection={orderBy === 'timestamp' ? order : false}
               >
                 <TableSortLabel
@@ -195,8 +195,8 @@ class ModelsTable extends Component {
                 >
                   Date Created
                 </TableSortLabel>
-              </TableCell>
-              <TableCell />
+              </CustomTableCell>
+              <CustomTableCell />
             </TableRow>
           </TableHead>
           <TableBody>
