@@ -113,6 +113,30 @@ class AnnotationGenerator(object):
                                                                    min_examples,
                                                                    classes)
         print(f"Found {sum(concept_counts.values())} annotations.")
+        # TODO
+        #   Insert concept counts into new table 
+        #        (model name, model version, user, concept count)
+        #   User dictionaries -> String {'userid': concept count}
+        #   Number of annotations
+        #   Number of verified annotations
+        #   Numbers of trackings -> comes from having userid
+        #   Which videos it came from
+        #   Dictionary {'user_id': {'concepts': {'0': number of annotations, '1': number of annotations}  }}
+        #       0 = non-verified, 1 = verified
+        userDict = {}
+        for user_df in selected_frames:
+            userId = user_df['userid'].iloc[0]
+            if userId not in userDict:
+                userDict[userId] = {}
+            for index,row in user_df.iterrows(): # each unique concept
+                conceptId = row['conceptid']
+                if conceptId not in userDict[userId]:
+                    userDict[userId][conceptId] = {'0': 0, '1':0} # 0 is un-verified, 1 is verified
+                if pd.notnull(row['verifiedby']): # it has been verified, increment verified count
+                    userDict[userId][conceptId]['1'] +=1
+                else:
+                    userDict[userId][conceptId]['0'] +=1
+        self.userDict = userDict
         self.selected_frames = selected_frames
         self.classmap = get_classmap(classes)
 
@@ -188,9 +212,9 @@ class AnnotationGenerator(object):
 
             in_annot = []
             for i, row in frame.iterrows():
+                # row['userid'], row['conceptid'], row['verifiedby']
                 if row['conceptid'] not in concept_count:
                     continue
-
                 concept_count[row['conceptid']] += 1
                 in_annot.append(row['conceptid'])
 

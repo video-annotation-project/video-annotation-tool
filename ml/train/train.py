@@ -62,6 +62,10 @@ def train_model(concepts,
         classes=concepts,
         verify_videos=verify_videos
     )
+    model_name_str = model_name.split("-")[0]
+    model_version = model_name.split("-")[-1]
+    
+    
 
     train_generator = annotation_generator.flow_from_s3(
         image_folder=config.IMAGE_FOLDER,
