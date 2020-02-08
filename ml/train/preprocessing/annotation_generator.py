@@ -190,9 +190,9 @@ class AnnotationGenerator(object):
             concept_count[concept] = 0
 
         # This grouping ensure that we can view all annotations for a single image
-        frame_groups = annotations.groupby(
+        frames_group = annotations.groupby(
             ['videoid', 'frame_num'], sort=False)
-        frame_groups = [df for _, df in frame_groups]
+        frames_group = [df for _, df in frames_group]
 
         ai_id = pd_query(
             "SELECT id FROM users WHERE username='tracking'").id[0]
@@ -201,18 +201,17 @@ class AnnotationGenerator(object):
         # And with least amount of tracking annotations
         # And lower speed
 
-        frame_groups.sort(key=lambda df: (
+        frames_group.sort(key=lambda df: (
             -df.priority.max(), list(df['userid']).count(ai_id), df.speed.mean()))
 
         # Selects images that we'll use (each group has annotations for an image)
-        for frame in frame_groups:
+        for annotation_group in frames_group:
             # Check if we have min number of images already
             if not any(v < min_examples for v in concept_count.values()):
                 break
 
             in_annot = []
-            for i, row in frame.iterrows():
-                # row['userid'], row['conceptid'], row['verifiedby']
+            for i, row in annotation_group.iterrows():
                 if row['conceptid'] not in concept_count:
                     continue
                 concept_count[row['conceptid']] += 1
@@ -220,12 +219,12 @@ class AnnotationGenerator(object):
 
                 x1, x2, y1, y2 = _bound_coordinates(row)
 
-                frame.at[i, 'x1'] = x1
-                frame.at[i, 'x2'] = x2
-                frame.at[i, 'y1'] = y1
-                frame.at[i, 'y2'] = y2
-                frame.at[i, 'videowidth'] = config.RESIZED_WIDTH
-                frame.at[i, 'videoheight'] = config.RESIZED_HEIGHT
+                annotation_group.at[i, 'x1'] = x1
+                annotation_group.at[i, 'x2'] = x2
+                annotation_group.at[i, 'y1'] = y1
+                annotation_group.at[i, 'y2'] = y2
+                annotation_group.at[i, 'videowidth'] = config.RESIZED_WIDTH
+                annotation_group.at[i, 'videoheight'] = config.RESIZED_HEIGHT
 
             # Checks if frame has only concept we have too many of
             if any(v > min_examples for v in concept_count.values()):
@@ -239,7 +238,7 @@ class AnnotationGenerator(object):
                     for a in in_annot:
                         concept_count[a] -= 1
                     continue
-            selected.append(frame)
+            selected.append(annotation_group)
 
         return selected, concept_count
 

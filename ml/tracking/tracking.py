@@ -264,7 +264,8 @@ def track_object(frame_num, frames, box, track_forward, end,
                         x2 <= 0 or
                         y2 <= 0 or
                         x1 == x2 or
-                        y1 == y2):
+                        y1 == y2 or
+                        y2-y1 * x2-x2 < 1):
                     continue
                 # Fix box if outside video frame
                 x1 = x1 if x1 > 0 else 0
