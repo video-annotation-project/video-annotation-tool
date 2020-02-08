@@ -3,6 +3,7 @@ from multiprocessing import Pool
 import datetime
 import math
 import json
+import subprocess
 
 from config.config import TRACKING_USERS, DB_HOST, DB_NAME, DB_PASSWORD, DB_USER
 from tracking import tracking
