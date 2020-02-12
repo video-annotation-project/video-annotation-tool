@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 import axios from 'axios';
 
 import { withStyles } from '@material-ui/core/styles';
-import TableContainer from '@material-ui/core/TableContainer';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
@@ -160,165 +159,161 @@ class ModelsTable extends Component {
 
     return (
       <div>
-        <TableContainer>
-          <Table stickyHeader>
-            <TableHead>
-              <TableRow>
-                <CustomTableCell
-                  sortDirection={orderBy === 'name' ? order : false}
+        <Table>
+          <TableHead>
+            <TableRow>
+              <CustomTableCell
+                sortDirection={orderBy === 'name' ? order : false}
+              >
+                <TableSortLabel
+                  active={orderBy === 'name'}
+                  direction={orderBy === 'name' ? order : 'asc'}
+                  onClick={this.createSortHandler('name')}
                 >
-                  <TableSortLabel
-                    active={orderBy === 'name'}
-                    direction={orderBy === 'name' ? order : 'asc'}
-                    onClick={this.createSortHandler('name')}
-                  >
-                    Name
-                  </TableSortLabel>
-                </CustomTableCell>
-                <CustomTableCell>Version #</CustomTableCell>
-                <CustomTableCell
-                  sortDirection={orderBy === 'timestamp' ? order : false}
+                  Name
+                </TableSortLabel>
+              </CustomTableCell>
+              <CustomTableCell>Version #</CustomTableCell>
+              <CustomTableCell
+                sortDirection={orderBy === 'timestamp' ? order : false}
+              >
+                <TableSortLabel
+                  active={orderBy === 'timestamp'}
+                  direction={orderBy === 'timestamp' ? order : 'asc'}
+                  onClick={this.createSortHandler('timestamp')}
                 >
-                  <TableSortLabel
-                    active={orderBy === 'timestamp'}
-                    direction={orderBy === 'timestamp' ? order : 'asc'}
-                    onClick={this.createSortHandler('timestamp')}
-                  >
-                    Date Created
-                  </TableSortLabel>
-                </CustomTableCell>
-                <CustomTableCell>
-                  {train.status ? (
-                    <>
-                      <Typography variant="button" style={{ float: 'right' }}>
-                        Predict Instance:{' '}
-                        <font color="orange">{predict.status}</font>
-                      </Typography>
-                      <Typography
-                        variant="button"
-                        style={{ marginRight: '20px', float: 'right' }}
-                      >
-                        Train Instance:{' '}
-                        <font color="orange">{train.status}</font>
-                      </Typography>
-                    </>
-                  ) : (
-                    ''
-                  )}
-                </CustomTableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {this.stableSort(models, this.getSorting(order, orderBy)).map(
-                model => (
-                  <TableRow key={model.name}>
-                    <CustomTableCell component="th" scope="row">
-                      {model.name}
-                    </CustomTableCell>
-                    <CustomTableCell>
-                      <ModelTreeView
-                        model={model}
-                        toggleStateVariable={toggleStateVariable}
-                        handleSelectVersion={handleSelectVersion}
-                      />
-                      <Typography
-                        align="center"
-                        variant="subtitle2"
-                        color="secondary"
-                      >
-                        Selected: {model.version_selected}
-                      </Typography>
-                    </CustomTableCell>
-                    <CustomTableCell>
-                      {formatDate(model.timestamp)}
-                    </CustomTableCell>
-                    <CustomTableCell align="right">
-                      <IconButton
-                        onClick={() => handleOpenInfo(model)}
-                        aria-label="Description"
-                      >
-                        <Description />
-                      </IconButton>
-                      <IconButton
-                        disabled={
-                          !model.version_selected ||
-                          model.version_selected === '0' ||
-                          !model.start_trains[model.version_selected]
-                        }
-                        onClick={() =>
-                          launchTensorboard(
-                            model.name + '-' + model.version_selected
-                          )
-                        }
-                        aria-label="Assessment"
-                      >
-                        <AssessmentIcon />
-                      </IconButton>
-                      <IconButton
-                        onClick={() => deleteModel(model)}
-                        aria-label="Delete"
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                      <GeneralMenu
-                        disabled
-                        name="AiVideos"
-                        variant="contained"
-                        color="primary"
-                        Link={false}
-                        handleInsert={handleClickVideo}
-                        items={this.videosGetter(model)}
-                        aivideos={true}
-                      />
-                      <Button
-                        disabled={
-                          train.status !== 'stopped'
-                            ? model.name !== train.param
-                            : false
-                        }
-                        size="small"
-                        variant="contained"
-                        color="primary"
-                        onClick={() => {
-                          this.setState(
-                            {
-                              modelSelected: model
-                            },
-                            toggleStateVariable(true, 'trainOpen')
-                          );
-                        }}
-                      >
-                        Train
-                      </Button>
-                      <Button
-                        disabled={
-                          (predict.status !== 'stopped'
-                            ? model.name !== predict.param
-                            : false) ||
-                          model.version_selected.toString() === '0'
-                        }
-                        style={{ marginLeft: '10px' }}
-                        size="small"
-                        variant="contained"
-                        color="primary"
-                        onClick={() => {
-                          this.setState(
-                            {
-                              modelSelected: model
-                            },
-                            toggleStateVariable(true, 'predictOpen')
-                          );
-                        }}
-                      >
-                        Predict
-                      </Button>
-                    </CustomTableCell>
-                  </TableRow>
-                )
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
+                  Date Created
+                </TableSortLabel>
+              </CustomTableCell>
+              <CustomTableCell>
+                {train.status ? (
+                  <>
+                    <Typography variant="button" style={{ float: 'right' }}>
+                      Predict Instance:{' '}
+                      <font color="orange">{predict.status}</font>
+                    </Typography>
+                    <Typography
+                      variant="button"
+                      style={{ marginRight: '20px', float: 'right' }}
+                    >
+                      Train Instance: <font color="orange">{train.status}</font>
+                    </Typography>
+                  </>
+                ) : (
+                  ''
+                )}
+              </CustomTableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {this.stableSort(models, this.getSorting(order, orderBy)).map(
+              model => (
+                <TableRow key={model.name}>
+                  <CustomTableCell component="th" scope="row">
+                    {model.name}
+                  </CustomTableCell>
+                  <CustomTableCell>
+                    <ModelTreeView
+                      model={model}
+                      toggleStateVariable={toggleStateVariable}
+                      handleSelectVersion={handleSelectVersion}
+                    />
+                    <Typography
+                      align="center"
+                      variant="subtitle2"
+                      color="secondary"
+                    >
+                      Selected: {model.version_selected}
+                    </Typography>
+                  </CustomTableCell>
+                  <CustomTableCell>
+                    {formatDate(model.timestamp)}
+                  </CustomTableCell>
+                  <CustomTableCell align="right">
+                    <IconButton
+                      onClick={() => handleOpenInfo(model)}
+                      aria-label="Description"
+                    >
+                      <Description />
+                    </IconButton>
+                    <IconButton
+                      disabled={
+                        !model.version_selected ||
+                        model.version_selected === '0' ||
+                        !model.start_trains[model.version_selected]
+                      }
+                      onClick={() =>
+                        launchTensorboard(
+                          model.name + '-' + model.version_selected
+                        )
+                      }
+                      aria-label="Assessment"
+                    >
+                      <AssessmentIcon />
+                    </IconButton>
+                    <IconButton
+                      onClick={() => deleteModel(model)}
+                      aria-label="Delete"
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                    <GeneralMenu
+                      disabled
+                      name="AiVideos"
+                      variant="contained"
+                      color="primary"
+                      Link={false}
+                      handleInsert={handleClickVideo}
+                      items={this.videosGetter(model)}
+                      aivideos={true}
+                    />
+                    <Button
+                      disabled={
+                        train.status !== 'stopped'
+                          ? model.name !== train.param
+                          : false
+                      }
+                      size="small"
+                      variant="contained"
+                      color="primary"
+                      onClick={() => {
+                        this.setState(
+                          {
+                            modelSelected: model
+                          },
+                          toggleStateVariable(true, 'trainOpen')
+                        );
+                      }}
+                    >
+                      Train
+                    </Button>
+                    <Button
+                      disabled={
+                        (predict.status !== 'stopped'
+                          ? model.name !== predict.param
+                          : false) || model.version_selected.toString() === '0'
+                      }
+                      style={{ marginLeft: '10px' }}
+                      size="small"
+                      variant="contained"
+                      color="primary"
+                      onClick={() => {
+                        this.setState(
+                          {
+                            modelSelected: model
+                          },
+                          toggleStateVariable(true, 'predictOpen')
+                        );
+                      }}
+                    >
+                      Predict
+                    </Button>
+                  </CustomTableCell>
+                </TableRow>
+              )
+            )}
+          </TableBody>
+        </Table>
         {trainOpen ? (
           <TrainModel
             status={train}
