@@ -117,7 +117,7 @@ def evaluate(
         return
     username_split = model_username.split('-')
     version = username_split[-1]
-    model_name = username_split[0]
+    model_name = '-'.join(username_split[:-1])
     # add the entry to ai_videos
     cursor.execute('''
         INSERT INTO ai_videos (name, videoid, version, model_name)
