@@ -159,7 +159,7 @@ router.get(
   '/summary/:videoid',
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
-    tracking_users = data.ml.tracking_users;
+    tracking_userid = data.ml.tracking_userid;
     let queryText = `
     SELECT 
       *
@@ -171,12 +171,15 @@ router.get(
           conceptid, videoid, COUNT(*) 
         FROM 
           annotations 
-        WHERE userid = ANY(${"'{" + tracking_users + "}'"}::int[])
+        WHERE userid != $1
         GROUP BY conceptid, videoid
       ) AS counts ON counts.conceptid=a.id
-    WHERE videoid = $1`;
+    WHERE videoid = $2`;
     try {
-      const summary = await psql.query(queryText, [req.params.videoid]);
+      const summary = await psql.query(queryText, [
+        tracking_userid,
+        req.params.videoid
+      ]);
       res.json(summary.rows);
     } catch (error) {
       console.log('Error in get /api/videos/summary/:videoid');
