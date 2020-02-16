@@ -159,23 +159,12 @@ class ModelsTable extends Component {
 
     return (
       <div>
-        {train.status ? (
-          <Typography
-            variant="button"
-            display="block"
-            gutterBottom={true}
-            style={{ float: 'right' }}
-          >
-            Train Instance: <font color="orange">{train.status}</font> Predict
-            Instance: <font color="orange">{predict.status}</font>
-          </Typography>
-        ) : (
-          ''
-        )}
         <Table>
           <TableHead>
             <TableRow>
-              <CustomTableCell sortDirection={orderBy === 'name' ? order : false}>
+              <CustomTableCell
+                sortDirection={orderBy === 'name' ? order : false}
+              >
                 <TableSortLabel
                   active={orderBy === 'name'}
                   direction={orderBy === 'name' ? order : 'asc'}
@@ -196,7 +185,24 @@ class ModelsTable extends Component {
                   Date Created
                 </TableSortLabel>
               </CustomTableCell>
-              <CustomTableCell />
+              <CustomTableCell>
+                {train.status ? (
+                  <>
+                    <Typography variant="button" style={{ float: 'right' }}>
+                      Predict Instance:{' '}
+                      <font color="orange">{predict.status}</font>
+                    </Typography>
+                    <Typography
+                      variant="button"
+                      style={{ marginRight: '20px', float: 'right' }}
+                    >
+                      Train Instance: <font color="orange">{train.status}</font>
+                    </Typography>
+                  </>
+                ) : (
+                  ''
+                )}
+              </CustomTableCell>
             </TableRow>
           </TableHead>
           <TableBody>
