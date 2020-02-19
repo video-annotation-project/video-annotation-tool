@@ -48,7 +48,9 @@ class Models extends Component {
       metricLoaded: false,
       allMetrics: [],
       total: [],
-      showTotal: false
+      conceptCounts : [],
+      showTotal: false,
+      showTrainingData: false
     };
   }
   formatDate = version => {
@@ -332,7 +334,7 @@ class Models extends Component {
       let prediciton_error =
         concept.true_num <= 0
           ? 1
-          : Math.abs(concept.true_num - concept.pred_num) / 
+          : Math.abs(concept.true_num - concept.pred_num) /
             Math.max(concept.true_num, concept.pred_num);
       concept.count_accuracy = 1 - prediciton_error;
     });
@@ -340,6 +342,95 @@ class Models extends Component {
       total,
       showTotal: true
     });
+  };
+  // TODO
+  //   WORK ON THIS -> print out the table.
+  showTrainingData = () => {
+    const { selectedModel } = this.state;
+    console.log(selectedModel)
+    let versionConceptCounts = []
+    selectedModel.concept_counts.forEach(
+      version_count => {
+        let concept_dict = {}
+        // iterate through each user
+        Object.keys(version_count).forEach(function(key) {
+          // iterate through each concept
+          Object.keys(version_count[key]).forEach(function(conceptKey) {
+            if(!(conceptKey in concept_dict)) { // piggyback on if statement for other dict.
+              concept_dict[conceptKey] = {
+                'concept_id' : conceptKey,
+                'num_annotations': 0,
+                'verified_annotations': 0,
+                'tracking_annotations': 0
+              }
+            }
+            // iterate through each binary (0/1) for unverified/verified counts.
+            Object.keys(version_count[key][conceptKey]).forEach(function(binaryKey) {
+              concept_dict[conceptKey]['num_annotations'] += version_count[key][conceptKey][binaryKey]
+              if(binaryKey === '1') {
+                concept_dict[conceptKey]['verified_annotations'] += version_count[key][conceptKey][binaryKey]
+              }
+              if(key === '32') {
+                concept_dict[conceptKey]['tracking_annotations'] += version_count[key][conceptKey][binaryKey]
+              }
+            })
+          })
+        })
+        versionConceptCounts.push(concept_dict)
+      }
+    )
+    let version_index = parseInt(selectedModel.version_selected)
+    let conceptCount = versionConceptCounts[version_index]
+    let dataObject = []
+    Object.keys(conceptCount).forEach(function(key) {
+      dataObject.push(conceptCount[key])
+    })
+    this.setState({
+      conceptCounts: dataObject,
+      showTrainingData: true // show training data not showTotal
+    });
+  };
+
+  displayTrainingData = () => {
+    const { showTrainingData, conceptCounts } = this.state;
+    if (showTrainingData) {
+      return (
+        <Paper style={{ maxHeight: 400, overflow: 'auto' }}>
+          <Typography variant="h5" color="primary">
+            Training Data Metrics
+          </Typography>
+          {this.conceptMetric(conceptCounts)}
+        </Paper>
+      );
+    } else {
+      return '';
+    }
+  };
+
+  conceptMetric = data => {
+    const { classes } = this.props;
+    return (
+      <Table className={classes.table}>
+        <TableHead>
+          <TableRow>
+            <TableCell>ConceptId</TableCell>
+            <TableCell>Num Annotations</TableCell>
+            <TableCell>Verified Annotations</TableCell>
+            <TableCell>Tracking Annotations</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {data.map(row => (
+            <TableRow key={row.concept_id}>
+              <TableCell>{row.concept_id}</TableCell>
+              <TableCell>{row.num_annotations}</TableCell>
+              <TableCell>{row.verified_annotations}</TableCell>
+              <TableCell>{row.tracking_annotations}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    );
   };
 
   displayTotal = () => {
@@ -457,6 +548,14 @@ class Models extends Component {
                     onClick={this.showTotal}
                   >
                     Get Total
+                  </Button>
+                  {this.displayTrainingData()}
+                  <Button
+                    variant="contained"
+                    color="secondary"
+                    onClick={this.showTrainingData}
+                  >
+                    Get Training Data
                   </Button>
                   {allMetrics.map(metrics => (
                     <div key={metrics.name}>
