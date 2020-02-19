@@ -346,7 +346,7 @@ class Models extends Component {
   // TODO
   //   WORK ON THIS -> print out the table.
   showTrainingData = () => {
-    const { selectedModel } = this.state;
+    const { selectedModel, showTrainingData } = this.state;
     console.log(selectedModel)
     let versionConceptCounts = []
     selectedModel.concept_counts.forEach(
@@ -379,6 +379,7 @@ class Models extends Component {
         versionConceptCounts.push(concept_dict)
       }
     )
+    // TODO: version index fails if its a decimal version.
     let version_index = parseInt(selectedModel.version_selected)
     let conceptCount = versionConceptCounts[version_index]
     let dataObject = []
@@ -387,7 +388,7 @@ class Models extends Component {
     })
     this.setState({
       conceptCounts: dataObject,
-      showTrainingData: true // show training data not showTotal
+      showTrainingData: !showTrainingData // open if closed and vice versa.
     });
   };
 
