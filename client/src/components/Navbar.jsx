@@ -56,7 +56,7 @@ class Navbar extends React.Component {
       splitStr[i] =
         splitStr[i].charAt(0).toUpperCase() + splitStr[i].substring(1);
     }
-    if (splitStr.includes('Collection')) {
+    if (splitStr.includes('Collections')) {
       return splitStr.reverse().join(' ');
     }
     // Directly return the joined string
@@ -107,9 +107,9 @@ class Navbar extends React.Component {
                   name="Collections"
                   Link={Link}
                   items={[
-                    { name: 'Annotations', link: '/collection/annotation' },
-                    { name: 'Concepts', link: '/collection/concept' },
-                    { name: 'Videos', link: '/collection/video' }
+                    { name: 'Annotations', link: '/collections/annotation' },
+                    { name: 'Concepts', link: '/collections/concept' },
+                    { name: 'Videos', link: '/collections/video' }
                   ]}
                 />
                 <GeneralMenu
@@ -137,14 +137,18 @@ class Navbar extends React.Component {
                 >
                   Report
                 </Button>
-                <Button
-                  id="navbar-models"
-                  name="Models"
-                  component={Link}
-                  to="/models"
-                >
-                  Models
-                </Button>
+                {localStorage.getItem('admin') ? (
+                  <Button
+                    id="navbar-models"
+                    name="Models"
+                    component={Link}
+                    to="/models"
+                  >
+                    Models
+                  </Button>
+                ) : (
+                  ''
+                )}
                 <GeneralMenu
                   buttonid="navbar-account"
                   name="Account"
@@ -190,7 +194,13 @@ class Navbar extends React.Component {
               color="textPrimary"
               className={classes.pathname}
             >
-              {this.titleCase(location.pathname)}
+              {location.pathname === '/annotate/videos'
+                ? 'Annotate Videos'
+                : location.pathname === '/annotate/verify'
+                ? 'Verify Annotations'
+                : location.pathname === '/account/create'
+                ? 'Create User'
+                : this.titleCase(location.pathname)}
             </Typography>
             <Divider className={classes.divider} />
           </>

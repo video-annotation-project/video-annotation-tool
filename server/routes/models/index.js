@@ -56,16 +56,45 @@ router.get(
       GROUP BY model) mv ON mv.model=m.name
     LEFT JOIN (
       SELECT 
-        model_name, 
-        json_agg(json_build_object('version', version, 'videos', names)) AS videos 
-      FROM (
-        SELECT model_name, version, array_agg(name) AS names 
-        FROM ai_videos 
-        GROUP BY model_name, version)
-      av GROUP BY model_name
-    ) av ON av.model_name = m.name
-    GROUP BY
-      (m.name, m.timestamp, verificationvideos, versions, version_selected, concept_counts)
+        m.name,
+        m.timestamp,
+        array_agg(c.name) concepts,
+        array_agg(c.id) conceptsid,
+        verificationvideos,
+        versions,
+        start_trains,
+        0 AS version_selected,
+        (array_agg(videos))[1] as videos
+      FROM 
+        (SELECT
+          name,
+          timestamp,
+          UNNEST(concepts) concept,
+          verificationvideos
+        FROM
+          models) m
+      LEFT JOIN 
+        concepts c ON c.id=m.concept
+      LEFT JOIN (
+        SELECT
+          model,
+          array_agg(version) AS versions,
+          json_object_agg(version, start_train) #>> '{}' AS start_trains
+        FROM
+          model_versions
+        GROUP BY model) mv ON mv.model=m.name
+      LEFT JOIN (
+        SELECT 
+          model_name, 
+          json_agg(json_build_object('version', version, 'videos', names)) AS videos 
+        FROM (
+          SELECT model_name, version, array_agg(name) AS names 
+          FROM ai_videos 
+          GROUP BY model_name, version)
+        av GROUP BY model_name
+      ) av ON av.model_name = m.name
+      GROUP BY
+        (m.name, m.timestamp, verificationvideos, versions, start_trains, version_selected, concept_counts)
     `;
     if (req.query.predict === 'true') {
       queryText = `

@@ -17,8 +17,8 @@ const styles = theme => ({
     width: '100%'
   },
   search: {
-    marginBottom: theme.spacing(4),
-    marginRight: theme.spacing(4)
+    margin: theme.spacing(2),
+    marginTop: theme.spacing(4)
   },
   path: {
     marginTop: theme.spacing(),
@@ -186,16 +186,20 @@ class Concepts extends React.Component {
 
   searchConcepts = search => {
     const { concepts } = this.state;
+    search = search.replace(/\\/g, '\\\\');
+    const conceptsMatchID = concepts.filter(concept => {
+      return concept.id.toString() === search;
+    })
     const conceptsLikeSearch = concepts.filter(concept => {
       return concept.name.match(new RegExp(search, 'i'));
     });
-    return conceptsLikeSearch.slice(0, 10);
+    return conceptsMatchID.concat(conceptsLikeSearch).slice(0, 10);
   };
 
   getConceptInfo = concept => {
     const { concepts } = this.state;
     const match = concepts.find(item => {
-      return item.name === concept;
+      return item.id.toString() === concept || item.name === concept;
     });
     return match;
   };

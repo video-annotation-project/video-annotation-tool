@@ -275,9 +275,6 @@ class Annotate extends Component {
     return axios
       .put(`/api/videos/checkpoints/${currentVideo.id}`, body, config)
       .then(res => {
-        if (res.data === 'not a tracking user') {
-          return;
-        }
         if (reloadVideos) {
           this.loadVideos(doneClicked ? this.getCurrentVideo : null);
         }
