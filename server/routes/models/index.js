@@ -27,41 +27,13 @@ router.get(
   async (req, res) => {
     let queryText = `
     SELECT 
-      m.name,
-      m.timestamp,
-      array_agg(c.name) concepts,
-      array_agg(c.id) conceptsid,
-      verificationvideos,
-      versions,
-      concept_counts,
-      0 AS version_selected,
-      (array_agg(videos))[1] as videos
-    FROM 
-      (SELECT
-        name,
-        timestamp,
-        UNNEST(concepts) concept,
-        verificationvideos
-      FROM
-        models) m
-    LEFT JOIN 
-      concepts c ON c.id=m.concept
-    LEFT JOIN (
-      SELECT
-        model,
-        array_agg(version) AS versions,
-        jsonb_agg(concept_count) AS concept_counts
-      FROM
-        model_versions
-      GROUP BY model) mv ON mv.model=m.name
-    LEFT JOIN (
-      SELECT 
         m.name,
         m.timestamp,
         array_agg(c.name) concepts,
         array_agg(c.id) conceptsid,
         verificationvideos,
         versions,
+        concept_counts,
         start_trains,
         0 AS version_selected,
         (array_agg(videos))[1] as videos
@@ -79,6 +51,7 @@ router.get(
         SELECT
           model,
           array_agg(version) AS versions,
+          jsonb_agg(concept_count) AS concept_counts,
           json_object_agg(version, start_train) #>> '{}' AS start_trains
         FROM
           model_versions

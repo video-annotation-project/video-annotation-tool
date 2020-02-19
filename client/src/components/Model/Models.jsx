@@ -307,7 +307,7 @@ class Models extends Component {
   };
 
   showTotal = () => {
-    const { allMetrics } = this.state;
+    const { allMetrics, showTotal } = this.state;
 
     let total = [];
     allMetrics.forEach(metric => {
@@ -342,7 +342,7 @@ class Models extends Component {
     });
     this.setState({
       total,
-      showTotal: true
+      showTotal: !showTotal
     });
   };
   // TODO
