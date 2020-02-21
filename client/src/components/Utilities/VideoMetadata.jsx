@@ -16,10 +16,8 @@ import Summary from './Summary';
 
 const styles = theme => ({
   dialogStyle: {
+    margin: theme.spacing(),
     width: theme.spacing(50),
-    height: theme.spacing(65),
-    boxShadow: theme.shadows[5],
-    margin: 'auto',
     outline: 'none'
   },
   descriptionInput: {
@@ -185,7 +183,7 @@ class VideoMetadata extends Component {
   };
 
   render() {
-    const { classes, openedVideo, handleClose, open, modelTab } = this.props;
+    const { classes, openedVideo, open, modelTab } = this.props;
     const {
       isLoaded,
       videoStatus,
@@ -217,26 +215,25 @@ class VideoMetadata extends Component {
       goodvideo
     } = videoMetadata;
 
+    const startdate = new Date(starttime);
+    const enddate = new Date(endtime);
+
     return (
-      <Dialog
-        onClose={this.update}
-        open={open}
-        aria-labelledby="form-dialog-title"
-      >
+      <Dialog onClose={this.update} open={open}>
         <div className={classes.dialogStyle}>
-          <DialogTitle id="form-dialog-title">
-            <Typography>Video {openedVideo.id + ': ' + filename}</Typography>
+          <DialogTitle>
+            Video {openedVideo.id}: {filename}
           </DialogTitle>
           <DialogContent>
             <Typography>Users Watching: {userswatching.join(', ')}</Typography>
-            <Typography>GPS start: {`${gpsstart.x}, ${gpsstart.y}`}</Typography>
-            <Typography>GPS stop: {`${gpsstop.x}, ${gpsstop.y}`}</Typography>
-            <Typography>Start Depth: {startdepth}</Typography>
-            <Typography>End Depth: {enddepth}</Typography>
-            <Typography>Start Time: {starttime}</Typography>
-            <Typography>End Time: {endtime}</Typography>
-
+            <Typography>GPS Start: {`${gpsstart.x}, ${gpsstart.y}`}</Typography>
+            <Typography>GPS Stop: {`${gpsstop.x}, ${gpsstop.y}`}</Typography>
+            <Typography>Start Depth: {startdepth} m</Typography>
+            <Typography>End Depth: {enddepth} m</Typography>
+            <Typography>Start Date: {startdate.toString()}</Typography>
+            <Typography>End Date: {enddate.toString()}</Typography>
             <Input
+              style={{ marginTop: '18px' }}
               onKeyPress={this.handleKeyPress}
               className={classes.descriptionInput}
               autoFocus
@@ -248,6 +245,7 @@ class VideoMetadata extends Component {
               disabled={modelTab}
             />
             <FormControlLabel
+              style={{ marginTop: '15px' }}
               control={
                 <Checkbox
                   checked={goodvideo}
@@ -275,6 +273,7 @@ class VideoMetadata extends Component {
             value="unwatched"
             color="default"
             disabled={modelTab}
+            style={{ marginLeft: '15px' }}
           />
           Unwatched
           <Radio
@@ -293,17 +292,20 @@ class VideoMetadata extends Component {
             disabled={modelTab}
           />
           In Progress
-          <DialogActions>
+          <DialogActions style={{ margin: '10px' }}>
             <Button
               onClick={event => this.openVideoSummary(event)}
+              variant="contained"
               color="primary"
             >
               Summary
             </Button>
-            <Button onClick={handleClose} color="primary">
-              Cancel
-            </Button>
-            <Button onClick={this.update} color="primary" disabled={modelTab}>
+            <Button
+              onClick={this.update}
+              variant="contained"
+              color="primary"
+              disabled={modelTab}
+            >
               Update
             </Button>
           </DialogActions>

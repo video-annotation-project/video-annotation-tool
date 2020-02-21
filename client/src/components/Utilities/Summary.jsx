@@ -1,7 +1,6 @@
 import React from 'react';
 import { withStyles } from '@material-ui/core/styles';
 import Modal from '@material-ui/core/Modal';
-import Button from '@material-ui/core/Button';
 import Avatar from '@material-ui/core/Avatar';
 import Paper from '@material-ui/core/Paper';
 import { getDistance } from 'geolib';
@@ -43,22 +42,20 @@ class Summary extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      showTotal: false,
-      total: null,
       anno: null
     };
   }
 
-  getTotal = data => {
-    let count = 0;
+  componentDidMount = () => {
+    const { summary } = this.props;
+    if (!summary) {
+      return;
+    }
     let anno = 0;
-    data.forEach(element => {
-      if (element.rank === 'species') {
-        count += 1;
-      }
+    summary.data.forEach(element => {
       anno += parseInt(element.count, 10);
     });
-    this.setState({ showTotal: !this.state.showTotal, total: count, anno });
+    this.setState({ anno });
   };
 
   setDecimal = data => {
@@ -84,11 +81,13 @@ class Summary extends React.Component {
       aiSummary,
       summary
     } = this.props;
-    const { showTotal, total, anno } = this.state;
+    const { anno } = this.state;
+
     let start;
     let end;
+    let lat_dist = 0;
+    let depth = 0;
     let dist;
-    let depth;
 
     if (gpsstart && gpsstop) {
       start = {
@@ -96,15 +95,15 @@ class Summary extends React.Component {
         longitude: gpsstart.y
       };
       end = { latitude: gpsstop.x, longitude: gpsstop.y };
-      dist = getDistance(start, end, 1);
-    } else {
-      dist = 1;
+      lat_dist = getDistance(start, end, 1);
     }
+
     if (startdepth && enddepth) {
       depth = startdepth - enddepth;
-    } else {
-      depth = 0;
     }
+
+    // kilometers
+    dist = Math.sqrt(Math.pow(lat_dist, 2) + Math.pow(depth, 2)) / 1000;
 
     return (
       <Modal
@@ -181,7 +180,7 @@ class Summary extends React.Component {
                       <TableCell align="right">
                         {aiSummary
                           ? '# of Annotations by Non-AI'
-                          : 'Creatures per km'}
+                          : 'Count per km'}
                       </TableCell>
                     </TableRow>
                   </TableHead>
@@ -206,7 +205,7 @@ class Summary extends React.Component {
                             <TableCell align="right">
                               {aiSummary
                                 ? row.notai
-                                : this.setDecimal((row.count / dist) * 1000)}
+                                : this.setDecimal(row.count / dist)}
                             </TableCell>
                           </TableRow>
                         ))
@@ -216,40 +215,17 @@ class Summary extends React.Component {
               </Paper>
               <div>
                 {summary && !aiSummary && (
-                  <Button
-                    className={classes.button}
-                    variant="contained"
-                    color="primary"
-                    onClick={() => this.getTotal(summary.data)}
-                  >
-                    Total
-                  </Button>
-                )}
-                {showTotal ? (
                   <div>
-                    <Typography variant="body2" gutterBottom>
-                      Total species: {total}
-                    </Typography>
                     <Typography variant="body2" gutterBottom>
                       Total annotations: {anno}
                     </Typography>
                     <Typography variant="body2" gutterBottom>
-                      Total density: {this.setDecimal(anno / dist) * 1000}{' '}
-                      concepts/km
+                      Total density: {this.setDecimal(anno / dist)} concepts/km
                     </Typography>
                     <Typography variant="body2" gutterBottom>
-                      Total distance covered: {dist / 1000} km
-                    </Typography>
-                    <Typography variant="body2" gutterBottom>
-                      Total depth covered:{' '}
-                      {depth < 0
-                        ? `Descended ${Math.abs(depth) / 1000}`
-                        : `Ascended ${Math.abs(depth) / 1000}`}{' '}
-                      km
+                      Total distance covered: {this.setDecimal(dist)} km
                     </Typography>
                   </div>
-                ) : (
-                  ''
                 )}
               </div>
             </div>
