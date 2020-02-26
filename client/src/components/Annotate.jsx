@@ -551,72 +551,68 @@ class Annotate extends Component {
           </Grid>
           <Grid item xs />
         </Grid>
-        <div style={{ marginLeft: '214px', marginRight: '747px' }}>
-          <Grid container>
-            <Grid item xs={8}>
-              <div
+        <Grid container spacing={0}>
+          <Grid item xs={1} />
+          <Grid item xs>
+            <div
+              style={{
+                float: 'left'
+              }}
+            >
+              <Slider
                 style={{
-                  float: 'left'
+                  width: 200
                 }}
-              >
-                <Slider
-                  style={{
-                    width: 200
-                  }}
-                  value={videoPlaybackRate}
-                  min={0}
-                  max={4}
-                  step={0.1}
-                  onChange={this.handleChangeSpeed}
-                />
-                <Typography>Play Rate: {videoPlaybackRate}</Typography>
-              </div>
-              <Button
-                color="primary"
-                variant="contained"
-                className={classes.button}
-                onClick={() => Annotate.skipVideoTime(-5)}
-              >
-                -5 sec
-              </Button>
-              <Button
-                color="primary"
-                variant="contained"
-                className={classes.button}
-                onClick={Annotate.playPause}
-              >
-                Play/Pause
-              </Button>
-              <Button
-                color="primary"
-                variant="contained"
-                className={classes.button}
-                onClick={() => Annotate.skipVideoTime(5)}
-              >
-                +5 sec
-              </Button>
-              <Button
-                color="primary"
-                variant="contained"
-                className={classes.button}
-                onClick={() => Annotate.toggleVideoControls()}
-              >
-                Toggle Controls
-              </Button>
-            </Grid>
-            <Grid item xs={4}>
-              <Button
-                style={{ float: 'right' }}
-                color="primary"
-                variant="contained"
-                className={classes.button}
-                onClick={() => this.handleDoneClick()}
-              >
-                Done With Video
-              </Button>
-            </Grid>
+                value={videoPlaybackRate}
+                min={0}
+                max={4}
+                step={0.1}
+                onChange={this.handleChangeSpeed}
+              />
+              <Typography>Play Rate: {videoPlaybackRate}</Typography>
+            </div>
+            <Button
+              color="primary"
+              variant="contained"
+              className={classes.button}
+              onClick={() => Annotate.skipVideoTime(-5)}
+            >
+              -5 sec
+            </Button>
+            <Button
+              color="primary"
+              variant="contained"
+              className={classes.button}
+              onClick={Annotate.playPause}
+            >
+              Play/Pause
+            </Button>
+            <Button
+              color="primary"
+              variant="contained"
+              className={classes.button}
+              onClick={() => Annotate.skipVideoTime(5)}
+            >
+              +5 sec
+            </Button>
+            <Button
+              color="primary"
+              variant="contained"
+              className={classes.button}
+              onClick={() => Annotate.toggleVideoControls()}
+            >
+              Toggle Controls
+            </Button>
+            <Button
+              className={classes.button}
+              style={{ marginLeft: '40px' }}
+              variant="contained"
+              onClick={() => this.handleDoneClick()}
+            >
+              Done With Video
+            </Button>
           </Grid>
-        </div>
+        </Grid>
         {dialogOpen && (
           <DialogModal
             title="Confirm Annotation"
