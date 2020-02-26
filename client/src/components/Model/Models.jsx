@@ -227,7 +227,8 @@ class Models extends Component {
     this.setState({
       infoOpen: false,
       total: [],
-      showTotal: false
+      showTotal: false,
+      showTrainingData: false
     });
   };
 
@@ -345,45 +346,52 @@ class Models extends Component {
       showTotal: !showTotal
     });
   };
-  // TODO
-  //   WORK ON THIS -> print out the table.
   showTrainingData = () => {
     const { selectedModel, showTrainingData } = this.state;
-    console.log(selectedModel)
-    let versionConceptCounts = []
-    selectedModel.concept_counts.forEach(
-      version_count => {
-        let concept_dict = {}
-        // iterate through each user
-        Object.keys(version_count).forEach(function(key) {
-          // iterate through each concept
-          Object.keys(version_count[key]).forEach(function(conceptKey) {
-            if(!(conceptKey in concept_dict)) { // piggyback on if statement for other dict.
-              concept_dict[conceptKey] = {
-                'concept_id' : conceptKey,
-                'num_annotations': 0,
-                'verified_annotations': 0,
-                'tracking_annotations': 0
-              }
+    let version_index = parseFloat(selectedModel.version_selected)
+    let concept_dict = {}
+    if(showTrainingData === true) { // if you're trying to close the table by clicking again.
+      this.setState({
+        conceptCounts: {},
+        showTrainingData: !showTrainingData // open if closed and vice versa.
+      });
+      return // immediately quit because no point in making table if we're closing it.
+    }
+    // iterate through each version
+    for (let i = 0; i < selectedModel.concept_counts.length; i++) {
+      let version_count = selectedModel.concept_counts[i]
+      if(version_index !== parseFloat(version_count.version)) {
+        continue;
+      }
+      if(version_count.counts === null) {
+        continue
+      }
+      // iterate through each user
+      Object.keys(version_count.counts).forEach(function(key) {
+        // iterate through each concept
+        Object.keys(version_count.counts[key]).forEach(function(conceptKey) {
+          if(!(conceptKey in concept_dict)) { // piggyback on if statement for other dict.
+            concept_dict[conceptKey] = {
+              'concept_id' : conceptKey,
+              'num_annotations': 0,
+              'verified_annotations': 0,
+              'tracking_annotations': 0
             }
-            // iterate through each binary (0/1) for unverified/verified counts.
-            Object.keys(version_count[key][conceptKey]).forEach(function(binaryKey) {
-              concept_dict[conceptKey]['num_annotations'] += version_count[key][conceptKey][binaryKey]
-              if(binaryKey === '1') {
-                concept_dict[conceptKey]['verified_annotations'] += version_count[key][conceptKey][binaryKey]
-              }
-              if(key === '32') {
-                concept_dict[conceptKey]['tracking_annotations'] += version_count[key][conceptKey][binaryKey]
-              }
-            })
+          }
+          // iterate through each binary (0/1) for unverified/verified counts.
+          Object.keys(version_count.counts[key][conceptKey]).forEach(function(binaryKey) {
+            concept_dict[conceptKey]['num_annotations'] += version_count.counts[key][conceptKey][binaryKey]
+            if(binaryKey === '1') {
+              concept_dict[conceptKey]['verified_annotations'] += version_count.counts[key][conceptKey][binaryKey]
+            }
+            if(key === '32') {
+              concept_dict[conceptKey]['tracking_annotations'] += version_count.counts[key][conceptKey][binaryKey]
+            }
           })
         })
-        versionConceptCounts.push(concept_dict)
-      }
-    )
-    // TODO: version index fails if its a decimal version.
-    let version_index = parseInt(selectedModel.version_selected)
-    let conceptCount = versionConceptCounts[version_index]
+      })
+    }
+    let conceptCount = concept_dict
     let dataObject = []
     Object.keys(conceptCount).forEach(function(key) {
       dataObject.push(conceptCount[key])
