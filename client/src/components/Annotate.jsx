@@ -605,7 +605,6 @@ class Annotate extends Component {
             </Button>
             <Button
               className={classes.button}
-              style={{ marginLeft: '40px' }}
               variant="contained"
               onClick={() => this.handleDoneClick()}
             >

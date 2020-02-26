@@ -697,8 +697,7 @@ class AnnotationCollection extends Component {
             </div>
           </Grid>
         </Grid>
-        <Grid container>
-          <Grid item xs />
+        <Grid container justify="center">
           <Grid item xs={5}>
             <Stepper
               activeStep={activeStep}
@@ -711,14 +710,12 @@ class AnnotationCollection extends Component {
               ))}
             </Stepper>
           </Grid>
-          <Grid item xs />
         </Grid>
         <Grid container justify="center">
           <Grid item className={classes.grid}>
             {this.getStepForm(activeStep)}
           </Grid>
         </Grid>
-
         <Grid container justify="center">
           <Grid item>
             <Button
