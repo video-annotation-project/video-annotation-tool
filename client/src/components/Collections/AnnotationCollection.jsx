@@ -697,17 +697,22 @@ class AnnotationCollection extends Component {
             </div>
           </Grid>
         </Grid>
-        <Stepper
-          activeStep={activeStep}
-          style={{ backgroundColor: 'transparent' }}
-        >
-          {steps.map(label => (
-            <Step key={label}>
-              <StepLabel>{label}</StepLabel>
-            </Step>
-          ))}
-        </Stepper>
-
+        <Grid container>
+          <Grid item xs />
+          <Grid item xs={5}>
+            <Stepper
+              activeStep={activeStep}
+              style={{ backgroundColor: 'transparent' }}
+            >
+              {steps.map(label => (
+                <Step key={label}>
+                  <StepLabel>{label}</StepLabel>
+                </Step>
+              ))}
+            </Stepper>
+          </Grid>
+          <Grid item xs />
+        </Grid>
         <Grid container justify="center">
           <Grid item className={classes.grid}>
             {this.getStepForm(activeStep)}
