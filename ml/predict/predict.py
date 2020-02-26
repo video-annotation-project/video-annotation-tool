@@ -568,6 +568,7 @@ def upload_annotation(frame, frame_w_box, x1, x2, y1, y2,
             x2, y2, videowidth, videoheight, datetime.datetime.now().date(), no_box, box
         )
     )
+    con.commit()
 
 
 def upload_predict_progress(count, videoid, total_count, status):

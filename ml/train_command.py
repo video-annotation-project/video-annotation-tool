@@ -17,29 +17,30 @@ def main():
     """
     # This process periodically uploads the stdout and stderr files
     # To the S3 bucket. The website uses these to display stdout and stderr
-    pid = os.getpid()
-    upload_process = upload_stdout.start_uploading(pid)
-    model, model_params = get_model_and_params()
-    user_model, new_version = get_user_model(model_params)
-    create_model_user(new_version, model_params, user_model)
-    # This removes all of the [INFO] outputs from tensorflow.
-    # We still see [WARNING] and [ERROR], but there's a lot less clutter
-    os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
+    try:
+        pid = os.getpid()
+        upload_process = upload_stdout.start_uploading(pid)
+        model, model_params = get_model_and_params()
+        user_model, new_version = get_user_model(model_params)
+        create_model_user(new_version, model_params, user_model)
 
-    # If set, training will sometimes be unable to save the model
-    os.environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
+        # This removes all of the [INFO] outputs from tensorflow.
+        # We still see [WARNING] and [ERROR], but there's a lot less clutter
+        os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 
-    concepts = model["concepts"]
-    verify_videos = model["verificationvideos"]
+        # If set, training will sometimes be unable to save the model
+        os.environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
 
-    start_training(user_model, concepts, verify_videos, model_params)
-    setup_predict_progress(verify_videos)
+        concepts = model["concepts"]
+        verify_videos = model["verificationvideos"]
 
-    evaluate_videos(concepts, verify_videos, user_model)
-    end_predictions()
+        start_training(user_model, concepts, verify_videos, model_params)
+        setup_predict_progress(verify_videos)
 
-    reset_model_params()
-    shutdown_server()
+        evaluate_videos(concepts, verify_videos, user_model)
+    finally:
+        reset_model_params()
+        shutdown_server()
 
 
 def get_model_and_params():
@@ -158,8 +159,6 @@ def create_model_user(new_version, model_params, user_model):
          model_user_id, new_version, datetime.now()))
     con.commit()
 
-    return model_user_id
-
 
 def start_training(user_model, concepts, verify_videos, model_params):
     """Start a training job with the correct parameters
@@ -208,15 +207,7 @@ def evaluate_videos(concepts, verify_videos, user_model,
         con.commit()
         evaluate(video_id, user_model, concepts, upload_annotations)
 
-    # Status level 4 on a video means that predictions have completed.
-    cursor.execute(
-        """
-        UPDATE predict_progress
-        SET status=4
-        """
-    )
-    con.commit()
-
+    end_predictions()
 
 def reset_model_params():
     """ Reset the model_params table

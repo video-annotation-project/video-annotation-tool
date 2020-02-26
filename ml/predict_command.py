@@ -19,19 +19,22 @@ def main():
     video - int: id of video to predict on
     upload_annotations - boolean: if true upload annotations to database
     '''
-    cursor.execute("SELECT * FROM predict_params")
-    params = cursor.fetchone()
-    model_name = str(params[0])
-    concepts = params[2]
-    videoids = params[4]
-    upload_annotations = bool(params[3])
-    version = params[6]
-    user_model = model_name + "-" + version
 
-    download_weights(user_model)
-    setup_predict_progress(videoids)
-    evaluate_videos(concepts, videoids, user_model, upload_annotations)
-    cleanup()
+    try:
+        cursor.execute("SELECT * FROM predict_params")
+        params = cursor.fetchone()
+        model_name = str(params[0])
+        concepts = params[2]
+        videoids = params[4]
+        upload_annotations = bool(params[3])
+        version = params[6]
+        user_model = model_name + "-" + version
+
+        download_weights(user_model)
+        setup_predict_progress(videoids)
+        evaluate_videos(concepts, videoids, user_model, upload_annotations)
+    finally:
+        cleanup()
 
 
 def download_weights(user_model):

@@ -174,7 +174,7 @@ def _upload_weights(model_name):
 
 def _redirect_outputs(job_id):
     """ The DatabaseOutput class will redirect this programs output to a column
-        in out training_progress databse (as well as into a file)
+        in out training_progress database (as well as into a file)
     """
     sys.stdout = DatabaseOutput(job_id, 'out')
     sys.stderr = DatabaseOutput(job_id, 'err')
