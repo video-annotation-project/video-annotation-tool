@@ -209,8 +209,9 @@ class Annotations extends Component {
                 <ListItemText
                   primary={`At ${Math.floor(
                     annotation.timeinvideo / 60
-                  )} minutes ${annotation.timeinvideo %
-                    60} seconds Annotated: ${annotation.name}`}
+                  )} minutes ${(annotation.timeinvideo % 60).toFixed(
+                    2
+                  )} seconds Annotated: ${annotation.name}`}
                   secondary={
                     annotation.comment
                       ? `Annotation Comment: ${annotation.comment}`

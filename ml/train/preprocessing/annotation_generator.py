@@ -113,6 +113,21 @@ class AnnotationGenerator(object):
                                                                    min_examples,
                                                                    classes)
         print(f"Found {sum(concept_counts.values())} annotations.")
+        # Creating a counter for each user: the concepts & whether they were verified.
+        userDict = {}
+        for user_df in selected_frames:
+            userId = str(user_df['userid'].iloc[0])
+            if userId not in userDict:
+                userDict[userId] = {}
+            for index,row in user_df.iterrows(): # each unique concept
+                conceptId = str(row['conceptid'])
+                if conceptId not in userDict[userId]:
+                    userDict[userId][conceptId] = {'0': 0, '1':0} # 0 is un-verified, 1 is verified
+                if pd.notnull(row['verifiedby']): # it has been verified, increment verified count
+                    userDict[userId][conceptId]['1'] +=1
+                else:
+                    userDict[userId][conceptId]['0'] +=1
+        self.userDict = userDict
         self.selected_frames = selected_frames
         self.classmap = get_classmap(classes)
 
@@ -190,7 +205,6 @@ class AnnotationGenerator(object):
             for i, row in annotation_group.iterrows():
                 if row['conceptid'] not in concept_count:
                     continue
-
                 concept_count[row['conceptid']] += 1
                 in_annot.append(row['conceptid'])
 
@@ -285,7 +299,8 @@ class AnnotationGenerator(object):
                 x1, x2, y1, y2,
                 speed,
                 priority,
-                ROUND(fps * timeinvideo) as frame_num
+                ROUND(fps * timeinvideo) as frame_num,
+                verifiedby
             FROM
                 annotations a
             LEFT JOIN
