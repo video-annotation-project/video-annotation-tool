@@ -350,6 +350,8 @@ class Models extends Component {
     const { selectedModel, showTrainingData } = this.state;
     let version_index = parseFloat(selectedModel.version_selected)
     let concept_dict = {}
+    console.log(selectedModel)
+    selectedModel['epochs'] = 0
     if(showTrainingData === true) { // if you're trying to close the table by clicking again.
       this.setState({
         conceptCounts: {},
@@ -360,12 +362,17 @@ class Models extends Component {
     // iterate through each version
     for (let i = 0; i < selectedModel.concept_counts.length; i++) {
       let version_count = selectedModel.concept_counts[i]
+      // if this is not the right version, continue iterating
       if(version_index !== parseFloat(version_count.version)) {
         continue;
       }
+      // repeated for old models (otherwise if the counts don't exist, can't update epoch)
+      selectedModel['epochs'] = version_count.epochs
+      // if the counts is null (old model or failed training) continue searching.
       if(version_count.counts === null) {
         continue
       }
+      selectedModel['epochs'] = version_count.epochs
       // iterate through each user
       Object.keys(version_count.counts).forEach(function(key) {
         // iterate through each concept
@@ -390,6 +397,8 @@ class Models extends Component {
           })
         })
       })
+      break // done getting concept counts, don't need to continue the for loop.
+      // b/c can't have 2 versions with the same version #
     }
     let conceptCount = concept_dict
     let dataObject = []
@@ -403,12 +412,12 @@ class Models extends Component {
   };
 
   displayTrainingData = () => {
-    const { showTrainingData, conceptCounts } = this.state;
+    const { showTrainingData, conceptCounts, selectedModel } = this.state;
     if (showTrainingData) {
       return (
         <Paper style={{ maxHeight: 400, overflow: 'auto' }}>
           <Typography variant="h5" color="primary">
-            Training Data Metrics
+            Training Data Metrics for {selectedModel.epochs} epochs.
           </Typography>
           {this.conceptMetric(conceptCounts)}
         </Paper>
