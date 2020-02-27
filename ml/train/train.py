@@ -1,6 +1,8 @@
 import uuid
 import sys
 
+import json
+
 import keras
 import tensorflow as tf
 import multiprocessing
@@ -12,7 +14,7 @@ from keras.callbacks import EarlyStopping
 from keras_retinanet.callbacks import RedirectModel
 
 from config import config
-from utils.query import s3
+from utils.query import s3, query
 from utils.timer import timer
 from utils.output import DatabaseOutput
 from train.preprocessing.annotation_generator import AnnotationGenerator
@@ -62,6 +64,26 @@ def train_model(concepts,
         classes=concepts,
         verify_videos=verify_videos
     )
+    # Get model name & version to insert into model_versions table
+    #  a user dictionary containing the concept counts from this model
+    #  for each userid
+    model_name_str = model_name.split("-")[0]
+    model_version = model_name.split("-")[-1]
+    insert_counts_query = '''
+        UPDATE
+            model_versions
+        SET
+            concept_count = %s
+        WHERE
+            model = %s
+            AND
+            version = %s
+    '''
+    query(
+            insert_counts_query,
+            (json.dumps(annotation_generator.userDict), model_name_str, model_version)
+    )
+    
 
     train_generator = annotation_generator.flow_from_s3(
         image_folder=config.IMAGE_FOLDER,

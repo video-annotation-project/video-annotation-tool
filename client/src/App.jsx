@@ -42,15 +42,19 @@ const App = () => {
             <Route exact path="/report" component={Report} />
             <Route
               exact
-              path="/collection/annotation"
+              path="/collections/annotation"
               component={AnnotationCollection}
             />
             <Route
               exact
-              path="/collection/concept"
+              path="/collections/concept"
               component={ConceptCollection}
             />
-            <Route exact path="/collection/video" component={VideoCollection} />
+            <Route
+              exact
+              path="/collections/video"
+              component={VideoCollection}
+            />
             <Route exact path="/annotate/videos" component={Annotate} />
             <Route exact path="/annotate/verify" component={Verify} />
             <Route exact path="/account/profile" component={Profile} />
