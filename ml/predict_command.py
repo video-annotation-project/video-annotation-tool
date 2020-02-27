@@ -21,20 +21,19 @@ def main():
     '''
 
     try:
-        cursor.execute("SELECT * FROM predict_params")
-        params = cursor.fetchone()
-        model_name = str(params[0])
-        concepts = params[2]
-        videoids = params[4]
-        upload_annotations = bool(params[3])
-        version = params[6]
-        user_model = model_name + "-" + version
+        params = pd_query("SELECT * FROM predict_params").iloc[0]
+        model_name = params["model"]
+        concepts = params["concepts"]
+        videoids = params["videos"]
+        upload_annotations = params["upload_annotations"]
+        version = params["version"]
 
+        user_model = model_name + "-" + version
         download_weights(user_model)
         setup_predict_progress(videoids)
         evaluate_videos(concepts, videoids, user_model, upload_annotations)
     finally:
-        cleanup()
+        shutdown_server()
 
 
 def download_weights(user_model):
@@ -46,14 +45,9 @@ def download_weights(user_model):
             WEIGHTS_PATH
         )
         print("downloaded file: {0}".format(filename))
-    except ClientError:
-        print("Could not find weights file {0} in S3, exiting".format(filename))
-        cleanup()
-
-
-def cleanup():
-    end_predictions()
-    shutdown_server()
+    except ClientError as e:
+        print("Could not find weights file {0} in S3".format(filename))
+        raise e
 
 
 if __name__ == '__main__':
