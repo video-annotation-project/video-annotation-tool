@@ -51,7 +51,7 @@ router.get(
     SELECT
       model,
       array_agg(version) AS versions,
-      jsonb_agg(json_build_object('version', version, 'counts', concept_count)) AS concept_counts,
+      jsonb_agg(json_build_object('version', version, 'counts', concept_count, 'epochs', epochs)) AS concept_counts,
       json_object_agg(version, start_train) #>> '{}' AS start_trains
     FROM
       model_versions
