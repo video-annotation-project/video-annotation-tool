@@ -38,6 +38,8 @@ def main():
         setup_predict_progress(verify_videos)
 
         evaluate_videos(concepts, verify_videos, user_model)
+    except Exception as e:
+        raise e
     finally:
         reset_model_params()
         shutdown_server()
