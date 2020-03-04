@@ -35,6 +35,7 @@ def main():
     except Exception as e:
         raise e
     finally:
+        reset_predict_params()
         shutdown_server()
 
 
@@ -50,6 +51,21 @@ def download_weights(user_model):
     except ClientError as e:
         print("Could not find weights file {0} in S3".format(filename))
         raise e
+
+
+def reset_predict_params():
+    """ Reset the predict_params table
+    """
+    print("resetting model_params")
+    cursor.execute(
+        """
+        UPDATE predict_params
+        SET model='', userid=-1, concepts=ARRAY[]::integer[],
+            upload_annotations=false, videos=ARRAY[]::integer[],
+            version='0', create_collection=false
+        """
+    )
+    con.commit()
 
 
 if __name__ == '__main__':
