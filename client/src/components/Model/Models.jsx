@@ -350,7 +350,6 @@ class Models extends Component {
     const { selectedModel, showTrainingData } = this.state;
     let version_index = parseFloat(selectedModel.version_selected)
     let concept_dict = {}
-    console.log(selectedModel)
     selectedModel['epochs'] = 0
     if(showTrainingData === true) { // if you're trying to close the table by clicking again.
       this.setState({
