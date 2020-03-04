@@ -415,7 +415,7 @@ class S3Generator(Generator):
         """ Returns the image path for image_index.
         """
         image = self.selected_annotations.iloc[image_index]
-        image_name = f"{image['save_name']}_{image['videowidth']}_{image['videoheight']}"
+        image_name = f"{image['save_name']_{config.RESIZED_WIDTH}_{config.RESIZED_HEIGHT}"
         return os.path.join(self.image_folder, image_name + self.image_extension)
 
     def load_annotations(self, image_index):
