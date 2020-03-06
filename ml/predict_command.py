@@ -21,22 +21,29 @@ def main():
     '''
 
     try:
-        params = pd_query("SELECT * FROM predict_params").iloc[0]
-        model_name = params["model"]
-        concepts = params["concepts"]
-        videoids = params["videos"]
-        upload_annotations = params["upload_annotations"]
-        version = params["version"]
+        # params = pd_query("SELECT * FROM predict_params").iloc[0]
+        # model_name = params["model"]
+        # concepts = params["concepts"]
+        # videoids = params["videos"]
+        # upload_annotations = params["upload_annotations"]
+        # version = params["version"]
+        model_name = 'test_1000_vs_5000_fhd'
+        userid = 722
+        concepts = [1629, 1133, 2137, 236, 1210, 383]
+        upload_annotations = True
+        videoids = [86]
+        version = '0.5'
 
         user_model = model_name + "-" + version
         download_weights(user_model)
         setup_predict_progress(videoids)
-        evaluate_videos(concepts, videoids, user_model, upload_annotations)
+        evaluate_videos(concepts, videoids, user_model, upload_annotations,
+                        userid)
     except Exception as e:
         raise e
     finally:
         reset_predict_params()
-        shutdown_server()
+        # shutdown_server()
 
 
 def download_weights(user_model):

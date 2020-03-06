@@ -537,6 +537,9 @@ def handle_annotation(prediction, frames, videoid, videoheight, videowidth, user
 # Uploads images and puts annotation in database
 def upload_annotation(frame, x1, x2, y1, y2,
                       frame_num, conceptid, videoid, videowidth, videoheight, userid, fps):
+    if userid is None:
+        raise ValueError("userid is None, can't upload annotations")
+
     timeinvideo = frame_num / fps
     no_box = str(videoid) + "_" + str(timeinvideo) + "_ai.png"
     temp_file = str(uuid.uuid4()) + ".png"
@@ -556,7 +559,6 @@ def upload_annotation(frame, x1, x2, y1, y2,
             x2, y2, videowidth, videoheight, datetime.datetime.now().date(), no_box
         )
     )
-    con.commit()
 
 
 def upload_predict_progress(count, videoid, total_count, status):

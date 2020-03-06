@@ -105,13 +105,14 @@ def get_counts(results, annotations):
     return counts
 
 
-def evaluate(
-        video_id, model_username, concepts, upload_annotations=False):
+def evaluate(video_id, model_username, concepts, upload_annotations=False,
+             userid=None):
     # file format: (video_id)_(model_name)-(version).mp4
     filename = str(video_id) + "_" + model_username + ".mp4"
     print("ai video filename: {0}".format(filename))
     results, annotations = predict.predict_on_video(
-        video_id, config.WEIGHTS_PATH, concepts, filename
+        video_id, config.WEIGHTS_PATH, concepts, filename, upload_annotations,
+        userid
     )
     if (results.empty):
         return
