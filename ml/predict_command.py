@@ -3,7 +3,7 @@ import subprocess
 from dotenv import load_dotenv
 import boto3
 import json
-from utils.query import s3, con, cursor
+from utils.query import s3, con, cursor, pd_query
 from config.config import S3_BUCKET, S3_WEIGHTS_FOLDER, WEIGHTS_PATH
 from train_command import setup_predict_progress, evaluate_videos, end_predictions, shutdown_server
 from botocore.exceptions import ClientError

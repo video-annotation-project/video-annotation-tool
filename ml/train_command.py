@@ -43,7 +43,7 @@ def main():
         try:
             start_training(user_model, concepts, verify_videos, model_params)
         except Exception as e:
-            delete_model_user()
+            delete_model_user(model_user_id)
             raise e
 
         setup_predict_progress(verify_videos)
