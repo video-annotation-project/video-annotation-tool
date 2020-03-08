@@ -139,6 +139,7 @@ class ReportModal extends Component {
               )}
 
               <FormControlLabel
+                style={{ marginTop: '17px' }}
                 control={
                   <Checkbox
                     checked={unsureOnly}
