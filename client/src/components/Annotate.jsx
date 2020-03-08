@@ -551,9 +551,9 @@ class Annotate extends Component {
           </Grid>
           <Grid item xs />
         </Grid>
-        <Grid container className={classes.root} spacing={0}>
+        <Grid container spacing={0}>
           <Grid item xs={1} />
-          <Grid item xs={6}>
+          <Grid item xs>
             <div
               style={{
                 float: 'left'
@@ -604,16 +604,13 @@ class Annotate extends Component {
               Toggle Controls
             </Button>
             <Button
-              style={{ float: 'right' }}
-              color="primary"
-              variant="contained"
               className={classes.button}
+              variant="contained"
               onClick={() => this.handleDoneClick()}
             >
-              Done
+              Done With Video
             </Button>
           </Grid>
-          <Grid item xs />
         </Grid>
         {dialogOpen && (
           <DialogModal

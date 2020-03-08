@@ -463,9 +463,6 @@ def generate_video(filename, frames, fps, results,
             # boxText = count concept-name (confidence) e.g. "1 Starfish (0.5)"
             boxText = str(conceptsCounts[res.label]) + " " + boxText + \
                 " (" + str(round(res.confidence, 3)) + ")"
-            cv2.putText(
-                frames[res.frame_num], str(res.confidence),
-                (x1, y1 + 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
         cv2.putText(
             frames[res.frame_num], boxText,
             (x1-5, y2+10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
