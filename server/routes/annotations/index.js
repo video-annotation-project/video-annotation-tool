@@ -361,18 +361,9 @@ router.delete(
     try {
       let deleteRes = await psql.query(queryText, [req.body.id]);
 
-      //These are the s3 object we will be deleting
+      //These are the s3 objects we will be deleting
       let Objects = [];
 
-      deleteRes.rows.forEach(element => {
-        Objects.push({
-          Key: process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + element.image
-        });
-        Objects.push({
-          Key:
-            process.env.AWS_S3_BUCKET_ANNOTATIONS_FOLDER + element.imagewithbox
-        });
-      });
       // add tracking video
       Objects.push({
         Key:
