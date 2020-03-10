@@ -118,7 +118,7 @@ def resize(row):
 
 @profile(stream=fp)
 def predict_on_video(videoid, model_weights, concepts, filename,
-                     upload_annotations=False, userid=None):
+                     upload_annotations=False, userid=None, collection_id=None):
 
     vid_filename = pd_query(f'''
             SELECT *
@@ -179,7 +179,9 @@ def predict_on_video(videoid, model_weights, concepts, filename,
         # upload these annotations
         mid_frame_results.apply(
             lambda prediction: handle_annotation(prediction, frames, videoid,
-                                                 config.RESIZED_HEIGHT, config.RESIZED_WIDTH, userid, fps), axis=1)
+                                                 config.RESIZED_HEIGHT,
+                                                 config.RESIZED_WIDTH, userid,
+                                                 fps, collection_id), axis=1)
         con.commit()
 
     generate_video(
@@ -526,12 +528,22 @@ def get_final_predictions(results):
     return middle_frames
 
 
-def handle_annotation(prediction, frames, videoid, videoheight, videowidth, userid, fps):
+def handle_annotation(prediction, frames, videoid, videoheight, videowidth, userid, fps, collection_id):
     frame = frames[int(prediction.frame_num)]
-    upload_annotation(frame,
-                      *prediction.loc[['x1', 'x2', 'y1',
-                                       'y2', 'frame_num', 'label']],
-                      videoid, videowidth, videoheight, userid, fps)
+    annotation_id = upload_annotation(frame,
+                                      *prediction.loc[['x1', 'x2', 'y1',
+                                                       'y2', 'frame_num',
+                                                       'label']],
+                                      videoid, videowidth, videoheight, userid,
+                                      fps)
+    if collection_id is not None:
+        cursor.execute(
+            """
+            INSERT INTO annotation_intermediate (id, annotationid)
+            VALUES (%s, %s)
+            """,
+            (collection_id, annotation_id)
+        )
 
 
 # Uploads images and puts annotation in database
@@ -559,6 +571,8 @@ def upload_annotation(frame, x1, x2, y1, y2,
             x2, y2, videowidth, videoheight, datetime.datetime.now().date(), no_box
         )
     )
+    annotation_id = cursor.fetchone()[0]
+    return annotation_id
 
 
 def upload_predict_progress(count, videoid, total_count, status):

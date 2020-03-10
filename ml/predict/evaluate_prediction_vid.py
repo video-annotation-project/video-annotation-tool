@@ -106,13 +106,24 @@ def get_counts(results, annotations):
 
 
 def evaluate(video_id, model_username, concepts, upload_annotations=False,
-             userid=None):
+             userid=None, create_collection=False):
     # file format: (video_id)_(model_name)-(version).mp4
+
+    if create_collection:
+        if not upload_annotations:
+            raise ValueError("cannot create new annotation collection if "
+                             "annotations aren't uploaded")
+        if userid is None:
+            raise ValueError("userid is None, cannot create new collection")
+        collection_id = create_annotation_collection(model_username, userid, video_id, concepts)
+    else:
+        collection_id = None
+
     filename = str(video_id) + "_" + model_username + ".mp4"
     print("ai video filename: {0}".format(filename))
     results, annotations = predict.predict_on_video(
         video_id, config.WEIGHTS_PATH, concepts, filename, upload_annotations,
-        userid
+        userid, collection_id)
     )
     if (results.empty):
         return
@@ -145,6 +156,33 @@ def evaluate(video_id, model_username, concepts, upload_annotations=False,
     )
     print(metrics)
     con.commit()
+
+
+def create_annotation_collection(model_name, user_id, video_id, concept_ids):
+    time_now = datetime.datetime.now().strftime(r"%y-%m-%d_%H:%M:%S")
+    collection_name = '_'.join([model_name, video_id, time_now])
+    description = f"By {model_name} on video {video_id} at {time_now}"
+    concept_names = (pd_query(
+        """
+        SELECT name
+        FROM concepts
+        WHERE id IN %s
+        """, [concept_ids])
+        ['name'].tolist())
+
+    cursor.execute(
+        """
+        INSERT INTO annotation_collection
+        (name, description, users, videos, concepts, tracking, conceptid)
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """,
+        (collection_name, description, [user_id], [video_id], concept_names,
+         False, concept_ids)
+    )
+    con.commit()
+    collection_id = int(cursor.fetchone()[0])
+
+    return collection_id
 
 
 if __name__ == "__main__":

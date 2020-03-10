@@ -27,12 +27,13 @@ def main():
         videoids = params["videos"]
         upload_annotations = params["upload_annotations"]
         version = params["version"]
+        create_collection = params["create_collection"]
 
         user_model = model_name + "-" + version
         download_weights(user_model)
         setup_predict_progress(videoids)
         evaluate_videos(concepts, videoids, user_model, upload_annotations,
-                        userid)
+                        userid, create_collection)
     except Exception as e:
         raise e
     finally:

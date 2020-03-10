@@ -227,7 +227,7 @@ def setup_predict_progress(verify_videos):
 
 
 def evaluate_videos(concepts, verify_videos, user_model,
-                    upload_annotations=False, userid=None):
+                    upload_annotations=False, userid=None, create_collection=False):
     """ Run evaluate on all the evaluation videos
     """
 
@@ -237,7 +237,7 @@ def evaluate_videos(concepts, verify_videos, user_model,
             f"""UPDATE predict_progress SET videoid = {video_id}, current_video = current_video + 1"""
         )
         con.commit()
-        evaluate(video_id, user_model, concepts, upload_annotations, userid)
+        evaluate(video_id, user_model, concepts, upload_annotations, userid, create_collection)
 
     end_predictions()
 
