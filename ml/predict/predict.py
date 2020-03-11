@@ -561,10 +561,11 @@ def upload_annotation(frame, x1, x2, y1, y2,
     os.system('rm ' + temp_file)
     cursor.execute(
         """
-       INSERT INTO annotations (
-       videoid, userid, conceptid, timeinvideo, x1, y1, x2, y2,
-       videowidth, videoheight, dateannotated, image)
-       VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        INSERT INTO annotations (
+        videoid, userid, conceptid, timeinvideo, x1, y1, x2, y2,
+        videowidth, videoheight, dateannotated, image)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        RETURNING id
         """,
         (
             int(videoid), int(userid), int(conceptid), timeinvideo, x1, y1,

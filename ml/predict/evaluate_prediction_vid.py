@@ -1,5 +1,6 @@
 import os
 import json
+import datetime
 
 import pandas as pd
 import boto3
@@ -7,7 +8,7 @@ from psycopg2 import connect
 
 from predict import predict
 from config import config
-from utils.query import cursor, s3, con
+from utils.query import cursor, s3, con, pd_query
 
 
 def score_predictions(validation, predictions, iou_thresh, concepts):
@@ -124,7 +125,6 @@ def evaluate(video_id, model_username, concepts, upload_annotations=False,
     results, annotations = predict.predict_on_video(
         video_id, config.WEIGHTS_PATH, concepts, filename, upload_annotations,
         userid, collection_id)
-    )
     if (results.empty):
         return
     username_split = model_username.split('-')
@@ -160,21 +160,22 @@ def evaluate(video_id, model_username, concepts, upload_annotations=False,
 
 def create_annotation_collection(model_name, user_id, video_id, concept_ids):
     time_now = datetime.datetime.now().strftime(r"%y-%m-%d_%H:%M:%S")
-    collection_name = '_'.join([model_name, video_id, time_now])
+    collection_name = '_'.join([model_name, str(video_id), time_now])
     description = f"By {model_name} on video {video_id} at {time_now}"
-    concept_names = (pd_query(
+    concept_names = pd_query(
         """
         SELECT name
         FROM concepts
         WHERE id IN %s
-        """, [concept_ids])
-        ['name'].tolist())
+        """, (tuple(concept_ids),)
+        )['name'].tolist()
 
     cursor.execute(
         """
         INSERT INTO annotation_collection
         (name, description, users, videos, concepts, tracking, conceptid)
         VALUES (%s, %s, %s, %s, %s, %s, %s)
+        RETURNING id
         """,
         (collection_name, description, [user_id], [video_id], concept_names,
          False, concept_ids)

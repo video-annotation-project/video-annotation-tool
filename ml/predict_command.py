@@ -23,6 +23,7 @@ def main():
     try:
         params = pd_query("SELECT * FROM predict_params").iloc[0]
         model_name = params["model"]
+        userid = params['userid']
         concepts = params["concepts"]
         videoids = params["videos"]
         upload_annotations = params["upload_annotations"]
