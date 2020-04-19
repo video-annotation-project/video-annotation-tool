@@ -37,9 +37,9 @@ def main():
         evaluate_videos(concepts, videoids, user_model, upload_annotations,
                         userid, create_collection)
     finally:
-        # reset_predict_params()
+        reset_predict_params()
         upload_stdout_stderr()
-        # shutdown_server()
+        shutdown_server()
 
 
 def download_weights(user_model):
