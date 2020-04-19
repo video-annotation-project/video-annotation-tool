@@ -49,10 +49,6 @@ def main():
         setup_predict_progress(verify_videos)
         evaluate_videos(concepts, verify_videos, user_model)
 
-    except Exception as e:
-        # Reraise the error so there is proper traceback
-        raise e
-
     finally:
         # Cleanup training hyperparameters and shut server down regardless
         # whether this process succeeded

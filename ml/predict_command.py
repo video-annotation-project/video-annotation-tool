@@ -4,7 +4,8 @@ from dotenv import load_dotenv
 import boto3
 import json
 from utils.query import s3, con, cursor, pd_query
-from config.config import S3_BUCKET, S3_WEIGHTS_FOLDER, WEIGHTS_PATH
+from config.config import S3_BUCKET, S3_WEIGHTS_FOLDER, WEIGHTS_PATH,\
+    AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, S3_STDOUT_FOLDER
 from train_command import setup_predict_progress, evaluate_videos, end_predictions, shutdown_server
 from botocore.exceptions import ClientError
 
@@ -23,23 +24,22 @@ def main():
     try:
         params = pd_query("SELECT * FROM predict_params").iloc[0]
         model_name = params["model"]
-        userid = params['userid']
         concepts = params["concepts"]
         videoids = params["videos"]
         upload_annotations = params["upload_annotations"]
         version = params["version"]
         create_collection = params["create_collection"]
+        userid = get_model_userid(model_name, version)
 
         user_model = model_name + "-" + version
         download_weights(user_model)
         setup_predict_progress(videoids)
         evaluate_videos(concepts, videoids, user_model, upload_annotations,
                         userid, create_collection)
-    except Exception as e:
-        raise e
     finally:
-        reset_predict_params()
-        shutdown_server()
+        # reset_predict_params()
+        upload_stdout_stderr()
+        # shutdown_server()
 
 
 def download_weights(user_model):
@@ -69,6 +69,25 @@ def reset_predict_params():
         """
     )
     con.commit()
+
+
+def upload_stdout_stderr():
+    STDOUT_FILE = "results_pred.txt"
+    STDERR_FILE = "error_pred.txt"
+
+    client = boto3.client(
+        's3',
+        aws_access_key_id=AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=AWS_SECRET_ACCESS_KEY
+    )
+    client.upload_file(STDOUT_FILE, S3_BUCKET, f'{S3_STDOUT_FOLDER}{STDOUT_FILE}')
+    client.upload_file(STDERR_FILE, S3_BUCKET, f'{S3_STDOUT_FOLDER}{STDERR_FILE}')
+
+
+def get_model_userid(name, version):
+    return int(pd_query("SELECT userid FROM model_versions WHERE "
+                        f"model='{name}' AND version='{version}'")\
+               .iloc[0]['userid'])
 
 
 if __name__ == '__main__':
