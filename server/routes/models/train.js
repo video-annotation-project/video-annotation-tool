@@ -112,13 +112,15 @@ router.put(
         concepts=$3, 
         videos=$4,
         upload_annotations=$5,
-        version=$6`;
+        create_collection=$6,
+        version=$7`;
       params = [
         req.body.model,
         req.body.userid,
         req.body.concepts,
         req.body.videos,
         req.body.uploadAnnotations,
+        req.boby.createCollection,
         req.body.version
       ];
     } else {
