@@ -120,7 +120,7 @@ router.put(
         req.body.concepts,
         req.body.videos,
         req.body.uploadAnnotations,
-        req.boby.createCollection,
+        req.body.createCollection,
         req.body.version
       ];
     } else {
