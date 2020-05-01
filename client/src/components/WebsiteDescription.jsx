@@ -79,6 +79,16 @@ class WebsiteDescription extends Component {
           name: 'Kevin Label',
           role: 'Software Developer',
           img: 'kevin.jpg'
+        },
+        {
+          name: 'Stephen Hung',
+          role: 'Software Developer',
+          img: 'stephen.jpg'
+        },
+        {
+          name: 'Viet Nguyen',
+          role: 'Software Developer',
+          img: 'viet.jpg'
         }
       ]
     };
