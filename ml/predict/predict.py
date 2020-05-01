@@ -171,9 +171,9 @@ def predict_on_video(videoid, model_weights, concepts, filename,
     results = propagate_conceptids(results, concepts)
     results = length_limit_objects(results, config.MIN_FRAMES_THRESH)
     # interweb human annotations and predictions
-    printing_with_time("Generating Video")
 
     if upload_annotations:
+        printing_with_time("Uploading annotations")
         # filter results down to middle frames
         mid_frame_results = get_final_predictions(results)
         # upload these annotations
@@ -184,11 +184,12 @@ def predict_on_video(videoid, model_weights, concepts, filename,
                                                  fps, collection_id), axis=1)
         con.commit()
 
+    printing_with_time("Generating Video")
     generate_video(
         filename, frames,
         fps, results, concepts, videoid, annotations)
 
-    print("Done generating")
+    printing_with_time("Done generating")
     return results, annotations
 
 
@@ -520,7 +521,7 @@ def get_final_predictions(results):
         middle_frame = int(obj.frame_num.median())
         frame = obj[obj.frame_num == middle_frame]
         # Skip erroneous frames without data
-        if frame.shape == (0, 10):
+        if frame.size == 0:
             continue
         middle_frames.append(frame.values.tolist()[0])
     middle_frames = pd.DataFrame(middle_frames)
@@ -544,6 +545,7 @@ def handle_annotation(prediction, frames, videoid, videoheight, videowidth, user
             """,
             (collection_id, annotation_id)
         )
+    # con.commit()
 
 
 # Uploads images and puts annotation in database
