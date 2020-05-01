@@ -15,31 +15,45 @@ from datetime import datetime
 def main():
     """ We train a model and then use it to predict on the specified videos
     """
-    # This process periodically uploads the stdout and stderr files
-    # To the S3 bucket. The website uses these to display stdout and stderr
-    pid = os.getpid()
-    upload_process = upload_stdout.start_uploading(pid)
-    model, model_params = get_model_and_params()
-    user_model, new_version = get_user_model(model_params)
-    create_model_user(new_version, model_params, user_model)
-    # This removes all of the [INFO] outputs from tensorflow.
-    # We still see [WARNING] and [ERROR], but there's a lot less clutter
-    os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 
-    # If set, training will sometimes be unable to save the model
-    os.environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
+    try:
+        # This process periodically uploads the stdout and stderr files
+        # to the S3 bucket. The website uses these to display stdout and stderr
+        pid = os.getpid()
+        upload_process = upload_stdout.start_uploading(pid)
 
-    concepts = model["concepts"]
-    verify_videos = model["verificationvideos"]
+        # Get training hyperparameters, insert new entries for new model in
+        # users and model_versions tables
+        model, model_params = get_model_and_params()
+        user_model, new_version = get_user_model(model_params)
+        model_user_id = create_model_user(new_version, model_params, user_model)
 
-    start_training(user_model, concepts, verify_videos, model_params)
-    setup_predict_progress(verify_videos)
+        # This removes all of the [INFO] outputs from tensorflow.
+        # We still see [WARNING] and [ERROR], but there's a lot less clutter
+        os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 
-    evaluate_videos(concepts, verify_videos, user_model)
-    end_predictions()
+        # If set, training will sometimes be unable to save the model
+        os.environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
 
-    reset_model_params()
-    shutdown_server()
+        concepts = model["concepts"]
+        verify_videos = model["verificationvideos"]
+
+        # If error occurs during training, remove entries for model in users
+        # and model_versions tables
+        try:
+            start_training(user_model, concepts, verify_videos, model_params)
+        except Exception as e:
+            delete_model_user(model_user_id)
+            raise e
+
+        setup_predict_progress(verify_videos)
+        evaluate_videos(concepts, verify_videos, user_model)
+
+    finally:
+        # Cleanup training hyperparameters and shut server down regardless
+        # whether this process succeeded
+        reset_model_params()
+        shutdown_server()
 
 
 def get_model_and_params():
@@ -157,8 +171,21 @@ def create_model_user(new_version, model_params, user_model):
          bool(model_params["include_tracking"]),
          model_user_id, new_version, datetime.now()))
     con.commit()
-
     return model_user_id
+
+
+def delete_model_user(model_user_id):
+    cursor.execute(
+        """DELETE FROM model_versions
+           WHERE userid=%s""",
+        (model_user_id,)
+    )
+    cursor.execute(
+        """DELETE FROM users
+           WHERE id=%s""",
+        (model_user_id,)
+    )
+    con.commit()
 
 
 def start_training(user_model, concepts, verify_videos, model_params):
@@ -196,7 +223,7 @@ def setup_predict_progress(verify_videos):
 
 
 def evaluate_videos(concepts, verify_videos, user_model,
-                    upload_annotations=False):
+                    upload_annotations=False, userid=None, create_collection=False):
     """ Run evaluate on all the evaluation videos
     """
 
@@ -206,17 +233,9 @@ def evaluate_videos(concepts, verify_videos, user_model,
             f"""UPDATE predict_progress SET videoid = {video_id}, current_video = current_video + 1"""
         )
         con.commit()
-        evaluate(video_id, user_model, concepts, upload_annotations)
+        evaluate(video_id, user_model, concepts, upload_annotations, userid, create_collection)
 
-    # Status level 4 on a video means that predictions have completed.
-    cursor.execute(
-        """
-        UPDATE predict_progress
-        SET status=4
-        """
-    )
-    con.commit()
-
+    end_predictions()
 
 def reset_model_params():
     """ Reset the model_params table

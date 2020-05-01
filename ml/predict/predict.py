@@ -2,6 +2,7 @@ import copy
 import os
 import uuid
 import datetime
+import psutil
 
 import cv2
 import numpy as np
@@ -117,7 +118,7 @@ def resize(row):
 
 @profile(stream=fp)
 def predict_on_video(videoid, model_weights, concepts, filename,
-                     upload_annotations=False, userid=None):
+                     upload_annotations=False, userid=None, collection_id=None):
 
     vid_filename = pd_query(f'''
             SELECT *
@@ -125,7 +126,6 @@ def predict_on_video(videoid, model_weights, concepts, filename,
             WHERE id ={videoid}''').iloc[0].filename
     print("Loading Video.")
     frames, fps = get_video_frames(vid_filename, videoid)
-    original_frames = copy.deepcopy(frames)
 
     # Get biologist annotations for video
 
@@ -167,25 +167,29 @@ def predict_on_video(videoid, model_weights, concepts, filename,
     results, frames = predict_frames(frames, fps, model, videoid)
     if (results.empty):
         print("no predictions")
-        return results, fps, original_frames, annotations
+        return results, annotations
     results = propagate_conceptids(results, concepts)
     results = length_limit_objects(results, config.MIN_FRAMES_THRESH)
     # interweb human annotations and predictions
     printing_with_time("Generating Video")
 
-    generate_video(
-        filename, copy.deepcopy(original_frames),
-        fps, results, concepts, videoid, annotations)
     if upload_annotations:
         # filter results down to middle frames
         mid_frame_results = get_final_predictions(results)
         # upload these annotations
         mid_frame_results.apply(
-            lambda prediction: handle_annotation(prediction, original_frames, videoid,
-                                                 config.RESIZED_HEIGHT, config.RESIZED_WIDTH, userid, fps), axis=1)
+            lambda prediction: handle_annotation(prediction, frames, videoid,
+                                                 config.RESIZED_HEIGHT,
+                                                 config.RESIZED_WIDTH, userid,
+                                                 fps, collection_id), axis=1)
         con.commit()
+
+    generate_video(
+        filename, frames,
+        fps, results, concepts, videoid, annotations)
+
     print("Done generating")
-    return results, fps, original_frames, annotations
+    return results, annotations
 
 
 @profile(stream=fp)
@@ -487,6 +491,7 @@ def save_video(filename, frames, fps):
         outputs={converted_file: ['-codec:v', 'libx264', '-y']}
     )
     print(ff.cmd)
+    print(psutil.virtual_memory())
     ff.run()
 
     # temp = ['ffmpeg', '-loglevel', '0', '-i', filename,
@@ -520,51 +525,52 @@ def get_final_predictions(results):
     return middle_frames
 
 
-def handle_annotation(prediction, frames, videoid, videoheight, videowidth, userid, fps):
+def handle_annotation(prediction, frames, videoid, videoheight, videowidth, userid, fps, collection_id):
     frame = frames[int(prediction.frame_num)]
-    frame_w_box = get_boxed_image(
-        *prediction.loc[['x1', 'x2', 'y1', 'y2']], copy.deepcopy(frame))
-    upload_annotation(frame, frame_w_box,
-                      *prediction.loc[['x1', 'x2', 'y1',
-                                       'y2', 'frame_num', 'label']],
-                      videoid, videowidth, videoheight, userid, fps)
+    annotation_id = upload_annotation(frame,
+                                      *prediction.loc[['x1', 'x2', 'y1',
+                                                       'y2', 'frame_num',
+                                                       'label']],
+                                      videoid, videowidth, videoheight, userid,
+                                      fps)
+    if collection_id is not None:
+        cursor.execute(
+            """
+            INSERT INTO annotation_intermediate (id, annotationid)
+            VALUES (%s, %s)
+            """,
+            (collection_id, annotation_id)
+        )
 
-
-def get_boxed_image(x1, x2, y1, y2, frame):
-    cv2.rectangle(frame, (int(x1), int(y1)),
-                  (int(x2), int(y2)), (0, 255, 0), 2)
-    return frame
 
 # Uploads images and puts annotation in database
-
-
-def upload_annotation(frame, frame_w_box, x1, x2, y1, y2,
+def upload_annotation(frame, x1, x2, y1, y2,
                       frame_num, conceptid, videoid, videowidth, videoheight, userid, fps):
+    if userid is None:
+        raise ValueError("userid is None, can't upload annotations")
+
     timeinvideo = frame_num / fps
     no_box = str(videoid) + "_" + str(timeinvideo) + "_ai.png"
-    box = str(uuid.uuid4()) + "_" + str(videoid) + \
-        "_" + str(timeinvideo) + "_box_ai.png"
     temp_file = str(uuid.uuid4()) + ".png"
     cv2.imwrite(temp_file, frame)
     s3.upload_file(temp_file, config.S3_BUCKET, config.S3_ANNOTATION_FOLDER +
                    no_box, ExtraArgs={'ContentType': 'image/png'})
     os.system('rm ' + temp_file)
-    cv2.imwrite(temp_file, frame_w_box)
-    s3.upload_file(temp_file, config.S3_BUCKET, config.S3_ANNOTATION_FOLDER +
-                   box, ExtraArgs={'ContentType': 'image/png'})
-    os.system('rm ' + temp_file)
     cursor.execute(
         """
-       INSERT INTO annotations (
-       videoid, userid, conceptid, timeinvideo, x1, y1, x2, y2,
-       videowidth, videoheight, dateannotated, image, imagewithbox)
-       VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        INSERT INTO annotations (
+        videoid, userid, conceptid, timeinvideo, x1, y1, x2, y2,
+        videowidth, videoheight, dateannotated, image)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        RETURNING id
         """,
         (
             int(videoid), int(userid), int(conceptid), timeinvideo, x1, y1,
-            x2, y2, videowidth, videoheight, datetime.datetime.now().date(), no_box, box
+            x2, y2, videowidth, videoheight, datetime.datetime.now().date(), no_box
         )
     )
+    annotation_id = cursor.fetchone()[0]
+    return annotation_id
 
 
 def upload_predict_progress(count, videoid, total_count, status):

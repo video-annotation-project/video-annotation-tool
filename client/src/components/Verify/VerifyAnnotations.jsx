@@ -819,7 +819,7 @@ class VerifyAnnotations extends Component {
                     onLoad={this.loaded}
                     onError={this.handleErrImage}
                     className={classes.img}
-                    src={`https://cdn.deepseaannotations.com/test/${annotation.image}`}
+                    src={`https://cdn.deepseaannotations.com/annotation_frames/${annotation.image}`}
                     alt="error"
                     crossOrigin="use-credentials"
                     style={{
