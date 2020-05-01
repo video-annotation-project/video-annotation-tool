@@ -143,7 +143,7 @@ class AnnotationFrame extends Component {
             <img
               className={classes.img}
               id="imageId"
-              src={`https://cdn.deepseaannotations.com/test/${image}`}
+              src={`https://cdn.deepseaannotations.com/annotation_frames/${image}`}
               alt="error"
             />
           </div>
