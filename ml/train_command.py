@@ -37,27 +37,22 @@ def main():
 
         concepts = model["concepts"]
         verify_videos = model["verificationvideos"]
-
-        # If error occurs during training, remove entries for model in users
-        # and model_versions tables
-        try:
-            start_training(user_model, concepts, verify_videos, model_params)
-        except Exception as e:
-            delete_model_user()
-            raise e
+        
+        start_training(user_model, concepts, verify_videos, model_params)
+        print("end training")
 
         setup_predict_progress(verify_videos)
         evaluate_videos(concepts, verify_videos, user_model)
 
-    except Exception as e:
-        # Reraise the error so there is proper traceback
-        raise e
-
+    # except Exception:
+    #     delete_model_user()
+    #     raise
     finally:
         # Cleanup training hyperparameters and shut server down regardless
         # whether this process succeeded
+        print("Done")
         reset_model_params()
-        shutdown_server()
+        # shutdown_server()
 
 
 def get_model_and_params():
