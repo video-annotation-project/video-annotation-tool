@@ -17,8 +17,8 @@ import DragBoxContainer from './Utilities/DragBoxContainer';
 const styles = theme => ({
   videoContainer: {
     top: '50px',
-    width: '1600px',
-    height: '900px'
+    width: '1920px',
+    height: '1080px'
   },
   dragBox: {
     margin: '0px',
@@ -364,8 +364,8 @@ class Annotate extends Component {
       y1,
       x2,
       y2,
-      videoWidth: 1600,
-      videoHeight: 900,
+      videoWidth: 1920,
+      videoHeight: 1080,
       image: date,
       comment,
       unsure
@@ -506,8 +506,8 @@ class Annotate extends Component {
           <Grid item xs={1} />
           <Grid item xs>
             <DragBoxContainer
-              videoHeight="900"
-              videoWidth="1600"
+              videoHeight="1080"
+              videoWidth="1920"
               dragBox={classes.dragBox}
               drawDragBoxProp={false}
               size={{
@@ -539,8 +539,8 @@ class Annotate extends Component {
               <video
                 onPause={() => this.updateCheckpoint(false, true)}
                 id="video"
-                width="1600"
-                height="900"
+                width="1920"
+                height="1080"
                 src={`https://cdn.deepseaannotations.com/videos/${currentVideo.filename}`}
                 type="video/mp4"
                 crossOrigin="use-credentials"
@@ -551,9 +551,9 @@ class Annotate extends Component {
           </Grid>
           <Grid item xs />
         </Grid>
-        <Grid container className={classes.root} spacing={0}>
+        <Grid container spacing={0}>
           <Grid item xs={1} />
-          <Grid item xs={6}>
+          <Grid item xs>
             <div
               style={{
                 float: 'left'
@@ -604,16 +604,13 @@ class Annotate extends Component {
               Toggle Controls
             </Button>
             <Button
-              style={{ float: 'right' }}
-              color="primary"
-              variant="contained"
               className={classes.button}
+              variant="contained"
               onClick={() => this.handleDoneClick()}
             >
-              Done
+              Done With Video
             </Button>
           </Grid>
-          <Grid item xs />
         </Grid>
         {dialogOpen && (
           <DialogModal
