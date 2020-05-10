@@ -7,3 +7,5 @@ python-dotenv
 pascal-voc-writer
 scikit-image
 keras
+memory-profiler
+ffmpy

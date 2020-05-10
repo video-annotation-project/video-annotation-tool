@@ -1,7 +1,7 @@
 import os
 import datetime
 
-import keras
+import tensorflow.keras as keras
 import boto3
 from psycopg2 import connect
 

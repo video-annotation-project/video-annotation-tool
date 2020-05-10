@@ -15,46 +15,44 @@ from datetime import datetime
 def main():
     """ We train a model and then use it to predict on the specified videos
     """
+    # This process periodically uploads the stdout and stderr files
+    # to the S3 bucket. The website uses these to display stdout and stderr
+    pid = os.getpid()
+    upload_process = upload_stdout.start_uploading(pid)
 
+    # Get training hyperparameters, insert new entries for new model in
+    # users and model_versions tables
+    model, model_params = get_model_and_params()
+    user_model, new_version = get_user_model(model_params)
+    model_user_id = create_model_user(new_version, model_params, user_model)
+
+    # This removes all of the [INFO] outputs from tensorflow.
+    # We still see [WARNING] and [ERROR], but there's a lot less clutter
+    os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
+
+    # If set, training will sometimes be unable to save the model
+    os.environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
+
+    concepts = model["concepts"]
+    verify_videos = model["verificationvideos"]
+
+    # If error occurs during training, remove entries for model in users
+    # and model_versions tables
     try:
-        # This process periodically uploads the stdout and stderr files
-        # to the S3 bucket. The website uses these to display stdout and stderr
-        pid = os.getpid()
-        upload_process = upload_stdout.start_uploading(pid)
+        start_training(user_model, concepts, verify_videos, model_params)
+    except Exception as e:
+        delete_model_user(model_user_id)
+        raise e
 
-        # Get training hyperparameters, insert new entries for new model in
-        # users and model_versions tables
-        model, model_params = get_model_and_params()
-        user_model, new_version = get_user_model(model_params)
-        model_user_id = create_model_user(new_version, model_params, user_model)
-
-        # This removes all of the [INFO] outputs from tensorflow.
-        # We still see [WARNING] and [ERROR], but there's a lot less clutter
-        os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
-
-        # If set, training will sometimes be unable to save the model
-        os.environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
-
-        concepts = model["concepts"]
-        verify_videos = model["verificationvideos"]
-
-        # If error occurs during training, remove entries for model in users
-        # and model_versions tables
-        try:
-            start_training(user_model, concepts, verify_videos, model_params)
-        except Exception as e:
-            delete_model_user(model_user_id)
-            raise e
-
-        setup_predict_progress(verify_videos)
-        evaluate_videos(concepts, verify_videos, user_model)
-
+    setup_predict_progress(verify_videos)
+    evaluate_videos(concepts, verify_videos, user_model)
+'''
     finally:
         # Cleanup training hyperparameters and shut server down regardless
         # whether this process succeeded
         reset_model_params()
         shutdown_server()
-
+'''
 
 def get_model_and_params():
     """ If they exist, get the selected model's old weights.
