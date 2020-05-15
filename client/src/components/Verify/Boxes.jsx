@@ -2,6 +2,8 @@
 import React, { Component } from 'react';
 import Swal from 'sweetalert2/src/sweetalert2';
 import HighlightOff from '@material-ui/icons/HighlightOff';
+import CreateIcon from '@material-ui/icons/Create';
+
 
 class Hover extends Component {
   constructor(props) {
@@ -10,7 +12,7 @@ class Hover extends Component {
   }
 
   render() {
-    const { box, annotation, handleDelete, color } = this.props;
+    const { box, annotation, handleDelete, color, handleEdit, clicked } = this.props;
     const { hover } = this.state;
     let col = color;
     if (hover) {
@@ -27,26 +29,37 @@ class Hover extends Component {
         }}
         onMouseEnter={() => this.setState({ hover: true })}
         onMouseLeave={() => this.setState({ hover: false })}
-        onClick={event => {
-          event.stopPropagation();
-          Swal.fire({
-            title: 'Are you sure?',
-            text: "You won't be able to revert this!",
-            type: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
-            confirmButtonText: 'Yes, delete it!'
-          }).then(result => {
-            if (result.value) {
-              handleDelete(box);
-            }
-          });
-        }}
+        
       >
         {hover ? (
           <div>
-            <HighlightOff />
+            <HighlightOff 
+              onClick={event => {
+                event.stopPropagation();
+                Swal.fire({
+                  title: 'Are you sure?',
+                  text: "You won't be able to revert this!",
+                  type: 'warning',
+                  showCancelButton: true,
+                  confirmButtonColor: '#3085d6',
+                  cancelButtonColor: '#d33',
+                  confirmButtonText: 'Yes, delete it!'
+                }).then(result => {
+                  if (result.value) {
+                    handleDelete(box);
+                  }
+                });
+              }}
+            />
+            <CreateIcon
+              onClick={
+                event => {
+                  handleEdit(!clicked, box.id, box);
+                  // console.log(annotation)
+                  // console.log(box)
+                }
+              }
+            />
             <div>{box.name ? box.name : ''}</div>
           </div>
         ) : (
@@ -58,6 +71,24 @@ class Hover extends Component {
 }
 
 class Boxes extends Component {
+
+  state = {editClicked: false, prevClicker:null}
+
+  handleEditButton = (clicked, id, box) => {
+    const {handleConceptChange} = this.props;
+    if(id !== this.state.prevClicker && this.state.prevClicker !== null) {
+      return;
+    }
+    if(clicked) { // button has been clicked.
+      // do stuff when edit button is clicked
+      this.setState({prevClicker:id})
+    } else { // button has been reclicked to false: reset button clicking state
+      this.setState({prevClicker:null})
+    }
+    this.setState({editClicked: clicked})
+    handleConceptChange(id, box)
+  };
+
   displayIgnoredBoxes = () => {
     const { ignoredAnnotations, annotation, handleDelete } = this.props;
     return (
@@ -80,6 +111,8 @@ class Boxes extends Component {
                   box={box}
                   annotation={annotation}
                   color="2px solid DodgerBlue"
+                  handleEdit={this.handleEditButton}
+                  clicked={this.state.editClicked}
                 />
               </div>
             ))
@@ -111,6 +144,8 @@ class Boxes extends Component {
                   box={box}
                   annotation={annotation}
                   color="2px solid DodgerBlue"
+                  handleEdit={this.handleEditButton}
+                  clicked={this.state.editClicked}
                 />
               </div>
             ))
@@ -142,6 +177,8 @@ class Boxes extends Component {
                   box={box}
                   annotation={annotation}
                   color="2px solid lightgreen"
+                  handleEdit={this.handleEditButton}
+                  clicked={this.state.editClicked}
                 />
               </div>
             ))

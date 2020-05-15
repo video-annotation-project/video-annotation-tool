@@ -134,7 +134,8 @@ class VerifyAnnotations extends Component {
       videoDialogOpen,
       drawDragBox: true,
       trackingStatus: null,
-      detailDialogOpen: false
+      detailDialogOpen: false,
+      annotation : annotation
     };
 
     this.displayLoading = displayLoading;
@@ -275,7 +276,8 @@ class VerifyAnnotations extends Component {
   };
 
   handleConceptClick = concept => {
-    const { annotation, annotating } = this.props;
+    const { annotating } = this.props;
+    const { annotation } = this.state;
 
     this.setState({
       conceptDialogMsg: annotating
@@ -284,6 +286,16 @@ class VerifyAnnotations extends Component {
       conceptDialogOpen: true,
       clickedConcept: annotation.conceptid === concept.id ? null : concept
     });
+  };
+
+  // change annotation for blue box
+  handleChangedConcept = (id, box) => {
+    const {annotation} = this.state;
+    // annotation.id = id
+    console.log("annotation:", annotation)
+    console.log("box:", box)
+
+    console.log("handleChangedConcept:", id)
   };
 
   changeConcept = (comment, unsure) => {
@@ -809,6 +821,7 @@ class VerifyAnnotations extends Component {
                 >
                   <Boxes
                     handleDelete={this.handleDelete}
+                    handleConceptChange = {this.handleChangedConcept}
                     boxesOutsideCol={boxesOutsideCol}
                     verifiedBoxes={verifiedBoxes}
                     ignoredAnnotations={ignoredAnnotations}
