@@ -740,36 +740,27 @@ let updateBoundingBox = async (req, res) => {
 };
 
 let updateBoundingBoxMultiple = async (req, res) => {
-  const params = [req.body.annotations.map(o => [
-    o.id,
-    o.x1,
-    o.y1,
-    o.x2,
-    o.y2
-  ])]
-
   const queryText = `
-      UPDATE
-        annotations as a
-      SET
-        x1 = r.x1,
-        y1 = r.y1,
-        x2 = r.x2,
-        y2 = r.y2,
-        oldx1 = a.x1,
-        oldy1 = a.y1,
-        oldx2 = a.x2,
-        oldy2 = a.y2,
-        priority = a.priority + 1
-      FROM 
-        (
-          values $1
-        ) as r (id, x1, y1, x2, y2)
-      WHERE
-        a.id = r.id;
-    `;
+    UPDATE
+      annotations as a
+    SET
+      x1 = r.x1,
+      y1 = r.y1,
+      x2 = r.x2,
+      y2 = r.y2,
+      oldx1 = a.x1,
+      oldy1 = a.y1,
+      oldx2 = a.x2,
+      oldy2 = a.y2,
+      priority = a.priority + 1
+    FROM
+      json_to_recordset($1) as r(id int, x1 int, y1 int, x2 int, y2 int)
+    WHERE
+      a.id = r.id;
+  `;
+
   try {
-    let update = await psql.query(queryText, params);
+    let update = await psql.query(queryText, JSON.stringify(res.body));
     res.json(update.rows);
   } catch (error) {
     console.log(error);
@@ -852,50 +843,32 @@ let verifyAnnotation = async (req, res) => {
 };
 
 let verifyAnnotationMultiple = async (req, res) => {
-  const params = [req.body.annotations.map(o => [
-    o.id,
-    o.verifiedby, 
-    o.originalid,
-    o.conceptid,
-    o.comment,
-    o.unsure
-  ])]
-
   const queryText = `
-      UPDATE
-        annotations as a
-      SET
-        verifiedby = r.verifiedby,
-        verifieddate = CURRENT_TIMESTAMP,
-        originalid = r.originalid,
-        conceptid = coalesce(r.conceptid, a.conceptid),
-        oldconceptid = (case when r.conceptid then a.conceptid end),
-        priority = (case when r.conceptid then a.priority + 3 else a.priority + 1 end),
-        comment = coalesce(r.comment, a.comment),
-        unsure = coalesce(r.unsure, a.unsure)
-      FROM 
-        (
-          values $1
-        ) as r (
-          id,
-          verifiedby,
-          originalid,
-          conceptid,
-          comment,
-          unsure
-        )
-      WHERE
-        a.id = r.id;
-    `;
+    UPDATE
+      annotations as a
+    SET
+      verifiedby = r.verifiedby,
+      verifieddate = CURRENT_TIMESTAMP,
+      originalid = r.originalid,
+      conceptid = coalesce(r.conceptid, a.conceptid),
+      oldconceptid = (case when r.conceptid notnull then a.conceptid end),
+      priority = (case when r.conceptid notnull then a.priority + 3 else a.priority + 1 end),
+      comment = coalesce(r.comment, a.comment),
+      unsure = coalesce(r.unsure, a.unsure)
+    FROM
+      json_to_recordset($1) as r(id int, verifiedby int, originalid int, conceptid int, comment text, unsure boolean)
+    WHERE
+      a.id = r.id;
+  `;
 
-    try {
-      await psql.query(queryText, params);
-      deleteTrackingAnnotations(req);
-      res.json('success');
-    } catch (error) {
-      console.log(error);
-      res.status(500).json(error);
-    }
+  try {
+    await psql.query(queryText, JSON.stringify(res.body));
+    deleteTrackingAnnotations(req);
+    res.json('success');
+  } catch (error) {
+    console.log(error);
+    res.status(500).json(error);
+  }
 };
 
 let selectLevelQuery = level => {
