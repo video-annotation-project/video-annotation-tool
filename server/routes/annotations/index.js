@@ -850,9 +850,11 @@ let verifyAnnotation = async (req, res) => {
 let verifyAnnotationMultiple = async (req, res) => {
   /*
     res.body should be list of JSON objects, object should be:
-    {"id": int, "verifiedby": int, "conceptid": int, "comment": string, "unsure": bool}
+    {"id": int, "conceptid": int, "comment": string, "unsure": bool}
     Missing attibutes will be treated as null
   */
+
+  req.body.forEach(r => r.verifiedby = req.user.id);
 
   const queryText = `
     UPDATE
