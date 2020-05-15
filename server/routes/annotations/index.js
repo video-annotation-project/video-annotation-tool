@@ -740,6 +740,11 @@ let updateBoundingBox = async (req, res) => {
 };
 
 let updateBoundingBoxMultiple = async (req, res) => {
+  /*
+    res.body should be list of JSON objects, object should be:
+    {"id": int, "x1": int, "y1": int, "x2": int, "y2": int}
+    Missing attibutes will be treated as null
+  */
   const queryText = `
     UPDATE
       annotations as a
@@ -843,6 +848,12 @@ let verifyAnnotation = async (req, res) => {
 };
 
 let verifyAnnotationMultiple = async (req, res) => {
+  /*
+    res.body should be list of JSON objects, object should be:
+    {"id": int, "verifiedby": int, "conceptid": int, "comment": string, "unsure": bool}
+    Missing attibutes will be treated as null
+  */
+
   const queryText = `
     UPDATE
       annotations as a
