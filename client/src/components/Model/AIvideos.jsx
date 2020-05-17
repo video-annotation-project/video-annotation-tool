@@ -276,8 +276,8 @@ class Annotate extends Component {
                   <video
                     className={classes.videoContainer}
                     id="video"
-                    width="1600"
-                    height="900"
+                    width="1920"
+                    height="1080"
                     src={`https://cdn.deepseaannotations.com/ai_videos/${video}`}
                     type="video/mp4"
                     crossOrigin="use-credentials"
