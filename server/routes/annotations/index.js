@@ -159,7 +159,7 @@ router.get(
     let queryText = `
       WITH collection AS (
         SELECT
-          a.*, c.name, c.picture, u.username,
+          a.*, c.name, c.picture, u.username, u.admin,
           v.filename, ROUND(a.timeinvideo * v.fps) as frame
         FROM
           annotation_intermediate ai

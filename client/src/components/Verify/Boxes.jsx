@@ -91,6 +91,7 @@ class Boxes extends Component {
 
   displayIgnoredBoxes = () => {
     const { ignoredAnnotations, annotation, handleDelete } = this.props;
+    
     return (
       <div>
         {ignoredAnnotations
@@ -110,7 +111,7 @@ class Boxes extends Component {
                   handleDelete={handleDelete}
                   box={box}
                   annotation={annotation}
-                  color="2px solid DodgerBlue"
+                  color={box.admin === null ? "2px solid DarkTurquoise" : "2px solid DodgerBlue"}
                   handleEdit={this.handleEditButton}
                   clicked={this.state.editClicked}
                 />
@@ -143,7 +144,7 @@ class Boxes extends Component {
                   handleDelete={handleDelete}
                   box={box}
                   annotation={annotation}
-                  color="2px solid DodgerBlue"
+                  color={box.admin === null ? "2px solid DarkTurquoise" : "2px solid DodgerBlue"}
                   handleEdit={this.handleEditButton}
                   clicked={this.state.editClicked}
                 />

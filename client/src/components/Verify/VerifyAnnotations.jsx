@@ -98,7 +98,11 @@ function Legend() {
         <LegendItem color="lightgreen" label="Verified in Collection" />
         <LegendItem
           color="DodgerBlue"
-          label="Ignored / Outside of Collection"
+          label="Ignored / Outside of Collection (User)"
+        />
+        <LegendItem
+          color="DarkTurquoise"
+          label="Ignored / Outside of Collection (Model)"
         />
         <LegendItem color="coral" label="Current Unverified in Collection" />
       </Paper>
