@@ -452,10 +452,15 @@ class S3Generator(Generator):
             return True
 
         image_name = str(image['image'])
+        # Some files have a file extension, some don't. Let's fix that.
+        if self.image_extension not in image_name:
+            image_name += self.image_extension
+            
         try:
             obj = self.client.get_object(
                 Bucket=config.S3_BUCKET, Key=config.S3_ANNOTATION_FOLDER + image_name)
             if (obj['ContentLength'] == 0):
+                print(f'{image_name} Content Length is 0')
                 # Image is empty, use the next index
                 error_print(
                     f'file {config.S3_ANNOTATION_FOLDER}{image_name} has size 0, using next image instead')
@@ -467,14 +472,13 @@ class S3Generator(Generator):
         # ClientError is the exception class for a KeyNotFound error
         except ClientError:
             # Image doesnt exist, use the next index
+            print(f'{image_name} not found')
             error_print(
                 f'file {config.S3_ANNOTATION_FOLDER}{image_name} not found in S3 bucket, using next image instead')
             self.failed_downloads.add(image_index)
             return False
 
-        # Some files have a file extension, some don't. Let's fix that.
-        if self.image_extension not in image_name:
-            image_name += self.image_extension
+        
 
         image_path = self.image_path(image_index)
 
