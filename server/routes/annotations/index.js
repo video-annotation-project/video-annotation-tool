@@ -107,24 +107,27 @@ router.get(
         json_agg(
         json_build_object(
           'id', c.id, 'x1',c.x1, 'y1',c.y1, 'x2',c.x2, 'y2',c.y2,
-          'videowidth', c.videowidth, 'videoheight', c.videoheight, 'name', c.name )) as box
+          'videowidth', c.videowidth, 'videoheight', c.videoheight, 'name', c.name, 'admin', c.admin, 'userid', c.userid )) as box
       FROM
         (SELECT 
-          a.id, a.x1, a.x2, a.y1, a.y2, a.videowidth, a.videoheight, cc.name,
+          a.id, a.x1, a.x2, a.y1, a.y2, a.videowidth, a.videoheight, cc.name, u.admin, a.userid,
           CASE WHEN
             array_agg(ai.id) && $4 
             AND a.verifiedby IS NOT NULL 
           THEN 1 
             WHEN array_agg(ai.id) && $4
           THEN 2
+            WHEN u.admin is null
+          THEN 3
           ELSE 0 
           END AS verified_flag
         FROM
           annotationsAtVideoFrame a
         LEFT JOIN concepts cc ON cc.id = a.conceptid
         LEFT JOIN annotation_intermediate ai ON ai.annotationid=a.id
+        LEFT JOIN users u on u.id = a.userid
         GROUP BY
-            a.id, a.x1, a.x2, a.y1, a.y2, a.videowidth, a.videoheight, a.verifiedby, cc.name) c
+            a.id, a.x1, a.x2, a.y1, a.y2, a.videowidth, a.videoheight, a.verifiedby, cc.name, u.admin, a.userid) c
       WHERE c.verified_flag != 2
       GROUP BY c.verified_flag
       ORDER BY c.verified_flag;
