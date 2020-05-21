@@ -39,20 +39,20 @@ def main():
         verify_videos = model["verificationvideos"]
         
         start_training(user_model, concepts, verify_videos, model_params)
-        print("end training")
 
         setup_predict_progress(verify_videos)
         evaluate_videos(concepts, verify_videos, user_model)
 
-    # except Exception:
-    #     delete_model_user()
-    #     raise
+    except:
+        delete_model_user(model_user_id)
+        print("Training failed, deleted entries in model_versions and users")
+        raise
+
     finally:
         # Cleanup training hyperparameters and shut server down regardless
         # whether this process succeeded
-        print("Done")
         reset_model_params()
-        # shutdown_server()
+        shutdown_server()
 
 
 def get_model_and_params():
