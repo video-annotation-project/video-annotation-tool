@@ -205,24 +205,22 @@ class VerifyAnnotations extends Component {
           `?videoid=${annotation.videoid}&timeinvideo=${annotation.timeinvideo}`,
         config
       );
+      let [vBoxTemp, boColTemp] = [[],[]]
       console.log(selectedAnnotationCollections)
       if (data.data.length > 0) {
-        if (data.data[0].verified_flag === 1) {
-          this.setState({
-            verifiedBoxes: data.data[0].box,
-            boxesOutsideCol: []
-          });
-        } else if (data.data.length === 2) {
-          this.setState({
-            boxesOutsideCol: data.data[0].box,
-            verifiedBoxes: data.data[1].box
-          });
-        } else {
-          this.setState({
-            verifiedBoxes: [],
-            boxesOutsideCol: data.data[0].box
-          });
-        }
+        data.data.forEach(
+          row => {
+            if(row.verified_flag === 1) {
+              vBoxTemp = row.box
+            } else { // case for when flag is 0 or 3
+              boColTemp = boColTemp.concat(row.box)
+            }
+          }
+        )
+        this.setState({
+          boxesOutsideCol: boColTemp,
+          verifiedBoxes: vBoxTemp
+        });
       } else {
         this.setState({
           boxesOutsideCol: [],

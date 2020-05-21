@@ -155,7 +155,7 @@ class Boxes extends Component {
                   handleDelete={handleDelete}
                   box={box}
                   annotation={annotation}
-                  color={box.admin === null ? "2px solid Yellow" : "2px solid lightgreen"}
+                  color= "2px solid lightgreen"
                 />
               </div>
             ))
