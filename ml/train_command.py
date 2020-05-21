@@ -270,6 +270,23 @@ def shutdown_server():
     con.close()
     subprocess.call(["sudo", "shutdown", "-h"])
 
+def get_ancestor(concepts_table, concept):
+    return concepts_table[concepts_table['id'] == concept]['parent'].iloc[0]
+
+def find_nearest_common_ancestor(c1, c2):
+    concepts_table = pd_query("""SELECT * FROM concepts""")
+    if c1 == c2:
+        return c1
+    visited = set((c1, c2))
+    while c1 != 0 or c2 != 0:
+        c1 = get_ancestor(concepts_table, c1)
+        if c1 in visited:
+            return c1
+        c2 = get_ancestor(concepts_table, c2)
+        if c2 in visited:
+            return c2
+    # This won't be reached
+    return 0
 
 if __name__ == '__main__':
     main()
