@@ -101,7 +101,7 @@ function Legend() {
           label="Ignored / Outside of Collection (User)"
         />
         <LegendItem
-          color="DarkTurquoise"
+          color="Yellow"
           label="Ignored / Outside of Collection (Model)"
         />
         <LegendItem color="coral" label="Current Unverified in Collection" />
@@ -205,6 +205,7 @@ class VerifyAnnotations extends Component {
           `?videoid=${annotation.videoid}&timeinvideo=${annotation.timeinvideo}`,
         config
       );
+      console.log(selectedAnnotationCollections)
       if (data.data.length > 0) {
         if (data.data[0].verified_flag === 1) {
           this.setState({
@@ -280,8 +281,7 @@ class VerifyAnnotations extends Component {
   };
 
   handleConceptClick = concept => {
-    const { annotating } = this.props;
-    const { annotation } = this.state;
+    const { annotation, annotating } = this.props;
 
     this.setState({
       conceptDialogMsg: annotating
@@ -290,16 +290,6 @@ class VerifyAnnotations extends Component {
       conceptDialogOpen: true,
       clickedConcept: annotation.conceptid === concept.id ? null : concept
     });
-  };
-
-  // change annotation for blue box
-  handleChangedConcept = (id, box) => {
-    const {annotation} = this.state;
-    // annotation.id = id
-    console.log("annotation:", annotation)
-    console.log("box:", box)
-
-    console.log("handleChangedConcept:", id)
   };
 
   changeConcept = (comment, unsure) => {
@@ -825,7 +815,6 @@ class VerifyAnnotations extends Component {
                 >
                   <Boxes
                     handleDelete={this.handleDelete}
-                    handleConceptChange = {this.handleChangedConcept}
                     boxesOutsideCol={boxesOutsideCol}
                     verifiedBoxes={verifiedBoxes}
                     ignoredAnnotations={ignoredAnnotations}

@@ -12,7 +12,7 @@ class Hover extends Component {
   }
 
   render() {
-    const { box, annotation, handleDelete, color, handleEdit, clicked } = this.props;
+    const { box, annotation, handleDelete, color } = this.props;
     const { hover } = this.state;
     let col = color;
     if (hover) {
@@ -54,9 +54,8 @@ class Hover extends Component {
             <CreateIcon
               onClick={
                 event => {
-                  handleEdit(!clicked, box.id, box);
-                  // console.log(annotation)
-                  // console.log(box)
+                  console.log("annotation:", annotation)
+                  console.log("box:", box)
                 }
               }
             />
@@ -71,23 +70,6 @@ class Hover extends Component {
 }
 
 class Boxes extends Component {
-
-  state = {editClicked: false, prevClicker:null}
-
-  handleEditButton = (clicked, id, box) => {
-    const {handleConceptChange} = this.props;
-    if(id !== this.state.prevClicker && this.state.prevClicker !== null) {
-      return;
-    }
-    if(clicked) { // button has been clicked.
-      // do stuff when edit button is clicked
-      this.setState({prevClicker:id})
-    } else { // button has been reclicked to false: reset button clicking state
-      this.setState({prevClicker:null})
-    }
-    this.setState({editClicked: clicked})
-    handleConceptChange(id, box)
-  };
 
   displayIgnoredBoxes = () => {
     const { ignoredAnnotations, annotation, handleDelete } = this.props;
@@ -111,9 +93,7 @@ class Boxes extends Component {
                   handleDelete={handleDelete}
                   box={box}
                   annotation={annotation}
-                  color={box.admin === null ? "2px solid DarkTurquoise" : "2px solid DodgerBlue"}
-                  handleEdit={this.handleEditButton}
-                  clicked={this.state.editClicked}
+                  color={box.admin === null ? "2px solid Yellow" : "2px solid DodgerBlue"}
                 />
               </div>
             ))
@@ -144,9 +124,7 @@ class Boxes extends Component {
                   handleDelete={handleDelete}
                   box={box}
                   annotation={annotation}
-                  color={box.admin === null ? "2px solid DarkTurquoise" : "2px solid DodgerBlue"}
-                  handleEdit={this.handleEditButton}
-                  clicked={this.state.editClicked}
+                  color={box.admin === null ?  "2px solid Yellow" : "2px solid DodgerBlue" }
                 />
               </div>
             ))
@@ -177,9 +155,7 @@ class Boxes extends Component {
                   handleDelete={handleDelete}
                   box={box}
                   annotation={annotation}
-                  color="2px solid lightgreen"
-                  handleEdit={this.handleEditButton}
-                  clicked={this.state.editClicked}
+                  color={box.admin === null ? "2px solid Yellow" : "2px solid lightgreen"}
                 />
               </div>
             ))
