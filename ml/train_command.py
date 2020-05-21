@@ -278,14 +278,18 @@ def find_nearest_common_ancestor(c1, c2):
         return c1
     visited = set((c1, c2))
     while c1 != 0 or c2 != 0:
-        c1 = get_ancestor(concepts_table, c1)
-        if c1 in visited:
-            return c1
-        c2 = get_ancestor(concepts_table, c2)
-        if c2 in visited:
-            return c2
-    # This won't be reached
-    return 0
+        if c1 != 0:
+            c1 = get_ancestor(concepts_table, c1)
+            if c1 in visited:
+                return c1
+            visited.add(c1)
+        if c2 != 0:
+            c2 = get_ancestor(concepts_table, c2)
+            if c2 in visited:
+                return c2
+            visited.add(c2)
+    # This shouldn't be reached
+    return -1
 
 if __name__ == '__main__':
     main()
