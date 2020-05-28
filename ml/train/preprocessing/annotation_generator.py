@@ -268,7 +268,7 @@ class AnnotationGenerator(object):
             annotations_query += """ AND a.verifiedby IS NOT NULL"""
 
         # Filter collection so each concept has min_example annotations
-        annotations_query += r'''
+        annotations_query += f'''
             ),
             filteredCollection AS (
                 SELECT
@@ -278,7 +278,7 @@ class AnnotationGenerator(object):
                         ROW_NUMBER() OVER (
                             PARTITION BY
                                 conceptid
-                            ORDER BY userid=32, verifiedby IS NULL) AS r,
+                            ORDER BY userid={tracking_uid}, verifiedby IS NULL) AS r,
                         c.*
                     FROM
                         collection c) t
@@ -287,7 +287,7 @@ class AnnotationGenerator(object):
             )
         '''
         # Add annotations that exist in the same frame
-        annotations_query += r'''
+        annotations_query += f'''
             SELECT
                 A.id,
                 image,
@@ -311,6 +311,9 @@ class AnnotationGenerator(object):
                 x2>0 AND x2<=videowidth AND
                 y1>=0 AND y1<videowidth AND
                 y2>0 AND y2<=videowidth AND
+                (a.userid = {tracking_uid} OR 
+                a.userid in {str(tuple(config.GOOD_USERS))} OR
+                a.verifiedby is not null) AND
                 EXISTS (
                     SELECT
                         1
