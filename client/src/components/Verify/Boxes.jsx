@@ -2,6 +2,8 @@
 import React, { Component } from 'react';
 import Swal from 'sweetalert2/src/sweetalert2';
 import HighlightOff from '@material-ui/icons/HighlightOff';
+import CreateIcon from '@material-ui/icons/Create';
+
 
 class Hover extends Component {
   constructor(props) {
@@ -27,26 +29,36 @@ class Hover extends Component {
         }}
         onMouseEnter={() => this.setState({ hover: true })}
         onMouseLeave={() => this.setState({ hover: false })}
-        onClick={event => {
-          event.stopPropagation();
-          Swal.fire({
-            title: 'Are you sure?',
-            text: "You won't be able to revert this!",
-            type: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
-            confirmButtonText: 'Yes, delete it!'
-          }).then(result => {
-            if (result.value) {
-              handleDelete(box);
-            }
-          });
-        }}
+        
       >
         {hover ? (
           <div>
-            <HighlightOff />
+            <HighlightOff 
+              onClick={event => {
+                event.stopPropagation();
+                Swal.fire({
+                  title: 'Are you sure?',
+                  text: "You won't be able to revert this!",
+                  type: 'warning',
+                  showCancelButton: true,
+                  confirmButtonColor: '#3085d6',
+                  cancelButtonColor: '#d33',
+                  confirmButtonText: 'Yes, delete it!'
+                }).then(result => {
+                  if (result.value) {
+                    handleDelete(box);
+                  }
+                });
+              }}
+            />
+            <CreateIcon
+              onClick={
+                event => {
+                  console.log("annotation:", annotation)
+                  console.log("box:", box)
+                }
+              }
+            />
             <div>{box.name ? box.name : ''}</div>
           </div>
         ) : (
@@ -58,8 +70,10 @@ class Hover extends Component {
 }
 
 class Boxes extends Component {
+
   displayIgnoredBoxes = () => {
     const { ignoredAnnotations, annotation, handleDelete } = this.props;
+    
     return (
       <div>
         {ignoredAnnotations
@@ -79,7 +93,7 @@ class Boxes extends Component {
                   handleDelete={handleDelete}
                   box={box}
                   annotation={annotation}
-                  color="2px solid DodgerBlue"
+                  color={box.admin === null ? "2px solid Yellow" : "2px solid DodgerBlue"}
                 />
               </div>
             ))
@@ -110,7 +124,7 @@ class Boxes extends Component {
                   handleDelete={handleDelete}
                   box={box}
                   annotation={annotation}
-                  color="2px solid DodgerBlue"
+                  color={box.admin === null ?  "2px solid Yellow" : "2px solid DodgerBlue" }
                 />
               </div>
             ))
@@ -141,7 +155,7 @@ class Boxes extends Component {
                   handleDelete={handleDelete}
                   box={box}
                   annotation={annotation}
-                  color="2px solid lightgreen"
+                  color= "2px solid lightgreen"
                 />
               </div>
             ))

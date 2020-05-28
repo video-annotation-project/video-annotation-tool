@@ -107,24 +107,27 @@ router.get(
         json_agg(
         json_build_object(
           'id', c.id, 'x1',c.x1, 'y1',c.y1, 'x2',c.x2, 'y2',c.y2,
-          'videowidth', c.videowidth, 'videoheight', c.videoheight, 'name', c.name )) as box
+          'videowidth', c.videowidth, 'videoheight', c.videoheight, 'name', c.name, 'admin', c.admin, 'userid', c.userid )) as box
       FROM
         (SELECT 
-          a.id, a.x1, a.x2, a.y1, a.y2, a.videowidth, a.videoheight, cc.name,
+          a.id, a.x1, a.x2, a.y1, a.y2, a.videowidth, a.videoheight, cc.name, u.admin, a.userid,
           CASE WHEN
             array_agg(ai.id) && $4 
             AND a.verifiedby IS NOT NULL 
           THEN 1 
             WHEN array_agg(ai.id) && $4
           THEN 2
+            WHEN u.admin is null
+          THEN 3
           ELSE 0 
           END AS verified_flag
         FROM
           annotationsAtVideoFrame a
         LEFT JOIN concepts cc ON cc.id = a.conceptid
         LEFT JOIN annotation_intermediate ai ON ai.annotationid=a.id
+        LEFT JOIN users u on u.id = a.userid
         GROUP BY
-            a.id, a.x1, a.x2, a.y1, a.y2, a.videowidth, a.videoheight, a.verifiedby, cc.name) c
+            a.id, a.x1, a.x2, a.y1, a.y2, a.videowidth, a.videoheight, a.verifiedby, cc.name, u.admin, a.userid) c
       WHERE c.verified_flag != 2
       GROUP BY c.verified_flag
       ORDER BY c.verified_flag;
@@ -156,7 +159,7 @@ router.get(
     let queryText = `
       WITH collection AS (
         SELECT
-          a.*, c.name, c.picture, u.username,
+          a.*, c.name, c.picture, u.username, u.admin,
           v.filename, ROUND(a.timeinvideo * v.fps) as frame
         FROM
           annotation_intermediate ai
@@ -726,7 +729,7 @@ let updateBoundingBox = async (req, res) => {
         annotations 
       SET 
         x1=$1, y1=$2, x2=$3, y2=$4, oldx1=$5, oldy1=$6, oldx2=$7, oldy2=$8,
-        priority = priority+1 
+        priority = CASE WHEN $9 is null THEN priority+2 ELSE priority+1 END
       WHERE 
         id=$9
     `;
@@ -790,11 +793,11 @@ let verifyAnnotation = async (req, res) => {
       verifiedby=$2, verifieddate=current_timestamp, originalid=null`;
 
   if (req.body.conceptId !== null) {
-    queryText1 += `, conceptid=$3, oldconceptid=$4, priority=priority+3`;
+    queryText1 += `, conceptid=$3, oldconceptid=$4, priority=CASE WHEN $9 is null THEN priority+4 ELSE priority+3 END`;
     params.push(req.body.conceptId);
     params.push(req.body.oldConceptId);
   } else {
-    queryText1 += `, priority = priority+1`;
+    queryText1 += `, priority=CASE WHEN $9 is null THEN priority+2 ELSE priority+1 END`;
   }
 
   params.push(req.body.comment);
