@@ -729,7 +729,7 @@ let updateBoundingBox = async (req, res) => {
         annotations 
       SET 
         x1=$1, y1=$2, x2=$3, y2=$4, oldx1=$5, oldy1=$6, oldx2=$7, oldy2=$8,
-        priority = priority+1 
+        priority = CASE WHEN $9 is null THEN priority+2 ELSE priority+1 END
       WHERE 
         id=$9
     `;
@@ -793,11 +793,11 @@ let verifyAnnotation = async (req, res) => {
       verifiedby=$2, verifieddate=current_timestamp, originalid=null`;
 
   if (req.body.conceptId !== null) {
-    queryText1 += `, conceptid=$3, oldconceptid=$4, priority=priority+3`;
+    queryText1 += `, conceptid=$3, oldconceptid=$4, priority=CASE WHEN $9 is null THEN priority+4 ELSE priority+3 END`;
     params.push(req.body.conceptId);
     params.push(req.body.oldConceptId);
   } else {
-    queryText1 += `, priority = priority+1`;
+    queryText1 += `, priority=CASE WHEN $9 is null THEN priority+2 ELSE priority+1 END`;
   }
 
   params.push(req.body.comment);

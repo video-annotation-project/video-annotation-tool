@@ -467,7 +467,8 @@ class VerifyAnnotations extends Component {
       conceptId: !concept ? null : concept.id,
       comment,
       unsure,
-      oldConceptId: !concept ? null : annotation.conceptid
+      oldConceptId: !concept ? null : annotation.conceptid,
+      admin: annotation.admin
     };
 
     const config = {
