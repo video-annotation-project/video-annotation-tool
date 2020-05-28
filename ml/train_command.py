@@ -38,7 +38,12 @@ def main():
         concepts = model["concepts"]
         verify_videos = model["verificationvideos"]
         
-        start_training(user_model, concepts, verify_videos, model_params)
+        to_merge = concepts[:2]
+        concepts = concepts[2:]
+        ancestor = find_nearest_common_ancestor(to_merge*)
+        hierarchy_map = {concept:ancestor for concept in to_merge}
+        
+        start_training(user_model, concepts, verify_videos, model_params, hierarchy_map)
 
         setup_predict_progress(verify_videos)
         evaluate_videos(concepts, verify_videos, user_model)
@@ -187,7 +192,7 @@ def delete_model_user(model_user_id):
     con.commit()
 
 
-def start_training(user_model, concepts, verify_videos, model_params):
+def start_training(user_model, concepts, verify_videos, model_params, hierarchy_map):
     """Start a training job with the correct parameters
     """
 
@@ -202,6 +207,7 @@ def start_training(user_model, concepts, verify_videos, model_params):
         download_data=True,
         verified_only=model_params["verified_only"],
         include_tracking=model_params["include_tracking"],
+        hierarchy_map=hierarchy_map,
     )
 
 
@@ -278,16 +284,11 @@ def find_nearest_common_ancestor(c1, c2):
         return c1
     visited = set((c1, c2))
     while c1 != 0 or c2 != 0:
-        if c1 != 0:
-            c1 = get_ancestor(concepts_table, c1)
-            if c1 in visited:
-                return c1
-            visited.add(c1)
-        if c2 != 0:
-            c2 = get_ancestor(concepts_table, c2)
-            if c2 in visited:
-                return c2
-            visited.add(c2)
+        for c in (c1, c2):
+            c = get_ancestor(concepts_table, c)
+            if c in visited:
+                return c
+            visited.add(c)
     # This shouldn't be reached
     return -1
 
