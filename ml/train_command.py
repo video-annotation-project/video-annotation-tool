@@ -40,7 +40,7 @@ def main():
         
         to_merge = concepts[:2]
         concepts = concepts[2:]
-        ancestor = find_nearest_common_ancestor(to_merge*)
+        ancestor = find_nearest_common_ancestor(*to_merge)
         hierarchy_map = {concept:ancestor for concept in to_merge}
         
         start_training(user_model, concepts, verify_videos, model_params, hierarchy_map)
@@ -56,8 +56,9 @@ def main():
     finally:
         # Cleanup training hyperparameters and shut server down regardless
         # whether this process succeeded
-        reset_model_params()
-        shutdown_server()
+        # reset_model_params()
+        # shutdown_server()
+        pass
 
 
 def get_model_and_params():
@@ -116,7 +117,7 @@ def get_user_model(model_params):
 
     # from model_version, select versions one level down
     level_down = pd_query(
-        """ SELECT version FROM model_versions WHERE model='{0}' AND version ~ '{1}.*{{1}}' """.format(
+        """ SELECT version FROM model_versions WHERE model='{0}' AND version ~ '{1}.*{{1}}' order by version""".format(
             str(model_params["model"]),
             model_version
         )
@@ -127,8 +128,8 @@ def get_user_model(model_params):
         new_version = model_version + ".1"
     else:
         latest_version = level_down.iloc[num_rows - 1]["version"]
-        last_num = int(latest_version[-1]) + 1
-        new_version = latest_version[:-1] + str(last_num)
+        last_num = int(latest_version.split('.')[-1]) + 1
+        new_version = '.'.join((model_version, str(last_num)))
 
     print(f"new version: {new_version}")
 

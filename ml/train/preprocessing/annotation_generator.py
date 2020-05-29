@@ -355,6 +355,7 @@ class S3Generator(Generator):
 
         self.image_extension = image_extension
         self.classes = classes
+        self.hierarchy_map = hierarchy_map
 
         self.labelmap = _get_labelmap(list(classes))
         self.failed_downloads = set()
@@ -510,7 +511,7 @@ class S3Generator(Generator):
             # We treat the database ID as the class name.
             class_name = image['conceptid']
             try:
-                class_name = concept_to_parent[class_name]
+                class_name = self.hierarchy_map[class_name]
             except KeyError:
                 pass
 
