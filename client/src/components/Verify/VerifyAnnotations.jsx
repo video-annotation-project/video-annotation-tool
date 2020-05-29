@@ -444,7 +444,8 @@ class VerifyAnnotations extends Component {
       oldy1: annotation.y1,
       oldx2: annotation.x2,
       oldy2: annotation.y2,
-      id: annotation.id
+      id: annotation.id,
+      model: annotation.admin === null ? true : false,
     };
     const config = {
       headers: {
@@ -468,7 +469,7 @@ class VerifyAnnotations extends Component {
       comment,
       unsure,
       oldConceptId: !concept ? null : annotation.conceptid,
-      admin: annotation.admin
+      model: annotation.admin === null ? true : false,
     };
 
     const config = {

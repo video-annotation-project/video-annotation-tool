@@ -729,7 +729,7 @@ let updateBoundingBox = async (req, res) => {
         annotations 
       SET 
         x1=$1, y1=$2, x2=$3, y2=$4, oldx1=$5, oldy1=$6, oldx2=$7, oldy2=$8,
-        priority = CASE WHEN $9 is null THEN priority+2 ELSE priority+1 END
+        priority = CASE WHEN $10::boolean=true THEN priority+2 ELSE priority+1 END
       WHERE 
         id=$9
     `;
@@ -783,28 +783,28 @@ let verifyAnnotation = async (req, res) => {
   delete req.body.op;
 
   const verifiedby = req.user.id;
-  const id = req.body.id;
-
-  let params = [id, verifiedby];
+  const { id, model } = req.body;
+  
+  let params = [model, id, verifiedby];
   let queryText1 = `
     UPDATE 
       annotations
     SET 
-      verifiedby=$2, verifieddate=current_timestamp, originalid=null`;
+      verifiedby=$3, verifieddate=current_timestamp, originalid=null`;
 
   if (req.body.conceptId !== null) {
-    queryText1 += `, conceptid=$3, oldconceptid=$4, priority=CASE WHEN $9 is null THEN priority+4 ELSE priority+3 END`;
+    queryText1 += `, conceptid=$4, oldconceptid=$5, priority=CASE WHEN $1::boolean=true THEN priority+4 ELSE priority+3 END`;
     params.push(req.body.conceptId);
     params.push(req.body.oldConceptId);
   } else {
-    queryText1 += `, priority=CASE WHEN $9 is null THEN priority+2 ELSE priority+1 END`;
+    queryText1 += `, priority=CASE WHEN $1::boolean=true THEN 0 ELSE priority+1 END`;
   }
 
   params.push(req.body.comment);
   queryText1 += `, comment=$` + params.length;
   params.push(req.body.unsure);
   queryText1 += `, unsure=$` + params.length;
-  queryText1 += ` WHERE id=$1`;
+  queryText1 += ` WHERE id=$2`;
 
   try {
     await psql.query(queryText1, params);
