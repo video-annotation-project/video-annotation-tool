@@ -797,7 +797,7 @@ let verifyAnnotation = async (req, res) => {
     params.push(req.body.conceptId);
     params.push(req.body.oldConceptId);
   } else {
-    queryText1 += `, priority=CASE WHEN $1::boolean=true THEN 0 ELSE priority+1 END`;
+    queryText1 += `, priority=priority+1`;
   }
 
   params.push(req.body.comment);
