@@ -41,13 +41,14 @@ def main():
         to_merge = concepts[:2]
         concepts = concepts[2:]
         ancestor = find_nearest_common_ancestor(*to_merge)
-        concepts.add(ancestor)
+        concepts.append(ancestor)
         hierarchy_map = {concept:ancestor for concept in to_merge}
         
-        start_training(user_model, concepts, verify_videos, model_params, hierarchy_map=hierarchy_map)
+        start_training(user_model, concepts, verify_videos, model_params,
+                       hierarchy_map)
 
         setup_predict_progress(verify_videos)
-        evaluate_videos(concepts, verify_videos, user_model, hierarchy_map=hierarchy_map)
+        evaluate_videos(concepts, verify_videos, user_model)
 
     except:
         delete_model_user(model_user_id)
@@ -230,7 +231,8 @@ def setup_predict_progress(verify_videos):
 
 
 def evaluate_videos(concepts, verify_videos, user_model,
-                    upload_annotations=False, userid=None, create_collection=False, hierarchy_map=None):
+                    upload_annotations=False, userid=None,
+                    create_collection=False):
     """ Run evaluate on all the evaluation videos
     """
 
@@ -240,7 +242,7 @@ def evaluate_videos(concepts, verify_videos, user_model,
             f"""UPDATE predict_progress SET videoid = {video_id}, current_video = current_video + 1"""
         )
         con.commit()
-        evaluate(video_id, user_model, concepts, upload_annotations, userid, create_collection, hierarchy_map=hierarchy_map)
+        evaluate(video_id, user_model, concepts, upload_annotations, userid, create_collection)
 
     end_predictions()
 
@@ -286,11 +288,16 @@ def find_nearest_common_ancestor(c1, c2):
         return c1
     visited = set((c1, c2))
     while c1 != 0 or c2 != 0:
-        for c in (c1, c2):
-            c = get_ancestor(concepts_table, c)
-            if c in visited:
-                return c
-            visited.add(c)
+        if c1 != 0:
+            c1 = get_ancestor(concepts_table, c1)
+            if c1 in visited:
+                return c1
+            visited.add(c1)
+        if c2 != 0:
+            c2 = get_ancestor(concepts_table, c2)
+            if c2 in visited:
+                return int(c2)
+            visited.add(c2)
     # This shouldn't be reached
     return -1
 
