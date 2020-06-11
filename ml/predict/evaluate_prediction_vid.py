@@ -107,7 +107,7 @@ def get_counts(results, annotations):
 
 
 def evaluate(video_id, model_username, concepts, upload_annotations=False,
-             userid=None, create_collection=False):
+             userid=None, create_collection=False, hierarchy_map=None):
     # file format: (video_id)_(model_name)-(version).mp4
 
     if create_collection:
@@ -116,7 +116,8 @@ def evaluate(video_id, model_username, concepts, upload_annotations=False,
                              "annotations aren't uploaded")
         if userid is None:
             raise ValueError("userid is None, cannot create new collection")
-        collection_id = create_annotation_collection(model_username, userid, video_id, concepts)
+        collection_id = create_annotation_collection(model_username, userid,
+                                                     video_id, concepts)
     else:
         collection_id = None
 
@@ -124,7 +125,7 @@ def evaluate(video_id, model_username, concepts, upload_annotations=False,
     print("ai video filename: {0}".format(filename))
     results, annotations = predict.predict_on_video(
         video_id, config.WEIGHTS_PATH, concepts, filename, upload_annotations,
-        userid, collection_id)
+        userid, collection_id, hierarchy_map=hierarchy_map)
     if (results.empty):
         return
     username_split = model_username.split('-')
@@ -162,6 +163,7 @@ def create_annotation_collection(model_name, user_id, video_id, concept_ids):
     time_now = datetime.datetime.now().strftime(r"%y-%m-%d_%H:%M:%S")
     collection_name = '_'.join([model_name, str(video_id), time_now])
     description = f"By {model_name} on video {video_id} at {time_now}"
+
     concept_names = pd_query(
         """
         SELECT name

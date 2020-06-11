@@ -118,7 +118,8 @@ def resize(row):
 
 @profile(stream=fp)
 def predict_on_video(videoid, model_weights, concepts, filename,
-                     upload_annotations=False, userid=None, collection_id=None):
+                     upload_annotations=False, userid=None, collection_id=None,
+                     hierarchy_map=None):
 
     vid_filename = pd_query(f'''
             SELECT *
@@ -129,14 +130,19 @@ def predict_on_video(videoid, model_weights, concepts, filename,
 
     # Get biologist annotations for video
 
+    concepts_to_get_annotations = concepts
+
+    if hierarchy_map is not None:
+        concepts_to_get_annotations += (hierarchy_map.keys())
+
     printing_with_time("Before database query")
     tuple_concept = ''
-    if len(concepts) == 1:
-        tuple_concept = f''' = {str(concepts[0])}'''
+    if len(concepts_to_get_annotations) == 1:
+        tuple_concept = f''' = {str(concepts_to_get_annotations)}'''
     else:
-        tuple_concept = f''' in {str(tuple(concepts))}'''
+        tuple_concept = f''' in {str(tuple(concepts_to_get_annotations))}'''
 
-    print(concepts)
+    print(concepts_to_get_annotations)
     annotations = pd_query(
         f'''
         SELECT
@@ -152,6 +158,12 @@ def predict_on_video(videoid, model_weights, concepts, filename,
           videoid={videoid} AND
           userid in {str(tuple(config.GOOD_USERS))} AND
           conceptid {tuple_concept}''')
+    
+    if hierarchy_map is not None:
+        for succ, pred in hierarchy_map:
+            annotations['label'].where(annotations['label'] != succ, pred,
+                                       inplace=True)
+
     print(annotations)
     printing_with_time("After database query")
 

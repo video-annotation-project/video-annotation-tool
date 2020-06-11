@@ -48,7 +48,7 @@ def main():
                        hierarchy_map)
 
         setup_predict_progress(verify_videos)
-        evaluate_videos(concepts, verify_videos, user_model)
+        evaluate_videos(concepts, verify_videos, user_model, hierarchy_map=hierarchy_map)
 
     except:
         delete_model_user(model_user_id)
@@ -232,7 +232,7 @@ def setup_predict_progress(verify_videos):
 
 def evaluate_videos(concepts, verify_videos, user_model,
                     upload_annotations=False, userid=None,
-                    create_collection=False):
+                    create_collection=False, hierarchy_map=None):
     """ Run evaluate on all the evaluation videos
     """
 
@@ -242,7 +242,8 @@ def evaluate_videos(concepts, verify_videos, user_model,
             f"""UPDATE predict_progress SET videoid = {video_id}, current_video = current_video + 1"""
         )
         con.commit()
-        evaluate(video_id, user_model, concepts, upload_annotations, userid, create_collection)
+        evaluate(video_id, user_model, concepts, upload_annotations, userid,
+                 create_collection, hierarchy_map=hierarchy_map)
 
     end_predictions()
 
