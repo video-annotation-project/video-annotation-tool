@@ -119,7 +119,9 @@ def resize(row):
 @profile(stream=fp)
 def predict_on_video(videoid, model_weights, concepts, filename,
                      upload_annotations=False, userid=None, collection_id=None,
-                     hierarchy_map=None):
+                     hierarchy_map=None, concepts_including_grouped=None):
+    if concepts_including_grouped is None:
+        concepts_including_grouped = concepts
 
     vid_filename = pd_query(f'''
             SELECT *
@@ -130,19 +132,14 @@ def predict_on_video(videoid, model_weights, concepts, filename,
 
     # Get biologist annotations for video
 
-    concepts_to_get_annotations = concepts
-
-    if hierarchy_map is not None:
-        concepts_to_get_annotations += (hierarchy_map.keys())
-
     printing_with_time("Before database query")
     tuple_concept = ''
-    if len(concepts_to_get_annotations) == 1:
-        tuple_concept = f''' = {str(concepts_to_get_annotations)}'''
+    if len(concepts_including_grouped) == 1:
+        tuple_concept = f''' = {str(concepts_including_grouped)}'''
     else:
-        tuple_concept = f''' in {str(tuple(concepts_to_get_annotations))}'''
+        tuple_concept = f''' in {str(tuple(concepts_including_grouped))}'''
 
-    print(concepts_to_get_annotations)
+    print(concepts_including_grouped)
     annotations = pd_query(
         f'''
         SELECT
