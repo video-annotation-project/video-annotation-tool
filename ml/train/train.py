@@ -30,6 +30,7 @@ def train_model(concepts,
                 collection_ids,
                 min_examples,
                 epochs,
+                hierarchy_map,
                 download_data=True,
                 verified_only=False,
                 include_tracking=True):
@@ -62,7 +63,8 @@ def train_model(concepts,
         include_tracking=include_tracking,
         min_examples=min_examples,
         classes=concepts,
-        verify_videos=verify_videos
+        verify_videos=verify_videos,
+        hierarchy_map=hierarchy_map,
     )
     # Get model name & version to insert into model_versions table
     #  a user dictionary containing the concept counts from this model

@@ -19,8 +19,8 @@ from keras_retinanet.utils.anchors import compute_overlap
         best_thresh are the corresponding threshold values to achieve these maximum f1 scores.
 """
 def f1_evaluation(generator,model,iou_threshold=0.5,score_threshold=0.05,max_detections=100,save_path=None):
-    all_detections     = _get_detections(generator, model, score_threshold=score_threshold, max_detections=max_detections, save_path=save_path)
-    all_annotations    = _get_annotations(generator)
+    all_detections, _ = _get_detections(generator, model, score_threshold=score_threshold, max_detections=max_detections, save_path=save_path)
+    all_annotations = _get_annotations(generator)
     best_thresh = {}
     best_f1 = {}
     # process detections and annotations

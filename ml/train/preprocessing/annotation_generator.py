@@ -102,6 +102,7 @@ class AnnotationGenerator(object):
                  verify_videos,
                  classes,
                  min_examples,
+                 hierarchy_map,
                  validation_split=0.8):
 
         print("Grabbing annotations....")
@@ -130,6 +131,7 @@ class AnnotationGenerator(object):
         self.userDict = userDict
         self.selected_frames = selected_frames
         self.classmap = get_classmap(classes)
+        self.hierarchy_map = hierarchy_map
 
         # Shuffle selected frames so that training/testing set are different each run
         random.shuffle(self.selected_frames)
@@ -137,7 +139,7 @@ class AnnotationGenerator(object):
         num_frames = len(self.selected_frames)
         split_index = int(num_frames * validation_split)
 
-        # Split our data into training and testing sets, based on validation_split
+        # Split our data into training and testing sets, based on validation_splitppp
         self.training_set = self.selected_frames[0:split_index]
         self.testing_set = self.selected_frames[split_index:]
 
@@ -154,6 +156,7 @@ class AnnotationGenerator(object):
                 image_folder=image_folder,
                 image_extension=image_extension,
                 classes=self.classmap,
+                hierarchy_map=self.hierarchy_map,
                 **kwargs
             )
         elif subset in ['validation', 'testing']:
@@ -162,6 +165,7 @@ class AnnotationGenerator(object):
                 image_folder=image_folder,
                 image_extension=image_extension,
                 classes=self.classmap,
+                hierarchy_map=self.hierarchy_map,
                 **kwargs
             )
         else:
@@ -330,7 +334,7 @@ class AnnotationGenerator(object):
 
 class S3Generator(Generator):
 
-    def __init__(self, classes, selected_frames, image_folder, image_extension='.png', **kwargs):
+    def __init__(self, classes, selected_frames, image_folder, hierarchy_map, image_extension='.png', **kwargs):
 
         self.image_folder = image_folder
 
@@ -351,6 +355,7 @@ class S3Generator(Generator):
 
         self.image_extension = image_extension
         self.classes = classes
+        self.hierarchy_map = hierarchy_map
 
         self.labelmap = _get_labelmap(list(classes))
         self.failed_downloads = set()
@@ -505,6 +510,10 @@ class S3Generator(Generator):
             image_file = image['save_name']
             # We treat the database ID as the class name.
             class_name = image['conceptid']
+            try:
+                class_name = self.hierarchy_map[class_name]
+            except KeyError:
+                pass
 
             # We already augmented these when creating our annotations df
             # So, we can just directly assign the coordinates.
