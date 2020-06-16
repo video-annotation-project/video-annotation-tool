@@ -115,9 +115,9 @@ router.post(
   async (req, res) => {
     const queryText = `
       INSERT INTO 
-        models (name, timestamp, concepts, verificationvideos)
+        models (name, timestamp, concepts, verificationvideos, concept_collections)
       VALUES
-        ($1, current_timestamp, $2, $3)
+        ($1, current_timestamp, $2, $3, $4)
       RETURNING *
     `;
     const postVersionZero = `
@@ -131,7 +131,8 @@ router.post(
       let response = await psql.query(queryText, [
         req.body.name,
         req.body.concepts,
-        req.body.videos
+        req.body.videos,
+        req.body.concept_collections
       ]);
       await psql.query(postVersionZero, [req.body.name]);
       res.json(response.rows);
