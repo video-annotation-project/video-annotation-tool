@@ -71,8 +71,9 @@ class CreateModel extends Component {
       modelName: '',
       models: [],
       concepts: [],
-      conceptCollections: [],
       conceptsSelected: [],
+      conceptCollections: [],
+      conceptCollectionsSelected: [],
       videos: [],
       videoCollections: [],
       videosSelected: [],
@@ -200,9 +201,29 @@ class CreateModel extends Component {
     );
   };
 
+  selectCollectionConcepts = id => {
+    const { conceptsSelected, conceptCollections} = this.state;
+    let conceptids = JSON.parse(JSON.stringify(conceptsSelected));
+
+    const conceptCollection = conceptCollections.find(x => x.id === id);
+
+    if (conceptCollection.conceptids[0]) {
+      conceptCollection.conceptids.forEach(id => {
+        if (!conceptids.includes(id)) conceptids.push(id);
+      })
+
+      this.handleChangeCollection('conceptsSelected')(
+        conceptids
+      );
+    }
+  }
+
   // Handle concept checkbox selections
   checkboxSelect = (stateName, stateValue, id) => event => {
     let deepCopy = JSON.parse(JSON.stringify(stateValue));
+
+    if (stateName === "conceptCollectionsSelected") this.selectCollectionConcepts(id);
+
     if (event.target.checked) {
       deepCopy.push(id);
     } else {
@@ -213,9 +234,25 @@ class CreateModel extends Component {
     });
   };
 
+  checkDisjointCollection = id => {
+    const { conceptsSelected, conceptCollections, conceptCollectionsSelected } = this.state;
+    const conceptCollection = conceptCollections.find(x => x.id === id);
+    let disabled = false;
+
+    if (!conceptCollectionsSelected.includes(id)) {
+      conceptCollection.conceptids.forEach(conceptid => {
+        if (conceptsSelected.includes(conceptid)) {
+          disabled = true;
+        }
+      })
+    }
+
+    return disabled;
+  }
+
   selectConcepts = () => {
     const { classes } = this.props;
-    const { concepts, conceptsSelected, conceptCollections } = this.state;
+    const { concepts, conceptsSelected, conceptCollections, conceptCollectionsSelected } = this.state;
     if (!concepts) {
       return <Typography style={{ margin: '20px' }}>Loading...</Typography>;
     }
@@ -254,45 +291,23 @@ class CreateModel extends Component {
           </FormLabel>
           <List className={classes.list}>
             {conceptCollections.map(conceptCollection => (
-              <ListItem key={conceptCollection.id}>
-                <Tooltip
-                  title={
-                    !conceptCollection.description
-                      ? ''
-                      : conceptCollection.description
+              <div key={conceptCollection.id}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      onChange={this.checkboxSelect(
+                        'conceptCollectionsSelected',
+                        conceptCollectionsSelected,
+                        conceptCollection.id
+                      )}
+                      color="primary"
+                      checked={conceptCollectionsSelected.includes(conceptCollection.id)}
+                      disabled={this.checkDisjointCollection(conceptCollection.id)}
+                    />
                   }
-                  placement="bottom-start"
-                >
-                  <div>
-                    <Button
-                      className={classes.collectionButton}
-                      variant="outlined"
-                      value={conceptCollection.id}
-                      disabled={!conceptCollection.conceptids[0]}
-                      onClick={() => {
-                        if (conceptCollection.conceptids[0]) {
-                          const conceptids = [];
-                          concepts.forEach(concept => {
-                            if (
-                              conceptCollection.conceptids.includes(concept.id)
-                            ) {
-                              conceptids.push(concept.id);
-                            }
-                          });
-                          this.handleChangeCollection('conceptsSelected')(
-                            conceptids
-                          );
-                        }
-                      }}
-                    >
-                      {conceptCollection.name +
-                        (!conceptCollection.conceptids[0]
-                          ? ' (No concepts)'
-                          : '')}
-                    </Button>
-                  </div>
-                </Tooltip>
-              </ListItem>
+                  label={`${conceptCollection.name}`}
+                />
+              </div>
             ))}
           </List>
         </Grid>
@@ -444,7 +459,7 @@ class CreateModel extends Component {
 
   postModel = async () => {
     const { loadExistingModels } = this.props;
-    const { modelName, conceptsSelected, videosSelected } = this.state;
+    const { modelName, conceptsSelected, conceptCollectionsSelected, videosSelected } = this.state;
     const config = {
       headers: {
         Authorization: `Bearer ${localStorage.getItem('token')}`
@@ -453,6 +468,7 @@ class CreateModel extends Component {
     const body = {
       name: modelName,
       concepts: conceptsSelected,
+      concept_collections: conceptCollectionsSelected,
       videos: videosSelected
     };
     try {
