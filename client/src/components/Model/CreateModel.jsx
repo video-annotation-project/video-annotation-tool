@@ -26,7 +26,7 @@ import VideoMetadata from '../Utilities/VideoMetadata';
 const styles = theme => ({
   checkSelector: {
     marginTop: theme.spacing(2),
-    maxHeight: '300px',
+    maxHeight: '200px',
     overflow: 'auto'
   },
   list: {
@@ -201,11 +201,25 @@ class CreateModel extends Component {
     );
   };
 
-  selectCollectionConcepts = id => {
-    const { conceptsSelected, conceptCollections} = this.state;
+  unselectCollectionConcepts = conceptid => {
+    const { conceptCollectionsSelected, conceptCollections} = this.state;
+    let selectedCollectionIds = JSON.parse(JSON.stringify(conceptCollectionsSelected));
+
+    selectedCollectionIds = selectedCollectionIds.filter(collectionid => {
+      const conceptCollection = conceptCollections.find(x => x.id === collectionid);
+      return !conceptCollection.conceptids.includes(conceptid);
+    })
+
+    this.handleChangeCollection('conceptCollectionsSelected')(
+      selectedCollectionIds
+    );
+  }
+
+  selectCollectionConcepts = collectionid => {
+    const { conceptsSelected, conceptCollections } = this.state;
     let conceptids = JSON.parse(JSON.stringify(conceptsSelected));
 
-    const conceptCollection = conceptCollections.find(x => x.id === id);
+    const conceptCollection = conceptCollections.find(x => x.id === collectionid);
 
     if (conceptCollection.conceptids[0]) {
       conceptCollection.conceptids.forEach(id => {
@@ -222,11 +236,11 @@ class CreateModel extends Component {
   checkboxSelect = (stateName, stateValue, id) => event => {
     let deepCopy = JSON.parse(JSON.stringify(stateValue));
 
-    if (stateName === "conceptCollectionsSelected") this.selectCollectionConcepts(id);
-
     if (event.target.checked) {
+      if (stateName === "conceptCollectionsSelected") this.selectCollectionConcepts(id);
       deepCopy.push(id);
     } else {
+      if (stateName === "conceptsSelected") this.unselectCollectionConcepts(id);
       deepCopy = deepCopy.filter(user => user !== id);
     }
     this.setState({
@@ -286,30 +300,45 @@ class CreateModel extends Component {
           </FormControl>
         </Grid>
         <Grid item>
+          <Button
+            variant="contained"
+            color="primary"
+            className={classes.button}
+            onClick={() => {
+              this.handleUnselectAll('conceptsSelected');
+              this.handleUnselectAll('conceptCollectionsSelected');
+            }}
+          >
+            Clear
+          </Button>
+        </Grid>
+        <Grid item>
           <FormLabel component="legend">
             Select species collection to test model
           </FormLabel>
-          <List className={classes.list}>
-            {conceptCollections.map(conceptCollection => (
-              <div key={conceptCollection.id}>
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      onChange={this.checkboxSelect(
-                        'conceptCollectionsSelected',
-                        conceptCollectionsSelected,
-                        conceptCollection.id
-                      )}
-                      color="primary"
-                      checked={conceptCollectionsSelected.includes(conceptCollection.id)}
-                      disabled={this.checkDisjointCollection(conceptCollection.id)}
-                    />
-                  }
-                  label={`${conceptCollection.name}`}
-                />
-              </div>
-            ))}
-          </List>
+          <FormControl component="fieldset" className={classes.checkSelector}>
+            <FormGroup className={classes.group}>
+              {conceptCollections.map(conceptCollection => (
+                <div key={conceptCollection.id}>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        onChange={this.checkboxSelect(
+                          'conceptCollectionsSelected',
+                          conceptCollectionsSelected,
+                          conceptCollection.id
+                        )}
+                        color="primary"
+                        checked={conceptCollectionsSelected.includes(conceptCollection.id)}
+                        disabled={this.checkDisjointCollection(conceptCollection.id)}
+                      />
+                    }
+                    label={`${conceptCollection.name}`}
+                  />
+                </div>
+              ))}
+            </FormGroup>
+          </FormControl>
         </Grid>
       </Grid>
     );
