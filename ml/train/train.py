@@ -183,7 +183,9 @@ def _get_callbacks(model,
         num_epochs=epochs
     )
 
-    return [stopping, progress_callback, log_callback, tensorboard_callback]
+    # It's important that tensorboard_callback is before log_callback,
+    # so the board is created/updated before being uploaded
+    return [stopping, progress_callback, tensorboard_callback, log_callback]
 
 
 def _upload_weights(model_name):
