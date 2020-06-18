@@ -110,7 +110,7 @@ def evaluate(video_id, model_username, concepts, upload_annotations=False,
              userid=None, create_collection=False, hierarchy_map=None):
     # file format: (video_id)_(model_name)-(version).mp4
 
-    concepts_including_grouped = concepts
+    concepts_including_grouped = list(concepts)
     if hierarchy_map is not None:
         concepts_including_grouped += list(hierarchy_map.keys())
 

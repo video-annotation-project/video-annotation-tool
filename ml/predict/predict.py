@@ -157,7 +157,7 @@ def predict_on_video(videoid, model_weights, concepts, filename,
           conceptid {tuple_concept}''')
     
     if hierarchy_map is not None:
-        for succ, pred in hierarchy_map:
+        for succ, pred in hierarchy_map.items():
             annotations['label'].where(annotations['label'] != succ, pred,
                                        inplace=True)
 
