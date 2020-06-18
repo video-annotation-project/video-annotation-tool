@@ -265,7 +265,7 @@ class AnnotationGenerator(object):
                 annotations a ON a.id=inter.annotationid
             LEFT JOIN
                 videos ON videos.id=videoid
-            WHERE inter.id = ANY(%s) AND a.videoid <> ANY(%s)
+            WHERE inter.id = ANY(%s) AND a.videoid <> ALL(%s)
         '''
 
         if verified_only:
