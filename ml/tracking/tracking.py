@@ -93,7 +93,7 @@ def getVideoFrames(url, start, end):
     curr = start
 
     while (check and curr <= end):
-        check, frame = cap.read()
+        check, frame = cap.retrieve()
         if check:
             frame_list.append(
                 cv2.resize(frame, (RESIZED_WIDTH, RESIZED_HEIGHT)))
