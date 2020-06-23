@@ -4,6 +4,7 @@ const psql = require('../../db/simpleConnect');
 const AWS = require('aws-sdk');
 
 var configData = require('../../../config.json');
+const { LexModelBuildingService } = require('aws-sdk');
 
 /**
  * @typedef annotation
@@ -634,7 +635,6 @@ router.get(
               AND b.frame=v.framenum
           )
       ORDER BY videoid, frame;`;
-    console.log('here');
 
     if (selectedTrackingFirst === 'true') {
       queryText = `
@@ -657,7 +657,6 @@ router.get(
       `;
     }
     try {
-      console.log(queryText);
       const response = await psql.query(queryText, params);
       res.json(response.rows);
     } catch (error) {
@@ -785,15 +784,16 @@ let verifyAnnotation = async (req, res) => {
   const verifiedby = req.user.id;
   const { id, model } = req.body;
   
-  let params = [model, id, verifiedby];
+  let params = [id, verifiedby];
   let queryText1 = `
     UPDATE 
       annotations
     SET 
-      verifiedby=$3, verifieddate=current_timestamp, originalid=null`;
+      verifiedby=$2, verifieddate=current_timestamp, originalid=null`;
 
   if (req.body.conceptId !== null) {
-    queryText1 += `, conceptid=$4, oldconceptid=$5, priority=CASE WHEN $1::boolean=true THEN priority+4 ELSE priority+3 END`;
+    queryText1 += `, conceptid=$4, oldconceptid=$5, priority=CASE WHEN $3::boolean=true THEN priority+4 ELSE priority+3 END`;
+    params.push(model);
     params.push(req.body.conceptId);
     params.push(req.body.oldConceptId);
   } else {
@@ -804,7 +804,7 @@ let verifyAnnotation = async (req, res) => {
   queryText1 += `, comment=$` + params.length;
   params.push(req.body.unsure);
   queryText1 += `, unsure=$` + params.length;
-  queryText1 += ` WHERE id=$2`;
+  queryText1 += ` WHERE id=$1`;
 
   try {
     await psql.query(queryText1, params);
