@@ -109,14 +109,15 @@ def get_counts(results, annotations):
 def evaluate(video_id, model_username, concepts, upload_annotations=False,
              userid=None, create_collection=False):
     # file format: (video_id)_(model_name)-(version).mp4
-    
+
     if create_collection:
         if not upload_annotations:
             raise ValueError("cannot create new annotation collection if "
                              "annotations aren't uploaded")
         if userid is None:
             raise ValueError("userid is None, cannot create new collection")
-        collection_id = create_annotation_collection(model_username, userid, video_id, concepts)
+        collection_id = create_annotation_collection(
+            model_username, userid, video_id, concepts)
     else:
         collection_id = None
 
@@ -124,7 +125,7 @@ def evaluate(video_id, model_username, concepts, upload_annotations=False,
     print("ai video filename: {0}".format(filename))
     results, annotations = predict.predict_on_video(
         video_id, config.WEIGHTS_PATH, concepts, filename, upload_annotations,
-        userid, collection_id, concepts=concepts)
+        userid, collection_id)
     if (results.empty):
         return
     username_split = model_username.split('-')
@@ -169,7 +170,7 @@ def create_annotation_collection(model_name, user_id, video_id, concept_ids):
         FROM concepts
         WHERE id IN %s
         """, (tuple(concept_ids),)
-        )['name'].tolist()
+    )['name'].tolist()
 
     cursor.execute(
         """
