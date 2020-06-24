@@ -21,34 +21,27 @@ def main():
         # to the S3 bucket. The website uses these to display stdout and stderr
         pid = os.getpid()
         upload_process = upload_stdout.start_uploading(pid)
-
+    
         # Get training hyperparameters, insert new entries for new model in
         # users and model_versions tables
         model, model_params = get_model_and_params()
         user_model, new_version = get_user_model(model_params)
         model_user_id = create_model_user(new_version, model_params, user_model)
-
+    
         # This removes all of the [INFO] outputs from tensorflow.
         # We still see [WARNING] and [ERROR], but there's a lot less clutter
         os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
-
+    
         # If set, training will sometimes be unable to save the model
         os.environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
-
+    
         concepts = model["concepts"]
         verify_videos = model["verificationvideos"]
         
-        to_merge = concepts[:2]
-        concepts = concepts[2:]
-        ancestor = find_nearest_common_ancestor(*to_merge)
-        concepts.append(ancestor)
-        hierarchy_map = {concept:ancestor for concept in to_merge}
-        
-        start_training(user_model, concepts, verify_videos, model_params,
-                       hierarchy_map)
-
+        start_training(user_model, concepts, verify_videos, model_params)
+    
         setup_predict_progress(verify_videos)
-        evaluate_videos(concepts, verify_videos, user_model, hierarchy_map=hierarchy_map)
+        evaluate_videos(concepts, verify_videos, user_model)
 
     except:
         delete_model_user(model_user_id)
@@ -80,7 +73,6 @@ def get_model_and_params():
     model_version = str(model_params["version"])
     model_name = str(model_params["model"])
     filename = model_name + "-" + model_version + ".h5"
-
     if model_version != "0":
         try:
             s3.download_file(
@@ -104,7 +96,6 @@ def get_model_and_params():
             config.S3_WEIGHTS_FOLDER + config.DEFAULT_WEIGHTS_PATH,
             config.WEIGHTS_PATH,
         )
-
     model = pd_query(
         """SELECT * FROM models WHERE name=%s""", (str(model_params["model"]),)
     ).iloc[0]
@@ -119,7 +110,7 @@ def get_user_model(model_params):
 
     # from model_version, select versions one level down
     level_down = pd_query(
-        """ SELECT version FROM model_versions WHERE model='{0}' AND version ~ '{1}.*{{1}}' order by version""".format(
+        """ SELECT version FROM model_versions WHERE model='{0}' AND version ~ '{1}.*'""".format(
             str(model_params["model"]),
             model_version
         )
@@ -129,8 +120,7 @@ def get_user_model(model_params):
     if num_rows == 0:
         new_version = model_version + ".1"
     else:
-        latest_version = level_down.iloc[num_rows - 1]["version"]
-        last_num = int(latest_version.split('.')[-1]) + 1
+        last_num = max([int(x.split('.')[-1]) for x in level_down['version']]) + 1
         new_version = '.'.join((model_version, str(last_num)))
 
     print(f"new version: {new_version}")
@@ -195,7 +185,7 @@ def delete_model_user(model_user_id):
     con.commit()
 
 
-def start_training(user_model, concepts, verify_videos, model_params, hierarchy_map):
+def start_training(user_model, concepts, verify_videos, model_params):
     """Start a training job with the correct parameters
     """
 
@@ -210,7 +200,6 @@ def start_training(user_model, concepts, verify_videos, model_params, hierarchy_
         download_data=True,
         verified_only=model_params["verified_only"],
         include_tracking=model_params["include_tracking"],
-        hierarchy_map=hierarchy_map,
     )
 
 
@@ -232,7 +221,7 @@ def setup_predict_progress(verify_videos):
 
 def evaluate_videos(concepts, verify_videos, user_model,
                     upload_annotations=False, userid=None,
-                    create_collection=False, hierarchy_map=None):
+                    create_collection=False):
     """ Run evaluate on all the evaluation videos
     """
 
@@ -243,7 +232,7 @@ def evaluate_videos(concepts, verify_videos, user_model,
         )
         con.commit()
         evaluate(video_id, user_model, concepts, upload_annotations, userid,
-                 create_collection, hierarchy_map=hierarchy_map)
+                 create_collection)
 
     end_predictions()
 
@@ -279,28 +268,7 @@ def shutdown_server():
 
     con.close()
     subprocess.call(["sudo", "shutdown", "-h"])
-
-def get_ancestor(concepts_table, concept):
-    return concepts_table[concepts_table['id'] == concept]['parent'].iloc[0]
-
-def find_nearest_common_ancestor(c1, c2):
-    concepts_table = pd_query("""SELECT * FROM concepts""")
-    if c1 == c2:
-        return c1
-    visited = set((c1, c2))
-    while c1 != 0 or c2 != 0:
-        if c1 != 0:
-            c1 = get_ancestor(concepts_table, c1)
-            if c1 in visited:
-                return c1
-            visited.add(c1)
-        if c2 != 0:
-            c2 = get_ancestor(concepts_table, c2)
-            if c2 in visited:
-                return int(c2)
-            visited.add(c2)
-    # This shouldn't be reached
-    return -1
+    
 
 if __name__ == '__main__':
     main()

@@ -107,21 +107,16 @@ def get_counts(results, annotations):
 
 
 def evaluate(video_id, model_username, concepts, upload_annotations=False,
-             userid=None, create_collection=False, hierarchy_map=None):
+             userid=None, create_collection=False):
     # file format: (video_id)_(model_name)-(version).mp4
-
-    concepts_including_grouped = list(concepts)
-    if hierarchy_map is not None:
-        concepts_including_grouped += list(hierarchy_map.keys())
-
+    
     if create_collection:
         if not upload_annotations:
             raise ValueError("cannot create new annotation collection if "
                              "annotations aren't uploaded")
         if userid is None:
             raise ValueError("userid is None, cannot create new collection")
-        collection_id = create_annotation_collection(model_username, userid,
-                                                     video_id, concepts_including_grouped)
+        collection_id = create_annotation_collection(model_username, userid, video_id, concepts)
     else:
         collection_id = None
 
@@ -129,8 +124,7 @@ def evaluate(video_id, model_username, concepts, upload_annotations=False,
     print("ai video filename: {0}".format(filename))
     results, annotations = predict.predict_on_video(
         video_id, config.WEIGHTS_PATH, concepts, filename, upload_annotations,
-        userid, collection_id, hierarchy_map=hierarchy_map,
-        concepts_including_grouped=concepts_including_grouped)
+        userid, collection_id, concepts=concepts)
     if (results.empty):
         return
     username_split = model_username.split('-')
