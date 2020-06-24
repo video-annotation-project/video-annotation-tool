@@ -209,7 +209,7 @@ def get_video_frames(vid_filename, videoid):
     url = s3.generate_presigned_url('get_object',
                                     Params={'Bucket': config.S3_BUCKET,
                                             'Key': config.S3_VIDEO_FOLDER + vid_filename},
-                                    ExpiresIn=100)
+                                    ExpiresIn=3600)
     vid = cv2.VideoCapture(url)
     fps = vid.get(cv2.CAP_PROP_FPS)
     length = int(vid.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -447,13 +447,8 @@ def generate_video(filename, frames, fps, results,
     conceptsCounts = {concept: 0 for concept in concepts}
     total_length = len(results)
     one_percent_length = int(total_length / 100)
-    f = open('gen.txt', 'w')
-    f.write(str(frames[130]))
-    f.write(str(classmap))
     seenObjects = []
     for pred_index, res in enumerate(results.itertuples()):
-        f.write(f'{pred_index}  {res} {type(frames)}')
-
         if pred_index % one_percent_length == 0:
             upload_predict_progress(pred_index, video_id, total_length, 3)
 
