@@ -102,7 +102,6 @@ class AnnotationGenerator(object):
                  verify_videos,
                  classes,
                  min_examples,
-                 hierarchy_map,
                  validation_split=0.8):
 
         print("Grabbing annotations....")
@@ -131,7 +130,6 @@ class AnnotationGenerator(object):
         self.userDict = userDict
         self.selected_frames = selected_frames
         self.classmap = get_classmap(classes)
-        self.hierarchy_map = hierarchy_map
 
         # Shuffle selected frames so that training/testing set are different each run
         random.shuffle(self.selected_frames)
@@ -156,7 +154,6 @@ class AnnotationGenerator(object):
                 image_folder=image_folder,
                 image_extension=image_extension,
                 classes=self.classmap,
-                hierarchy_map=self.hierarchy_map,
                 **kwargs
             )
         elif subset in ['validation', 'testing']:
@@ -165,7 +162,6 @@ class AnnotationGenerator(object):
                 image_folder=image_folder,
                 image_extension=image_extension,
                 classes=self.classmap,
-                hierarchy_map=self.hierarchy_map,
                 **kwargs
             )
         else:
@@ -265,14 +261,14 @@ class AnnotationGenerator(object):
                 annotations a ON a.id=inter.annotationid
             LEFT JOIN
                 videos ON videos.id=videoid
-            WHERE inter.id = ANY(%s) AND a.videoid <> ANY(%s)
+            WHERE inter.id = ANY(%s) AND a.videoid <> ALL(%s)
         '''
 
         if verified_only:
             annotations_query += """ AND a.verifiedby IS NOT NULL"""
 
         # Filter collection so each concept has min_example annotations
-        annotations_query += r'''
+        annotations_query += f'''
             ),
             filteredCollection AS (
                 SELECT
@@ -282,7 +278,7 @@ class AnnotationGenerator(object):
                         ROW_NUMBER() OVER (
                             PARTITION BY
                                 conceptid
-                            ORDER BY userid=32, verifiedby IS NULL) AS r,
+                            ORDER BY userid={tracking_uid}, verifiedby IS NULL) AS r,
                         c.*
                     FROM
                         collection c) t
@@ -291,7 +287,7 @@ class AnnotationGenerator(object):
             )
         '''
         # Add annotations that exist in the same frame
-        annotations_query += r'''
+        annotations_query += f'''
             SELECT
                 A.id,
                 image,
@@ -315,6 +311,9 @@ class AnnotationGenerator(object):
                 x2>0 AND x2<=videowidth AND
                 y1>=0 AND y1<videowidth AND
                 y2>0 AND y2<=videowidth AND
+                (a.userid = {tracking_uid} OR 
+                a.userid in {str(tuple(config.GOOD_USERS))} OR
+                a.verifiedby is not null) AND
                 EXISTS (
                     SELECT
                         1
@@ -334,7 +333,7 @@ class AnnotationGenerator(object):
 
 class S3Generator(Generator):
 
-    def __init__(self, classes, selected_frames, image_folder, hierarchy_map, image_extension='.png', **kwargs):
+    def __init__(self, classes, selected_frames, image_folder, image_extension='.png', **kwargs):
 
         self.image_folder = image_folder
 
@@ -355,7 +354,6 @@ class S3Generator(Generator):
 
         self.image_extension = image_extension
         self.classes = classes
-        self.hierarchy_map = hierarchy_map
 
         self.labelmap = _get_labelmap(list(classes))
         self.failed_downloads = set()
@@ -510,10 +508,6 @@ class S3Generator(Generator):
             image_file = image['save_name']
             # We treat the database ID as the class name.
             class_name = image['conceptid']
-            try:
-                class_name = self.hierarchy_map[class_name]
-            except KeyError:
-                pass
 
             # We already augmented these when creating our annotations df
             # So, we can just directly assign the coordinates.
