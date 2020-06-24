@@ -152,12 +152,14 @@ def predict_on_video(videoid, model_weights, concepts, filename,
           userid in {str(tuple(config.GOOD_USERS))} AND
           conceptid {tuple_concept}''')
     
-    print(annotations)
+    print(f'Number of human annotations {len(annotations)}')
     printing_with_time("After database query")
 
     printing_with_time("Resizing annotations.")
     annotations = annotations.apply(resize, axis=1)
     annotations = annotations.drop(['videowidth', 'videoheight'], axis=1)
+    frame_limit = len(frames)
+    annotations['frame_num'] = annotations['frame_num'].apply(lambda x: x if x < frame_limit else frame_limit-1)
     printing_with_time("Done resizing annotations.")
 
     print("Initializing Model")
@@ -170,8 +172,7 @@ def predict_on_video(videoid, model_weights, concepts, filename,
         return results, annotations
     results = propagate_conceptids(results, concepts)
     results = length_limit_objects(results, config.MIN_FRAMES_THRESH)
-    # interweb human annotations and predictions
-
+    print(f'Number of model annotations {len(results)}')
     if upload_annotations:
         printing_with_time("Uploading annotations")
         # filter results down to middle frames
@@ -416,7 +417,6 @@ def propagate_conceptids(annotations, concepts):
 
 
 def length_limit_objects(pred, frame_thresh):
-    print(pred)
     obj_len = pred.groupby('objectid').label.value_counts()
     len_thresh = obj_len[obj_len > frame_thresh]
     return pred[[(obj in len_thresh) for obj in pred.objectid]]
@@ -429,7 +429,7 @@ def generate_video(filename, frames, fps, results,
                    concepts, video_id, annotations):
 
     # Combine human and prediction annotations
-    results = results.append(annotations)
+    results = results.append(annotations, sort=True)
     # Cast frame_num to int (prevent indexing errors)
     results.frame_num = results.frame_num.astype('int')
     classmap = get_classmap(concepts)
