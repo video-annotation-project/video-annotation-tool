@@ -58,13 +58,13 @@ class Verify extends Component {
     localStorage.setItem('totalAnnotations', annotations.length);
   };
 
-  displayLoading = message => {
+  displayLoading = () => {
     const { tracking } = this.props;
     const { videoDialogOpen } = this.state;
 
     if (!tracking && !videoDialogOpen) {
       Swal.fire({
-        title: message || 'Loading...',
+        title: 'Loading...',
         showConfirmButton: false,
         onBeforeOpen: () => {
           Swal.showLoading();
@@ -265,7 +265,7 @@ class Verify extends Component {
         callback
       );
     }
-    
+
     else if (
       annotations &&
       annotations.length &&
@@ -317,8 +317,8 @@ class Verify extends Component {
           );
         }
       });
-    } 
-    
+    }
+
     else {
       localStorage.setItem('curIndex', index + 1);
       this.setState(
