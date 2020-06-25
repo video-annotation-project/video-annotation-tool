@@ -118,8 +118,7 @@ def resize(row):
 
 @profile(stream=fp)
 def predict_on_video(videoid, model_weights, concepts, filename,
-                     upload_annotations=False, userid=None, collection_id=None):
-
+                     upload_annotations=False, userid=None, collection_id=None): 
     vid_filename = pd_query(f'''
             SELECT *
             FROM videos
@@ -132,7 +131,7 @@ def predict_on_video(videoid, model_weights, concepts, filename,
     printing_with_time("Before database query")
     tuple_concept = ''
     if len(concepts) == 1:
-        tuple_concept = f''' = {str(concepts[0])}'''
+        tuple_concept = f''' = {str(concepts)}'''
     else:
         tuple_concept = f''' in {str(tuple(concepts))}'''
 
@@ -152,12 +151,15 @@ def predict_on_video(videoid, model_weights, concepts, filename,
           videoid={videoid} AND
           userid in {str(tuple(config.GOOD_USERS))} AND
           conceptid {tuple_concept}''')
-    print(annotations)
+    
+    print(f'Number of human annotations {len(annotations)}')
     printing_with_time("After database query")
 
     printing_with_time("Resizing annotations.")
     annotations = annotations.apply(resize, axis=1)
     annotations = annotations.drop(['videowidth', 'videoheight'], axis=1)
+    frame_limit = len(frames)
+    annotations['frame_num'] = annotations['frame_num'].apply(lambda x: x if x < frame_limit else frame_limit-1)
     printing_with_time("Done resizing annotations.")
 
     print("Initializing Model")
@@ -170,8 +172,7 @@ def predict_on_video(videoid, model_weights, concepts, filename,
         return results, annotations
     results = propagate_conceptids(results, concepts)
     results = length_limit_objects(results, config.MIN_FRAMES_THRESH)
-    # interweb human annotations and predictions
-
+    print(f'Number of model annotations {len(results)}')
     if upload_annotations:
         printing_with_time("Uploading annotations")
         # filter results down to middle frames
@@ -200,7 +201,7 @@ def get_video_frames(vid_filename, videoid):
     url = s3.generate_presigned_url('get_object',
                                     Params={'Bucket': config.S3_BUCKET,
                                             'Key': config.S3_VIDEO_FOLDER + vid_filename},
-                                    ExpiresIn=100)
+                                    ExpiresIn=3600)
     vid = cv2.VideoCapture(url)
     fps = vid.get(cv2.CAP_PROP_FPS)
     length = int(vid.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -415,7 +416,6 @@ def propagate_conceptids(annotations, concepts):
 
 
 def length_limit_objects(pred, frame_thresh):
-    print(pred)
     obj_len = pred.groupby('objectid').label.value_counts()
     len_thresh = obj_len[obj_len > frame_thresh]
     return pred[[(obj in len_thresh) for obj in pred.objectid]]
@@ -428,7 +428,7 @@ def generate_video(filename, frames, fps, results,
                    concepts, video_id, annotations):
 
     # Combine human and prediction annotations
-    results = results.append(annotations)
+    results = results.append(annotations, sort=True)
     # Cast frame_num to int (prevent indexing errors)
     results.frame_num = results.frame_num.astype('int')
     classmap = get_classmap(concepts)
@@ -437,13 +437,8 @@ def generate_video(filename, frames, fps, results,
     conceptsCounts = {concept: 0 for concept in concepts}
     total_length = len(results)
     one_percent_length = int(total_length / 100)
-    f = open('gen.txt', 'w')
-    f.write(str(frames[130]))
-    f.write(str(classmap))
     seenObjects = []
     for pred_index, res in enumerate(results.itertuples()):
-        f.write(f'{pred_index}  {res} {type(frames)}')
-
         if pred_index % one_percent_length == 0:
             upload_predict_progress(pred_index, video_id, total_length, 3)
 
