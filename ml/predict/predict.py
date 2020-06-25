@@ -288,7 +288,6 @@ def predict_frames(video_frames, fps, model, videoid):
         annotations.append(obj.annotations)
 
     results = pd.concat(annotations)
-    results.to_csv('results.csv')
     return results, video_frames
 
 
