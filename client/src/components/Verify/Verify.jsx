@@ -58,13 +58,13 @@ class Verify extends Component {
     localStorage.setItem('totalAnnotations', annotations.length);
   };
 
-  displayLoading = () => {
+  displayLoading = message => {
     const { tracking } = this.props;
     const { videoDialogOpen } = this.state;
 
     if (!tracking && !videoDialogOpen) {
       Swal.fire({
-        title: 'Loading...',
+        title: message || 'Loading...',
         showConfirmButton: false,
         onBeforeOpen: () => {
           Swal.showLoading();
@@ -251,14 +251,30 @@ class Verify extends Component {
   };
 
   handleNext = callback => {
-    const { index, annotations } = this.state;
-    if (
+    const { index, annotations, annotating } = this.state;
+
+    if (annotating) {
+      localStorage.setItem('ignoredAnnotations', JSON.stringify([]));
+      localStorage.setItem('curIndex', index + 1);
+      this.setState(
+        {
+          ignoredAnnotations: [],
+          index: index + 1,
+          annotating: false
+        },
+        callback
+      );
+    }
+    
+    else if (
       annotations &&
       annotations.length &&
-      (annotations.length === index + 1 ||
+      (
+        annotations.length === index + 1 ||
         annotations[index].videoid !== annotations[index + 1].videoid ||
         Math.round(annotations[index].timeinvideo * FPS) !==
-          Math.round(annotations[index + 1].timeinvideo * FPS))
+        Math.round(annotations[index + 1].timeinvideo * FPS)
+      )
     ) {
       Swal.fire({
         title: 'Finished with current frame',
@@ -301,7 +317,9 @@ class Verify extends Component {
           );
         }
       });
-    } else {
+    } 
+    
+    else {
       localStorage.setItem('curIndex', index + 1);
       this.setState(
         {
@@ -350,10 +368,11 @@ class Verify extends Component {
 
     if (annotations.length > 0 && index >= annotations.length + 1) {
       this.resetLocalStorage();
-      return <div />;
+      return;
     }
 
     let selection = '';
+
     if (selectionMounted) {
       selection = (
         <VerifySelection
@@ -389,9 +408,7 @@ class Verify extends Component {
         </div>
       );
     } else if (!annotations || annotations.length <= 0) {
-      selection = <div>Loading...</div>;
-    } else if (!annotations || annotations.length <= 0) {
-      selection = <div>Loading Annotations...</div>;
+      selection = "";
     } else {
       selection = (
         <VerifyAnnotations
