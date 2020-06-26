@@ -319,16 +319,22 @@ def does_match_existing_tracked_object(detection, currently_tracked_objects):
 
 
 def compute_IOU(A, B):
-    # +1 in computations are to account for pixel indexing
-    area_A = (A.x2 - A.x1) * (A.y2 - A.y1) + 1
-    area_B = (B.x2 - B.x1) * (B.y2 - B.y1) + 1
-    intersect_width = min(A.x2, B.x2) - max(A.x1, B.x1) + 1
-    intersect_height = min(A.y2, B.y2) - max(A.y1, B.y1) + 1
-    # check for zero overlap
-    intersect_width = max(0, intersect_width)
-    intersect_height = max(0, intersect_height)
-    intersection = intersect_width * intersect_height
-    return intersection / (area_A + area_B - intersection)
+    max_x1 = max(A.x1, B.x1)
+    max_y1 = max(A.y1, B.y1)
+    min_x2 = min(A.x2, B.x2)
+    min_y2 = min(A.y2, B.y2)
+    
+    area_inter = abs(max(0, min_x2 - max_x1) * max(0, min_y2 - max_y1))
+    if area_inter == 0:
+        return 0
+    
+    area_A = abs((A.x2 - A.x1) * (A.y2 - A.y1))
+    area_B = abs((B.x2 - B.x1) * (B.y2 - B.y1))
+    
+    iou = area_inter / (area_A + area_B - area_inter)
+    
+    return iou
+
 
 # get tracking annotations before first model prediction for object - max_time_back seconds
 # skipping original frame annotation, already saved in object initialization
