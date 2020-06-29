@@ -254,16 +254,25 @@ class Verify extends Component {
     const { index, annotations, annotating } = this.state;
 
     if (annotating) {
-      localStorage.setItem('ignoredAnnotations', JSON.stringify([]));
-      localStorage.setItem('curIndex', index + 1);
-      this.setState(
-        {
-          ignoredAnnotations: [],
-          index: index + 1,
-          annotating: false
-        },
-        callback
-      );
+      if (annotations.length === index + 1) {
+        this.resetLocalStorage();
+        Swal.fire({
+          title: 'Finished annotating'
+        });
+      }
+      
+      else {
+        localStorage.setItem('ignoredAnnotations', JSON.stringify([]));
+        localStorage.setItem('curIndex', index + 1);
+        this.setState(
+          {
+            ignoredAnnotations: [],
+            index: index + 1,
+            annotating: false
+          },
+          callback
+        );
+      }
     }
 
     else if (
@@ -348,7 +357,8 @@ class Verify extends Component {
         index: 0,
         noAnnotations: false,
         annotations: [],
-        selectedTrackingFirst: false
+        selectedTrackingFirst: false,
+        annotating: false
       })
     );
   };

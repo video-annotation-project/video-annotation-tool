@@ -347,13 +347,13 @@ class Annotate extends Component {
     videoImage.setAttribute('crossOrigin', 'use-credentials');
     videoImage.src = canvas.toDataURL(1.0);
 
-    // Bouding box coordinates
+    // Bounding box coordinates
     const x1 = Math.max(x, 0);
     const y1 = Math.max(y, 0);
     const x2 = Math.min(x1 + parseInt(width, 0), 1599);
     const y2 = Math.min(y1 + parseInt(height, 0), 899);
 
-    // draw video with and without bounding box to canvas and save as img
+    // Draw video with and without bounding box to canvas and save as img
     const date = Date.now().toString();
 
     const body = {
