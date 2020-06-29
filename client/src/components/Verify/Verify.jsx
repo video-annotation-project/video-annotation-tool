@@ -251,7 +251,8 @@ class Verify extends Component {
   };
 
   handleNext = callback => {
-    const { index, annotations } = this.state;
+    const { index, annotations, annotating } = this.state;
+    /* This checks if we need to load a new video frame*/
     if (
       annotations &&
       annotations.length &&
@@ -260,47 +261,31 @@ class Verify extends Component {
         Math.round(annotations[index].timeinvideo * FPS) !==
           Math.round(annotations[index + 1].timeinvideo * FPS))
     ) {
-      Swal.fire({
-        title: 'Finished with current frame',
-        text: 'Move on to next frame?',
-        type: 'info',
-        showCancelButton: true,
-        cancelButtonText: 'Add annotations',
-        confirmButtonText: 'Next',
-        reverseButtons: true
-      }).then(result => {
-        if (result.dismiss !== "backdrop") {
-          this.displayLoading()
-        }
-        if (result.value) {
-          if (annotations.length === index + 1) {
-            this.resetLocalStorage();
-            Swal.fire({
-              title: 'Finished annotating'
-            });
-          } else {
-            this.verifyFrame();
-            localStorage.setItem('ignoredAnnotations', JSON.stringify([]));
-            localStorage.setItem('curIndex', index + 1);
-            this.setState(
-              {
-                ignoredAnnotations: [],
-                index: index + 1,
-                annotating: false
-              },
-              callback
-            );
-          }
-        } else if (result.dismiss === 'cancel') {
-          // Add annotations here
-          this.setState(
-            {
-              annotating: true
-            },
-            callback
-          );
-        }
-      });
+      if (annotations.length === index + 1) { // Finished with collection 
+        this.resetLocalStorage();
+        Swal.fire({
+          title: 'Finished annotating'
+        });
+      } else if (annotating) { // Go to the next frame
+        this.verifyFrame();
+        localStorage.setItem('ignoredAnnotations', JSON.stringify([]));
+        localStorage.setItem('curIndex', index + 1);
+        this.setState(
+          {
+            ignoredAnnotations: [],
+            index: index + 1,
+            annotating: false
+          },
+          callback
+        );
+      } else { // Add new annotations to the page
+        this.setState(
+          {
+            annotating: true
+          },
+          callback
+        );
+      }
     } else {
       localStorage.setItem('curIndex', index + 1);
       this.setState(

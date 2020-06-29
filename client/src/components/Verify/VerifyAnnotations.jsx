@@ -139,7 +139,7 @@ class VerifyAnnotations extends Component {
       drawDragBox: true,
       trackingStatus: null,
       detailDialogOpen: false,
-      annotation : annotation
+      annotation: annotation
     };
 
     this.displayLoading = displayLoading;
@@ -205,18 +205,17 @@ class VerifyAnnotations extends Component {
           `?videoid=${annotation.videoid}&timeinvideo=${annotation.timeinvideo}`,
         config
       );
-      let [vBoxTemp, boColTemp] = [[],[]]
-      console.log(selectedAnnotationCollections)
+      let [vBoxTemp, boColTemp] = [[], []];
+      console.log(selectedAnnotationCollections);
       if (data.data.length > 0) {
-        data.data.forEach(
-          row => {
-            if(row.verified_flag === 1) {
-              vBoxTemp = row.box
-            } else { // case for when flag is 0 or 3
-              boColTemp = boColTemp.concat(row.box)
-            }
+        data.data.forEach(row => {
+          if (row.verified_flag === 1) {
+            vBoxTemp = row.box;
+          } else {
+            // case for when flag is 0 or 3
+            boColTemp = boColTemp.concat(row.box);
           }
-        )
+        });
         this.setState({
           boxesOutsideCol: boColTemp,
           verifiedBoxes: vBoxTemp
@@ -445,7 +444,7 @@ class VerifyAnnotations extends Component {
       oldx2: annotation.x2,
       oldy2: annotation.y2,
       id: annotation.id,
-      model: annotation.admin === null ? true : false,
+      model: annotation.admin === null ? true : false
     };
     const config = {
       headers: {
@@ -469,7 +468,7 @@ class VerifyAnnotations extends Component {
       comment,
       unsure,
       oldConceptId: !concept ? null : annotation.conceptid,
-      model: annotation.admin === null ? true : false,
+      model: annotation.admin === null ? true : false
     };
 
     const config = {
@@ -590,7 +589,7 @@ class VerifyAnnotations extends Component {
           variant="contained"
           onClick={() => this.nextAnnotation(true)}
         >
-          {annotating ? 'Done Annotating' : 'Ignore'}
+          {annotating ? 'Next Frame' : 'Ignore'}
         </Button>
         {annotating ? (
           ''
