@@ -14,7 +14,6 @@ const { LexModelBuildingService } = require('aws-sdk');
  * @property {integer} priority - Training priorty of this annotation
  * @property {boolean} unsure - Was the annotator unsure of the annotation
  * @property {string} timeinvideo - Time in seconds in the video where the annotation takes place
- * @property {string} imagewithbox - Filename of the saved image with the bounding box
  * @property {string} name - Name of the annotation's concept
  * @property {string} extended - Is the annotation extended
  */
@@ -238,7 +237,7 @@ router.get(
  * @property {string} value - Inserted row.
  * e.g. "{\"id\":1970,\"videoid\":12,\"userid\":4,\"conceptid\":53,\"timeinvideo\":21.416856,\"x1\":610,
  *\"y1\":296,\"x2\":853,\"y2\":452,\"videowidth\":1600,\"videoheight\":900,\"dateannotated\":\"2019-07-16T08:44:51.505Z\",
- *\"image\":\"1563241431179.png\",\"imagewithbox\":\"1563241431179_box.png\",\"comment\":\"Test comment\",\"unsure\":true,
+ *\"image\":\"1563241431179.png\",\"comment\":\"Test comment\",\"unsure\":true,
  *\"originalid\":null,\"aivideo\":null,\"framenum\":null,\"verifiedby\":null,\"verifieddate\":null,\"priority\":0,
  *\"oldconceptid\":null,\"oldx1\":null,\"oldy1\":null,\"oldx2\":null,\"oldy2\":null,\"bad_tracking\":false}"
  */
@@ -257,7 +256,6 @@ router.get(
  * @param {integer} videoWidth.body.required - Width of video
  * @param {integer} videoHeight.body.required - Height of video
  * @param {string} image.body.required - Filename of image
- * @param {string} imagewithbox.body.required - Filename of image with bounding box
  * @param {string} comment.body.required - Annotation comment
  * @param {boolean} unsure.body.required - Is the annotator sure of the annotation
  * @returns {annotationInsert.model} 200 - Message plus inserted annotation
@@ -279,7 +277,6 @@ router.post(
       req.body.videoWidth,
       req.body.videoHeight,
       req.body.image + '.png',
-      req.body.imagewithbox + '.png',
       req.body.comment,
       req.body.unsure
     ];
@@ -287,11 +284,11 @@ router.post(
       INSERT INTO 
         annotations (
           userid, videoid, conceptid, timeinvideo, x1, y1, x2, y2, videoWidth,
-          videoHeight, image, imagewithbox, comment, unsure, dateannotated
+          videoHeight, image, comment, unsure, dateannotated
         )
       VALUES
         (
-          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, 
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, 
           current_timestamp
         )
       RETURNING *
