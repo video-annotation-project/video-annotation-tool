@@ -144,7 +144,7 @@ def predict_on_video(videoid, model_weights, concepts, filename,
           null as confidence,
           null as objectid,
           videowidth, videoheight,
-          ROUND(timeinvideo*{fps}) as frame_num
+          CASE WHEN framenum is not null THEN framenum ELSE FLOOR(timeinvideo*30) END as frame_num
         FROM
           annotations
         WHERE
