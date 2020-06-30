@@ -47,7 +47,8 @@ class DragBoxContainer extends Component {
       boxCounter: 0,
       drawDragBox: false,
       disabledMouse: !drawDragBoxProp || false,
-      showControls: false
+      showControls: false,
+      localDrawDragBoxProp: drawDragBoxProp
     };
   }
 
@@ -164,6 +165,20 @@ class DragBoxContainer extends Component {
     });
   };
 
+  updateLocalDragBoxProps = () => {
+    const {
+      dragBoxWidth,
+      dragBoxHeight,
+    } = this.state;
+    const { drawDragBoxProp } = this.props;
+
+    const boxLargeEnough = dragBoxWidth > 25 && dragBoxHeight > 25;
+    this.setState({
+      drawDragBox: boxLargeEnough,
+      localDrawDragBoxProp: drawDragBoxProp
+    });
+  }
+
   render() {
     const {
       children,
@@ -176,7 +191,10 @@ class DragBoxContainer extends Component {
       videoWidth,
       videoHeight
     } = this.props;
-    const { drawDragBox, boxCounter, disabledMouse } = this.state;
+    const { drawDragBox, boxCounter, disabledMouse, localDrawDragBoxProp } = this.state;
+    if (localDrawDragBoxProp !== drawDragBoxProp) {
+      this.updateLocalDragBoxProps();
+    }
     return (
       <div
         style={{
