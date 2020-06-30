@@ -45,15 +45,11 @@ class DragBoxContainer extends Component {
     const { drawDragBoxProp } = this.props;
     this.state = {
       boxCounter: 0,
-      drawDragBox: drawDragBoxProp || false,
+      drawDragBox: false,
       disabledMouse: !drawDragBoxProp || false,
-      showControls: false
+      showControls: false,
+      localDrawDragBoxProp: drawDragBoxProp
     };
-
-    this.resetDragBox = this.resetDragBox.bind(this);
-    this.drawDragBox = this.drawDragBox.bind(this);
-    this.createDragBox = this.createDragBox.bind(this);
-    this.removeDragBox = this.removeDragBox.bind(this);
   }
 
   resetDragBox = async e => {
@@ -163,15 +159,25 @@ class DragBoxContainer extends Component {
   };
 
   removeDragBox = e => {
-    const { toggleDragBox } = this.props;
     e.preventDefault();
     this.setState({
       drawDragBox: false
     });
-    if (toggleDragBox) {
-      toggleDragBox();
-    }
   };
+
+  updateLocalDragBoxProps = () => {
+    const {
+      dragBoxWidth,
+      dragBoxHeight,
+    } = this.state;
+    const { drawDragBoxProp } = this.props;
+
+    const boxLargeEnough = dragBoxWidth > 25 && dragBoxHeight > 25;
+    this.setState({
+      drawDragBox: boxLargeEnough,
+      localDrawDragBoxProp: drawDragBoxProp
+    });
+  }
 
   render() {
     const {
@@ -185,7 +191,10 @@ class DragBoxContainer extends Component {
       videoWidth,
       videoHeight
     } = this.props;
-    const { drawDragBox, boxCounter, disabledMouse } = this.state;
+    const { drawDragBox, boxCounter, disabledMouse, localDrawDragBoxProp } = this.state;
+    if (localDrawDragBoxProp !== drawDragBoxProp) {
+      this.updateLocalDragBoxProps();
+    }
     return (
       <div
         style={{

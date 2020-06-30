@@ -16,8 +16,8 @@
     "resized_video_height": 1080,
     "max_seconds_back": 5,
     "tracking_vid_length": 6000,
-    "biologist_users": [11, 13, 12, 6, 15, 16],
-    "tracking_users": [11, 13, 12, 6, 15, 16, 7, 8, 125],
+    "biologist_users": [11, 13, 12, 6, 15, 16, 831],
+    "tracking_users": [11, 13, 12, 6, 15, 16, 7, 8, 125, 831],
     "tracking_userid": 32
   }
 }

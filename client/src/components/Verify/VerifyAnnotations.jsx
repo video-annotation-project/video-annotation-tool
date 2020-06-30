@@ -136,7 +136,6 @@ class VerifyAnnotations extends Component {
       width: annotation.x2 - annotation.x1,
       height: annotation.y2 - annotation.y1,
       videoDialogOpen,
-      drawDragBox: true,
       trackingStatus: null,
       detailDialogOpen: false,
       annotation: annotation
@@ -208,20 +207,16 @@ class VerifyAnnotations extends Component {
         `?videoid=${annotation.videoid}&timeinvideo=${annotation.timeinvideo}`,
         config
       );
-      console.log("2")
-
-      let [vBoxTemp, boColTemp] = [[], []]
-
+      let [vBoxTemp, boColTemp] = [[], []];
       if (data.data.length > 0) {
-        data.data.forEach(
-          row => {
-            if (row.verified_flag === 1) {
-              vBoxTemp = row.box
-            } else { // case for when flag is 0 or 3
-              boColTemp = boColTemp.concat(row.box)
-            }
+        data.data.forEach(row => {
+          if (row.verified_flag === 1) {
+            vBoxTemp = row.box;
+          } else {
+            // case for when flag is 0 or 3
+            boColTemp = boColTemp.concat(row.box);
           }
-        )
+        });
         this.setState({
           boxesOutsideCol: boColTemp,
           verifiedBoxes: vBoxTemp
@@ -244,7 +239,6 @@ class VerifyAnnotations extends Component {
     displayLoading();
     await this.loadBoxes();
     this.setState({
-      drawDragBox: true,
       disableVerify: false,
       concept: null,
       comment: annotating ? '' : annotation.comment,
@@ -253,12 +247,6 @@ class VerifyAnnotations extends Component {
       y: annotating ? 0 : annotation.y1,
       width: annotating ? 0 : annotation.x2 - annotation.x1,
       height: annotating ? 0 : annotation.y2 - annotation.y1
-    });
-  };
-
-  toggleDragBox = () => {
-    this.setState({
-      drawDragBox: false
     });
   };
 
@@ -361,6 +349,17 @@ class VerifyAnnotations extends Component {
     const y1 = y;
     const x2 = x + parseInt(width, 0);
     const y2 = y + parseInt(height, 0);
+    if (x1 < 0 || y1 < 0 || x2 > annotation.videowidth ||
+      y1 > annotation.videoheight ||
+      parseInt(width, 0) < 10 || parseInt(height, 0) < 10) {
+      Swal.fire({
+        title: 'Error',
+        text: 'Invalid Bounding Box',
+        type: 'error',
+        confirmButtonText: 'Okay'
+      });
+      return;
+    }
 
     const body = {
       conceptId: concept ? concept.id : annotation.conceptid,
@@ -451,7 +450,7 @@ class VerifyAnnotations extends Component {
       oldx2: annotation.x2,
       oldy2: annotation.y2,
       id: annotation.id,
-      model: annotation.admin === null ? true : false,
+      model: annotation.admin === null ? true : false
     };
     const config = {
       headers: {
@@ -475,7 +474,7 @@ class VerifyAnnotations extends Component {
       comment,
       unsure,
       oldConceptId: !concept ? null : annotation.conceptid,
-      model: annotation.admin === null ? true : false,
+      model: annotation.admin === null ? true : false
     };
 
     const config = {
@@ -500,13 +499,23 @@ class VerifyAnnotations extends Component {
       });
   };
 
+  checkValidDragBox = () => {
+    const { annotation } = this.props;
+    const { x, y, width, height } = this.state;
+    if (x + parseInt(width, 0) > annotation.videowidth ||
+      y + parseInt(height, 0) > annotation.videoheight ||
+      x < 0 || y < 0 || width < 10 || height < 10) {
+      return false;
+    }
+    return true;
+  }
+
   handleVerifyClick = () => {
     const dragBox = document.getElementById('dragBox');
-
-    if (dragBox === null) {
+    if (dragBox === null || !this.checkValidDragBox()) {
       Swal.fire({
         title: 'Error',
-        text: 'No bounding box exists.',
+        text: 'Invalid Bounding Box',
         type: 'error',
         confirmButtonText: 'Okay'
       });
@@ -596,7 +605,7 @@ class VerifyAnnotations extends Component {
           variant="contained"
           onClick={() => this.nextAnnotation(true)}
         >
-          {annotating ? 'Done Annotating' : 'Ignore'}
+          {annotating ? 'Next Frame' : 'Ignore'}
         </Button>
         {annotating ? (
           ''
@@ -741,7 +750,8 @@ class VerifyAnnotations extends Component {
       excludeTracking,
       collectionFlag,
       resetLocalStorage,
-      ignoredAnnotations
+      ignoredAnnotations,
+      annotating
     } = this.props;
 
     const {
@@ -749,7 +759,6 @@ class VerifyAnnotations extends Component {
       y,
       conceptDialogOpen,
       trackingStatus,
-      drawDragBox,
       width,
       height,
       openedVideo,
@@ -786,8 +795,7 @@ class VerifyAnnotations extends Component {
                 >
                   <DragBoxContainer
                     dragBox={classes.dragBox}
-                    drawDragBoxProp={drawDragBox}
-                    toggleDragBox={this.toggleDragBox}
+                    drawDragBoxProp={!annotating}
                     size={{
                       width,
                       height

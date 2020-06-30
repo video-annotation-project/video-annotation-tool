@@ -252,16 +252,24 @@ class Verify extends Component {
 
   handleNext = callback => {
     const { index, annotations, annotating } = this.state;
-
-    if (annotating) {
-      if (annotations.length === index + 1) {
+    /* This checks if we need to load a new video frame*/
+    if (
+      annotations &&
+      annotations.length &&
+      (
+        annotations.length === index + 1 ||
+        annotations[index].videoid !== annotations[index + 1].videoid ||
+        Math.round(annotations[index].timeinvideo * FPS) !==
+        Math.round(annotations[index + 1].timeinvideo * FPS)
+      )
+    ) {
+      if (annotations.length === index + 1) { // Finished with collection 
         this.resetLocalStorage();
         Swal.fire({
           title: 'Finished annotating'
         });
-      }
-      
-      else {
+      } else if (annotating) { // Go to the next frame
+        this.verifyFrame();
         localStorage.setItem('ignoredAnnotations', JSON.stringify([]));
         localStorage.setItem('curIndex', index + 1);
         this.setState(
@@ -272,63 +280,15 @@ class Verify extends Component {
           },
           callback
         );
+      } else { // Add new annotations to the page
+        this.setState(
+          {
+            annotating: true
+          },
+          callback
+        );
       }
-    }
-
-    else if (
-      annotations &&
-      annotations.length &&
-      (
-        annotations.length === index + 1 ||
-        annotations[index].videoid !== annotations[index + 1].videoid ||
-        Math.round(annotations[index].timeinvideo * FPS) !==
-        Math.round(annotations[index + 1].timeinvideo * FPS)
-      )
-    ) {
-      Swal.fire({
-        title: 'Finished with current frame',
-        text: 'Move on to next frame?',
-        type: 'info',
-        showCancelButton: true,
-        cancelButtonText: 'Add annotations',
-        confirmButtonText: 'Next',
-        reverseButtons: true
-      }).then(result => {
-        if (result.dismiss !== "backdrop") {
-          this.displayLoading()
-        }
-        if (result.value) {
-          if (annotations.length === index + 1) {
-            this.resetLocalStorage();
-            Swal.fire({
-              title: 'Finished annotating'
-            });
-          } else {
-            this.verifyFrame();
-            localStorage.setItem('ignoredAnnotations', JSON.stringify([]));
-            localStorage.setItem('curIndex', index + 1);
-            this.setState(
-              {
-                ignoredAnnotations: [],
-                index: index + 1,
-                annotating: false
-              },
-              callback
-            );
-          }
-        } else if (result.dismiss === 'cancel') {
-          // Add annotations here
-          this.setState(
-            {
-              annotating: true
-            },
-            callback
-          );
-        }
-      });
-    }
-
-    else {
+    } else {
       localStorage.setItem('curIndex', index + 1);
       this.setState(
         {

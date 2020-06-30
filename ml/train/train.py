@@ -76,7 +76,7 @@ def train_model(concepts,
         include_tracking=include_tracking,
         min_examples=min_examples,
         classes=concepts,
-        verify_videos=verify_videos
+        verify_videos=verify_videos,
     )
     # Get model name & version to insert into model_versions table
     #  a user dictionary containing the concept counts from this model
@@ -195,7 +195,9 @@ def _get_callbacks(model,
         num_epochs=epochs
     )
 
-    return [stopping, progress_callback, log_callback, tensorboard_callback]
+    # It's important that tensorboard_callback is before log_callback,
+    # so the board is created/updated before being uploaded
+    return [stopping, progress_callback, tensorboard_callback, log_callback]
 
 
 def _upload_weights(model_name):
