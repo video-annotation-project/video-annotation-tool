@@ -49,9 +49,6 @@ class TrackingVideos extends Component {
         body,
         config
       );
-      this.setState({
-        trackingStatus: flag
-      });
       Swal.fire('Successfully Marked', '', 'success');
       if (tracking) {
         nextAnnotation(false);
@@ -69,7 +66,6 @@ class TrackingVideos extends Component {
       excludeTracking,
       collectionFlag,
       videoDialogOpen,
-      trackingStatus,
       index,
       size,
       videoDialogToggle,
@@ -143,12 +139,6 @@ class TrackingVideos extends Component {
               {!excludeTracking && collectionFlag > 0
                 ? 'Next disabled because the collection might contain tracking annotations'
                 : ''}
-            </Typography>
-            <Typography variant="subtitle1" className={classes.button}>
-              <b>Status: </b>{' '}
-              {!trackingStatus
-                ? this.getStatus(annotation.tracking_flag)
-                : this.getStatus(trackingStatus)}
             </Typography>
             <Typography style={{ marginTop: '10px' }}>
               {index + 1} of {size}

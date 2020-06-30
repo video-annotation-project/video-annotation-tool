@@ -249,6 +249,32 @@ class Verify extends Component {
     }
   };
 
+  handlePrev = callback => {
+    const { index, annotating } = this.state;
+
+    localStorage.setItem('ignoredAnnotations', JSON.stringify([]));
+    localStorage.setItem('curIndex', index + 1);
+
+    if (annotating) {
+        this.setState(
+          {
+            ignoredAnnotations: [],
+            annotating: false
+          },
+          callback
+        );
+    } else {
+      this.setState(
+        {
+          ignoredAnnotations: [],
+          index: index - 1,
+          annotating: false
+        },
+        callback
+      );
+    }
+  }
+
   handleNext = callback => {
     const { index, annotations, annotating } = this.state;
     /* This checks if we need to load a new video frame*/
@@ -387,6 +413,7 @@ class Verify extends Component {
           ignoredAnnotations={ignoredAnnotations}
           annotation={annotations[index]}
           index={index}
+          handlePrev={this.handlePrev}
           handleNext={this.handleNext}
           toggleSelection={this.toggleSelection}
           size={annotations.length}

@@ -136,7 +136,6 @@ class VerifyAnnotations extends Component {
       width: annotation.x2 - annotation.x1,
       height: annotation.y2 - annotation.y1,
       videoDialogOpen,
-      trackingStatus: null,
       detailDialogOpen: false,
       annotation: annotation
     };
@@ -250,16 +249,19 @@ class VerifyAnnotations extends Component {
     });
   };
 
+  prevAnnotation = async () => {
+    const { handlePrev } = this.props;
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    handlePrev(this.resetState);
+  }
+
   nextAnnotation = async ignoreFlag => {
     const { handleNext, populateIgnoreList, annotation } = this.props;
 
     if (ignoreFlag) {
       populateIgnoreList(annotation);
     }
-
-    this.setState({
-      trackingStatus: null
-    });
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
     handleNext(this.resetState);
@@ -554,7 +556,7 @@ class VerifyAnnotations extends Component {
   };
 
   optionButtons = annotation => {
-    const { classes, resetLocalStorage, annotating } = this.props;
+    const { classes, resetLocalStorage, annotating, index } = this.props;
     const { disableVerify } = this.state;
     return (
       <div
@@ -600,6 +602,14 @@ class VerifyAnnotations extends Component {
             </Button>
             </>
           )}
+        <Button
+          className={classes.button}
+          variant="contained"
+          disabled={index === 0 && !annotating}
+          onClick={() => this.prevAnnotation()}
+        >
+          Back
+        </Button>
         <Button
           className={classes.button}
           variant="contained"
@@ -758,7 +768,6 @@ class VerifyAnnotations extends Component {
       x,
       y,
       conceptDialogOpen,
-      trackingStatus,
       width,
       height,
       openedVideo,
@@ -777,7 +786,6 @@ class VerifyAnnotations extends Component {
               excludeTracking={excludeTracking}
               collectionFlag={collectionFlag}
               videoDialogOpen={videoDialogOpen}
-              trackingStatus={trackingStatus}
               index={index}
               size={size}
               resetLocalStorage={resetLocalStorage}
