@@ -74,7 +74,6 @@ class Verify extends Component {
   };
 
   toggleSelection = async () => {
-    this.displayLoading();
     const { selectedAnnotationCollections, selectionMounted } = this.state;
     let annotations = [];
     if (!selectionMounted) {
