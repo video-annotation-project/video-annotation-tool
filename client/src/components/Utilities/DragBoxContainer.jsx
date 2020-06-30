@@ -45,15 +45,10 @@ class DragBoxContainer extends Component {
     const { drawDragBoxProp } = this.props;
     this.state = {
       boxCounter: 0,
-      drawDragBox: drawDragBoxProp || false,
+      drawDragBox: false,
       disabledMouse: !drawDragBoxProp || false,
       showControls: false
     };
-
-    this.resetDragBox = this.resetDragBox.bind(this);
-    this.drawDragBox = this.drawDragBox.bind(this);
-    this.createDragBox = this.createDragBox.bind(this);
-    this.removeDragBox = this.removeDragBox.bind(this);
   }
 
   resetDragBox = async e => {
