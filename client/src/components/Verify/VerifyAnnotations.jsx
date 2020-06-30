@@ -206,7 +206,6 @@ class VerifyAnnotations extends Component {
         config
       );
       let [vBoxTemp, boColTemp] = [[], []];
-      console.log(selectedAnnotationCollections);
       if (data.data.length > 0) {
         data.data.forEach(row => {
           if (row.verified_flag === 1) {
@@ -783,7 +782,6 @@ class VerifyAnnotations extends Component {
                 <DragBoxContainer
                   dragBox={classes.dragBox}
                   drawDragBoxProp={drawDragBox}
-                  toggleDragBox={this.toggleDragBox}
                   size={{
                     width,
                     height

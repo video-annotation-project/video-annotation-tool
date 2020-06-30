@@ -163,14 +163,10 @@ class DragBoxContainer extends Component {
   };
 
   removeDragBox = e => {
-    const { toggleDragBox } = this.props;
     e.preventDefault();
     this.setState({
       drawDragBox: false
     });
-    if (toggleDragBox) {
-      toggleDragBox();
-    }
   };
 
   render() {
