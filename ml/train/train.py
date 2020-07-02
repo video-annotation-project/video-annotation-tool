@@ -9,10 +9,9 @@ import multiprocessing
 from tensorflow.python.client import device_lib
 from keras_retinanet import models
 from keras_retinanet import losses
-from tensorflow.keras.utils import multi_gpu_model
-from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping
+from keras.utils import multi_gpu_model
+from keras.callbacks import ModelCheckpoint, EarlyStopping
 from keras_retinanet.callbacks import RedirectModel
-import keras.backend.tensorflow_backend as tfback
 
 from config import config
 from utils.query import s3, query
@@ -22,20 +21,6 @@ from train.preprocessing.annotation_generator import AnnotationGenerator
 from train.evaluation.evaluate import evaluate_class_thresholds
 from train.callbacks.progress import Progress
 from train.callbacks.tensorboard import TensorboardLog
-
-def _get_available_gpus():
-    """Get a list of available gpu devices (formatted as strings).
-
-    # Returns
-        A list of available GPU devices.
-    """
-    #global _LOCAL_DEVICES
-    if tfback._LOCAL_DEVICES is None:
-        devices = tf.config.list_logical_devices()
-        tfback._LOCAL_DEVICES = [x.name for x in devices]
-    return [x for x in tfback._LOCAL_DEVICES if 'device:gpu' in x.lower()]
-
-tfback._get_available_gpus = _get_available_gpus
 
 @timer("training")
 def train_model(concepts,
