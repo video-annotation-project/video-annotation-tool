@@ -10,7 +10,7 @@ from tensorflow.python.client import device_lib
 from keras_retinanet import models
 from keras_retinanet import losses
 from tensorflow.keras.utils import multi_gpu_model
-from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping
 from keras_retinanet.callbacks import RedirectModel
 import keras.backend.tensorflow_backend as tfback
 
@@ -168,10 +168,19 @@ def _get_callbacks(model,
                    steps_per_epoch):
     """ Returns a list of callbacks to use while training.
     """
+    # Save models that are improvements
+    checkpoint = ModelCheckpoint(
+        config.WEIGHTS_PATH,
+        monitor='val_loss',
+        save_best_only=True,
+        verbose=1
+    )
+
+    checkpoint = RedirectModel(checkpoint, model)
 
     # Stops training if val_loss stops improving
     stopping = EarlyStopping(
-        monitor='val_loss', min_delta=0, patience=10, restore_best_weights=True)
+        monitor='val_loss', min_delta=0, patience=3, restore_best_weights=True)
 
     # Every epoch upload tensorboard logs to the S3 bucket
     log_callback = TensorboardLog(
@@ -197,7 +206,7 @@ def _get_callbacks(model,
 
     # It's important that tensorboard_callback is before log_callback,
     # so the board is created/updated before being uploaded
-    return [stopping, progress_callback, tensorboard_callback, log_callback]
+    return [stopping, checkpoint, progress_callback, tensorboard_callback, log_callback]
 
 
 def _upload_weights(model_name):
