@@ -65,7 +65,7 @@ def train_model(concepts,
             'regression': losses.smooth_l1(),
             'classification': losses.focal()
         },
-        optimizer=tensorboard.keras.optimizers.adam(lr=1e-5, clipnorm=0.001)
+        optimizer=keras.optimizers.adam(lr=1e-5, clipnorm=0.001)
     )
 
     print("initializing annotation generator")
@@ -192,7 +192,7 @@ def _get_callbacks(model,
     )
 
     # Save tensorboard logs to appropriate folder
-    tensorboard_callback = tensorboard.keras.callbacks.TensorBoard(
+    tensorboard_callback = keras.callbacks.TensorBoard(
         log_dir=f'./logs/{job_id}',
         batch_size=config.BATCH_SIZE,
     )
