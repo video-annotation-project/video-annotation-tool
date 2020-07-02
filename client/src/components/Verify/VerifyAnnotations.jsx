@@ -200,7 +200,6 @@ class VerifyAnnotations extends Component {
     };
 
     try {
-      console.log("1")
       const data = await axios.get(
         `/api/annotations/boxes/${annotating ? -1 : annotation.id}` +
         `?videoid=${annotation.videoid}&timeinvideo=${annotation.timeinvideo}`,
