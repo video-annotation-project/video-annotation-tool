@@ -309,8 +309,7 @@ class Verify extends Component {
         this.setState(
           {
             annotating: true
-          },
-          callback
+          }
         );
       }
     } else {
