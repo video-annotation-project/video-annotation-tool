@@ -276,6 +276,7 @@ class Verify extends Component {
   }
 
   handleNext = callback => {
+    const videoDialogOpen = JSON.parse(localStorage.getItem('videoDialogOpen'));
     const { index, annotations, annotating } = this.state;
     /* This checks if we need to load a new video frame*/
     if (
@@ -293,7 +294,7 @@ class Verify extends Component {
         Swal.fire({
           title: 'Finished annotating'
         });
-      } else if (annotating) { // Go to the next frame
+      } else if (annotating || videoDialogOpen) { // Go to the next frame
         this.verifyFrame();
         localStorage.setItem('ignoredAnnotations', JSON.stringify([]));
         localStorage.setItem('curIndex', index + 1);
