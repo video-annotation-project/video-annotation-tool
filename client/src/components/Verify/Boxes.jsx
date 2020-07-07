@@ -39,7 +39,7 @@ class Hover extends Component {
             confirmButtonText: 'Yes, delete it!'
           }).then(result => {
             if (result.value) {
-              handleDelete(box);
+              handleDelete(type, box.id);
             }
           });
         }}
