@@ -87,50 +87,47 @@ router.get(
       req.query.videoid,
       req.query.timeinvideo,
       req.params.id,
-      req.query.selectedAnnotationCollections
+      req.query.selectedAnnotationCollections,
     ];
     let queryText = `
       WITH annotationsAtVideoFrame AS (
         SELECT 
-          a.*
+            a.id, x1, x2, y1, y2, videoheight, videowidth, userid, name, admin,
+            CASE WHEN
+            EXISTS(SELECT 1 FROM annotation_intermediate ai WHERE ai.annotationid=a.id AND ai.id=ANY($4)) 
+            AND a.verifiedby IS NOT NULL 
+            THEN 1 
+            WHEN EXISTS(SELECT 1 FROM annotation_intermediate ai WHERE ai.annotationid=a.id AND ai.id=ANY($4))
+            THEN 2
+            WHEN u.admin is null
+            THEN 3
+            ELSE 0 
+            END AS verified_flag
         FROM
-          annotations a
+            annotations a
         LEFT JOIN
-          videos v ON v.id = a.videoid
+            videos v ON v.id = a.videoid
+        LEFT JOIN concepts cc ON cc.id = a.conceptid
+        LEFT JOIN users u on u.id = a.userid
         WHERE 
-          a.videoid = $1
-          AND ROUND(v.fps * a.timeinvideo) = ROUND(v.fps * $2)
-          AND a.id <> $3
+            a.videoid = $1
+            AND ROUND(v.fps * a.timeinvideo) = ROUND(v.fps * $2)
+            AND a.id <> $3
+        GROUP BY
+        a.id, a.x1, a.x2, a.y1, a.y2, a.videowidth, a.videoheight, a.verifiedby, cc.name, u.admin, a.userid
       )
       SELECT
-        c.verified_flag,
+        verified_flag,
         json_agg(
         json_build_object(
-          'id', c.id, 'x1',c.x1, 'y1',c.y1, 'x2',c.x2, 'y2',c.y2,
-          'videowidth', c.videowidth, 'videoheight', c.videoheight, 'name', c.name, 'admin', c.admin, 'userid', c.userid )) as box
-      FROM
-        (SELECT 
-          a.id, a.x1, a.x2, a.y1, a.y2, a.videowidth, a.videoheight, cc.name, u.admin, a.userid,
-          CASE WHEN
-            array_agg(ai.id) && $4 
-            AND a.verifiedby IS NOT NULL 
-          THEN 1 
-            WHEN array_agg(ai.id) && $4
-          THEN 2
-            WHEN u.admin is null
-          THEN 3
-          ELSE 0 
-          END AS verified_flag
-        FROM
-          annotationsAtVideoFrame a
-        LEFT JOIN concepts cc ON cc.id = a.conceptid
-        LEFT JOIN annotation_intermediate ai ON ai.annotationid=a.id
-        LEFT JOIN users u on u.id = a.userid
-        GROUP BY
-            a.id, a.x1, a.x2, a.y1, a.y2, a.videowidth, a.videoheight, a.verifiedby, cc.name, u.admin, a.userid) c
-      WHERE c.verified_flag != 2
-      GROUP BY c.verified_flag
-      ORDER BY c.verified_flag;
+            'id', id, 'x1',x1, 'y1',y1, 'x2',x2, 'y2',y2,
+            'videowidth', videowidth, 'videoheight', videoheight, 'name', name, 'admin', admin, 'userid', userid )) as box
+      FROM 
+        annotationsAtVideoFrame
+      WHERE
+        verified_flag != 2
+      GROUP BY verified_flag
+      ORDER BY verified_flag;
     `;
     try {
       let response = await psql.query(queryText, params);
@@ -152,7 +149,7 @@ router.get(
     const {
       selectedAnnotationCollections,
       excludeTracking,
-      selectedTrackingFirst
+      selectedTrackingFirst,
     } = req.query;
 
     let params = [selectedAnnotationCollections];
@@ -278,7 +275,7 @@ router.post(
       req.body.videoHeight,
       req.body.image + '.png',
       req.body.comment,
-      req.body.unsure
+      req.body.unsure,
     ];
     const queryText = `
       INSERT INTO 
@@ -297,7 +294,7 @@ router.post(
       let insertRes = await psql.query(queryText, data);
       res.json({
         message: 'Annotated',
-        value: JSON.stringify(insertRes.rows[0])
+        value: JSON.stringify(insertRes.rows[0]),
       });
     } catch (error) {
       console.log(error);
@@ -370,13 +367,13 @@ router.delete(
         Key:
           process.env.AWS_S3_BUCKET_VIDEOS_FOLDER +
           req.body.id +
-          '_tracking.mp4'
+          '_tracking.mp4',
       });
       let params = {
         Bucket: process.env.AWS_S3_BUCKET_NAME,
         Delete: {
-          Objects: Objects
-        }
+          Objects: Objects,
+        },
       };
       let s3Res = await s3.deleteObjects(params, (err, data) => {
         if (err) {
@@ -424,15 +421,12 @@ router.post(
       Bucket: process.env.AWS_S3_BUCKET_NAME,
       ContentEncoding: 'base64',
       ContentType: 'image/png',
-      Body: Buffer.from(req.body.buf) //the base64 string is now the body
+      Body: Buffer.from(req.body.buf), //the base64 string is now the body
     };
     s3.putObject(params, (err, data) => {
       if (err) {
         console.log(err);
-        res
-          .status(500)
-          .json(error)
-          .end();
+        res.status(500).json(error).end();
       } else {
         res.json({ message: 'successfully uploaded image to S3' });
       }
@@ -582,7 +576,7 @@ router.get(
       selectedConcepts,
       selectedUnsure,
       selectedTrackingFirst,
-      excludeTracking
+      excludeTracking,
     } = req.query;
     const params = [selectedUsers, selectedVideos, selectedConcepts];
 
@@ -738,7 +732,7 @@ let updateBoundingBox = async (req, res) => {
   }
 };
 
-let deleteTrackingAnnotations = req => {
+let deleteTrackingAnnotations = (req) => {
   const id = req.body.id;
   let s3 = new AWS.S3();
   const queryText2 = `
@@ -759,13 +753,13 @@ let deleteTrackingAnnotations = req => {
     // add tracking video
     Objects.push({
       Key:
-        process.env.AWS_S3_BUCKET_VIDEOS_FOLDER + req.body.id + '_tracking.mp4'
+        process.env.AWS_S3_BUCKET_VIDEOS_FOLDER + req.body.id + '_tracking.mp4',
     });
     params = {
       Bucket: process.env.AWS_S3_BUCKET_NAME,
       Delete: {
-        Objects: Objects
-      }
+        Objects: Objects,
+      },
     };
     s3.deleteObjects(params, (err, data) => {
       if (err) {
@@ -780,7 +774,7 @@ let verifyAnnotation = async (req, res) => {
 
   const verifiedby = req.user.id;
   const { id, model } = req.body;
-  
+
   let params = [id, verifiedby];
   let queryText1 = `
     UPDATE 
@@ -813,7 +807,7 @@ let verifyAnnotation = async (req, res) => {
   }
 };
 
-let selectLevelQuery = level => {
+let selectLevelQuery = (level) => {
   let queryPass = '';
   if (level === 'Video') {
     queryPass = `

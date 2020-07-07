@@ -202,7 +202,7 @@ class VerifyAnnotations extends Component {
     try {
       const data = await axios.get(
         `/api/annotations/boxes/${annotating ? -1 : annotation.id}` +
-        `?videoid=${annotation.videoid}&timeinvideo=${annotation.timeinvideo}`,
+          `?videoid=${annotation.videoid}&timeinvideo=${annotation.timeinvideo}`,
         config
       );
       let [vBoxTemp, boColTemp] = [[], []];
@@ -253,7 +253,7 @@ class VerifyAnnotations extends Component {
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
     handlePrev(this.resetState);
-  }
+  };
 
   nextAnnotation = async ignoreFlag => {
     const { handleNext, populateIgnoreList, annotation } = this.props;
@@ -350,9 +350,14 @@ class VerifyAnnotations extends Component {
     const y1 = y;
     const x2 = x + parseInt(width, 0);
     const y2 = y + parseInt(height, 0);
-    if (x1 < 0 || y1 < 0 || x2 > annotation.videowidth ||
+    if (
+      x1 < 0 ||
+      y1 < 0 ||
+      x2 > annotation.videowidth ||
       y1 > annotation.videoheight ||
-      parseInt(width, 0) < 10 || parseInt(height, 0) < 10) {
+      parseInt(width, 0) < 10 ||
+      parseInt(height, 0) < 10
+    ) {
       Swal.fire({
         title: 'Error',
         text: 'Invalid Bounding Box',
@@ -420,10 +425,10 @@ class VerifyAnnotations extends Component {
         if (
           Math.abs(
             annotation.x1 -
-            x1 +
-            (annotation.y1 - y1) +
-            (annotation.x2 - x2) +
-            (annotation.y2 - y2)
+              x1 +
+              (annotation.y1 - y1) +
+              (annotation.x2 - x2) +
+              (annotation.y2 - y2)
           ) > 0.1 &&
           annotation.image
         ) {
@@ -503,13 +508,18 @@ class VerifyAnnotations extends Component {
   checkValidDragBox = () => {
     const { annotation } = this.props;
     const { x, y, width, height } = this.state;
-    if (x + parseInt(width, 0) > annotation.videowidth ||
+    if (
+      x + parseInt(width, 0) > annotation.videowidth ||
       y + parseInt(height, 0) > annotation.videoheight ||
-      x < 0 || y < 0 || width < 10 || height < 10) {
+      x < 0 ||
+      y < 0 ||
+      width < 10 ||
+      height < 10
+    ) {
       return false;
     }
     return true;
-  }
+  };
 
   handleVerifyClick = () => {
     const dragBox = document.getElementById('dragBox');
@@ -565,42 +575,42 @@ class VerifyAnnotations extends Component {
         {annotating ? (
           ''
         ) : (
-            <>
+          <>
+            <Button
+              className={classes.button}
+              variant="contained"
+              color="primary"
+              onClick={resetLocalStorage}
+            >
+              Reset Selections
+            </Button>
+            <Button
+              className={classes.button}
+              variant="contained"
+              color="primary"
+              onClick={this.toggleDetails}
+            >
+              Details
+            </Button>
+            <MuiThemeProvider theme={theme}>
               <Button
                 className={classes.button}
                 variant="contained"
-                color="primary"
-                onClick={resetLocalStorage}
+                color="secondary"
+                onClick={() => this.handleDelete(annotation)}
               >
-                Reset Selections
-            </Button>
-              <Button
-                className={classes.button}
-                variant="contained"
-                color="primary"
-                onClick={this.toggleDetails}
-              >
-                Details
-            </Button>
-              <MuiThemeProvider theme={theme}>
-                <Button
-                  className={classes.button}
-                  variant="contained"
-                  color="secondary"
-                  onClick={() => this.handleDelete(annotation)}
-                >
-                  Delete
+                Delete
               </Button>
-              </MuiThemeProvider>
-              <Button
-                className={classes.button}
-                variant="contained"
-                onClick={this.resetState}
-              >
-                Reset Box
+            </MuiThemeProvider>
+            <Button
+              className={classes.button}
+              variant="contained"
+              onClick={this.resetState}
+            >
+              Reset Box
             </Button>
-            </>
-          )}
+          </>
+        )}
         <Button
           className={classes.button}
           variant="contained"
@@ -619,16 +629,16 @@ class VerifyAnnotations extends Component {
         {annotating ? (
           ''
         ) : (
-            <Button
-              className={classes.button}
-              variant="contained"
-              color="primary"
-              onClick={this.handleVerifyClick}
-              disabled={disableVerify}
-            >
-              Verify
-            </Button>
-          )}
+          <Button
+            className={classes.button}
+            variant="contained"
+            color="primary"
+            onClick={this.handleVerifyClick}
+            disabled={disableVerify}
+          >
+            Verify
+          </Button>
+        )}
         <IconButton
           onClick={this.videoDialogToggle}
           aria-label="OnDemandVideo"
@@ -653,21 +663,21 @@ class VerifyAnnotations extends Component {
           {annotating ? (
             ''
           ) : (
-              <>
-                <Grid item>
-                  <Avatar
-                    src={`https://cdn.deepseaannotations.com/concept_images/${
-                      !concept ? annotation.picture : concept.picture
-                      }`}
-                  />
-                </Grid>
-                <Grid item>
-                  <Typography variant="subtitle1" style={{ marginLeft: '10px' }}>
-                    {!concept ? annotation.name : concept.name}
-                  </Typography>
-                </Grid>
-              </>
-            )}
+            <>
+              <Grid item>
+                <Avatar
+                  src={`https://cdn.deepseaannotations.com/concept_images/${
+                    !concept ? annotation.picture : concept.picture
+                  }`}
+                />
+              </Grid>
+              <Grid item>
+                <Typography variant="subtitle1" style={{ marginLeft: '10px' }}>
+                  {!concept ? annotation.name : concept.name}
+                </Typography>
+              </Grid>
+            </>
+          )}
           <Grid item xs>
             <ConceptsSelected
               disableConcept={this.state.disableConcept}
@@ -712,8 +722,8 @@ class VerifyAnnotations extends Component {
                 Comment: {comment}
               </Typography>
             ) : (
-                ''
-              )}
+              ''
+            )}
             {unsure !== null ? (
               <Typography className={classes.paper} variant="body2">
                 Unsure:{' '}
@@ -723,8 +733,8 @@ class VerifyAnnotations extends Component {
                   .toUpperCase() + unsure.toString().slice(1)}
               </Typography>
             ) : (
-                ''
-              )}
+              ''
+            )}
           </DialogContent>
         </div>
       </Dialog>
@@ -792,76 +802,76 @@ class VerifyAnnotations extends Component {
               nextAnnotation={this.nextAnnotation}
             />
           ) : (
-              <div style={{ position: 'absolute', left: '250px' }}>
-                <Hotkeys keyName="r, d, i, v" onKeyDown={this.handleKeyDown} />
-                <div
-                  style={{
-                    width: annotation.videowidth,
-                    height: annotation.videoheight
+            <div style={{ position: 'absolute', left: '250px' }}>
+              <Hotkeys keyName="r, d, i, v" onKeyDown={this.handleKeyDown} />
+              <div
+                style={{
+                  width: annotation.videowidth,
+                  height: annotation.videoheight
+                }}
+              >
+                <DragBoxContainer
+                  dragBox={classes.dragBox}
+                  drawDragBoxProp={!annotating}
+                  size={{
+                    width,
+                    height
+                  }}
+                  videoWidth={annotation.videowidth}
+                  videoHeight={annotation.videoheight}
+                  position={{ x, y }}
+                  onDragStop={(e, d) => {
+                    this.setState({ x: d.x, y: d.y });
+                  }}
+                  onResize={(e, direction, ref, delta, position) => {
+                    this.setState(
+                      {
+                        width: ref.style.width,
+                        height: ref.style.height,
+                        ...position
+                      },
+                      () => {
+                        this.setState({
+                          disableConcept:
+                            ref.style.width === 0 && ref.style.height === 0
+                              ? true
+                              : false
+                        });
+                      }
+                    );
                   }}
                 >
-                  <DragBoxContainer
-                    dragBox={classes.dragBox}
-                    drawDragBoxProp={!annotating}
-                    size={{
-                      width,
-                      height
+                  <Boxes
+                    handleDelete={this.handleDelete}
+                    boxesOutsideCol={boxesOutsideCol}
+                    verifiedBoxes={verifiedBoxes}
+                    ignoredAnnotations={ignoredAnnotations}
+                    annotation={annotation}
+                  />
+                  <img
+                    id="image"
+                    onLoad={this.loaded}
+                    onError={this.handleErrImage}
+                    className={classes.img}
+                    src={`https://cdn.deepseaannotations.com/annotation_frames/${annotation.image}`}
+                    alt="error"
+                    crossOrigin="use-credentials"
+                    style={{
+                      width: annotation.videowidth,
+                      height: annotation.videoheight
                     }}
-                    videoWidth={annotation.videowidth}
-                    videoHeight={annotation.videoheight}
-                    position={{ x, y }}
-                    onDragStop={(e, d) => {
-                      this.setState({ x: d.x, y: d.y });
-                    }}
-                    onResize={(e, direction, ref, delta, position) => {
-                      this.setState(
-                        {
-                          width: ref.style.width,
-                          height: ref.style.height,
-                          ...position
-                        },
-                        () => {
-                          this.setState({
-                            disableConcept:
-                              ref.style.width === 0 && ref.style.height === 0
-                                ? true
-                                : false
-                          });
-                        }
-                      );
-                    }}
-                  >
-                    <Boxes
-                      handleDelete={this.handleDelete}
-                      boxesOutsideCol={boxesOutsideCol}
-                      verifiedBoxes={verifiedBoxes}
-                      ignoredAnnotations={ignoredAnnotations}
-                      annotation={annotation}
-                    />
-                    <img
-                      id="image"
-                      onLoad={this.loaded}
-                      onError={this.handleErrImage}
-                      className={classes.img}
-                      src={`https://cdn.deepseaannotations.com/annotation_frames/${annotation.image}`}
-                      alt="error"
-                      crossOrigin="use-credentials"
-                      style={{
-                        width: annotation.videowidth,
-                        height: annotation.videoheight
-                      }}
-                    />
-                  </DragBoxContainer>
-                  <Legend />
-                </div>
-                <Typography style={{ marginTop: '10px' }}>
-                  {index + 1} of {size}
-                </Typography>
-                {this.optionButtons(annotation)}
-                {this.annotationConcept(annotation)}
-                {this.annotationDetails(annotation)}
+                  />
+                </DragBoxContainer>
+                <Legend />
               </div>
-            )}
+              <Typography style={{ marginTop: '10px' }}>
+                {index + 1} of {size}
+              </Typography>
+              {this.optionButtons(annotation)}
+              {this.annotationConcept(annotation)}
+              {this.annotationDetails(annotation)}
+            </div>
+          )}
         </>
         {openedVideo && (
           <VideoMetadata
