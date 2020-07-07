@@ -162,9 +162,9 @@ class Verify extends Component {
       });
   };
 
-  removeFromIgnoreList = annotation => {
+  removeFromIgnoreList = id => {
     const { ignoredAnnotations } = this.state;
-    const ignored = ignoredAnnotations.filter(x => x.id !== annotation.id);
+    const ignored = ignoredAnnotations.filter(x => x.id !== id);
     localStorage.setItem('ignoredAnnotations', JSON.stringify(ignored));
     this.setState({
       ignoredAnnotations: ignored
@@ -289,10 +289,10 @@ class Verify extends Component {
         Math.round(annotations[index + 1].timeinvideo * FPS)
       )
     ) {
-      if (annotations.length === index + 1) { // Finished with collection 
+      if ((annotating || videoDialogOpen) && annotations.length === index + 1) { // Finished with collection 
         this.resetLocalStorage();
         Swal.fire({
-          title: 'Finished annotating'
+          title: 'Finished with collection'
         });
       } else if (annotating || videoDialogOpen) { // Go to the next frame
         this.verifyFrame();

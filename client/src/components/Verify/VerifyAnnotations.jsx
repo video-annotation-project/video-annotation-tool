@@ -157,15 +157,14 @@ class VerifyAnnotations extends Component {
   };
 
   handleKeyDown = (keyName, e) => {
-    const { annotation } = this.props;
     e.preventDefault();
     if (e.target === document.body) {
       if (keyName === 'r') {
         // reset shortcut
-        this.resetState();
+        this.resetCurrentBox(false);
       } else if (keyName === 'd') {
         // delete shortcut
-        this.handleDelete(annotation);
+        this.handleDelete('current');
       } else if (keyName === 'i') {
         // ignore shortcut
         this.nextAnnotation(true);
@@ -229,6 +228,31 @@ class VerifyAnnotations extends Component {
     } catch (error) {
       console.log(error);
     }
+  };
+
+  resetCurrentBox = boxOnly => {
+    const { annotation, annotating } = this.props;
+
+    if (boxOnly) {
+      this.setState({
+        x: annotating ? 0 : annotation.x1,
+        y: annotating ? 0 : annotation.y1,
+        width: annotating ? 0 : annotation.x2 - annotation.x1,
+        height: annotating ? 0 : annotation.y2 - annotation.y1
+      });
+      return;
+    }
+
+    this.setState({
+      disableVerify: false,
+      concept: null,
+      comment: annotating ? '' : annotation.comment,
+      unsure: annotating ? false : annotation.unsure,
+      x: annotating ? 0 : annotation.x1,
+      y: annotating ? 0 : annotation.y1,
+      width: annotating ? 0 : annotation.x2 - annotation.x1,
+      height: annotating ? 0 : annotation.y2 - annotation.y1
+    });
   };
 
   resetState = async () => {
@@ -313,16 +337,15 @@ class VerifyAnnotations extends Component {
     );
   };
 
-  handleDelete = async annotationArg => {
-    const { annotation, removeFromIgnoreList } = this.props;
+  handleDelete = async (type, id) => {
+    const { removeFromIgnoreList } = this.props;
+    const { boxesOutsideCol, verifiedBoxes } = this.state;
     const config = {
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${localStorage.getItem('token')}`
       },
-      data: {
-        id: annotationArg.id
-      }
+      data: { id }
     };
     axios
       .delete('/api/annotations', config)
@@ -331,12 +354,29 @@ class VerifyAnnotations extends Component {
           type: 'success',
           title: 'Deleted!!'
         });
-        if (annotation.id === annotationArg.id) {
-          this.nextAnnotation(false);
-        } else {
-          removeFromIgnoreList(annotationArg);
-          this.resetState();
+
+        switch (type) {
+          case 'current':
+            this.nextAnnotation(false);
+            break;
+          case 'ignored':
+            removeFromIgnoreList(id);
+            break;
+          case 'outside':
+            const outside = boxesOutsideCol.filter(x => x.id !== id);
+            this.setState({
+              boxesOutsideCol: outside
+            });
+            break;
+          case 'verified':
+            const verified = verifiedBoxes.filter(x => x.id !== id);
+            this.setState({
+              verifiedBoxes: verified
+            });
+            break;
+          // no default
         }
+        this.resetCurrentBox(true);
       })
       .catch(error => {
         Swal.fire(error, '', 'error');
@@ -572,18 +612,18 @@ class VerifyAnnotations extends Component {
         className={classes.buttonsContainer1}
         style={{ width: (2 * annotation.videowidth) / 3 }}
       >
+        <Button
+          className={classes.button}
+          variant="contained"
+          color="primary"
+          onClick={resetLocalStorage}
+        >
+          Reset Selections
+        </Button>
         {annotating ? (
           ''
         ) : (
           <>
-            <Button
-              className={classes.button}
-              variant="contained"
-              color="primary"
-              onClick={resetLocalStorage}
-            >
-              Reset Selections
-            </Button>
             <Button
               className={classes.button}
               variant="contained"
@@ -597,7 +637,7 @@ class VerifyAnnotations extends Component {
                 className={classes.button}
                 variant="contained"
                 color="secondary"
-                onClick={() => this.handleDelete(annotation)}
+                onClick={() => this.handleDelete('current')}
               >
                 Delete
               </Button>
@@ -605,7 +645,7 @@ class VerifyAnnotations extends Component {
             <Button
               className={classes.button}
               variant="contained"
-              onClick={this.resetState}
+              onClick={() => this.resetCurrentBox(false)}
             >
               Reset Box
             </Button>

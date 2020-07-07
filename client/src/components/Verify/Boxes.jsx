@@ -10,7 +10,7 @@ class Hover extends Component {
   }
 
   render() {
-    const { box, annotation, handleDelete, color } = this.props;
+    const { box, annotation, handleDelete, type, color } = this.props;
     const { hover } = this.state;
     let col = color;
     if (hover) {
@@ -78,6 +78,7 @@ class Boxes extends Component {
                 <Hover
                   id={box.id}
                   handleDelete={handleDelete}
+                  type="ignored"
                   box={box}
                   annotation={annotation}
                   color={
@@ -113,6 +114,7 @@ class Boxes extends Component {
                   id={box.id}
                   concept={box.concept}
                   handleDelete={handleDelete}
+                  type="outside"
                   box={box}
                   annotation={annotation}
                   color={
@@ -148,6 +150,7 @@ class Boxes extends Component {
                   id={box.id}
                   concept={box.concept}
                   handleDelete={handleDelete}
+                  type="verified"
                   box={box}
                   annotation={annotation}
                   color="2px solid lightgreen"
