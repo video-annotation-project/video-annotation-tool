@@ -157,6 +157,8 @@ class VerifyAnnotations extends Component {
   };
 
   handleKeyDown = (keyName, e) => {
+    const { annotation } = this.props;
+
     e.preventDefault();
     if (e.target === document.body) {
       if (keyName === 'r') {
@@ -164,7 +166,7 @@ class VerifyAnnotations extends Component {
         this.resetCurrentBox(false);
       } else if (keyName === 'd') {
         // delete shortcut
-        this.handleDelete('current');
+        this.handleDelete('current', annotation.id);
       } else if (keyName === 'i') {
         // ignore shortcut
         this.nextAnnotation(true);
@@ -637,7 +639,7 @@ class VerifyAnnotations extends Component {
                 className={classes.button}
                 variant="contained"
                 color="secondary"
-                onClick={() => this.handleDelete('current')}
+                onClick={() => this.handleDelete('current', annotation.id)}
               >
                 Delete
               </Button>
