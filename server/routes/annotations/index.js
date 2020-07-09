@@ -347,18 +347,16 @@ router.patch(
 router.delete(
   '/',
   passport.authenticate('jwt', { session: false }),
-  async (req, res) => {
+  (req, res) => {
     let s3 = new AWS.S3();
     let queryText = `
       DELETE FROM
         annotations
       WHERE 
-        annotations.id=$1 OR annotations.originalid=$1 
-      RETURNING *
+        annotations.id=$1 OR annotations.originalid=$1
     `;
     try {
-      let deleteRes = await psql.query(queryText, [req.body.id]);
-
+      psql.query(queryText, [req.body.id]);
       //These are the s3 objects we will be deleting
       let Objects = [];
 
@@ -375,7 +373,7 @@ router.delete(
           Objects: Objects,
         },
       };
-      let s3Res = await s3.deleteObjects(params, (err, data) => {
+      s3.deleteObjects(params, (err, data) => {
         if (err) {
           console.log('Err: deleting images');
           res.status(500).json(err);
