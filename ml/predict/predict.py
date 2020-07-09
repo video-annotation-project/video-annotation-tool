@@ -446,30 +446,6 @@ def does_match_existing_tracked_object(detection, currently_tracked_objects):
     return (max_iou >= config.TRACKING_IOU_THRESH), match
 
 
-<< << << < HEAD
-
-
-def compute_IOU(A, B):
-    max_x1 = max(A.x1, B.x1)
-    max_y1 = max(A.y1, B.y1)
-    min_x2 = min(A.x2, B.x2)
-    min_y2 = min(A.y2, B.y2)
-
-    area_inter = abs(max(0, min_x2 - max_x1) * max(0, min_y2 - max_y1))
-    if area_inter == 0:
-        return 0
-
-    area_A = abs((A.x2 - A.x1) * (A.y2 - A.y1))
-    area_B = abs((B.x2 - B.x1) * (B.y2 - B.y1))
-
-    iou = area_inter / (area_A + area_B - area_inter)
-
-    return iou
-
-
-== == == =
-
-
 def compute_IOU(boxA, boxB):
     # determine the (x, y)-coordinates of the intersection rectangle
     xA = max(boxA[0], boxB[0])
@@ -499,12 +475,8 @@ def compute_IOU_wrapper(boxA, boxB):
     return compute_IOU([boxA.x1, boxA.y1, boxA.x2, boxA.y2], [boxB.x1, boxB.y1, boxB.x2, boxB.y2])
 
 
->>>>>> > origin/viet
-
 # get tracking annotations before first model prediction for object - max_time_back seconds
 # skipping original frame annotation, already saved in object initialization
-
-
 def track_backwards(video_frames, frame_num, detection, object_id, fps, old_annotations):
     annotations = pd.DataFrame(
         columns=['x1', 'y1', 'x2', 'y2', 'label', 'confidence', 'objectid', 'frame_num'])
