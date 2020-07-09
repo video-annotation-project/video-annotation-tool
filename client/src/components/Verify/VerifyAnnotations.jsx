@@ -340,7 +340,7 @@ class VerifyAnnotations extends Component {
   };
 
   handleDelete = async (type, id) => {
-    const { removeFromIgnoreList } = this.props;
+    const { removeFromIgnoreList, displayLoading} = this.props;
     const { boxesOutsideCol, verifiedBoxes } = this.state;
     const config = {
       headers: {
@@ -349,9 +349,12 @@ class VerifyAnnotations extends Component {
       },
       data: { id }
     };
+
+    displayLoading();
     axios
       .delete('/api/annotations', config)
       .then(async () => {
+        Swal.close();
         this.toastPopup.fire({
           type: 'success',
           title: 'Deleted!!'
