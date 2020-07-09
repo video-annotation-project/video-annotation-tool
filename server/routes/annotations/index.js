@@ -216,6 +216,7 @@ router.get(
         WHERE
           ai.id::TEXT = ANY($1)
           AND a.tracking_flag IS NULL
+          AND a.userid!=${configData.ml.tracking_userid}
       `;
     }
     try {
