@@ -273,7 +273,7 @@ def predict_frames(video_frames, fps, model, videoid, collections=None):
         if frame_num % config.NUM_FRAMES == 0:
             detections = get_predictions(frame, model, collections)
             print(f'total detections: {len(detections)}')
-            for detection in detections:
+            for _, detection in detections.iterrows():
                 (x1, y1, x2, y2) = detection[0]
                 if (x1 > x2 or y1 > y2):
                     continue
