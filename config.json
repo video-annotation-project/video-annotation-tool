@@ -1,6 +1,7 @@
 {
   "ml": {
     "prediction_confidence_thresholds": [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5],
+    "default_prediction_confidence_threshold": 0.5,
     "train_annot_file": "train_annot_file.csv",
     "valid_annot_file": "valid_annot_file.csv",
     "image_folder": "image_folder",

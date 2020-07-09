@@ -3,6 +3,7 @@ import os
 import uuid
 import datetime
 import psutil
+import itertools
 
 import cv2
 import numpy as np
@@ -96,7 +97,7 @@ class Tracked_object(object):
             self.y2 = y1 + h
             self.box = (x1, y1, w, h)
             self.save_annotation(frame_num)
-            self.tracked_frames += 1
+        self.tracked_frames += 1
         return success
 
     def change_id(self, matched_obj_id):
@@ -118,7 +119,8 @@ def resize(row):
 
 @profile(stream=fp)
 def predict_on_video(videoid, model_weights, concepts, filename,
-                     upload_annotations=False, userid=None, collection_id=None): 
+                     upload_annotations=False, userid=None, collection_id=None,
+                     collections=None):
     vid_filename = pd_query(f'''
             SELECT *
             FROM videos
@@ -144,14 +146,20 @@ def predict_on_video(videoid, model_weights, concepts, filename,
           null as confidence,
           null as objectid,
           videowidth, videoheight,
-          CASE WHEN framenum is not null THEN framenum ELSE FLOOR(timeinvideo*{fps}) END as frame_num
+          CASE WHEN
+            framenum is not null
+          THEN
+            framenum
+          ELSE
+            FLOOR(timeinvideo*{fps}) 
+          END AS frame_num
         FROM
           annotations
         WHERE
           videoid={videoid} AND
           userid in {str(tuple(config.GOOD_USERS))} AND
           conceptid {tuple_concept}''')
-    
+
     print(f'Number of human annotations {len(annotations)}')
     printing_with_time("After database query")
 
@@ -165,7 +173,7 @@ def predict_on_video(videoid, model_weights, concepts, filename,
     model = init_model(model_weights)
 
     printing_with_time("Predicting")
-    results, frames = predict_frames(frames, fps, model, videoid)
+    results, frames = predict_frames(frames, fps, model, videoid, collections)
     if (results.empty):
         print("no predictions")
         return results, annotations
@@ -232,7 +240,7 @@ def init_model(model_path):
     return model
 
 
-def predict_frames(video_frames, fps, model, videoid):
+def predict_frames(video_frames, fps, model, videoid, collections=None):
     currently_tracked_objects = []
     annotations = [
         pd.DataFrame(
@@ -250,11 +258,11 @@ def predict_frames(video_frames, fps, model, videoid):
         # update tracking for currently tracked objects
         for obj in currently_tracked_objects:
             success = obj.update(frame, frame_num)
-            temp = list(currently_tracked_objects)
-            temp.remove(obj)
-            detection = (obj.box, 0, 0)
-            match, matched_object = does_match_existing_tracked_object(
-                detection[0], temp)
+            # temp = list(currently_tracked_objects)
+            # temp.remove(obj)
+            # detection = (obj.box, 0, 0)
+            # match, matched_object = does_match_existing_tracked_object(
+            #     detection[0], temp)
             if not success or obj.tracked_frames > 30:
                 annotations.append(obj.annotations)
                 currently_tracked_objects.remove(obj)
@@ -263,7 +271,7 @@ def predict_frames(video_frames, fps, model, videoid):
         # Every NUM_FRAMES frames, get new predictions
         # Then, check if any detections match a currently tracked object
         if frame_num % config.NUM_FRAMES == 0:
-            detections = get_predictions(frame, model)
+            detections = get_predictions(frame, model, collections)
             print(f'total detections: {len(detections)}')
             for detection in detections:
                 (x1, y1, x2, y2) = detection[0]
@@ -277,7 +285,8 @@ def predict_frames(video_frames, fps, model, videoid):
                     tracked_object = Tracked_object(
                         detection, frame, frame_num)
                     prev_annotations, matched_obj_id = track_backwards(
-                        video_frames, frame_num, detection, tracked_object.id, fps, pd.concat(annotations))
+                        video_frames, frame_num, detection,
+                        tracked_object.id, fps, pd.concat(annotations))
                     if matched_obj_id:
                         tracked_object.change_id(matched_obj_id)
                     tracked_object.annotations = tracked_object.annotations.append(
@@ -291,16 +300,136 @@ def predict_frames(video_frames, fps, model, videoid):
     return results, video_frames
 
 
-def get_predictions(frame, model):
+def _get_collection_confidence(confidences):  # 1 - (1-a)(1-b)...(1-z)
+    complement = np.prod([1 - c for c in confidences])
+    return 1 - complement
+
+# Check if the proposals are pairwise overlapping
+
+
+def _are_overlapping(adj_list, proposals):
+    for proposal_a, proposal_b in itertools.combinations(proposals, 2):
+        try:
+            if proposal_b not in adj_list[proposal_a]:
+                return False
+        except KeyError:
+            return False
+    return True
+
+
+def _get_ancestor(concepts_table, concept):
+    return int(concepts_table[concepts_table['id'] == concept]['parent'].iloc[0])
+
+
+def _find_nearest_common_ancestor_pair(c1, c2):
+    concepts_table = pd_query("""SELECT * FROM concepts""")
+    if c1 == c2:
+        return c1
+    visited = set((c1, c2))
+    while c1 != 0 or c2 != 0:
+        if c1 != 0:
+            c1 = _get_ancestor(concepts_table, c1)
+            if c1 in visited:
+                return c1
+            visited.add(c1)
+        if c2 != 0:
+            c2 = _get_ancestor(concepts_table, c2)
+            if c2 in visited:
+                return c2
+            visited.add(c2)
+    raise ValueError("Bug in find_nearest_common_ancestor")
+
+
+def _find_nearest_common_ancestor(concepts):
+    concepts = list(concepts)
+    c1 = concepts.pop()
+
+    for c2 in concepts:
+        c1 = _find_nearest_common_ancestor_pair(c1, c2)
+    return c1
+
+# build a graph where vertices are proposals and there are edges between overlapping proposals of differing concepts
+
+
+def _build_graph(label_groups):
+    adj_list = dict()
+    # filter out proposals that even combined with max of other groups don't exceed threshold
+    group_maxima = label_groups.score.apply(max)
+    for group_a, group_b in itertools.combinations(label_groups, 2):
+        other_maxima = list(group_maxima.drop([group_a[0], group_b[0]]))
+        for i, proposal_a in group_a[1].iterrows():
+            # first = True
+            # broken = False
+            for j, proposal_b in group_b[1].iterrows():
+                # if _get_collection_confidence([proposal_a['score'], proposal_b['score']] + other_maxima) < THRESHOLD:
+                # broken = True
+                # break
+                iou = compute_IOU(proposal_a['box'], proposal_b['box'])
+                if iou > config.EVALUATION_IOU_THRESH:
+                    adj_list.setdefault(i, set()).add(j)
+                    adj_list.setdefault(j, set()).add(i)
+                # first = False
+            # if first and broken:
+                # break
+    return adj_list
+
+
+def _get_intersecting_box(boxes):
+    x1 = max(box[0] for box in boxes)
+    y1 = max(box[1] for box in boxes)
+    x2 = min(box[2] for box in boxes)
+    y2 = min(box[3] for box in boxes)
+    return np.array((x1, y1, x2, y2))
+
+
+def _find_collection_predictions(df, collection, label):
+    # filter the df and group it by label
+    label_groups = df[df.label.isin(collection)].groupby('label')
+    if len(label_groups) < 2:
+        return []
+
+    # filter out proposals not in adj_list
+    adj_list = _build_graph(label_groups)
+    label_groups = df[df.label.isin(
+        collection) & df.index.isin(adj_list)].groupby('label')
+
+    predictions = []
+
+    for n in range(2, len(collection) + 1):
+        # iterate over all possible subsets of size n of the collection
+        for subgroups in itertools.combinations(label_groups, n):
+            for proposals in itertools.product(*[sg[1].iterrows() for sg in subgroups]):
+                confidence = _get_collection_confidence(
+                    [p['score'] for _, p in proposals])
+                if confidence > config.DEFAULT_PREDICTION_THRESHOLD and _are_overlapping(adj_list, [v for v, _ in proposals]):
+                    intersecting_box = _get_intersecting_box(
+                        [p['box'] for _, p in proposals])
+                    predictions.append((intersecting_box, confidence, label))
+
+    return predictions
+
+
+def get_predictions(frame, model, collections=None):
     frame = np.expand_dims(frame, axis=0)
     boxes, scores, labels = model.predict_on_batch(frame)
-    predictions = zip(boxes[0], scores[0], labels[0])
-    filtered_predictions = []
-    for box, score, label in predictions:
-        if config.THRESHOLDS[label] > score:
-            continue
-        filtered_predictions.append((box, score, label))
-    return filtered_predictions
+
+    # create dataframe to manipulate data easier
+    df = pd.DataFrame({'box': list(boxes[0]), 'score': scores[0],
+                       'label': labels[0]})
+
+    confident_mask = df.apply(
+        lambda x: x['score'] >= config.THRESHOLDS[x['label']])
+    base_concept_predictions = df[confident_mask]
+    collection_candidates = df[~confident_mask]
+
+    collection_predictions = []
+    if collections:
+        for collection in collections:
+            ancestor = _find_nearest_common_ancestor(collection)
+            collection_prediction += _find_collection_predictions(
+                collection_candidates, collection, ancestor)
+
+    return base_concept_predictions + collection_predictions
 
 
 def does_match_existing_tracked_object(detection, currently_tracked_objects):
@@ -310,11 +439,14 @@ def does_match_existing_tracked_object(detection, currently_tracked_objects):
     max_iou = 0
     match = None
     for obj in currently_tracked_objects:
-        iou = compute_IOU(obj, detection_series)
+        iou = compute_IOU_wrapper(obj, detection_series)
         if (iou > max_iou):
             max_iou = iou
             match = obj
     return (max_iou >= config.TRACKING_IOU_THRESH), match
+
+
+<< << << < HEAD
 
 
 def compute_IOU(A, B):
@@ -322,18 +454,52 @@ def compute_IOU(A, B):
     max_y1 = max(A.y1, B.y1)
     min_x2 = min(A.x2, B.x2)
     min_y2 = min(A.y2, B.y2)
-    
+
     area_inter = abs(max(0, min_x2 - max_x1) * max(0, min_y2 - max_y1))
     if area_inter == 0:
         return 0
-    
+
     area_A = abs((A.x2 - A.x1) * (A.y2 - A.y1))
     area_B = abs((B.x2 - B.x1) * (B.y2 - B.y1))
-    
+
     iou = area_inter / (area_A + area_B - area_inter)
-    
+
     return iou
 
+
+== == == =
+
+
+def compute_IOU(boxA, boxB):
+    # determine the (x, y)-coordinates of the intersection rectangle
+    xA = max(boxA[0], boxB[0])
+    yA = max(boxA[1], boxB[1])
+    xB = min(boxA[2], boxB[2])
+    yB = min(boxA[3], boxB[3])
+
+    # compute the area of intersection rectangle
+    interArea = max((xB - xA, 0)) * max((yB - yA), 0)
+    if interArea == 0:
+        return 0
+    # compute the area of both the prediction and ground-truth
+    # rectangles
+    boxAArea = abs((boxA[2] - boxA[0]) * (boxA[3] - boxA[1]))
+    boxBArea = abs((boxB[2] - boxB[0]) * (boxB[3] - boxB[1]))
+
+    # compute the intersection over union by taking the intersection
+    # area and dividing it by the sum of prediction + ground-truth
+    # areas - the interesection area
+    iou = interArea / float(boxAArea + boxBArea - interArea)
+
+    # return the intersection over union value
+    return iou
+
+
+def compute_IOU_wrapper(boxA, boxB):
+    return compute_IOU([boxA.x1, boxA.y1, boxA.x2, boxA.y2], [boxB.x1, boxB.y1, boxB.x2, boxB.y2])
+
+
+>>>>>> > origin/viet
 
 # get tracking annotations before first model prediction for object - max_time_back seconds
 # skipping original frame annotation, already saved in object initialization
@@ -364,7 +530,7 @@ def track_backwards(video_frames, frame_num, detection, object_id, fps, old_anno
                 return annotations, matched_obj_id
 
             annotations = annotations.append(annotation, ignore_index=True)
-            frames += 1
+        frames += 1
     return annotations, None
 
 
@@ -372,7 +538,7 @@ def match_old_annotations(old_annotations, annotation):
     max_iou = 0
     match = None
     for _, annot in old_annotations.iterrows():
-        iou = compute_IOU(annot, annotation)
+        iou = compute_IOU_wrapper(annot, annotation)
         if (iou > max_iou):
             max_iou = iou
             match = annot['objectid']

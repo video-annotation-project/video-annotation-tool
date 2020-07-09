@@ -46,12 +46,12 @@ def main():
         start_training(user_model, concepts, verify_videos, model_params)
 
         setup_predict_progress(verify_videos)
-        evaluate_videos(concepts, verify_videos, user_model)
+        evaluate_videos(concepts, verify_videos, user_model,
+                        model['concept_collections'])
     except:
         delete_model_user(model_user_id)
         print("Training failed, deleted entries in model_versions and users")
         raise
-
     finally:
         # Cleanup training hyperparameters and shut server down regardless
         # whether this process succeeded
@@ -229,7 +229,7 @@ def setup_predict_progress(verify_videos):
 
 def evaluate_videos(concepts, verify_videos, user_model,
                     upload_annotations=False, userid=None,
-                    create_collection=False):
+                    create_collection=False, collections=None):
     """ Run evaluate on all the evaluation videos
     """
 
@@ -244,7 +244,7 @@ def evaluate_videos(concepts, verify_videos, user_model,
         )
         con.commit()
         evaluate(video_id, user_model, concepts, upload_annotations, userid,
-                 create_collection)
+                 create_collection, collections)
 
     end_predictions()
 

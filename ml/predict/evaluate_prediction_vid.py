@@ -107,7 +107,7 @@ def get_counts(results, annotations):
 
 
 def evaluate(video_id, model_username, concepts, upload_annotations=False,
-             userid=None, create_collection=False):
+             userid=None, create_collection=False, collections=None):
     # file format: (video_id)_(model_name)-(version).mp4
 
     if create_collection:
@@ -125,7 +125,7 @@ def evaluate(video_id, model_username, concepts, upload_annotations=False,
     print("ai video filename: {0}".format(filename))
     results, annotations = predict.predict_on_video(
         video_id, config.WEIGHTS_PATH, concepts, filename, upload_annotations,
-        userid, collection_id)
+        userid, collection_id, collections)
     if (results.empty):
         return
     username_split = model_username.split('-')
