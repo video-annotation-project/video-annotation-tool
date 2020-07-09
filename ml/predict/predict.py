@@ -428,8 +428,10 @@ def get_predictions(frame, model, collections=None):
             ancestor = _find_nearest_common_ancestor(collection)
             collection_predictions += _find_collection_predictions(
                 collection_candidates, collection, ancestor)
-
-    return base_concept_predictions + collection_predictions
+    if len(collections_predictions) != 0:
+        print('collection prediction!!')
+    return base_concept_predictions.append(
+        pd.DataFrame(collection_predictions, columns=df.columns))
 
 
 def does_match_existing_tracked_object(detection, currently_tracked_objects):
