@@ -418,7 +418,7 @@ def get_predictions(frame, model, collections=None):
                        'label': labels[0]})
 
     confident_mask = df.apply(
-        lambda x: x['score'] >= config.THRESHOLDS[x['label']])
+        lambda x: x['score'] >= config.THRESHOLDS[x['label']], axis=1)
     base_concept_predictions = df[confident_mask]
     collection_candidates = df[~confident_mask]
 
