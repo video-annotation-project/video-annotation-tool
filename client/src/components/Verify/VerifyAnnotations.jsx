@@ -438,7 +438,28 @@ class VerifyAnnotations extends Component {
           type: 'success',
           title: res.data.message
         });
-        this.loadBoxes();
+        let annotationData = JSON.parse(res.data.value);
+        let newAnnotation = {
+          admin: false,
+          id: annotationData.id,
+          name: concept ? concept.name : annotation.name,
+          userid: annotationData.userid,
+          videoheight: annotation.videoheight,
+          videowidth: annotation.videowidth,
+          x1,
+          x2,
+          y1,
+          y2
+        };
+        this.setState(
+          prevState => ({
+            boxesOutsideCol: [newAnnotation, ...prevState.boxesOutsideCol]
+          }),
+          () => {
+            console.log(this.state.boxesOutsideCol);
+            this.resetCurrentBox();
+          }
+        );
       })
       .catch(error => {
         console.log(error);
