@@ -428,7 +428,7 @@ def get_predictions(frame, model, collections=None):
             ancestor = _find_nearest_common_ancestor(collection)
             collection_predictions += _find_collection_predictions(
                 collection_candidates, collection, ancestor)
-    if len(collections_predictions) != 0:
+    if len(collection_predictions) != 0:
         print('collection prediction!!')
     return base_concept_predictions.append(
         pd.DataFrame(collection_predictions, columns=df.columns))
