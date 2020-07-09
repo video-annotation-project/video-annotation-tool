@@ -426,7 +426,7 @@ def get_predictions(frame, model, collections=None):
     if collections:
         for collection in collections:
             ancestor = _find_nearest_common_ancestor(collection)
-            collection_prediction += _find_collection_predictions(
+            collection_predictions += _find_collection_predictions(
                 collection_candidates, collection, ancestor)
 
     return base_concept_predictions + collection_predictions
