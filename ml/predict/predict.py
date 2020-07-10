@@ -24,8 +24,7 @@ fp = open('memory_profiler.log', 'w+')
 def get_classmap(concepts):
     classmap = []
     for concept in concepts:
-        name = pd_query("select name from concepts where id=" +
-                        str(concept)).iloc[0]["name"]
+        name = pd_query("select name from concepts where id=%s", (str(concept),)).iloc[0]["name"]
         classmap.append([name, concepts.index(concept)])
     classmap = pd.DataFrame(classmap)
     classmap = classmap.to_dict()[0]
@@ -151,7 +150,7 @@ def predict_on_video(videoid, model_weights, concepts, filename,
           THEN
             framenum
           ELSE
-            FLOOR(timeinvideo*{fps}) 
+            FLOOR(timeinvideo*{fps})
           END AS frame_num
         FROM
           annotations
@@ -401,7 +400,8 @@ def _find_collection_predictions(df, collection, label):
             for proposals in itertools.product(*[sg[1].iterrows() for sg in subgroups]):
                 confidence = _get_collection_confidence(
                     [p['score'] for _, p in proposals])
-                if confidence > config.DEFAULT_PREDICTION_THRESHOLD and _are_overlapping(adj_list, [v for v, _ in proposals]):
+                if confidence > config.DEFAULT_PREDICTION_THRESHOLD and _are_overlapping(
+                        adj_list, [v for v, _ in proposals]):
                     intersecting_box = _get_intersecting_box(
                         [p['box'] for _, p in proposals])
                     predictions.append((intersecting_box, confidence, label))
@@ -609,7 +609,7 @@ def generate_video(filename, frames, fps, results,
                 " (" + str(round(res.confidence, 3)) + ")"
         cv2.putText(
             frames[res.frame_num], boxText,
-            (x1-5, y2+10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+            (x1 - 5, y2 + 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
 
     save_video(filename, frames, fps)
 
@@ -716,7 +716,7 @@ def upload_annotation(frame, x1, x2, y1, y2,
 
 def upload_predict_progress(count, videoid, total_count, status):
     '''
-    For updating the predict_progress psql database, which tracks prediction and 
+    For updating the predict_progress psql database, which tracks prediction and
     video generation status.
 
     Arguments:
