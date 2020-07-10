@@ -277,9 +277,10 @@ class Verify extends Component {
 
   handleNext = callback => {
     const videoDialogOpen = JSON.parse(localStorage.getItem('videoDialogOpen'));
-    const { index, annotations, annotating } = this.state;
+    const { index, annotations, annotating, selectedTrackingFirst } = this.state;
     /* This checks if we need to load a new video frame*/
     if (
+      !selectedTrackingFirst &&
       annotations &&
       annotations.length &&
       (
