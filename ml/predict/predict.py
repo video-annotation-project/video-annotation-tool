@@ -45,7 +45,7 @@ class Tracked_object(object):
                 'label', 'confidence', 'objectid', 'frame_num'
             ]
         )
-        (x1, y1, x2, y2) = detection[0]
+        (x1, y1, x2, y2) = detection.box
         self.id = uuid.uuid4()
         self.x1 = x1
         self.x2 = x2
@@ -54,8 +54,8 @@ class Tracked_object(object):
         self.box = (x1, y1, (x2 - x1), (y2 - y1))
         self.tracker = cv2.TrackerKCF_create()
         self.tracker.init(frame, self.box)
-        label = detection[2]
-        confidence = detection[1]
+        label = detection.label
+        confidence = detection.score
         self.save_annotation(frame_num, label=label, confidence=confidence)
         self.tracked_frames = 0
 
@@ -73,7 +73,7 @@ class Tracked_object(object):
             annotation, ignore_index=True)
 
     def reinit(self, detection, frame, frame_num):
-        (x1, y1, x2, y2) = detection[0]
+        (x1, y1, x2, y2) = detection.box
         self.x1 = x1
         self.x2 = x2
         self.y1 = y1
@@ -81,8 +81,8 @@ class Tracked_object(object):
         self.box = (x1, y1, (x2 - x1), (y2 - y1))
         self.tracker = cv2.TrackerKCF_create()
         self.tracker.init(frame, self.box)
-        label = detection[2]
-        confidence = detection[1]
+        label = detection.label
+        confidence = detection.score
         self.annotations = self.annotations[:-1]
         self.save_annotation(frame_num, label=label, confidence=confidence)
         self.tracked_frames = 0
@@ -274,11 +274,11 @@ def predict_frames(video_frames, fps, model, videoid, collections=None):
             detections = get_predictions(frame, model, collections)
             print(f'total detections: {len(detections)}')
             for _, detection in detections.iterrows():
-                (x1, y1, x2, y2) = detection[0]
+                (x1, y1, x2, y2) = detection.box
                 if (x1 > x2 or y1 > y2):
                     continue
                 match, matched_object = does_match_existing_tracked_object(
-                    detection[0], currently_tracked_objects)
+                    detection.box, currently_tracked_objects)
                 if match:
                     matched_object.reinit(detection, frame, frame_num)
                 else:
@@ -482,7 +482,7 @@ def compute_IOU_wrapper(boxA, boxB):
 def track_backwards(video_frames, frame_num, detection, object_id, fps, old_annotations):
     annotations = pd.DataFrame(
         columns=['x1', 'y1', 'x2', 'y2', 'label', 'confidence', 'objectid', 'frame_num'])
-    (x1, y1, x2, y2) = detection[0]
+    (x1, y1, x2, y2) = detection.box
     box = (x1, y1, (x2 - x1), (y2 - y1))
     frame = video_frames[frame_num]
     tracker = cv2.TrackerKCF_create()

@@ -47,7 +47,7 @@ def main():
 
         setup_predict_progress(verify_videos)
         evaluate_videos(concepts, verify_videos, user_model,
-                        model['concept_collections'])
+                        collection=get_conceptid_collections(model['concept_collections']))
     except:
         delete_model_user(model_user_id)
         print("Training failed, deleted entries in model_versions and users")
@@ -225,6 +225,17 @@ def setup_predict_progress(verify_videos):
         (0, 0, len(verify_videos)),
     )
     con.commit()
+
+
+def get_conceptid_collections(collectionid_list):
+    collection_conceptids_list = []
+    for collectionid in collectionid_list:
+        conceptids = list(pd_query(
+            """SELECT conceptid FROM concept_intermediate WHERE id=%s""", (
+                collectionid,)
+        ).conceptid)
+        collection_conceptids_list.append(conceptids)
+    return collection_conceptids_list
 
 
 def evaluate_videos(concepts, verify_videos, user_model,
