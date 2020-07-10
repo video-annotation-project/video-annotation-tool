@@ -168,7 +168,7 @@ def predict_on_video(videoid, model_weights, concepts, filename,
     model = init_model(model_weights)
 
     printing_with_time("Predicting")
-    results, frames = predict_frames(frames, fps, model, videoid, collections)
+    results, frames = predict_frames(frames, fps, model, videoid, concepts, collections)
     if (results.empty):
         print("no predictions")
         return results, annotations
@@ -235,7 +235,7 @@ def init_model(model_path):
     return model
 
 
-def predict_frames(video_frames, fps, model, videoid, collections=None):
+def predict_frames(video_frames, fps, model, videoid, concepts, collections=None):
     currently_tracked_objects = []
     annotations = [
         pd.DataFrame(
@@ -266,7 +266,7 @@ def predict_frames(video_frames, fps, model, videoid, collections=None):
         # Every NUM_FRAMES frames, get new predictions
         # Then, check if any detections match a currently tracked object
         if frame_num % config.NUM_FRAMES == 0:
-            detections = get_predictions(frame, model, collections)
+            detections = get_predictions(frame, model, concepts, collections)
             print(f'total detections: {len(detections)}')
             for detection in detections:
                 (x1, y1, x2, y2) = detection[0]
@@ -391,9 +391,10 @@ def _find_collection_predictions(df, collection, label):
     return predictions
 
 
-def get_predictions(frame, model, collections=None):
+def get_predictions(frame, model, concepts, collections=None):
     frame = np.expand_dims(frame, axis=0)
     boxes, scores, labels = model.predict_on_batch(frame)
+    labels = [concepts[x] for x in labels]
     
     # create dataframe to manipulate data easier
     df = pd.DataFrame({'box': list(boxes), 'score': scores, 'label': labels})#.sort_values('score')
@@ -515,7 +516,6 @@ def make_annotation(box, object_id, frame_num):
 
 
 def propagate_conceptids(annotations, concepts):
-    label = None
     objects = annotations.groupby(['objectid'])
     for oid, group in objects:
         scores = {}
@@ -525,8 +525,6 @@ def propagate_conceptids(annotations, concepts):
         annotations.loc[annotations.objectid == oid, 'label'] = idmax
         annotations.loc[annotations.objectid ==
                         oid, 'confidence'] = scores[idmax]
-    annotations['label'] = annotations['label'].apply(
-        lambda x: concepts[int(x)])
     # need both label and conceptid for later
     annotations['conceptid'] = annotations['label']
     return annotations
