@@ -222,13 +222,13 @@ def setup_predict_progress(verify_videos):
 
 
 def get_conceptid_collections(collectionid_list):
-    collection_conceptids_list = []
+    collection_conceptids_list = {}  # key: -colection id values: concepts ids in the collection
     for collectionid in collectionid_list:
         conceptids = list(pd_query(
             """SELECT conceptid FROM concept_intermediate WHERE id=%s""", (
                 collectionid,)
         ).conceptid)
-        collection_conceptids_list.append(conceptids)
+        collection_conceptids_list[-collectionid] = conceptids
     return collection_conceptids_list
 
 
