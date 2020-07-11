@@ -57,18 +57,27 @@ router.post(
   '/',
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
-    const queryText = `
+    const queryText1 = `
       INSERT INTO 
         concept_collection (name, description)
       VALUES
         ($1, $2)
       RETURNING *
     `;
+
+    const queryText2 = `
+      INSERT INTO
+        concepts (id, name, parent)
+      VALUES
+        ($1, $2, -1)
+    `;
+
     try {
-      let insert = await psql.query(queryText, [
+      let insert = await psql.query(queryText1, [
         req.body.name,
         req.body.description
       ]);
+      await psql.query(queryText2, [-insert.rows[0].id, req.body.name])
       res.json({ value: JSON.stringify(insert.rows) });
     } catch (error) {
       res.status(400).json(error);
@@ -88,15 +97,24 @@ router.delete(
   '/:id',
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
-    const queryText = `
+    const queryText1 = `
       DELETE FROM 
         concept_collection
       WHERE
         id = $1
       RETURNING *
     `;
+
+    const queryText2 = `
+      DELETE FROM 
+        concepts
+      WHERE
+        id = $1
+    `;
+
     try {
-      let deleted = await psql.query(queryText, [req.params.id]);
+      let deleted = await psql.query(queryText1, [req.params.id]);
+      await psql.query(queryText2, [-req.params.id]);
       if (deleted) {
         res.json(deleted);
       }
