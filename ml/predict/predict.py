@@ -172,11 +172,11 @@ def predict_on_video(videoid, model_weights, concepts, filename,
     model = init_model(model_weights)
 
     printing_with_time("Predicting")
-    results, frames = predict_frames(frames, fps, model, videoid, collections)
+    results, frames = predict_frames(frames, fps, model, videoid, concepts, collections)
     if (results.empty):
         print("no predictions")
         return results, annotations
-    results = propagate_conceptids(results, concepts)
+    results = propagate_conceptids(results)
     results = length_limit_objects(results, config.MIN_FRAMES_THRESH)
     print(f'Number of model annotations {len(results)}')
     if upload_annotations:
@@ -194,7 +194,7 @@ def predict_on_video(videoid, model_weights, concepts, filename,
     printing_with_time("Generating Video")
     generate_video(
         filename, frames,
-        fps, results, concepts, videoid, annotations)
+        fps, results, concepts + list(collections.keys()), videoid, annotations)
 
     printing_with_time("Done generating")
     return results, annotations
@@ -239,7 +239,7 @@ def init_model(model_path):
     return model
 
 
-def predict_frames(video_frames, fps, model, videoid, collections=None):
+def predict_frames(video_frames, fps, model, videoid, concepts, collections=None):
     currently_tracked_objects = []
     annotations = [
         pd.DataFrame(
@@ -270,7 +270,7 @@ def predict_frames(video_frames, fps, model, videoid, collections=None):
         # Every NUM_FRAMES frames, get new predictions
         # Then, check if any detections match a currently tracked object
         if frame_num % config.NUM_FRAMES == 0:
-            detections = get_predictions(frame, model, collections)
+            detections = get_predictions(frame, model, concepts, collections)
             print(f'total detections: {len(detections)}')
             for _, detection in detections.iterrows():
                 (x1, y1, x2, y2) = detection.box
@@ -409,25 +409,29 @@ def _find_collection_predictions(df, collection, label):
     return predictions
 
 
-def get_predictions(frame, model, collections=None):
+def get_predictions(frame, model, concepts, collections=None):
     frame = np.expand_dims(frame, axis=0)
     boxes, scores, labels = model.predict_on_batch(frame)
 
     # create dataframe to manipulate data easier
     df = pd.DataFrame({'box': list(boxes[0]), 'score': scores[0],
                        'label': labels[0]})
+    df = df[df['label'] != -1]
+    df['label'] = df['label'].apply(lambda x: concepts[x])
 
-    confident_mask = df.apply(
-        lambda x: x['score'] >= config.THRESHOLDS[x['label']], axis=1)
+    print(df)
+
+    # confident_mask = df.apply(
+    #     lambda x: x['score'] >= config.THRESHOLDS[x['label']], axis=1)
+    confident_mask = (df['score'] >= config.DEFAULT_PREDICTION_THRESHOLD)
     base_concept_predictions = df[confident_mask]
     collection_candidates = df[~confident_mask]
 
     collection_predictions = []
     if collections:
-        for collection in collections:
-            ancestor = _find_nearest_common_ancestor(collection)
+        for dummy_concept_id, collection in collections.items():
             collection_predictions += _find_collection_predictions(
-                collection_candidates, collection, ancestor)
+                collection_candidates, collection, dummy_concept_id)
     if len(collection_predictions) != 0:
         print('collection prediction!!')
     return base_concept_predictions.append(
@@ -540,8 +544,7 @@ def make_annotation(box, object_id, frame_num):
 # for multiple objects choose a label for each object
 
 
-def propagate_conceptids(annotations, concepts):
-    label = None
+def propagate_conceptids(annotations):
     objects = annotations.groupby(['objectid'])
     for oid, group in objects:
         scores = {}
@@ -551,8 +554,6 @@ def propagate_conceptids(annotations, concepts):
         annotations.loc[annotations.objectid == oid, 'label'] = idmax
         annotations.loc[annotations.objectid ==
                         oid, 'confidence'] = scores[idmax]
-    annotations['label'] = annotations['label'].apply(
-        lambda x: concepts[int(x)])
     # need both label and conceptid for later
     annotations['conceptid'] = annotations['label']
     return annotations
@@ -569,8 +570,8 @@ def length_limit_objects(pred, frame_thresh):
 
 
 @profile(stream=fp)
-def generate_video(filename, frames, fps, results,
-                   concepts, video_id, annotations):
+def generate_video(filename, frames, fps, results, concepts, video_id,
+                   annotations):
 
     # Combine human and prediction annotations
     results = results.append(annotations, sort=True)
