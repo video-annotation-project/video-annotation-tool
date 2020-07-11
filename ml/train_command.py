@@ -47,7 +47,7 @@ def main():
 
         setup_predict_progress(verify_videos)
         evaluate_videos(concepts, verify_videos, user_model,
-                        collection=get_conceptid_collections(model['concept_collections']))
+                        collections=get_conceptid_collections(model['concept_collections']))
     except:
         delete_model_user(model_user_id)
         print("Training failed, deleted entries in model_versions and users")

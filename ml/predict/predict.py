@@ -419,8 +419,6 @@ def get_predictions(frame, model, concepts, collections=None):
     df = df[df['label'] != -1]
     df['label'] = df['label'].apply(lambda x: concepts[x])
 
-    print(df)
-
     # confident_mask = df.apply(
     #     lambda x: x['score'] >= config.THRESHOLDS[x['label']], axis=1)
     confident_mask = (df['score'] >= config.DEFAULT_PREDICTION_THRESHOLD)
