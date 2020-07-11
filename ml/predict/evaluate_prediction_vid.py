@@ -11,9 +11,10 @@ from config import config
 from utils.query import cursor, s3, con, pd_query
 
 
-def score_predictions(validation, predictions, iou_thresh, concepts):
+def score_predictions(validation, predictions, iou_thresh, concepts, collections):
     # Maintain a set of predicted objects to verify
     detected_objects = []
+    hierarchy_detected_objects = []
     obj_map = predictions.groupby("objectid", sort=False).label.max()
 
     # group predictions by video frames
@@ -32,8 +33,11 @@ def score_predictions(validation, predictions, iou_thresh, concepts):
 
     # initialize counters for each concept
     true_positives = dict(zip(concepts, [0] * len(concepts)))
+    hierarchy_true_positives = dict(zip(concepts, [0] * len(concepts)))
     false_positives = dict(zip(concepts, [0] * len(concepts)))
+    hierarchy_false_positives = dict(zip(concepts, [0] * len(concepts)))
     false_negatives = dict(zip(concepts, [0] * len(concepts)))
+    hierarchy_false_negatives = dict(zip(concepts, [0] * len(concepts)))
 
     # get true and false positives for each frame of validation data
     for group in validation:
@@ -44,47 +48,78 @@ def score_predictions(validation, predictions, iou_thresh, concepts):
             continue  # False Negatives already covered
 
         detected_truths = dict(zip(concepts, [0] * len(concepts)))
+        hierarchy_detected_truths = dict(zip(concepts, [0] * len(concepts)))
         for index, truth in group.iterrows():
             for index, prediction in predicted.iterrows():
-                if (
-                    prediction.label == truth.label
-                    and predict.compute_IOU(truth, prediction) > iou_thresh
-                    and prediction.objectid not in detected_objects
-                ):
-
+                if (prediction.label == truth.label
+                    and predict.compute_IOU_wrapper(truth, prediction) > iou_thresh
+                        and prediction.objectid not in detected_objects):
                     detected_objects.append(prediction.objectid)
                     true_positives[prediction.label] += 1
                     detected_truths[prediction.label] += 1
+                    hierarchy_detected_truths[truth.label] += 1
+                elif (prediction.label < 0
+                      and truth.label in collections[prediction.label]
+                      and predict.compute_IOU_wrapper(truth, prediction) > iou_thresh
+                      and prediction.objectid not in detected_objects):
+                    hierarchy_detected_objects.append(prediction.objectid)
+                    hierarchy_true_positives[truth.label] += 1 / len(collection[prediction.label])
+                    hierarchy_detected_truths[truth.label] += 1
 
         # False Negatives (Missed ground truth predicitions)
         counts = group.label.value_counts()
         for concept in concepts:
             count = counts[concept] if (concept in counts.index) else 0
             false_negatives[concept] += count - detected_truths[concept]
+            hierarchy_false_negatives[concept] += count - hierarchy_detected_truths[concept]
 
     # False Positives (No ground truth prediction at any frame for that object)
-    undetected_objects = set(obj_map.index) - set(detected_objects)
-    for obj in undetected_objects:
+
+    hierarchy_undetected_objects = set(obj_map.index) - set(detected_objects) - set(hierarchy_detected_objects)
+    for obj in hierarchy_undetected_objects:
         concept = obj_map[obj]
-        false_positives[concept] += 1
+        if concept > 0:
+            hierarchy_false_positives[concept] += 1
+        for conceptid in collections[concept]:
+            hierarchy_false_positives[concept] += 1 / len(collections[concept])
+
+    original_undetected_objects = set(obj_map[obj_map > 0].index) - set(detected_objects)
+    for obj in original_undetected_objects:
+        concept = obj_map[obj]
+        if concept > 0:
+            false_positives[concept] += 1
 
     metrics = pd.DataFrame()
     for concept in concepts:
         TP = true_positives[concept]
+        HTP = hierarchy_true_positives[concept]
         FP = false_positives[concept]
+        HFP = hierarchy_false_positives[concept]
         FN = false_negatives[concept]
-        precision = TP / (TP + FP) if (TP + FP) != 0 else 0
-        recall = TP / (TP + FN) if (TP + FN) != 0 else 0
-        f1 = (
-            (2 * recall * precision / (precision + recall))
-            if (precision + recall) != 0
-            else 0
-        )
+        HFN = hierarchy_false_negatives[concept]
+        precision = get_precision(TP, FP)
+        recall = get_recall(TP, FN)
+        hierarchy_precision = get_precision(HTP, HFP)
+        hierarchy_recall = get_recall(HTP, HFN)
+        f1 = get_f1(recall, precision)
+        hierarchy_f1 = get_f1(hierarchy_recall, hierarchy_precision)
         metrics = metrics.append(
-            [[concept, TP, FP, FN, precision, recall, f1]])
+            [[concept, TP, FP, FN, precision, hierarchy_precision, recall, hierarchy_recall, f1, hierarchy_f1]])
     metrics.columns = ["conceptid", "TP", "FP",
-                       "FN", "Precision", "Recall", "F1"]
+                       "FN", "Precision", "Hierarchy Precision", "Recall", "Hierarchy Recall", "F1", "Hierarchy F1"]
     return metrics
+
+
+def get_precision(TP, FP):
+    return TP / (TP + FP) if (TP + FP) != 0 else 0
+
+
+def get_recall(TP, FN):
+    return TP / (TP + FN) if (TP + FN) != 0 else 0
+
+
+def get_f1(recall, precision):
+    return (2 * recall * precision / (precision + recall)) if (precision + recall) != 0 else 0
 
 
 def count_accuracy(row):
@@ -142,7 +177,7 @@ def evaluate(video_id, model_username, concepts, upload_annotations=False,
     print("done predicting")
 
     metrics = score_predictions(
-        annotations, results, config.EVALUATION_IOU_THRESH, concepts
+        annotations, results, config.EVALUATION_IOU_THRESH, concepts, collections
     )
     concept_counts = get_counts(results, annotations)
     metrics = metrics.set_index("conceptid").join(concept_counts)

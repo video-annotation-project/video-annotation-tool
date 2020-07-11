@@ -24,8 +24,7 @@ fp = open('memory_profiler.log', 'w+')
 def get_classmap(concepts):
     classmap = []
     for concept in concepts:
-        name = pd_query("select name from concepts where id=" +
-                        str(concept)).iloc[0]["name"]
+        name = pd_query("select name from concepts where id=%s", (str(concept),)).iloc[0]["name"]
         classmap.append([name, concepts.index(concept)])
     classmap = pd.DataFrame(classmap)
     classmap = classmap.to_dict()[0]
@@ -45,7 +44,7 @@ class Tracked_object(object):
                 'label', 'confidence', 'objectid', 'frame_num'
             ]
         )
-        (x1, y1, x2, y2) = detection[0]
+        (x1, y1, x2, y2) = detection.box
         self.id = uuid.uuid4()
         self.x1 = x1
         self.x2 = x2
@@ -54,8 +53,8 @@ class Tracked_object(object):
         self.box = (x1, y1, (x2 - x1), (y2 - y1))
         self.tracker = cv2.TrackerKCF_create()
         self.tracker.init(frame, self.box)
-        label = detection[2]
-        confidence = detection[1]
+        label = detection.label
+        confidence = detection.score
         self.save_annotation(frame_num, label=label, confidence=confidence)
         self.tracked_frames = 0
 
@@ -73,7 +72,7 @@ class Tracked_object(object):
             annotation, ignore_index=True)
 
     def reinit(self, detection, frame, frame_num):
-        (x1, y1, x2, y2) = detection[0]
+        (x1, y1, x2, y2) = detection.box
         self.x1 = x1
         self.x2 = x2
         self.y1 = y1
@@ -81,8 +80,8 @@ class Tracked_object(object):
         self.box = (x1, y1, (x2 - x1), (y2 - y1))
         self.tracker = cv2.TrackerKCF_create()
         self.tracker.init(frame, self.box)
-        label = detection[2]
-        confidence = detection[1]
+        label = detection.label
+        confidence = detection.score
         self.annotations = self.annotations[:-1]
         self.save_annotation(frame_num, label=label, confidence=confidence)
         self.tracked_frames = 0
@@ -151,7 +150,7 @@ def predict_on_video(videoid, model_weights, concepts, filename,
           THEN
             framenum
           ELSE
-            FLOOR(timeinvideo*{fps}) 
+            FLOOR(timeinvideo*{fps})
           END AS frame_num
         FROM
           annotations
@@ -173,11 +172,11 @@ def predict_on_video(videoid, model_weights, concepts, filename,
     model = init_model(model_weights)
 
     printing_with_time("Predicting")
-    results, frames = predict_frames(frames, fps, model, videoid, collections)
+    results, frames = predict_frames(frames, fps, model, videoid, concepts, collections)
     if (results.empty):
         print("no predictions")
         return results, annotations
-    results = propagate_conceptids(results, concepts)
+    results = propagate_conceptids(results)
     results = length_limit_objects(results, config.MIN_FRAMES_THRESH)
     print(f'Number of model annotations {len(results)}')
     if upload_annotations:
@@ -195,7 +194,7 @@ def predict_on_video(videoid, model_weights, concepts, filename,
     printing_with_time("Generating Video")
     generate_video(
         filename, frames,
-        fps, results, concepts, videoid, annotations)
+        fps, results, concepts + list(collections.keys()), videoid, annotations)
 
     printing_with_time("Done generating")
     return results, annotations
@@ -240,7 +239,7 @@ def init_model(model_path):
     return model
 
 
-def predict_frames(video_frames, fps, model, videoid, collections=None):
+def predict_frames(video_frames, fps, model, videoid, concepts, collections=None):
     currently_tracked_objects = []
     annotations = [
         pd.DataFrame(
@@ -271,14 +270,14 @@ def predict_frames(video_frames, fps, model, videoid, collections=None):
         # Every NUM_FRAMES frames, get new predictions
         # Then, check if any detections match a currently tracked object
         if frame_num % config.NUM_FRAMES == 0:
-            detections = get_predictions(frame, model, collections)
+            detections = get_predictions(frame, model, concepts, collections)
             print(f'total detections: {len(detections)}')
-            for detection in detections:
-                (x1, y1, x2, y2) = detection[0]
+            for _, detection in detections.iterrows():
+                (x1, y1, x2, y2) = detection.box
                 if (x1 > x2 or y1 > y2):
                     continue
                 match, matched_object = does_match_existing_tracked_object(
-                    detection[0], currently_tracked_objects)
+                    detection.box, currently_tracked_objects)
                 if match:
                     matched_object.reinit(detection, frame, frame_num)
                 else:
@@ -401,7 +400,8 @@ def _find_collection_predictions(df, collection, label):
             for proposals in itertools.product(*[sg[1].iterrows() for sg in subgroups]):
                 confidence = _get_collection_confidence(
                     [p['score'] for _, p in proposals])
-                if confidence > config.DEFAULT_PREDICTION_THRESHOLD and _are_overlapping(adj_list, [v for v, _ in proposals]):
+                if confidence > config.DEFAULT_PREDICTION_THRESHOLD and _are_overlapping(
+                        adj_list, [v for v, _ in proposals]):
                     intersecting_box = _get_intersecting_box(
                         [p['box'] for _, p in proposals])
                     predictions.append((intersecting_box, confidence, label))
@@ -409,25 +409,27 @@ def _find_collection_predictions(df, collection, label):
     return predictions
 
 
-def get_predictions(frame, model, collections=None):
+def get_predictions(frame, model, concepts, collections=None):
     frame = np.expand_dims(frame, axis=0)
     boxes, scores, labels = model.predict_on_batch(frame)
 
     # create dataframe to manipulate data easier
     df = pd.DataFrame({'box': list(boxes[0]), 'score': scores[0],
                        'label': labels[0]})
+    df = df[df['label'] != -1]
+    df['label'] = df['label'].apply(lambda x: concepts[x])
 
-    confident_mask = df.apply(
-        lambda x: x['score'] >= config.THRESHOLDS[x['label']], axis=1)
+    # confident_mask = df.apply(
+    #     lambda x: x['score'] >= config.THRESHOLDS[x['label']], axis=1)
+    confident_mask = (df['score'] >= config.DEFAULT_PREDICTION_THRESHOLD)
     base_concept_predictions = df[confident_mask]
     collection_candidates = df[~confident_mask]
 
     collection_predictions = []
     if collections:
-        for collection in collections:
-            ancestor = _find_nearest_common_ancestor(collection)
+        for dummy_concept_id, collection in collections.items():
             collection_predictions += _find_collection_predictions(
-                collection_candidates, collection, ancestor)
+                collection_candidates, collection, dummy_concept_id)
     if len(collection_predictions) != 0:
         print('collection prediction!!')
     return base_concept_predictions.append(
@@ -482,7 +484,7 @@ def compute_IOU_wrapper(boxA, boxB):
 def track_backwards(video_frames, frame_num, detection, object_id, fps, old_annotations):
     annotations = pd.DataFrame(
         columns=['x1', 'y1', 'x2', 'y2', 'label', 'confidence', 'objectid', 'frame_num'])
-    (x1, y1, x2, y2) = detection[0]
+    (x1, y1, x2, y2) = detection.box
     box = (x1, y1, (x2 - x1), (y2 - y1))
     frame = video_frames[frame_num]
     tracker = cv2.TrackerKCF_create()
@@ -540,8 +542,7 @@ def make_annotation(box, object_id, frame_num):
 # for multiple objects choose a label for each object
 
 
-def propagate_conceptids(annotations, concepts):
-    label = None
+def propagate_conceptids(annotations):
     objects = annotations.groupby(['objectid'])
     for oid, group in objects:
         scores = {}
@@ -551,8 +552,6 @@ def propagate_conceptids(annotations, concepts):
         annotations.loc[annotations.objectid == oid, 'label'] = idmax
         annotations.loc[annotations.objectid ==
                         oid, 'confidence'] = scores[idmax]
-    annotations['label'] = annotations['label'].apply(
-        lambda x: concepts[int(x)])
     # need both label and conceptid for later
     annotations['conceptid'] = annotations['label']
     return annotations
@@ -569,8 +568,8 @@ def length_limit_objects(pred, frame_thresh):
 
 
 @profile(stream=fp)
-def generate_video(filename, frames, fps, results,
-                   concepts, video_id, annotations):
+def generate_video(filename, frames, fps, results, concepts, video_id,
+                   annotations):
 
     # Combine human and prediction annotations
     results = results.append(annotations, sort=True)
@@ -609,7 +608,7 @@ def generate_video(filename, frames, fps, results,
                 " (" + str(round(res.confidence, 3)) + ")"
         cv2.putText(
             frames[res.frame_num], boxText,
-            (x1-5, y2+10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+            (x1 - 5, y2 + 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
 
     save_video(filename, frames, fps)
 
@@ -716,7 +715,7 @@ def upload_annotation(frame, x1, x2, y1, y2,
 
 def upload_predict_progress(count, videoid, total_count, status):
     '''
-    For updating the predict_progress psql database, which tracks prediction and 
+    For updating the predict_progress psql database, which tracks prediction and
     video generation status.
 
     Arguments:

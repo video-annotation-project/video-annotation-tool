@@ -47,7 +47,7 @@ def main():
 
         setup_predict_progress(verify_videos)
         evaluate_videos(concepts, verify_videos, user_model,
-                        model['concept_collections'])
+                        collections=get_conceptid_collections(model['concept_collections']))
     except:
         delete_model_user(model_user_id)
         print("Training failed, deleted entries in model_versions and users")
@@ -114,25 +114,19 @@ def get_user_model(model_params):
     model_version = str(model_params["version"])
 
     # from model_version, select versions one level down
-    level_down = pd_query(
+    next_version = pd_query(
         """ SELECT
-                version
+                count(*) + 1 as next_version
             FROM
                 model_versions
-            WHERE model=%s AND version ~ concat(%s, '.*')::lquery
+            WHERE model=%s
+            AND version ~ concat(%s, '.*')::lquery
+            AND nlevel(version) = nlevel(%s)+1
         """,
         (str(model_params["model"]),
-         model_version)
+         model_version, model_version)
     )
-
-    num_rows = len(level_down)
-    if num_rows == 0:
-        new_version = model_version + ".1"
-    else:
-        last_num = max([int(x.split('.')[-1])
-                        for x in level_down['version']]) + 1
-        new_version = '.'.join((model_version, str(last_num)))
-
+    new_version = '.'.join((model_version, str(next_version.loc[0]['next_version'])))
     print(f"new version: {new_version}")
 
     # create new model-version user
@@ -225,6 +219,17 @@ def setup_predict_progress(verify_videos):
         (0, 0, len(verify_videos)),
     )
     con.commit()
+
+
+def get_conceptid_collections(collectionid_list):
+    collection_conceptids_list = {}  # key: -colection id values: concepts ids in the collection
+    for collectionid in collectionid_list:
+        conceptids = list(pd_query(
+            """SELECT conceptid FROM concept_intermediate WHERE id=%s""", (
+                collectionid,)
+        ).conceptid)
+        collection_conceptids_list[-collectionid] = conceptids
+    return collection_conceptids_list
 
 
 def evaluate_videos(concepts, verify_videos, user_model,
