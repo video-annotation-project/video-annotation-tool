@@ -63,7 +63,7 @@ def score_predictions(validation, predictions, iou_thresh, concepts, collections
                       and predict.compute_IOU_wrapper(truth, prediction) > iou_thresh
                       and prediction.objectid not in detected_objects):
                     hierarchy_detected_objects.append(prediction.objectid)
-                    hierarchy_true_positives[truth.label] += 1 / len(collection[prediction.label])
+                    hierarchy_true_positives[truth.label] += 1 / len(collections[prediction.label])
                     hierarchy_detected_truths[truth.label] += 1
 
         # False Negatives (Missed ground truth predicitions)
