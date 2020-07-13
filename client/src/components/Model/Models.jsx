@@ -48,7 +48,7 @@ class Models extends Component {
       metricLoaded: false,
       allMetrics: [],
       total: [],
-      conceptCounts : [],
+      conceptCounts: [],
       showTotal: false,
       showTrainingData: false
     };
@@ -338,7 +338,7 @@ class Models extends Component {
         concept.true_num <= 0
           ? 1
           : Math.abs(concept.true_num - concept.pred_num) /
-            Math.max(concept.true_num, concept.pred_num);
+          Math.max(concept.true_num, concept.pred_num);
       concept.count_accuracy = 1 - prediciton_error;
     });
     this.setState({
@@ -351,7 +351,7 @@ class Models extends Component {
     let version_index = parseFloat(selectedModel.version_selected)
     let concept_dict = {}
     selectedModel['epochs'] = 0
-    if(showTrainingData === true) { // if you're trying to close the table by clicking again.
+    if (showTrainingData === true) { // if you're trying to close the table by clicking again.
       this.setState({
         conceptCounts: {},
         showTrainingData: !showTrainingData // open if closed and vice versa.
@@ -362,35 +362,35 @@ class Models extends Component {
     for (let i = 0; i < selectedModel.concept_counts.length; i++) {
       let version_count = selectedModel.concept_counts[i]
       // if this is not the right version, continue iterating
-      if(version_index !== parseFloat(version_count.version)) {
+      if (version_index !== parseFloat(version_count.version)) {
         continue;
       }
       // repeated for old models (otherwise if the counts don't exist, can't update epoch)
       selectedModel['epochs'] = version_count.epochs
       // if the counts is null (old model or failed training) continue searching.
-      if(version_count.counts === null) {
+      if (version_count.counts === null) {
         continue
       }
       selectedModel['epochs'] = version_count.epochs
       // iterate through each user
-      Object.keys(version_count.counts).forEach(function(key) {
+      Object.keys(version_count.counts).forEach(function (key) {
         // iterate through each concept
-        Object.keys(version_count.counts[key]).forEach(function(conceptKey) {
-          if(!(conceptKey in concept_dict)) { // piggyback on if statement for other dict.
+        Object.keys(version_count.counts[key]).forEach(function (conceptKey) {
+          if (!(conceptKey in concept_dict)) { // piggyback on if statement for other dict.
             concept_dict[conceptKey] = {
-              'concept_id' : conceptKey,
+              'concept_id': conceptKey,
               'num_annotations': 0,
               'verified_annotations': 0,
               'tracking_annotations': 0
             }
           }
           // iterate through each binary (0/1) for unverified/verified counts.
-          Object.keys(version_count.counts[key][conceptKey]).forEach(function(binaryKey) {
+          Object.keys(version_count.counts[key][conceptKey]).forEach(function (binaryKey) {
             concept_dict[conceptKey]['num_annotations'] += version_count.counts[key][conceptKey][binaryKey]
-            if(binaryKey === '1') {
+            if (binaryKey === '1') {
               concept_dict[conceptKey]['verified_annotations'] += version_count.counts[key][conceptKey][binaryKey]
             }
-            if(key === '32') {
+            if (key === '32') {
               concept_dict[conceptKey]['tracking_annotations'] += version_count.counts[key][conceptKey][binaryKey]
             }
           })
@@ -401,7 +401,7 @@ class Models extends Component {
     }
     let conceptCount = concept_dict
     let dataObject = []
-    Object.keys(conceptCount).forEach(function(key) {
+    Object.keys(conceptCount).forEach(function (key) {
       dataObject.push(conceptCount[key])
     })
     this.setState({
@@ -471,38 +471,77 @@ class Models extends Component {
   metrics = data => {
     const { classes } = this.props;
     return (
-      <Table className={classes.table}>
-        <TableHead>
-          <TableRow>
-            <TableCell>ConceptId</TableCell>
-            <TableCell>TP</TableCell>
-            <TableCell>FP</TableCell>
-            <TableCell>FN</TableCell>
-            <TableCell>Precision</TableCell>
-            <TableCell>Recall</TableCell>
-            <TableCell>F1</TableCell>
-            <TableCell>pred_num</TableCell>
-            <TableCell>true_num</TableCell>
-            <TableCell>count_accuracy</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {data.map(row => (
-            <TableRow key={row.conceptid}>
-              <TableCell>{row.conceptid}</TableCell>
-              <TableCell>{row.TP}</TableCell>
-              <TableCell>{row.FP}</TableCell>
-              <TableCell>{row.FN}</TableCell>
-              <TableCell>{this.setDecimal(row.Precision)}</TableCell>
-              <TableCell>{this.setDecimal(row.Recall)}</TableCell>
-              <TableCell>{this.setDecimal(row.F1)}</TableCell>
-              <TableCell>{this.setDecimal(row.pred_num)}</TableCell>
-              <TableCell>{this.setDecimal(row.true_num)}</TableCell>
-              <TableCell>{this.setDecimal(row.count_accuracy)}</TableCell>
+      <>
+        <Table className={classes.table}>
+          <TableHead>
+            <TableRow>
+              <TableCell>ConceptId</TableCell>
+              <TableCell>TP</TableCell>
+              <TableCell>FP</TableCell>
+              <TableCell>FN</TableCell>
+              <TableCell>Precision</TableCell>
+              <TableCell>Recall</TableCell>
+              <TableCell>F1</TableCell>
+              <TableCell>pred_num</TableCell>
+              <TableCell>true_num</TableCell>
+              <TableCell>count_accuracy</TableCell>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHead>
+          <TableBody>
+            {data.map(row => (
+              <TableRow key={row.conceptid}>
+                <TableCell>{row.conceptid}</TableCell>
+                <TableCell>{row.TP}</TableCell>
+                <TableCell>{row.FP}</TableCell>
+                <TableCell>{row.FN}</TableCell>
+                <TableCell>{this.setDecimal(row.Precision)}</TableCell>
+                <TableCell>{this.setDecimal(row.Recall)}</TableCell>
+                <TableCell>{this.setDecimal(row.F1)}</TableCell>
+                <TableCell>{this.setDecimal(row.pred_num)}</TableCell>
+                <TableCell>{this.setDecimal(row.true_num)}</TableCell>
+                <TableCell>{this.setDecimal(row.count_accuracy)}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+        {/* {data[0]["Hierarchy F1"] === undefined ? "" :
+          <>
+            <Typography style={{ marginTop: "30px", marginLeft: "10px" }}>With Hierarchical Classification</Typography>
+            <Table className={classes.table}>
+              <TableHead>
+                <TableRow>
+                  <TableCell>ConceptId</TableCell>
+                  <TableCell>H_TP</TableCell>
+                  <TableCell>H_FP</TableCell>
+                  <TableCell>H_FN</TableCell>
+                  <TableCell>H_Precision</TableCell>
+                  <TableCell>H_Recall</TableCell>
+                  <TableCell>H_F1</TableCell>
+                  <TableCell>H_pred_num</TableCell>
+                  <TableCell>H_true_num</TableCell>
+                  <TableCell>H_count_accuracy</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {data.map(row => (
+                  <TableRow key={row.conceptid}>
+                    <TableCell>{row.conceptid}</TableCell>
+                    <TableCell>{row.TP}</TableCell>
+                    <TableCell>{row.FP}</TableCell>
+                    <TableCell>{row.FN}</TableCell>
+                    <TableCell>{this.setDecimal(row.Precision)}</TableCell>
+                    <TableCell>{this.setDecimal(row.Recall)}</TableCell>
+                    <TableCell>{this.setDecimal(row.F1)}</TableCell>
+                    <TableCell>{this.setDecimal(row.pred_num)}</TableCell>
+                    <TableCell>{this.setDecimal(row.true_num)}</TableCell>
+                    <TableCell>{this.setDecimal(row.count_accuracy)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </>
+        } */}
+      </>
     );
   };
 
@@ -598,15 +637,15 @@ class Models extends Component {
                   {!allMetrics ? (
                     <Typography>No Metrics</Typography>
                   ) : (
-                    <div>
-                      <CircularProgress />
-                      <Typography>Metrics Loading...</Typography>
-                    </div>
-                  )}
+                      <div>
+                        <CircularProgress />
+                        <Typography>Metrics Loading...</Typography>
+                      </div>
+                    )}
                 </div>
               ) : (
-                ''
-              )}
+                    ''
+                  )}
               <Table className={classes.table}>
                 <TableHead>
                   <TableRow>

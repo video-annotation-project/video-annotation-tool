@@ -16,8 +16,8 @@ import Annotate from '../Annotate';
 const styles = theme => ({
   videoContainer: {
     top: '50px',
-    width: '1600px',
-    height: '900px'
+    width: '1920px',
+    height: '1080px'
   },
   dragBox: {
     margin: '0px',
