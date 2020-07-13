@@ -162,8 +162,6 @@ def evaluate(video_id, model_username, concepts, upload_annotations=False,
     results, annotations = predict.predict_on_video(
         video_id, config.WEIGHTS_PATH, concepts, filename, upload_annotations,
         userid, collection_id, collections)
-    results.to_csv('results_h_testing.csv')
-    annotations.to_csv('annotations_h_testing.csv')
     if (results.empty):
         return
     username_split = model_username.split('-')
