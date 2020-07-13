@@ -80,8 +80,9 @@ def score_predictions(validation, predictions, iou_thresh, concepts, collections
         concept = obj_map[obj]
         if concept > 0:
             hierarchy_false_positives[concept] += 1
-        for conceptid in collections[concept]:
-            hierarchy_false_positives[concept] += 1 / len(collections[concept])
+        else:
+            for conceptid in collections[concept]:
+                hierarchy_false_positives[conceptid] += 1 / len(collections[concept])
 
     original_undetected_objects = set(obj_map[obj_map > 0].index) - set(detected_objects)
     for obj in original_undetected_objects:
@@ -161,6 +162,8 @@ def evaluate(video_id, model_username, concepts, upload_annotations=False,
     results, annotations = predict.predict_on_video(
         video_id, config.WEIGHTS_PATH, concepts, filename, upload_annotations,
         userid, collection_id, collections)
+    results.to_csv('results_h_testing.csv')
+    annotations.to_csv('annotations_h_testing.csv')
     if (results.empty):
         return
     username_split = model_username.split('-')
