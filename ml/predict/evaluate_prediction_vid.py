@@ -10,137 +10,94 @@ from predict import predict
 from config import config
 from utils.query import cursor, s3, con, pd_query
 
+def vectorized_iou(bboxes1, bboxes2):
+    x11, y11, x12, y12 = np.split(bboxes1, 4, axis=1)
+    x21, y21, x22, y22 = np.split(bboxes2, 4, axis=1)
+    xA = np.maximum(x11, x21)
+    yA = np.maximum(y11, y21)
+    xB = np.minimum(x12, x22)
+    yB = np.minimum(y12, y22)
+    interArea = np.maximum((xB - xA), 0) * np.maximum((yB - yA), 0)
+    boxAArea = np.abs((x12 - x11) * (y12 - y11))
+    boxBArea = np.abs((x22 - x21) * (y22 - y21))
+    denominator = (boxAArea + boxBArea - interArea)
+    ious = np.where(denominator != 0, interArea / denominator, 0)
+    return [iou[0] for iou in ious]
 
-def score_predictions(validation, predictions, iou_thresh, concepts, collections):
-    # Maintain a set of predicted objects to verify
-    detected_objects = []
-    hierarchy_detected_objects = []
-    obj_map = predictions.groupby("objectid", sort=False).label.max()
+def convert_hierarchy_counts(value_counts, collections):
+    # normal counts is a count_values type object
+    # It ignores hierarchy counts
+    normal_counts = copy.deepcopy(value_counts)
+    for collectionid, count in value_counts[value_counts.index < 0].iteritems():
+        del value_counts[collectionid]
+        del normal_counts[collectionid]
+        collection_conceptids = collections[collectionid]
+        for conceptid in collection_conceptids:
+            value_counts[conceptid] += count / len(collection_conceptids)
+    return value_counts, normal_counts
 
-    # group predictions by video frames
-    predictions = predictions.groupby("frame_num", sort=False)
-    predictions = [df for _, df in predictions]
-
-    # mapping frames to predictions index
-    frame_data = {}
-    for i, group in enumerate(predictions):
-        frame_num = group.iloc[0]["frame_num"]
-        frame_data[frame_num] = i
-
-    # group validation annotations by frames
-    validation = validation.groupby("frame_num", sort=False)
-    validation = [df for _, df in validation]
-
-    # initialize counters for each concept
-    true_positives = dict(zip(concepts, [0] * len(concepts)))
-    hierarchy_true_positives = dict(zip(concepts, [0] * len(concepts)))
-    false_positives = dict(zip(concepts, [0] * len(concepts)))
-    hierarchy_false_positives = dict(zip(concepts, [0] * len(concepts)))
-    false_negatives = dict(zip(concepts, [0] * len(concepts)))
-    hierarchy_false_negatives = dict(zip(concepts, [0] * len(concepts)))
-
-    # get true and false positives for each frame of validation data
-    for group in validation:
-        try:  # get corresponding predictions for this frame
-            frame_num = group.iloc[0]["frame_num"]
-            predicted = predictions[frame_data[frame_num]]
-        except:
-            continue  # False Negatives already covered
-
-        detected_truths = dict(zip(concepts, [0] * len(concepts)))
-        hierarchy_detected_truths = dict(zip(concepts, [0] * len(concepts)))
-        for index, truth in group.iterrows():
-            for index, prediction in predicted.iterrows():
-                if (prediction.label == truth.label
-                    and predict.compute_IOU_wrapper(truth, prediction) > iou_thresh
-                        and prediction.objectid not in detected_objects):
-                    detected_objects.append(prediction.objectid)
-                    true_positives[prediction.label] += 1
-                    detected_truths[prediction.label] += 1
-                    hierarchy_detected_truths[truth.label] += 1
-                elif (prediction.label < 0
-                      and truth.label in collections[prediction.label]
-                      and predict.compute_IOU_wrapper(truth, prediction) > iou_thresh
-                      and prediction.objectid not in detected_objects):
-                    hierarchy_detected_objects.append(prediction.objectid)
-                    hierarchy_true_positives[truth.label] += 1 / len(collections[prediction.label])
-                    hierarchy_detected_truths[truth.label] += 1
-
-        # False Negatives (Missed ground truth predicitions)
-        counts = group.label.value_counts()
-        for concept in concepts:
-            count = counts[concept] if (concept in counts.index) else 0
-            false_negatives[concept] += count - detected_truths[concept]
-            hierarchy_false_negatives[concept] += count - hierarchy_detected_truths[concept]
-
-    # False Positives (No ground truth prediction at any frame for that object)
-
-    hierarchy_undetected_objects = set(obj_map.index) - set(detected_objects) - set(hierarchy_detected_objects)
-    for obj in hierarchy_undetected_objects:
-        concept = obj_map[obj]
-        if concept > 0:
-            hierarchy_false_positives[concept] += 1
-        else:
-            for conceptid in collections[concept]:
-                hierarchy_false_positives[conceptid] += 1 / len(collections[concept])
-
-    original_undetected_objects = set(obj_map[obj_map > 0].index) - set(detected_objects)
-    for obj in original_undetected_objects:
-        concept = obj_map[obj]
-        if concept > 0:
-            false_positives[concept] += 1
-
-    metrics = pd.DataFrame()
-    for concept in concepts:
-        TP = true_positives[concept]
-        HTP = hierarchy_true_positives[concept]
-        FP = false_positives[concept]
-        HFP = hierarchy_false_positives[concept]
-        FN = false_negatives[concept]
-        HFN = hierarchy_false_negatives[concept]
-        precision = get_precision(TP, FP)
-        recall = get_recall(TP, FN)
-        hierarchy_precision = get_precision(HTP, HFP)
-        hierarchy_recall = get_recall(HTP, HFN)
-        f1 = get_f1(recall, precision)
-        hierarchy_f1 = get_f1(hierarchy_recall, hierarchy_precision)
-        metrics = metrics.append(
-            [[concept, TP, FP, FN, precision, hierarchy_precision, recall, hierarchy_recall, f1, hierarchy_f1]])
-    metrics.columns = ["conceptid", "TP", "FP",
-                       "FN", "Precision", "Hierarchy Precision", "Recall", "Hierarchy Recall", "F1", "Hierarchy F1"]
-    return metrics
-
+def get_count(count_values, concept):
+    return count_values[concept] if concept in count_values.index else 0
 
 def get_precision(TP, FP):
     return TP / (TP + FP) if (TP + FP) != 0 else 0
 
-
 def get_recall(TP, FN):
     return TP / (TP + FN) if (TP + FN) != 0 else 0
-
 
 def get_f1(recall, precision):
     return (2 * recall * precision / (precision + recall)) if (precision + recall) != 0 else 0
 
-
-def count_accuracy(row):
-    if row.true_num == 0:
-        return 1.0 if row.pred_num == 0 else 0
+def count_accuracy(true_num, pred_num):
+    if true_num == 0:
+        return 1.0 if pred_num == 0 else 0
     else:
-        return 1 - (abs(row.true_num - row.pred_num) / max(row.true_num, row.pred_num))
+        return 1 - (abs(true_num - pred_num) / max(true_num, pred_num))
 
+def get_recall_precision_f1_counts(TP, FP, FN):
+    pred_num, true_num = TP+FP, TP+FN
+    r, p = get_recall(TP, FN), get_precision(TP, FP)
+    return r, p, get_f1(r, p), pred_num, true_num, count_accuracy(true_num, pred_num)
 
-def get_counts(results, annotations):
-    grouped = results.groupby(["objectid"]).label.mean().reset_index()
-    counts = grouped.groupby("label").count()
-    counts.columns = ["pred_num"]
-    groundtruth_counts = pd.DataFrame(annotations.groupby("label").size())
-    groundtruth_counts.columns = ["true_num"]
-    counts = pd.concat((counts, groundtruth_counts),
-                       axis=1, join="outer").fillna(0)
-    counts["count_accuracy"] = counts.apply(count_accuracy, axis=1)
-    return counts
+def score_predictions(validation, predictions, iou_thresh, concepts, collections):
+    validation['id'] = validation.index
+    cords = ['x1', 'y1', 'x2', 'y2']
+    val_suffix='_val'
+    pred_suffix='_pred'
 
+    # Set the index to frame_num for merge on prediction
+    merged_user_pred_annotations = validation.set_index('frame_num').join(predictions.set_index('frame_num'), lsuffix=val_suffix, rsuffix=pred_suffix, sort=True).reset_index()
+    # Only keep rows which the predicted label matching validation (or collection)
+    merged_user_pred_annotations = merged_user_pred_annotations[
+        merged_user_pred_annotations.apply(lambda row: True if row.label_val==row.label_pred or (row.label_pred < 0 and row.label_val in collections[row.label_pred]) else False, axis=1)]
+
+    # get data from validation x_val...
+    merged_val_x_y = merged_user_pred_annotations[[cord+val_suffix for cord in cords]].to_numpy()
+    # get data for pred data x_pred...
+    merged_pred_x_y = merged_user_pred_annotations[[cord+pred_suffix for cord in cords]].to_numpy()
+    
+    # Get iou for each row
+    iou = vectorized_iou(merged_val_x_y, merged_pred_x_y)
+    merged_user_pred_annotations = merged_user_pred_annotations.assign(iou = iou)
+
+    # Correctly Classified must have iou greater than or equal to threshold
+    correctly_classified_objects = merged_user_pred_annotations[merged_user_pred_annotations.iou >= iou_thresh]
+    correctly_classified_objects = correctly_classified_objects.drop_duplicates(subset='objectid_pred')
+    
+    # True Positive
+    HTP = correctly_classified_objects.sort_values(by=['label_pred', 'iou'], ascending=False).drop_duplicates(subset='id').label_pred.value_counts()
+    HTP, TP = convert_hierarchy_counts(HTP, collections)
+
+    # False Positive
+    pred_objects_no_val = predictions[~predictions.objectid.isin(correctly_classified_objects.objectid_pred)].drop_duplicates(subset='objectid')
+    HFP = pred_objects_no_val['label'].value_counts()
+    HFP, FP = convert_hierarchy_counts(HFP, collections)
+
+    # False Negative
+    HFN = validation[~validation.id.isin(correctly_classified_objects.id)].label.value_counts()
+    FN = validation[~validation.id.isin(correctly_classified_objects[correctly_classified_objects.label_pred>0].id)].label.value_counts()
+    
+    return generate_metrics(concepts, [HTP, HFP, HFN, TP, FP, FN])
 
 def evaluate(video_id, model_username, concepts, upload_annotations=False,
              userid=None, create_collection=False, collections=None):
@@ -180,8 +137,6 @@ def evaluate(video_id, model_username, concepts, upload_annotations=False,
     metrics = score_predictions(
         annotations, results, config.EVALUATION_IOU_THRESH, concepts, collections
     )
-    concept_counts = get_counts(results, annotations)
-    metrics = metrics.set_index("conceptid").join(concept_counts)
     metrics.to_csv("metrics" + str(video_id) + ".csv")
     # upload the data to s3 bucket
     print("uploading to s3 folder")
