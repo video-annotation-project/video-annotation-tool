@@ -350,21 +350,14 @@ router.delete(
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     let s3 = new AWS.S3();
-    let queryText1 = `
-      DELETE FROM
-        annotation_intermediate
-      WHERE
-        annotationid=$1
-    `;
-    let queryText2 = `
+    let queryText = `
       DELETE FROM
         annotations
       WHERE 
         annotations.id=$1 OR annotations.originalid=$1
     `;
     try {
-      await psql.query(queryText1, [req.body.id]);
-      await psql.query(queryText2, [req.body.id]);
+      await psql.query(queryText, [req.body.id]);
       //These are the s3 objects we will be deleting
       let Objects = [];
 
