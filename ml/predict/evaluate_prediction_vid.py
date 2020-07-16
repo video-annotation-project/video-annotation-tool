@@ -146,7 +146,7 @@ def score_predictions(validation, predictions, iou_thresh, concepts, collections
     return generate_metrics(concepts, [HTP, HFP, HFN, TP, FP, FN])
 
 
-def update_ai_videos_database(model_username, video_id, filename, con=con):
+def update_ai_videos_database(model_username, video_id, filename, con=None):
     # Get the model's name
     username_split = model_username.split('-')
     version = username_split[-1]
