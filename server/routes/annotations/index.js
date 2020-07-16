@@ -216,6 +216,7 @@ router.get(
         WHERE
           ai.id::TEXT = ANY($1)
           AND a.tracking_flag IS NULL
+          AND a.userid!=${configData.ml.tracking_userid}
       `;
     }
     try {
@@ -349,21 +350,14 @@ router.delete(
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     let s3 = new AWS.S3();
-    let queryText1 = `
-      DELETE FROM
-        annotation_intermediate
-      WHERE
-        annotationid=$1
-    `;
-    let queryText2 = `
+    let queryText = `
       DELETE FROM
         annotations
       WHERE 
         annotations.id=$1 OR annotations.originalid=$1
     `;
     try {
-      await psql.query(queryText1, [req.body.id]);
-      await psql.query(queryText2, [req.body.id]);
+      await psql.query(queryText, [req.body.id]);
       //These are the s3 objects we will be deleting
       let Objects = [];
 
