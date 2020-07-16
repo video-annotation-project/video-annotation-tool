@@ -34,22 +34,20 @@ def get_s3_connection():
             aws_secret_access_key=config.AWS_SECRET_ACCESS_KEY
             )
 
-def pd_query(query_string, params=None, con=None):
+def pd_query(query_string, params=None, local_con=None):
     """
     Execture a SQL query using Pandas
     Returns resulting rows
     """
-    if con is None:
-        con = global con
-    result = pd.read_sql_query(query_string, con, params=params)
+    connection = local_con if local_con else con
+    result = pd.read_sql_query(query_string, connection, params=params)
     return result
 
 
-def query(query_string, params=None, con=None):
+def query(query_string, params=None, local_con=None):
     """
     Execture a SQL query
     """
-    if con is None:
-        con = global con
-    con.cursor().execute(query_string, params)
-    con.commit()
+    connection = local_con if local_con else con
+    connection.cursor().execute(query_string, params)
+    connection.commit()
