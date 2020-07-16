@@ -8,8 +8,6 @@ import itertools
 import cv2
 import numpy as np
 import pandas as pd
-from keras_retinanet.models import convert_model
-from keras_retinanet.models import load_model
 import subprocess
 
 from config import config
@@ -119,7 +117,7 @@ def resize(row):
 @profile(stream=fp)
 def predict_on_video(videoid, model_weights, concepts, filename,
                      upload_annotations=False, userid=None, collection_id=None,
-                     collections=None, local_con=None, s3=None):
+                     collections=None, local_con=None, s3=None, gpu_id=None):
     vid_filename = pd_query(f'''
             SELECT *
             FROM videos
@@ -169,7 +167,7 @@ def predict_on_video(videoid, model_weights, concepts, filename,
     printing_with_time("Done resizing annotations.")
 
     print("Initializing Model")
-    model = init_model(model_weights)
+    model = init_model(model_weights, gpu_id)
 
     printing_with_time("Predicting")
     results, frames = predict_frames(
@@ -236,7 +234,10 @@ def get_video_frames(vid_filename, videoid, local_con=None, s3=None):
     return frames, fps
 
 
-def init_model(model_path):
+def init_model(model_path, gpu_id):
+    os.environ["CUDA_VISIBLE_DEVICES"] = "{}".format(gpu_id)
+    from keras_retinanet.models import convert_model
+    from keras_retinanet.models import load_model
     model = load_model(model_path, backbone_name='resnet50')
     model = convert_model(model)
     return model

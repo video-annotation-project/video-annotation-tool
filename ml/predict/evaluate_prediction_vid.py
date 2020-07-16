@@ -176,7 +176,7 @@ def upload_metrics(metrics, filename, video_id, s3=None):
 
 
 def evaluate(video_id, model_username, concepts, upload_annotations=False,
-             user_id=None, create_collection=False, collections=None):
+             user_id=None, create_collection=False, collections=None, gpu_id=None):
     local_con = get_db_connection()
     s3 = get_s3_connection()
 
@@ -190,11 +190,12 @@ def evaluate(video_id, model_username, concepts, upload_annotations=False,
 
     results, annotations = predict.predict_on_video(
         video_id, config.WEIGHTS_PATH, concepts, filename, upload_annotations,
-        user_id, collection_id, collections, local_con=local_con, s3=s3)
+        user_id, collection_id, collections, local_con=local_con, s3=s3, gpu_id=gpu_id)
     if (results.empty):  # If the model predicts nothing stop here
         return
     # Send the new generated video to our database
-    update_ai_videos_database(model_username, video_id, filename, local_con=local_con)
+    update_ai_videos_database(model_username, video_id,
+                              filename, local_con=local_con)
     print("done predicting")
 
     # This scores our well our model preformed against user annotations

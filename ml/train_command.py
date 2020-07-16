@@ -3,6 +3,7 @@ import time
 import subprocess
 
 from botocore.exceptions import ClientError
+from tensorflow.python.client import device_lib
 
 import upload_stdout
 from predict.evaluate_prediction_vid import evaluate
@@ -127,7 +128,8 @@ def get_user_model(model_params):
         (str(model_params["model"]),
          model_version, model_version)
     )
-    new_version = '.'.join((model_version, str(next_version.loc[0]['next_version'])))
+    new_version = '.'.join(
+        (model_version, str(next_version.loc[0]['next_version'])))
     print(f"new version: {new_version}")
 
     # create new model-version user
@@ -223,7 +225,8 @@ def setup_predict_progress(verify_videos):
 
 
 def get_conceptid_collections(collectionid_list):
-    collection_conceptids_list = {}  # key: -colection id values: concepts ids in the collection
+    # key: -colection id values: concepts ids in the collection
+    collection_conceptids_list = {}
     for collectionid in collectionid_list:
         conceptids = list(pd_query(
             """SELECT conceptid FROM concept_intermediate WHERE id=%s""", (
@@ -240,12 +243,15 @@ def evaluate_videos(concepts, verify_videos, user_model,
     """
 
     # We go one by one as multiprocessing ran into memory issues
-
-    with Pool() as p:
-        p.starmap(evaluate, map(
-            lambda video_id: (video_id, user_model, concepts,
-            upload_annotations, userid,
-            create_collection, collections), verify_videos))
+    gpus = len([i for i in device_lib.list_local_devices()
+                if i.device_type == 'GPU'])
+    evaluate_generator = map(lambda (index, video_id):
+                             (video_id, user_model, concepts,
+                              upload_annotations, userid,
+                              create_collection, collections, index % gpus),
+                             enumerate(verify_videos))
+    with Pool(gpus) as p:
+        p.starmap(evaluate, evaluate_generator)
 
     end_predictions()
 
