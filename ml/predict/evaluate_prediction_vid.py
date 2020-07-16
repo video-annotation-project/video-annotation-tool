@@ -146,20 +146,20 @@ def score_predictions(validation, predictions, iou_thresh, concepts, collections
     return generate_metrics(concepts, [HTP, HFP, HFN, TP, FP, FN])
 
 
-def update_ai_videos_database(model_username, video_id, filename, con=None):
+def update_ai_videos_database(model_username, video_id, filename, local_con=None):
     # Get the model's name
     username_split = model_username.split('-')
     version = username_split[-1]
     model_name = '-'.join(username_split[:-1])
 
     # add the entry to ai_videos
-    cursor = con.cursor()
+    cursor = local_con.cursor()
     cursor.execute('''
             INSERT INTO ai_videos (name, videoid, version, model_name)
             VALUES (%s, %s, %s, %s)''',
                    (filename, video_id, version, model_name)
                    )
-    con.commit()
+    local_con.commit()
 
 
 def upload_metrics(metrics, filename, video_id, s3=None):
@@ -177,11 +177,11 @@ def upload_metrics(metrics, filename, video_id, s3=None):
 
 def evaluate(video_id, model_username, concepts, upload_annotations=False,
              user_id=None, create_collection=False, collections=None):
-    con = get_db_connection()
+    local_con = get_db_connection()
     s3 = get_s3_connection()
 
     collection_id = create_annotation_collection(
-        model_username, user_id, video_id, concepts, upload_annotations, con=con) if create_collection else None
+        model_username, user_id, video_id, concepts, upload_annotations, local_con=local_con) if create_collection else None
 
     # filename format: (video_id)_(model_name)-(version).mp4
     # This the generated video's filename
@@ -190,11 +190,11 @@ def evaluate(video_id, model_username, concepts, upload_annotations=False,
 
     results, annotations = predict.predict_on_video(
         video_id, config.WEIGHTS_PATH, concepts, filename, upload_annotations,
-        user_id, collection_id, collections, con=con, s3=s3)
+        user_id, collection_id, collections, local_con=local_con, s3=s3)
     if (results.empty):  # If the model predicts nothing stop here
         return
     # Send the new generated video to our database
-    update_ai_videos_database(model_username, video_id, filename, con=con)
+    update_ai_videos_database(model_username, video_id, filename, local_con=local_con)
     print("done predicting")
 
     # This scores our well our model preformed against user annotations
@@ -204,10 +204,10 @@ def evaluate(video_id, model_username, concepts, upload_annotations=False,
     # Upload metrics to s3 bucket
     upload_metrics(metrics, filename, video_id, s3=s3)
 
-    con.close()
+    local_con.close()
 
 
-def create_annotation_collection(model_name, user_id, video_id, concept_ids, upload_annotations, con=None):
+def create_annotation_collection(model_name, user_id, video_id, concept_ids, upload_annotations, local_con=None):
     if not upload_annotations:
         raise ValueError("cannot create new annotation collection if "
                          "annotations aren't uploaded")
@@ -223,10 +223,10 @@ def create_annotation_collection(model_name, user_id, video_id, concept_ids, upl
         SELECT name
         FROM concepts
         WHERE id IN %s
-        """, params=(tuple(concept_ids),), con=con
+        """, params=(tuple(concept_ids),), local_con=local_con
     )['name'].tolist()
 
-    cursor = con.cursor()
+    cursor = local_con.cursor()
     cursor.execute(
         """
         INSERT INTO annotation_collection
@@ -237,7 +237,7 @@ def create_annotation_collection(model_name, user_id, video_id, concept_ids, upl
         (collection_name, description, [user_id], [video_id], concept_names,
          False, concept_ids)
     )
-    con.commit()
+    local_con.commit()
     collection_id = int(cursor.fetchone()[0])
 
     return collection_id

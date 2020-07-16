@@ -119,13 +119,13 @@ def resize(row):
 @profile(stream=fp)
 def predict_on_video(videoid, model_weights, concepts, filename,
                      upload_annotations=False, userid=None, collection_id=None,
-                     collections=None, con=None, s3=None):
+                     collections=None, local_con=None, s3=None):
     vid_filename = pd_query(f'''
             SELECT *
             FROM videos
-            WHERE id ={videoid}''', con=con).iloc[0].filename
+            WHERE id ={videoid}''', local_con=local_con).iloc[0].filename
     print("Loading Video.")
-    frames, fps = get_video_frames(vid_filename, videoid, con=con, s3=s3)
+    frames, fps = get_video_frames(vid_filename, videoid, local_con=local_con, s3=s3)
 
     # Get biologist annotations for video
 
@@ -157,7 +157,7 @@ def predict_on_video(videoid, model_weights, concepts, filename,
         WHERE
           videoid={videoid} AND
           userid in {str(tuple(config.GOOD_USERS))} AND
-          conceptid {tuple_concept}''', con=con)
+          conceptid {tuple_concept}''', local_con=local_con)
 
     print(f'Number of human annotations {len(annotations)}')
     printing_with_time("After database query")
@@ -173,7 +173,7 @@ def predict_on_video(videoid, model_weights, concepts, filename,
 
     printing_with_time("Predicting")
     results, frames = predict_frames(
-        frames, fps, model, videoid, concepts, collections, con=con)
+        frames, fps, model, videoid, concepts, collections, local_con=local_con)
     if (results.empty):
         print("no predictions")
         return results, annotations
@@ -184,7 +184,7 @@ def predict_on_video(videoid, model_weights, concepts, filename,
         printing_with_time("Uploading annotations")
         # filter results down to middle frames
         mid_frame_results = get_final_predictions(results)
-        cursor = con.cursor()
+        cursor = local_con.cursor()
         # upload these annotations
         mid_frame_results.apply(
             lambda prediction: handle_annotation(prediction, frames, videoid,
@@ -192,19 +192,19 @@ def predict_on_video(videoid, model_weights, concepts, filename,
                                                  config.RESIZED_WIDTH, userid,
                                                  fps, collection_id, cursor=cursor,
                                                  s3=s3), axis=1)
-        con.commit()
+        local_con.commit()
 
     printing_with_time("Generating Video")
     generate_video(
         filename, frames,
-        fps, results, concepts + list(collections.keys()), videoid, annotations, con=con, s3=s3)
+        fps, results, concepts + list(collections.keys()), videoid, annotations, local_con=local_con, s3=s3)
 
     printing_with_time("Done generating")
     return results, annotations
 
 
 @profile(stream=fp)
-def get_video_frames(vid_filename, videoid, con=None, s3=None):
+def get_video_frames(vid_filename, videoid, local_con=None, s3=None):
     frames = []
     # grab video stream
     url = s3.generate_presigned_url('get_object',
@@ -222,7 +222,7 @@ def get_video_frames(vid_filename, videoid, con=None, s3=None):
     one_percent_length = int(length / 100)
     while True:
         if frame_counter % one_percent_length == 0:
-            upload_predict_progress(frame_counter, videoid, length, 1, con=con)
+            upload_predict_progress(frame_counter, videoid, length, 1, local_con=local_con)
 
         check, frame = vid.read()
         if not check:
@@ -242,7 +242,7 @@ def init_model(model_path):
     return model
 
 
-def predict_frames(video_frames, fps, model, videoid, concepts, collections=None, con=None):
+def predict_frames(video_frames, fps, model, videoid, concepts, collections=None, local_con=None):
     currently_tracked_objects = []
     annotations = [
         pd.DataFrame(
@@ -256,7 +256,7 @@ def predict_frames(video_frames, fps, model, videoid, concepts, collections=None
         if frame_num % one_percent_length == 0:
             # update the progress every 1% of the video
             upload_predict_progress(
-                frame_num, videoid, total_frames, 2, con=con)
+                frame_num, videoid, total_frames, 2, local_con=local_con)
 
         # update tracking for currently tracked objects
         for obj in currently_tracked_objects:
@@ -573,7 +573,7 @@ def length_limit_objects(pred, frame_thresh):
 
 @profile(stream=fp)
 def generate_video(filename, frames, fps, results, concepts, video_id,
-                   annotations, con=None, s3=None):
+                   annotations, local_con=None, s3=None):
 
     # Combine human and prediction annotations
     results = results.append(annotations, sort=True)
@@ -589,7 +589,7 @@ def generate_video(filename, frames, fps, results, concepts, video_id,
     for pred_index, res in enumerate(results.itertuples()):
         if pred_index % one_percent_length == 0:
             upload_predict_progress(
-                pred_index, video_id, total_length, 3, con=con)
+                pred_index, video_id, total_length, 3, local_con=local_con)
 
         x1, y1, x2, y2 = int(res.x1), int(res.y1), int(res.x2), int(res.y2)
         # boxText init to concept name
@@ -717,7 +717,7 @@ def upload_annotation(frame, x1, x2, y1, y2,
     return annotation_id
 
 
-def upload_predict_progress(count, videoid, total_count, status, con=None):
+def upload_predict_progress(count, videoid, total_count, status, local_con=None):
     '''
     For updating the predict_progress psql database, which tracks prediction and
     video generation status.
@@ -731,18 +731,18 @@ def upload_predict_progress(count, videoid, total_count, status, con=None):
     print(
         f'count: {count} total_count: {total_count} vid: {videoid} status: {status}')
     if (count == 0):
-        con.cursor().execute('''
+        local_con.cursor().execute('''
             UPDATE predict_progress
             SET framenum=%s, status=%s, totalframe=%s''',
                              (count, status, total_count,))
-        con.commit()
+        local_con.commit()
         return
 
     if (total_count == count):
         count = -1
-    con.cursor().execute('''
+    local_con.cursor().execute('''
         UPDATE predict_progress
         SET framenum=%s''',
                          (count,)
                          )
-    con.commit()
+    local_con.commit()
