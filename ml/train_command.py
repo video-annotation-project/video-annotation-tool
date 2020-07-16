@@ -3,7 +3,7 @@ import time
 import subprocess
 
 from botocore.exceptions import ClientError
-from tensorflow.python.client import device_lib
+import GPUtil
 
 import upload_stdout
 from predict.evaluate_prediction_vid import evaluate
@@ -243,12 +243,11 @@ def evaluate_videos(concepts, verify_videos, user_model,
     """
 
     # We go one by one as multiprocessing ran into memory issues
-    gpus = len([i for i in device_lib.list_local_devices()
-                if i.device_type == 'GPU'])
-    evaluate_generator = map(lambda (index, video_id):
-                             (video_id, user_model, concepts,
+    gpus = len(GPUtil.getGPUs())
+    evaluate_generator = map(lambda index_video_id:
+                             (index_video_id[1], user_model, concepts,
                               upload_annotations, userid,
-                              create_collection, collections, index % gpus),
+                              create_collection, collections, index_video_id[0] % gpus),
                              enumerate(verify_videos))
     with Pool(gpus) as p:
         p.starmap(evaluate, evaluate_generator)
