@@ -1,0 +1,33 @@
+Using TensorFlow backend.
+WARNING: Logging before flag parsing goes to stderr.
+W0710 07:03:38.229605 140054816118592 deprecation_wrapper.py:119] From /home/ubuntu/.virtualenvs/cv/lib/python3.6/site-packages/keras/backend/tensorflow_backend.py:4070: The name tf.nn.max_pool is deprecated. Please use tf.nn.max_pool2d instead.
+
+/home/ubuntu/.virtualenvs/cv/lib/python3.6/site-packages/keras/engine/saving.py:341: UserWarning: No training configuration found in save file: the model was *not* compiled. Compile it manually.
+  warnings.warn('No training configuration found in save file: '
+W0710 07:04:00.637157 140054816118592 deprecation.py:323] From /home/ubuntu/.virtualenvs/cv/lib/python3.6/site-packages/keras_retinanet/backend/tensorflow_backend.py:104: add_dispatch_support.<locals>.wrapper (from tensorflow.python.ops.array_ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use tf.where in 2.0, which has the same broadcast rule as np.where
+W0710 07:04:02.220723 140054816118592 deprecation_wrapper.py:119] From /home/ubuntu/.virtualenvs/cv/lib/python3.6/site-packages/keras/backend/tensorflow_backend.py:422: The name tf.global_variables is deprecated. Please use tf.compat.v1.global_variables instead.
+
+Traceback (most recent call last):
+  File "/home/ubuntu/video-annotation-tool/ml/train_command.py", line 301, in <module>
+    main()
+  File "/home/ubuntu/video-annotation-tool/ml/train_command.py", line 50, in main
+    collections=get_conceptid_collections(model['concept_collections']))
+  File "/home/ubuntu/video-annotation-tool/ml/train_command.py", line 258, in evaluate_videos
+    create_collection, collections)
+  File "/home/ubuntu/video-annotation-tool/ml/predict/evaluate_prediction_vid.py", line 128, in evaluate
+    userid, collection_id, collections)
+  File "/home/ubuntu/.virtualenvs/cv/lib/python3.6/site-packages/memory_profiler.py", line 1074, in wrapper
+    val = prof(func)(*args, **kwargs)
+  File "/home/ubuntu/.virtualenvs/cv/lib/python3.6/site-packages/memory_profiler.py", line 660, in f
+    return func(*args, **kwds)
+  File "/home/ubuntu/video-annotation-tool/ml/predict/predict.py", line 197, in predict_on_video
+    fps, results, concepts, videoid, annotations)
+  File "/home/ubuntu/.virtualenvs/cv/lib/python3.6/site-packages/memory_profiler.py", line 1074, in wrapper
+    val = prof(func)(*args, **kwargs)
+  File "/home/ubuntu/.virtualenvs/cv/lib/python3.6/site-packages/memory_profiler.py", line 660, in f
+    return func(*args, **kwds)
+  File "/home/ubuntu/video-annotation-tool/ml/predict/predict.py", line 594, in generate_video
+    boxText = classmap[concepts.index(res.label)]
+ValueError: 2117 is not in list

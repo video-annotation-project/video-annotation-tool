@@ -10,7 +10,7 @@ from psycopg2 import connect
 
 from predict import predict
 from config import config
-from utils.query import cursor, s3, con, pd_query
+from utils.query import pd_query, get_db_connection, get_s3_connection
 
 
 def vectorized_iou(list_bboxes1, list_bboxes2):
@@ -146,22 +146,23 @@ def score_predictions(validation, predictions, iou_thresh, concepts, collections
     return generate_metrics(concepts, [HTP, HFP, HFN, TP, FP, FN])
 
 
-def update_ai_videos_database(model_username, video_id, filename):
+def update_ai_videos_database(model_username, video_id, filename, con=con):
     # Get the model's name
     username_split = model_username.split('-')
     version = username_split[-1]
     model_name = '-'.join(username_split[:-1])
 
     # add the entry to ai_videos
+    cursor = con.cursor()
     cursor.execute('''
-        INSERT INTO ai_videos (name, videoid, version, model_name)
-        VALUES (%s, %s, %s, %s)''',
+            INSERT INTO ai_videos (name, videoid, version, model_name)
+            VALUES (%s, %s, %s, %s)''',
                    (filename, video_id, version, model_name)
                    )
     con.commit()
 
 
-def upload_metrics(metrics, filename, video_id):
+def upload_metrics(metrics, filename, video_id, s3=None):
     metrics.to_csv("metrics" + str(video_id) + ".csv")
     # upload the data to s3 bucket
     print("uploading to s3 folder")
@@ -172,13 +173,15 @@ def upload_metrics(metrics, filename, video_id):
         ExtraArgs={"ContentType": "application/vnd.ms-excel"},
     )
     print(metrics)
-    con.commit()
 
 
 def evaluate(video_id, model_username, concepts, upload_annotations=False,
              user_id=None, create_collection=False, collections=None):
+    con = get_db_connection()
+    s3 = get_s3_connection()
+
     collection_id = create_annotation_collection(
-        model_username, user_id, video_id, concepts, upload_annotations) if create_collection else None
+        model_username, user_id, video_id, concepts, upload_annotations, con=con) if create_collection else None
 
     # filename format: (video_id)_(model_name)-(version).mp4
     # This the generated video's filename
@@ -187,11 +190,11 @@ def evaluate(video_id, model_username, concepts, upload_annotations=False,
 
     results, annotations = predict.predict_on_video(
         video_id, config.WEIGHTS_PATH, concepts, filename, upload_annotations,
-        user_id, collection_id, collections)
+        user_id, collection_id, collections, con=con, s3=s3)
     if (results.empty):  # If the model predicts nothing stop here
         return
     # Send the new generated video to our database
-    update_ai_videos_database(model_username, video_id, filename)
+    update_ai_videos_database(model_username, video_id, filename, con=con)
     print("done predicting")
 
     # This scores our well our model preformed against user annotations
@@ -199,10 +202,10 @@ def evaluate(video_id, model_username, concepts, upload_annotations=False,
         annotations, results, config.EVALUATION_IOU_THRESH, concepts, collections
     )
     # Upload metrics to s3 bucket
-    upload_metrics(metrics, filename, video_id)
+    upload_metrics(metrics, filename, video_id, s3=s3)
 
 
-def create_annotation_collection(model_name, user_id, video_id, concept_ids, upload_annotations):
+def create_annotation_collection(model_name, user_id, video_id, concept_ids, upload_annotations, con=con):
     if not upload_annotations:
         raise ValueError("cannot create new annotation collection if "
                          "annotations aren't uploaded")
@@ -218,9 +221,10 @@ def create_annotation_collection(model_name, user_id, video_id, concept_ids, upl
         SELECT name
         FROM concepts
         WHERE id IN %s
-        """, (tuple(concept_ids),)
+        """, params=(tuple(concept_ids),), con=con
     )['name'].tolist()
 
+    cursor = con.cursor()
     cursor.execute(
         """
         INSERT INTO annotation_collection
@@ -235,41 +239,3 @@ def create_annotation_collection(model_name, user_id, video_id, concept_ids, upl
     collection_id = int(cursor.fetchone()[0])
 
     return collection_id
-
-
-if __name__ == "__main__":
-    cursor.execute(
-        """
-        SELECT * FROM models
-        LEFT JOIN users u ON u.id=userid
-        WHERE name=%s
-        """,
-        ("testv3",),
-    )
-    model = cursor.fetchone()
-
-    video_id = 86
-    concepts = model[2]
-    user_id = "270"
-    model_username = "testV2_KLSKLS"
-
-    cursor.execute("""DELETE FROM predict_progress""")
-    con.commit()
-    cursor.execute(
-        """
-        INSERT INTO predict_progress (videoid, current_video, total_videos)
-        VALUES (%s, %s, %s)""",
-        (0, 0, 1),
-    )
-    con.commit()
-    cursor.execute(
-        """UPDATE predict_progress SET videoid = 86, current_video = current_video + 1"""
-    )
-    con.commit()
-
-    evaluate(video_id, model_username, concepts)
-    cursor.execute('''
-        DELETE FROM predict_progress
-        ''')
-
-    con.commit()
