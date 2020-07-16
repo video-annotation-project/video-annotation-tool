@@ -40,7 +40,7 @@ def pd_query(query_string, params=None, con=None):
     Returns resulting rows
     """
     if con is None:
-        con = con
+        con = global con
     result = pd.read_sql_query(query_string, con, params=params)
     return result
 
@@ -50,6 +50,6 @@ def query(query_string, params=None, con=None):
     Execture a SQL query
     """
     if con is None:
-        con = con
+        con = global con
     con.cursor().execute(query_string, params)
     con.commit()
