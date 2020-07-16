@@ -204,6 +204,8 @@ def evaluate(video_id, model_username, concepts, upload_annotations=False,
     # Upload metrics to s3 bucket
     upload_metrics(metrics, filename, video_id, s3=s3)
 
+    con.close()
+
 
 def create_annotation_collection(model_name, user_id, video_id, concept_ids, upload_annotations, con=con):
     if not upload_annotations:

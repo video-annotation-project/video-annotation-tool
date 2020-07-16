@@ -239,17 +239,11 @@ def evaluate_videos(concepts, verify_videos, user_model,
     """
 
     # We go one by one as multiprocessing ran into memory issues
-    for video_id in verify_videos:
-        cursor.execute(
-            f"""
-            UPDATE
-                predict_progress
-            SET
-                videoid = {video_id}, current_video = current_video + 1"""
-        )
-        con.commit()
-        evaluate(video_id, user_model, concepts, upload_annotations, userid,
-                 create_collection, collections)
+
+    with Pool() as p:
+        p.starmap(lambda video_id: evaluate(video_id, user_model, concepts,
+                                            upload_annotations, user_id,
+                                            create_collection, collections), verify_videos)
 
     end_predictions()
 
