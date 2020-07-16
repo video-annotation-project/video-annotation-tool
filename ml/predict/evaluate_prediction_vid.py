@@ -207,7 +207,7 @@ def evaluate(video_id, model_username, concepts, upload_annotations=False,
     con.close()
 
 
-def create_annotation_collection(model_name, user_id, video_id, concept_ids, upload_annotations, con=con):
+def create_annotation_collection(model_name, user_id, video_id, concept_ids, upload_annotations, con=None):
     if not upload_annotations:
         raise ValueError("cannot create new annotation collection if "
                          "annotations aren't uploaded")
