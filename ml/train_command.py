@@ -242,9 +242,10 @@ def evaluate_videos(concepts, verify_videos, user_model,
     # We go one by one as multiprocessing ran into memory issues
 
     with Pool() as p:
-        p.starmap(lambda video_id: evaluate(video_id, user_model, concepts,
-                                            upload_annotations, userid,
-                                            create_collection, collections), verify_videos)
+        p.starmap(evaluate, map(
+            lambda video_id: (video_id, user_model, concepts,
+            upload_annotations, userid,
+            create_collection, collections), verify_videos))
 
     end_predictions()
 
