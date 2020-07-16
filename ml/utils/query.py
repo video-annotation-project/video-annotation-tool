@@ -26,7 +26,6 @@ def get_db_connection():
             password=config.DB_PASSWORD,
             host=config.DB_HOST
             )
-)
 
 def get_s3_connection():
     return boto3.client(
