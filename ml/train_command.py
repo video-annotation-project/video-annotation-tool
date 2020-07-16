@@ -10,6 +10,7 @@ from train.train import train_model
 from config import config
 from utils.query import s3, con, cursor, pd_query
 from datetime import datetime
+from multiprocessing import Pool
 
 
 def main():
@@ -242,7 +243,7 @@ def evaluate_videos(concepts, verify_videos, user_model,
 
     with Pool() as p:
         p.starmap(lambda video_id: evaluate(video_id, user_model, concepts,
-                                            upload_annotations, user_id,
+                                            upload_annotations, userid,
                                             create_collection, collections), verify_videos)
 
     end_predictions()
