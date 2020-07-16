@@ -13,7 +13,6 @@ from keras_retinanet.models import load_model
 import subprocess
 
 from config import config
-from train.preprocessing.annotation_generator import get_classmap
 from utils.query import s3, cursor, pd_query, con
 from ffmpy import FFmpeg
 from memory_profiler import profile
@@ -24,7 +23,8 @@ fp = open('memory_profiler.log', 'w+')
 def get_classmap(concepts):
     classmap = []
     for concept in concepts:
-        name = pd_query("select name from concepts where id=%s", (str(concept),)).iloc[0]["name"]
+        name = pd_query("select name from concepts where id=%s",
+                        (str(concept),)).iloc[0]["name"]
         classmap.append([name, concepts.index(concept)])
     classmap = pd.DataFrame(classmap)
     classmap = classmap.to_dict()[0]
@@ -172,7 +172,8 @@ def predict_on_video(videoid, model_weights, concepts, filename,
     model = init_model(model_weights)
 
     printing_with_time("Predicting")
-    results, frames = predict_frames(frames, fps, model, videoid, concepts, collections)
+    results, frames = predict_frames(
+        frames, fps, model, videoid, concepts, collections)
     if (results.empty):
         print("no predictions")
         return results, annotations
