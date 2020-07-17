@@ -163,7 +163,7 @@ def predict_on_video(videoid, model_weights, concepts, filename,
     printing_with_time("Resizing annotations.")
     annotations = annotations.apply(resize, axis=1)
     annotations = annotations.drop(['videowidth', 'videoheight'], axis=1)
-    frame_limit = len(frames)
+    
     printing_with_time("Done resizing annotations.")
 
     print("Initializing Model")
