@@ -15,10 +15,14 @@ import TableCell from '@material-ui/core/TableCell';
 import ModelsTable from './ModelsTable';
 import CreateModel from './CreateModel';
 
-const styles = theme => ({
+const styles = () => ({
   root: {
     margins: 'auto',
     padding: '20px 12%'
+  },
+  cell: {
+    minWidth: '90px',
+    maxWidth: '90px'
   }
 });
 
@@ -474,19 +478,19 @@ class Models extends Component {
     
     return (
       <>
-        <Table className={classes.table}>
+        <Table>
           <TableHead>
             <TableRow>
-              <TableCell>ConceptId</TableCell>
-              <TableCell>TP</TableCell>
-              <TableCell>FP</TableCell>
-              <TableCell>FN</TableCell>
-              <TableCell>Precision</TableCell>
-              <TableCell>Recall</TableCell>
-              <TableCell>F1</TableCell>
-              <TableCell>pred_num</TableCell>
-              <TableCell>true_num</TableCell>
-              <TableCell>count_accuracy</TableCell>
+              <TableCell className={classes.cell}>ConceptId</TableCell>
+              <TableCell className={classes.cell}>TP</TableCell>
+              <TableCell className={classes.cell}>FP</TableCell>
+              <TableCell className={classes.cell}>FN</TableCell>
+              <TableCell className={classes.cell}>Precision</TableCell>
+              <TableCell className={classes.cell}>Recall</TableCell>
+              <TableCell className={classes.cell}>F1</TableCell>
+              <TableCell className={classes.cell}>pred_num</TableCell>
+              <TableCell className={classes.cell}>true_num</TableCell>
+              <TableCell className={classes.cell}>count_accuracy</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -509,19 +513,19 @@ class Models extends Component {
         {!selectedModel.concept_collections ? "" :
           <>
             <Typography style={{ marginTop: "30px", marginLeft: "10px" }}>With Hierarchical Classification</Typography>
-            <Table className={classes.table}>
+            <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>ConceptId</TableCell>
-                  <TableCell>H_TP</TableCell>
-                  <TableCell>H_FP</TableCell>
-                  <TableCell>H_FN</TableCell>
-                  <TableCell>H_Precision</TableCell>
-                  <TableCell>H_Recall</TableCell>
-                  <TableCell>H_F1</TableCell>
-                  <TableCell>H_pred_num</TableCell>
-                  <TableCell>H_true_num</TableCell>
-                  <TableCell>H_count_accuracy</TableCell>
+                  <TableCell className={classes.cell}>ConceptId</TableCell>
+                  <TableCell className={classes.cell}>H_TP</TableCell>
+                  <TableCell className={classes.cell}>H_FP</TableCell>
+                  <TableCell className={classes.cell}>H_FN</TableCell>
+                  <TableCell className={classes.cell}>H_Precision</TableCell>
+                  <TableCell className={classes.cell}>H_Recall</TableCell>
+                  <TableCell className={classes.cell}>H_F1</TableCell>
+                  <TableCell className={classes.cell}>H_pred_num</TableCell>
+                  <TableCell className={classes.cell}>H_true_num</TableCell>
+                  <TableCell className={classes.cell}>H_count_accuracy</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
