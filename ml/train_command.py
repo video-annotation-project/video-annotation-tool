@@ -249,7 +249,7 @@ def evaluate_videos(concepts, verify_videos, user_model,
                               upload_annotations, userid,
                               create_collection, collections, index_video_id[0] % gpus),
                              enumerate(verify_videos))
-    with Pool(gpus) as p:
+    with Pool() as p:
         p.starmap(evaluate, evaluate_generator)
 
     end_predictions()
