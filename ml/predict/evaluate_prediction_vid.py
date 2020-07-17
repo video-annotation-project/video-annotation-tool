@@ -1,113 +1,49 @@
 import os
 import json
 import datetime
+import copy
 
 import pandas as pd
+import numpy as np
 import boto3
 from psycopg2 import connect
 
 from predict import predict
 from config import config
-from utils.query import cursor, s3, con, pd_query
+from utils.query import pd_query, get_db_connection, get_s3_connection
 
 
-def score_predictions(validation, predictions, iou_thresh, concepts, collections):
-    # Maintain a set of predicted objects to verify
-    detected_objects = []
-    hierarchy_detected_objects = []
-    obj_map = predictions.groupby("objectid", sort=False).label.max()
+def vectorized_iou(list_bboxes1, list_bboxes2):
+    x11, y11, x12, y12 = np.split(list_bboxes1, 4, axis=1)
+    x21, y21, x22, y22 = np.split(list_bboxes2, 4, axis=1)
 
-    # group predictions by video frames
-    predictions = predictions.groupby("frame_num", sort=False)
-    predictions = [df for _, df in predictions]
+    xA = np.maximum(x11, x21)
+    yA = np.maximum(y11, y21)
+    xB = np.minimum(x12, x22)
+    yB = np.minimum(y12, y22)
+    interArea = np.maximum((xB - xA), 0) * np.maximum((yB - yA), 0)
+    boxAArea = np.abs((x12 - x11) * (y12 - y11))
+    boxBArea = np.abs((x22 - x21) * (y22 - y21))
+    denominator = (boxAArea + boxBArea - interArea)
+    ious = np.where(denominator != 0, interArea / denominator, 0)
+    return [iou[0] for iou in ious]
 
-    # mapping frames to predictions index
-    frame_data = {}
-    for i, group in enumerate(predictions):
-        frame_num = group.iloc[0]["frame_num"]
-        frame_data[frame_num] = i
 
-    # group validation annotations by frames
-    validation = validation.groupby("frame_num", sort=False)
-    validation = [df for _, df in validation]
+def convert_hierarchy_counts(value_counts, collections):
+    # normal counts is a count_values type object
+    # It ignores hierarchy counts
+    normal_counts = copy.deepcopy(value_counts)
+    for collectionid, count in value_counts[value_counts.index < 0].iteritems():
+        del value_counts[collectionid]
+        del normal_counts[collectionid]
+        collection_conceptids = collections[collectionid]
+        for conceptid in collection_conceptids:
+            value_counts[conceptid] += count / len(collection_conceptids)
+    return value_counts, normal_counts
 
-    # initialize counters for each concept
-    true_positives = dict(zip(concepts, [0] * len(concepts)))
-    hierarchy_true_positives = dict(zip(concepts, [0] * len(concepts)))
-    false_positives = dict(zip(concepts, [0] * len(concepts)))
-    hierarchy_false_positives = dict(zip(concepts, [0] * len(concepts)))
-    false_negatives = dict(zip(concepts, [0] * len(concepts)))
-    hierarchy_false_negatives = dict(zip(concepts, [0] * len(concepts)))
 
-    # get true and false positives for each frame of validation data
-    for group in validation:
-        try:  # get corresponding predictions for this frame
-            frame_num = group.iloc[0]["frame_num"]
-            predicted = predictions[frame_data[frame_num]]
-        except:
-            continue  # False Negatives already covered
-
-        detected_truths = dict(zip(concepts, [0] * len(concepts)))
-        hierarchy_detected_truths = dict(zip(concepts, [0] * len(concepts)))
-        for index, truth in group.iterrows():
-            for index, prediction in predicted.iterrows():
-                if (prediction.label == truth.label
-                    and predict.compute_IOU_wrapper(truth, prediction) > iou_thresh
-                        and prediction.objectid not in detected_objects):
-                    detected_objects.append(prediction.objectid)
-                    true_positives[prediction.label] += 1
-                    detected_truths[prediction.label] += 1
-                    hierarchy_detected_truths[truth.label] += 1
-                elif (prediction.label < 0
-                      and truth.label in collections[prediction.label]
-                      and predict.compute_IOU_wrapper(truth, prediction) > iou_thresh
-                      and prediction.objectid not in detected_objects):
-                    hierarchy_detected_objects.append(prediction.objectid)
-                    hierarchy_true_positives[truth.label] += 1 / len(collection[prediction.label])
-                    hierarchy_detected_truths[truth.label] += 1
-
-        # False Negatives (Missed ground truth predicitions)
-        counts = group.label.value_counts()
-        for concept in concepts:
-            count = counts[concept] if (concept in counts.index) else 0
-            false_negatives[concept] += count - detected_truths[concept]
-            hierarchy_false_negatives[concept] += count - hierarchy_detected_truths[concept]
-
-    # False Positives (No ground truth prediction at any frame for that object)
-
-    hierarchy_undetected_objects = set(obj_map.index) - set(detected_objects) - set(hierarchy_detected_objects)
-    for obj in hierarchy_undetected_objects:
-        concept = obj_map[obj]
-        if concept > 0:
-            hierarchy_false_positives[concept] += 1
-        for conceptid in collections[concept]:
-            hierarchy_false_positives[concept] += 1 / len(collections[concept])
-
-    original_undetected_objects = set(obj_map[obj_map > 0].index) - set(detected_objects)
-    for obj in original_undetected_objects:
-        concept = obj_map[obj]
-        if concept > 0:
-            false_positives[concept] += 1
-
-    metrics = pd.DataFrame()
-    for concept in concepts:
-        TP = true_positives[concept]
-        HTP = hierarchy_true_positives[concept]
-        FP = false_positives[concept]
-        HFP = hierarchy_false_positives[concept]
-        FN = false_negatives[concept]
-        HFN = hierarchy_false_negatives[concept]
-        precision = get_precision(TP, FP)
-        recall = get_recall(TP, FN)
-        hierarchy_precision = get_precision(HTP, HFP)
-        hierarchy_recall = get_recall(HTP, HFN)
-        f1 = get_f1(recall, precision)
-        hierarchy_f1 = get_f1(hierarchy_recall, hierarchy_precision)
-        metrics = metrics.append(
-            [[concept, TP, FP, FN, precision, hierarchy_precision, recall, hierarchy_recall, f1, hierarchy_f1]])
-    metrics.columns = ["conceptid", "TP", "FP",
-                       "FN", "Precision", "Hierarchy Precision", "Recall", "Hierarchy Recall", "F1", "Hierarchy F1"]
-    return metrics
+def get_count(count_values, concept):
+    return count_values[concept] if concept in count_values.index else 0
 
 
 def get_precision(TP, FP):
@@ -122,65 +58,111 @@ def get_f1(recall, precision):
     return (2 * recall * precision / (precision + recall)) if (precision + recall) != 0 else 0
 
 
-def count_accuracy(row):
-    if row.true_num == 0:
-        return 1.0 if row.pred_num == 0 else 0
+def count_accuracy(true_num, pred_num):
+    if true_num == 0:
+        return 1.0 if pred_num == 0 else 0
     else:
-        return 1 - (abs(row.true_num - row.pred_num) / max(row.true_num, row.pred_num))
+        return 1 - (abs(true_num - pred_num) / max(true_num, pred_num))
 
 
-def get_counts(results, annotations):
-    grouped = results.groupby(["objectid"]).label.mean().reset_index()
-    counts = grouped.groupby("label").count()
-    counts.columns = ["pred_num"]
-    groundtruth_counts = pd.DataFrame(annotations.groupby("label").size())
-    groundtruth_counts.columns = ["true_num"]
-    counts = pd.concat((counts, groundtruth_counts),
-                       axis=1, join="outer").fillna(0)
-    counts["count_accuracy"] = counts.apply(count_accuracy, axis=1)
-    return counts
+def get_recall_precision_f1_counts(TP, FP, FN):
+    pred_num, true_num = TP+FP, TP+FN
+    r, p = get_recall(TP, FN), get_precision(TP, FP)
+    return r, p, get_f1(r, p), pred_num, true_num, count_accuracy(true_num, pred_num)
 
 
-def evaluate(video_id, model_username, concepts, upload_annotations=False,
-             userid=None, create_collection=False, collections=None):
-    # file format: (video_id)_(model_name)-(version).mp4
+def generate_metrics(concepts, list_of_classifications):
+    metrics = pd.DataFrame()
+    for concept in concepts:
+        HTP, HFP, HFN, TP, FP, FN = [
+            get_count(classification, concept) for classification in list_of_classifications]
 
-    if create_collection:
-        if not upload_annotations:
-            raise ValueError("cannot create new annotation collection if "
-                             "annotations aren't uploaded")
-        if userid is None:
-            raise ValueError("userid is None, cannot create new collection")
-        collection_id = create_annotation_collection(
-            model_username, userid, video_id, concepts)
-    else:
-        collection_id = None
+        metrics = metrics.append([
+            [
+                concept,
+                HTP, HFP, HFN, *get_recall_precision_f1_counts(HTP, HFP, HFN),
+                TP, FP, FN, *get_recall_precision_f1_counts(TP, FP, FN)
+            ]
+        ])
+    metrics.columns = [
+        "conceptid",
+        "H_TP", "H_FP", "H_FN", "H_Precision", "H_Recall", "H_F1", "H_pred_num", "H_true_num", "H_count_accuracy",
+        "TP", "FP", "FN", "Precision", "Recall", "F1", "pred_num", "true_num", "count_accuracy"]
+    return metrics
 
-    filename = str(video_id) + "_" + model_username + ".mp4"
-    print("ai video filename: {0}".format(filename))
-    results, annotations = predict.predict_on_video(
-        video_id, config.WEIGHTS_PATH, concepts, filename, upload_annotations,
-        userid, collection_id, collections)
-    if (results.empty):
-        return
+
+def score_predictions(validation, predictions, iou_thresh, concepts, collections):
+    validation['id'] = validation.index
+    cords = ['x1', 'y1', 'x2', 'y2']
+    val_suffix = '_val'
+    pred_suffix = '_pred'
+
+    # Set the index to frame_num for merge on prediction
+    merged_user_pred_annotations = validation.set_index('frame_num').join(predictions.set_index(
+        'frame_num'), lsuffix=val_suffix, rsuffix=pred_suffix, sort=True).reset_index()
+    # Only keep rows which the predicted label matching validation (or collection)
+    merged_user_pred_annotations = merged_user_pred_annotations[
+        merged_user_pred_annotations.apply(
+            lambda row:
+            True if
+            row.label_val == row.label_pred
+            or (row.label_pred < 0 and row.label_val in collections[row.label_pred])
+            else False, axis=1)]
+
+    # get data from validation x_val...
+    merged_val_x_y = merged_user_pred_annotations[[
+        cord+val_suffix for cord in cords]].to_numpy()
+    # get data for pred data x_pred...
+    merged_pred_x_y = merged_user_pred_annotations[[
+        cord+pred_suffix for cord in cords]].to_numpy()
+
+    # Get iou for each row
+    iou = vectorized_iou(merged_val_x_y, merged_pred_x_y)
+    merged_user_pred_annotations = merged_user_pred_annotations.assign(iou=iou)
+
+    # Correctly Classified must have iou greater than or equal to threshold
+    correctly_classified_objects = merged_user_pred_annotations[
+        merged_user_pred_annotations.iou >= iou_thresh]
+    correctly_classified_objects = correctly_classified_objects.drop_duplicates(
+        subset='objectid_pred')
+
+    # True Positive
+    HTP = correctly_classified_objects.sort_values(
+        by=['label_pred', 'iou'], ascending=False).drop_duplicates(subset='id').label_pred.value_counts()
+    HTP, TP = convert_hierarchy_counts(HTP, collections)
+
+    # False Positive
+    pred_objects_no_val = predictions[~predictions.objectid.isin(
+        correctly_classified_objects.objectid_pred)].drop_duplicates(subset='objectid')
+    HFP = pred_objects_no_val['label'].value_counts()
+    HFP, FP = convert_hierarchy_counts(HFP, collections)
+
+    # False Negative
+    HFN = validation[~validation.id.isin(
+        correctly_classified_objects.id)].label.value_counts()
+    FN = validation[~validation.id.isin(
+        correctly_classified_objects[correctly_classified_objects.label_pred > 0].id)].label.value_counts()
+
+    return generate_metrics(concepts, [HTP, HFP, HFN, TP, FP, FN])
+
+
+def update_ai_videos_database(model_username, video_id, filename, local_con=None):
+    # Get the model's name
     username_split = model_username.split('-')
     version = username_split[-1]
     model_name = '-'.join(username_split[:-1])
+
     # add the entry to ai_videos
+    cursor = local_con.cursor()
     cursor.execute('''
-        INSERT INTO ai_videos (name, videoid, version, model_name)
-        VALUES (%s, %s, %s, %s)''',
+            INSERT INTO ai_videos (name, videoid, version, model_name)
+            VALUES (%s, %s, %s, %s)''',
                    (filename, video_id, version, model_name)
                    )
+    local_con.commit()
 
-    con.commit()
-    print("done predicting")
 
-    metrics = score_predictions(
-        annotations, results, config.EVALUATION_IOU_THRESH, concepts, collections
-    )
-    concept_counts = get_counts(results, annotations)
-    metrics = metrics.set_index("conceptid").join(concept_counts)
+def upload_metrics(metrics, filename, video_id, s3=None):
     metrics.to_csv("metrics" + str(video_id) + ".csv")
     # upload the data to s3 bucket
     print("uploading to s3 folder")
@@ -191,10 +173,48 @@ def evaluate(video_id, model_username, concepts, upload_annotations=False,
         ExtraArgs={"ContentType": "application/vnd.ms-excel"},
     )
     print(metrics)
-    con.commit()
 
 
-def create_annotation_collection(model_name, user_id, video_id, concept_ids):
+def evaluate(video_id, model_username, concepts, upload_annotations=False,
+             user_id=None, create_collection=False, collections=None, gpu_id=None):
+    local_con = get_db_connection()
+    s3 = get_s3_connection()
+
+    collection_id = create_annotation_collection(
+        model_username, user_id, video_id, concepts, upload_annotations, local_con=local_con) if create_collection else None
+
+    # filename format: (video_id)_(model_name)-(version).mp4
+    # This the generated video's filename
+    filename = str(video_id) + "_" + model_username + ".mp4"
+    print("ai video filename: {0}".format(filename))
+
+    results, annotations = predict.predict_on_video(
+        video_id, config.WEIGHTS_PATH, concepts, filename, upload_annotations,
+        user_id, collection_id, collections, local_con=local_con, s3=s3, gpu_id=gpu_id)
+    if (results.empty):  # If the model predicts nothing stop here
+        return
+    # Send the new generated video to our database
+    update_ai_videos_database(model_username, video_id,
+                              filename, local_con=local_con)
+    print("done predicting")
+
+    # This scores our well our model preformed against user annotations
+    metrics = score_predictions(
+        annotations, results, config.EVALUATION_IOU_THRESH, concepts, collections
+    )
+    # Upload metrics to s3 bucket
+    upload_metrics(metrics, filename, video_id, s3=s3)
+
+    local_con.close()
+
+
+def create_annotation_collection(model_name, user_id, video_id, concept_ids, upload_annotations, local_con=None):
+    if not upload_annotations:
+        raise ValueError("cannot create new annotation collection if "
+                         "annotations aren't uploaded")
+    if user_id is None:
+        raise ValueError("user_id is None, cannot create new collection")
+
     time_now = datetime.datetime.now().strftime(r"%y-%m-%d_%H:%M:%S")
     collection_name = '_'.join([model_name, str(video_id), time_now])
     description = f"By {model_name} on video {video_id} at {time_now}"
@@ -204,9 +224,10 @@ def create_annotation_collection(model_name, user_id, video_id, concept_ids):
         SELECT name
         FROM concepts
         WHERE id IN %s
-        """, (tuple(concept_ids),)
+        """, params=(tuple(concept_ids),), local_con=local_con
     )['name'].tolist()
 
+    cursor = local_con.cursor()
     cursor.execute(
         """
         INSERT INTO annotation_collection
@@ -217,45 +238,7 @@ def create_annotation_collection(model_name, user_id, video_id, concept_ids):
         (collection_name, description, [user_id], [video_id], concept_names,
          False, concept_ids)
     )
-    con.commit()
+    local_con.commit()
     collection_id = int(cursor.fetchone()[0])
 
     return collection_id
-
-
-if __name__ == "__main__":
-    cursor.execute(
-        """
-        SELECT * FROM models
-        LEFT JOIN users u ON u.id=userid
-        WHERE name=%s
-        """,
-        ("testv3",),
-    )
-    model = cursor.fetchone()
-
-    video_id = 86
-    concepts = model[2]
-    userid = "270"
-    model_username = "testV2_KLSKLS"
-
-    cursor.execute("""DELETE FROM predict_progress""")
-    con.commit()
-    cursor.execute(
-        """
-        INSERT INTO predict_progress (videoid, current_video, total_videos)
-        VALUES (%s, %s, %s)""",
-        (0, 0, 1),
-    )
-    con.commit()
-    cursor.execute(
-        """UPDATE predict_progress SET videoid = 86, current_video = current_video + 1"""
-    )
-    con.commit()
-
-    evaluate(video_id, model_username, concepts)
-    cursor.execute('''
-        DELETE FROM predict_progress
-        ''')
-
-    con.commit()

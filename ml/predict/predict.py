@@ -8,13 +8,10 @@ import itertools
 import cv2
 import numpy as np
 import pandas as pd
-from keras_retinanet.models import convert_model
-from keras_retinanet.models import load_model
 import subprocess
 
 from config import config
-from train.preprocessing.annotation_generator import get_classmap
-from utils.query import s3, cursor, pd_query, con
+from utils.query import pd_query
 from ffmpy import FFmpeg
 from memory_profiler import profile
 
@@ -24,7 +21,8 @@ fp = open('memory_profiler.log', 'w+')
 def get_classmap(concepts):
     classmap = []
     for concept in concepts:
-        name = pd_query("select name from concepts where id=%s", (str(concept),)).iloc[0]["name"]
+        name = pd_query("select name from concepts where id=%s",
+                        (str(concept),)).iloc[0]["name"]
         classmap.append([name, concepts.index(concept)])
     classmap = pd.DataFrame(classmap)
     classmap = classmap.to_dict()[0]
@@ -119,13 +117,13 @@ def resize(row):
 @profile(stream=fp)
 def predict_on_video(videoid, model_weights, concepts, filename,
                      upload_annotations=False, userid=None, collection_id=None,
-                     collections=None):
+                     collections=None, local_con=None, s3=None, gpu_id=None):
     vid_filename = pd_query(f'''
             SELECT *
             FROM videos
-            WHERE id ={videoid}''').iloc[0].filename
+            WHERE id ={videoid}''', local_con=local_con).iloc[0].filename
     print("Loading Video.")
-    frames, fps = get_video_frames(vid_filename, videoid)
+    frames, fps = get_video_frames(vid_filename, videoid, local_con=local_con, s3=s3)
 
     # Get biologist annotations for video
 
@@ -157,7 +155,7 @@ def predict_on_video(videoid, model_weights, concepts, filename,
         WHERE
           videoid={videoid} AND
           userid in {str(tuple(config.GOOD_USERS))} AND
-          conceptid {tuple_concept}''')
+          conceptid {tuple_concept}''', local_con=local_con)
 
     print(f'Number of human annotations {len(annotations)}')
     printing_with_time("After database query")
@@ -169,10 +167,11 @@ def predict_on_video(videoid, model_weights, concepts, filename,
     printing_with_time("Done resizing annotations.")
 
     print("Initializing Model")
-    model = init_model(model_weights)
+    model = init_model(model_weights, gpu_id)
 
     printing_with_time("Predicting")
-    results, frames = predict_frames(frames, fps, model, videoid, concepts, collections)
+    results, frames = predict_frames(
+        frames, fps, model, videoid, concepts, collections, local_con=local_con)
     if (results.empty):
         print("no predictions")
         return results, annotations
@@ -183,25 +182,27 @@ def predict_on_video(videoid, model_weights, concepts, filename,
         printing_with_time("Uploading annotations")
         # filter results down to middle frames
         mid_frame_results = get_final_predictions(results)
+        cursor = local_con.cursor()
         # upload these annotations
         mid_frame_results.apply(
             lambda prediction: handle_annotation(prediction, frames, videoid,
                                                  config.RESIZED_HEIGHT,
                                                  config.RESIZED_WIDTH, userid,
-                                                 fps, collection_id), axis=1)
-        con.commit()
+                                                 fps, collection_id, cursor=cursor,
+                                                 s3=s3), axis=1)
+        local_con.commit()
 
     printing_with_time("Generating Video")
     generate_video(
         filename, frames,
-        fps, results, concepts + list(collections.keys()), videoid, annotations)
+        fps, results, concepts + list(collections.keys()), videoid, annotations, local_con=local_con, s3=s3)
 
     printing_with_time("Done generating")
     return results, annotations
 
 
 @profile(stream=fp)
-def get_video_frames(vid_filename, videoid):
+def get_video_frames(vid_filename, videoid, local_con=None, s3=None):
     frames = []
     # grab video stream
     url = s3.generate_presigned_url('get_object',
@@ -219,7 +220,7 @@ def get_video_frames(vid_filename, videoid):
     one_percent_length = int(length / 100)
     while True:
         if frame_counter % one_percent_length == 0:
-            upload_predict_progress(frame_counter, videoid, length, 1)
+            upload_predict_progress(frame_counter, videoid, length, 1, local_con=local_con)
 
         check, frame = vid.read()
         if not check:
@@ -233,13 +234,16 @@ def get_video_frames(vid_filename, videoid):
     return frames, fps
 
 
-def init_model(model_path):
+def init_model(model_path, gpu_id):
+    os.environ["CUDA_VISIBLE_DEVICES"] = "{}".format(gpu_id)
+    from keras_retinanet.models import convert_model
+    from keras_retinanet.models import load_model
     model = load_model(model_path, backbone_name='resnet50')
     model = convert_model(model)
     return model
 
 
-def predict_frames(video_frames, fps, model, videoid, concepts, collections=None):
+def predict_frames(video_frames, fps, model, videoid, concepts, collections=None, local_con=None):
     currently_tracked_objects = []
     annotations = [
         pd.DataFrame(
@@ -252,7 +256,8 @@ def predict_frames(video_frames, fps, model, videoid, concepts, collections=None
     for frame_num, frame in enumerate(video_frames):
         if frame_num % one_percent_length == 0:
             # update the progress every 1% of the video
-            upload_predict_progress(frame_num, videoid, total_frames, 2)
+            upload_predict_progress(
+                frame_num, videoid, total_frames, 2, local_con=local_con)
 
         # update tracking for currently tracked objects
         for obj in currently_tracked_objects:
@@ -569,7 +574,7 @@ def length_limit_objects(pred, frame_thresh):
 
 @profile(stream=fp)
 def generate_video(filename, frames, fps, results, concepts, video_id,
-                   annotations):
+                   annotations, local_con=None, s3=None):
 
     # Combine human and prediction annotations
     results = results.append(annotations, sort=True)
@@ -584,7 +589,8 @@ def generate_video(filename, frames, fps, results, concepts, video_id,
     seenObjects = []
     for pred_index, res in enumerate(results.itertuples()):
         if pred_index % one_percent_length == 0:
-            upload_predict_progress(pred_index, video_id, total_length, 3)
+            upload_predict_progress(
+                pred_index, video_id, total_length, 3, local_con=local_con)
 
         x1, y1, x2, y2 = int(res.x1), int(res.y1), int(res.x2), int(res.y2)
         # boxText init to concept name
@@ -610,11 +616,11 @@ def generate_video(filename, frames, fps, results, concepts, video_id,
             frames[res.frame_num], boxText,
             (x1 - 5, y2 + 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
 
-    save_video(filename, frames, fps)
+    save_video(filename, frames, fps, s3=s3)
 
 
 @profile(stream=fp)
-def save_video(filename, frames, fps):
+def save_video(filename, frames, fps, s3=None):
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     out = cv2.VideoWriter(filename, fourcc, fps, frames[0].shape[::-1][1:3])
     for frame in frames:
@@ -664,14 +670,14 @@ def get_final_predictions(results):
     return middle_frames
 
 
-def handle_annotation(prediction, frames, videoid, videoheight, videowidth, userid, fps, collection_id):
+def handle_annotation(prediction, frames, videoid, videoheight, videowidth, userid, fps, collection_id, cursor=None, s3=None):
     frame = frames[int(prediction.frame_num)]
     annotation_id = upload_annotation(frame,
                                       *prediction.loc[['x1', 'x2', 'y1',
                                                        'y2', 'frame_num',
                                                        'label']],
                                       videoid, videowidth, videoheight, userid,
-                                      fps)
+                                      fps, cursor=cursor, s3=s3)
     if collection_id is not None:
         cursor.execute(
             """
@@ -680,12 +686,11 @@ def handle_annotation(prediction, frames, videoid, videoheight, videowidth, user
             """,
             (collection_id, annotation_id)
         )
-    # con.commit()
 
 
 # Uploads images and puts annotation in database
 def upload_annotation(frame, x1, x2, y1, y2,
-                      frame_num, conceptid, videoid, videowidth, videoheight, userid, fps):
+                      frame_num, conceptid, videoid, videowidth, videoheight, userid, fps, cursor=None, s3=None):
     if userid is None:
         raise ValueError("userid is None, can't upload annotations")
 
@@ -713,7 +718,7 @@ def upload_annotation(frame, x1, x2, y1, y2,
     return annotation_id
 
 
-def upload_predict_progress(count, videoid, total_count, status):
+def upload_predict_progress(count, videoid, total_count, status, local_con=None):
     '''
     For updating the predict_progress psql database, which tracks prediction and
     video generation status.
@@ -727,33 +732,18 @@ def upload_predict_progress(count, videoid, total_count, status):
     print(
         f'count: {count} total_count: {total_count} vid: {videoid} status: {status}')
     if (count == 0):
-        cursor.execute('''
+        local_con.cursor().execute('''
             UPDATE predict_progress
             SET framenum=%s, status=%s, totalframe=%s''',
-                       (count, status, total_count,))
-        con.commit()
+                             (count, status, total_count,))
+        local_con.commit()
         return
 
     if (total_count == count):
         count = -1
-    cursor.execute('''
+    local_con.cursor().execute('''
         UPDATE predict_progress
         SET framenum=%s''',
-                   (count,)
-                   )
-    con.commit()
-
-
-if __name__ == '__main__':
-
-    model_name = 'testV2'
-
-    s3.download_file(config.S3_BUCKET, config.S3_WEIGHTS_FOLDER +
-                     model_name + '.h5', config.WEIGHTS_PATH)
-    cursor.execute("SELECT * FROM MODELS WHERE name='" + model_name + "'")
-    model = cursor.fetchone()
-
-    videoid = 86
-    concepts = model[2]
-
-    predict_on_video(videoid, config.WEIGHTS_PATH, concepts)
+                         (count,)
+                         )
+    local_con.commit()

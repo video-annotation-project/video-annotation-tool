@@ -19,19 +19,35 @@ s3 = boto3.client(
     aws_secret_access_key=config.AWS_SECRET_ACCESS_KEY
 )
 
+def get_db_connection():
+    return connect(
+            database=config.DB_NAME,
+            user=config.DB_USER,
+            password=config.DB_PASSWORD,
+            host=config.DB_HOST
+            )
 
-def pd_query(query_string, params=None):
+def get_s3_connection():
+    return boto3.client(
+            's3',
+            aws_access_key_id=config.AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=config.AWS_SECRET_ACCESS_KEY
+            )
+
+def pd_query(query_string, params=None, local_con=None):
     """
     Execture a SQL query using Pandas
     Returns resulting rows
     """
-    result = pd.read_sql_query(query_string, con, params=params)
+    connection = local_con if local_con else con
+    result = pd.read_sql_query(query_string, connection, params=params)
     return result
 
 
-def query(query_string, params=None):
+def query(query_string, params=None, local_con=None):
     """
     Execture a SQL query
     """
-    con.cursor().execute(query_string, params)
-    con.commit()
+    connection = local_con if local_con else con
+    connection.cursor().execute(query_string, params)
+    connection.commit()

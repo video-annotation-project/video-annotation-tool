@@ -3,6 +3,7 @@ import time
 import subprocess
 
 from botocore.exceptions import ClientError
+import GPUtil
 
 import upload_stdout
 from predict.evaluate_prediction_vid import evaluate
@@ -10,6 +11,7 @@ from train.train import train_model
 from config import config
 from utils.query import s3, con, cursor, pd_query
 from datetime import datetime
+from multiprocessing import Pool
 
 
 def main():
@@ -126,7 +128,8 @@ def get_user_model(model_params):
         (str(model_params["model"]),
          model_version, model_version)
     )
-    new_version = '.'.join((model_version, str(next_version.loc[0]['next_version'])))
+    new_version = '.'.join(
+        (model_version, str(next_version.loc[0]['next_version'])))
     print(f"new version: {new_version}")
 
     # create new model-version user
@@ -222,7 +225,8 @@ def setup_predict_progress(verify_videos):
 
 
 def get_conceptid_collections(collectionid_list):
-    collection_conceptids_list = {}  # key: -colection id values: concepts ids in the collection
+    # key: -colection id values: concepts ids in the collection
+    collection_conceptids_list = {}
     for collectionid in collectionid_list:
         conceptids = list(pd_query(
             """SELECT conceptid FROM concept_intermediate WHERE id=%s""", (
@@ -239,17 +243,14 @@ def evaluate_videos(concepts, verify_videos, user_model,
     """
 
     # We go one by one as multiprocessing ran into memory issues
-    for video_id in verify_videos:
-        cursor.execute(
-            f"""
-            UPDATE
-                predict_progress
-            SET
-                videoid = {video_id}, current_video = current_video + 1"""
-        )
-        con.commit()
-        evaluate(video_id, user_model, concepts, upload_annotations, userid,
-                 create_collection, collections)
+    gpus = len(GPUtil.getGPUs())
+    evaluate_generator = map(lambda index_video_id:
+                             (index_video_id[1], user_model, concepts,
+                              upload_annotations, userid,
+                              create_collection, collections, index_video_id[0] % gpus),
+                             enumerate(verify_videos))
+    with Pool(gpus) as p:
+        p.starmap(evaluate, evaluate_generator)
 
     end_predictions()
 
