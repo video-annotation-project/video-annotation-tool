@@ -470,6 +470,8 @@ class Models extends Component {
 
   metrics = data => {
     const { classes } = this.props;
+    const { selectedModel } = this.state;
+    
     return (
       <>
         <Table className={classes.table}>
@@ -504,7 +506,7 @@ class Models extends Component {
             ))}
           </TableBody>
         </Table>
-        {/* {data[0]["Hierarchy F1"] === undefined ? "" :
+        {!selectedModel.concept_collections ? "" :
           <>
             <Typography style={{ marginTop: "30px", marginLeft: "10px" }}>With Hierarchical Classification</Typography>
             <Table className={classes.table}>
@@ -526,21 +528,21 @@ class Models extends Component {
                 {data.map(row => (
                   <TableRow key={row.conceptid}>
                     <TableCell>{row.conceptid}</TableCell>
-                    <TableCell>{row.TP}</TableCell>
-                    <TableCell>{row.FP}</TableCell>
-                    <TableCell>{row.FN}</TableCell>
-                    <TableCell>{this.setDecimal(row.Precision)}</TableCell>
-                    <TableCell>{this.setDecimal(row.Recall)}</TableCell>
-                    <TableCell>{this.setDecimal(row.F1)}</TableCell>
-                    <TableCell>{this.setDecimal(row.pred_num)}</TableCell>
-                    <TableCell>{this.setDecimal(row.true_num)}</TableCell>
-                    <TableCell>{this.setDecimal(row.count_accuracy)}</TableCell>
+                    <TableCell>{row.H_TP}</TableCell>
+                    <TableCell>{row.H_FP}</TableCell>
+                    <TableCell>{row.H_FN}</TableCell>
+                    <TableCell>{this.setDecimal(row.H_Precision)}</TableCell>
+                    <TableCell>{this.setDecimal(row.H_Recall)}</TableCell>
+                    <TableCell>{this.setDecimal(row.H_F1)}</TableCell>
+                    <TableCell>{this.setDecimal(row.H_pred_num)}</TableCell>
+                    <TableCell>{this.setDecimal(row.H_true_num)}</TableCell>
+                    <TableCell>{this.setDecimal(row.H_count_accuracy)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
           </>
-        } */}
+        }
       </>
     );
   };
