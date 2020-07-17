@@ -18,11 +18,11 @@ from memory_profiler import profile
 fp = open('memory_profiler.log', 'w+')
 
 
-def get_classmap(concepts):
+def get_classmap(concepts, local_con=None):
     classmap = []
     for concept in concepts:
         name = pd_query("select name from concepts where id=%s",
-                        (str(concept),)).iloc[0]["name"]
+                        (str(concept),), local_con=local_con).iloc[0]["name"]
         classmap.append([name, concepts.index(concept)])
     classmap = pd.DataFrame(classmap)
     classmap = classmap.to_dict()[0]
@@ -580,7 +580,7 @@ def generate_video(filename, frames, fps, results, concepts, video_id,
     results = results.append(annotations, sort=True)
     # Cast frame_num to int (prevent indexing errors)
     results.frame_num = results.frame_num.astype('int')
-    classmap = get_classmap(concepts)
+    classmap = get_classmap(concepts, local_con)
 
     # make a dictionary mapping conceptid to count (init 0)
     conceptsCounts = {concept: 0 for concept in concepts}
