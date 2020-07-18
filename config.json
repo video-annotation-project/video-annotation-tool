@@ -5,6 +5,7 @@
     "train_annot_file": "train_annot_file.csv",
     "valid_annot_file": "valid_annot_file.csv",
     "image_folder": "image_folder",
+    "video_folder": "video_folder",
     "test_examples": "test_examples",
     "default_weights": "resnet50_coco_best_v2.1.0.h5",
     "weights_path": "weights.h5",

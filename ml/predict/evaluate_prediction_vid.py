@@ -207,7 +207,6 @@ def evaluate(video_id, model_username, concepts, upload_annotations=False,
 
     local_con.close()
 
-
 def create_annotation_collection(model_name, user_id, video_id, concept_ids, upload_annotations, local_con=None):
     if not upload_annotations:
         raise ValueError("cannot create new annotation collection if "
