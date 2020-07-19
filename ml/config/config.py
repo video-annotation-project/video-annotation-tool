@@ -34,6 +34,7 @@ DEFAULT_WEIGHTS_PATH = config["default_weights"]
 
 # Other folders
 IMAGE_FOLDER = config["image_folder"]
+VIDEO_FOLDER = config["video_folder"]
 TEST_EXAMPLES = config["test_examples"]
 
 # Batch size to train with
