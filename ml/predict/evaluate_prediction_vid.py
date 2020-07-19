@@ -29,7 +29,8 @@ def vectorized_iou(list_bboxes1, list_bboxes2):
     return [iou[0] for iou in ious]
 
 
-def convert_hierarchy_counts(value_counts, collections):
+# These are the new functions for FP
+def convert_hierarchy_fp_counts(value_counts, collections):
     # normal counts is a count_values type object
     # It ignores hierarchy counts
     normal_counts = copy.deepcopy(value_counts)
@@ -40,6 +41,27 @@ def convert_hierarchy_counts(value_counts, collections):
         for conceptid in collection_conceptids:
             value_counts[conceptid] += count / len(collection_conceptids)
     return value_counts, normal_counts
+
+
+# New function for convering hierarchy TP
+def convert_hierarchy_tp_counts(pred_val_label_counts, HFP, collections, concepts):
+    TP = dict(zip(concepts, [0.0] * len(concepts)))
+    HTP = dict(zip(concepts, [0.0] * len(concepts)))
+    for _, row in pred_val_label_counts.reset_index().iterrows():
+        user_label = row.label_val  # Adding TP to this
+        # If this is negative, add to TP 1/len(collection) and add to FP 1/len(collection)
+        model_label = row.label_pred
+        count = row.iou  # This how many of this label model annotations overlap with this label human annotation
+        if model_label < 0:
+            HTP[user_label] += count / len(collections[model_label])
+            for conceptid in collections[model_label]:
+                if conceptid == user_label:
+                    continue
+                HFP[conceptid] += count / len(collections[model_label])
+        else:
+            HTP[user_label] += count
+            TP[user_label] += count
+    return pd.Series(HTP), pd.Series(HFP), pd.Series(TP)
 
 
 def get_count(count_values, concept):
@@ -126,16 +148,17 @@ def score_predictions(validation, predictions, iou_thresh, concepts, collections
     correctly_classified_objects = correctly_classified_objects.drop_duplicates(
         subset='objectid_pred')
 
-    # True Positive
-    HTP = correctly_classified_objects.sort_values(
-        by=['label_pred', 'iou'], ascending=False).drop_duplicates(subset='id').label_pred.value_counts()
-    HTP, TP = convert_hierarchy_counts(HTP, collections)
-
     # False Positive
     pred_objects_no_val = predictions[~predictions.objectid.isin(
         correctly_classified_objects.objectid_pred)].drop_duplicates(subset='objectid')
     HFP = pred_objects_no_val['label'].value_counts()
-    HFP, FP = convert_hierarchy_counts(HFP, collections)
+    HFP, FP = convert_hierarchy_fp_counts(HFP, collections)
+
+    # True Positive
+    pred_val_label_counts = correctly_classified_objects.sort_values(
+        by=['label_pred', 'iou'], ascending=False).drop_duplicates(subset='id').groupby(["label_pred", "label_val"])["iou"].count()
+    HTP, HFP, TP = convert_hierarchy_tp_counts(
+        pred_val_label_counts, HFP, collections, concepts)
 
     # False Negative
     HFN = validation[~validation.id.isin(
