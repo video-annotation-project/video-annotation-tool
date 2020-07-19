@@ -4,6 +4,7 @@ import subprocess
 
 from botocore.exceptions import ClientError
 import GPUtil
+from frozendict import frozendict
 
 import upload_stdout
 from predict.evaluate_prediction_vid import evaluate
@@ -44,9 +45,9 @@ def main():
 
         concepts = model["concepts"]
         verify_videos = model["verificationvideos"]
-
+        """
         start_training(user_model, concepts, verify_videos, model_params)
-
+        """
         setup_predict_progress(verify_videos)
         evaluate_videos(concepts, verify_videos, user_model,
                         collections=get_conceptid_collections(model['concept_collections']))
@@ -79,6 +80,7 @@ def get_model_and_params():
     model_version = str(model_params["version"])
     model_name = str(model_params["model"])
     filename = model_name + "-" + model_version + ".h5"
+    """
     if model_version != "0":
         try:
             s3.download_file(
@@ -103,6 +105,7 @@ def get_model_and_params():
             config.S3_WEIGHTS_FOLDER + config.DEFAULT_WEIGHTS_PATH,
             config.WEIGHTS_PATH,
         )
+        """
     model = pd_query(
         """SELECT * FROM models WHERE name=%s""", (str(model_params["model"]),)
     ).iloc[0]
@@ -244,10 +247,11 @@ def evaluate_videos(concepts, verify_videos, user_model,
 
     # We go one by one as multiprocessing ran into memory issues
     gpus = len(GPUtil.getGPUs())
+    print(f'There are {gpus} GPUs.')
     evaluate_generator = map(lambda index_video_id:
-                             (index_video_id[1], user_model, concepts,
+                             (index_video_id[1], user_model, tuple(concepts),
                               upload_annotations, userid,
-                              create_collection, collections, index_video_id[0] % gpus),
+                              create_collection, frozendict(collections), index_video_id[0] % gpus),
                              enumerate(verify_videos))
     with Pool() as p:
         p.starmap(evaluate, evaluate_generator)
