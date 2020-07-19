@@ -124,7 +124,7 @@ def predict_on_video(videoid, model_weights, concepts, filename,
             FROM videos
             WHERE id ={videoid}''', local_con=local_con).iloc[0].filename
     print("Loading Video.")
-    video_capture = get_video_capture(vid_filename)
+    video_capture = get_video_capture(vid_filename, s3=s3)
 
     # Get biologist annotations for video
     printing_with_time("Before database query")
@@ -193,7 +193,7 @@ def predict_on_video(videoid, model_weights, concepts, filename,
     printing_with_time("Generating Video")
     generate_video(
         filename, video_capture,
-        results, concepts + list(collections.keys()), videoid, annotations, local_con=local_con, s3=s3)
+        results, list(concepts) + list(collections.keys()), videoid, annotations, local_con=local_con, s3=s3)
 
     printing_with_time("Done generating")
     return results, annotations
@@ -566,6 +566,7 @@ def length_limit_objects(pred, frame_thresh):
 def generate_video(filename, video_capture, results, concepts, video_id,
                    annotations, local_con=None, s3=None):
 
+    print("Inside generating video")
     # Combine human and prediction annotations
     results = results.append(annotations, sort=True)
     # Cast frame_num to int (prevent indexing errors)
@@ -574,22 +575,23 @@ def generate_video(filename, video_capture, results, concepts, video_id,
 
     # make a dictionary mapping conceptid to count (init 0)
     conceptsCounts = {concept: 0 for concept in concepts}
-    total_length = video_capture.get(cv2.CAP_PROP_FRAME_COUNT)
+    total_length = int(video_capture.get(cv2.CAP_PROP_FRAME_COUNT))
     one_percent_length = int(total_length / 100)
     seenObjects = []
 
+    print("Opening video writer")
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     out = cv2.VideoWriter(filename, fourcc, video_capture.get(cv2.CAP_PROP_FPS),
-                          (config.RESIZED_WIDTH, cv2.RESIZED_HEIGHT))
+                          (config.RESIZED_WIDTH, config.RESIZED_HEIGHT))
+    print("Opened video writer")
 
     video_capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
-    # for pred_index, res in enumerate(results.itertuples()):
     for frame_num in range(total_length):
         check, frame = video_capture.read()
         if not check:
             break
 
-        if pred_index % one_percent_length == 0:
+        if frame_num % one_percent_length == 0:
             upload_predict_progress(
                 frame_num, video_id, total_length, 3, local_con=local_con)
 
@@ -621,11 +623,11 @@ def generate_video(filename, video_capture, results, concepts, video_id,
     
     out.release()
 
-    save_video(filename, frames, s3=s3)
+    save_video(filename, s3=s3)
 
 
 @profile(stream=fp)
-def save_video(filename, frames, s3=None):
+def save_video(filename, s3=None):
     # convert to mp4 and upload to s3 and db
     # requires temp so original not overwritten
     converted_file = str(uuid.uuid4()) + ".mp4"
