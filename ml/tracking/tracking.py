@@ -234,10 +234,10 @@ def track_object(frame_num, frames, box, track_forward, end,
         (x1, y1, w, h) = [int(v) for v in box]
         # Remove invalid bounding boxes
         if (
-                x1 >= RESIZED_WIDTH or
-                y1 >= RESIZED_HEIGHT or
-                x2 <= 0 or
-                y2 <= 0 or
+                x1 > RESIZED_WIDTH or
+                y1 > RESIZED_HEIGHT or
+                x2 < 0 or
+                y2 < 0 or
                 x1 == x2 or
                 y1 == y2):
             continue
@@ -253,13 +253,13 @@ def track_object(frame_num, frames, box, track_forward, end,
                 y2 = y1 + h
                 # Remove invalid bounding boxes
                 if (
-                        x1 >= RESIZED_WIDTH or
-                        y1 >= RESIZED_HEIGHT or
-                        x2 <= 0 or
-                        y2 <= 0 or
+                        x1 > RESIZED_WIDTH or
+                        y1 > RESIZED_HEIGHT or
+                        x2 < 0 or
+                        y2 < 0 or
                         x1 == x2 or
                         y1 == y2 or
-                        y2-y1 * x2-x2 < 1):
+                        y2-y1 * x2-x1 < 1):
                     continue
                 # Fix box if outside video frame
                 x1 = x1 if x1 > 0 else 0
