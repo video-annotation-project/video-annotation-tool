@@ -232,6 +232,8 @@ def track_object(frame_num, frames, box, track_forward, end,
     # keep tracking object until its out of frame or time is up
     for index, frame in enumerate(frames):
         (x1, y1, w, h) = [int(v) for v in box]
+        x2 = x1 + w
+        y2 = y1 + h
         # Remove invalid bounding boxes
         if (
                 x1 > RESIZED_WIDTH or
