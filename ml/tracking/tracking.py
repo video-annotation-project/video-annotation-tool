@@ -58,7 +58,7 @@ def getS3Image(image):
 
 def getTrackingUserid(cursor):
     cursor.execute("SELECT id FROM users WHERE username=%s", ("tracking",))
-    return cursor.fetchone().id
+    return cursor.fetchone()[0]
 
 
 def getVideoURL(cursor, videoid):
@@ -72,7 +72,7 @@ def getVideoURL(cursor, videoid):
     # grab video stream
     url = s3.generate_presigned_url('get_object',
                                     Params={'Bucket': S3_BUCKET,
-                                            'Key': S3_VIDEO_FOLDER + cursor.fetchone().filename},
+                                            'Key': S3_VIDEO_FOLDER + cursor.fetchone()[0]},
                                     ExpiresIn=100)
     return url
 

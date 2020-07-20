@@ -42,11 +42,11 @@ def get_annotation_speed(bad_users):
     cur = conn.cursor()
     bad_users.append(17) # dont get opencv tracking annotations
     # get human annotations that haven't had speed calculated yet
-    rows = cur.execute("SELECT * FROM annotations WHERE speed IS NULL AND userid NOT IN " + str(tuple(bad_users)))
+    rows = cur.execute("SELECT id, timeinvideo FROM annotations WHERE speed IS NULL AND userid NOT IN " + str(tuple(bad_users)))
     print(rows)
     for human_annot in rows:
        # get tracking annotations within 1 sec after original annot
-       tracking_annots = cur.execute("SELECT * FROM annotations WHERE userid=17 AND originalid=%d AND timeinvideo BETWEEN %f AND %f" % (human_annot.id, human_annot.timeinvideo, human_annot.timeinvideo + 1))
+       tracking_annots = cur.execute("SELECT * FROM annotations WHERE userid=17 AND originalid=%d AND timeinvideo BETWEEN %f AND %f" % (human_annot[0], human_annot[1], human_annot[1] + 1))
        for annot in tracking_annots:
           print(annot)
 
