@@ -1,5 +1,5 @@
 import cv2
-from pgdb import connect
+from psycopg2 import connect
 import boto3
 import os
 from dotenv import load_dotenv

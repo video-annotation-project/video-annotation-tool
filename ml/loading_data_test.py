@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # Initial package imports
-from pgdb import connect
+from psycopg2 import connect
 import json
 import math
 import pandas as pd
