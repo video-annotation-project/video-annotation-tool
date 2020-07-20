@@ -121,7 +121,7 @@ def upload_image(frame_num, frame,
       """,
         (
             frame_num, videoid, TRACKING_ID, conceptid, timeinvideo, x1, y1,
-            x2, y2, RESIZED_WIDTH, RESIZED_HEIGHT, datetime.datetime.now().date(), image_name, box,
+            x2, y2, RESIZED_WIDTH, RESIZED_HEIGHT, datetime.datetime.now().date(), image_name,
             comment, unsure, id
         )
     )
