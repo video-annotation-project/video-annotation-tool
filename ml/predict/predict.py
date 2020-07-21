@@ -581,3 +581,34 @@ def upload_annotation(frame, x1, x2, y1, y2,
     )
     annotation_id = cursor.fetchone()[0]
     return annotation_id
+
+
+def upload_predict_progress(count, videoid, total_count, status, local_con=None):
+    '''
+    For updating the predict_progress psql database, which tracks prediction and
+    video generation status.
+
+    Arguments:
+    count - frame of video (or index of annotation) being processed
+    videoid - video being processed
+    total_count - total number of frames in the video (or number of predictions + annotations)
+    status - Indicates whether processing video or drawing annotation boxes
+    '''
+    print(
+        f'count: {count} total_count: {total_count} vid: {videoid} status: {status}')
+    # if (count == 0):
+    #     local_con.cursor().execute('''
+    #         UPDATE predict_progress
+    #         SET framenum=%s, status=%s, totalframe=%s''',
+    #                          (count, status, total_count,))
+    #     local_con.commit()
+    #     return
+
+    # if (total_count == count):
+    #     count = -1
+    # local_con.cursor().execute('''
+    #     UPDATE predict_progress
+    #     SET framenum=%s''',
+    #                      (count,)
+    #                      )
+    # local_con.commit()
