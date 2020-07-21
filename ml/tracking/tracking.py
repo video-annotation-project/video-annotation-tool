@@ -117,7 +117,7 @@ def upload_image(frame_num, frame,
      INSERT INTO annotations (
      framenum, videoid, userid, conceptid, timeinvideo, x1, y1, x2, y2,
      videowidth, videoheight, dateannotated, image, comment, unsure, originalid)
-     VALUES (%d, %d, %d, %d, %f, %f, %f, %f, %f, %d, %d, %s, %s, %s, %s, %d)
+     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
       """,
         (
             frame_num, videoid, TRACKING_ID, conceptid, timeinvideo, x1, y1,
@@ -197,16 +197,16 @@ def fix_offset(priorFrames, postFrames, s3Image, fps, timeinvideo,
         cursor.execute(
             '''
                 UPDATE annotations
-                SET framenum=%d, timeinvideo=%f, originalid=NULL
-                WHERE id= %d;
+                SET framenum=%s, timeinvideo=%s, originalid=NULL
+                WHERE id= %s;
             ''',
-            (frame_num, timeinvideo, id,))
+            (frame_num, timeinvideo, id))
         con.commit()
     else:
         print(
             f'Failed on annnotation {id} with best score {best_score}')
         cursor.execute(
-            "UPDATE annotations SET unsure=TRUE WHERE id=%d;", (id,))
+            "UPDATE annotations SET unsure=TRUE WHERE id=%s;", (id,))
         con.commit()
     if best_index > 0:
         tempFrames = postFrames[:best_index + 1]
@@ -249,31 +249,33 @@ def track_object(frame_num, frames, box, track_forward, end,
             trackers.add(tracker, frame, box)
         (success, boxes) = trackers.update(frame)
         if success:
-            for box in boxes:
-                (x1, y1, w, h) = [int(v) for v in box]
-                x2 = x1 + w
-                y2 = y1 + h
-                # Remove invalid bounding boxes
-                if (
-                        x1 > RESIZED_WIDTH or
-                        y1 > RESIZED_HEIGHT or
-                        x2 < 0 or
-                        y2 < 0 or
-                        x1 == x2 or
-                        y1 == y2 or
-                        y2-y1 * x2-x1 < 1):
-                    continue
-                # Fix box if outside video frame
-                x1 = x1 if x1 > 0 else 0
-                y1 = y1 if y1 > 0 else 0
-                x2 = x2 if x2 < RESIZED_WIDTH else RESIZED_WIDTH
-                y2 = y2 if y2 < RESIZED_HEIGHT else RESIZED_HEIGHT
+            box = boxes[0]
+            (x1, y1, w, h) = [int(v) for v in box]
+            x2 = x1 + w
+            y2 = y1 + h
+            # Fix box if outside video frame
+            x1 = x1 if x1 > 0 else 0
+            y1 = y1 if y1 > 0 else 0
+            x2 = x2 if x2 < RESIZED_WIDTH else RESIZED_WIDTH
+            y2 = y2 if y2 < RESIZED_HEIGHT else RESIZED_HEIGHT
+            # Remove invalid bounding boxes
+            if (
+                    x1 > RESIZED_WIDTH or
+                    y1 > RESIZED_HEIGHT or
+                    x2 < 0 or
+                    y2 < 0 or
+                    x1 == x2 or
+                    y1 == y2 or
+                    (y2-y1) * (x2-x1) < 1):
+                continue
+            
             if index != 0:
                 upload_image(frame_num, frame, id, videoid,
                              conceptid, comment, unsure,
                              x1, y1, x2, y2,
                              cursor, con, TRACKING_ID,
                              round(timeinvideo + time_elapsed, 2))
+            cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
         frame_list.append(frame)
     cv2.destroyAllWindows()
     return frame_list
