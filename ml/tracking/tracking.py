@@ -206,7 +206,7 @@ def fix_offset(priorFrames, postFrames, s3Image, fps, timeinvideo,
         print(
             f'Failed on annnotation {id} with best score {best_score}')
         cursor.execute(
-            "UPDATE annotations SET unsure=TRUE WHERE id=%d;", (id,))
+            "UPDATE annotations SET unsure=TRUE WHERE id=%s;", (id,))
         con.commit()
     if best_index > 0:
         tempFrames = postFrames[:best_index + 1]
