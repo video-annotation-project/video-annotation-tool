@@ -1,5 +1,5 @@
 import cv2
-from pgdb import connect
+from psycopg2 import connect
 import boto3
 import os
 from dotenv import load_dotenv
@@ -58,7 +58,7 @@ def getS3Image(image):
 
 def getTrackingUserid(cursor):
     cursor.execute("SELECT id FROM users WHERE username=%s", ("tracking",))
-    return cursor.fetchone().id
+    return cursor.fetchone()[0]
 
 
 def getVideoURL(cursor, videoid):
@@ -72,7 +72,7 @@ def getVideoURL(cursor, videoid):
     # grab video stream
     url = s3.generate_presigned_url('get_object',
                                     Params={'Bucket': S3_BUCKET,
-                                            'Key': S3_VIDEO_FOLDER + cursor.fetchone().filename},
+                                            'Key': S3_VIDEO_FOLDER + cursor.fetchone()[0]},
                                     ExpiresIn=100)
     return url
 
@@ -93,7 +93,7 @@ def getVideoFrames(url, start, end):
     curr = start
 
     while (check and curr <= end):
-        check, frame = cap.retrieve()
+        check, frame = cap.read()
         if check:
             frame_list.append(
                 cv2.resize(frame, (RESIZED_WIDTH, RESIZED_HEIGHT)))
@@ -121,7 +121,7 @@ def upload_image(frame_num, frame,
       """,
         (
             frame_num, videoid, TRACKING_ID, conceptid, timeinvideo, x1, y1,
-            x2, y2, RESIZED_WIDTH, RESIZED_HEIGHT, datetime.datetime.now().date(), image_name, box,
+            x2, y2, RESIZED_WIDTH, RESIZED_HEIGHT, datetime.datetime.now().date(), image_name,
             comment, unsure, id
         )
     )
@@ -232,12 +232,14 @@ def track_object(frame_num, frames, box, track_forward, end,
     # keep tracking object until its out of frame or time is up
     for index, frame in enumerate(frames):
         (x1, y1, w, h) = [int(v) for v in box]
+        x2 = x1 + w
+        y2 = y1 + h
         # Remove invalid bounding boxes
         if (
-                x1 >= RESIZED_WIDTH or
-                y1 >= RESIZED_HEIGHT or
-                x2 <= 0 or
-                y2 <= 0 or
+                x1 > RESIZED_WIDTH or
+                y1 > RESIZED_HEIGHT or
+                x2 < 0 or
+                y2 < 0 or
                 x1 == x2 or
                 y1 == y2):
             continue
@@ -253,13 +255,13 @@ def track_object(frame_num, frames, box, track_forward, end,
                 y2 = y1 + h
                 # Remove invalid bounding boxes
                 if (
-                        x1 >= RESIZED_WIDTH or
-                        y1 >= RESIZED_HEIGHT or
-                        x2 <= 0 or
-                        y2 <= 0 or
+                        x1 > RESIZED_WIDTH or
+                        y1 > RESIZED_HEIGHT or
+                        x2 < 0 or
+                        y2 < 0 or
                         x1 == x2 or
                         y1 == y2 or
-                        y2-y1 * x2-x2 < 1):
+                        y2-y1 * x2-x1 < 1):
                     continue
                 # Fix box if outside video frame
                 x1 = x1 if x1 > 0 else 0
