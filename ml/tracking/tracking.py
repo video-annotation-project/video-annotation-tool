@@ -197,10 +197,10 @@ def fix_offset(priorFrames, postFrames, s3Image, fps, timeinvideo,
         cursor.execute(
             '''
                 UPDATE annotations
-                SET framenum=%d, timeinvideo=%f, originalid=NULL
-                WHERE id= %d;
+                SET framenum=%s, timeinvideo=%s, originalid=NULL
+                WHERE id= %s;
             ''',
-            (frame_num, timeinvideo, id,))
+            (frame_num, timeinvideo, id))
         con.commit()
     else:
         print(
