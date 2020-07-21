@@ -238,11 +238,15 @@ class AnnotationGenerator(object):
                          verify_videos, concepts, min_examples):
         # Query that gets all annotations for given concepts
         # making sure that any tracking annotations originated from good users
-        tracking_user = cursor.execute(
+        cursor.execute(
             """SELECT id FROM users WHERE username = 'tracking'""")
         tracking_uid = cursor.fetchone()[0]
 
-        annotations_query = r'''
+        cursor.execute(
+                    """SELECT fps FROM videos LIMIT 1""")
+        fps = cursor.fetchone()[0]
+
+        annotations_query = f'''
             WITH collection AS (SELECT
                 A.id,
                 image,
@@ -253,7 +257,13 @@ class AnnotationGenerator(object):
                 conceptid,
                 x1, x2, y1, y2,
                 speed,
-                ROUND(fps * timeinvideo) as frame_num,
+                CASE WHEN
+                    framenum is not null
+                THEN
+                    framenum
+                ELSE
+                    FLOOR(timeinvideo*{fps})
+                END AS frame_num,
                 verifiedby
             FROM
                 annotation_intermediate inter
@@ -299,7 +309,13 @@ class AnnotationGenerator(object):
                 x1, x2, y1, y2,
                 speed,
                 priority,
-                ROUND(fps * timeinvideo) as frame_num,
+                CASE WHEN
+                    framenum is not null
+                THEN
+                    framenum
+                ELSE
+                    FLOOR(timeinvideo*{fps})
+                END AS frame_num,
                 verifiedby
             FROM
                 annotations a
