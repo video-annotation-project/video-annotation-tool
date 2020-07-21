@@ -117,7 +117,7 @@ def upload_image(frame_num, frame,
      INSERT INTO annotations (
      framenum, videoid, userid, conceptid, timeinvideo, x1, y1, x2, y2,
      videowidth, videoheight, dateannotated, image, comment, unsure, originalid)
-     VALUES (%d, %d, %d, %d, %f, %f, %f, %f, %f, %d, %d, %s, %s, %s, %s, %d)
+     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
       """,
         (
             frame_num, videoid, TRACKING_ID, conceptid, timeinvideo, x1, y1,
