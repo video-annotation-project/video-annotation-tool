@@ -268,6 +268,7 @@ def track_object(frame_num, frames, box, track_forward, end,
                     y1 == y2 or
                     (y2-y1) * (x2-x1) < 1):
                 continue
+            cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
             if index != 0:
                 upload_image(frame_num, frame, id, videoid,
                              conceptid, comment, unsure,
