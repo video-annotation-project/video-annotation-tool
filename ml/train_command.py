@@ -45,9 +45,8 @@ def main():
 
         concepts = model["concepts"]
         verify_videos = model["verificationvideos"]
-        """
         start_training(user_model, concepts, verify_videos, model_params)
-        """
+
         setup_predict_progress(verify_videos)
         evaluate_videos(concepts, verify_videos, user_model,
                         collections=get_conceptid_collections(model['concept_collections']))
@@ -80,7 +79,6 @@ def get_model_and_params():
     model_version = str(model_params["version"])
     model_name = str(model_params["model"])
     filename = model_name + "-" + model_version + ".h5"
-    """
     if model_version != "0":
         try:
             s3.download_file(
@@ -105,7 +103,7 @@ def get_model_and_params():
             config.S3_WEIGHTS_FOLDER + config.DEFAULT_WEIGHTS_PATH,
             config.WEIGHTS_PATH,
         )
-        """
+        
     model = pd_query(
         """SELECT * FROM models WHERE name=%s""", (str(model_params["model"]),)
     ).iloc[0]
