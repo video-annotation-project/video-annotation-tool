@@ -8,11 +8,22 @@ import numpy as np
 import boto3
 from psycopg2 import connect
 
-from predict import predict
+from predict import predict, upload_predict_progress
 from config import config
 from utils.query import pd_query, get_db_connection, get_s3_connection
 
 fp = open('memory_profiler.log', 'w+')
+
+
+def get_classmap(concepts, local_con=None):
+    classmap = []
+    for concept in concepts:
+        name = pd_query("select name from concepts where id=%s",
+                        (str(concept),), local_con=local_con).iloc[0]["name"]
+        classmap.append([name, concepts.index(concept)])
+    classmap = pd.DataFrame(classmap)
+    classmap = classmap.to_dict()[0]
+    return classmap
 
 
 def printing_with_time(text):
