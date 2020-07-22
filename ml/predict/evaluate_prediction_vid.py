@@ -8,7 +8,7 @@ import numpy as np
 import boto3
 from psycopg2 import connect
 
-from predict import predict, upload_predict_progress
+from predict import predict
 from config import config
 from utils.query import pd_query, get_db_connection, get_s3_connection
 
@@ -263,7 +263,7 @@ def generate_video(filename, video_capture, results, concepts, video_id,
             break
 
         if frame_num % one_percent_length == 0:
-            upload_predict_progress(
+            predict.upload_predict_progress(
                 frame_num, video_id, total_length, 3, local_con=local_con)
 
         for res in results[results.frame_num == frame_num].itertuples():
