@@ -1,18 +1,21 @@
 import os
 import json
+import uuid
 import datetime
 import copy
+import time
+import psutil
 
 import pandas as pd
 import numpy as np
 import boto3
 from psycopg2 import connect
+import cv2
+from ffmpy import FFmpeg
 
 from predict import predict
 from config import config
 from utils.query import pd_query, get_db_connection, get_s3_connection
-
-fp = open('memory_profiler.log', 'w+')
 
 
 def get_classmap(concepts, local_con=None):
@@ -231,9 +234,35 @@ def get_video_capture(vid_filename, s3=None):
     return vid
 
 
+def save_video(filename, s3=None):
+    # convert to mp4 and upload to s3 and db
+    # requires temp so original not overwritten
+    converted_file = str(uuid.uuid4()) + ".mp4"
+    # Convert file so we can stream on s3
+    ff = FFmpeg(
+        inputs={filename: ['-loglevel', '0']},
+        outputs={converted_file: ['-codec:v', 'libx264', '-y']}
+    )
+    print(ff.cmd)
+    print(psutil.virtual_memory())
+    ff.run()
+
+    # temp = ['ffmpeg', '-loglevel', '0', '-i', filename,
+    #         '-codec:v', 'libx264', '-y', converted_file]
+    # subprocess.call(temp)
+    # upload video..
+    s3.upload_file(
+        converted_file, config.S3_BUCKET,
+        config.S3_BUCKET_AIVIDEOS_FOLDER + filename,
+        ExtraArgs={'ContentType': 'video/mp4'})
+    # remove files once uploaded
+    os.system('rm \'' + filename + '\'')
+    os.system('rm ' + converted_file)
+
+    cv2.destroyAllWindows()
+
 # Generates the video with the ground truth frames interlaced
 
-@profile(stream=fp)
 def generate_video(filename, video_capture, results, concepts, video_id,
                    annotations, local_con=None, s3=None):
 
@@ -373,7 +402,7 @@ def evaluate(video_id, model_username, concepts, upload_annotations=False,
     printing_with_time("Generating Video")
     generate_video(
         filename, video_capture,
-        results, list(concepts) + list(collections.keys()), videoid, annotations, local_con=local_con, s3=s3)
+        results, list(concepts) + list(collections.keys()), video_id, annotations, local_con=local_con, s3=s3)
     printing_with_time("Done generating")
 
     # Send the new generated video to our database

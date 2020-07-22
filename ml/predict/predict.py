@@ -2,7 +2,6 @@ import copy
 import os
 import uuid
 import datetime
-import psutil
 import itertools
 import sys
 
@@ -13,7 +12,6 @@ import subprocess
 
 from config import config
 from utils.query import pd_query
-from ffmpy import FFmpeg
 from memory_profiler import profile
 
 fp = open('memory_profiler.log', 'w+')
@@ -112,7 +110,8 @@ def predict_on_video(videoid, model_weights, concepts, filename, video_capture,
     model = init_model(model_weights, gpu_id)
 
     printing_with_time("Predicting")
-    results = predict_frames(video_capture, model, videoid, concepts, collections, local_con)
+    results = predict_frames(video_capture, model,
+                             videoid, concepts, collections, local_con)
     if (results.empty):
         print("no predictions")
         return results
@@ -156,7 +155,8 @@ def predict_frames(video_capture, model, videoid, concepts, collections=None, lo
                 'label', 'confidence', 'objectid', 'frame_num']
         )]
 
-    max_tracked_frames = int(video_capture.get(cv2.CAP_PROP_FPS) * config.MAX_TIME_BACK)
+    max_tracked_frames = int(video_capture.get(
+        cv2.CAP_PROP_FPS) * config.MAX_TIME_BACK)
     total_frames = int(video_capture.get(cv2.CAP_PROP_FRAME_COUNT))
     one_percent_length = int(total_frames / 100)
     frame_num = 0
@@ -167,7 +167,8 @@ def predict_frames(video_capture, model, videoid, concepts, collections=None, lo
         check, frame = video_capture.read()
         if not check:
             break
-        frame = cv2.resize(frame, (config.RESIZED_WIDTH, config.RESIZED_HEIGHT))
+        frame = cv2.resize(
+            frame, (config.RESIZED_WIDTH, config.RESIZED_HEIGHT))
         video_frames = [frame] + video_frames[:max_tracked_frames]
 
         if frame_num % one_percent_length == 0:
@@ -457,10 +458,9 @@ def make_annotation(box, object_id, frame_num):
     annotation['frame_num'] = frame_num
     return annotation
 
+
 # Given a list of annotations(some with or without labels/confidence scores)
 # for multiple objects choose a label for each object
-
-
 def propagate_conceptids(annotations):
     objects = annotations.groupby(['objectid'])
     for oid, group in objects:
@@ -475,46 +475,15 @@ def propagate_conceptids(annotations):
     annotations['conceptid'] = annotations['label']
     return annotations
 
+
 # Limit results based on tracked object length (ex. > 30 frames)
-
-
 def length_limit_objects(pred, frame_thresh):
     obj_len = pred.groupby('objectid').label.value_counts()
     len_thresh = obj_len[obj_len > frame_thresh]
     return pred[[(obj in len_thresh) for obj in pred.objectid]]
 
 
-@profile(stream=fp)
-def save_video(filename, s3=None):
-    # convert to mp4 and upload to s3 and db
-    # requires temp so original not overwritten
-    converted_file = str(uuid.uuid4()) + ".mp4"
-    # Convert file so we can stream on s3
-    ff = FFmpeg(
-        inputs={filename: ['-loglevel', '0']},
-        outputs={converted_file: ['-codec:v', 'libx264', '-y']}
-    )
-    print(ff.cmd)
-    print(psutil.virtual_memory())
-    ff.run()
-
-    # temp = ['ffmpeg', '-loglevel', '0', '-i', filename,
-    #         '-codec:v', 'libx264', '-y', converted_file]
-    # subprocess.call(temp)
-    # upload video..
-    s3.upload_file(
-        converted_file, config.S3_BUCKET,
-        config.S3_BUCKET_AIVIDEOS_FOLDER + filename,
-        ExtraArgs={'ContentType': 'video/mp4'})
-    # remove files once uploaded
-    os.system('rm \'' + filename + '\'')
-    os.system('rm ' + converted_file)
-
-    cv2.destroyAllWindows()
-
-
-# Chooses single prediction for each object (the middle frame)
-
+# Chooses single prediction for each object (the middle frame)s
 def get_final_predictions(results):
     middle_frames = []
     for obj in [df for _, df in results.groupby('objectid')]:
@@ -530,7 +499,7 @@ def get_final_predictions(results):
 
 
 def handle_annotation(prediction, video_capture, videoid, videoheight, videowidth, userid, collection_id, cursor=None, s3=None):
-    frame = get_frame(video_capture, frame_num)
+    frame = get_frame(video_capture, prediction['frame_num'])
     annotation_id = upload_annotation(frame,
                                       *prediction.loc[['x1', 'x2', 'y1',
                                                        'y2', 'frame_num',
@@ -546,14 +515,17 @@ def handle_annotation(prediction, video_capture, videoid, videoheight, videowidt
             (collection_id, annotation_id)
         )
 
+
 def get_frame(video_capture, frame_num):
     video_capture.set(cv2.CAP_PROP_POS_FRAMES)
     check, frame = video_capture.read()
     if not check:
-        print(f'failed to get frame {frame_num}', file=std.err)
+        print(f'failed to get frame {frame_num}', file=sys.stderr)
     return frame
 
 # Uploads images and puts annotation in database
+
+
 def upload_annotation(frame, x1, x2, y1, y2,
                       frame_num, conceptid, videoid, videowidth, videoheight, userid, fps, cursor=None, s3=None):
     if userid is None:
