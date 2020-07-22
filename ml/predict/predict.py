@@ -90,18 +90,6 @@ class Tracked_object(object):
         self.annotations['objectid'] = matched_obj_id
 
 
-def resize(row):
-    new_width = config.RESIZED_WIDTH
-    new_height = config.RESIZED_HEIGHT
-    row.x1 = (row.x1 * new_width) / row.videowidth
-    row.x2 = (row.x2 * new_width) / row.videowidth
-    row.y1 = (row.y1 * new_height) / row.videoheight
-    row.y2 = (row.y2 * new_height) / row.videoheight
-    row.videowidth = new_width
-    row.videoheight = new_height
-    return row
-
-
 @profile(stream=fp)
 def predict_on_video(videoid, model_weights, concepts, filename, video_capture,
                      upload_annotations=False, userid=None, collection_id=None,

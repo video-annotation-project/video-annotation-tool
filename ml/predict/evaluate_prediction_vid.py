@@ -263,6 +263,7 @@ def save_video(filename, s3=None):
 
 # Generates the video with the ground truth frames interlaced
 
+
 def generate_video(filename, video_capture, results, concepts, video_id,
                    annotations, local_con=None, s3=None):
 
@@ -320,10 +321,22 @@ def generate_video(filename, video_capture, results, concepts, video_id,
                 frame, boxText,
                 (x1 - 5, y2 + 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
         out.write(frame)
-    
+
     out.release()
 
     save_video(filename, s3=s3)
+
+
+def resize(row):
+    new_width = config.RESIZED_WIDTH
+    new_height = config.RESIZED_HEIGHT
+    row.x1 = (row.x1 * new_width) / row.videowidth
+    row.x2 = (row.x2 * new_width) / row.videowidth
+    row.y1 = (row.y1 * new_height) / row.videoheight
+    row.y2 = (row.y2 * new_height) / row.videoheight
+    row.videowidth = new_width
+    row.videoheight = new_height
+    return row
 
 
 def evaluate(video_id, model_username, concepts, upload_annotations=False,
@@ -342,7 +355,7 @@ def evaluate(video_id, model_username, concepts, upload_annotations=False,
     vid_filename = pd_query(f'''
             SELECT *
             FROM videos
-            WHERE id ={videoid}''', local_con=local_con).iloc[0].filename
+            WHERE id ={video_id}''', local_con=local_con).iloc[0].filename
     print("Loading Video.")
     video_capture = get_video_capture(vid_filename, s3=s3)
 
@@ -372,7 +385,7 @@ def evaluate(video_id, model_username, concepts, upload_annotations=False,
         FROM
           annotations
         WHERE
-          videoid={videoid} AND
+          videoid={video_id} AND
           userid in {str(tuple(config.GOOD_USERS))} AND
           conceptid {tuple_concept}''', local_con=local_con)
     print(f'Number of human annotations {len(annotations)}')
@@ -397,7 +410,7 @@ def evaluate(video_id, model_username, concepts, upload_annotations=False,
 
     # Upload metrics to s3 bucket
     upload_metrics(metrics, filename, video_id, s3=s3)
-    
+
     # Generate video
     printing_with_time("Generating Video")
     generate_video(
@@ -410,6 +423,7 @@ def evaluate(video_id, model_username, concepts, upload_annotations=False,
                               filename, local_con=local_con)
 
     local_con.close()
+
 
 def create_annotation_collection(model_name, user_id, video_id, concept_ids, upload_annotations, local_con=None):
     if not upload_annotations:
