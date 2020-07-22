@@ -1,90 +1,71 @@
-import React from "react";
-import { Redirect, Route, Switch } from "react-router-dom";
+import React from 'react';
+import { Redirect, Route, Switch } from 'react-router-dom';
+import '@sweetalert2/themes/dark';
 
-import Annotate from "./components/Annotate.jsx";
-import Concepts from "./components/SelectConcepts/Concepts.jsx";
-import CreateUser from "./components/CreateUser.jsx";
-import Home from "./components/Home.jsx";
-import Login from "./components/Login.jsx";
-import Navbar from "./components/Navbar.jsx";
-import Profile from "./components/Profile.jsx";
-import Report from "./components/Report/Report.jsx";
-import Verify from "./components/Verify/Verify.jsx";
-import PreviousModels from "./components/Model/PreviousModels.jsx";
-import Users from "./components/Users.jsx";
-import AIvideos from "./components/AIVideos/AIvideos.jsx";
+import Annotate from './components/Annotate';
+import Concepts from './components/SelectConcepts/Concepts';
+import CreateUser from './components/CreateUser';
+import Home from './components/Home';
+import Login from './components/Login';
+import Navbar from './components/Navbar';
+import Profile from './components/Profile';
+import Report from './components/Report/Report';
+import Verify from './components/Verify/Verify';
+import Users from './components/Users';
 
-import AnnotationCollection from "./components/Collections/AnnotationCollection.jsx";
-import ConceptCollection from "./components/Collections/ConceptCollection.jsx";
-import VideoCollection from "./components/Collections/VideoCollection.jsx";
+import AnnotationCollection from './components/Collections/AnnotationCollection';
+import ConceptCollection from './components/Collections/ConceptCollection';
+import VideoCollection from './components/Collections/VideoCollection';
 
-import CreateModel from "./components/Model/CreateModel.jsx";
-import ViewModels from "./components/Model/ViewModels.jsx";
-import PredictModel from "./components/Model/PredictModel.jsx";
-import TrainModel from "./components/Model/TrainModel.jsx";
+import Models from './components/Model/Models';
 
-require("dotenv").config();
+require('dotenv').config();
 
-class App extends React.Component {
-  render() {
-    return (
-      <React.Fragment>
-        <Navbar />
-        <Switch>
-          <Route exact path="/" component={Home} />
-          {localStorage.getItem("isAuthed") ? (
-            <React.Fragment>
-              {localStorage.getItem("admin") ? (
-                <React.Fragment>
-                  <Route
-                    exact
-                    path="/account/createUser"
-                    component={CreateUser}
-                  />
-                  <Route exact path="/models/create" component={CreateModel} />
-                  <Route
-                    exact
-                    path="/models/predict"
-                    component={PredictModel}
-                  />
-                  <Route exact path="/models/train" component={TrainModel} />
-                  <Route exact path="/models/view" component={ViewModels} />
-                  <Route exact path="/models/runs" component={PreviousModels} />
-                  <Route exact path="/users" component={Users} />
-                  <Route exact path="/aivideos" component={AIvideos} />
-                </React.Fragment>
-              ) : (
-                ""
-              )}
-              <Route exact path="/concepts" component={Concepts} />
-              <Route exact path="/report" component={Report} />
-              <Route
-                exact
-                path="/collection/annotations"
-                component={AnnotationCollection}
-              />
-              <Route
-                exact
-                path="/collection/concepts"
-                component={ConceptCollection}
-              />
-              <Route
-                exact
-                path="/collection/videos"
-                component={VideoCollection}
-              />
-              <Route exact path="/annotate/videos" component={Annotate} />
-              <Route exact path="/annotate/verify" component={Verify} />
-              <Route exact path="/account/profile" component={Profile} />
-            </React.Fragment>
-          ) : (
-            <Route exact path="/login" component={Login} />
-          )}
-          <Route render={() => <Redirect to={"/"} />} />
-        </Switch>
-      </React.Fragment>
-    );
-  }
-}
+const App = () => {
+  return (
+    <>
+      <Navbar />
+      <Switch>
+        <Route exact path="/" component={Home} />
+        {localStorage.getItem('isAuthed') ? (
+          <>
+            {localStorage.getItem('admin') ? (
+              <>
+                <Route exact path="/account/create" component={CreateUser} />
+                <Route exact path="/models" component={Models} />
+                <Route exact path="/users" component={Users} />
+              </>
+            ) : (
+              ''
+            )}
+            <Route exact path="/concepts" component={Concepts} />
+            <Route exact path="/report" component={Report} />
+            <Route
+              exact
+              path="/collections/annotation"
+              component={AnnotationCollection}
+            />
+            <Route
+              exact
+              path="/collections/concept"
+              component={ConceptCollection}
+            />
+            <Route
+              exact
+              path="/collections/video"
+              component={VideoCollection}
+            />
+            <Route exact path="/annotate/videos" component={Annotate} />
+            <Route exact path="/annotate/verify" component={Verify} />
+            <Route exact path="/account/profile" component={Profile} />
+          </>
+        ) : (
+          <Route exact path="/login" component={Login} />
+        )}
+        <Route render={() => <Redirect to="/" />} />
+      </Switch>
+    </>
+  );
+};
 
 export default App;

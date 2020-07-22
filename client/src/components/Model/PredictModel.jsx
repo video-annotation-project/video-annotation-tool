@@ -1,160 +1,108 @@
-import React, { Component } from "react";
-import axios from "axios";
-import io from "socket.io-client";
-import Typography from "@material-ui/core/Typography";
-import { withStyles } from "@material-ui/core/styles";
-import PropTypes from "prop-types";
-import Stepper from "@material-ui/core/Stepper";
-import Step from "@material-ui/core/Step";
-import StepLabel from "@material-ui/core/StepLabel";
-import StepContent from "@material-ui/core/StepContent";
-import Button from "@material-ui/core/Button";
-import Paper from "@material-ui/core/Paper";
-import CircularProgress from "@material-ui/core/CircularProgress";
-import { FormControl } from "@material-ui/core";
-import FormGroup from "@material-ui/core/FormGroup";
-import InputLabel from "@material-ui/core/InputLabel";
-import Select from "@material-ui/core/Select";
-import MenuItem from "@material-ui/core/MenuItem";
-import Radio from "@material-ui/core/Radio";
-import IconButton from "@material-ui/core/IconButton";
-import Description from "@material-ui/icons/Description";
+import React, { Component } from 'react';
+import axios from 'axios';
+import Input from '@material-ui/core/Input';
+import { FormControl, Paper, Typography } from '@material-ui/core';
+import InputLabel from '@material-ui/core/InputLabel';
+import Select from '@material-ui/core/Select';
+import MenuItem from '@material-ui/core/MenuItem';
+import Checkbox from '@material-ui/core/Checkbox';
+import ListItemText from '@material-ui/core/ListItemText';
+import Divider from '@material-ui/core/Divider';
+import Button from '@material-ui/core/Button';
+import { withStyles } from '@material-ui/core/styles';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Switch from '@material-ui/core/Switch';
+import PredictProgress from '../OldModel/PredictProgress';
+import Swal from 'sweetalert2/src/sweetalert2';
+import Dialog from '@material-ui/core/Dialog';
 
-import VideoMetadata from "../Utilities/VideoMetadata.jsx";
+import './TrainModel.css';
 
 const styles = theme => ({
-  root: {
-    marginTop: 10,
-    width: "90%"
-  },
-  form: {
-    width: "10%"
-  },
-  center: {
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "center"
-  },
-  button: {
+  switches: {
     marginTop: theme.spacing(),
-    marginRight: theme.spacing()
+    marginLeft: theme.spacing(7)
   },
-  actionsContainer: {
-    marginBottom: theme.spacing(2)
+  options: {
+    marginLeft: theme.spacing(1.5),
+    marginRight: theme.spacing(1.5)
   },
-  resetContainer: {
-    padding: theme.spacing(3)
-  },
-  videoForm: {
-    maxHeight: "400px",
-    overflow: "auto",
-    width: "630px"
+  paper: {
+    minHeight: 'calc(100vh - 130px)'
   }
 });
+
+function VideoForm(props) {
+  const { className, selectedVideos, onChange, videos } = props;
+  return (
+    <FormControl component="fieldset" className={className}>
+      <InputLabel shrink>Videos</InputLabel>
+      <Select
+        multiple
+        name="selectedVideos"
+        value={selectedVideos}
+        onChange={onChange}
+        input={<Input id="select-multiple" />}
+        renderValue={selected =>
+          selected.map(videoSelected => videoSelected.filename).join(', ') ||
+          'Loading...'
+        }
+      >
+        {videos.map(video => (
+          <MenuItem key={video.id} value={video}>
+            <Checkbox checked={selectedVideos.indexOf(video) > -1} />
+            <ListItemText>{video.id + '. ' + video.filename}</ListItemText>
+          </MenuItem>
+        ))}
+      </Select>
+    </FormControl>
+  );
+}
 
 class PredictModel extends Component {
   constructor(props) {
     super(props);
-    // here we do a manual conditional proxy because React won't do it for us
-    let socket;
-    if (window.location.origin === "http://localhost:3000") {
-      console.log("manually proxying socket");
-      socket = io("http://localhost:3001");
-    } else {
-      socket = io();
-    }
-    socket.on("connect", () => {
-      console.log("socket connected!");
-    });
-    socket.on("reconnect_attempt", attemptNumber => {
-      console.log("reconnect attempt", attemptNumber);
-    });
-    socket.on("disconnect", reason => {
-      console.log(reason);
-    });
-    socket.on("refresh predictmodel", this.loadOptionInfo);
 
     this.state = {
       models: [],
-      modelSelected: "",
       videos: [],
-      videoSelected: "",
+      selectedVideos: [],
+      videoSelected: '',
       users: [],
-      userSelected: "",
+      userSelected: '',
       activeStep: 0,
       openedVideo: null,
-      socket: socket
+      ready: false,
+      postAnnotation: false,
+      createCollection: false,
+      loaded: false
     };
   }
 
-  //Methods for video meta data
-  openVideoMetadata = (event, video) => {
-    event.stopPropagation();
-    this.setState({
-      openedVideo: video
-    });
-  };
-
-  closeVideoMetadata = () => {
-    this.setState({
-      openedVideo: null
-    });
-  };
-
-  componentDidMount = () => {
-    this.loadOptionInfo();
-    this.loadExistingModels();
-    this.loadVideoList();
-    this.loadUserList();
-  };
-
-  componentWillUnmount = () => {
-    this.state.socket.disconnect();
-  };
-
-  loadOptionInfo = () => {
-    const config = {
-      headers: {
-        Authorization: "Bearer " + localStorage.getItem("token")
-      }
-    };
-    let option = "predictmodel";
-    axios
-      .get(`/api/models/train/${option}`, config)
-      .then(res => {
-        const info = res.data[0].info;
-        this.setState({
-          activeStep: info.activeStep,
-          userSelected: info.userSelected,
-          videoSelected: info.videoSelected,
-          modelSelected: info.modelSelected
-        });
-      })
-      .catch(error => {
-        console.log("Error in get /api/models");
-        console.log(error);
-        if (error.response) {
-          console.log(error.response.data.detail);
-        }
-      });
+  componentDidMount = async () => {
+    const { predictOpen } = this.props;
+    if (predictOpen) {
+      await this.loadExistingModels();
+      await this.loadVideoList();
+      this.interval = setInterval(() => this.loadProgressInfoPredict(), 500);
+    }
   };
 
   loadExistingModels = () => {
     const config = {
       headers: {
-        Authorization: "Bearer " + localStorage.getItem("token")
+        Authorization: `Bearer ${localStorage.getItem('token')}`
       }
     };
-    axios
-      .get(`/api/models`, config)
+    return axios
+      .get(`/api/models?predict=true`, config)
       .then(res => {
         this.setState({
           models: res.data
         });
       })
       .catch(error => {
-        console.log("Error in get /api/models");
+        console.log('Error in get /api/models');
         console.log(error);
         if (error.response) {
           console.log(error.response.data.detail);
@@ -165,27 +113,14 @@ class PredictModel extends Component {
   loadVideoList = () => {
     const config = {
       headers: {
-        Authorization: "Bearer " + localStorage.getItem("token")
+        Authorization: `Bearer ${localStorage.getItem('token')}`
       }
     };
     axios.get(`/api/videos`, config).then(res => {
-      let { unwatchedVideos, watchedVideos, inProgressVideos } = res.data;
+      const { unwatchedVideos, watchedVideos, inProgressVideos } = res.data;
       const videos = unwatchedVideos.concat(watchedVideos, inProgressVideos);
       this.setState({
-        videos: videos
-      });
-    });
-  };
-
-  loadUserList = () => {
-    const config = {
-      headers: {
-        Authorization: "Bearer " + localStorage.getItem("token")
-      }
-    };
-    axios.get(`/api/users`, config).then(res => {
-      this.setState({
-        users: res.data
+        videos
       });
     });
   };
@@ -196,257 +131,266 @@ class PredictModel extends Component {
     });
   };
 
-  selectModel = () => {
-    return (
-      <FormControl className={this.props.classes.form}>
-        <InputLabel>Select Model</InputLabel>
-        <Select
-          name="modelSelected"
-          value={this.state.modelSelected}
-          onChange={this.handleSelect}
-        >
-          {this.state.models.map(model => (
-            <MenuItem key={model.name} value={model.name}>
-              {model.name}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-    );
-  };
+  updateBackendInfo = async () => {
+    const { model } = this.props;
+    const { postAnnotation, createCollection, selectedVideos } = this.state;
+    let vidArray = [];
+    selectedVideos.forEach(video => {
+      vidArray.push(video.id);
+    });
+    const config = {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    };
+    const body = {
+      model: model.name,
+      uploadAnnotations: postAnnotation,
+      createCollection: createCollection,
+      concepts: model.conceptsid,
+      videos: vidArray,
+      userid: model.userid,
+      version: model.version_selected
+    };
 
-  selectVideo = () => {
-    return (
-      <FormControl
-        component="fieldset"
-        className={this.props.classes.videoForm}
-      >
-        <FormGroup>
-          {this.state.videos.map(video => (
-            <div key={video.filename}>
-              <Radio
-                name="videoSelected"
-                color="primary"
-                checked={this.state.videoSelected === video.id.toString()}
-                value={video.id.toString()}
-                onChange={this.handleSelect}
-              />
-              {video.filename}
-              <IconButton
-                onClick={event => this.openVideoMetadata(event, video)}
-                style={{ float: "right" }}
-              >
-                <Description />
-              </IconButton>
-            </div>
-          ))}
-        </FormGroup>
-      </FormControl>
-    );
-  };
-
-  selectUser = () => {
-    return (
-      <FormControl className={this.props.classes.form}>
-        <InputLabel>Select User</InputLabel>
-        <Select
-          name="userSelected"
-          value={this.state.userSelected}
-          onChange={this.handleSelect}
-        >
-          {this.state.users.map(user => (
-            <MenuItem key={user.id} value={user.id}>
-              {user.username}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-    );
-  };
-
-  getSteps = () => {
-    return ["Select model", "Select videos", "Select user"];
-  };
-
-  getStepContent = step => {
-    switch (step) {
-      case 0:
-        return this.selectModel();
-      case 1:
-        return this.selectVideo();
-      case 2:
-        return this.selectUser();
-      default:
-        return "Unknown step";
+    try {
+      let res = await axios.put(
+        `/api/models/train?predictmodel=true`,
+        body,
+        config
+      );
+      console.log(res);
+      if (res.data[0].userid === model.userid) {
+        Swal.fire(`Started Predicting with ${body.model}`, '', 'success');
+      }
+    } catch (error) {
+      console.log(error);
     }
   };
 
-  updateBackendInfo = () => {
-    const config = {
-      headers: {
-        Authorization: "Bearer " + localStorage.getItem("token")
-      }
-    };
-    let info = {
-      activeStep: this.state.activeStep,
-      modelSelected: this.state.modelSelected,
-      userSelected: this.state.userSelected,
-      videoSelected: this.state.videoSelected
-    };
-    const body = {
-      info: JSON.stringify(info)
-    };
-    // update SQL database
-    axios
-      .put("/api/models/train/predictmodel", body, config)
-      .then(res => {
-        this.state.socket.emit("refresh predictmodel");
-      })
-      .catch(error => {
-        console.log(error);
-        console.log(JSON.parse(JSON.stringify(error)));
-      });
+  startTraining = async () => {
+    try {
+      await this.updateBackendInfo();
+    } catch (error) {
+      console.log(error);
+    }
+    this.postModelInstance();
   };
 
-  handleNext = () => {
-    this.setState(
-      state => ({
-        activeStep: state.activeStep + 1
-      }),
-      () => {
-        if (this.state.activeStep === 3) {
-          console.log("Last Step Starting Model...");
-          this.postModelInstance("start");
-        }
-        this.updateBackendInfo();
-      }
-    );
+  handleChange = event => {
+    event.persist();
+    this.setState({
+      [event.target.name]: event.target.value
+    });
   };
 
-  handleBack = () => {
-    this.setState(
-      state => ({
-        activeStep: state.activeStep - 1
-      }),
-      () => {
-        this.updateBackendInfo();
-      }
-    );
+  handleChangeSwitch = event => {
+    event.persist();
+    this.setState({
+      [event.target.value]: event.target.checked
+    });
   };
 
-  handleStop = () => {
-    this.setState(
-      {
-        activeStep: 0
-      },
-      () => {
-        this.updateBackendInfo();
-        this.postModelInstance("stop");
-      }
-    );
+  handleChangeMultiple = event => {
+    const options = event.target.value;
+    const value = [];
+    for (let i = 0, l = options.length; i < l; i += 1) {
+      value.push(options[i]);
+    }
+    this.setState({
+      selectedVideos: value
+    });
   };
 
   postModelInstance = command => {
     const config = {
       headers: {
-        Authorization: "Bearer " + localStorage.getItem("token")
+        Authorization: `Bearer ${localStorage.getItem('token')}`
       }
     };
     const body = {
-      command: command,
-      modelInstanceId: "i-0f2287cb0fc621b6d"
+      command,
+      modelInstanceId: 'i-0f2287cb0fc621b6d'
     };
-    axios.post(`/api/models`, body, config).then(res => {
+    axios.post(`/api/models/train`, body, config).then(res => {
       console.log(res);
     });
   };
 
-  render() {
-    const { classes } = this.props;
-    const steps = this.getSteps();
-    const {
-      modelSelected,
-      videos,
-      videoSelected,
-      userSelected,
-      activeStep,
-      openedVideo
-    } = this.state;
-    if (!videos) {
-      return <div>Loading...</div>;
+  loadProgressInfoPredict = async () => {
+    const config = {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    };
+    try {
+      const predictions = await axios.get(
+        `/api/models/progress/predict`,
+        config
+      );
+      const predictionsData = predictions.data;
+      if (predictionsData === 'not loaded') {
+        this.setState({
+          loaded: false
+        });
+        return;
+      }
+
+      const totalVideos = predictionsData.total_videos;
+      const currentVideoNum = predictionsData.current_video;
+      const totalFrames = predictionsData.totalframe;
+      const currentFrame = predictionsData.framenum;
+      const predictStatus = predictionsData.status;
+      const videoProgress = (currentVideoNum / totalVideos) * 100;
+      const predictionProgress = (currentFrame / totalFrames) * 100;
+      const videoId = predictionsData.videoid;
+
+      this.setState({
+        loaded: true,
+        totalVideos,
+        currentVideoNum,
+        currentFrame,
+        totalFrames,
+        predictStatus,
+        videoProgress,
+        predictionProgress,
+        videoId
+      });
+    } catch (error) {
+      console.log(error);
     }
+  };
+
+  render() {
+    const {
+      classes,
+      predictOpen,
+      toggleStateVariable,
+      model,
+      status
+    } = this.props;
+    const {
+      selectedVideos,
+      videos,
+      postAnnotation,
+      loaded,
+      currentVideoNum,
+      totalVideos,
+      currentFrame,
+      totalFrames,
+      videoProgress,
+      predictionProgress,
+      predictStatus,
+      videoId,
+      createCollection
+    } = this.state;
+
     return (
-      <div className={classes.root}>
-        <div className={classes.center}>
-          <Typography variant="h6">Run a trained model on video(s)</Typography>
-          <br />
-        </div>
-        <Stepper activeStep={activeStep} orientation="vertical">
-          {steps.map((label, index) => (
-            <Step key={label}>
-              <StepLabel>{label}</StepLabel>
-              <StepContent>
-                {this.getStepContent(index)}
-                <div className={classes.actionsContainer}>
-                  <div>
-                    <Button
-                      disabled={activeStep === 0}
-                      onClick={this.handleBack}
-                      className={classes.button}
-                    >
-                      Back
-                    </Button>
-                    <Button
-                      variant="contained"
+      <Dialog
+        fullWidth={true}
+        maxWidth="md"
+        className={classes.root}
+        open={predictOpen}
+        onClose={() => toggleStateVariable(false, 'predictOpen')}
+      >
+        <Paper className={classes.paper}>
+          <div className="container">
+            <Typography
+              variant="button"
+              display="block"
+              gutterBottom={true}
+              style={{ marginLeft: 10, position: 'absolute', bottom: 10 }}
+            >
+              Instance Status: <font color="orange">{status.status}</font>
+            </Typography>
+            <div className="actionsContainer">
+              <div>
+                <Typography align="left" variant="h4">
+                  {model.name}
+                </Typography>
+                <Typography align="left" variant="caption">
+                  Version: {model.version_selected}
+                </Typography>
+              </div>
+              <VideoForm
+                className="collectionsForm"
+                videos={videos}
+                selectedVideos={selectedVideos}
+                onChange={this.handleChangeMultiple}
+              />
+            </div>
+
+            <div className={classes.options}>
+              <div className={classes.switches}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={postAnnotation}
+                      onChange={this.handleChangeSwitch}
+                      value="postAnnotation"
                       color="primary"
-                      onClick={this.handleNext}
-                      className={classes.button}
-                      disabled={
-                        (activeStep === 0 && modelSelected === "") ||
-                        (activeStep === 1 && videoSelected.length < 1) ||
-                        (activeStep === 2 && userSelected === "")
-                      }
-                    >
-                      {activeStep === steps.length - 1 ? "Predict" : "Next"}
-                    </Button>
-                  </div>
-                </div>
-              </StepContent>
-            </Step>
-          ))}
-        </Stepper>
-        {activeStep === steps.length && (
-          <Paper square elevation={0} className={classes.resetContainer}>
-            <Typography>Model is running/generating images...</Typography>
-            <CircularProgress />
-            <Button onClick={this.handleStop} className={classes.button}>
-              Stop
-            </Button>
-          </Paper>
-        )}
-        {this.state.openedVideo && (
-          <VideoMetadata
-            open={
-              true /* The VideoMetadata 'openness' is controlled through
-              boolean logic rather than by passing in a variable as an
-              attribute. This is to force VideoMetadata to unmount when it 
-              closes so that its state is reset. This also prevents the 
-              accidental double submission bug, by implicitly reducing 
-              the transition time of VideoMetadata to zero. */
-            }
-            handleClose={this.closeVideoMetadata}
-            openedVideo={openedVideo}
-            loadVideos={this.props.loadVideos}
-            modelTab={true}
-          />
-        )}
-      </div>
+                      align="center"
+                    />
+                  }
+                  label="Post Annotations"
+                />
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={createCollection}
+                      disabled={!postAnnotation}
+                      onChange={this.handleChangeSwitch}
+                      value="createCollection"
+                      color="primary"
+                      align="center"
+                    />
+                  }
+                  label="Create Annotation Collection"
+                />
+                {/* <Button
+                  onClick={this.startTraining}
+                  variant="contained"
+                  color="secondary"
+                >
+                  Start Training
+                </Button> */}
+                <Button
+                  style={{ float: 'right', marginRight: '60px' }}
+                  className={loaded ? 'terminateButton' : ''}
+                  onClick={
+                    loaded
+                      ? () => this.postModelInstance('stop')
+                      : this.startTraining
+                  }
+                  variant="contained"
+                  color="secondary"
+                >
+                  {loaded ? 'Stop Predicting' : 'Start Predicting'}
+                </Button>
+                {loaded ? (
+                  <PredictProgress
+                    className="progress"
+                    currentVideoNum={currentVideoNum}
+                    totalVideos={totalVideos}
+                    currentFrame={currentFrame}
+                    totalFrames={totalFrames}
+                    videoProgress={videoProgress}
+                    predictionProgress={predictionProgress}
+                    status={predictStatus}
+                    videoId={videoId}
+                    predictOnly={true}
+                  />
+                ) : (
+                  ''
+                )}
+              </div>
+            </div>
+            <Divider style={{ marginTop: '30px' }} variant="middle" />
+          </div>
+        </Paper>
+      </Dialog>
     );
   }
 }
-
-PredictModel.propTypes = {
-  classes: PropTypes.object
-};
 
 export default withStyles(styles)(PredictModel);

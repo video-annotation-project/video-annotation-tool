@@ -1,4 +1,4 @@
-tensorflow-gpu
+tensorflow-gpu==1.14
 psycopg2-binary
 boto3
 pandas
@@ -6,4 +6,6 @@ numpy
 python-dotenv
 pascal-voc-writer
 scikit-image
-keras
+memory-profiler
+ffmpy
+keras==2.3.1

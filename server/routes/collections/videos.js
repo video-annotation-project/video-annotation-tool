@@ -1,18 +1,19 @@
-const router = require("express").Router();
-const passport = require("passport");
-const psql = require("../../db/simpleConnect");
+const router = require('express').Router();
+const passport = require('passport');
+const psql = require('../../db/simpleConnect');
 
-router.baseURL = "/collections/videos";
+router.baseURL = '/collections/videos';
 
 router.get(
-  "/",
-  passport.authenticate("jwt", { session: false }),
+  '/',
+  passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     let queryText = `
       SELECT 
         vc.*, 
-        json_agg((vi.videoid, v.filename)) as videos,
-        array_agg(vi.videoid) as videoids
+        json_agg(json_build_object('id', vi.videoid, 'filename', v.filename)) as videos,
+        array_agg(vi.videoid) as videoids,
+        false as dropdown
       FROM 
         video_collection vc
       LEFT JOIN 
@@ -38,8 +39,8 @@ router.get(
 );
 
 router.post(
-  "/",
-  passport.authenticate("jwt", { session: false }),
+  '/',
+  passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     const queryText = `
       INSERT INTO 
@@ -61,8 +62,8 @@ router.post(
 );
 
 router.delete(
-  "/:id",
-  passport.authenticate("jwt", { session: false }),
+  '/:id',
+  passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     const queryText = `
       DELETE FROM 
@@ -83,8 +84,8 @@ router.delete(
 );
 
 router.post(
-  "/:id",
-  passport.authenticate("jwt", { session: false }),
+  '/:id',
+  passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     let params = [req.params.id, req.body.videos];
     let queryText = `
@@ -106,8 +107,8 @@ router.post(
 );
 
 router.delete(
-  "/elements/:id",
-  passport.authenticate("jwt", { session: false }),
+  '/elements/:id',
+  passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     var params = [req.params.id, req.body.videos];
     var queryText = `

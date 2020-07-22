@@ -1,8 +1,8 @@
 const router = require('express').Router();
-const passport = require("passport");
-const psql = require("../../db/simpleConnect");
-const awsS3 = require("s3");
-const { spawn } = require("child_process");
+const passport = require('passport');
+const psql = require('../../db/simpleConnect');
+const awsS3 = require('s3');
+const { spawn } = require('child_process');
 
 let currentTensorboardID = null;
 let currentTensorboardProcess = null;
@@ -14,12 +14,14 @@ let currentTensorboardProcess = null;
 
 /**
  * @route GET /api/models/tensorboard
- * @group models 
+ * @group models
  * @summary Get the currently running tensorboard process
  * @returns {tensorboard.model} 200 - Current running tensorboard process ID
  * @returns {Error} 500 - Unexpected server error
  */
-router.get("/", passport.authenticate("jwt", { session: false }), 
+router.get(
+  '/',
+  passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     res.json({ id: currentTensorboardID });
   }
@@ -27,12 +29,14 @@ router.get("/", passport.authenticate("jwt", { session: false }),
 
 /**
  * @route DELETE /api/models/tensorboard
- * @group models 
+ * @group models
  * @summary End the currently running tensorboard process
  * @returns 200 - Successfully stopped tensorboard process
  * @returns {Error} 400 - Unable to end process
  */
-router.delete("/", passport.authenticate("jwt", { session: false }), 
+router.delete(
+  '/',
+  passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     if (currentTensorboardID !== null) {
       try {
@@ -42,7 +46,7 @@ router.delete("/", passport.authenticate("jwt", { session: false }),
 
         res.sendStatus(200);
       } catch (err) {
-        if (err.code !== "ESRCH") {
+        if (err.code !== 'ESRCH') {
           res.status(400).json(err);
         } else {
           res.sendStatus(200);
@@ -55,16 +59,17 @@ router.delete("/", passport.authenticate("jwt", { session: false }),
   }
 );
 
-
 /**
  * @route POST /api/models/tensorboard
- * @group models 
+ * @group models
  * @summary Start a tensorboard isntance for a specific training session
  * @param {integer} id.url.required - ID of training session to load tensorboard logs from
  * @returns 200 - Successfully started tensorboard
  * @returns {Error} 400 - Unable to download tensorboard files or end previous running process
  */
-router.post("/:id", passport.authenticate("jwt", { session: false }),
+router.post(
+  '/:id',
+  passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     const id = req.params.id;
 
@@ -73,7 +78,7 @@ router.post("/:id", passport.authenticate("jwt", { session: false }),
       try {
         currentTensorboardProcess.kill();
       } catch (err) {
-        if (err.code !== "ESRCH") {
+        if (err.code !== 'ESRCH') {
           res.status(400).json(err);
         }
       }
@@ -95,17 +100,19 @@ router.post("/:id", passport.authenticate("jwt", { session: false }),
       }
     });
 
-    downloader.on("error", function(err) {
+    console.log(process.env.AWS_S3_BUCKET_LOGS_FOLDER );
+
+    downloader.on('error', function(err) {
       res.status(400).json(err);
     });
 
-    downloader.on("end", function(data) {
+    downloader.on('end', function(data) {
       const tensorboard = spawn(`tensorboard`, [
         `--logdir=logs/${id}`,
-        "--port=6008"
+        '--port=6008'
       ]);
 
-      tensorboard.stderr.on("data", data => {
+      tensorboard.stderr.on('data', data => {
         if (!res.headersSent) {
           currentTensorboardID = id;
           currentTensorboardProcess = tensorboard;
@@ -113,13 +120,13 @@ router.post("/:id", passport.authenticate("jwt", { session: false }),
         }
       });
 
-      tensorboard.on("exit", (code, signal) => {
+      tensorboard.on('exit', (code, signal) => {
         if (!res.headersSent) {
           res.sendStatus(200);
         }
       });
 
-      tensorboard.on("error", err => {
+      tensorboard.on('error', err => {
         if (!res.headersSent) {
           res.status(400).json(err);
         }

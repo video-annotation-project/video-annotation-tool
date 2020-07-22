@@ -1,191 +1,240 @@
-import React, { Component } from "react";
-import Rnd from "react-rnd";
-import { withStyles } from "@material-ui/core/styles";
+import React, { Component } from 'react';
+import { Rnd } from 'react-rnd';
+import { withStyles } from '@material-ui/core/styles';
 
-const styles = theme => ({
+const styles = () => ({
   dragBox: {
-    margin: "0px",
-    backgroundColor: "transparent",
-    border: "2px coral solid",
-    borderStyle: "ridge"
-  },
+    margin: '0px',
+    backgroundColor: 'transparent',
+    border: '2px coral solid',
+    borderStyle: 'ridge'
+  }
 });
 
+const DragBox = props => {
+  const {
+    name,
+    dragBox,
+    size,
+    position,
+    disabledMouse,
+    onDragStop,
+    onResize
+  } = props;
 
-class DragBox extends Component {
-
-  render(){
-    return (
-      <Rnd 
-        id="dragBox"
-        key={this.props.name}
-        className={this.props.dragBox}
-
-        size={ this.props.size }
-      	position={ this.props.position }
-
-        maxWidth={900}
-        maxHeight={650}
-        bounds="parent"
-        style={{pointerEvents: this.props.disabledMouse ? 'none' : 'auto'}}
-
-        onDragStop={this.props.onDragStop}
-        onResize={this.props.onResize}
-			/>
-    )
-  }
-}
-
+  return (
+    <Rnd
+      id="dragBox"
+      key={name}
+      className={dragBox}
+      size={size}
+      position={position}
+      maxWidth={900}
+      maxHeight={650}
+      bounds="parent"
+      style={{ pointerEvents: disabledMouse ? 'none' : 'auto' }}
+      onDragStop={onDragStop}
+      onResize={onResize}
+    />
+  );
+};
 
 class DragBoxContainer extends Component {
-
-  constructor(props){
+  constructor(props) {
     super(props);
-
+    const { drawDragBoxProp } = this.props;
     this.state = {
       boxCounter: 0,
-      drawDragBox: this.props.drawDragBox || false,
-      disabledMouse: !this.props.drawDragBox || false,
+      drawDragBox: false,
+      disabledMouse: !drawDragBoxProp || false,
       showControls: false,
-    }
-
-    this.resetDragBox = this.resetDragBox.bind(this);
-    this.drawDragBox = this.drawDragBox.bind(this);
-    this.createDragBox = this.createDragBox.bind(this);
-    this.removeDragBox = this.removeDragBox.bind(this);
+      localDrawDragBoxProp: drawDragBoxProp
+    };
   }
 
-  resetDragBox = async (e) => {
+  resetDragBox = async e => {
+    const { onResize } = this.props;
+    const { disableDraw, boxCounter } = this.state;
     e.preventDefault();
 
-    if (this.state.disableDraw){
+    if (disableDraw) {
       return;
     }
 
-    const videoElement = document.getElementById("video");
-    if (videoElement){
-      this.setState( { showControls: videoElement.controls });
+    const videoElement = document.getElementById('video');
+    if (videoElement) {
+      this.setState({ showControls: videoElement.controls });
       videoElement.controls = false;
     }
 
-    let video = e.target;
-    let dim = video.getBoundingClientRect();
-    let x = e.clientX - dim.left;
-    let y = e.clientY - dim.top;
+    const video = e.target;
+    const dim = video.getBoundingClientRect();
+    const x = e.clientX - dim.left;
+    const y = e.clientY - dim.top;
 
-    this.setState({
-      drawDragBox: true,
-      boxCounter: this.state.boxCounter + 1,
-      dragBoxX: x,
-      dragBoxY: y,
-      dragBoxWidth: 0,
-      dragBoxHeight: 0,
-      mouseDown: true,
-      disabledMouse: true,
-      disableDraw: false,
-    }, 
-    () => {
-      this.props.onResize && this.props.onResize(e, 
-        null, 
-        {style: {width: 0, height: 0}},
-        null,
-        {x: this.state.dragBoxX, y: this.state.dragBoxY}
-      );
-    });
-  }
+    this.setState(
+      {
+        drawDragBox: true,
+        boxCounter: boxCounter + 1,
+        dragBoxX: x,
+        dragBoxY: y,
+        dragBoxWidth: 0,
+        dragBoxHeight: 0,
+        mouseDown: true,
+        disabledMouse: true,
+        disableDraw: false
+      },
+      () => {
+        if (onResize) {
+          onResize(e, null, { style: { width: 0, height: 0 } }, null, {
+            x,
+            y
+          });
+        }
+      }
+    );
+  };
 
-  drawDragBox = (e) => {
+  drawDragBox = e => {
+    const { onResize } = this.props;
+    const { mouseDown, dragBoxX, dragBoxY, boxCounter } = this.state;
     e.preventDefault();
 
-    if (this.state.mouseDown){
-      let video = e.target;
-      let dim = video.getBoundingClientRect();
-      let x = e.clientX - dim.left;
-      let y = e.clientY - dim.top;
+    if (mouseDown) {
+      const video = e.target;
+      const dim = video.getBoundingClientRect();
+      const x = e.clientX - dim.left;
+      const y = e.clientY - dim.top;
 
-      let newWidth = x - this.state.dragBoxX;
-      let newHeight = y - this.state.dragBoxY;
+      const newWidth = x - dragBoxX;
+      const newHeight = y - dragBoxY;
 
       // Passing direction and delta to onResize as null,
       // if necessary can be added in later
-      this.props.onResize && this.props.onResize(e, 
-      	null, 
-      	{style: {width: newWidth, height: newHeight}},
-      	null,
-      	{x: this.state.dragBoxX, y: this.state.dragBoxY}
-      );
-
+      if (onResize) {
+        onResize(
+          e,
+          null,
+          { style: { width: newWidth, height: newHeight } },
+          null,
+          { x: dragBoxX, y: dragBoxY }
+        );
+      }
       this.setState({
-        boxCounter: this.state.boxCounter + 1,
+        boxCounter: boxCounter + 1,
         dragBoxWidth: newWidth,
-        dragBoxHeight: newHeight,
+        dragBoxHeight: newHeight
       });
     }
-  }
+  };
 
-  createDragBox = (e) => {
+  createDragBox = e => {
+    const {
+      disableDraw,
+      dragBoxWidth,
+      dragBoxHeight,
+      showControls
+    } = this.state;
     e.preventDefault();
 
-    if (this.state.disableDraw){
+    if (disableDraw) {
       return;
     }
 
-    let boxLargeEnough = this.state.dragBoxWidth > 25 
-      && this.state.dragBoxHeight > 25;
+    const boxLargeEnough = dragBoxWidth > 25 && dragBoxHeight > 25;
 
     this.setState({
       mouseDown: false,
       disabledMouse: false,
-      drawDragBox: boxLargeEnough,
+      drawDragBox: boxLargeEnough
     });
-    
-    const videoElement = document.getElementById("video");
+
+    const videoElement = document.getElementById('video');
 
     setTimeout(() => {
-      if (videoElement){
-        videoElement.controls = this.state.showControls;
+      if (videoElement) {
+        videoElement.controls = showControls;
       }
     }, 100);
-  }
+  };
 
-  removeDragBox = (e) => {
+  removeDragBox = e => {
     e.preventDefault();
     this.setState({
-      drawDragBox: false,
+      drawDragBox: false
     });
-    this.props.toggleDragBox && this.props.toggleDragBox();
+  };
+
+  updateLocalDragBoxProps = () => {
+    const {
+      dragBoxWidth,
+      dragBoxHeight,
+    } = this.state;
+    const { drawDragBoxProp } = this.props;
+
+    const boxLargeEnough = dragBoxWidth > 25 && dragBoxHeight > 25;
+    this.setState({
+      drawDragBox: boxLargeEnough,
+      localDrawDragBoxProp: drawDragBoxProp
+    });
   }
 
-  render(){
+  render() {
+    const {
+      children,
+      size,
+      position,
+      dragBox,
+      onResize,
+      onDragStop,
+      drawDragBoxProp,
+      videoWidth,
+      videoHeight
+    } = this.props;
+    const { drawDragBox, boxCounter, disabledMouse, localDrawDragBoxProp } = this.state;
+    if (localDrawDragBoxProp !== drawDragBoxProp) {
+      this.updateLocalDragBoxProps();
+    }
     return (
       <div
-        className={this.props.className}
+        style={{
+          width: videoWidth,
+          height: videoHeight
+        }}
       >
-        <div 
-          className={this.props.className}
-          onMouseDown={(e) => this.resetDragBox(e)}
-          onMouseMove={(e) => this.drawDragBox(e)}
-          onMouseUp={(e) => this.createDragBox(e)}
-          onPlay={(e) => { this.setState({ disableDraw: true }); this.removeDragBox(e)}}
-          onPause={(e) => this.setState({ disableDraw: false })}>
-          {this.props.children}
+        <div
+          style={{
+            width: videoWidth,
+            height: videoHeight
+          }}
+          onMouseDown={e => this.resetDragBox(e)}
+          onMouseMove={e => this.drawDragBox(e)}
+          onMouseUp={e => this.createDragBox(e)}
+          onPlay={e => {
+            this.setState({ disableDraw: true });
+            this.removeDragBox(e);
+          }}
+          onPause={() => this.setState({ disableDraw: false })}
+        >
+          {children}
         </div>
-        {this.state.drawDragBox || this.props.drawDragBox ?
-        <DragBox 
-          name={this.state.boxCounter}
-          size={this.props.size}
-          position={this.props.position}
-          dragBox={this.props.dragBox}
-          disabledMouse={this.state.disabledMouse}
-
-          onResize={this.props.onResize}
-          onDragStop={this.props.onDragStop}
-        ></DragBox>
-        : <div/>}
+        {drawDragBox || drawDragBoxProp ? (
+          <DragBox
+            drawDragBox={drawDragBox}
+            name={boxCounter}
+            size={size}
+            position={position}
+            dragBox={dragBox}
+            disabledMouse={disabledMouse}
+            onResize={onResize}
+            onDragStop={onDragStop}
+          />
+        ) : (
+          <div />
+        )}
       </div>
-    )
+    );
   }
 }
 
 export default withStyles(styles)(DragBoxContainer);
-

@@ -1,379 +1,435 @@
-import React, { Component } from "react";
-import axios from "axios";
-import PropTypes from "prop-types";
-import { withStyles } from "@material-ui/core/styles";
-import Paper from "@material-ui/core/Paper";
+import React, { Component } from 'react';
+import axios from 'axios';
+import { Button, Typography } from '@material-ui/core';
+import Swal from 'sweetalert2/src/sweetalert2';
 
-import VerifySelection from "./VerifySelection.jsx";
-import VerifyAnnotations from "./VerifyAnnotations.jsx";
-import { Button, Typography } from "@material-ui/core";
+import VerifySelection from './VerifySelection';
+import VerifyAnnotations from './VerifyAnnotations';
 
-const styles = theme => ({
-  button: {
-    margin: theme.spacing()
-  },
-  resetContainer: {
-    padding: theme.spacing(3)
-  },
-  list: {
-    width: "100%",
-    backgroundColor: theme.palette.background.paper
-  },
-  item: {
-    display: "inline",
-    paddingTop: 0,
-    width: "1300px",
-    height: "730px",
-    paddingLeft: 0
-  },
-  img: {
-    padding: theme.spacing(3),
-    width: "1280px",
-    height: "720px"
-  },
-  container: {
-    display: "grid",
-    gridTemplateColumns: "repeat(12, 1fr)",
-    gridGap: theme.spacing(3)
-  },
-  paper: {
-    padding: theme.spacing(5)
-  }
-});
+const FPS = 29.97002997002997;
 
 class Verify extends Component {
   constructor(props) {
     super(props);
+    const selectionMounted = JSON.parse(
+      localStorage.getItem('selectionMounted')
+    );
+    const ignoredAnnotations = JSON.parse(
+      localStorage.getItem('ignoredAnnotations')
+    );
+    const noAnnotations = JSON.parse(localStorage.getItem('noAnnotations'));
+    const index = JSON.parse(localStorage.getItem('curIndex'));
+    const selectedTrackingFirst = JSON.parse(
+      localStorage.getItem('selectedTrackingFirst')
+    );
+    const selectedAnnotationCollections = JSON.parse(
+      localStorage.getItem('selectedAnnotationCollections')
+    );
+    const excludeTracking = JSON.parse(localStorage.getItem('excludeTracking'));
     this.state = {
-      selectionMounted: true,
-      /* -1 represents select all */
-      selectedUsers: [],
-      selectedVideos: [],
-      selectedConcepts: [],
-      selectedUnsure: false,
-      selectedTrackingFirst: false,
-      annotations: [],
-      error: null,
-      index: 0
+      ignoredAnnotations,
+      selectedAnnotationCollections,
+      selectedTrackingFirst,
+      selectionMounted,
+      noAnnotations,
+      index,
+      excludeTracking,
+      annotating: false,
+      annotations: []
     };
   }
 
+  componentDidMount = async () => {
+    const { index } = this.state;
+    const annotations = await this.getAnnotationsFromCollection();
+    const prevLength = JSON.parse(localStorage.getItem('totalAnnotations'));
+    if (prevLength !== 0 && prevLength !== annotations.length) {
+      const newIndex = index - (prevLength - annotations.length);
+      localStorage.setItem('curIndex', newIndex);
+      this.setState({
+        index: newIndex,
+        annotations
+      });
+    } else {
+      this.setState({
+        annotations
+      });
+    }
+    localStorage.setItem('totalAnnotations', annotations.length);
+  };
+
+  displayLoading = () => {
+    const { tracking } = this.props;
+    const { videoDialogOpen } = this.state;
+
+    if (!tracking && !videoDialogOpen) {
+      Swal.fire({
+        title: 'Loading...',
+        showConfirmButton: false,
+        onBeforeOpen: () => {
+          Swal.showLoading();
+        }
+      });
+    }
+  };
+
   toggleSelection = async () => {
+    const { selectedAnnotationCollections, selectionMounted } = this.state;
     let annotations = [];
-    if (!this.state.selectionMounted) {
+    if (!selectionMounted) {
+      localStorage.setItem('selectionMounted', !selectionMounted);
+      localStorage.setItem('noAnnotations', false);
       this.resetState(
         this.setState({
-          selectionMounted: !this.state.selectionMounted,
+          selectionMounted: !selectionMounted,
           noAnnotations: false
         })
       );
     } else {
-      annotations = await this.getAnnotations();
+      if (selectedAnnotationCollections.length) {
+        localStorage.setItem(
+          'selectedAnnotationCollections',
+          JSON.stringify(selectedAnnotationCollections)
+        );
+        annotations = await this.getAnnotationsFromCollection();
+      }
       if (annotations.length < 1) {
+        localStorage.setItem('noAnnotations', true);
+        localStorage.setItem('selectionMounted', !selectionMounted);
         this.setState({
           noAnnotations: true,
-          selectionMounted: !this.state.selectionMounted
+          selectionMounted: !selectionMounted
         });
       } else {
+        localStorage.setItem('selectionMounted', !selectionMounted);
         this.setState({
-          annotations: annotations,
-          selectionMounted: !this.state.selectionMounted
+          selectionMounted: !selectionMounted,
+          annotations
         });
+        localStorage.setItem('totalAnnotations', annotations.length);
       }
     }
   };
 
-  getUsers = async () => {
+  getAnnotationCollections = async () => {
     return axios
-      .get(`/api/users?noAi=true`, {
-        headers: { Authorization: "Bearer " + localStorage.getItem("token") }
-      })
-      .then(res => res.data)
-      .catch(error => {
-        console.log(error);
-        this.setState({
-          error: error
-        });
-      });
-  };
-
-  getVideos = async () => {
-    return axios
-      .get(`/api/annotations/verified`, {
-        headers: { Authorization: "Bearer " + localStorage.getItem("token") },
-        params: {
-          verifiedOnly: "-1",
-          selectedUsers: this.state.selectedUsers
+      .get(`/api/collections/annotations`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
         }
       })
       .then(res => res.data)
       .catch(error => {
-        this.setState({
-          error: error
-        });
+        console.log(error);
+      });
+  };
+
+  getAnnotationsFromCollection = async () => {
+    const {
+      selectedAnnotationCollections,
+      excludeTracking,
+      selectedTrackingFirst
+    } = this.state;
+
+    return axios
+      .get(`/api/annotations/collections`, {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        },
+        params: {
+          selectedAnnotationCollections,
+          excludeTracking,
+          selectedTrackingFirst
+        }
+      })
+      .then(res => {
+        return res.data;
+      })
+      .catch(error => {
+        console.log(error);
       });
   };
 
   getVideoCollections = async () => {
     return axios
       .get(`/api/collections/videos`, {
-        headers: { Authorization: "Bearer " + localStorage.getItem("token") }
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       })
       .then(res => res.data)
       .catch(error => {
-        this.setState({
-          error: error
-        });
+        console.log(error);
       });
   };
 
-  getConcepts = async () => {
-    return axios
-      .get(`/api/annotations/verified`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + localStorage.getItem("token")
-        },
-        params: {
-          verifiedOnly: "-1",
-          selectedUsers: this.state.selectedUsers,
-          selectedVideos: this.state.selectedVideos
-        }
-      })
-      .then(res => res.data)
-      .catch(error => {
-        this.setState({
-          error: error
-        });
-      });
-  };
-
-  getConceptCollections = async () => {
-    return axios
-      .get(`/api/collections/concepts`, {
-        headers: { Authorization: "Bearer " + localStorage.getItem("token") }
-      })
-      .then(res => res.data)
-      .catch(error => {
-        this.setState({
-          error: error
-        });
-      });
-  };
-
-  getUnsure = async () => {
-    return axios
-      .get(`/api/annotations/verified`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + localStorage.getItem("token")
-        },
-        params: {
-          verifiedOnly: "-1",
-          selectedUsers: this.state.selectedUsers,
-          selectedVideos: this.state.selectedVideos,
-          selectedConcepts: this.state.selectedConcepts
-        }
-      })
-      .then(res => res.data)
-      .catch(error => {
-        this.setState({
-          error: error
-        });
-      });
-  };
-
-  getAnnotations = async () => {
-    return axios
-      .get(`/api/annotations/verified`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + localStorage.getItem("token")
-        },
-        params: {
-          verifiedOnly: this.state.selectedTrackingFirst ? "1" : "-1",
-          selectedUsers: this.state.selectedUsers,
-          selectedVideos: this.state.selectedVideos,
-          selectedConcepts: this.state.selectedConcepts,
-          selectedUnsure: this.state.selectedUnsure,
-          selectedTrackingFirst: this.state.selectedTrackingFirst
-        }
-      })
-      .then(res => res.data)
-      .catch(error => {
-        this.setState({
-          error: error
-        });
-      });
-  };
-
-  selectUser = user => {
+  removeFromIgnoreList = id => {
+    const { ignoredAnnotations } = this.state;
+    const ignored = ignoredAnnotations.filter(x => x.id !== id);
+    localStorage.setItem('ignoredAnnotations', JSON.stringify(ignored));
     this.setState({
-      selectedUsers: this.state.selectedUsers.concat(user)
+      ignoredAnnotations: ignored
     });
   };
 
-  handleChange = type => value => {
+  populateIgnoreList = annotation => {
+    const { ignoredAnnotations } = this.state;
+    if (!ignoredAnnotations.some(a => a.id === annotation.id)) {
+      ignoredAnnotations.push(annotation);
+    }
+    localStorage.setItem(
+      'ignoredAnnotations',
+      JSON.stringify(ignoredAnnotations)
+    );
     this.setState({
-      [type]: value
+      ignoredAnnotations
     });
   };
 
   handleChangeSwitch = type => event => {
+    if (type === 'selectedTrackingFirst') {
+      localStorage.setItem('selectedTrackingFirst', event.target.checked);
+    }
+    if (type === 'excludeTracking') {
+      localStorage.setItem('excludeTracking', event.target.checked);
+    }
     this.setState({
       [type]: event.target.checked
     });
   };
 
-  handleChangeList = type => event => {
-    if (!this.state[type].includes(event.target.value)) {
-      if (event.target.value === "-1") {
-        this.setState({
-          [type]: ["-1"]
-        });
-      } else {
-        if (this.state[type][0] === "-1") {
-          this.setState({
-            [type]: [event.target.value]
-          });
-        } else {
-          this.setState({
-            [type]: this.state[type].concat(event.target.value)
-          });
-        }
-      }
+  handleChangeList = (stateVariable, type) => event => {
+    let value;
+    if (!stateVariable.includes(event.target.value)) {
+      value = stateVariable.concat(event.target.value);
     } else {
-      this.setState({
-        [type]: this.state[type].filter(typeid => typeid !== event.target.value)
-      });
+      value = stateVariable.filter(typeid => typeid !== event.target.value);
     }
-  };
-
-  resetStep = step => {
-    switch (step) {
-      case 0:
-        this.setState({
-          selectedUsers: []
-        });
-        return;
-      case 1:
-        this.setState({
-          selectedVideos: []
-        });
-        return;
-      case 2:
-        this.setState({
-          selectedConcepts: []
-        });
-        return;
-      case 3:
-        this.setState({
-          selectedUnsure: false,
-          selectedTrackingFirst: false
-        });
-        return;
-      default:
-        return;
-    }
+    this.setState({
+      [type]: value
+    });
   };
 
   resetState = callback => {
+    localStorage.setItem('curIndex', 0);
+    localStorage.setItem('selectedTrackingFirst', false);
     this.setState(
       {
-        selectedUsers: [],
-        selectedVideos: [],
-        selectedConcepts: [],
-        selectedUnsure: false,
         selectedTrackingFirst: false,
+        excludeTracking: false,
         index: 0
       },
       callback
     );
   };
 
+  verifyFrame = async () => {
+    const { index, annotations } = this.state;
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    };
+    const body = {
+      framenum: annotations[index].timeinvideo * 29.97002997003,
+      videoid: annotations[index].videoid
+    };
+    try {
+      const res = await axios.post(
+        `/api/annotations/verifyframe`,
+        body,
+        config
+      );
+      if (res) {
+        console.log('frame inserted');
+        return;
+      }
+    } catch (error) {
+      Swal.fire('Error POSTING verify frame', '', 'error');
+    }
+  };
+
+  handlePrev = callback => {
+    const { index, annotating } = this.state;
+
+    localStorage.setItem('ignoredAnnotations', JSON.stringify([]));
+    localStorage.setItem('curIndex', index + 1);
+
+    if (annotating) {
+        this.setState(
+          {
+            ignoredAnnotations: [],
+            annotating: false
+          },
+          callback
+        );
+    } else {
+      this.setState(
+        {
+          ignoredAnnotations: [],
+          index: index - 1,
+          annotating: false
+        },
+        callback
+      );
+    }
+  }
+
   handleNext = callback => {
-    this.setState(
-      {
-        index: this.state.index + 1
-      },
-      callback
+    const videoDialogOpen = JSON.parse(localStorage.getItem('videoDialogOpen'));
+    const { index, annotations, annotating, selectedTrackingFirst } = this.state;
+    /* This checks if we need to load a new video frame*/
+    if (
+      !selectedTrackingFirst &&
+      annotations &&
+      annotations.length &&
+      (
+        annotations.length === index + 1 ||
+        annotations[index].videoid !== annotations[index + 1].videoid ||
+        Math.round(annotations[index].timeinvideo * FPS) !==
+        Math.round(annotations[index + 1].timeinvideo * FPS)
+      )
+    ) {
+      if ((annotating || videoDialogOpen) && annotations.length === index + 1) { // Finished with collection 
+        this.resetLocalStorage();
+        Swal.fire({
+          title: 'Finished with collection'
+        });
+      } else if (annotating || videoDialogOpen) { // Go to the next frame
+        this.verifyFrame();
+        localStorage.setItem('ignoredAnnotations', JSON.stringify([]));
+        localStorage.setItem('curIndex', index + 1);
+        this.setState(
+          {
+            ignoredAnnotations: [],
+            index: index + 1,
+            annotating: false
+          },
+          callback
+        );
+      } else { // Add new annotations to the page
+        this.setState(
+          {
+            annotating: true
+          }
+        );
+      }
+    } else {
+      localStorage.setItem('curIndex', index + 1);
+      this.setState(
+        {
+          index: index + 1
+        },
+        callback
+      );
+    }
+  };
+
+  resetLocalStorage = () => {
+    localStorage.setItem('totalAnnotations', 0);
+    localStorage.setItem('ignoredAnnotations', JSON.stringify([]));
+    localStorage.setItem('selectedAnnotationCollections', JSON.stringify([]));
+    localStorage.setItem('selectionMounted', true);
+    localStorage.setItem('videoDialogOpen', false);
+    localStorage.setItem('selectedTrackingFirst', false);
+    localStorage.setItem('curIndex', 0);
+    localStorage.removeItem('noAnnotations');
+    localStorage.setItem('excludeTracking', false);
+    this.resetState(
+      this.setState({
+        selectedAnnotationCollections: [],
+        ignoredAnnotations: [],
+        selectionMounted: true,
+        index: 0,
+        noAnnotations: false,
+        annotations: [],
+        selectedTrackingFirst: false,
+        annotating: false
+      })
     );
   };
 
   render() {
-    let selection = "";
-    if (this.state.selectionMounted) {
+    const {
+      selectionMounted,
+      selectedAnnotationCollections,
+      selectedTrackingFirst,
+      excludeTracking,
+      annotations,
+      noAnnotations,
+      index,
+      annotating,
+      ignoredAnnotations
+    } = this.state;
+
+    if (annotations.length > 0 && index >= annotations.length + 1) {
+      this.resetLocalStorage();
+      return;
+    }
+
+    let selection = '';
+
+    if (selectionMounted) {
       selection = (
         <VerifySelection
-          selectedUsers={this.state.selectedUsers}
-          selectedVideos={this.state.selectedVideos}
-          selectedConcepts={this.state.selectedConcepts}
-          selectedUnsure={this.state.selectedUnsure}
-          selectedTrackingFirst={this.state.selectedTrackingFirst}
-          getUsers={this.getUsers}
-          getVideos={this.getVideos}
-          getVideoCollections={this.getVideoCollections}
-          getConcepts={this.getConcepts}
-          getConceptCollections={this.getConceptCollections}
-          getUnsure={this.getUnsure}
+          selectedAnnotationCollections={selectedAnnotationCollections}
+          selectedTrackingFirst={selectedTrackingFirst}
+          excludeTracking={excludeTracking}
+          getAnnotationCollections={this.getAnnotationCollections}
           handleChangeSwitch={this.handleChangeSwitch}
-          handleChange={this.handleChange}
           handleChangeList={this.handleChangeList}
-          resetStep={this.resetStep}
-          resetState={this.resetState}
           toggleSelection={this.toggleSelection}
-          selectUser={this.selectUser}
         />
       );
-    } else if (this.state.noAnnotations) {
+    } else if (noAnnotations) {
       selection = (
-        <Paper
-          square
-          elevation={0}
-          className={this.props.classes.resetContainer}
-        >
-          <Typography>All Tracking Videos Verified</Typography>
+        <div style={{ margin: '30px' }}>
+          <Typography>All Verified</Typography>
           <Button
+            style={{ marginTop: '15px' }}
             variant="contained"
             color="primary"
-            onClick={() =>
-              this.resetState(
-                this.setState({
-                  selectionMounted: !this.state.selectionMounted,
-                  noAnnotations: false
-                })
-              )
-            }
+            onClick={() => {
+              localStorage.setItem('selectionMounted', !selectionMounted);
+              localStorage.setItem('noAnnotations', false);
+              this.resetState();
+              this.setState({
+                selectionMounted: !selectionMounted,
+                noAnnotations: false
+              });
+            }}
           >
             Reset
           </Button>
-        </Paper>
+        </div>
       );
+    } else if (!annotations || annotations.length <= 0) {
+      selection = "";
     } else {
       selection = (
-        <Paper
-          square
-          elevation={0}
-          className={this.props.classes.resetContainer}
-        >
-          <VerifyAnnotations
-            annotation={this.state.annotations[this.state.index]}
-            index={this.state.index}
-            handleNext={this.handleNext}
-            toggleSelection={this.toggleSelection}
-            size={this.state.annotations.length}
-            tracking={this.state.selectedTrackingFirst}
-          />
-        </Paper>
+        <VerifyAnnotations
+          selectedAnnotationCollections={selectedAnnotationCollections}
+          populateIgnoreList={this.populateIgnoreList}
+          removeFromIgnoreList={this.removeFromIgnoreList}
+          ignoredAnnotations={ignoredAnnotations}
+          annotation={annotations[index]}
+          index={index}
+          handlePrev={this.handlePrev}
+          handleNext={this.handleNext}
+          toggleSelection={this.toggleSelection}
+          size={annotations.length}
+          tracking={selectedTrackingFirst}
+          resetLocalStorage={this.resetLocalStorage}
+          collectionFlag={selectedAnnotationCollections.length}
+          excludeTracking={excludeTracking}
+          annotating={annotating}
+          displayLoading={this.displayLoading}
+        />
       );
     }
 
-    return <React.Fragment>{selection}</React.Fragment>;
+    return <>{selection}</>;
   }
 }
 
-Verify.propTypes = {
-  classes: PropTypes.object
-};
-
-export default withStyles(styles)(Verify);
+export default Verify;

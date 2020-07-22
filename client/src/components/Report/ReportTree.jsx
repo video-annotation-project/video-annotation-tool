@@ -1,21 +1,24 @@
-import React, { Component } from "react";
-import PropTypes from "prop-types";
-import { withStyles } from "@material-ui/core/styles";
-import List from "@material-ui/core/List";
-import ListItem from "@material-ui/core/ListItem";
-import ListItemText from "@material-ui/core/ListItemText";
-import Collapse from "@material-ui/core/Collapse";
-import ExpandLess from "@material-ui/icons/ExpandLess";
-import ExpandMore from "@material-ui/icons/ExpandMore";
-import axios from "axios";
+import React, { Component } from 'react';
+import { withStyles } from '@material-ui/core/styles';
+import List from '@material-ui/core/List';
+import ListItem from '@material-ui/core/ListItem';
+import ListItemText from '@material-ui/core/ListItemText';
+import Collapse from '@material-ui/core/Collapse';
+import ExpandLess from '@material-ui/icons/ExpandLess';
+import ExpandMore from '@material-ui/icons/ExpandMore';
+import axios from 'axios';
+import { Typography } from '@material-ui/core';
 
-import AnnotationsGroup from "./AnnotationsGroup.jsx";
-import Annotations from "./Annotations.jsx";
+import AnnotationsGroup from './AnnotationsGroup';
+import Annotations from './Annotations';
 
 const styles = theme => ({
   root: {
     backgroundColor: theme.palette.background.paper,
     paddingLeft: theme.spacing(2)
+  },
+  text: {
+    margin: theme.spacing(2)
   }
 });
 
@@ -31,22 +34,28 @@ class ReportTree extends Component {
   }
 
   componentDidMount = async () => {
+    const {
+      levels,
+      treeDepth,
+      queryConditions,
+      unsureOnly,
+      verifiedCondition
+    } = this.props;
     const config = {
       headers: {
-        Authorization: "Bearer " + localStorage.getItem("token")
+        Authorization: `Bearer ${localStorage.getItem('token')}`
       }
     };
     await this.setState({
-      levelName: this.props.levels[this.props.treeDepth]
+      levelName: levels[treeDepth]
     });
+    const { levelName } = this.state;
     try {
-      let treeData = await axios.get(
-        `api/annotations/treeData?` +
-          `levelName=${this.state.levelName}&` +
-          `queryConditions=${this.props.queryConditions}&` +
-          `unsureOnly=${this.props.unsureOnly}&` +
-          `verifiedCondition=${this.props.verifiedCondition}&` +
-          `admin=${localStorage.getItem("admin")}`,
+      // the query has to be this long or the req.query will not register. If you broke it again, please fix it here
+      const treeData = await axios.get(
+        `api/annotations/treeData?levelName=${levelName}&queryConditions=${queryConditions}&unsureOnly=${unsureOnly}&verifiedCondition=${verifiedCondition}&admin=${localStorage.getItem(
+          'admin'
+        )}`,
         config
       );
       this.setState({
@@ -59,8 +68,8 @@ class ReportTree extends Component {
       if (!error.response) {
         return;
       }
-      let errMsg =
-        error.response.data.detail || error.response.data.message || "Error";
+      const errMsg =
+        error.response.data.detail || error.response.data.message || 'Error';
       console.log(errMsg);
       this.setState({
         isLoaded: true,
@@ -70,29 +79,65 @@ class ReportTree extends Component {
   };
 
   handleListClick = async name => {
-    let treeData = JSON.parse(JSON.stringify(this.state.treeData));
-    let selected = treeData.find(data => data.name === name);
+    let { treeData } = this.state;
+    treeData = JSON.parse(JSON.stringify(treeData));
+    const selected = treeData.find(data => data.name === name);
     selected.expanded = !selected.expanded;
     this.setState({
-      treeData: treeData
+      treeData
     });
   };
 
-  render() {
-    const { isLoaded, treeData, error } = this.state;
+  renderCollapse = data => {
     const {
-      classes,
       levels,
       treeDepth,
       queryConditions,
       unsureOnly,
-      verifiedCondition
+      verifiedCondition,
+      classes
     } = this.props;
+    const { levelName } = this.state;
+    if (levels[treeDepth + 1]) {
+      return (
+        <ReportTree
+          treeDepth={treeDepth + 1}
+          queryConditions={`${queryConditions} AND annotations.${levelName}id=${data.key}`}
+          levels={levels}
+          unsureOnly={unsureOnly}
+          classes={classes}
+          verifiedCondition={verifiedCondition}
+        />
+      );
+    }
+    if (data.count > 100) {
+      return (
+        <AnnotationsGroup
+          queryConditions={`${queryConditions} AND annotations.${levelName}id=${data.key}`}
+          unsureOnly={unsureOnly}
+          count={data.count}
+          verifiedCondition={verifiedCondition}
+        />
+      );
+    }
+    return (
+      <Annotations
+        queryConditions={`${queryConditions} AND annotations.${levelName}id=${data.key}`}
+        unsureOnly={unsureOnly}
+        verifiedCondition={verifiedCondition}
+      />
+    );
+  };
+
+  render() {
+    const { isLoaded, treeData, error } = this.state;
+    const { classes } = this.props;
+
     if (!isLoaded) {
-      return <List>Loading...</List>;
+      return <Typography className={classes.text}>Loading...</Typography>;
     }
     if (error) {
-      return <div>Error: {error}</div>;
+      return <Typography className={classes.text}>Error: {error}</Typography>;
     }
     return (
       <List disablePadding className={classes.root}>
@@ -100,52 +145,12 @@ class ReportTree extends Component {
           <React.Fragment key={data.key}>
             <ListItem button onClick={() => this.handleListClick(data.name)}>
               <ListItemText
-                primary={data.key + ": " + data.name + " count:" + data.count}
+                primary={`${data.key}: ${data.name} count:${data.count}`}
               />
               {data.expanded ? <ExpandLess /> : <ExpandMore />}
             </ListItem>
             <Collapse in={data.expanded} timeout="auto" unmountOnExit>
-              {levels[treeDepth + 1] ? (
-                <ReportTree
-                  treeDepth={treeDepth + 1}
-                  queryConditions={
-                    queryConditions +
-                    " AND annotations." +
-                    this.state.levelName +
-                    "id=" +
-                    data.key
-                  }
-                  levels={levels}
-                  unsureOnly={unsureOnly}
-                  classes={classes}
-                  verifiedCondition={verifiedCondition}
-                />
-              ) : data.count > 100 ? (
-                <AnnotationsGroup
-                  queryConditions={
-                    queryConditions +
-                    " AND annotations." +
-                    this.state.levelName +
-                    "id=" +
-                    data.key
-                  }
-                  unsureOnly={unsureOnly}
-                  count={data.count}
-                  verifiedCondition={verifiedCondition}
-                />
-              ) : (
-                <Annotations
-                  queryConditions={
-                    queryConditions +
-                    " AND annotations." +
-                    this.state.levelName +
-                    "id=" +
-                    data.key
-                  }
-                  unsureOnly={unsureOnly}
-                  verifiedCondition={verifiedCondition}
-                />
-              )}
+              {this.renderCollapse(data)}
             </Collapse>
           </React.Fragment>
         ))}
@@ -153,9 +158,5 @@ class ReportTree extends Component {
     );
   }
 }
-
-ReportTree.propTypes = {
-  classes: PropTypes.object.isRequired
-};
 
 export default withStyles(styles)(ReportTree);

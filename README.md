@@ -19,6 +19,7 @@ Our own app used for deep sea annotations is live [here](https://www.deepseaanno
 - [Api Documentation](#api-documentation)
 - [Coding Style Guide](#coding-style-guide)
 - [Configuring Tensorboard](#configuring-tensorboard)
+- [Setting up Travis CI](#setting-up-travis-ci)
 
 ## Installation
 ### Environment
@@ -116,7 +117,6 @@ Don't worry about your secrets being exposed, ```.env``` is added to ```.gitigno
 
 ### Elastic Beanstalk
 We used Elastic Beanstalk to deploy and manage our web app. Follow these instructions to be able to deploy and manage the web app.
-[Guide](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/eb-cli3-install.html)
 
 1. You will need to install and configure the EB CLI.
 See [Install the EB CLI](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/eb-cli3-install.html) and [Configure the EB CLI](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/eb-cli3-configuration.html). When configuring, make sure you enter 'video-annotation-tool' as the name of the folder in step 4.
@@ -195,3 +195,16 @@ server {
 ```
 
 This file should be placed in the `/etc/nginx/conf.d/`folder. This will allow the tensorboard server to be located at tensorboard.yourdomain.com .
+
+## Setting up Travis CI
+Follow these steps if changes are made to any env 
+  1. Install ruby dev with `sudo apt-get install ruby-dev`
+  2. Install Travis CI with `gem install travis` (Ruby required)
+  3. Compress env files with `tar cvf travis.tar .env ./client/cypress.env.json`
+  4. Delete `before_install` in `.travis.yml`
+  5. Encrypt the tar file with `travis encrypt-file travis.tar --add --pro`
+  6. Log in with GitHub credentials with `--pro` (if prompted)
+  7. Add `tar xvf travis.tar` to `before_install`
+
+## Compatibility
+This was tested on Ubuntu 18.04 with CUDA 10.0.

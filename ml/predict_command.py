@@ -1,52 +1,94 @@
 from psycopg2 import connect
-import os
+import subprocess
 from dotenv import load_dotenv
-from predict import predict_on_video
 import boto3
 import json
+from utils.query import s3, con, cursor, pd_query
+from config.config import S3_BUCKET, S3_WEIGHTS_FOLDER, WEIGHTS_PATH,\
+    AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, S3_STDOUT_FOLDER
+from train_command import setup_predict_progress, evaluate_videos, end_predictions, shutdown_server
+from botocore.exceptions import ClientError
 
-load_dotenv(dotenv_path="../.env")
 
-# AWS
-AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
-AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
-S3_BUCKET = os.getenv('AWS_S3_BUCKET_NAME')
-s3 = boto3.client('s3', aws_access_key_id = AWS_ACCESS_KEY_ID, aws_secret_access_key = AWS_SECRET_ACCESS_KEY)
-S3_WEIGHTS_FOLDER = os.getenv("AWS_S3_BUCKET_WEIGHTS_FOLDER")
+def main():
+    '''
+    get predict params
+    returns a list elements:
+    model - string: name of the model
+    userid - int: model's userid
+    concepts - int[]: list of concept ids model is trying to find
+    video - int: id of video to predict on
+    upload_annotations - boolean: if true upload annotations to database
+    '''
 
-# connect to db
-DB_NAME = os.getenv("DB_NAME")
-DB_HOST = os.getenv("DB_HOST")
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
-con = connect(database=DB_NAME, host=DB_HOST, user=DB_USER, password=DB_PASSWORD)
-cursor = con.cursor()
+    try:
+        params = pd_query("SELECT * FROM predict_params").iloc[0]
+        model_name = params["model"]
+        concepts = params["concepts"]
+        videoids = params["videos"]
+        upload_annotations = params["upload_annotations"]
+        version = params["version"]
+        create_collection = params["create_collection"]
+        userid = get_model_userid(model_name, version)
 
-config_path = "../config.json"
-load_dotenv(dotenv_path="../.env")
-with open(config_path) as config_buffer:    
-    config = json.loads(config_buffer.read())['ml']
+        user_model = model_name + "-" + version
+        download_weights(user_model)
+        setup_predict_progress(videoids)
+        evaluate_videos(concepts, videoids, user_model, upload_annotations,
+                        userid, create_collection)
+    finally:
+        reset_predict_params()
+        upload_stdout_stderr()
+        shutdown_server()
 
-weights_path = config['weights_path']
 
-# get annotations from test
-cursor.execute("SELECT * FROM MODELTAB WHERE option='runmodel'")
-info = cursor.fetchone()[1]
-if info['activeStep'] != 3:
-    exit()
+def download_weights(user_model):
+    filename = user_model + '.h5'
+    try:
+        s3.download_file(
+            S3_BUCKET,
+            S3_WEIGHTS_FOLDER + filename,
+            WEIGHTS_PATH
+        )
+        print("downloaded file: {0}".format(filename))
+    except ClientError as e:
+        print("Could not find weights file {0} in S3".format(filename))
+        raise e
 
-model_name = str(info['modelSelected'])
-s3.download_file(S3_BUCKET, S3_WEIGHTS_FOLDER + model_name + '.h5', weights_path)
 
-cursor.execute("SELECT * FROM MODELS WHERE name='" + model_name + "'")
-model = cursor.fetchone()
-videoid = int(info['videoSelected'])
-concepts = model[2]
-userid = int(info['userSelected'])
+def reset_predict_params():
+    """ Reset the predict_params table
+    """
+    print("resetting model_params")
+    cursor.execute(
+        """
+        UPDATE predict_params
+        SET model='', userid=-1, concepts=ARRAY[]::integer[],
+            upload_annotations=false, videos=ARRAY[]::integer[],
+            version='0', create_collection=false
+        """
+    )
+    con.commit()
 
-predict_on_video(videoid, weights_path, concepts, upload_annotations=True, userid)
 
-cursor.execute("Update modeltab SET info =  '{\"activeStep\": 0, \"modelSelected\":\"\",\"videoSelected\":\"\",\"userSelected\":\"\"}' WHERE option = 'predictmodel'")
-con.commit()
-con.close()    
-os.system("sudo shutdown -h")
+def upload_stdout_stderr():
+    STDOUT_FILE = "results_pred.txt"
+    STDERR_FILE = "error_pred.txt"
+
+    client = boto3.client(
+        's3',
+        aws_access_key_id=AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=AWS_SECRET_ACCESS_KEY
+    )
+    client.upload_file(STDOUT_FILE, S3_BUCKET, f'{S3_STDOUT_FOLDER}{STDOUT_FILE}')
+    client.upload_file(STDERR_FILE, S3_BUCKET, f'{S3_STDOUT_FOLDER}{STDERR_FILE}')
+
+
+def get_model_userid(name, version):
+    return int(pd_query("SELECT userid FROM model_versions WHERE "
+                        f"model='{name}' AND version='{version}'")\
+               .iloc[0]['userid'])
+
+
+if __name__ == '__main__':
+    main()

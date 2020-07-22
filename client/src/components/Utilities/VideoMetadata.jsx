@@ -1,24 +1,28 @@
-import React, { Component } from "react";
-import axios from "axios";
-import Input from "@material-ui/core/Input";
-import Dialog from "@material-ui/core/Dialog";
-import DialogContent from "@material-ui/core/DialogContent";
-import DialogContentText from "@material-ui/core/DialogContentText";
-import DialogTitle from "@material-ui/core/DialogTitle";
-import DialogActions from "@material-ui/core/DialogActions";
-import Button from "@material-ui/core/Button";
-import Radio from "@material-ui/core/Radio";
-import { withStyles } from "@material-ui/core/styles";
+import React, { Component } from 'react';
+import axios from 'axios';
+import Input from '@material-ui/core/Input';
+import Dialog from '@material-ui/core/Dialog';
+import DialogContent from '@material-ui/core/DialogContent';
+import DialogTitle from '@material-ui/core/DialogTitle';
+import DialogActions from '@material-ui/core/DialogActions';
+import Button from '@material-ui/core/Button';
+import Radio from '@material-ui/core/Radio';
+import { withStyles } from '@material-ui/core/styles';
+import { Typography } from '@material-ui/core';
+import Checkbox from '@material-ui/core/Checkbox';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
 
-import Summary from "./Summary.jsx";
+import Summary from './Summary';
 
 const styles = theme => ({
   dialogStyle: {
+    margin: theme.spacing(),
     width: theme.spacing(50),
-    height: theme.spacing(65),
-    boxShadow: theme.shadows[5],
-    margin: "auto",
-    outline: "none"
+    outline: 'none'
+  },
+  descriptionInput: {
+    float: 'left',
+    marginRight: '10px'
   }
 });
 
@@ -37,41 +41,42 @@ class VideoMetadata extends Component {
   componentDidMount = () => {
     const config = {
       headers: {
-        Authorization: "Bearer " + localStorage.getItem("token")
+        Authorization: `Bearer ${localStorage.getItem('token')}`
       }
     };
+    const { openedVideo } = this.props;
     axios
-      .get("/api/videos/" + this.props.openedVideo.id, config)
+      .get(`/api/videos/${openedVideo.id}`, config)
       .then(response => {
-        //Logic to check video's status from user checkpoints
-        let username = localStorage.getItem("username");
-        let usersWatching = response.data[0].userswatching;
-        let usersFinished = response.data[0].usersfinished;
-        let userIndex = usersWatching.indexOf(username);
-        let videoStatus = "inProgress";
+        // Logic to check video's status from user checkpoints
+        const username = localStorage.getItem('username');
+        const usersWatching = response.data[0].userswatching;
+        const usersFinished = response.data[0].usersfinished;
+        const userIndex = usersWatching.indexOf(username);
+        let videoStatus = 'inProgress';
 
         if (userIndex === -1) {
-          videoStatus = "unwatched";
+          videoStatus = 'unwatched';
         } else if (usersFinished[userIndex]) {
-          videoStatus = "annotated";
+          videoStatus = 'annotated';
         }
         this.setState({
           videoMetadata: response.data[0],
-          videoStatus: videoStatus,
+          videoStatus,
           isLoaded: true
         });
       })
       .catch(error => {
-        console.log("Error in VideoMetadata.jsx get /api/videoMetadata/");
+        console.log('Error in VideoMetadata.jsx get /api/videoMetadata/');
         console.log(error);
       });
   };
 
   handleKeyPress = e => {
-    if (e.key === "Enter") {
+    if (e.key === 'Enter') {
       this.update();
     } else {
-      let videoMetadata = this.state.videoMetadata;
+      const { videoMetadata } = this.state;
       videoMetadata.description = e.target.value + e.key;
       this.setState({
         videoMetadata: JSON.parse(JSON.stringify(videoMetadata))
@@ -80,53 +85,59 @@ class VideoMetadata extends Component {
   };
 
   update = () => {
+    const { handleClose } = this.props;
     this.updateVideoDescription();
-    this.updateVideoStatus();
-    this.props.handleClose();
+    this.updateVideoCheckpoint();
+    handleClose();
   };
 
   updateVideoDescription = () => {
+    const { openedVideo } = this.props;
+    const { videoMetadata } = this.state;
     const body = {
-      description: this.state.videoMetadata.description
+      description: videoMetadata.description,
+      goodvideo: videoMetadata.goodvideo
     };
     const config = {
       headers: {
-        Authorization: "Bearer " + localStorage.getItem("token")
+        Authorization: `Bearer ${localStorage.getItem('token')}`
       }
     };
     axios
-      .patch("/api/videos/" + this.props.openedVideo.id, body, config)
+      .patch(`/api/videos/${openedVideo.id}`, body, config)
       .then(updateRes => {
         console.log(updateRes);
       })
       .catch(error => {
-        console.log("Error in VideoMetadata.jsx patch /api/videos");
+        console.log('Error in VideoMetadata.jsx patch /api/videos');
         console.log(error.response.data);
       });
   };
 
-  updateVideoStatus = () => {
+  updateVideoCheckpoint = () => {
+    const { openedVideo, socket } = this.props;
+    const { videoStatus } = this.state;
+
     const config = {
-      url: "/api/videos/checkpoints/" + this.props.openedVideo.id,
+      url: `/api/videos/checkpoints/${openedVideo.id}`,
       headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + localStorage.getItem("token")
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`
       },
       data: {
-        timeinvideo: this.props.openedVideo.timeinvideo,
-        finished: this.state.videoStatus === "annotated" ? true : false
+        timeinvideo: openedVideo.timeinvideo,
+        finished: videoStatus === 'annotated'
       }
     };
-    config.method = this.state.videoStatus === "unwatched" ? "delete" : "put";
+    config.method = videoStatus === 'unwatched' ? 'delete' : 'put';
     axios
       .request(config)
       .then(res => {
-        this.props.loadVideos();
-        this.props.socket.emit("refresh videos");
-        console.log("Changed: " + res.data.message);
+        socket.emit('refresh videos');
+        console.log(`Changed: ${res.data.message}`);
       })
       .catch(error => {
-        console.log("Error in /api/videos " + config.method);
+        console.log(`Error in /api/videos ${config.method}`);
         console.log(error);
       });
   };
@@ -148,18 +159,19 @@ class VideoMetadata extends Component {
   };
 
   getSummary = () => {
+    const { openedVideo } = this.props;
     const config = {
       headers: {
-        Authorization: "Bearer " + localStorage.getItem("token")
+        Authorization: `Bearer ${localStorage.getItem('token')}`
       }
     };
     return axios
-      .get("/api/videos/summary/" + this.props.openedVideo.id, config)
+      .get(`/api/videos/summary/${openedVideo.id}`, config)
       .then(summary => {
         return summary;
       })
       .catch(error => {
-        console.log("Error in VideoMetadata.jsx patch /api/videos/summary");
+        console.log('Error in VideoMetadata.jsx patch /api/videos/summary');
         console.log(error.response.data);
       });
   };
@@ -171,10 +183,24 @@ class VideoMetadata extends Component {
   };
 
   render() {
-    const { classes, openedVideo } = this.props;
-    const { isLoaded, videoStatus } = this.state;
+    const { classes, openedVideo, open, modelTab } = this.props;
+    const {
+      isLoaded,
+      videoStatus,
+      videoMetadata,
+      descriptionOpen,
+      summary
+    } = this.state;
     if (!isLoaded) {
-      return <div>Loading...</div>;
+      return (
+        <Dialog
+          onClose={this.update}
+          open={open}
+          aria-labelledby="form-dialog-title"
+        >
+          <div>Loading...</div>
+        </Dialog>
+      );
     }
     const {
       filename,
@@ -185,110 +211,113 @@ class VideoMetadata extends Component {
       enddepth,
       starttime,
       endtime,
-      userswatching
-    } = this.state.videoMetadata;
+      userswatching,
+      goodvideo
+    } = videoMetadata;
+
+    const startdate = new Date(starttime);
+    const enddate = new Date(endtime);
 
     return (
-      <Dialog
-        onClose={this.props.handleClose}
-        open={this.props.open}
-        aria-labelledby="form-dialog-title"
-      >
+      <Dialog onClose={this.update} open={open}>
         <div className={classes.dialogStyle}>
-          <DialogTitle id="form-dialog-title">
-            <small>
-              Video:{openedVideo.id}
-              <br />
-              {filename}
-            </small>
+          <DialogTitle>
+            Video {openedVideo.id}: {filename}
           </DialogTitle>
           <DialogContent>
-            <DialogContentText>
-              Users Watching: {userswatching.join(", ")}
-              <br />
-              GPS start: {gpsstart.x + ", " + gpsstart.y}
-              <br />
-              GPS stop: {gpsstop.x + ", " + gpsstop.y}
-              <br />
-              Start Depth: {startdepth}
-              <br />
-              End Depth: {enddepth}
-              <br />
-              Start Time: {starttime}
-              <br />
-              End Time: {endtime}
-              <br />
-            </DialogContentText>
-            <br />
+            <Typography>Users Watching: {userswatching.join(', ')}</Typography>
+            <Typography>GPS Start: {`${gpsstart.x}, ${gpsstart.y}`}</Typography>
+            <Typography>GPS Stop: {`${gpsstop.x}, ${gpsstop.y}`}</Typography>
+            <Typography>Start Depth: {startdepth} m</Typography>
+            <Typography>End Depth: {enddepth} m</Typography>
+            <Typography>Start Date: {startdate.toString()}</Typography>
+            <Typography>End Date: {enddate.toString()}</Typography>
             <Input
+              style={{ marginTop: '18px' }}
               onKeyPress={this.handleKeyPress}
+              className={classes.descriptionInput}
               autoFocus
               id="concept"
               type="text"
               defaultValue={description}
-              placeholder={"Description"}
+              placeholder="Description"
               multiline
-              disabled={this.props.modelTab}
+              disabled={modelTab}
+            />
+            <FormControlLabel
+              style={{ marginTop: '15px' }}
+              control={
+                <Checkbox
+                  checked={goodvideo}
+                  onChange={() => {
+                    let deepMetaData = JSON.parse(
+                      JSON.stringify(videoMetadata)
+                    );
+                    deepMetaData.goodvideo = !goodvideo;
+                    console.log(deepMetaData);
+
+                    this.setState({
+                      videoMetadata: deepMetaData
+                    });
+                  }}
+                  value="goodVideo"
+                  color="secondary"
+                />
+              }
+              label="Good Video"
             />
           </DialogContent>
           <Radio
-            checked={videoStatus === "unwatched"}
+            checked={videoStatus === 'unwatched'}
             onChange={this.handleVideoStatusChange}
             value="unwatched"
             color="default"
-            disabled={this.props.modelTab}
+            disabled={modelTab}
+            style={{ marginLeft: '15px' }}
           />
           Unwatched
           <Radio
-            checked={videoStatus === "annotated"}
+            checked={videoStatus === 'annotated'}
             onChange={this.handleVideoStatusChange}
             value="annotated"
             color="default"
-            disabled={this.props.modelTab}
+            disabled={modelTab}
           />
           Annotated
           <Radio
-            checked={videoStatus === "inProgress"}
+            checked={videoStatus === 'inProgress'}
             onChange={this.handleVideoStatusChange}
             value="inProgress"
             color="default"
-            disabled={this.props.modelTab}
+            disabled={modelTab}
           />
           In Progress
-          <DialogActions>
+          <DialogActions style={{ margin: '10px' }}>
             <Button
               onClick={event => this.openVideoSummary(event)}
+              variant="contained"
               color="primary"
             >
               Summary
             </Button>
-            <Button onClick={this.props.handleClose} color="primary">
-              Cancel
-            </Button>
             <Button
               onClick={this.update}
+              variant="contained"
               color="primary"
-              disabled={this.props.modelTab}
+              disabled={modelTab}
             >
               Update
             </Button>
           </DialogActions>
-          {this.state.descriptionOpen && (
+          {descriptionOpen && (
             <Summary
-              open={
-                true /* The 'openness' is controlled through
-              boolean logic rather than by passing in a variable as an
-              attribute. This is to force Summary to unmount when it 
-              closes so that its state is reset. This also prevents the 
-              accidental double submission bug, by implicitly reducing 
-              the transition time of Summary to zero. */
-              }
+              open
               handleClose={this.closeVideoSummary}
               gpsstart={gpsstart}
               gpsstop={gpsstop}
               startdepth={startdepth}
               enddepth={enddepth}
-              summary={this.state.summary}
+              summary={summary}
             />
           )}
         </div>

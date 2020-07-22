@@ -1,20 +1,20 @@
-import React, { Component } from "react";
-import PropTypes from "prop-types";
-import { withStyles } from "@material-ui/core/styles";
-import List from "@material-ui/core/List";
-import ListItem from "@material-ui/core/ListItem";
-import ListItemText from "@material-ui/core/ListItemText";
-import Collapse from "@material-ui/core/Collapse";
-import ExpandLess from "@material-ui/icons/ExpandLess";
-import ExpandMore from "@material-ui/icons/ExpandMore";
+import React, { Component } from 'react';
+import { withStyles } from '@material-ui/core/styles';
+import List from '@material-ui/core/List';
+import ListItem from '@material-ui/core/ListItem';
+import ListItemText from '@material-ui/core/ListItemText';
+import Collapse from '@material-ui/core/Collapse';
+import ExpandLess from '@material-ui/icons/ExpandLess';
+import ExpandMore from '@material-ui/icons/ExpandMore';
 
-import Annotations from "./Annotations.jsx";
+import Annotations from './Annotations';
+import { Typography } from '@material-ui/core';
 
 const styles = theme => ({
   icons: {
-    float: "left",
-    position: "relative",
-    left: "-50px"
+    float: 'left',
+    position: 'relative',
+    left: '-50px'
   },
   button: {
     margin: theme.spacing()
@@ -37,66 +37,68 @@ class AnnotationsGroup extends Component {
   }
 
   componentDidMount = async () => {
-    let annotationGroups = [];
-    for (let i = 0; i < this.props.count; i += this.state.groupInterval) {
+    const { count } = this.props;
+    const { groupInterval } = this.state;
+
+    const annotationGroups = [];
+    for (let i = 0; i < count; i += groupInterval) {
       annotationGroups.push({ offset: i, extended: false });
     }
     this.setState({
       isLoaded: true,
-      annotationGroups: annotationGroups
+      annotationGroups
     });
   };
 
   handleClick = offset => {
-    let annotationGroups = JSON.parse(
-      JSON.stringify(this.state.annotationGroups)
-    );
-    let group = annotationGroups.find(group => group.offset === offset);
+    const { annotationGroups } = this.state;
+
+    const group = annotationGroups.find(g => g.offset === offset);
     group.expanded = !group.expanded;
+
     this.setState({
-      annotationGroups: annotationGroups
+      annotationGroups
     });
   };
 
   render() {
     const { error, isLoaded, annotationGroups, groupInterval } = this.state;
-    const { 
+    const {
       classes,
-      queryConditions, 
-      unsureOnly, 
+      queryConditions,
+      unsureOnly,
       count,
       verifiedCondition
     } = this.props;
     if (!isLoaded) {
-      return <List>Loading...</List>;
+      return <Typography style={{ margin: '20px' }}>Loading...</Typography>;
     }
     if (error) {
-      return <List>Error: {error.message}</List>;
+      return (
+        <Typography style={{ margin: '20px' }}>
+          Error: {error.message}
+        </Typography>
+      );
     }
     return (
-      <React.Fragment>
+      <>
         <List disablePadding className={classes.root}>
           {annotationGroups.map(group => (
             <React.Fragment key={group.offset}>
               <ListItem button onClick={() => this.handleClick(group.offset)}>
                 <ListItemText
-                  primary={
-                    group.offset +
-                    1 +
-                    " to " +
-                    (parseFloat(group.offset) + groupInterval > count
+                  primary={`${group.offset + 1} to ${
+                    parseFloat(group.offset) + groupInterval > count
                       ? count
-                      : parseFloat(group.offset) + groupInterval)
-                  }
+                      : parseFloat(group.offset) + groupInterval
+                  }`}
                 />
                 {group.expanded ? <ExpandLess /> : <ExpandMore />}
               </ListItem>
               <Collapse in={group.expanded} timeout="auto" unmountOnExit>
                 <Annotations
                   queryConditions={queryConditions}
-                  queryLimit={
-                    " LIMIT " + groupInterval + " OFFSET " + group.offset
-                  }
+                  queryLimit={` LIMIT ${groupInterval} OFFSET ${group.offset}`}
                   unsureOnly={unsureOnly}
                   verifiedCondition={verifiedCondition}
                 />
@@ -104,13 +106,9 @@ class AnnotationsGroup extends Component {
             </React.Fragment>
           ))}
         </List>
-      </React.Fragment>
+      </>
     );
   }
 }
-
-AnnotationsGroup.propTypes = {
-  classes: PropTypes.object.isRequired
-};
 
 export default withStyles(styles)(AnnotationsGroup);

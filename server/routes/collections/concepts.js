@@ -1,10 +1,17 @@
-const router = require("express").Router();
-const passport = require("passport");
-const psql = require("../../db/simpleConnect");
+const router = require('express').Router();
+const passport = require('passport');
+const psql = require('../../db/simpleConnect');
 
+/**
+ * @route GET /api/collections/concepts
+ * @group collections
+ * @summary Get all concept collections and its concepts
+ * @returns {Array.<object>} 200 - An array of every concept collection
+ * @returns {Error} 500 - Unexpected database error
+ */
 router.get(
-  "/",
-  passport.authenticate("jwt", { session: false }),
+  '/',
+  passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     let queryText = `
     SELECT
@@ -37,29 +44,40 @@ router.get(
   }
 );
 
+/**
+ * @route POST /api/collections/concepts
+ * @group collections
+ * @summary Post a new concept collection
+ * @param {string} name.body - Collection name
+ * @param {string} description.body - Collection description
+ * @returns {Success} 200 - Concept collection created
+ * @returns {Error} 500 - Unexpected database error
+ */
 router.post(
-  "/",
-  passport.authenticate("jwt", { session: false }),
+  '/',
+  passport.authenticate('jwt', { session: false }),
   async (req, res) => {
-    // const queryText = `
-    //   INSERT INTO
-    //     concept_collection (name, description, parent)
-    //   VALUES
-    //     ($1, $2, 0)
-    //   RETURNING *
-    // `;
-    const queryText = `
+    const queryText1 = `
       INSERT INTO 
         concept_collection (name, description)
       VALUES
         ($1, $2)
       RETURNING *
     `;
+
+    const queryText2 = `
+      INSERT INTO
+        concepts (id, name, parent)
+      VALUES
+        ($1, $2, -1)
+    `;
+
     try {
-      let insert = await psql.query(queryText, [
+      let insert = await psql.query(queryText1, [
         req.body.name,
         req.body.description
       ]);
+      await psql.query(queryText2, [-insert.rows[0].id, req.body.name])
       res.json({ value: JSON.stringify(insert.rows) });
     } catch (error) {
       res.status(400).json(error);
@@ -67,31 +85,36 @@ router.post(
   }
 );
 
-// router.patch()
+/**
+ * @route DELETE /api/collections/concepts/:id
+ * @group collections
+ * @summary Delete an concept collection
+ * @param {String} id.params - Collection id
+ * @returns {Success} 200 - Concept collection deleted
+ * @returns {Error} 500 - Unexpected database error
+ */
 router.delete(
-  "/:id",
-  // "/",
-  passport.authenticate("jwt", { session: false }),
+  '/:id',
+  passport.authenticate('jwt', { session: false }),
   async (req, res) => {
-    const queryText = `
+    const queryText1 = `
       DELETE FROM 
         concept_collection
       WHERE
         id = $1
       RETURNING *
     `;
-    // const queryText = `
-    //   UPDATE
-    //     concept_collection
-    //   SET
-    //     deleted_flag=TRUE
-    //   WHERE
-    //     collectionid=$1
-    //   RETURNING *
-    // `;
+
+    const queryText2 = `
+      DELETE FROM 
+        concepts
+      WHERE
+        id = $1
+    `;
+
     try {
-      let deleted = await psql.query(queryText, [req.params.id]);
-      // let deleted = await psql.query(queryText, [req.body.id]);
+      let deleted = await psql.query(queryText1, [req.params.id]);
+      await psql.query(queryText2, [-req.params.id]);
       if (deleted) {
         res.json(deleted);
       }
@@ -102,8 +125,8 @@ router.delete(
 );
 
 router.post(
-  "/:id",
-  passport.authenticate("jwt", { session: false }),
+  '/:id',
+  passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     let params = [req.params.id];
     let queryText = `

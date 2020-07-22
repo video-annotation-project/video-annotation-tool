@@ -1,11 +1,11 @@
 const router = require('express').Router();
-const passport = require("passport");
-const psql = require("../../db/simpleConnect");
-const AWS = require("aws-sdk");
+const passport = require('passport');
+const psql = require('../../db/simpleConnect');
 
-router.use('/checkpoints', require('./checkpoints'))
-router.use('/aivideos', require('./ai_videos'))
+var data = require('../../../config.json');
 
+router.use('/checkpoints', require('./checkpoints'));
+router.use('/aivideos', require('./ai_videos'));
 
 /**
  * @typedef video
@@ -27,12 +27,14 @@ router.use('/aivideos', require('./ai_videos'))
 
 /**
  * @route GET /api/videos
- * @group videos 
+ * @group videos
  * @summary Get a list of all videos, separated by progress
  * @returns {videoArray.model} 200 - An object containing 4 arrays of videos separated based on progress
  * @returns {Error} 500 - Unexpected database error
  */
-router.get("/", passport.authenticate("jwt", { session: false }),
+router.get(
+  '/',
+  passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     let userId = req.user.id;
     //These need to be updated using joins to become optimal
@@ -147,14 +149,17 @@ router.get("/", passport.authenticate("jwt", { session: false }),
  */
 /**
  * @route GET /api/videos/summary/:videoid
- * @group videos 
+ * @group videos
  * @summary Get a list of concepts in a video
  * @param {integer} videoid.url.required - ID of the video to get the array from
  * @returns {Array.<summary>} 200 - An array of concepts in the video
  * @returns {Error} 500 - Unexpected database error
  */
-router.get("/summary/:videoid", passport.authenticate("jwt", { session: false }),
+router.get(
+  '/summary/:videoid',
+  passport.authenticate('jwt', { session: false }),
   async (req, res) => {
+    tracking_userid = data.ml.tracking_userid;
     let queryText = `
     SELECT 
       *
@@ -166,28 +171,35 @@ router.get("/summary/:videoid", passport.authenticate("jwt", { session: false })
           conceptid, videoid, COUNT(*) 
         FROM 
           annotations 
+        WHERE userid != $1
         GROUP BY conceptid, videoid
       ) AS counts ON counts.conceptid=a.id
-    WHERE videoid = $1`;
+    WHERE videoid = $2`;
     try {
-      const summary = await psql.query(queryText, [req.params.videoid]);
+      const summary = await psql.query(queryText, [
+        tracking_userid,
+        req.params.videoid
+      ]);
       res.json(summary.rows);
     } catch (error) {
-      console.log("Error in get /api/videos/summary/:videoid");
+      console.log('Error in get /api/videos/summary/:videoid');
       console.log(error);
       res.status(500).json(error);
     }
   }
 );
 
-router.patch("/:videoid", passport.authenticate("jwt", { session: false }),
+router.patch(
+  '/:videoid',
+  passport.authenticate('jwt', { session: false }),
   async (req, res) => {
-    let queryText = 'UPDATE videos SET description=$1 WHERE id=$2 RETURNING *';
+    const { description, goodvideo } = req.body;
+    const { videoid } = req.params;
+    const params = [description, goodvideo, videoid];
+    let queryText =
+      'UPDATE videos SET description=$1, goodvideo=$2 WHERE id=$3 RETURNING *';
     try {
-      const updateRes = await psql.query(queryText, [
-        req.body.description,
-        req.params.videoid
-      ]);
+      const updateRes = await psql.query(queryText, params);
       res.json(updateRes.rows);
     } catch (error) {
       res.status(500).json(error);
@@ -195,8 +207,9 @@ router.patch("/:videoid", passport.authenticate("jwt", { session: false }),
   }
 );
 
-
-router.get("/:videoid", passport.authenticate("jwt", { session: false }),
+router.get(
+  '/:videoid',
+  passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     let queryText = `
       SELECT 
