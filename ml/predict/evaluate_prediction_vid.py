@@ -386,7 +386,7 @@ def evaluate(video_id, model_username, concepts, upload_annotations=False,
 
     tracking_id = pd_query(f"""
         SELECT id from users where username='tracking'
-    """).id[0]
+    """, local_con=local_con).id[0]
 
     tuple_concept = ''
     if len(concepts) == 1:
