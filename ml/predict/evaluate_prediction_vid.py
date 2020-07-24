@@ -278,7 +278,7 @@ def generate_video(filename, video_capture, results, concepts, video_id,
     conceptsCounts = {concept: 0 for concept in concepts}
     total_length = int(video_capture.get(cv2.CAP_PROP_FRAME_COUNT))
     one_percent_length = int(total_length / 100)
-    seenObjects = []
+    seenObjects = {}
 
     print("Opening video writer")
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
@@ -310,12 +310,12 @@ def generate_video(filename, video_capture, results, concepts, video_id,
                 # Keeps count of concepts
                 if (res.objectid not in seenObjects):
                     conceptsCounts[res.label] += 1
-                    seenObjects.append(res.objectid)
+                    seenObjects[res.objectid] = conceptsCounts[res.label]
                 # Draw an (AI) green box
                 cv2.rectangle(frame, (x1, y1),
                               (x2, y2), (0, 255, 0), 2)
                 # boxText = count concept-name (confidence) e.g. "1 Starfish (0.5)"
-                boxText = str(conceptsCounts[res.label]) + " " + boxText + \
+                boxText = str(seenObjects[res.objectid]) + " " + boxText + \
                     " (" + str(round(res.confidence, 3)) + ")"
             cv2.putText(
                 frame, boxText,
