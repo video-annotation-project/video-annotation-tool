@@ -2,7 +2,6 @@ import copy
 import os
 import uuid
 import datetime
-import psutil
 import itertools
 import sys
 
@@ -13,21 +12,9 @@ import subprocess
 
 from config import config
 from utils.query import pd_query
-from ffmpy import FFmpeg
 from memory_profiler import profile
 
 fp = open('memory_profiler.log', 'w+')
-
-
-def get_classmap(concepts, local_con=None):
-    classmap = []
-    for concept in concepts:
-        name = pd_query("select name from concepts where id=%s",
-                        (str(concept),), local_con=local_con).iloc[0]["name"]
-        classmap.append([name, concepts.index(concept)])
-    classmap = pd.DataFrame(classmap)
-    classmap = classmap.to_dict()[0]
-    return classmap
 
 
 def printing_with_time(text):
@@ -103,74 +90,19 @@ class Tracked_object(object):
         self.annotations['objectid'] = matched_obj_id
 
 
-def resize(row):
-    new_width = config.RESIZED_WIDTH
-    new_height = config.RESIZED_HEIGHT
-    row.x1 = (row.x1 * new_width) / row.videowidth
-    row.x2 = (row.x2 * new_width) / row.videowidth
-    row.y1 = (row.y1 * new_height) / row.videoheight
-    row.y2 = (row.y2 * new_height) / row.videoheight
-    row.videowidth = new_width
-    row.videoheight = new_height
-    return row
-
-
 @profile(stream=fp)
-def predict_on_video(videoid, model_weights, concepts, filename,
+def predict_on_video(videoid, model_weights, concepts, filename, video_capture,
                      upload_annotations=False, userid=None, collection_id=None,
                      collections=None, local_con=None, s3=None, gpu_id=None):
-    vid_filename = pd_query(f'''
-            SELECT *
-            FROM videos
-            WHERE id ={videoid}''', local_con=local_con).iloc[0].filename
-    print("Loading Video.")
-    video_capture = get_video_capture(vid_filename, s3=s3)
-
-    # Get biologist annotations for video
-    printing_with_time("Before database query")
-    tuple_concept = ''
-    if len(concepts) == 1:
-        tuple_concept = f''' = {str(concepts)}'''
-    else:
-        tuple_concept = f''' in {str(tuple(concepts))}'''
-    print(concepts)
-    annotations = pd_query(
-        f'''
-        SELECT
-          x1, y1, x2, y2,
-          conceptid as label,
-          null as confidence,
-          null as objectid,
-          videowidth, videoheight,
-          CASE WHEN
-            framenum is not null
-          THEN
-            framenum
-          ELSE
-            FLOOR(timeinvideo*{video_capture.get(cv2.CAP_PROP_FPS)})
-          END AS frame_num
-        FROM
-          annotations
-        WHERE
-          videoid={videoid} AND
-          userid in {str(tuple(config.GOOD_USERS))} AND
-          conceptid {tuple_concept}''', local_con=local_con)
-    print(f'Number of human annotations {len(annotations)}')
-    printing_with_time("After database query")
-
-    printing_with_time("Resizing annotations.")
-    annotations = annotations.apply(resize, axis=1)
-    annotations = annotations.drop(['videowidth', 'videoheight'], axis=1)
-    printing_with_time("Done resizing annotations.")
-
     print("Initializing Model")
     model = init_model(model_weights, gpu_id)
 
     printing_with_time("Predicting")
-    results = predict_frames(video_capture, model, videoid, concepts, collections, local_con)
+    results = predict_frames(video_capture, model,
+                             videoid, concepts, collections, local_con)
     if (results.empty):
         print("no predictions")
-        return results, annotations
+        return results
 
     results = propagate_conceptids(results)
     results = length_limit_objects(results, config.MIN_FRAMES_THRESH)
@@ -190,28 +122,7 @@ def predict_on_video(videoid, model_weights, concepts, filename,
                                                  s3=s3), axis=1)
         local_con.commit()
 
-    printing_with_time("Generating Video")
-    generate_video(
-        filename, video_capture,
-        results, list(concepts) + list(collections.keys()), videoid, annotations, local_con=local_con, s3=s3)
-
-    printing_with_time("Done generating")
-    return results, annotations
-
-def get_video_capture(vid_filename, s3=None):
-    vid_filepath = os.path.join(config.VIDEO_FOLDER, vid_filename)
-    if not os.path.exists(vid_filepath):
-        s3.download_file(
-            config.S3_BUCKET,
-            config.S3_VIDEO_FOLDER + vid_filename,
-            vid_filepath,
-        )
-
-    vid = cv2.VideoCapture(vid_filepath)
-    while not vid.isOpened():
-        time.sleep(1)
-    print("Successfully opened video.")
-    return vid
+    return results
 
 
 def init_model(model_path, gpu_id):
@@ -232,7 +143,8 @@ def predict_frames(video_capture, model, videoid, concepts, collections=None, lo
                 'label', 'confidence', 'objectid', 'frame_num']
         )]
 
-    max_tracked_frames = int(video_capture.get(cv2.CAP_PROP_FPS) * config.MAX_TIME_BACK)
+    max_tracked_frames = int(video_capture.get(
+        cv2.CAP_PROP_FPS) * config.MAX_TIME_BACK)
     total_frames = int(video_capture.get(cv2.CAP_PROP_FRAME_COUNT))
     one_percent_length = int(total_frames / 100)
     frame_num = 0
@@ -243,7 +155,8 @@ def predict_frames(video_capture, model, videoid, concepts, collections=None, lo
         check, frame = video_capture.read()
         if not check:
             break
-        frame = cv2.resize(frame, (config.RESIZED_WIDTH, config.RESIZED_HEIGHT))
+        frame = cv2.resize(
+            frame, (config.RESIZED_WIDTH, config.RESIZED_HEIGHT))
         video_frames = [frame] + video_frames[:max_tracked_frames]
 
         if frame_num % one_percent_length == 0:
@@ -533,10 +446,9 @@ def make_annotation(box, object_id, frame_num):
     annotation['frame_num'] = frame_num
     return annotation
 
+
 # Given a list of annotations(some with or without labels/confidence scores)
 # for multiple objects choose a label for each object
-
-
 def propagate_conceptids(annotations):
     objects = annotations.groupby(['objectid'])
     for oid, group in objects:
@@ -551,112 +463,15 @@ def propagate_conceptids(annotations):
     annotations['conceptid'] = annotations['label']
     return annotations
 
+
 # Limit results based on tracked object length (ex. > 30 frames)
-
-
 def length_limit_objects(pred, frame_thresh):
     obj_len = pred.groupby('objectid').label.value_counts()
     len_thresh = obj_len[obj_len > frame_thresh]
     return pred[[(obj in len_thresh) for obj in pred.objectid]]
 
-# Generates the video with the ground truth frames interlaced
 
-
-@profile(stream=fp)
-def generate_video(filename, video_capture, results, concepts, video_id,
-                   annotations, local_con=None, s3=None):
-
-    print("Inside generating video")
-    # Combine human and prediction annotations
-    results = results.append(annotations, sort=True)
-    # Cast frame_num to int (prevent indexing errors)
-    results.frame_num = results.frame_num.astype('int')
-    classmap = get_classmap(concepts, local_con)
-
-    # make a dictionary mapping conceptid to count (init 0)
-    conceptsCounts = {concept: 0 for concept in concepts}
-    total_length = int(video_capture.get(cv2.CAP_PROP_FRAME_COUNT))
-    one_percent_length = int(total_length / 100)
-    seenObjects = []
-
-    print("Opening video writer")
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    out = cv2.VideoWriter(filename, fourcc, video_capture.get(cv2.CAP_PROP_FPS),
-                          (config.RESIZED_WIDTH, config.RESIZED_HEIGHT))
-    print("Opened video writer")
-
-    video_capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
-    for frame_num in range(total_length):
-        check, frame = video_capture.read()
-        if not check:
-            break
-
-        if frame_num % one_percent_length == 0:
-            upload_predict_progress(
-                frame_num, video_id, total_length, 3, local_con=local_con)
-
-        for res in results[results.frame_num == frame_num].itertuples():
-            x1, y1, x2, y2 = int(res.x1), int(res.y1), int(res.x2), int(res.y2)
-            # boxText init to concept name
-            boxText = classmap[concepts.index(res.label)]
-
-            if pd.isna(res.confidence):  # No confidence means user annotation
-                # Draws a (user) red box
-                # Note: opencv uses color as BGR
-                cv2.rectangle(frame, (x1, y1),
-                              (x2, y2), (0, 0, 255), 2)
-            else:  # if confidence exists -> AI annotation
-                # Keeps count of concepts
-                if (res.objectid not in seenObjects):
-                    conceptsCounts[res.label] += 1
-                    seenObjects.append(res.objectid)
-                # Draw an (AI) green box
-                cv2.rectangle(frame, (x1, y1),
-                              (x2, y2), (0, 255, 0), 2)
-                # boxText = count concept-name (confidence) e.g. "1 Starfish (0.5)"
-                boxText = str(conceptsCounts[res.label]) + " " + boxText + \
-                    " (" + str(round(res.confidence, 3)) + ")"
-            cv2.putText(
-                frame, boxText,
-                (x1 - 5, y2 + 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
-        out.write(frame)
-    
-    out.release()
-
-    save_video(filename, s3=s3)
-
-
-@profile(stream=fp)
-def save_video(filename, s3=None):
-    # convert to mp4 and upload to s3 and db
-    # requires temp so original not overwritten
-    converted_file = str(uuid.uuid4()) + ".mp4"
-    # Convert file so we can stream on s3
-    ff = FFmpeg(
-        inputs={filename: ['-loglevel', '0']},
-        outputs={converted_file: ['-codec:v', 'libx264', '-y']}
-    )
-    print(ff.cmd)
-    print(psutil.virtual_memory())
-    ff.run()
-
-    # temp = ['ffmpeg', '-loglevel', '0', '-i', filename,
-    #         '-codec:v', 'libx264', '-y', converted_file]
-    # subprocess.call(temp)
-    # upload video..
-    s3.upload_file(
-        converted_file, config.S3_BUCKET,
-        config.S3_BUCKET_AIVIDEOS_FOLDER + filename,
-        ExtraArgs={'ContentType': 'video/mp4'})
-    # remove files once uploaded
-    os.system('rm \'' + filename + '\'')
-    os.system('rm ' + converted_file)
-
-    cv2.destroyAllWindows()
-
-# Chooses single prediction for each object (the middle frame)
-
-
+# Chooses single prediction for each object (the middle frame)s
 def get_final_predictions(results):
     middle_frames = []
     for obj in [df for _, df in results.groupby('objectid')]:
@@ -672,7 +487,7 @@ def get_final_predictions(results):
 
 
 def handle_annotation(prediction, video_capture, videoid, videoheight, videowidth, userid, collection_id, cursor=None, s3=None):
-    frame = get_frame(video_capture, frame_num)
+    frame = get_frame(video_capture, prediction['frame_num'])
     annotation_id = upload_annotation(frame,
                                       *prediction.loc[['x1', 'x2', 'y1',
                                                        'y2', 'frame_num',
@@ -688,14 +503,17 @@ def handle_annotation(prediction, video_capture, videoid, videoheight, videowidt
             (collection_id, annotation_id)
         )
 
+
 def get_frame(video_capture, frame_num):
     video_capture.set(cv2.CAP_PROP_POS_FRAMES)
     check, frame = video_capture.read()
     if not check:
-        print(f'failed to get frame {frame_num}', file=std.err)
+        print(f'failed to get frame {frame_num}', file=sys.stderr)
     return frame
 
 # Uploads images and puts annotation in database
+
+
 def upload_annotation(frame, x1, x2, y1, y2,
                       frame_num, conceptid, videoid, videowidth, videoheight, userid, fps, cursor=None, s3=None):
     if userid is None:

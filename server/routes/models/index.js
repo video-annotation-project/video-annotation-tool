@@ -36,13 +36,15 @@ router.get(
     concept_counts,
     start_trains,
     0 AS version_selected,
-    (array_agg(videos))[1] as videos
+    (array_agg(videos))[1] as videos,
+    m.concept_collections
   FROM 
     (SELECT
       name,
       timestamp,
       UNNEST(concepts) concept,
-      verificationvideos
+      verificationvideos,
+      concept_collections
     FROM
       models) m
   LEFT JOIN 
@@ -67,7 +69,7 @@ router.get(
     av GROUP BY model_name
   ) av ON av.model_name = m.name
   GROUP BY
-    (m.name, m.timestamp, verificationvideos, versions, start_trains, version_selected, concept_counts)
+    (m.name, m.timestamp, verificationvideos, versions, start_trains, version_selected, concept_counts, m.concept_collections)
     `;
     if (req.query.predict === 'true') {
       queryText = `

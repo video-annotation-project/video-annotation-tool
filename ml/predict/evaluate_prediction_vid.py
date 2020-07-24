@@ -1,16 +1,36 @@
 import os
 import json
+import uuid
 import datetime
 import copy
+import time
+import psutil
 
 import pandas as pd
 import numpy as np
 import boto3
 from psycopg2 import connect
+import cv2
+from ffmpy import FFmpeg
 
 from predict import predict
 from config import config
 from utils.query import pd_query, get_db_connection, get_s3_connection
+
+
+def get_classmap(concepts, local_con=None):
+    classmap = []
+    for concept in concepts:
+        name = pd_query("select name from concepts where id=%s",
+                        (str(concept),), local_con=local_con).iloc[0]["name"]
+        classmap.append([name, concepts.index(concept)])
+    classmap = pd.DataFrame(classmap)
+    classmap = classmap.to_dict()[0]
+    return classmap
+
+
+def printing_with_time(text):
+    print(text + " " + str(datetime.datetime.now()))
 
 
 def vectorized_iou(list_bboxes1, list_bboxes2):
@@ -113,60 +133,68 @@ def generate_metrics(concepts, list_of_classifications):
     return metrics
 
 
-def score_predictions(validation, predictions, iou_thresh, concepts, collections):
-    validation['id'] = validation.index
-    cords = ['x1', 'y1', 'x2', 'y2']
-    val_suffix = '_val'
-    pred_suffix = '_pred'
+def get_human_annotations(validation, correctly_classified_objects):
+    human_annotations = correctly_classified_objects[
+        ['x1_val', 'y1_val', 'x2_val', 'y2_val', 'label_val', 'userid', 'originalid', 'frame_num']]
+    human_annotations = human_annotations.rename(
+        columns={'x1_val':'x1', 'y1_val': 'y1', 'x2_val': 'x2', 'y2_val': 'y2', 'label_val': 'label'})
+    human_annotations = validation[
+        ~validation.originalid.isin(correctly_classified_objects.originalid)].drop_duplicates(subset='originalid').append(human_annotations)
+    return human_annotations
 
-    # Set the index to frame_num for merge on prediction
-    merged_user_pred_annotations = validation.set_index('frame_num').join(predictions.set_index(
-        'frame_num'), lsuffix=val_suffix, rsuffix=pred_suffix, sort=True).reset_index()
+
+def score_predictions(validation, predictions, iou_thresh, concepts, collections):
+    cords = ['x1', 'y1', 'x2', 'y2']
+    val_suffix='_val'
+    pred_suffix='_pred'
+
+    # Match human and model annotations by frame number 
+    merged_user_pred_annotations = pd.merge(
+        validation,
+        predictions,
+        suffixes=[val_suffix, pred_suffix],
+        on='frame_num')
     # Only keep rows which the predicted label matching validation (or collection)
     merged_user_pred_annotations = merged_user_pred_annotations[
         merged_user_pred_annotations.apply(
-            lambda row:
-            True if
-            row.label_val == row.label_pred
-            or (row.label_pred < 0 and row.label_val in collections[row.label_pred])
-            else False, axis=1)]
+            lambda row: True if row.label_val==row.label_pred or (row.label_pred < 0 and row.label_val in collections[row.label_pred]) else False, axis=1)]
 
     # get data from validation x_val...
-    merged_val_x_y = merged_user_pred_annotations[[
-        cord+val_suffix for cord in cords]].to_numpy()
+    merged_val_x_y = merged_user_pred_annotations[[cord+val_suffix for cord in cords]].to_numpy()
     # get data for pred data x_pred...
-    merged_pred_x_y = merged_user_pred_annotations[[
-        cord+pred_suffix for cord in cords]].to_numpy()
-
+    merged_pred_x_y = merged_user_pred_annotations[[cord+pred_suffix for cord in cords]].to_numpy()
+    
     # Get iou for each row
     iou = vectorized_iou(merged_val_x_y, merged_pred_x_y)
-    merged_user_pred_annotations = merged_user_pred_annotations.assign(iou=iou)
+    merged_user_pred_annotations = merged_user_pred_annotations.assign(iou = iou)
 
     # Correctly Classified must have iou greater than or equal to threshold
-    correctly_classified_objects = merged_user_pred_annotations[
-        merged_user_pred_annotations.iou >= iou_thresh]
-    correctly_classified_objects = correctly_classified_objects.drop_duplicates(
-        subset='objectid_pred')
-
+    max_iou = merged_user_pred_annotations.groupby("originalid").iou.max().to_frame().reset_index()
+    max_iou = max_iou[max_iou["iou"] >= iou_thresh]
+    correctly_classified_objects = pd.merge(
+        merged_user_pred_annotations,
+        max_iou,
+        how="inner",
+        left_on=["originalid", "iou"],
+        right_on=["originalid", "iou"]
+    ).drop_duplicates(subset='objectid')
+    
     # False Positive
     pred_objects_no_val = predictions[~predictions.objectid.isin(
-        correctly_classified_objects.objectid_pred)].drop_duplicates(subset='objectid')
+        correctly_classified_objects.objectid)].drop_duplicates(subset='objectid')
     HFP = pred_objects_no_val['label'].value_counts()
     HFP, FP = convert_hierarchy_fp_counts(HFP, collections)
 
     # True Positive
-    pred_val_label_counts = correctly_classified_objects.sort_values(
-        by=['label_pred', 'iou'], ascending=False).drop_duplicates(subset='id').groupby(["label_pred", "label_val"])["iou"].count()
-    HTP, HFP, TP = convert_hierarchy_tp_counts(
-        pred_val_label_counts, HFP, collections, concepts)
+    pred_val_label_counts = correctly_classified_objects.groupby(["label_pred", "label_val"])["iou"].count()
+    HTP, HFP, TP = convert_hierarchy_tp_counts(pred_val_label_counts, HFP, collections, concepts)
 
     # False Negative
-    HFN = validation[~validation.id.isin(
-        correctly_classified_objects.id)].label.value_counts()
-    FN = validation[~validation.id.isin(
-        correctly_classified_objects[correctly_classified_objects.label_pred > 0].id)].label.value_counts()
-
-    return generate_metrics(concepts, [HTP, HFP, HFN, TP, FP, FN])
+    HFN = validation[~validation.originalid.isin(correctly_classified_objects.originalid)].drop_duplicates(subset='originalid').label.value_counts()
+    FN = validation[~validation.originalid.isin(
+        correctly_classified_objects[correctly_classified_objects.label_pred>0].originalid)].drop_duplicates(subset='originalid').label.value_counts()
+    
+    return generate_metrics(concepts, [HTP, HFP, HFN, TP, FP, FN]), get_human_annotations(validation, correctly_classified_objects)
 
 
 def update_ai_videos_database(model_username, video_id, filename, local_con=None):
@@ -198,6 +226,144 @@ def upload_metrics(metrics, filename, video_id, s3=None):
     print(metrics)
 
 
+def get_video_capture(vid_filename, s3=None):
+    vid_filepath = os.path.join(config.VIDEO_FOLDER, vid_filename)
+    if not os.path.exists(vid_filepath):
+        s3.download_file(
+            config.S3_BUCKET,
+            config.S3_VIDEO_FOLDER + vid_filename,
+            vid_filepath,
+        )
+
+    vid = cv2.VideoCapture(vid_filepath)
+    while not vid.isOpened():
+        time.sleep(1)
+    print("Successfully opened video.")
+    return vid
+
+
+def save_video(filename, s3=None):
+    # convert to mp4 and upload to s3 and db
+    # requires temp so original not overwritten
+    converted_file = str(uuid.uuid4()) + ".mp4"
+    # Convert file so we can stream on s3
+    ff = FFmpeg(
+        inputs={filename: ['-loglevel', '0']},
+        outputs={converted_file: ['-codec:v', 'libx264', '-y']}
+    )
+    print(ff.cmd)
+    print(psutil.virtual_memory())
+    ff.run()
+
+    # temp = ['ffmpeg', '-loglevel', '0', '-i', filename,
+    #         '-codec:v', 'libx264', '-y', converted_file]
+    # subprocess.call(temp)
+    # upload video..
+    s3.upload_file(
+        converted_file, config.S3_BUCKET,
+        config.S3_BUCKET_AIVIDEOS_FOLDER + filename,
+        ExtraArgs={'ContentType': 'video/mp4'})
+    # remove files once uploaded
+    os.system('rm \'' + filename + '\'')
+    os.system('rm ' + converted_file)
+
+    cv2.destroyAllWindows()
+
+# Generates the video with the ground truth frames interlaced
+
+
+def generate_video(filename, video_capture, results, concepts, video_id,
+                   annotations, local_con=None, s3=None):
+
+    print("Inside generating video")
+    # Combine human and prediction annotations
+    results = results.append(annotations, sort=True)
+    # Cast frame_num to int (prevent indexing errors)
+    results.frame_num = results.frame_num.astype('int')
+    classmap = get_classmap(concepts, local_con)
+
+    # make a dictionary mapping conceptid to count (init 0)
+    conceptsCounts = {concept: 0 for concept in concepts}
+    total_length = int(video_capture.get(cv2.CAP_PROP_FRAME_COUNT))
+    one_percent_length = int(total_length / 100)
+    seenObjects = {}
+
+    print("Opening video writer")
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    out = cv2.VideoWriter(filename, fourcc, video_capture.get(cv2.CAP_PROP_FPS),
+                          (config.RESIZED_WIDTH, config.RESIZED_HEIGHT))
+    print("Opened video writer")
+
+    video_capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
+    for frame_num in range(total_length):
+        check, frame = video_capture.read()
+        if not check:
+            break
+
+        if frame_num % one_percent_length == 0:
+            predict.upload_predict_progress(
+                frame_num, video_id, total_length, 3, local_con=local_con)
+
+        for res in results[results.frame_num == frame_num].itertuples():
+            x1, y1, x2, y2 = int(res.x1), int(res.y1), int(res.x2), int(res.y2)
+            # boxText init to concept name
+            boxText = classmap[concepts.index(res.label)]
+
+            if pd.isna(res.confidence):  # No confidence means user annotation
+                # Draws a (user) red box
+                # Note: opencv uses color as BGR
+                cv2.rectangle(frame, (x1, y1),
+                              (x2, y2), (0, 0, 255), 2)
+            else:  # if confidence exists -> AI annotation
+                # Keeps count of concepts
+                if (res.objectid not in seenObjects):
+                    conceptsCounts[res.label] += 1
+                    seenObjects[res.objectid] = conceptsCounts[res.label]
+                # Draw an (AI) green box
+                cv2.rectangle(frame, (x1, y1),
+                              (x2, y2), (0, 255, 0), 2)
+                # boxText = count concept-name (confidence) e.g. "1 Starfish (0.5)"
+                boxText = str(seenObjects[res.objectid]) + " " + boxText + \
+                    " (" + str(round(res.confidence, 3)) + ")"
+            cv2.putText(
+                frame, boxText,
+                (x1 - 5, y2 + 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+        out.write(frame)
+
+    out.release()
+
+    save_video(filename, s3=s3)
+
+
+def get_validation_set(video_fps, video_id, concepts, tracking_id, local_con=None):
+    query_string = f'''
+        SELECT
+            x1, y1, x2, y2,
+            conceptid as label,
+            videowidth, videoheight, userid, originalid,
+            CASE WHEN
+                framenum is not null
+            THEN
+                framenum
+            ELSE
+                FLOOR(timeinvideo*{video_fps})
+            END AS frame_num
+        FROM
+            annotations
+        WHERE
+            videoid={video_id} AND
+            (userid in {str(tuple(config.GOOD_USERS))} or userid = {tracking_id}) AND
+            conceptid in {str(tuple(concepts))}
+    '''
+    validation = pd_query(query_string, local_con=local_con)
+    validation['x1'] = validation['x1'] * config.RESIZED_WIDTH / validation['videowidth']
+    validation['x2'] = validation['x2'] * config.RESIZED_WIDTH / validation['videowidth']
+    validation['y1'] = validation['y1'] * config.RESIZED_HEIGHT / validation['videoheight']
+    validation['y2'] = validation['y2'] * config.RESIZED_HEIGHT / validation['videoheight']
+    validation = validation.drop(['videowidth', 'videoheight'], axis=1)
+    return validation
+
+
 def evaluate(video_id, model_username, concepts, upload_annotations=False,
              user_id=None, create_collection=False, collections=None, gpu_id=None):
     local_con = get_db_connection()
@@ -211,24 +377,57 @@ def evaluate(video_id, model_username, concepts, upload_annotations=False,
     filename = str(video_id) + "_" + model_username + ".mp4"
     print("ai video filename: {0}".format(filename))
 
-    results, annotations = predict.predict_on_video(
-        video_id, config.WEIGHTS_PATH, concepts, filename, upload_annotations,
+    vid_filename = pd_query(f'''
+            SELECT *
+            FROM videos
+            WHERE id ={video_id}''', local_con=local_con).iloc[0].filename
+    print("Loading Video.")
+    video_capture = get_video_capture(vid_filename, s3=s3)
+
+    tracking_id = pd_query(f"""
+        SELECT id from users where username='tracking'
+    """).id[0]
+
+    tuple_concept = ''
+    if len(concepts) == 1:
+        tuple_concept = f''' = {str(concepts)}'''
+    else:
+        tuple_concept = f''' in {str(tuple(concepts))}'''
+
+    results = predict.predict_on_video(
+        video_id, config.WEIGHTS_PATH, concepts, filename, video_capture, upload_annotations,
         user_id, collection_id, collections, local_con=local_con, s3=s3, gpu_id=gpu_id)
     if (results.empty):  # If the model predicts nothing stop here
         return
+    print("done predicting")
+
+    # Get human annotations
+    validation = get_validation_set(
+        video_capture.get(cv2.CAP_PROP_FPS), video_id, tuple_concept,
+        tracking_id, local_con=local_con)
+    print(f'Got validation set shape: {validation.shape}')
+    # This scores our well our model preformed against user annotations
+    metrics, human_annotations = score_predictions(
+        validation, results, config.EVALUATION_IOU_THRESH, concepts, collections
+    )
+    print('Got metrics')
+    print(metrics)
+    # Upload metrics to s3 bucket
+    upload_metrics(metrics, filename, video_id, s3=s3)
+    print('Uploaded Metrics')
+    # Generate video
+    printing_with_time("Generating Video")
+    generate_video(
+        filename, video_capture,
+        results, list(concepts) + list(collections.keys()), video_id, human_annotations, local_con=local_con, s3=s3)
+    printing_with_time("Done generating")
+
     # Send the new generated video to our database
     update_ai_videos_database(model_username, video_id,
                               filename, local_con=local_con)
-    print("done predicting")
-
-    # This scores our well our model preformed against user annotations
-    metrics = score_predictions(
-        annotations, results, config.EVALUATION_IOU_THRESH, concepts, collections
-    )
-    # Upload metrics to s3 bucket
-    upload_metrics(metrics, filename, video_id, s3=s3)
 
     local_con.close()
+
 
 def create_annotation_collection(model_name, user_id, video_id, concept_ids, upload_annotations, local_con=None):
     if not upload_annotations:
