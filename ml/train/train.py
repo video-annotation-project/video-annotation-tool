@@ -116,8 +116,6 @@ def train_model(concepts,
         verbose=2
     )
 
-    model.save(config.WEIGHTS_PATH)
-
     # Upload the weights file to the S3 bucket
     _upload_weights(model_name)
 
