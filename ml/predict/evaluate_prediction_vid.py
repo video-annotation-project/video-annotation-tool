@@ -133,60 +133,68 @@ def generate_metrics(concepts, list_of_classifications):
     return metrics
 
 
-def score_predictions(validation, predictions, iou_thresh, concepts, collections):
-    validation['id'] = validation.index
-    cords = ['x1', 'y1', 'x2', 'y2']
-    val_suffix = '_val'
-    pred_suffix = '_pred'
+def get_human_annotations(validation, correctly_classified_objects):
+    human_annotations = correctly_classified_objects[
+        ['x1_val', 'y1_val', 'x2_val', 'y2_val', 'label_val', 'userid', 'originalid', 'frame_num']]
+    human_annotations = human_annotations.rename(
+        columns={'x1_val':'x1', 'y1_val': 'y1', 'x2_val': 'x2', 'y2_val': 'y2', 'label_val': 'label'})
+    human_annotations = validation[
+        ~validation.originalid.isin(correctly_classified_objects.originalid)].drop_duplicates(subset='originalid').append(human_annotations)
+    return human_annotations
 
-    # Set the index to frame_num for merge on prediction
-    merged_user_pred_annotations = validation.set_index('frame_num').join(predictions.set_index(
-        'frame_num'), lsuffix=val_suffix, rsuffix=pred_suffix, sort=True).reset_index()
+
+def score_predictions(validation, predictions, iou_thresh, concepts, collections):
+    cords = ['x1', 'y1', 'x2', 'y2']
+    val_suffix='_val'
+    pred_suffix='_pred'
+
+    # Match human and model annotations by frame number 
+    merged_user_pred_annotations = pd.merge(
+        validation,
+        predictions,
+        suffixes=[val_suffix, pred_suffix],
+        on='frame_num')
     # Only keep rows which the predicted label matching validation (or collection)
     merged_user_pred_annotations = merged_user_pred_annotations[
         merged_user_pred_annotations.apply(
-            lambda row:
-            True if
-            row.label_val == row.label_pred
-            or (row.label_pred < 0 and row.label_val in collections[row.label_pred])
-            else False, axis=1)]
+            lambda row: True if row.label_val==row.label_pred or (row.label_pred < 0 and row.label_val in collections[row.label_pred]) else False, axis=1)]
 
     # get data from validation x_val...
-    merged_val_x_y = merged_user_pred_annotations[[
-        cord+val_suffix for cord in cords]].to_numpy()
+    merged_val_x_y = merged_user_pred_annotations[[cord+val_suffix for cord in cords]].to_numpy()
     # get data for pred data x_pred...
-    merged_pred_x_y = merged_user_pred_annotations[[
-        cord+pred_suffix for cord in cords]].to_numpy()
-
+    merged_pred_x_y = merged_user_pred_annotations[[cord+pred_suffix for cord in cords]].to_numpy()
+    
     # Get iou for each row
     iou = vectorized_iou(merged_val_x_y, merged_pred_x_y)
-    merged_user_pred_annotations = merged_user_pred_annotations.assign(iou=iou)
+    merged_user_pred_annotations = merged_user_pred_annotations.assign(iou = iou)
 
     # Correctly Classified must have iou greater than or equal to threshold
-    correctly_classified_objects = merged_user_pred_annotations[
-        merged_user_pred_annotations.iou >= iou_thresh]
-    correctly_classified_objects = correctly_classified_objects.drop_duplicates(
-        subset='objectid_pred')
-
+    max_iou = merged_user_pred_annotations.groupby("originalid").iou.max().to_frame().reset_index()
+    max_iou = max_iou[max_iou["iou"] >= iou_thresh]
+    correctly_classified_objects = pd.merge(
+        merged_user_pred_annotations,
+        max_iou,
+        how="inner",
+        left_on=["originalid", "iou"],
+        right_on=["originalid", "iou"]
+    ).drop_duplicates(subset='objectid')
+    
     # False Positive
     pred_objects_no_val = predictions[~predictions.objectid.isin(
-        correctly_classified_objects.objectid_pred)].drop_duplicates(subset='objectid')
+        correctly_classified_objects.objectid)].drop_duplicates(subset='objectid')
     HFP = pred_objects_no_val['label'].value_counts()
     HFP, FP = convert_hierarchy_fp_counts(HFP, collections)
 
     # True Positive
-    pred_val_label_counts = correctly_classified_objects.sort_values(
-        by=['label_pred', 'iou'], ascending=False).drop_duplicates(subset='id').groupby(["label_pred", "label_val"])["iou"].count()
-    HTP, HFP, TP = convert_hierarchy_tp_counts(
-        pred_val_label_counts, HFP, collections, concepts)
+    pred_val_label_counts = correctly_classified_objects.groupby(["label_pred", "label_val"])["iou"].count()
+    HTP, HFP, TP = convert_hierarchy_tp_counts(pred_val_label_counts, HFP, collections, concepts)
 
     # False Negative
-    HFN = validation[~validation.id.isin(
-        correctly_classified_objects.id)].label.value_counts()
-    FN = validation[~validation.id.isin(
-        correctly_classified_objects[correctly_classified_objects.label_pred > 0].id)].label.value_counts()
-
-    return generate_metrics(concepts, [HTP, HFP, HFN, TP, FP, FN])
+    HFN = validation[~validation.originalid.isin(correctly_classified_objects.originalid)].drop_duplicates(subset='originalid').label.value_counts()
+    FN = validation[~validation.originalid.isin(
+        correctly_classified_objects[correctly_classified_objects.label_pred>0].originalid)].drop_duplicates(subset='originalid').label.value_counts()
+    
+    return generate_metrics(concepts, [HTP, HFP, HFN, TP, FP, FN]), get_human_annotations(validation, correctly_classified_objects)
 
 
 def update_ai_videos_database(model_username, video_id, filename, local_con=None):
@@ -327,16 +335,33 @@ def generate_video(filename, video_capture, results, concepts, video_id,
     save_video(filename, s3=s3)
 
 
-def resize(row):
-    new_width = config.RESIZED_WIDTH
-    new_height = config.RESIZED_HEIGHT
-    row.x1 = (row.x1 * new_width) / row.videowidth
-    row.x2 = (row.x2 * new_width) / row.videowidth
-    row.y1 = (row.y1 * new_height) / row.videoheight
-    row.y2 = (row.y2 * new_height) / row.videoheight
-    row.videowidth = new_width
-    row.videoheight = new_height
-    return row
+def get_validation_set(video_fps, video_id, concepts, tracking_id, local_con=None):
+    query_string = f'''
+        SELECT
+            x1, y1, x2, y2,
+            conceptid as label,
+            videowidth, videoheight, userid, originalid,
+            CASE WHEN
+                framenum is not null
+            THEN
+                framenum
+            ELSE
+                FLOOR(timeinvideo*{video_fps})
+            END AS frame_num
+        FROM
+            annotations
+        WHERE
+            videoid={video_id} AND
+            (userid in {str(tuple(config.GOOD_USERS))} or userid = {tracking_id}) AND
+            conceptid in {str(tuple(concepts))}
+    '''
+    validation = pd_query(query_string, local_con=local_con)
+    validation['x1'] = validation['x1'] * config.RESIZED_WIDTH / validation['videowidth']
+    validation['x2'] = validation['x2'] * config.RESIZED_WIDTH / validation['videowidth']
+    validation['y1'] = validation['y1'] * config.RESIZED_HEIGHT / validation['videoheight']
+    validation['y2'] = validation['y2'] * config.RESIZED_HEIGHT / validation['videoheight']
+    validation = validation.drop(['videowidth', 'videoheight'], axis=1)
+    return validation
 
 
 def evaluate(video_id, model_username, concepts, upload_annotations=False,
@@ -359,42 +384,15 @@ def evaluate(video_id, model_username, concepts, upload_annotations=False,
     print("Loading Video.")
     video_capture = get_video_capture(vid_filename, s3=s3)
 
-    # Get biologist annotations for video
-    printing_with_time("Before database query")
+    tracking_id = pd_query(f"""
+        SELECT id from users where username='tracking'
+    """).id[0]
+
     tuple_concept = ''
     if len(concepts) == 1:
         tuple_concept = f''' = {str(concepts)}'''
     else:
         tuple_concept = f''' in {str(tuple(concepts))}'''
-    print(concepts)
-    annotations = pd_query(
-        f'''
-        SELECT
-          x1, y1, x2, y2,
-          conceptid as label,
-          null as confidence,
-          null as objectid,
-          videowidth, videoheight,
-          CASE WHEN
-            framenum is not null
-          THEN
-            framenum
-          ELSE
-            FLOOR(timeinvideo*{video_capture.get(cv2.CAP_PROP_FPS)})
-          END AS frame_num
-        FROM
-          annotations
-        WHERE
-          videoid={video_id} AND
-          userid in {str(tuple(config.GOOD_USERS))} AND
-          conceptid {tuple_concept}''', local_con=local_con)
-    print(f'Number of human annotations {len(annotations)}')
-    printing_with_time("After database query")
-
-    printing_with_time("Resizing annotations.")
-    annotations = annotations.apply(resize, axis=1)
-    annotations = annotations.drop(['videowidth', 'videoheight'], axis=1)
-    printing_with_time("Done resizing annotations.")
 
     results = predict.predict_on_video(
         video_id, config.WEIGHTS_PATH, concepts, filename, video_capture, upload_annotations,
@@ -403,19 +401,25 @@ def evaluate(video_id, model_username, concepts, upload_annotations=False,
         return
     print("done predicting")
 
+    # Get human annotations
+    validation = get_validation_set(
+        video_capture.get(cv2.CAP_PROP_FPS), video_id, tuple_concept,
+        tracking_id, local_con=local_con)
+    print(f'Got validation set shape: {validation.shape}')
     # This scores our well our model preformed against user annotations
-    metrics = score_predictions(
-        annotations, results, config.EVALUATION_IOU_THRESH, concepts, collections
+    metrics, human_annotations = score_predictions(
+        validation, results, config.EVALUATION_IOU_THRESH, concepts, collections
     )
-
+    print('Got metrics')
+    print(metrics)
     # Upload metrics to s3 bucket
     upload_metrics(metrics, filename, video_id, s3=s3)
-
+    print('Uploaded Metrics')
     # Generate video
     printing_with_time("Generating Video")
     generate_video(
         filename, video_capture,
-        results, list(concepts) + list(collections.keys()), video_id, annotations, local_con=local_con, s3=s3)
+        results, list(concepts) + list(collections.keys()), video_id, human_annotations, local_con=local_con, s3=s3)
     printing_with_time("Done generating")
 
     # Send the new generated video to our database
