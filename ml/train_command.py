@@ -12,7 +12,7 @@ from train.train import train_model
 from config import config
 from utils.query import s3, con, cursor, pd_query
 from datetime import datetime
-from multiprocessing import Pool
+import multiprocessing
 
 
 def main():
@@ -45,7 +45,9 @@ def main():
 
         concepts = model["concepts"]
         verify_videos = model["verificationvideos"]
-        start_training(user_model, concepts, verify_videos, model_params)
+        p = multiprocessing.Process(target=start_training, args=(user_model, concepts, verify_videos, model_params))
+        p.start()
+        p.join()
 
         setup_predict_progress(verify_videos)
         evaluate_videos(concepts, verify_videos, user_model,
@@ -251,7 +253,7 @@ def evaluate_videos(concepts, verify_videos, user_model,
                               upload_annotations, userid,
                               create_collection, frozendict(collections), index_video_id[0] % gpus),
                              enumerate(verify_videos))
-    with Pool() as p:
+    with multiprocessing.Pool() as p:
         p.starmap(evaluate, evaluate_generator)
 
     end_predictions()
