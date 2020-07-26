@@ -10,10 +10,12 @@ import upload_stdout
 from predict.evaluate_prediction_vid import evaluate
 from train.train import train_model
 from config import config
-from utils.query import s3, con, cursor, pd_query
+from utils.query import s3, pd_query, get_db_connection
 from datetime import datetime
 import multiprocessing
 
+con = get_db_connection()
+cursor = con.cursor()
 
 def main():
     """ We train a model and then use it to predict on the specified videos
@@ -216,6 +218,7 @@ def setup_predict_progress(verify_videos):
 
     # Just to be sure in case of web app not deleting the progress
     # we clear the prediction progress table
+
     cursor.execute("""DELETE FROM predict_progress""")
     con.commit()
     cursor.execute(
@@ -233,7 +236,7 @@ def get_conceptid_collections(collectionid_list):
     for collectionid in collectionid_list:
         conceptids = list(pd_query(
             """SELECT conceptid FROM concept_intermediate WHERE id=%s""", (
-                collectionid,)
+                collectionid,), local_con=con
         ).conceptid)
         collection_conceptids_list[-collectionid] = conceptids
     return collection_conceptids_list
