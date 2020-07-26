@@ -137,36 +137,35 @@ def get_human_annotations(validation, correctly_classified_objects):
     human_annotations = correctly_classified_objects[
         ['x1_val', 'y1_val', 'x2_val', 'y2_val', 'label_val', 'userid', 'originalid', 'frame_num']]
     human_annotations = human_annotations.rename(
-        columns={'x1_val':'x1', 'y1_val': 'y1', 'x2_val': 'x2', 'y2_val': 'y2', 'label_val': 'label'})
-    human_annotations = validation[
-        ~validation.originalid.isin(correctly_classified_objects.originalid)].drop_duplicates(subset='originalid').append(human_annotations)
+        columns={'x1_val': 'x1', 'y1_val': 'y1', 'x2_val': 'x2', 'y2_val': 'y2', 'label_val': 'label'})
+    human_annotations = validation[~validation.originalid.isin(
+        correctly_classified_objects.originalid)].drop_duplicates(subset='originalid').append(human_annotations)
     return human_annotations
 
 
 def score_predictions(validation, predictions, iou_thresh, concepts, collections):
     cords = ['x1', 'y1', 'x2', 'y2']
-    val_suffix='_val'
-    pred_suffix='_pred'
+    val_suffix = '_val'
+    pred_suffix = '_pred'
 
-    # Match human and model annotations by frame number 
+    # Match human and model annotations by frame number
     merged_user_pred_annotations = pd.merge(
         validation,
         predictions,
         suffixes=[val_suffix, pred_suffix],
         on='frame_num')
     # Only keep rows which the predicted label matching validation (or collection)
-    merged_user_pred_annotations = merged_user_pred_annotations[
-        merged_user_pred_annotations.apply(
-            lambda row: True if row.label_val==row.label_pred or (row.label_pred < 0 and row.label_val in collections[row.label_pred]) else False, axis=1)]
+    merged_user_pred_annotations = merged_user_pred_annotations[merged_user_pred_annotations.apply(
+        lambda row: True if row.label_val == row.label_pred or (row.label_pred < 0 and row.label_val in collections[row.label_pred]) else False, axis=1)]
 
     # get data from validation x_val...
     merged_val_x_y = merged_user_pred_annotations[[cord+val_suffix for cord in cords]].to_numpy()
     # get data for pred data x_pred...
     merged_pred_x_y = merged_user_pred_annotations[[cord+pred_suffix for cord in cords]].to_numpy()
-    
+
     # Get iou for each row
     iou = vectorized_iou(merged_val_x_y, merged_pred_x_y)
-    merged_user_pred_annotations = merged_user_pred_annotations.assign(iou = iou)
+    merged_user_pred_annotations = merged_user_pred_annotations.assign(iou=iou)
 
     # Correctly Classified must have iou greater than or equal to threshold
     max_iou = merged_user_pred_annotations.groupby("originalid").iou.max().to_frame().reset_index()
@@ -178,7 +177,7 @@ def score_predictions(validation, predictions, iou_thresh, concepts, collections
         left_on=["originalid", "iou"],
         right_on=["originalid", "iou"]
     ).drop_duplicates(subset='objectid')
-    
+
     # False Positive
     pred_objects_no_val = predictions[~predictions.objectid.isin(
         correctly_classified_objects.objectid)].drop_duplicates(subset='objectid')
@@ -190,11 +189,14 @@ def score_predictions(validation, predictions, iou_thresh, concepts, collections
     HTP, HFP, TP = convert_hierarchy_tp_counts(pred_val_label_counts, HFP, collections, concepts)
 
     # False Negative
-    HFN = validation[~validation.originalid.isin(correctly_classified_objects.originalid)].drop_duplicates(subset='originalid').label.value_counts()
-    FN = validation[~validation.originalid.isin(
-        correctly_classified_objects[correctly_classified_objects.label_pred>0].originalid)].drop_duplicates(subset='originalid').label.value_counts()
-    
-    return generate_metrics(concepts, [HTP, HFP, HFN, TP, FP, FN]), get_human_annotations(validation, correctly_classified_objects)
+    HFN = validation[~validation.originalid.isin(correctly_classified_objects.originalid)].drop_duplicates(
+        subset='originalid').label.value_counts()
+    FN = validation[~validation.originalid.isin(correctly_classified_objects[correctly_classified_objects.label_pred > 0].originalid)].drop_duplicates(
+        subset='originalid').label.value_counts()
+
+    return generate_metrics(
+        concepts, [HTP, HFP, HFN, TP, FP, FN]), get_human_annotations(
+        validation, correctly_classified_objects)
 
 
 def update_ai_videos_database(model_username, video_id, filename, local_con=None):
@@ -353,7 +355,7 @@ def get_validation_set(video_fps, video_id, concepts, tracking_id, local_con=Non
         WHERE
             videoid={video_id} AND
             (userid in {str(tuple(config.GOOD_USERS))} or userid = {tracking_id}) AND
-            conceptid in {str(tuple(concepts))}
+            conceptid {concepts}
     '''
     validation = pd_query(query_string, local_con=local_con)
     validation['x1'] = validation['x1'] * config.RESIZED_WIDTH / validation['videowidth']
