@@ -89,6 +89,11 @@ class WebsiteDescription extends Component {
           name: 'Viet Nguyen',
           role: 'Software Developer',
           img: 'viet.jpg'
+        },
+        {
+          name: 'Rachel Castellino',
+          role: 'Software Developer',
+          img: 'rachel.jpg'
         }
       ]
     };

@@ -180,21 +180,23 @@ def predict_frames(video_capture, model, videoid, concepts, collections=None, lo
         # Every NUM_FRAMES frames, get new predictions
         # Then, check if any detections match a currently tracked object
         if frame_num % config.NUM_FRAMES == 0:
-            detections = get_predictions(frame, model, concepts, collections)
+            detections, rejections = get_predictions(frame, model, concepts, collections)
+            detections['is_detection'] = True
+            rejections['is_detection'] = False
             print(f'total detections: {len(detections)}')
-            for _, detection in detections.iterrows():
-                (x1, y1, x2, y2) = detection.box
+            for _, proposal in detections.append(rejections).iterrows():
+                (x1, y1, x2, y2) = proposal.box
                 if (x1 > x2 or y1 > y2):
                     continue
                 match, matched_object = does_match_existing_tracked_object(
-                    detection.box, currently_tracked_objects)
+                    proposal.box, currently_tracked_objects)
                 if match:
-                    matched_object.reinit(detection, frame, frame_num)
+                    matched_object.reinit(proposal, frame, frame_num)
                 else:
                     tracked_object = Tracked_object(
-                        detection, frame, frame_num)
+                        proposal, frame, frame_num)
                     prev_annotations, matched_obj_id = track_backwards(
-                        video_frames, frame_num, detection,
+                        video_frames, frame_num, proposal,
                         tracked_object.id, pd.concat(annotations), max_tracked_frames)
                     if matched_obj_id:
                         tracked_object.change_id(matched_obj_id)
@@ -291,16 +293,18 @@ def _get_intersecting_box(boxes):
     return np.array((x1, y1, x2, y2))
 
 
-def _find_collection_predictions(df, collection, label):
-    # filter the df and group it by label
-    label_groups = df[df.label.isin(collection)].groupby('label')
+def _find_collection_predictions(proposal_proposal_proposal_df, collection, label):
+    # These are the ids for the proposals we will use for collections
+    used_ids = []
+    # filter the proposal_proposal_df and group it by label
+    label_groups = proposal_df[proposal_df.label.isin(collection)].groupby('label')
     if len(label_groups) < 2:
         return []
 
     # filter out proposals not in adj_list
     adj_list = _build_graph(label_groups)
-    label_groups = df[df.label.isin(
-        collection) & df.index.isin(adj_list)].groupby('label')
+    label_groups = proposal_df[proposal_df.label.isin(
+        collection) & proposal_df.index.isin(adj_list)].groupby('label')
 
     predictions = []
 
@@ -315,35 +319,47 @@ def _find_collection_predictions(df, collection, label):
                     intersecting_box = _get_intersecting_box(
                         [p['box'] for _, p in proposals])
                     predictions.append((intersecting_box, confidence, label))
+                    used_ids+=[p['id'] for _, p in proposals]
 
-    return predictions
+    return predictions, used_ids
 
 
 def get_predictions(frame, model, concepts, collections=None):
+    # These are the ids for predictions
+    used_ids = []
     frame = np.expand_dims(frame, axis=0)
     boxes, scores, labels = model.predict_on_batch(frame)
 
     # create dataframe to manipulate data easier
-    df = pd.DataFrame({'box': list(boxes[0]), 'score': scores[0],
+    proposal_df = pd.DataFrame({'box': list(boxes[0]), 'score': scores[0],
                        'label': labels[0]})
-    df = df[df['label'] != -1]
-    df['label'] = df['label'].apply(lambda x: concepts[x])
+    proposal_df['id'] = proposal_df.index
+    proposal_df = proposal_df[proposal_df['label'] != -1]
+    proposal_df['label'] = proposal_df['label'].apply(lambda x: concepts[x])
 
-    # confident_mask = df.apply(
+    # confident_mask = proposal_df.apply(
     #     lambda x: x['score'] >= config.THRESHOLDS[x['label']], axis=1)
-    confident_mask = (df['score'] >= config.DEFAULT_PREDICTION_THRESHOLD)
-    base_concept_predictions = df[confident_mask]
-    collection_candidates = df[~confident_mask]
+    confident_mask = (proposal_df['score'] >= config.DEFAULT_PREDICTION_THRESHOLD)
+    base_concept_predictions = proposal_df[confident_mask]
+    used_ids += list(base_concept_predictions.id)
+    collection_candidates = proposal_df[~confident_mask]
 
     collection_predictions = []
     if collections:
         for dummy_concept_id, collection in collections.items():
-            collection_predictions += _find_collection_predictions(
+            predictions, predictions_ids = _find_collection_predictions(
                 collection_candidates, collection, dummy_concept_id)
+            collection_predictions += predictions
+            used_ids += predictions_ids
+
     if len(collection_predictions) != 0:
         print('collection prediction!!')
-    return base_concept_predictions.append(
-        pd.DataFrame(collection_predictions, columns=df.columns))
+    base_concept_predictions = base_concept_predictions.drop(columns='id')
+    proposals = base_concept_predictions.append(
+        pd.DataFrame(collection_predictions, columns=base_concept_predictions.columns))
+    rejections = proposal_df[~proposal_df.id.isin(used_ids)]
+    rejections = rejections.drop(columns='id')
+    return proposals, rejections
 
 
 def does_match_existing_tracked_object(detection, currently_tracked_objects):
@@ -474,7 +490,7 @@ def length_limit_objects(pred, frame_thresh):
 # Chooses single prediction for each object (the middle frame)s
 def get_final_predictions(results):
     middle_frames = []
-    for obj in [df for _, df in results.groupby('objectid')]:
+    for obj in [object_annotations for _, object_annotations in results.groupby('objectid')]:
         middle_frame = int(obj.frame_num.median())
         frame = obj[obj.frame_num == middle_frame]
         # Skip erroneous frames without data
