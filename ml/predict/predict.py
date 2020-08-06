@@ -299,7 +299,7 @@ def _find_collection_predictions(proposal_df, collection, label):
     # filter the proposal_df and group it by label
     label_groups = proposal_df[proposal_df.label.isin(collection)].groupby('label')
     if len(label_groups) < 2:
-        return []
+        return [], []
 
     # filter out proposals not in adj_list
     adj_list = _build_graph(label_groups)
