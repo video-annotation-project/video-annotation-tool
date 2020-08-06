@@ -293,10 +293,10 @@ def _get_intersecting_box(boxes):
     return np.array((x1, y1, x2, y2))
 
 
-def _find_collection_predictions(proposal_proposal_proposal_df, collection, label):
+def _find_collection_predictions(proposal_df, collection, label):
     # These are the ids for the proposals we will use for collections
     used_ids = []
-    # filter the proposal_proposal_df and group it by label
+    # filter the proposal_df and group it by label
     label_groups = proposal_df[proposal_df.label.isin(collection)].groupby('label')
     if len(label_groups) < 2:
         return []
