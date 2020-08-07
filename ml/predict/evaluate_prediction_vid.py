@@ -110,7 +110,7 @@ def count_accuracy(true_num, pred_num):
 def get_recall_precision_f1_counts(TP, FP, FN):
     pred_num, true_num = TP+FP, TP+FN
     r, p = get_recall(TP, FN), get_precision(TP, FP)
-    return r, p, get_f1(r, p), pred_num, true_num, count_accuracy(true_num, pred_num)
+    return p, r, get_f1(r, p), pred_num, true_num, count_accuracy(true_num, pred_num)
 
 
 def generate_metrics(concepts, list_of_classifications):
