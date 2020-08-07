@@ -146,7 +146,7 @@ def get_human_annotations(validation, correctly_classified_objects):
 def check_for_all_concepts(value_counts, concepts):
     for conceptid in concepts:
         if conceptid not in value_counts.index:
-            value_counts[coneptid] = 0
+            value_counts[conceptid] = 0
 
 
 def score_predictions(validation, predictions, iou_thresh, concepts, collections):
