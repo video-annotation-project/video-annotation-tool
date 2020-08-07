@@ -187,9 +187,12 @@ def predict_frames(video_capture, model, videoid, concepts, collections=None, lo
             print(f'total detections: {len(detections)}')
 
             # Match new detections with currently tracked objects
-            final_detections = match_existing_tracked_object(
-                detections.append(rejections),
-                currently_tracked_objects) if len(currently_tracked_objects) != 0 else detections
+            if len(currently_tracked_objects) != 0:
+                final_detections = match_existing_tracked_object(
+                    detections.append(rejections), currently_tracked_objects)
+            else:
+                final_detections = detections
+                final_detections['match'] = False
 
             for _, detection in final_detections.iterrows():
                 if detection.match:
