@@ -89,6 +89,9 @@ class Tracked_object(object):
         self.id = matched_obj_id
         self.annotations['objectid'] = matched_obj_id
 
+    def get_BB(self):
+        return [self.x1, self.y1, self.x2, self.y2]
+
 
 @profile(stream=fp)
 def predict_on_video(videoid, model_weights, concepts, filename, video_capture,
@@ -167,11 +170,7 @@ def predict_frames(video_capture, model, videoid, concepts, collections=None, lo
         # update tracking for currently tracked objects
         for obj in currently_tracked_objects:
             success = obj.update(frame, frame_num)
-            # temp = list(currently_tracked_objects)
-            # temp.remove(obj)
-            # detection = (obj.box, 0, 0)
-            # match, matched_object = does_match_existing_tracked_object(
-            #     detection[0], temp)
+            # Todo: Maybe remove overlapping tracking
             if not success or obj.tracked_frames > 30:
                 annotations.append(obj.annotations)
                 currently_tracked_objects.remove(obj)
@@ -183,20 +182,25 @@ def predict_frames(video_capture, model, videoid, concepts, collections=None, lo
             detections, rejections = get_predictions(frame, model, concepts, collections)
             detections['is_detection'] = True
             rejections['is_detection'] = False
+            if len(detections) == 0:
+                continue
             print(f'total detections: {len(detections)}')
-            for _, proposal in detections.append(rejections).iterrows():
-                (x1, y1, x2, y2) = proposal.box
-                if (x1 > x2 or y1 > y2):
-                    continue
-                match, matched_object = does_match_existing_tracked_object(
-                    proposal.box, currently_tracked_objects)
-                if match:
-                    matched_object.reinit(proposal, frame, frame_num)
+
+            # Match new detections with currently tracked objects
+            if len(currently_tracked_objects) != 0:
+                final_detections = match_existing_tracked_object(
+                    detections.append(rejections), currently_tracked_objects)
+            else:
+                final_detections = detections
+                final_detections['match'] = False
+
+            for _, detection in final_detections.iterrows():
+                if detection.match:
+                    currently_tracked_objects[detection.max_iou_index].reinit(detection, frame, frame_num)
                 else:
-                    tracked_object = Tracked_object(
-                        proposal, frame, frame_num)
+                    tracked_object = Tracked_object(detection, frame, frame_num)
                     prev_annotations, matched_obj_id = track_backwards(
-                        video_frames, frame_num, proposal,
+                        video_frames, frame_num, detection,
                         tracked_object.id, pd.concat(annotations), max_tracked_frames)
                     if matched_obj_id:
                         tracked_object.change_id(matched_obj_id)
@@ -319,7 +323,7 @@ def _find_collection_predictions(proposal_df, collection, label):
                     intersecting_box = _get_intersecting_box(
                         [p['box'] for _, p in proposals])
                     predictions.append((intersecting_box, confidence, label))
-                    used_ids+=[p['id'] for _, p in proposals]
+                    used_ids += [p['id'] for _, p in proposals]
 
     return predictions, used_ids
 
@@ -332,7 +336,7 @@ def get_predictions(frame, model, concepts, collections=None):
 
     # create dataframe to manipulate data easier
     proposal_df = pd.DataFrame({'box': list(boxes[0]), 'score': scores[0],
-                       'label': labels[0]})
+                                'label': labels[0]})
     proposal_df['id'] = proposal_df.index
     proposal_df = proposal_df[proposal_df['label'] != -1]
     proposal_df['label'] = proposal_df['label'].apply(lambda x: concepts[x])
@@ -362,18 +366,42 @@ def get_predictions(frame, model, concepts, collections=None):
     return proposals, rejections
 
 
-def does_match_existing_tracked_object(detection, currently_tracked_objects):
-    (x1, y1, x2, y2) = detection
-    detection_series = pd.Series({'x1': x1, 'y1': y1, 'x2': x2, 'y2': y2})
-    # Compute IOU with each currently tracked object
-    max_iou = 0
-    match = None
-    for obj in currently_tracked_objects:
-        iou = compute_IOU_wrapper(obj, detection_series)
-        if (iou > max_iou):
-            max_iou = iou
-            match = obj
-    return (max_iou >= config.TRACKING_IOU_THRESH), match
+def match_existing_tracked_object(detection_df, currently_tracked_objects):
+    # Make bounding box lists
+    detection_bb_list = np.stack(detection_df.box.values, axis=0)
+    tracked_obj_bb_list = np.array([obj.get_BB() for obj in currently_tracked_objects])
+
+    # Calculate ious
+    ious = computer_vectorized_IOU(detection_bb_list, tracked_obj_bb_list)
+    detection_df['max_iou'] = np.max(ious, axis=1)
+    detection_df['max_iou_index'] = np.argmax(ious, axis=1)
+
+    # Filter valid detections
+    new_detections = (detection_df.is_detection == True) & (detection_df.max_iou < config.TRACKING_IOU_THRESH)
+    matching_detections = ~new_detections & detection_df.max_iou > .2
+    final_detections = detection_df[new_detections].append(detection_df[matching_detections].sort_values(
+        ['score', 'max_iou'], ascending=False).drop_duplicates('max_iou_index'))
+
+    # Match is true if detection overlaps with an object
+    final_detections['match'] = final_detections.max_iou > config.TRACKING_IOU_THRESH
+
+    return final_detections
+
+
+def computer_vectorized_IOU(list_bboxes1, list_bboxes2):
+    x11, y11, x12, y12 = np.split(list_bboxes1, 4, axis=1)
+    x21, y21, x22, y22 = np.split(list_bboxes2, 4, axis=1)
+
+    xA = np.maximum(x11, np.transpose(x21))
+    yA = np.maximum(y11, np.transpose(y21))
+    xB = np.minimum(x12, np.transpose(x22))
+    yB = np.minimum(y12, np.transpose(y22))
+    interArea = np.maximum((xB - xA), 0) * np.maximum((yB - yA), 0)
+    boxAArea = np.abs((x12 - x11) * (y12 - y11))
+    boxBArea = np.abs((x22 - x21) * (y22 - y21))
+    denominator = (boxAArea + np.transpose(boxBArea) - interArea)
+    ious = np.where(denominator != 0, interArea / denominator, 0)
+    return ious
 
 
 def compute_IOU(boxA, boxB):
@@ -502,7 +530,8 @@ def get_final_predictions(results):
     return middle_frames
 
 
-def handle_annotation(prediction, video_capture, videoid, videoheight, videowidth, userid, collection_id, cursor=None, s3=None):
+def handle_annotation(
+        prediction, video_capture, videoid, videoheight, videowidth, userid, collection_id, cursor=None, s3=None):
     frame = get_frame(video_capture, prediction['frame_num'])
     annotation_id = upload_annotation(frame,
                                       *prediction.loc[['x1', 'x2', 'y1',
