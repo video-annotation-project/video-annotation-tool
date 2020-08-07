@@ -379,7 +379,7 @@ def match_existing_tracked_object(detection_df, currently_tracked_objects):
     # Filter valid detections
     new_detections = (detection_df.is_detection == True) & (detection_df.max_iou < config.TRACKING_IOU_THRESH)
     matching_detections = ~new_detections & detection_df.max_iou > .2
-    final_detections = proposal_df[new_detections].append(proposal_df[matching_detections].sort_values(
+    final_detections = detection_df[new_detections].append(detection_df[matching_detections].sort_values(
         ['score', 'max_iou'], ascending=False).drop_duplicates('max_iou_index'))
 
     # Match is true if detection overlaps with an object
