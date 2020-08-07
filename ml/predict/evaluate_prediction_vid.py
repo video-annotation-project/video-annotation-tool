@@ -142,6 +142,12 @@ def get_human_annotations(validation, correctly_classified_objects):
         correctly_classified_objects.originalid)].drop_duplicates(subset='originalid').append(human_annotations)
     return human_annotations
 
+# Some videos contain no conepts, so we set their count to be default
+def check_for_all_concepts(value_counts, concepts):
+    for conceptid in concepts:
+        if conceptid not in value_counts.index:
+            value_counts[coneptid] = 0
+
 
 def score_predictions(validation, predictions, iou_thresh, concepts, collections):
     cords = ['x1', 'y1', 'x2', 'y2']
@@ -178,10 +184,11 @@ def score_predictions(validation, predictions, iou_thresh, concepts, collections
         right_on=["originalid", "iou"]
     ).drop_duplicates(subset='objectid')
 
-    # False Positive
+    #    Positive
     pred_objects_no_val = predictions[~predictions.objectid.isin(
         correctly_classified_objects.objectid)].drop_duplicates(subset='objectid')
     HFP = pred_objects_no_val['label'].value_counts()
+    check_for_all_concepts(HFP, concepts)
     HFP, FP = convert_hierarchy_fp_counts(HFP, collections)
 
     # True Positive
@@ -191,8 +198,10 @@ def score_predictions(validation, predictions, iou_thresh, concepts, collections
     # False Negative
     HFN = validation[~validation.originalid.isin(correctly_classified_objects.originalid)].drop_duplicates(
         subset='originalid').label.value_counts()
+    check_for_all_concepts(HFN, concepts)
     FN = validation[~validation.originalid.isin(correctly_classified_objects[correctly_classified_objects.label_pred > 0].originalid)].drop_duplicates(
         subset='originalid').label.value_counts()
+    check_for_all_concepts(FN, concepts)
 
     return generate_metrics(
         concepts, [HTP, HFP, HFN, TP, FP, FN]), get_human_annotations(
