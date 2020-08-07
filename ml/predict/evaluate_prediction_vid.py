@@ -159,9 +159,9 @@ def score_predictions(validation, predictions, iou_thresh, concepts, collections
         lambda row: True if row.label_val == row.label_pred or (row.label_pred < 0 and row.label_val in collections[row.label_pred]) else False, axis=1)]
 
     # get data from validation x_val...
-    merged_val_x_y = merged_user_pred_annotations[[cord+val_suffix for cord in cords]].to_numpy()
+    merged_val_x_y = merged_user_pred_annotations[[cord + val_suffix for cord in cords]].to_numpy()
     # get data for pred data x_pred...
-    merged_pred_x_y = merged_user_pred_annotations[[cord+pred_suffix for cord in cords]].to_numpy()
+    merged_pred_x_y = merged_user_pred_annotations[[cord + pred_suffix for cord in cords]].to_numpy()
 
     # Get iou for each row
     iou = vectorized_iou(merged_val_x_y, merged_pred_x_y)
