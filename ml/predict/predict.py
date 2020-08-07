@@ -182,10 +182,15 @@ def predict_frames(video_capture, model, videoid, concepts, collections=None, lo
             detections, rejections = get_predictions(frame, model, concepts, collections)
             detections['is_detection'] = True
             rejections['is_detection'] = False
+            if len(detections) == 0:
+                continue
             print(f'total detections: {len(detections)}')
+
+            # Match new detections with currently tracked objects
             final_detections = match_existing_tracked_object(
                 detections.append(rejections),
                 currently_tracked_objects) if len(currently_tracked_objects) != 0 else detections
+
             for _, detection in final_detections.iterrows():
                 if detection.match:
                     currently_tracked_objects[detection.max_iou_index].reinit(detection, frame, frame_num)
