@@ -9,7 +9,7 @@
     "aws-sdk": "^2.601.0",
     "babel-cli": "^6.26.0",
     "babel-core": "6.26.3",
-    "bcrypt": "^3.0.7",
+    "bcrypt": "^5.0.0",
     "body-parser": "^1.19.0",
     "braces": "^3.0.2",
     "concurrently": "^5.2.0",
