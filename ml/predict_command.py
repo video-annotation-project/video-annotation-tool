@@ -6,7 +6,7 @@ import json
 from utils.query import s3, con, cursor, pd_query
 from config.config import S3_BUCKET, S3_WEIGHTS_FOLDER, WEIGHTS_PATH,\
     AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, S3_STDOUT_FOLDER
-from train_command import setup_predict_progress, evaluate_videos, end_predictions, shutdown_server
+from train_command import setup_predict_progress, evaluate_videos, end_predictions, shutdown_server, get_conceptid_collections, get_model_and_params
 from botocore.exceptions import ClientError
 
 
@@ -23,6 +23,7 @@ def main():
 
     try:
         params = pd_query("SELECT * FROM predict_params").iloc[0]
+        model, _ = get_model_and_params()
         model_name = params["model"]
         concepts = params["concepts"]
         videoids = params["videos"]
@@ -34,12 +35,13 @@ def main():
         user_model = model_name + "-" + version
         download_weights(user_model)
         setup_predict_progress(videoids)
-        evaluate_videos(concepts, videoids, user_model, upload_annotations,
-                        userid, create_collection)
+        evaluate_videos(concepts, videoids, user_model, upload_annotations=upload_annotations,
+                        userid=userid, create_collection=create_collection, collections=get_conceptid_collections(model['concept_collections']))
     finally:
-        reset_predict_params()
-        upload_stdout_stderr()
-        shutdown_server()
+        #reset_predict_params()
+        #upload_stdout_stderr()
+        #shutdown_server()
+        pass
 
 
 def download_weights(user_model):

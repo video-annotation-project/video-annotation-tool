@@ -387,11 +387,10 @@ def evaluate(video_id, model_username, concepts, upload_annotations=False,
     # This the generated video's filename
     filename = str(video_id) + "_" + model_username + ".mp4"
     print("ai video filename: {0}".format(filename))
-
     vid_filename = pd_query(f'''
             SELECT *
             FROM videos
-            WHERE id ={video_id}''', local_con=local_con).iloc[0].filename
+            WHERE id=%s''', params=(video_id,), local_con=local_con).iloc[0].filename
     print("Loading Video.")
     video_capture = get_video_capture(vid_filename, s3=s3)
 
@@ -458,17 +457,20 @@ def create_annotation_collection(model_name, user_id, video_id, concept_ids, upl
         WHERE id IN %s
         """, params=(tuple(concept_ids),), local_con=local_con
     )['name'].tolist()
-
+    string_conceptids = str(concept_ids)
+    string_conceptids = string_conceptids.replace('(', '{')
+    string_conceptids = string_conceptids.replace(')', '}')
+    print(string_conceptids)
     cursor = local_con.cursor()
     cursor.execute(
         """
         INSERT INTO annotation_collection
         (name, description, users, videos, concepts, tracking, conceptid)
-        VALUES (%s, %s, %s, %s, %s, %s, %s)
+        VALUES (%s, %s, %s, %s, %s, %s, %s::integer[])
         RETURNING id
         """,
         (collection_name, description, [user_id], [video_id], concept_names,
-         False, concept_ids)
+            False, string_conceptids)
     )
     local_con.commit()
     collection_id = int(cursor.fetchone()[0])

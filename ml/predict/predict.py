@@ -550,7 +550,7 @@ def handle_annotation(
 
 
 def get_frame(video_capture, frame_num):
-    video_capture.set(cv2.CAP_PROP_POS_FRAMES)
+    video_capture.set(cv2.CAP_PROP_POS_FRAMES, frame_num)
     check, frame = video_capture.read()
     if not check:
         print(f'failed to get frame {frame_num}', file=sys.stderr)
