@@ -205,3 +205,6 @@ Follow these steps if changes are made to any env
   5. Encrypt the tar file with `travis encrypt-file travis.tar --add --pro`
   6. Log in with GitHub credentials with `--pro` (if prompted)
   7. Add `tar xvf travis.tar` to `before_install`
+
+## Compatibility
+This was tested on Ubuntu 18.04 with CUDA 10.0.

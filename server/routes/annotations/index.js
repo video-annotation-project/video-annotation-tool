@@ -4,6 +4,7 @@ const psql = require('../../db/simpleConnect');
 const AWS = require('aws-sdk');
 
 var configData = require('../../../config.json');
+const { LexModelBuildingService } = require('aws-sdk');
 
 /**
  * @typedef annotation
@@ -13,7 +14,6 @@ var configData = require('../../../config.json');
  * @property {integer} priority - Training priorty of this annotation
  * @property {boolean} unsure - Was the annotator unsure of the annotation
  * @property {string} timeinvideo - Time in seconds in the video where the annotation takes place
- * @property {string} imagewithbox - Filename of the saved image with the bounding box
  * @property {string} name - Name of the annotation's concept
  * @property {string} extended - Is the annotation extended
  */
@@ -87,47 +87,47 @@ router.get(
       req.query.videoid,
       req.query.timeinvideo,
       req.params.id,
-      req.query.selectedAnnotationCollections
+      req.query.selectedAnnotationCollections,
     ];
     let queryText = `
       WITH annotationsAtVideoFrame AS (
         SELECT 
-          a.*
+            a.id, x1, x2, y1, y2, videoheight, videowidth, userid, name, admin,
+            CASE WHEN
+            EXISTS(SELECT 1 FROM annotation_intermediate ai WHERE ai.annotationid=a.id AND ai.id=ANY($4)) 
+            AND a.verifiedby IS NOT NULL 
+            THEN 1 
+            WHEN EXISTS(SELECT 1 FROM annotation_intermediate ai WHERE ai.annotationid=a.id AND ai.id=ANY($4))
+            THEN 2
+            WHEN u.admin is null
+            THEN 3
+            ELSE 0 
+            END AS verified_flag
         FROM
-          annotations a
+            annotations a
         LEFT JOIN
-          videos v ON v.id = a.videoid
+            videos v ON v.id = a.videoid
+        LEFT JOIN concepts cc ON cc.id = a.conceptid
+        LEFT JOIN users u on u.id = a.userid
         WHERE 
-          a.videoid = $1
-          AND ROUND(v.fps * a.timeinvideo) = ROUND(v.fps * $2)
-          AND a.id <> $3
+            a.videoid = $1
+            AND ROUND(v.fps * a.timeinvideo) = ROUND(v.fps * $2)
+            AND a.id <> $3
+        GROUP BY
+        a.id, a.x1, a.x2, a.y1, a.y2, a.videowidth, a.videoheight, a.verifiedby, cc.name, u.admin, a.userid
       )
       SELECT
-        c.verified_flag,
+        verified_flag,
         json_agg(
         json_build_object(
-          'id', c.id, 'x1',c.x1, 'y1',c.y1, 'x2',c.x2, 'y2',c.y2,
-          'videowidth', c.videowidth, 'videoheight', c.videoheight, 'name', c.name )) as box
-      FROM
-        (SELECT 
-          a.id, a.x1, a.x2, a.y1, a.y2, a.videowidth, a.videoheight, cc.name,
-          CASE WHEN
-            array_agg(ai.id) && $4 
-            AND a.verifiedby IS NOT NULL 
-          THEN 1 
-            WHEN array_agg(ai.id) && $4
-          THEN 2
-          ELSE 0 
-          END AS verified_flag
-        FROM
-          annotationsAtVideoFrame a
-        LEFT JOIN concepts cc ON cc.id = a.conceptid
-        LEFT JOIN annotation_intermediate ai ON ai.annotationid=a.id
-        GROUP BY
-            a.id, a.x1, a.x2, a.y1, a.y2, a.videowidth, a.videoheight, a.verifiedby, cc.name) c
-      WHERE c.verified_flag != 2
-      GROUP BY c.verified_flag
-      ORDER BY c.verified_flag;
+            'id', id, 'x1',x1, 'y1',y1, 'x2',x2, 'y2',y2,
+            'videowidth', videowidth, 'videoheight', videoheight, 'name', name, 'admin', admin, 'userid', userid )) as box
+      FROM 
+        annotationsAtVideoFrame
+      WHERE
+        verified_flag != 2
+      GROUP BY verified_flag
+      ORDER BY verified_flag;
     `;
     try {
       let response = await psql.query(queryText, params);
@@ -149,14 +149,14 @@ router.get(
     const {
       selectedAnnotationCollections,
       excludeTracking,
-      selectedTrackingFirst
+      selectedTrackingFirst,
     } = req.query;
 
     let params = [selectedAnnotationCollections];
     let queryText = `
       WITH collection AS (
         SELECT
-          a.*, c.name, c.picture, u.username,
+          a.*, c.name, c.picture, u.username, u.admin,
           v.filename, ROUND(a.timeinvideo * v.fps) as frame
         FROM
           annotation_intermediate ai
@@ -216,6 +216,7 @@ router.get(
         WHERE
           ai.id::TEXT = ANY($1)
           AND a.tracking_flag IS NULL
+          AND a.userid!=${configData.ml.tracking_userid}
       `;
     }
     try {
@@ -234,7 +235,7 @@ router.get(
  * @property {string} value - Inserted row.
  * e.g. "{\"id\":1970,\"videoid\":12,\"userid\":4,\"conceptid\":53,\"timeinvideo\":21.416856,\"x1\":610,
  *\"y1\":296,\"x2\":853,\"y2\":452,\"videowidth\":1600,\"videoheight\":900,\"dateannotated\":\"2019-07-16T08:44:51.505Z\",
- *\"image\":\"1563241431179.png\",\"imagewithbox\":\"1563241431179_box.png\",\"comment\":\"Test comment\",\"unsure\":true,
+ *\"image\":\"1563241431179.png\",\"comment\":\"Test comment\",\"unsure\":true,
  *\"originalid\":null,\"aivideo\":null,\"framenum\":null,\"verifiedby\":null,\"verifieddate\":null,\"priority\":0,
  *\"oldconceptid\":null,\"oldx1\":null,\"oldy1\":null,\"oldx2\":null,\"oldy2\":null,\"bad_tracking\":false}"
  */
@@ -253,7 +254,6 @@ router.get(
  * @param {integer} videoWidth.body.required - Width of video
  * @param {integer} videoHeight.body.required - Height of video
  * @param {string} image.body.required - Filename of image
- * @param {string} imagewithbox.body.required - Filename of image with bounding box
  * @param {string} comment.body.required - Annotation comment
  * @param {boolean} unsure.body.required - Is the annotator sure of the annotation
  * @returns {annotationInsert.model} 200 - Message plus inserted annotation
@@ -275,19 +275,18 @@ router.post(
       req.body.videoWidth,
       req.body.videoHeight,
       req.body.image + '.png',
-      req.body.imagewithbox + '.png',
       req.body.comment,
-      req.body.unsure
+      req.body.unsure,
     ];
     const queryText = `
       INSERT INTO 
         annotations (
           userid, videoid, conceptid, timeinvideo, x1, y1, x2, y2, videoWidth,
-          videoHeight, image, imagewithbox, comment, unsure, dateannotated
+          videoHeight, image, comment, unsure, dateannotated
         )
       VALUES
         (
-          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, 
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, 
           current_timestamp
         )
       RETURNING *
@@ -296,7 +295,7 @@ router.post(
       let insertRes = await psql.query(queryText, data);
       res.json({
         message: 'Annotated',
-        value: JSON.stringify(insertRes.rows[0])
+        value: JSON.stringify(insertRes.rows[0]),
       });
     } catch (error) {
       console.log(error);
@@ -355,12 +354,10 @@ router.delete(
       DELETE FROM
         annotations
       WHERE 
-        annotations.id=$1 OR annotations.originalid=$1 
-      RETURNING *
+        annotations.id=$1 OR annotations.originalid=$1
     `;
     try {
-      let deleteRes = await psql.query(queryText, [req.body.id]);
-
+      await psql.query(queryText, [req.body.id]);
       //These are the s3 objects we will be deleting
       let Objects = [];
 
@@ -369,15 +366,15 @@ router.delete(
         Key:
           process.env.AWS_S3_BUCKET_VIDEOS_FOLDER +
           req.body.id +
-          '_tracking.mp4'
+          '_tracking.mp4',
       });
       let params = {
         Bucket: process.env.AWS_S3_BUCKET_NAME,
         Delete: {
-          Objects: Objects
-        }
+          Objects: Objects,
+        },
       };
-      let s3Res = await s3.deleteObjects(params, (err, data) => {
+      s3.deleteObjects(params, (err, data) => {
         if (err) {
           console.log('Err: deleting images');
           res.status(500).json(err);
@@ -423,15 +420,12 @@ router.post(
       Bucket: process.env.AWS_S3_BUCKET_NAME,
       ContentEncoding: 'base64',
       ContentType: 'image/png',
-      Body: Buffer.from(req.body.buf) //the base64 string is now the body
+      Body: Buffer.from(req.body.buf), //the base64 string is now the body
     };
     s3.putObject(params, (err, data) => {
       if (err) {
         console.log(err);
-        res
-          .status(500)
-          .json(error)
-          .end();
+        res.status(500).json(error).end();
       } else {
         res.json({ message: 'successfully uploaded image to S3' });
       }
@@ -581,7 +575,7 @@ router.get(
       selectedConcepts,
       selectedUnsure,
       selectedTrackingFirst,
-      excludeTracking
+      excludeTracking,
     } = req.query;
     const params = [selectedUsers, selectedVideos, selectedConcepts];
 
@@ -631,7 +625,6 @@ router.get(
               AND b.frame=v.framenum
           )
       ORDER BY videoid, frame;`;
-    console.log('here');
 
     if (selectedTrackingFirst === 'true') {
       queryText = `
@@ -654,7 +647,6 @@ router.get(
       `;
     }
     try {
-      console.log(queryText);
       const response = await psql.query(queryText, params);
       res.json(response.rows);
     } catch (error) {
@@ -726,7 +718,7 @@ let updateBoundingBox = async (req, res) => {
         annotations 
       SET 
         x1=$1, y1=$2, x2=$3, y2=$4, oldx1=$5, oldy1=$6, oldx2=$7, oldy2=$8,
-        priority = priority+1 
+        priority = CASE WHEN $10::boolean=true THEN priority+2 ELSE priority+1 END
       WHERE 
         id=$9
     `;
@@ -739,7 +731,7 @@ let updateBoundingBox = async (req, res) => {
   }
 };
 
-let deleteTrackingAnnotations = req => {
+let deleteTrackingAnnotations = (req) => {
   const id = req.body.id;
   let s3 = new AWS.S3();
   const queryText2 = `
@@ -760,13 +752,13 @@ let deleteTrackingAnnotations = req => {
     // add tracking video
     Objects.push({
       Key:
-        process.env.AWS_S3_BUCKET_VIDEOS_FOLDER + req.body.id + '_tracking.mp4'
+        process.env.AWS_S3_BUCKET_VIDEOS_FOLDER + req.body.id + '_tracking.mp4',
     });
     params = {
       Bucket: process.env.AWS_S3_BUCKET_NAME,
       Delete: {
-        Objects: Objects
-      }
+        Objects: Objects,
+      },
     };
     s3.deleteObjects(params, (err, data) => {
       if (err) {
@@ -780,7 +772,7 @@ let verifyAnnotation = async (req, res) => {
   delete req.body.op;
 
   const verifiedby = req.user.id;
-  const id = req.body.id;
+  const { id, model } = req.body;
 
   let params = [id, verifiedby];
   let queryText1 = `
@@ -790,11 +782,12 @@ let verifyAnnotation = async (req, res) => {
       verifiedby=$2, verifieddate=current_timestamp, originalid=null`;
 
   if (req.body.conceptId !== null) {
-    queryText1 += `, conceptid=$3, oldconceptid=$4, priority=priority+3`;
+    queryText1 += `, conceptid=$4, oldconceptid=$5, priority=CASE WHEN $3::boolean=true THEN priority+4 ELSE priority+3 END`;
+    params.push(model);
     params.push(req.body.conceptId);
     params.push(req.body.oldConceptId);
   } else {
-    queryText1 += `, priority = priority+1`;
+    queryText1 += `, priority=priority+1`;
   }
 
   params.push(req.body.comment);
@@ -813,7 +806,7 @@ let verifyAnnotation = async (req, res) => {
   }
 };
 
-let selectLevelQuery = level => {
+let selectLevelQuery = (level) => {
   let queryPass = '';
   if (level === 'Video') {
     queryPass = `

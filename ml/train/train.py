@@ -10,7 +10,7 @@ from tensorflow.python.client import device_lib
 from keras_retinanet import models
 from keras_retinanet import losses
 from keras.utils import multi_gpu_model
-from keras.callbacks import EarlyStopping
+from keras.callbacks import ModelCheckpoint, EarlyStopping
 from keras_retinanet.callbacks import RedirectModel
 
 from config import config
@@ -21,7 +21,6 @@ from train.preprocessing.annotation_generator import AnnotationGenerator
 from train.evaluation.evaluate import evaluate_class_thresholds
 from train.callbacks.progress import Progress
 from train.callbacks.tensorboard import TensorboardLog
-
 
 @timer("training")
 def train_model(concepts,
@@ -62,7 +61,7 @@ def train_model(concepts,
         include_tracking=include_tracking,
         min_examples=min_examples,
         classes=concepts,
-        verify_videos=verify_videos
+        verify_videos=verify_videos,
     )
     # Get model name & version to insert into model_versions table
     #  a user dictionary containing the concept counts from this model
@@ -154,10 +153,19 @@ def _get_callbacks(model,
                    steps_per_epoch):
     """ Returns a list of callbacks to use while training.
     """
+    # Save models that are improvements
+    checkpoint = ModelCheckpoint(
+        config.WEIGHTS_PATH,
+        monitor='val_loss',
+        save_best_only=True,
+        verbose=1
+    )
+
+    checkpoint = RedirectModel(checkpoint, model)
 
     # Stops training if val_loss stops improving
     stopping = EarlyStopping(
-        monitor='val_loss', min_delta=0, patience=10, restore_best_weights=True)
+        monitor='val_loss', min_delta=0, patience=3, restore_best_weights=True)
 
     # Every epoch upload tensorboard logs to the S3 bucket
     log_callback = TensorboardLog(
@@ -181,7 +189,9 @@ def _get_callbacks(model,
         num_epochs=epochs
     )
 
-    return [stopping, progress_callback, log_callback, tensorboard_callback]
+    # It's important that tensorboard_callback is before log_callback,
+    # so the board is created/updated before being uploaded
+    return [stopping, checkpoint, progress_callback, tensorboard_callback, log_callback]
 
 
 def _upload_weights(model_name):

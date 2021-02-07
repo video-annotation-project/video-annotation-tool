@@ -149,7 +149,7 @@ class ModelTreeView extends Component {
     versions.forEach(i => {
       new_versions.push({
         id: i,
-        parentId: i.slice(0, i.length - 2)
+        parentId: i.slice(0, i.lastIndexOf('.'))
       });
     });
     this.setState({

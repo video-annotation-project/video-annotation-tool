@@ -19,6 +19,7 @@ RESIZED_WIDTH = config["resized_video_width"]
 RESIZED_HEIGHT = config["resized_video_height"]
 NUM_FRAMES = config["frames_between_predictions"]
 THRESHOLDS = config["prediction_confidence_thresholds"]
+DEFAULT_PREDICTION_THRESHOLD = config['default_prediction_confidence_threshold']
 TRACKING_IOU_THRESH = config["prediction_tracking_iou_threshold"]
 MIN_FRAMES_THRESH = config["min_frames_threshold"]
 MAX_TIME_BACK = config["max_seconds_back"]
@@ -33,6 +34,7 @@ DEFAULT_WEIGHTS_PATH = config["default_weights"]
 
 # Other folders
 IMAGE_FOLDER = config["image_folder"]
+VIDEO_FOLDER = config["video_folder"]
 TEST_EXAMPLES = config["test_examples"]
 
 # Batch size to train with

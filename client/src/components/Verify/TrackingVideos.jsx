@@ -21,6 +21,13 @@ const styles = theme => ({
 });
 
 class TrackingVideos extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      tracking_flag: null
+    };
+  }
+
   getStatus = flag => {
     switch (flag) {
       case false:
@@ -50,11 +57,13 @@ class TrackingVideos extends Component {
         config
       );
       this.setState({
-        trackingStatus: flag
+        tracking_flag: flag
       });
       Swal.fire('Successfully Marked', '', 'success');
       if (tracking) {
-        nextAnnotation(false);
+        this.setState({
+          tracking_flag: flag
+        }, () => nextAnnotation(false));
       }
     } catch (error) {
       Swal.fire('Error marking video as bad', '', 'error');
@@ -62,6 +71,7 @@ class TrackingVideos extends Component {
   };
 
   render() {
+    const { tracking_flag } = this.state;
     const {
       classes,
       annotation,
@@ -69,7 +79,6 @@ class TrackingVideos extends Component {
       excludeTracking,
       collectionFlag,
       videoDialogOpen,
-      trackingStatus,
       index,
       size,
       videoDialogToggle,
@@ -122,7 +131,11 @@ class TrackingVideos extends Component {
             <Button
               className={classes.button}
               variant="contained"
-              onClick={() => nextAnnotation(false)}
+              onClick={() => {
+                this.setState({
+                  tracking_flag: null
+                }, () => nextAnnotation(false));
+              }}
               disabled={!excludeTracking && collectionFlag > 0}
             >
               Next
@@ -145,10 +158,10 @@ class TrackingVideos extends Component {
                 : ''}
             </Typography>
             <Typography variant="subtitle1" className={classes.button}>
-              <b>Status: </b>{' '}
-              {!trackingStatus
+              <b>Status: </b>
+              {tracking_flag === null
                 ? this.getStatus(annotation.tracking_flag)
-                : this.getStatus(trackingStatus)}
+                : this.getStatus(tracking_flag)}
             </Typography>
             <Typography style={{ marginTop: '10px' }}>
               {index + 1} of {size}

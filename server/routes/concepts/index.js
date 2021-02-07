@@ -25,6 +25,7 @@ router.get(
     const queryText = `
       SELECT *
       FROM concepts
+      WHERE id >= 0
       ORDER BY name
     `;
     try {

@@ -74,7 +74,6 @@ class Verify extends Component {
   };
 
   toggleSelection = async () => {
-    this.displayLoading();
     const { selectedAnnotationCollections, selectionMounted } = this.state;
     let annotations = [];
     if (!selectionMounted) {
@@ -163,9 +162,9 @@ class Verify extends Component {
       });
   };
 
-  removeFromIgnoreList = annotation => {
+  removeFromIgnoreList = id => {
     const { ignoredAnnotations } = this.state;
-    const ignored = ignoredAnnotations.filter(x => x.id !== annotation.id);
+    const ignored = ignoredAnnotations.filter(x => x.id !== id);
     localStorage.setItem('ignoredAnnotations', JSON.stringify(ignored));
     this.setState({
       ignoredAnnotations: ignored
@@ -250,57 +249,71 @@ class Verify extends Component {
     }
   };
 
+  handlePrev = callback => {
+    const { index, annotating } = this.state;
+
+    localStorage.setItem('ignoredAnnotations', JSON.stringify([]));
+    localStorage.setItem('curIndex', index + 1);
+
+    if (annotating) {
+        this.setState(
+          {
+            ignoredAnnotations: [],
+            annotating: false
+          },
+          callback
+        );
+    } else {
+      this.setState(
+        {
+          ignoredAnnotations: [],
+          index: index - 1,
+          annotating: false
+        },
+        callback
+      );
+    }
+  }
+
   handleNext = callback => {
-    const { index, annotations } = this.state;
+    const videoDialogOpen = JSON.parse(localStorage.getItem('videoDialogOpen'));
+    const { index, annotations, annotating, selectedTrackingFirst } = this.state;
+    /* This checks if we need to load a new video frame*/
     if (
+      !selectedTrackingFirst &&
       annotations &&
       annotations.length &&
-      (annotations.length === index + 1 ||
+      (
+        annotations.length === index + 1 ||
         annotations[index].videoid !== annotations[index + 1].videoid ||
         Math.round(annotations[index].timeinvideo * FPS) !==
-          Math.round(annotations[index + 1].timeinvideo * FPS))
+        Math.round(annotations[index + 1].timeinvideo * FPS)
+      )
     ) {
-      Swal.fire({
-        title: 'Finished with current frame',
-        text: 'Move on to next frame?',
-        type: 'info',
-        showCancelButton: true,
-        cancelButtonText: 'Add annotations',
-        confirmButtonText: 'Next',
-        reverseButtons: true
-      }).then(result => {
-        if (result.dismiss !== "backdrop") {
-          this.displayLoading()
-        }
-        if (result.value) {
-          if (annotations.length === index + 1) {
-            this.resetLocalStorage();
-            Swal.fire({
-              title: 'Finished annotating'
-            });
-          } else {
-            this.verifyFrame();
-            localStorage.setItem('ignoredAnnotations', JSON.stringify([]));
-            localStorage.setItem('curIndex', index + 1);
-            this.setState(
-              {
-                ignoredAnnotations: [],
-                index: index + 1,
-                annotating: false
-              },
-              callback
-            );
+      if ((annotating || videoDialogOpen) && annotations.length === index + 1) { // Finished with collection 
+        this.resetLocalStorage();
+        Swal.fire({
+          title: 'Finished with collection'
+        });
+      } else if (annotating || videoDialogOpen) { // Go to the next frame
+        this.verifyFrame();
+        localStorage.setItem('ignoredAnnotations', JSON.stringify([]));
+        localStorage.setItem('curIndex', index + 1);
+        this.setState(
+          {
+            ignoredAnnotations: [],
+            index: index + 1,
+            annotating: false
+          },
+          callback
+        );
+      } else { // Add new annotations to the page
+        this.setState(
+          {
+            annotating: true
           }
-        } else if (result.dismiss === 'cancel') {
-          // Add annotations here
-          this.setState(
-            {
-              annotating: true
-            },
-            callback
-          );
-        }
-      });
+        );
+      }
     } else {
       localStorage.setItem('curIndex', index + 1);
       this.setState(
@@ -330,7 +343,8 @@ class Verify extends Component {
         index: 0,
         noAnnotations: false,
         annotations: [],
-        selectedTrackingFirst: false
+        selectedTrackingFirst: false,
+        annotating: false
       })
     );
   };
@@ -350,10 +364,11 @@ class Verify extends Component {
 
     if (annotations.length > 0 && index >= annotations.length + 1) {
       this.resetLocalStorage();
-      return <div />;
+      return;
     }
 
     let selection = '';
+
     if (selectionMounted) {
       selection = (
         <VerifySelection
@@ -389,9 +404,7 @@ class Verify extends Component {
         </div>
       );
     } else if (!annotations || annotations.length <= 0) {
-      selection = <div>Loading...</div>;
-    } else if (!annotations || annotations.length <= 0) {
-      selection = <div>Loading Annotations...</div>;
+      selection = "";
     } else {
       selection = (
         <VerifyAnnotations
@@ -401,6 +414,7 @@ class Verify extends Component {
           ignoredAnnotations={ignoredAnnotations}
           annotation={annotations[index]}
           index={index}
+          handlePrev={this.handlePrev}
           handleNext={this.handleNext}
           toggleSelection={this.toggleSelection}
           size={annotations.length}

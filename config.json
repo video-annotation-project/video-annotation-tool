@@ -1,9 +1,11 @@
 {
   "ml": {
     "prediction_confidence_thresholds": [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5],
+    "default_prediction_confidence_threshold": 0.5,
     "train_annot_file": "train_annot_file.csv",
     "valid_annot_file": "valid_annot_file.csv",
     "image_folder": "image_folder",
+    "video_folder": "video_folder",
     "test_examples": "test_examples",
     "default_weights": "resnet50_coco_best_v2.1.0.h5",
     "weights_path": "weights.h5",
@@ -16,8 +18,8 @@
     "resized_video_height": 1080,
     "max_seconds_back": 5,
     "tracking_vid_length": 6000,
-    "biologist_users": [11, 13, 12, 6, 15, 16],
-    "tracking_users": [11, 13, 12, 6, 15, 16, 7, 8, 125],
+    "biologist_users": [11, 13, 12, 6, 15, 16, 831],
+    "tracking_users": [11, 13, 12, 6, 15, 16, 7, 8, 125, 831],
     "tracking_userid": 32
   }
 }

@@ -93,7 +93,7 @@ def getVideoFrames(url, start, end):
     curr = start
 
     while (check and curr <= end):
-        check, frame = cap.read()
+        check, frame = cap.retrieve()
         if check:
             frame_list.append(
                 cv2.resize(frame, (RESIZED_WIDTH, RESIZED_HEIGHT)))
@@ -102,31 +102,26 @@ def getVideoFrames(url, start, end):
     return frame_list, fps, frame_num
 
 
-def upload_image(frame_num, frame, frame_w_box,
+def upload_image(frame_num, frame,
                  id, videoid, conceptid, comment, unsure,
                  x1, y1, x2, y2, cursor, con, TRACKING_ID, timeinvideo):
     # Uploads images and puts annotation in database
-    no_box = str(videoid) + "_" + str(timeinvideo) + "_tracking.png"
-    box = str(id) + "_" + str(timeinvideo) + "_box_tracking.png"
+    image_name = str(videoid) + "_" + str(timeinvideo) + "_tracking.png"
     temp_file = str(uuid.uuid4()) + ".png"
     cv2.imwrite(temp_file, frame)
     s3.upload_file(temp_file, S3_BUCKET, S3_ANNOTATION_FOLDER +
-                   no_box, ExtraArgs={'ContentType': 'image/png'})
-    os.system('rm ' + temp_file)
-    cv2.imwrite(temp_file, frame_w_box)
-    s3.upload_file(temp_file, S3_BUCKET, S3_ANNOTATION_FOLDER +
-                   box,  ExtraArgs={'ContentType': 'image/png'})
+                   image_name, ExtraArgs={'ContentType': 'image/png'})
     os.system('rm ' + temp_file)
     cursor.execute(
         """
      INSERT INTO annotations (
      framenum, videoid, userid, conceptid, timeinvideo, x1, y1, x2, y2,
-     videowidth, videoheight, dateannotated, image, imagewithbox, comment, unsure, originalid)
-     VALUES (%d, %d, %d, %d, %f, %f, %f, %f, %f, %d, %d, %s, %s, %s, %s, %s, %d)
+     videowidth, videoheight, dateannotated, image, comment, unsure, originalid)
+     VALUES (%d, %d, %d, %d, %f, %f, %f, %f, %f, %d, %d, %s, %s, %s, %s, %d)
       """,
         (
             frame_num, videoid, TRACKING_ID, conceptid, timeinvideo, x1, y1,
-            x2, y2, RESIZED_WIDTH, RESIZED_HEIGHT, datetime.datetime.now().date(), no_box, box,
+            x2, y2, RESIZED_WIDTH, RESIZED_HEIGHT, datetime.datetime.now().date(), image_name, box,
             comment, unsure, id
         )
     )
@@ -248,7 +243,6 @@ def track_object(frame_num, frames, box, track_forward, end,
             continue
         time_elapsed += (1 / fps) if track_forward else - (1 / fps)
         frame_num += 1 if track_forward else -1
-        frame_no_box = copy.deepcopy(frame)
         if index == 0:  # initialize bounding box in first frame
             trackers.add(tracker, frame, box)
         (success, boxes) = trackers.update(frame)
@@ -272,9 +266,8 @@ def track_object(frame_num, frames, box, track_forward, end,
                 y1 = y1 if y1 > 0 else 0
                 x2 = x2 if x2 < RESIZED_WIDTH else RESIZED_WIDTH
                 y2 = y2 if y2 < RESIZED_HEIGHT else RESIZED_HEIGHT
-                cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
             if index != 0:
-                upload_image(frame_num, frame_no_box, frame, id, videoid,
+                upload_image(frame_num, frame, id, videoid,
                              conceptid, comment, unsure,
                              x1, y1, x2, y2,
                              cursor, con, TRACKING_ID,

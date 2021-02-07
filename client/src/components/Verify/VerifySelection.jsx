@@ -1,10 +1,5 @@
 import React from 'react';
-import Button from '@material-ui/core/Button';
-import FormGroup from '@material-ui/core/FormGroup';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
-import { Checkbox, Switch } from '@material-ui/core';
-import FormControl from '@material-ui/core/FormControl';
-import Grid from '@material-ui/core/Grid';
+import { Button, Checkbox, FormControl, FormControlLabel, Grid } from '@material-ui/core';
 
 import VerifyAnnotationCollection from '../Utilities/SelectAnnotationCollection';
 
@@ -35,40 +30,30 @@ function VerifySelection(props) {
             />
             <div style={{ marginTop: '40px' }}>
               <FormControl>
-                <FormGroup>
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={selectedTrackingFirst}
-                        onChange={handleChangeSwitch('selectedTrackingFirst')}
-                        value="selectedTrackingFirst"
-                        color="primary"
-                        disabled={!excludeTracking}
-                      />
-                    }
-                    label="Tracking Video Verification"
-                  />
-                </FormGroup>
-                <FormGroup>
-                  <FormControlLabel
-                    control={
-                      //   <Checkbox
-                      //   checked={state.checkedA}
-                      //   onChange={handleChange('checkedA')}
-                      //     value="excludeTracking"
-
-                      // />
-                      <Checkbox
-                        checked={excludeTracking}
-                        onChange={handleChangeSwitch('excludeTracking')}
-                        value="excludeTracking"
-                        color="primary"
-                        disabled={selectedTrackingFirst}
-                      />
-                    }
-                    label="Exclude Tracking"
-                  />
-                </FormGroup>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={excludeTracking}
+                      onChange={handleChangeSwitch('excludeTracking')}
+                      value="excludeTracking"
+                      color="primary"
+                      disabled={selectedTrackingFirst}
+                    />
+                  }
+                  label="Exclude Tracking"
+                />
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={selectedTrackingFirst}
+                      onChange={handleChangeSwitch('selectedTrackingFirst')}
+                      value="selectedTrackingFirst"
+                      color="primary"
+                      disabled={!excludeTracking}
+                    />
+                  }
+                  label="Tracking Video Verification"
+                />
               </FormControl>
             </div>
           </>

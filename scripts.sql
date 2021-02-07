@@ -93,7 +93,6 @@ create table annotations
 	videoheight double precision not null,
 	dateannotated date not null,
 	image text,
-	imagewithbox text,
 	comment text,
 	unsure boolean default false,
 	originalid integer,

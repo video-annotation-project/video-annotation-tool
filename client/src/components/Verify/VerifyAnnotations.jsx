@@ -98,7 +98,11 @@ function Legend() {
         <LegendItem color="lightgreen" label="Verified in Collection" />
         <LegendItem
           color="DodgerBlue"
-          label="Ignored / Outside of Collection"
+          label="Ignored / Outside of Collection (User)"
+        />
+        <LegendItem
+          color="Yellow"
+          label="Ignored / Outside of Collection (Model)"
         />
         <LegendItem color="coral" label="Current Unverified in Collection" />
       </Paper>
@@ -116,7 +120,7 @@ class VerifyAnnotations extends Component {
 
   constructor(props) {
     super(props);
-    const { annotation, displayLoading } = this.props;
+    const { annotation } = this.props;
     const videoDialogOpen = JSON.parse(localStorage.getItem('videoDialogOpen'));
 
     this.state = {
@@ -132,16 +136,15 @@ class VerifyAnnotations extends Component {
       width: annotation.x2 - annotation.x1,
       height: annotation.y2 - annotation.y1,
       videoDialogOpen,
-      drawDragBox: true,
-      trackingStatus: null,
-      detailDialogOpen: false
+      detailDialogOpen: false,
+      annotation: annotation
     };
-
-    this.displayLoading = displayLoading;
   }
 
   componentDidMount = async () => {
-    this.displayLoading();
+    const { displayLoading } = this.props;
+
+    displayLoading();
     window.scrollTo({ top: 0, behavior: 'smooth' });
     await this.loadBoxes();
   };
@@ -155,14 +158,15 @@ class VerifyAnnotations extends Component {
 
   handleKeyDown = (keyName, e) => {
     const { annotation } = this.props;
+
     e.preventDefault();
     if (e.target === document.body) {
       if (keyName === 'r') {
         // reset shortcut
-        this.resetState();
+        this.resetCurrentBox(false);
       } else if (keyName === 'd') {
         // delete shortcut
-        this.handleDelete(annotation);
+        this.handleDelete('current', annotation.id);
       } else if (keyName === 'i') {
         // ignore shortcut
         this.nextAnnotation(true);
@@ -185,6 +189,7 @@ class VerifyAnnotations extends Component {
       selectedAnnotationCollections,
       annotating
     } = this.props;
+
     const config = {
       headers: {
         'Content-Type': 'application/json',
@@ -194,29 +199,27 @@ class VerifyAnnotations extends Component {
         selectedAnnotationCollections
       }
     };
+
     try {
       const data = await axios.get(
         `/api/annotations/boxes/${annotating ? -1 : annotation.id}` +
           `?videoid=${annotation.videoid}&timeinvideo=${annotation.timeinvideo}`,
         config
       );
+      let [vBoxTemp, boColTemp] = [[], []];
       if (data.data.length > 0) {
-        if (data.data[0].verified_flag === 1) {
-          this.setState({
-            verifiedBoxes: data.data[0].box,
-            boxesOutsideCol: []
-          });
-        } else if (data.data.length === 2) {
-          this.setState({
-            boxesOutsideCol: data.data[0].box,
-            verifiedBoxes: data.data[1].box
-          });
-        } else {
-          this.setState({
-            verifiedBoxes: [],
-            boxesOutsideCol: data.data[0].box
-          });
-        }
+        data.data.forEach(row => {
+          if (row.verified_flag === 1) {
+            vBoxTemp = row.box;
+          } else {
+            // case for when flag is 0 or 3
+            boColTemp = boColTemp.concat(row.box);
+          }
+        });
+        this.setState({
+          boxesOutsideCol: boColTemp,
+          verifiedBoxes: vBoxTemp
+        });
       } else {
         this.setState({
           boxesOutsideCol: [],
@@ -229,13 +232,20 @@ class VerifyAnnotations extends Component {
     }
   };
 
-  resetState = async () => {
-    this.displayLoading();
+  resetCurrentBox = boxOnly => {
     const { annotation, annotating } = this.props;
-    await this.loadBoxes();
+
+    if (boxOnly) {
+      this.setState({
+        x: annotating ? 0 : annotation.x1,
+        y: annotating ? 0 : annotation.y1,
+        width: annotating ? 0 : annotation.x2 - annotation.x1,
+        height: annotating ? 0 : annotation.y2 - annotation.y1
+      });
+      return;
+    }
 
     this.setState({
-      drawDragBox: true,
       disableVerify: false,
       concept: null,
       comment: annotating ? '' : annotation.comment,
@@ -247,10 +257,28 @@ class VerifyAnnotations extends Component {
     });
   };
 
-  toggleDragBox = () => {
+  resetState = async () => {
+    const { annotation, annotating, displayLoading } = this.props;
+
+    displayLoading();
+    await this.loadBoxes();
     this.setState({
-      drawDragBox: false
+      disableVerify: false,
+      concept: null,
+      comment: annotating ? '' : annotation.comment,
+      unsure: annotating ? false : annotation.unsure,
+      x: annotating ? 0 : annotation.x1,
+      y: annotating ? 0 : annotation.y1,
+      width: annotating ? 0 : annotation.x2 - annotation.x1,
+      height: annotating ? 0 : annotation.y2 - annotation.y1
     });
+  };
+
+  prevAnnotation = async () => {
+    const { handlePrev } = this.props;
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    handlePrev(this.resetState);
   };
 
   nextAnnotation = async ignoreFlag => {
@@ -259,10 +287,7 @@ class VerifyAnnotations extends Component {
     if (ignoreFlag) {
       populateIgnoreList(annotation);
     }
-    this.setState({
-      trackingStatus: null
-    });
-    this.displayLoading();
+
     window.scrollTo({ top: 0, behavior: 'smooth' });
     handleNext(this.resetState);
   };
@@ -314,30 +339,49 @@ class VerifyAnnotations extends Component {
     );
   };
 
-  handleDelete = async annotationArg => {
-    const { annotation, removeFromIgnoreList } = this.props;
+  handleDelete = async (type, id) => {
+    const { removeFromIgnoreList, displayLoading} = this.props;
+    const { boxesOutsideCol, verifiedBoxes } = this.state;
     const config = {
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${localStorage.getItem('token')}`
       },
-      data: {
-        id: annotationArg.id
-      }
+      data: { id }
     };
+
+    displayLoading();
     axios
       .delete('/api/annotations', config)
       .then(async () => {
+        Swal.close();
         this.toastPopup.fire({
           type: 'success',
           title: 'Deleted!!'
         });
-        if (annotation.id === annotationArg.id) {
-          this.nextAnnotation(false);
-        } else {
-          removeFromIgnoreList(annotationArg);
-          this.resetState();
+
+        switch (type) {
+          case 'current':
+            this.nextAnnotation(false);
+            break;
+          case 'ignored':
+            removeFromIgnoreList(id);
+            break;
+          case 'outside':
+            const outside = boxesOutsideCol.filter(x => x.id !== id);
+            this.setState({
+              boxesOutsideCol: outside
+            });
+            break;
+          case 'verified':
+            const verified = verifiedBoxes.filter(x => x.id !== id);
+            this.setState({
+              verifiedBoxes: verified
+            });
+            break;
+          // no default
         }
+        this.resetCurrentBox(true);
       })
       .catch(error => {
         Swal.fire(error, '', 'error');
@@ -351,6 +395,22 @@ class VerifyAnnotations extends Component {
     const y1 = y;
     const x2 = x + parseInt(width, 0);
     const y2 = y + parseInt(height, 0);
+    if (
+      x1 < 0 ||
+      y1 < 0 ||
+      x2 > annotation.videowidth ||
+      y1 > annotation.videoheight ||
+      parseInt(width, 0) < 10 ||
+      parseInt(height, 0) < 10
+    ) {
+      Swal.fire({
+        title: 'Error',
+        text: 'Invalid Bounding Box',
+        type: 'error',
+        confirmButtonText: 'Okay'
+      });
+      return;
+    }
 
     const body = {
       conceptId: concept ? concept.id : annotation.conceptid,
@@ -381,7 +441,28 @@ class VerifyAnnotations extends Component {
           type: 'success',
           title: res.data.message
         });
-        this.loadBoxes();
+        let annotationData = JSON.parse(res.data.value);
+        let newAnnotation = {
+          admin: false,
+          id: annotationData.id,
+          name: concept ? concept.name : annotation.name,
+          userid: annotationData.userid,
+          videoheight: annotation.videoheight,
+          videowidth: annotation.videowidth,
+          x1,
+          x2,
+          y1,
+          y2
+        };
+        this.setState(
+          prevState => ({
+            boxesOutsideCol: [newAnnotation, ...prevState.boxesOutsideCol]
+          }),
+          () => {
+            console.log(this.state.boxesOutsideCol);
+            this.resetCurrentBox();
+          }
+        );
       })
       .catch(error => {
         console.log(error);
@@ -440,7 +521,8 @@ class VerifyAnnotations extends Component {
       oldy1: annotation.y1,
       oldx2: annotation.x2,
       oldy2: annotation.y2,
-      id: annotation.id
+      id: annotation.id,
+      model: annotation.admin === null ? true : false
     };
     const config = {
       headers: {
@@ -463,7 +545,8 @@ class VerifyAnnotations extends Component {
       conceptId: !concept ? null : concept.id,
       comment,
       unsure,
-      oldConceptId: !concept ? null : annotation.conceptid
+      oldConceptId: !concept ? null : annotation.conceptid,
+      model: annotation.admin === null ? true : false
     };
 
     const config = {
@@ -488,13 +571,28 @@ class VerifyAnnotations extends Component {
       });
   };
 
+  checkValidDragBox = () => {
+    const { annotation } = this.props;
+    const { x, y, width, height } = this.state;
+    if (
+      x + parseInt(width, 0) > annotation.videowidth ||
+      y + parseInt(height, 0) > annotation.videoheight ||
+      x < 0 ||
+      y < 0 ||
+      width < 10 ||
+      height < 10
+    ) {
+      return false;
+    }
+    return true;
+  };
+
   handleVerifyClick = () => {
     const dragBox = document.getElementById('dragBox');
-
-    if (dragBox === null) {
+    if (dragBox === null || !this.checkValidDragBox()) {
       Swal.fire({
         title: 'Error',
-        text: 'No bounding box exists.',
+        text: 'Invalid Bounding Box',
         type: 'error',
         confirmButtonText: 'Okay'
       });
@@ -533,25 +631,25 @@ class VerifyAnnotations extends Component {
   };
 
   optionButtons = annotation => {
-    const { classes, resetLocalStorage, annotating } = this.props;
+    const { classes, resetLocalStorage, annotating, index } = this.props;
     const { disableVerify } = this.state;
     return (
       <div
         className={classes.buttonsContainer1}
         style={{ width: (2 * annotation.videowidth) / 3 }}
       >
+        <Button
+          className={classes.button}
+          variant="contained"
+          color="primary"
+          onClick={resetLocalStorage}
+        >
+          Reset Selections
+        </Button>
         {annotating ? (
           ''
         ) : (
           <>
-            <Button
-              className={classes.button}
-              variant="contained"
-              color="primary"
-              onClick={resetLocalStorage}
-            >
-              Reset Selections
-            </Button>
             <Button
               className={classes.button}
               variant="contained"
@@ -565,7 +663,7 @@ class VerifyAnnotations extends Component {
                 className={classes.button}
                 variant="contained"
                 color="secondary"
-                onClick={() => this.handleDelete(annotation)}
+                onClick={() => this.handleDelete('current', annotation.id)}
               >
                 Delete
               </Button>
@@ -573,7 +671,7 @@ class VerifyAnnotations extends Component {
             <Button
               className={classes.button}
               variant="contained"
-              onClick={this.resetState}
+              onClick={() => this.resetCurrentBox(false)}
             >
               Reset Box
             </Button>
@@ -582,9 +680,17 @@ class VerifyAnnotations extends Component {
         <Button
           className={classes.button}
           variant="contained"
+          disabled={index === 0 && !annotating}
+          onClick={() => this.prevAnnotation()}
+        >
+          Back
+        </Button>
+        <Button
+          className={classes.button}
+          variant="contained"
           onClick={() => this.nextAnnotation(true)}
         >
-          {annotating ? 'Done Annotating' : 'Ignore'}
+          {annotating ? 'Next Frame' : 'Ignore'}
         </Button>
         {annotating ? (
           ''
@@ -729,14 +835,14 @@ class VerifyAnnotations extends Component {
       excludeTracking,
       collectionFlag,
       resetLocalStorage,
-      ignoredAnnotations
+      ignoredAnnotations,
+      annotating
     } = this.props;
+
     const {
       x,
       y,
       conceptDialogOpen,
-      trackingStatus,
-      drawDragBox,
       width,
       height,
       openedVideo,
@@ -744,10 +850,6 @@ class VerifyAnnotations extends Component {
       verifiedBoxes,
       boxesOutsideCol
     } = this.state;
-
-    if (x === null) {
-      return <Typography style={{ margin: '20px' }}>Loading...</Typography>;
-    }
 
     return (
       <>
@@ -759,7 +861,6 @@ class VerifyAnnotations extends Component {
               excludeTracking={excludeTracking}
               collectionFlag={collectionFlag}
               videoDialogOpen={videoDialogOpen}
-              trackingStatus={trackingStatus}
               index={index}
               size={size}
               resetLocalStorage={resetLocalStorage}
@@ -777,8 +878,7 @@ class VerifyAnnotations extends Component {
               >
                 <DragBoxContainer
                   dragBox={classes.dragBox}
-                  drawDragBoxProp={drawDragBox}
-                  toggleDragBox={this.toggleDragBox}
+                  drawDragBoxProp={!annotating}
                   size={{
                     width,
                     height

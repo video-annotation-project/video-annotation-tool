@@ -137,7 +137,7 @@ class AnnotationGenerator(object):
         num_frames = len(self.selected_frames)
         split_index = int(num_frames * validation_split)
 
-        # Split our data into training and testing sets, based on validation_split
+        # Split our data into training and testing sets, based on validation_splitppp
         self.training_set = self.selected_frames[0:split_index]
         self.testing_set = self.selected_frames[split_index:]
 
@@ -261,14 +261,14 @@ class AnnotationGenerator(object):
                 annotations a ON a.id=inter.annotationid
             LEFT JOIN
                 videos ON videos.id=videoid
-            WHERE inter.id = ANY(%s) AND a.videoid <> ANY(%s)
+            WHERE inter.id = ANY(%s) AND a.videoid <> ALL(%s)
         '''
 
         if verified_only:
             annotations_query += """ AND a.verifiedby IS NOT NULL"""
 
         # Filter collection so each concept has min_example annotations
-        annotations_query += r'''
+        annotations_query += f'''
             ),
             filteredCollection AS (
                 SELECT
@@ -278,7 +278,7 @@ class AnnotationGenerator(object):
                         ROW_NUMBER() OVER (
                             PARTITION BY
                                 conceptid
-                            ORDER BY userid=32, verifiedby IS NULL) AS r,
+                            ORDER BY userid={tracking_uid}, verifiedby IS NULL) AS r,
                         c.*
                     FROM
                         collection c) t
@@ -287,7 +287,7 @@ class AnnotationGenerator(object):
             )
         '''
         # Add annotations that exist in the same frame
-        annotations_query += r'''
+        annotations_query += f'''
             SELECT
                 A.id,
                 image,
@@ -311,6 +311,9 @@ class AnnotationGenerator(object):
                 x2>0 AND x2<=videowidth AND
                 y1>=0 AND y1<videowidth AND
                 y2>0 AND y2<=videowidth AND
+                (a.userid = {tracking_uid} OR 
+                a.userid in {str(tuple(config.GOOD_USERS))} OR
+                a.verifiedby is not null) AND
                 EXISTS (
                     SELECT
                         1
@@ -452,10 +455,15 @@ class S3Generator(Generator):
             return True
 
         image_name = str(image['image'])
+        # Some files have a file extension, some don't. Let's fix that.
+        if self.image_extension not in image_name:
+            image_name += self.image_extension
+            
         try:
             obj = self.client.get_object(
                 Bucket=config.S3_BUCKET, Key=config.S3_ANNOTATION_FOLDER + image_name)
             if (obj['ContentLength'] == 0):
+                print(f'{image_name} Content Length is 0')
                 # Image is empty, use the next index
                 error_print(
                     f'file {config.S3_ANNOTATION_FOLDER}{image_name} has size 0, using next image instead')
@@ -467,14 +475,13 @@ class S3Generator(Generator):
         # ClientError is the exception class for a KeyNotFound error
         except ClientError:
             # Image doesnt exist, use the next index
+            print(f'{image_name} not found')
             error_print(
                 f'file {config.S3_ANNOTATION_FOLDER}{image_name} not found in S3 bucket, using next image instead')
             self.failed_downloads.add(image_index)
             return False
 
-        # Some files have a file extension, some don't. Let's fix that.
-        if self.image_extension not in image_name:
-            image_name += self.image_extension
+        
 
         image_path = self.image_path(image_index)
 
